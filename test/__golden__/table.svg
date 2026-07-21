@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="264px" height="152px" viewBox="-12 -2 264 152" role="img">
+  <defs></defs>
+  <rect id="sf-table-users" fill="#ffffff" stroke="transparent" stroke-width="0" x="10" y="20" width="220" height="108" rx="8"/>
+  <rect id="sf-table-header-fill-users" fill="#f1f5f9" stroke="transparent" stroke-width="0" x="10" y="20" width="220" height="36" rx="8"/>
+  <path id="sf-table-column-users-pk" fill="none" stroke="#9b42df" stroke-width="1" d="M 170 21 V 127"/>
+  <path id="sf-table-row-users-0" fill="none" stroke="#9b42df" stroke-width="1" d="M 11 56 H 229"/>
+  <path id="sf-table-row-users-1" fill="none" stroke="#9b42df" stroke-width="1" d="M 11 92 H 229"/>
+  <text id="sf-table-header-users-name" x="16" y="43.6" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="bold" fill="#111111" text-anchor="start"><tspan x="16" font-size="14px">Name</tspan></text>
+  <text id="sf-table-header-users-pk" x="176" y="43.6" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="bold" fill="#111111" text-anchor="start"><tspan x="176" font-size="14px">PK</tspan></text>
+  <text id="sf-table-cell-users-r1-name" x="16" y="79.6" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111111" text-anchor="start"><tspan x="16" font-size="14px">id</tspan></text>
+  <text id="sf-table-cell-users-r1-pk" x="176" y="79.6" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111111" text-anchor="start"><tspan x="176" font-size="14px">true</tspan></text>
+  <text id="sf-table-cell-users-r2-name" x="16" y="115.6" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111111" text-anchor="start"><tspan x="16" font-size="14px">email</tspan></text>
+  <text id="sf-table-cell-users-r2-pk" x="176" y="115.6" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111111" text-anchor="start"><tspan x="176" font-size="14px">false</tspan></text>
+  <rect id="sf-table-border-users" fill="transparent" stroke="#9b42df" stroke-width="2" x="10" y="20" width="220" height="108" rx="8"/>
+</svg>

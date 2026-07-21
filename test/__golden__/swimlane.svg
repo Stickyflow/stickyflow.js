@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="444px" height="204px" viewBox="-22 198 444 204" role="img">
+  <defs></defs>
+  <rect id="sf-swimlane-swimlane" fill="#f8fafc" stroke="#64748b" stroke-width="2" x="0" y="220" width="400" height="160" rx="8"/>
+  <path id="sf-swimlane-divider-swimlane-0" fill="none" stroke="#64748b" stroke-width="2" d="M 0 300 H 400"/>
+  <text id="sf-swimlane-label-swimlane-one" x="10" y="242" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="bold" fill="#334155" text-anchor="start"><tspan x="10" font-size="14px">One</tspan></text>
+  <text id="sf-swimlane-label-swimlane-two" x="10" y="322" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="bold" fill="#334155" text-anchor="start"><tspan x="10" font-size="14px">Two</tspan></text>
+</svg>

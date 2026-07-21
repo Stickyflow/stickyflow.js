@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200px" height="310px" viewBox="80 80 200 310" role="img">
+  <defs><marker id="sf-marker-arrow-0" markerWidth="33.6" markerHeight="33.6" viewBox="-16.8 -16.8 33.6 33.6" refX="0" refY="0" orient="auto-start-reverse" markerUnits="userSpaceOnUse" overflow="visible"><path d="M -12 -7.2 L 0 0 L -12 7.2" fill="none" stroke="#0369a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+  <path id="sf-link-go" fill="none" stroke="#0369a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="1" marker-end="url(#sf-marker-arrow-0)" d="M 180 170 L 180 300"/>
+  <rect id="sf-shape-start" fill="#e0f2fe" stroke="#0369a1" stroke-width="2" stroke-linecap="butt" opacity="1" x="100" y="100" width="160" height="70" rx="8"/>
+  <text id="sf-shape-text-start" x="180" y="139.9" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111827" text-anchor="middle"><tspan x="180" font-size="14px">Start</tspan></text>
+  <rect id="sf-shape-finish" fill="#e0f2fe" stroke="#0369a1" stroke-width="2" stroke-linecap="butt" opacity="1" x="100" y="300" width="160" height="70" rx="8"/>
+  <text id="sf-shape-text-finish" x="180" y="339.9" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111827" text-anchor="middle"><tspan x="180" font-size="14px">Finish</tspan></text>
+</svg>

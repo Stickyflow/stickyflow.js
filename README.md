@@ -44,6 +44,23 @@ dependencies; until then this proves portability against the actual code.
   `opentype.js` + Vite `?url` font imports. The FontRegistry decision (ADR-01)
   addresses this before it enters the core path.
 
+## Determinism
+
+`test/__golden__/*.svg` are committed golden renders — real, viewable SVGs that
+lock the pipeline's output (plan §18.3, ADR-02). `test/golden.test.ts` diffs
+against them and also asserts byte-identical output across repeated renders.
+Regenerate intentionally with `vitest -u` after a reviewed change.
+
+**Known cross-environment caveat (ADR-02 follow-up):** `buildRenderScene` breaks
+ties in its node sort with `a.id.localeCompare(b.id)`. `localeCompare` without an
+explicit locale is host/ICU-dependent, so nodes sharing the same `order` (e.g. a
+cylinder's `-body`/`-bottom` sub-nodes) could sort differently on CI vs. a dev
+machine — changing element order and, at worst, z-order. The determinism test
+only proves stability within one environment. When the render core is extracted,
+this tie-break should become a locale-independent comparison (plain code-point
+compare). Left as-is for now because the file is still imported unchanged from
+the app.
+
 ## Running the tests
 
 The package has no `node_modules` yet (that arrives with the workspace migration).
