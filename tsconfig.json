@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "typeRoots": ["../../frontend/node_modules/@types"],
+    "paths": {
+      "@entities/*": ["../../frontend/src/entities/*"],
+      "@links/*": ["../../frontend/src/entities/links/*"],
+      "@frames/*": ["../../frontend/src/entities/frames/*"],
+      "@shapes/*": ["../../frontend/src/entities/shapes/*"],
+      "@boards/*": ["../../frontend/src/entities/boards/*"],
+      "@shared/*": ["../../frontend/src/shared/*"],
+      "@lib/*": ["../../frontend/src/shared/lib/*"],
+      "@features/*": ["../../frontend/src/features/*"],
+      "vitest": ["../../frontend/node_modules/vitest"],
+      "vitest/*": ["../../frontend/node_modules/vitest/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*", "vitest.config.ts"]
+}
