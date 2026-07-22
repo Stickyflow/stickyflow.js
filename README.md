@@ -116,10 +116,21 @@ The package deliberately splits into two tiers, with a **one-way dependency**
 |---|---|---|---|
 | **Static** (docs/display, like Mermaid but richer) | `stickyflow` | headless (Node) | `render(sfl) → svg`, deterministic, DOM contract |
 | **Interaction** (embed, chatbots) | `stickyflow/viewer` | browser | mount, select/hover/click, zoom/pan, events |
+| **Web component** (drop-in embed) | `stickyflow/web-component` | browser | `<stickyflow-diagram>`, static by default, `interactive` opts in |
 
 The separation is **enforced by `test/boundary.test.ts`**: the static core must
-not import from `viewer/` and must use no DOM globals, so it always stays
-headless. A docs site pulls only the static tier and pays nothing for viewer JS.
+not import from a browser tier (`viewer/`, `web-component/`) and must use no DOM
+globals, so it always stays headless. A docs site pulls only the static tier and
+pays nothing for viewer JS. The web component sits on top and composes both.
+
+```html
+<stickyflow-diagram interactive></stickyflow-diagram>
+<script type="module">
+  import { defineStickyflowDiagram } from 'stickyflow/web-component';
+  defineStickyflowDiagram();
+  document.querySelector('stickyflow-diagram').source = sflText; // or the source="" attribute
+</script>
+```
 
 Inside the viewer the split continues:
 
@@ -145,8 +156,10 @@ cd packages/stickyflow.js
 npx vite demo      # then open the printed URL
 ```
 
-Click to select (Ctrl/Shift = multi), wheel = zoom, drag = pan, Esc = clear;
-events stream into the side panel.
+- `index.html` — the viewer (`createViewer`): click to select (Ctrl/Shift =
+  multi), wheel = zoom, drag = pan, Esc = clear; events stream into the panel.
+- `web-component.html` — `<stickyflow-diagram>` static **and** interactive
+  side by side.
 
 ## Running the tests
 

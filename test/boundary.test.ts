@@ -8,7 +8,9 @@ import { dirname, join, resolve, relative } from 'node:path';
 // the interaction tier, and must stay DOM-free so it keeps rendering headless.
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = resolve(here, '../src');
-const viewerDir = resolve(srcDir, 'viewer');
+// Browser tiers: they may use the DOM and depend on the static core. The static
+// core is everything else and must stay headless and self-contained.
+const browserTiers = [resolve(srcDir, 'viewer'), resolve(srcDir, 'web-component')];
 
 function tsFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -18,11 +20,11 @@ function tsFiles(dir: string): string[] {
   });
 }
 
-const staticFiles = tsFiles(srcDir).filter(f => !f.startsWith(viewerDir));
+const staticFiles = tsFiles(srcDir).filter(f => !browserTiers.some(dir => f.startsWith(dir)));
 
 describe('static / interaction separation', () => {
-  it('static core never imports from the viewer (one-way dependency)', () => {
-    const offenders = staticFiles.filter(f => /from ['"][^'"]*\/viewer(\/|['"])/.test(readFileSync(f, 'utf8')));
+  it('static core never imports from a browser tier (one-way dependency)', () => {
+    const offenders = staticFiles.filter(f => /from ['"][^'"]*\/(viewer|web-component)(\/|['"])/.test(readFileSync(f, 'utf8')));
     expect(offenders.map(f => relative(srcDir, f))).toEqual([]);
   });
 
@@ -34,8 +36,8 @@ describe('static / interaction separation', () => {
     expect(offenders.map(f => relative(srcDir, f))).toEqual([]);
   });
 
-  it('the static entry (index.ts) re-exports nothing from the viewer', () => {
+  it('the static entry (index.ts) re-exports nothing from a browser tier', () => {
     const index = readFileSync(join(srcDir, 'index.ts'), 'utf8');
-    expect(index).not.toMatch(/from ['"][^'"]*viewer/);
+    expect(index).not.toMatch(/from ['"][^'"]*(viewer|web-component)/);
   });
 });

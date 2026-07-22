@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>stickyflow.js — &lt;stickyflow-diagram&gt;</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; padding: 24px; display: grid; gap: 24px; grid-template-columns: 1fr 1fr; align-items: start; }
+    h2 { font-size: 14px; margin: 0 0 8px; }
+    p { font-size: 13px; color: #475569; margin: 0 0 12px; }
+    stickyflow-diagram { height: 380px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 6px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <section>
+    <h2>Statisch (wie Mermaid)</h2>
+    <p>Nur <code>&lt;stickyflow-diagram&gt;</code> — kein Viewer-JS, reines SVG.</p>
+    <stickyflow-diagram id="static"></stickyflow-diagram>
+  </section>
+  <section>
+    <h2>Interaktiv (<code>interactive</code>)</h2>
+    <p>Klick = auswählen, Rad = Zoom, Ziehen = Pan. Events unten.</p>
+    <stickyflow-diagram id="interactive" interactive diagram-id="demo"></stickyflow-diagram>
+    <pre id="log">—</pre>
+  </section>
+  <script type="module" src="./web-component.ts"></script>
+</body>
+</html>
