@@ -4,9 +4,9 @@ First step of the `stickyflow.js` effort (see `docs/SFL/STICKYFLOW_JS_IMPLEMENTA
 and `docs/SFL/STICKYFLOW_JS_ADR_SUPPLEMENT.md`).
 
 **Status:** the SFL parser + render-scene + SVG pipeline runs **headless** — Node,
-no DOM, no Konva, no React. The portability risk is retired, and the render half
-is now **extracted into this package** (see Structure below). The SFL core is the
-last remaining app seam.
+no DOM, no Konva, no React. The whole pipeline (SFL core **and** render half) is
+now **extracted into this package** — there are no app aliases left; the only
+external reference is the `vitest` dev dependency. The package is app-independent.
 
 ## What works today
 
@@ -32,6 +32,9 @@ The **render half is now owned by this package** (plan M2, render-scene extracti
 
 ```
 src/
+  sfl/                 SFL core (plan M1): ast, lexer, parser, emitter,
+                       sflToCanvasState, adapters/{sflToImportJson,decodeStyles}
+                       + local index — pure, alias-free
   entities/            model types + pure geometry (shapes, frames, links,
                        swimlanes, tables) — extracted, all-relative imports
   shared/ui/           the 3 pure leaf files the models depend on (color/shadow)
@@ -40,19 +43,19 @@ src/
   render.ts / index.ts public API
 ```
 
-These files were copied from `frontend/src` and their alias imports rewritten to
+All files were copied from `frontend/src` and their alias imports rewritten to
 relative — **no app source was touched**. Byte-identical golden SVGs before/after
-the copy prove the extraction is behaviour-neutral (the app and this package are
-a transitional dual copy, guarded by the golden suite as the plan endorses).
+each copy prove every extraction step is behaviour-neutral. The SFL core is a
+minimal closure of the four functions the render path uses; the app's editor,
+hooks, autocomplete and highlighting stay in the app and are not copied here.
 
-**The one remaining app seam** is the SFL core: `sflToImportJson` / `parse` are
-still imported via the single `@features/sfl-language/sfl` alias (that core is
-already alias-free internally and will be extracted next). No other app alias is
-needed — the render half compiles standalone.
+**No app seam remains** — the package builds and tests with zero app aliases. The
+app still has its own copy of these files (a transitional dual copy, guarded by
+the golden suite as the plan endorses); the two reconverge when the app is
+rewired to consume this package (Arbeitspaket E).
 
 > Divergence note: this package's `buildRenderScene` carries the ADR-02 tie-break
-> fix (below); the app's copy does not yet. They reconverge when the app is
-> rewired to consume this package.
+> fix (below); the app's copy does not yet.
 
 ## Known slice-1 gaps (documented, not hidden)
 

@@ -5,7 +5,7 @@
 // The interactive viewer, web component and packaging split follow later.
 
 // SFL core (re-exported from the app package — same single implementation).
-export { parse, canonicalize, sflToCanvasState, sflToImportJson } from '@features/sfl-language/sfl';
+export { parse, canonicalize, sflToCanvasState, sflToImportJson } from './sfl';
 
 // Render pipeline.
 export { render, renderCanvas } from './render';

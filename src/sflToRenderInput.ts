@@ -16,7 +16,7 @@ import type { Frame } from './entities/frames/model';
 import type { Table } from './entities/tables/model';
 import type { Link } from './entities/links/model';
 import type { Point, RenderInput, ResolvedExportLink } from './rendering/renderScene';
-import { sflToImportJson } from '@features/sfl-language/sfl';
+import { sflToImportJson } from './sfl';
 
 interface EntityBuckets { shapes: unknown[]; links: unknown[] }
 interface V3Json {

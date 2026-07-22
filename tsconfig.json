@@ -12,10 +12,9 @@
     "types": ["node"],
     "typeRoots": ["../../frontend/node_modules/@types"],
     "paths": {
-      // The render half is fully local now. The ONLY remaining app seam is the
-      // SFL core (not yet extracted). vitest resolves from the frontend install
-      // until this package gets its own node_modules with the workspace.
-      "@features/*": ["../../frontend/src/features/*"],
+      // No app aliases: SFL core + render half are fully local now. vitest still
+      // resolves from the frontend install until this package gets its own
+      // node_modules with the workspace migration.
       "vitest": ["../../frontend/node_modules/vitest"],
       "vitest/*": ["../../frontend/node_modules/vitest/*"]
     }
