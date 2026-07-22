@@ -1,4 +1,3 @@
-// src/entities/links/geometry/router.ts
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 
 export interface Bounds {

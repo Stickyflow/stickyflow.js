@@ -1,6 +1,5 @@
-// src/entities/shapes/model.ts
 
-import type { ShadowStyle } from '../../shared/ui/ShadowPicker/types';
+import type { ShadowStyle } from './shadows';
 export type { ShadowStyle };
 
 /** Gradient Color für Shape Fills/Strokes */

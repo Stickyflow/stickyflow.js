@@ -1,8 +1,7 @@
-// src/entities/links/geometry/connectionLineGeometry.ts
 // Pure geometry helpers for ConnectionLine: path routing, arrow/marker
 // transforms and midpoint calculation, extracted out of the component.
-import type { Link, PathType, StrokeStyle } from '../model'
-import type { GradientColor } from '../../../shared/ui/ColorPicker/types'
+import type { Link, PathType, StrokeStyle } from '../links'
+import type { GradientColor } from '../colors'
 import { routeCubic, routeOrthogonal, roundOrthogonalPath, type PathSegment, type Side } from './router'
 
 type Point = { x: number; y: number }

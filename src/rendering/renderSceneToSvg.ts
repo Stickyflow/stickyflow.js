@@ -1,4 +1,4 @@
-import type { MarkerType } from '../entities/links/model';
+import type { MarkerType } from '../model/links';
 import type { RenderNode, RenderScene, ScenePaint, SceneStyle, SceneText } from './renderScene';
 import { DOM_CONTRACT_VERSION } from './renderScene';
 

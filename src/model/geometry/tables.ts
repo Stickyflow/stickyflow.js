@@ -1,5 +1,5 @@
-import type { Table, TableColumn, TableRow } from './model';
-import { TABLE_MIN_COLUMN_WIDTH, TABLE_MIN_WIDTH, computeRowHeight } from './model';
+import type { Table, TableColumn, TableRow } from '../tables';
+import { TABLE_MIN_COLUMN_WIDTH, TABLE_MIN_WIDTH, computeRowHeight } from '../tables';
 
 export const tableSlotCount = (table: Pick<Table, 'rows' | 'show_header'>): number =>
   Math.max(1, table.rows.length + (table.show_header ? 1 : 0));

@@ -1,11 +1,11 @@
 // Representative render fixtures shared by the golden-snapshot suite. Each one
 // exercises a distinct part of the pipeline so the committed SVGs form a visual
 // contract: any change in geometry, ordering or serialization shows up as a diff.
-import type { Shape, ShapeType } from '../src/entities/shapes/model';
-import type { Frame } from '../src/entities/frames/model';
-import type { Swimlane } from '../src/entities/swimlanes/model';
-import type { Table } from '../src/entities/tables/model';
-import type { Link } from '../src/entities/links/model';
+import type { Shape, ShapeType } from '../src/model/shapes';
+import type { Frame } from '../src/model/frames';
+import type { Swimlane } from '../src/model/swimlanes';
+import type { Table } from '../src/model/tables';
+import type { Link } from '../src/model/links';
 import type { RenderInput } from '../src/index';
 
 const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape> = {}): Shape => ({

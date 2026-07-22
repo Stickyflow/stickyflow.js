@@ -1,4 +1,3 @@
-// frontend/src/entities/tables/model.ts
 /**
  * Table entity - Container rendering a configurable grid of columns and rows,
  * for DB-schema/ER and UML-attribute diagrams. Structurally closest to

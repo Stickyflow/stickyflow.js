@@ -1,4 +1,3 @@
-// frontend/src/entities/frames/model.ts
 /**
  * Frame entity - Container for user flows, workflows, and process boundaries
  * Frames are visual containers like Confluence Pages or Miro Frames

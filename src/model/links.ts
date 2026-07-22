@@ -1,8 +1,7 @@
-// src/entities/Link/model.ts
 
-import type { GradientColor } from '../../shared/ui/ColorPicker/types'
-import { hexToRgb, rgbToHex } from '../../shared/ui/ColorPicker/utils/colorConversion'
-import type { ShadowStyle } from '../../shared/ui/ShadowPicker/types'
+import type { GradientColor } from './colors'
+import { hexToRgb, rgbToHex } from './colorConversion'
+import type { ShadowStyle } from './shadows'
 
 /** Stroke style options for links */
 export type StrokeStyle = 'solid' | 'dashed' | 'dotted'

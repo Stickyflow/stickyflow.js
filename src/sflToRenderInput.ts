@@ -5,16 +5,16 @@
 // consume the same v3 JSON the app produces and map it straight to the pure
 // RenderInput the render core expects — no store, no DOM, no fork of app code.
 //
-// Known slice-1 gaps (documented, not hidden):
+// Known gaps (documented, not hidden):
 //   - Swimlanes: the app's SFL import already collapses swimlanes into frames
 //     (sflToImportJson emits them via frameObject without lane data), so lanes
 //     do not survive SFL round-trip yet. Rendered as frames.
 //   - Link waypoints: v3 JSON carries segmentOffsets, not absolute waypoints, so
 //     orthogonal links use the router's default routing rather than saved bends.
-import type { Shape } from './entities/shapes/model';
-import type { Frame } from './entities/frames/model';
-import type { Table } from './entities/tables/model';
-import type { Link } from './entities/links/model';
+import type { Shape } from './model/shapes';
+import type { Frame } from './model/frames';
+import type { Table } from './model/tables';
+import type { Link } from './model/links';
 import type { Point, RenderInput, ResolvedExportLink } from './rendering/renderScene';
 import { sflToImportJson } from './sfl';
 

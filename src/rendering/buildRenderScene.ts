@@ -1,13 +1,13 @@
-import type { GradientColorObject, MeshGradientObject, Shape, ShapeType } from '../entities/shapes/model';
-import { SHAPE_DEFAULTS } from '../entities/shapes/model';
-import type { Frame } from '../entities/frames/model';
-import type { Link, MarkerType } from '../entities/links/model';
-import { getLinkStrokeColor } from '../entities/links/model';
-import type { Swimlane } from '../entities/swimlanes/model';
-import { computeRowHeight, type Table } from '../entities/tables/model';
-import { tableBorderGeometry } from '../entities/tables/geometry';
-import { getDashArray, getLineMidpoint, getPathPoints } from '../entities/links/geometry/connectionLineGeometry';
-import type { PathSegment } from '../entities/links/geometry/router';
+import type { GradientColorObject, MeshGradientObject, Shape, ShapeType } from '../model/shapes';
+import { SHAPE_DEFAULTS } from '../model/shapes';
+import type { Frame } from '../model/frames';
+import type { Link, MarkerType } from '../model/links';
+import { getLinkStrokeColor } from '../model/links';
+import type { Swimlane } from '../model/swimlanes';
+import { computeRowHeight, type Table } from '../model/tables';
+import { tableBorderGeometry } from '../model/geometry/tables';
+import { getDashArray, getLineMidpoint, getPathPoints } from '../model/geometry/connectionLine';
+import type { PathSegment } from '../model/geometry/router';
 import type {
   Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene, SceneRole,
   ScenePaint, ScenePath, SceneStyle,

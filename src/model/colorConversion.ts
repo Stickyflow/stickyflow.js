@@ -1,4 +1,3 @@
-// src/shared/ui/ColorPicker/utils/colorConversion.ts
 
 export interface RGB {
   r: number;

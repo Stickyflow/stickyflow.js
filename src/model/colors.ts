@@ -1,4 +1,3 @@
-// src/shared/ui/ColorPicker/types.ts
 
 export interface ColorStop {
   position: number; // 0-100 (percentage)

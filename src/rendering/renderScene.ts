@@ -1,8 +1,8 @@
-import type { Frame } from '../entities/frames/model';
-import type { Link, MarkerType, PathType } from '../entities/links/model';
-import type { Shape } from '../entities/shapes/model';
-import type { Swimlane } from '../entities/swimlanes/model';
-import type { Table } from '../entities/tables/model';
+import type { Frame } from '../model/frames';
+import type { Link, MarkerType, PathType } from '../model/links';
+import type { Shape } from '../model/shapes';
+import type { Swimlane } from '../model/swimlanes';
+import type { Table } from '../model/tables';
 
 export interface Point { x: number; y: number }
 export interface Bounds { minX: number; minY: number; maxX: number; maxY: number }

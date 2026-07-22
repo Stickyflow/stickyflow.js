@@ -1,20 +1,24 @@
-// stickyflow — public surface of the vertical slice.
+// stickyflow — static tier: parse SFL and render it to SVG, headless.
 //
-// Goal of this slice: prove the SFL parser + render-scene + SVG pipeline runs
-// headless (Node, no DOM, no Konva, no React), consuming the real app source.
-// The interactive viewer, web component and packaging split follow later.
+// This entry is framework-free and DOM-free (Node, no Konva, no React): a docs
+// site or SSR pipeline uses only this. Interaction lives in `stickyflow/viewer`,
+// drop-in embedding in `stickyflow/web-component`.
 
-// SFL core (re-exported from the app package — same single implementation).
-export { parse, canonicalize, sflToCanvasState, sflToImportJson } from './sfl';
-
-// Render pipeline.
+// ── Primary API ───────────────────────────────────────────────────────────
+/** Render SFL text straight to an SVG string. */
 export { render, renderCanvas } from './render';
 export type { RenderResult, RenderOptions } from './render';
-export { sflToRenderInput } from './sflToRenderInput';
+/** Parse SFL, and canonically re-emit it (idempotent). */
+export { parse, canonicalize } from './sfl';
 
-// Render-scene contract types (now owned by this package).
+// ── Interactive DOM contract (shared with the viewer) ─────────────────────
+export { DOM_CONTRACT_VERSION } from './rendering/renderScene';
 export type {
   RenderScene, RenderNode, RenderInput, RenderDiagnostic, Bounds, Point, SceneRole,
 } from './rendering/renderScene';
-// Versioned interactive DOM contract shared by renderer and (future) viewer.
-export { DOM_CONTRACT_VERSION } from './rendering/renderScene';
+
+// ── Lower-level building blocks (advanced) ────────────────────────────────
+// The staged pipeline behind render(): SFL → canvas state → v3 JSON →
+// RenderInput. Exposed for tools that need an intermediate representation.
+export { sflToCanvasState, sflToImportJson } from './sfl';
+export { sflToRenderInput } from './sflToRenderInput';

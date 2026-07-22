@@ -1,4 +1,3 @@
-// frontend/src/entities/swimlanes/model.ts
 /**
  * Swimlane entity - Container holding N named lanes, for BPMN-style process diagrams.
  * One Swimlane = one container with an ordered list of lanes (e.g. "HR" / "IT" / "Manager").

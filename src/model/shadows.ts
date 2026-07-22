@@ -1,4 +1,3 @@
-// src/shared/ui/ShadowPicker/types.ts
 
 /** Configurable drop-shadow styling, shared between Shapes and Links */
 export interface ShadowStyle {

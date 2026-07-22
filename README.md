@@ -1,72 +1,65 @@
-# stickyflow (vertical slice)
+# stickyflow
 
-First step of the `stickyflow.js` effort (see `docs/SFL/STICKYFLOW_JS_IMPLEMENTATION_PLAN.md`
-and `docs/SFL/STICKYFLOW_JS_ADR_SUPPLEMENT.md`).
+Framework-independent SFL parser, render-scene, SVG runtime and interactive
+viewer. Parses the SFL diagram language and renders it — statically for docs
+(like Mermaid, but with precise positioning and far more styling), or
+interactively for embedding in web projects and chatbots.
 
-**Status:** the SFL parser + render-scene + SVG pipeline runs **headless** — Node,
-no DOM, no Konva, no React. The whole pipeline (SFL core **and** render half) is
-now **extracted into this package** — there are no app aliases left; the only
-external reference is the `vitest` dev dependency. The package is app-independent.
+Part of the `stickyflow.js` effort (see `docs/SFL/STICKYFLOW_JS_IMPLEMENTATION_PLAN.md`
+and `docs/SFL/STICKYFLOW_JS_ADR_SUPPLEMENT.md`). App-independent: no runtime
+dependencies, no Konva, no React; the static tier is DOM-free and runs in Node.
 
-## What works today
+## Quick start
 
 ```ts
 import { render } from 'stickyflow';
 
 const { svg, width, height, diagnostics } = render(sflSourceText);
-// svg is a complete, deterministic SVG string. render() never touches the DOM.
+// A complete, deterministic SVG string. render() never touches the DOM.
 ```
 
-Pipeline: `SFL text → parse (real SFL core) → sflToImportJson → sflToRenderInput
-(new pure adapter) → buildRenderScene → renderSceneToSvg`.
+Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflToRenderInput
+→ buildRenderScene → renderSceneToSvg`.
 
-- `render(source)` — SFL text to SVG.
-- `renderCanvas(input)` — a pre-built `RenderInput` to SVG.
-- Re-exports the real `parse`, `canonicalize`, `sflToCanvasState`, `sflToImportJson`.
-
-See `demo-output.svg` for a sample render.
-
-## Structure & what is extracted
-
-The **render half is now owned by this package** (plan M2, render-scene extraction):
+## Structure
 
 ```
 src/
-  sfl/                 SFL core (plan M1): ast, lexer, parser, emitter,
-                       sflToCanvasState, adapters/{sflToImportJson,decodeStyles}
-                       + local index — pure, alias-free
-  entities/            model types + pure geometry (shapes, frames, links,
-                       swimlanes, tables) — extracted, all-relative imports
-  shared/ui/           the 3 pure leaf files the models depend on (color/shadow)
-  rendering/           renderScene, buildRenderScene, renderSceneToSvg — extracted
+  sfl/               SFL core: ast, lexer, parser, emitter, sflToCanvasState,
+                     adapters/{sflToImportJson,decodeStyles} — pure, no DOM
+  model/             framework-agnostic document model:
+                       shapes/frames/links/swimlanes/tables + colors/shadows
+                       geometry/{connectionLine,router,tables}
+  rendering/         renderScene, buildRenderScene, renderSceneToSvg
+  render.ts          render(sfl) / renderCanvas(input) — static tier
   sflToRenderInput.ts  model adapter: SFL v3 JSON → RenderInput
-  render.ts / index.ts public API
+  index.ts           static public API  →  import 'stickyflow'
+  viewer/            interaction tier   →  import 'stickyflow/viewer'
+  web-component/     <stickyflow-diagram>  →  import 'stickyflow/web-component'
 ```
 
-All files were copied from `frontend/src` and their alias imports rewritten to
-relative — **no app source was touched**. Byte-identical golden SVGs before/after
-each copy prove every extraction step is behaviour-neutral. The SFL core is a
-minimal closure of the four functions the render path uses; the app's editor,
-hooks, autocomplete and highlighting stay in the app and are not copied here.
+The three tiers and their one-way dependency are described under *Two tiers*
+below and enforced by `test/boundary.test.ts`.
 
-**No app seam remains** — the package builds and tests with zero app aliases. The
-app still has its own copy of these files (a transitional dual copy, guarded by
-the golden suite as the plan endorses); the two reconverge when the app is
-rewired to consume this package (Arbeitspaket E).
+## Known gaps (documented, not hidden)
 
-> Divergence note: this package's `buildRenderScene` carries the ADR-02 tie-break
-> fix (below); the app's copy does not yet.
-
-## Known slice-1 gaps (documented, not hidden)
-
-- **Swimlanes** don't render from SFL: the app's own SFL import already collapses
-  them into frames without lane data (`sflToImportJson`), so lanes don't survive
-  the round-trip yet. Entity/frame/table/link paths are covered.
+- **Swimlanes** don't render from SFL: the SFL import collapses them into frames
+  without lane data (`sflToImportJson`), so lanes don't survive the round-trip
+  yet. Entity/frame/table/link paths are covered. (Rendering swimlanes directly
+  via `renderCanvas` works.)
 - **Link waypoints**: v3 JSON carries `segmentOffsets`, not absolute waypoints, so
   orthogonal links use default routing rather than saved bends.
 - **Text outlines** (`textMode: 'outlines'`) are intentionally excluded — they pull
-  `opentype.js` + Vite `?url` font imports. The FontRegistry decision (ADR-01)
-  addresses this before it enters the core path.
+  `opentype.js` + font assets. The FontRegistry decision (ADR-01) addresses this
+  before it enters the core path.
+- **Node dragging / editing** is not built yet — the viewer is read-only
+  interaction (select/hover/zoom/pan). Live mutation (the controlled-component
+  round-trip) is the planned next tier.
+
+> The app still keeps its own copy of the render/SFL files (a transitional dual
+> copy, guarded by the golden suite). This package's `buildRenderScene` carries
+> the ADR-02 tie-break fix the app copy doesn't have yet; they reconverge when
+> the app is rewired to consume this package.
 
 ## Determinism
 
