@@ -161,14 +161,35 @@ npx vite demo      # then open the printed URL
 - `web-component.html` — `<stickyflow-diagram>` static **and** interactive
   side by side.
 
-## Running the tests
+## Build & distribution
 
-The package has no `node_modules` yet (that arrives with the workspace migration).
-Run via the frontend's installed vitest:
+The package is self-contained (`npm install` here pulls only `tsup`, `typescript`,
+`vitest` — no runtime deps).
 
 ```bash
-cd frontend
-node ./node_modules/vitest/vitest.mjs run --config ./stickyflow.vitest.config.ts
+npm run build     # tsup → dist/: ESM + CJS + .d.ts per tier, shared chunks, + IIFE
+npm run smoke     # imports the BUILT dist/index.js in Node and renders headless
+npm run verify    # build + smoke in one
 ```
 
-All tests use `environment: 'node'` — a green run is the headless proof.
+`dist/` layout (mapped by `exports`):
+
+| Import | ESM | CJS | Types |
+|---|---|---|---|
+| `stickyflow` | `dist/index.js` | `dist/index.cjs` | `dist/index.d.ts` |
+| `stickyflow/viewer` | `dist/viewer/index.js` | `.cjs` | `.d.ts` |
+| `stickyflow/web-component` | `dist/web-component/index.js` | `.cjs` | `.d.ts` |
+
+`dist/stickyflow-diagram.global.js` is a minified, self-registering **IIFE** for a
+plain CDN `<script>` — no bundler, `<stickyflow-diagram>` just works:
+
+```html
+<script src="…/stickyflow-diagram.global.js"></script>
+<stickyflow-diagram interactive source="sfl 1.2 …"></stickyflow-diagram>
+```
+
+## Running the tests
+
+```bash
+npm test          # vitest, environment: 'node' — a green run is the headless proof
+```
