@@ -9,9 +9,22 @@ import { tableBorderGeometry } from '../entities/tables/geometry';
 import { getDashArray, getLineMidpoint, getPathPoints } from '../entities/links/geometry/connectionLineGeometry';
 import type { PathSegment } from '../entities/links/geometry/router';
 import type {
-  Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene,
+  Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene, SceneRole,
   ScenePaint, ScenePath, SceneStyle,
 } from './renderScene';
+
+// Interactive DOM contract (ADR-03): stamp every node of an owner with a shared
+// role + id so the viewer can map any sub-node (text, divider, cell) back to its
+// entity; the first (primary) node also gets an aria-label and becomes focusable.
+function tag(nodes: RenderNode[], sfRole: SceneRole, sfId: string, sfKind?: string, ariaLabel?: string): RenderNode[] {
+  nodes.forEach((node, index) => {
+    node.sfRole = sfRole;
+    node.sfId = sfId;
+    if (sfKind) node.sfKind = sfKind;
+    if (index === 0 && ariaLabel) node.ariaLabel = ariaLabel;
+  });
+  return nodes;
+}
 
 const DEFAULT_FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const EMPTY_BOUNDS: Bounds = { minX: 0, minY: 0, maxX: 100, maxY: 100 };
@@ -407,11 +420,11 @@ function sceneBounds(nodes: RenderNode[]): Bounds {
 export function buildRenderScene(input: RenderInput): RenderScene {
   const diagnostics: RenderDiagnostic[] = [];
   const nodes = [
-    ...input.frames.flatMap(buildFrame),
-    ...input.swimlanes.flatMap(buildSwimlane),
-    ...(input.tables ?? []).flatMap(buildTable),
-    ...input.links.flatMap(buildLink),
-    ...input.shapes.flatMap((shape, index) => buildShape(shape, index, diagnostics)),
+    ...input.frames.flatMap((frame, i) => tag(buildFrame(frame, i), 'frame', frame.id, undefined, frame.title ?? undefined)),
+    ...input.swimlanes.flatMap((swimlane, i) => tag(buildSwimlane(swimlane, i), 'swimlane', swimlane.id)),
+    ...(input.tables ?? []).flatMap((table, i) => tag(buildTable(table, i), 'table', table.id, undefined, table.title ?? undefined)),
+    ...input.links.flatMap((item, i) => tag(buildLink(item, i), 'link', item.link.id, undefined, item.link.text || undefined)),
+    ...input.shapes.flatMap((shape, index) => tag(buildShape(shape, index, diagnostics), 'entity', shape.id, shape.shapeType, shape.text || shape.shapeType)),
     // Locale-independent code-point tie-break (ADR-02): localeCompare depends on
     // the host ICU/locale and could reorder equal-order nodes across machines.
   ].sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

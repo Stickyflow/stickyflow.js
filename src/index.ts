@@ -14,5 +14,7 @@ export { sflToRenderInput } from './sflToRenderInput';
 
 // Render-scene contract types (now owned by this package).
 export type {
-  RenderScene, RenderNode, RenderInput, RenderDiagnostic, Bounds, Point,
+  RenderScene, RenderNode, RenderInput, RenderDiagnostic, Bounds, Point, SceneRole,
 } from './rendering/renderScene';
+// Versioned interactive DOM contract shared by renderer and (future) viewer.
+export { DOM_CONTRACT_VERSION } from './rendering/renderScene';

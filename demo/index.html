@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>stickyflow.js — Viewer-Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; display: grid; grid-template-columns: 1fr 320px; height: 100vh; }
+    #diagram { border-right: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; }
+    aside { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    h1 { font-size: 15px; margin: 0; }
+    p { font-size: 13px; color: #475569; margin: 0; line-height: 1.4; }
+    button { padding: 6px 10px; font-size: 13px; cursor: pointer; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 6px; font-size: 12px; flex: 1; overflow: auto; white-space: pre-wrap; }
+
+    /* The interaction layer sets data-sf-selected; styling it is the host's job. */
+    [data-sf-selected] { outline: none; stroke: #2563eb !important; stroke-width: 4 !important; }
+    [data-sf-role]:focus { outline: none; }
+    [data-sf-role="entity"], [data-sf-role="link"] { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="diagram"></div>
+  <aside>
+    <h1>stickyflow.js — Interaktion</h1>
+    <p>Klicken = auswählen (Strg/Shift = mehrfach). Rad = Zoom, Ziehen = Pan, Esc = Auswahl leeren. Events erscheinen unten.</p>
+    <div><button id="fit">Fit</button> <button id="clear">Auswahl leeren</button></div>
+    <pre id="log"></pre>
+  </aside>
+  <script type="module" src="./demo.ts"></script>
+</body>
+</html>

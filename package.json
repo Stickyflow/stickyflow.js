@@ -9,6 +9,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./viewer": {
+      "types": "./src/viewer/index.ts",
+      "import": "./src/viewer/index.ts"
     }
   },
   "scripts": {

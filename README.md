@@ -83,6 +83,71 @@ a locale-independent code-point compare. The change is byte-neutral on the
 current fixtures (ASCII ids), so no golden was regenerated — it removes a latent
 cross-machine hazard without altering output.
 
+## Interactive DOM contract (ADR-03)
+
+The SVG is the binding surface for a viewer. Every node carries its owner's
+identity so a click on any sub-node (a cylinder cap, a table cell, link text)
+resolves to the entity via `closest('[data-sf-id]')`:
+
+```html
+<svg … role="img" data-sf-contract="1">
+  <rect id="sf-shape-start" data-sf-role="entity" data-sf-id="start"
+        data-sf-kind="rounded_rectangle" tabindex="0" aria-label="Start" …/>
+  <path id="sf-link-go" data-sf-role="link" data-sf-id="go"
+        tabindex="0" aria-label="next" …/>
+```
+
+- `data-sf-contract` on the root is the versioned handshake (`DOM_CONTRACT_VERSION`):
+  a viewer checks it on mount and refuses a mismatch instead of binding blindly.
+- `data-sf-role` ∈ `entity | link | frame | swimlane | table`; `data-sf-id` is the
+  stable owner id; `data-sf-kind` is the shape type for entities.
+- The **primary** node of each owner is focusable (`tabindex="0"`) and labelled
+  (`aria-label`, whitespace-collapsed to one line). Ids and labels are XML-escaped.
+
+`test/domContract.test.ts` asserts all of this on the SVG string — no browser
+needed. This is the foundation the interactive viewer (M4) binds to.
+
+## Two tiers: static vs interaction (kept strictly separate)
+
+The package deliberately splits into two tiers, with a **one-way dependency**
+(interaction may use static, never the reverse):
+
+| Tier | Import | Runs | What |
+|---|---|---|---|
+| **Static** (docs/display, like Mermaid but richer) | `stickyflow` | headless (Node) | `render(sfl) → svg`, deterministic, DOM contract |
+| **Interaction** (embed, chatbots) | `stickyflow/viewer` | browser | mount, select/hover/click, zoom/pan, events |
+
+The separation is **enforced by `test/boundary.test.ts`**: the static core must
+not import from `viewer/` and must use no DOM globals, so it always stays
+headless. A docs site pulls only the static tier and pays nothing for viewer JS.
+
+Inside the viewer the split continues:
+
+```
+src/viewer/
+  display.ts      STATIC display — mount SVG + camera (fit/zoom/pan). No events.
+  interaction.ts  INTERACTION — the only place with event listeners: select,
+                  hover, click → serializable events. Model mutation (tier 2b)
+                  attaches here later as applyOp(), without touching display.
+  contract.ts / selection.ts / events.ts   PURE, node-tested logic (no DOM)
+  index.ts        createViewer() — composes display + optional interaction
+```
+
+`createViewer` verifies the SVG's `data-sf-contract` on mount and refuses a
+mismatch (ADR-03). Only `display.ts` / `interaction.ts` touch the DOM; everything
+else is unit-tested under Node. **Browser behaviour is verified via the demo, not
+the Node tests.**
+
+### Demo (browser)
+
+```bash
+cd packages/stickyflow.js
+npx vite demo      # then open the printed URL
+```
+
+Click to select (Ctrl/Shift = multi), wheel = zoom, drag = pan, Esc = clear;
+events stream into the side panel.
+
 ## Running the tests
 
 The package has no `node_modules` yet (that arrives with the workspace migration).

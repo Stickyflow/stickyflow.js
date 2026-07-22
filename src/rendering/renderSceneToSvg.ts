@@ -1,5 +1,6 @@
 import type { MarkerType } from '../entities/links/model';
 import type { RenderNode, RenderScene, ScenePaint, SceneStyle, SceneText } from './renderScene';
+import { DOM_CONTRACT_VERSION } from './renderScene';
 
 export interface SvgRenderOptions { padding?: number; includeXmlDeclaration?: boolean }
 export interface SvgRenderResult { svg: string; width: number; height: number; diagnostics: RenderScene['diagnostics'] }
@@ -9,6 +10,20 @@ const xml = (value: unknown): string => String(value)
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const num = (value: number): string => Number(value.toFixed(3)).toString();
 const safeId = (value: string): string => `sf-${value.replace(/[^A-Za-z0-9_.:-]/g, '-')}`;
+
+// Interactive DOM contract (§9, ADR-03): every node carries its owner's role/id/
+// kind so a viewer can resolve clicks via closest('[data-sf-id]'); the primary
+// node of an owner is focusable and labelled.
+function contractAttrs(node: RenderNode): string {
+  const parts: string[] = [];
+  if (node.sfRole) parts.push(`data-sf-role="${node.sfRole}"`);
+  if (node.sfId) parts.push(`data-sf-id="${xml(node.sfId)}"`);
+  if (node.sfKind) parts.push(`data-sf-kind="${xml(node.sfKind)}"`);
+  // aria-label is a single readable line: collapse newlines/whitespace from
+  // multi-line entity text so no raw control chars land in the attribute.
+  if (node.ariaLabel) parts.push(`tabindex="0" aria-label="${xml(node.ariaLabel.replace(/\s+/g, ' ').trim())}"`);
+  return parts.length ? ` ${parts.join(' ')}` : '';
+}
 
 class Defs {
   entries: string[] = [];
@@ -124,12 +139,12 @@ function textSvg(node: SceneText): string {
   // while treating the remaining SVG user units as CSS pixels. Explicit px units
   // keep text and geometry on the same scale after "Convert to Shape".
   const fontSize = `${num(node.fontSize)}px`;
-  return `<text id="${safeId(node.id)}" x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
+  return `<text id="${safeId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
 }
 
 function nodeSvg(node: RenderNode, defs: Defs): string {
   if (node.type === 'text') return textSvg(node);
-  const attrs = `id="${safeId(node.id)}" ${styleAttrs(node, defs)}`;
+  const attrs = `id="${safeId(node.id)}"${contractAttrs(node)} ${styleAttrs(node, defs)}`;
   if (node.type === 'rect') return `<rect ${attrs} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${node.rx ? ` rx="${num(node.rx)}"` : ''}${transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 })}/>`;
   if (node.type === 'ellipse') return `<ellipse ${attrs} cx="${num(node.cx)}" cy="${num(node.cy)}" rx="${num(node.rx)}" ry="${num(node.ry)}"${transform(node.rotation, { x: node.cx, y: node.cy })}/>`;
   return `<path ${attrs} d="${xml(node.d)}"${transform(node.rotation, node.rotationCenter)}/>`;
@@ -143,6 +158,6 @@ export function renderSceneToSvg(scene: RenderScene, options: SvgRenderOptions =
   const defs = new Defs();
   const body = scene.nodes.map(node => nodeSvg(node, defs)).join('\n  ');
   const declaration = options.includeXmlDeclaration === false ? '' : '<?xml version="1.0" encoding="UTF-8"?>\n';
-  const svg = `${declaration}<svg xmlns="http://www.w3.org/2000/svg" width="${num(width)}px" height="${num(height)}px" viewBox="${viewBox}" role="img">\n  <defs>${defs.entries.join('')}</defs>\n  ${body}\n</svg>`;
+  const svg = `${declaration}<svg xmlns="http://www.w3.org/2000/svg" width="${num(width)}px" height="${num(height)}px" viewBox="${viewBox}" role="img" data-sf-contract="${DOM_CONTRACT_VERSION}">\n  <defs>${defs.entries.join('')}</defs>\n  ${body}\n</svg>`;
   return { svg, width, height, diagnostics: scene.diagnostics };
 }

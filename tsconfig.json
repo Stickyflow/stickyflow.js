@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
@@ -19,5 +19,5 @@
       "vitest/*": ["../../frontend/node_modules/vitest/*"]
     }
   },
-  "include": ["src/**/*", "test/**/*", "vitest.config.ts"]
+  "include": ["src/**/*", "test/**/*", "demo/**/*", "vitest.config.ts"]
 }

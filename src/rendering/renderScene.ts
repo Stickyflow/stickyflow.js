@@ -24,7 +24,21 @@ export interface SceneStyle {
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
 }
 
-export interface SceneBase { id: string; order: number; bounds: Bounds }
+/** Semantic role of a node's owner in the interactive DOM contract (§9). */
+export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table';
+
+export interface SceneBase {
+  id: string; order: number; bounds: Bounds;
+  // Interactive DOM contract (ADR-03). Optional so non-interactive renders and
+  // older scenes stay valid; set by buildRenderScene for addressable owners.
+  sfRole?: SceneRole;
+  /** Stable owner id shared by every node of the same entity/link/etc. */
+  sfId?: string;
+  /** Owner kind (e.g. shapeType) surfaced as data-sf-kind. */
+  sfKind?: string;
+  /** Human label for the focusable owner node; drives tabindex + aria-label. */
+  ariaLabel?: string;
+}
 
 export interface SceneRect extends SceneBase {
   type: 'rect'; x: number; y: number; width: number; height: number; rx?: number;
@@ -60,6 +74,14 @@ export interface RenderScene {
   bounds: Bounds;
   diagnostics: RenderDiagnostic[];
 }
+
+/**
+ * Versioned interactive DOM contract (ADR-03). The renderer stamps this onto the
+ * root <svg data-sf-contract="…">; the viewer checks it on mount and refuses a
+ * mismatch instead of binding silently to attributes it doesn't understand.
+ * Bump only on a breaking change to data-sf-* names, roles or id scheme.
+ */
+export const DOM_CONTRACT_VERSION = 1;
 
 export interface ResolvedExportLink {
   link: Link;

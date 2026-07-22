@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="238.564px" height="223.923px" viewBox="-39.282 -31.962 238.564 223.923" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="238.564px" height="223.923px" viewBox="-39.282 -31.962 238.564 223.923" role="img" data-sf-contract="1">
   <defs></defs>
-  <rect id="sf-shape-rot" fill="#eef2ff" stroke="#123456" stroke-width="2" stroke-linecap="butt" opacity="1" x="0" y="20" width="160" height="120" transform="rotate(30 80 80)"/>
-  <text id="sf-shape-text-rot" x="80" y="66.7" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111827" text-anchor="middle" transform="rotate(30 80 80)"><tspan x="80" font-size="14px">line one</tspan><tspan x="80" font-size="14px" dy="18.2px">line two</tspan><tspan x="80" font-size="14px" dy="18.2px">line three</tspan></text>
+  <rect id="sf-shape-rot" data-sf-role="entity" data-sf-id="rot" data-sf-kind="rectangle" tabindex="0" aria-label="line one line two line three" fill="#eef2ff" stroke="#123456" stroke-width="2" stroke-linecap="butt" opacity="1" x="0" y="20" width="160" height="120" transform="rotate(30 80 80)"/>
+  <text id="sf-shape-text-rot" data-sf-role="entity" data-sf-id="rot" data-sf-kind="rectangle" x="80" y="66.7" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, sans-serif" font-size="14px" font-weight="normal" fill="#111827" text-anchor="middle" transform="rotate(30 80 80)"><tspan x="80" font-size="14px">line one</tspan><tspan x="80" font-size="14px" dy="18.2px">line two</tspan><tspan x="80" font-size="14px" dy="18.2px">line three</tspan></text>
 </svg>
