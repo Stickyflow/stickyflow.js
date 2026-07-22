@@ -11,11 +11,11 @@
 //     do not survive SFL round-trip yet. Rendered as frames.
 //   - Link waypoints: v3 JSON carries segmentOffsets, not absolute waypoints, so
 //     orthogonal links use the router's default routing rather than saved bends.
-import type { Shape } from '@entities/shapes/model';
-import type { Frame } from '@entities/frames/model';
-import type { Table } from '@entities/tables/model';
-import type { Link } from '@entities/links/model';
-import type { Point, RenderInput, ResolvedExportLink } from '@features/content-io/export/rendering/renderScene';
+import type { Shape } from './entities/shapes/model';
+import type { Frame } from './entities/frames/model';
+import type { Table } from './entities/tables/model';
+import type { Link } from './entities/links/model';
+import type { Point, RenderInput, ResolvedExportLink } from './rendering/renderScene';
 import { sflToImportJson } from '@features/sfl-language/sfl';
 
 interface EntityBuckets { shapes: unknown[]; links: unknown[] }

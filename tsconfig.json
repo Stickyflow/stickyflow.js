@@ -12,13 +12,9 @@
     "types": ["node"],
     "typeRoots": ["../../frontend/node_modules/@types"],
     "paths": {
-      "@entities/*": ["../../frontend/src/entities/*"],
-      "@links/*": ["../../frontend/src/entities/links/*"],
-      "@frames/*": ["../../frontend/src/entities/frames/*"],
-      "@shapes/*": ["../../frontend/src/entities/shapes/*"],
-      "@boards/*": ["../../frontend/src/entities/boards/*"],
-      "@shared/*": ["../../frontend/src/shared/*"],
-      "@lib/*": ["../../frontend/src/shared/lib/*"],
+      // The render half is fully local now. The ONLY remaining app seam is the
+      // SFL core (not yet extracted). vitest resolves from the frontend install
+      // until this package gets its own node_modules with the workspace.
       "@features/*": ["../../frontend/src/features/*"],
       "vitest": ["../../frontend/node_modules/vitest"],
       "vitest/*": ["../../frontend/node_modules/vitest/*"]

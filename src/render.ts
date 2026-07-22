@@ -1,10 +1,10 @@
 // Public render entry (plan §7). render() never touches the DOM: it is a pure
 // SFL-text -> SVG-string transform, verified to run under Node (no jsdom).
-import { buildRenderScene } from '@features/content-io/export/rendering/buildRenderScene';
-import { renderSceneToSvg } from '@features/content-io/export/rendering/renderSceneToSvg';
+import { buildRenderScene } from './rendering/buildRenderScene';
+import { renderSceneToSvg } from './rendering/renderSceneToSvg';
 import type {
   RenderInput, RenderScene, RenderDiagnostic,
-} from '@features/content-io/export/rendering/renderScene';
+} from './rendering/renderScene';
 import { sflToRenderInput } from './sflToRenderInput';
 
 export interface RenderResult {

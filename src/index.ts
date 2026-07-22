@@ -12,7 +12,7 @@ export { render, renderCanvas } from './render';
 export type { RenderResult, RenderOptions } from './render';
 export { sflToRenderInput } from './sflToRenderInput';
 
-// Render-scene contract types.
+// Render-scene contract types (now owned by this package).
 export type {
   RenderScene, RenderNode, RenderInput, RenderDiagnostic, Bounds, Point,
-} from '@features/content-io/export/rendering/renderScene';
+} from './rendering/renderScene';

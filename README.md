@@ -3,10 +3,10 @@
 First step of the `stickyflow.js` effort (see `docs/SFL/STICKYFLOW_JS_IMPLEMENTATION_PLAN.md`
 and `docs/SFL/STICKYFLOW_JS_ADR_SUPPLEMENT.md`).
 
-**Purpose of this slice:** prove that the SFL parser + render-scene + SVG pipeline
-runs **headless** — Node, no DOM, no Konva, no React — by consuming the *real*
-app source unchanged (no fork). If that holds, the biggest risk in the plan
-(RenderScene portability) is retired before any monorepo/packaging work begins.
+**Status:** the SFL parser + render-scene + SVG pipeline runs **headless** — Node,
+no DOM, no Konva, no React. The portability risk is retired, and the render half
+is now **extracted into this package** (see Structure below). The SFL core is the
+last remaining app seam.
 
 ## What works today
 
@@ -26,12 +26,33 @@ Pipeline: `SFL text → parse (real SFL core) → sflToImportJson → sflToRende
 
 See `demo-output.svg` for a sample render.
 
-## How it consumes the app
+## Structure & what is extracted
 
-Not a fork. `vitest.config.ts` / `tsconfig.json` alias `@entities/*`, `@features/*`,
-`@shared/*` to `../../frontend/src`, so the package imports the live app files.
-The eventual extraction (plan M1/M2) replaces these aliases with real package
-dependencies; until then this proves portability against the actual code.
+The **render half is now owned by this package** (plan M2, render-scene extraction):
+
+```
+src/
+  entities/            model types + pure geometry (shapes, frames, links,
+                       swimlanes, tables) — extracted, all-relative imports
+  shared/ui/           the 3 pure leaf files the models depend on (color/shadow)
+  rendering/           renderScene, buildRenderScene, renderSceneToSvg — extracted
+  sflToRenderInput.ts  model adapter: SFL v3 JSON → RenderInput
+  render.ts / index.ts public API
+```
+
+These files were copied from `frontend/src` and their alias imports rewritten to
+relative — **no app source was touched**. Byte-identical golden SVGs before/after
+the copy prove the extraction is behaviour-neutral (the app and this package are
+a transitional dual copy, guarded by the golden suite as the plan endorses).
+
+**The one remaining app seam** is the SFL core: `sflToImportJson` / `parse` are
+still imported via the single `@features/sfl-language/sfl` alias (that core is
+already alias-free internally and will be extracted next). No other app alias is
+needed — the render half compiles standalone.
+
+> Divergence note: this package's `buildRenderScene` carries the ADR-02 tie-break
+> fix (below); the app's copy does not yet. They reconverge when the app is
+> rewired to consume this package.
 
 ## Known slice-1 gaps (documented, not hidden)
 
@@ -51,15 +72,13 @@ lock the pipeline's output (plan §18.3, ADR-02). `test/golden.test.ts` diffs
 against them and also asserts byte-identical output across repeated renders.
 Regenerate intentionally with `vitest -u` after a reviewed change.
 
-**Known cross-environment caveat (ADR-02 follow-up):** `buildRenderScene` breaks
-ties in its node sort with `a.id.localeCompare(b.id)`. `localeCompare` without an
-explicit locale is host/ICU-dependent, so nodes sharing the same `order` (e.g. a
-cylinder's `-body`/`-bottom` sub-nodes) could sort differently on CI vs. a dev
-machine — changing element order and, at worst, z-order. The determinism test
-only proves stability within one environment. When the render core is extracted,
-this tie-break should become a locale-independent comparison (plain code-point
-compare). Left as-is for now because the file is still imported unchanged from
-the app.
+**Cross-environment tie-break (ADR-02) — fixed.** `buildRenderScene` previously
+broke node-sort ties with `a.id.localeCompare(b.id)`, which is host/ICU-dependent
+and could reorder equal-`order` nodes (e.g. a cylinder's `-body`/`-bottom`
+sub-nodes) across machines. Now that this package owns the file, the tie-break is
+a locale-independent code-point compare. The change is byte-neutral on the
+current fixtures (ASCII ids), so no golden was regenerated — it removes a latent
+cross-machine hazard without altering output.
 
 ## Running the tests
 
