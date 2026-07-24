@@ -183,6 +183,58 @@ Model Demo {
     expect(svg).toContain('sf-link-go');
   });
 
+  it('keeps ids byte-identical with no idPrefix (golden-snapshot compatibility)', () => {
+    const withoutOption = render(SFL).svg;
+    const withEmptyOptions = render(SFL, {}).svg;
+    expect(withEmptyOptions).toBe(withoutOption);
+    expect(withoutOption).toContain('id="sf-shape-start"');
+  });
+
+  it('keeps two renders with distinct idPrefix from colliding when embedded on the same page', () => {
+    // Two independent render() calls that happen to share entity ids (both
+    // declare `Entity e`) used to emit byte-identical gradient/id strings.
+    // Harmless alone, but once both SVGs sit in the same HTML document,
+    // url(#id) resolves to whichever element with that id appears first —
+    // so the second diagram would silently render with the first one's
+    // gradient. idPrefix keeps every id (element, gradient, marker) apart;
+    // data-sf-id must NOT be touched, since the viewer/interactive contract
+    // keys off it as the plain SFL entity id.
+    const oneShape = (fill: string) => `sfl 1.2
+
+Model M {
+  Entity e {
+    text: ""
+    style {
+      shape: rounded_rectangle
+      fill: "${fill}"
+      stroke: none
+    }
+    layout {
+      position: 0, 0
+      size: 100, 60
+    }
+  }
+}
+`;
+    const a = render(oneShape('gradient(0, #ef4444 0%, #3b82f6 100%)'), { idPrefix: 'diagram-a' });
+    const b = render(oneShape('gradient(0, #22c55e 0%, #eab308 100%)'), { idPrefix: 'diagram-b' });
+
+    expect(a.svg).toContain('id="sf-diagram-a-shape-e"');
+    expect(b.svg).toContain('id="sf-diagram-b-shape-e"');
+    // Each diagram's own gradient id must be scoped by its own prefix —
+    // otherwise both would emit the exact same id and collide when concatenated
+    // into one document.
+    const gradientIdIn = (svg: string, prefix: string) => svg.match(new RegExp(`<linearGradient id="(${prefix}[^"]+)"`))?.[1];
+    const idA = gradientIdIn(a.svg, 'sf-diagram-a-');
+    const idB = gradientIdIn(b.svg, 'sf-diagram-b-');
+    expect(idA).toBeTruthy();
+    expect(idB).toBeTruthy();
+    expect(idA).not.toBe(idB);
+    // data-sf-id stays the plain entity id regardless of idPrefix.
+    expect(a.svg).toContain('data-sf-id="e"');
+    expect(b.svg).toContain('data-sf-id="e"');
+  });
+
   it('applies a gradient stroke and opacity declared on a shape via SFL', () => {
     // Both used to be dropped: shape stroke passed through raw (so a gradient
     // string never became a paint), and SFL `opacity` was never mapped onto the

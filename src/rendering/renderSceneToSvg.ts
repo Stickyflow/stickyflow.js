@@ -2,7 +2,25 @@ import type { MarkerType } from '../model/links';
 import type { RenderNode, RenderScene, ScenePaint, SceneStyle, SceneText } from './renderScene';
 import { DOM_CONTRACT_VERSION } from './renderScene';
 
-export interface SvgRenderOptions { padding?: number; includeXmlDeclaration?: boolean }
+export interface SvgRenderOptions {
+  padding?: number;
+  includeXmlDeclaration?: boolean;
+  /**
+   * Prefix for every raw SVG `id="…"` (elements, gradients, filters, markers).
+   * Two independent render() calls that happen to share entity ids (e.g. both
+   * SFL sources declare `Entity e`) produce byte-identical ids by default —
+   * harmless for a single standalone SVG, but a real collision once multiple
+   * render() outputs are embedded in the same HTML document: `url(#id)` and
+   * getElementById resolve to whichever element with that id appears FIRST in
+   * the document, silently making one diagram borrow another's gradient/
+   * marker. Give each diagram on a page a distinct idPrefix to keep their ids
+   * apart. Does not touch `data-sf-id` — that stays the plain SFL entity id,
+   * since the interactive contract (ADR-03) depends on it being exactly that.
+   * Default '' keeps output byte-identical to versions without this option
+   * (needed for golden-snapshot determinism).
+   */
+  idPrefix?: string;
+}
 export interface SvgRenderResult { svg: string; width: number; height: number; diagnostics: RenderScene['diagnostics'] }
 
 const xml = (value: unknown): string => String(value)
@@ -31,13 +49,20 @@ class Defs {
   private filters = new Map<string, string>();
   private markers = new Map<string, string>();
 
+  constructor(private readonly prefix: string) {}
+
+  /** The raw `id="…"` for a scene node — the only place a node's own id gets the prefix. */
+  elementId(id: string): string {
+    return safeId(`${this.prefix}${id}`);
+  }
+
   paint(value: ScenePaint | undefined, nodeId: string, bounds: RenderNode['bounds']): string {
     if (!value || value.kind === 'none') return 'none';
     if (value.kind === 'solid') return value.color;
     const key = JSON.stringify(value) + JSON.stringify(bounds);
     let id = this.paints.get(key);
     if (!id) {
-      id = safeId(`gradient-${nodeId}-${this.paints.size}`);
+      id = safeId(`${this.prefix}gradient-${nodeId}-${this.paints.size}`);
       this.paints.set(key, id);
       if (value.kind === 'mesh-gradient') {
         // SVG 2's native <meshgradient> still has uneven viewer support.
@@ -67,7 +92,7 @@ class Defs {
     const key = JSON.stringify(style.shadow);
     let id = this.filters.get(key);
     if (!id) {
-      id = safeId(`shadow-${nodeId}-${this.filters.size}`); this.filters.set(key, id);
+      id = safeId(`${this.prefix}shadow-${nodeId}-${this.filters.size}`); this.filters.set(key, id);
       const s = style.shadow;
       this.entries.push(`<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="${num(s.dx)}" dy="${num(s.dy)}" stdDeviation="${num(s.blur / 2)}" flood-color="${xml(s.color)}" flood-opacity="${num(s.opacity)}"/></filter>`);
     }
@@ -79,7 +104,7 @@ class Defs {
     const key = `${type}:${color}:${strokeWidth}`;
     let id = this.markers.get(key);
     if (id) return id;
-    id = safeId(`marker-${type}-${this.markers.size}`); this.markers.set(key, id);
+    id = safeId(`${this.prefix}marker-${type}-${this.markers.size}`); this.markers.set(key, id);
     const size = 12 + (strokeWidth - 2) * 3;
     const compoundErMarker = type === 'one_many' || type === 'zero_many';
     const extent = Math.max(size * (compoundErMarker ? 2 : 1.4), strokeWidth * 2);
@@ -145,7 +170,7 @@ function transform(rotation?: number, center?: { x: number; y: number }): string
   return rotation && center ? ` transform="rotate(${num(rotation)} ${num(center.x)} ${num(center.y)})"` : '';
 }
 
-function textSvg(node: SceneText): string {
+function textSvg(node: SceneText, defs: Defs): string {
   const linePx = node.fontSize * node.lineHeight, contentHeight = node.lines.length * linePx;
   const firstY = node.verticalAlign === 'top' ? node.y + node.fontSize
     : node.verticalAlign === 'bottom' ? node.y + node.height - contentHeight + node.fontSize
@@ -156,12 +181,12 @@ function textSvg(node: SceneText): string {
   // while treating the remaining SVG user units as CSS pixels. Explicit px units
   // keep text and geometry on the same scale after "Convert to Shape".
   const fontSize = `${num(node.fontSize)}px`;
-  return `<text id="${safeId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
+  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
 }
 
 function nodeSvg(node: RenderNode, defs: Defs): string {
-  if (node.type === 'text') return textSvg(node);
-  const attrs = `id="${safeId(node.id)}"${contractAttrs(node)} ${styleAttrs(node, defs)}`;
+  if (node.type === 'text') return textSvg(node, defs);
+  const attrs = `id="${defs.elementId(node.id)}"${contractAttrs(node)} ${styleAttrs(node, defs)}`;
   if (node.type === 'rect') return `<rect ${attrs} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${node.rx ? ` rx="${num(node.rx)}"` : ''}${transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 })}/>`;
   if (node.type === 'ellipse') return `<ellipse ${attrs} cx="${num(node.cx)}" cy="${num(node.cy)}" rx="${num(node.rx)}" ry="${num(node.ry)}"${transform(node.rotation, { x: node.cx, y: node.cy })}/>`;
   return `<path ${attrs} d="${xml(node.d)}"${transform(node.rotation, node.rotationCenter)}/>`;
@@ -172,7 +197,7 @@ export function renderSceneToSvg(scene: RenderScene, options: SvgRenderOptions =
   const width = Math.max(1, scene.bounds.maxX - scene.bounds.minX + padding * 2);
   const height = Math.max(1, scene.bounds.maxY - scene.bounds.minY + padding * 2);
   const viewBox = `${num(scene.bounds.minX - padding)} ${num(scene.bounds.minY - padding)} ${num(width)} ${num(height)}`;
-  const defs = new Defs();
+  const defs = new Defs(options.idPrefix ? `${options.idPrefix}-` : '');
   const body = scene.nodes.map(node => nodeSvg(node, defs)).join('\n  ');
   const declaration = options.includeXmlDeclaration === false ? '' : '<?xml version="1.0" encoding="UTF-8"?>\n';
   const svg = `${declaration}<svg xmlns="http://www.w3.org/2000/svg" width="${num(width)}px" height="${num(height)}px" viewBox="${viewBox}" role="img" data-sf-contract="${DOM_CONTRACT_VERSION}">\n  <defs>${defs.entries.join('')}</defs>\n  ${body}\n</svg>`;

@@ -20,6 +20,18 @@ export interface RenderOptions {
   padding?: number;
   /** Emit the leading <?xml …?> declaration. Default true. */
   includeXmlDeclaration?: boolean;
+  /**
+   * Prefix every raw SVG `id="…"` with this string. render() is deterministic
+   * per call, so two renders that happen to share entity ids (e.g. both SFL
+   * sources declare `Entity e`) produce identical ids — invisible for one
+   * standalone SVG, but a real bug once multiple render() outputs sit in the
+   * same HTML page: `url(#id)` resolves to whichever element with that id
+   * comes first in the document, so a later diagram can silently render with
+   * an earlier diagram's gradient/marker. Set a distinct idPrefix per diagram
+   * when embedding more than one on a page. Does not affect `data-sf-id`,
+   * which stays the plain SFL entity id for the interactive contract.
+   */
+  idPrefix?: string;
 }
 
 /** Render an already-built RenderInput to SVG. Headless and pure. */
