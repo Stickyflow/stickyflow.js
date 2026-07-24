@@ -105,6 +105,24 @@ class Defs {
   }
 }
 
+// Markers render as a fixed solid-color shape (SVG can't paint a marker with a
+// live gradient reference the way it can a stroke), so a gradient stroke needs
+// one representative color per end. Using the stop closest to that end's own
+// side of the gradient — rather than a flat gray fallback — keeps the marker
+// visually part of the line instead of a mismatched placeholder.
+function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
+  const paint = style.stroke;
+  if (paint?.kind === 'solid') return paint.color;
+  if (paint?.kind === 'linear-gradient' && paint.stops.length) {
+    const pick = edge === 'start'
+      ? paint.stops.reduce((a, b) => (a.offset <= b.offset ? a : b))
+      : paint.stops.reduce((a, b) => (a.offset >= b.offset ? a : b));
+    return pick.color;
+  }
+  if (paint?.kind === 'mesh-gradient' && paint.points.length) return paint.points[0].color;
+  return '#64748b';
+}
+
 function styleAttrs(node: Exclude<RenderNode, SceneText>, defs: Defs): string {
   const style = node.style, stroke = defs.paint(style.stroke, `${node.id}-stroke`, node.bounds), fill = defs.paint(style.fill, `${node.id}-fill`, node.bounds);
   const attrs = [`fill="${xml(fill)}"`, `stroke="${xml(stroke)}"`];
@@ -115,9 +133,8 @@ function styleAttrs(node: Exclude<RenderNode, SceneText>, defs: Defs): string {
   if (style.opacity !== undefined) attrs.push(`opacity="${num(style.opacity)}"`);
   const filter = defs.filter(style, node.id); if (filter) attrs.push(`filter="url(#${filter})"`);
   if (node.type === 'path') {
-    const solidStroke = style.stroke?.kind === 'solid' ? style.stroke.color : '#64748b';
-    const start = defs.marker(node.markerStart, solidStroke, style.strokeWidth ?? 1);
-    const end = defs.marker(node.markerEnd, solidStroke, style.strokeWidth ?? 1);
+    const start = defs.marker(node.markerStart, strokeColorAt(style, 'start'), style.strokeWidth ?? 1);
+    const end = defs.marker(node.markerEnd, strokeColorAt(style, 'end'), style.strokeWidth ?? 1);
     if (start) attrs.push(`marker-start="url(#${start})"`);
     if (end) attrs.push(`marker-end="url(#${end})"`);
   }

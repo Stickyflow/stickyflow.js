@@ -97,6 +97,7 @@ function linkObject(l: SflLinkOut): any {
     segmentOffsets: p.segments ? safeJson(p.segments) : undefined,
     fromPoint: l.fromSide ? { side: l.fromSide, offset: l.fromFraction } : undefined,
     toPoint: l.toSide ? { side: l.toSide, offset: l.toFraction } : undefined,
+    order: l.order,
   };
 }
 
@@ -132,7 +133,13 @@ export function sflToImportJson(sfl: string): any {
     if (e.entityType === 'table') { tables.push(tableObject(e)); continue; }
     bucketFor(e.id).shapes.push(shapeObject(e));
   }
-  for (const l of state.links) bucketFor(l.id).links.push(linkObject(l));
+  // Links tragen kein layout{} und damit kein order_key — ein deklariertes
+  // order auf dem Link selbst entscheidet trotzdem ihre Reihenfolge unter-
+  // einander (Doku-Reihenfolge als Fallback für Ties/fehlenden Wert), exakt
+  // wie oben für Entities: die Array-Position hier bestimmt später den
+  // orderOf()-Fallback in buildRenderScene.
+  const orderedLinks = [...state.links].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  for (const l of orderedLinks) bucketFor(l.id).links.push(linkObject(l));
 
   // Group-Baum → v3-layers.groups (mit eingebetteten entities)
   const flatGroups: any[] = [];

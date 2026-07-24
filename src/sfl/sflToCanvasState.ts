@@ -46,6 +46,7 @@ export interface SflLinkOut {
   text?: string;
   fromSide?: Side; fromFraction?: number;
   toSide?: Side; toFraction?: number;
+  order?: number;
   props: Record<string, string>;
 }
 
@@ -373,7 +374,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     };
     const f = endpoint(fromV);
     const t = endpoint(toV);
-    const structural = new Set(['id', 'from', 'to', 'text']);
+    const structural = new Set(['id', 'from', 'to', 'text', 'order']);
     const props: Record<string, string> = {};
     for (const [k, v] of p) {
       if (structural.has(k)) continue;
@@ -386,6 +387,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       text: asString(p.get('text')),
       fromSide: f.side, fromFraction: f.fraction,
       toSide: t.side, toFraction: t.fraction,
+      order: asNumber(p.get('order')),
       props,
     };
   });

@@ -51,6 +51,31 @@ describe('render core runs headless through the package (real app source)', () =
     expect(svg).not.toContain('fill="#ffffff"');
   });
 
+  it('colors a link marker from its gradient stroke instead of a flat gray fallback', () => {
+    // Markers can't paint a live gradient reference, so buildRenderScene picks
+    // one representative color per end. This used to always fall back to a
+    // hardcoded gray whenever the stroke wasn't a plain solid color.
+    const link = {
+      id: 'grad-link', fromId: 'a', toId: 'b',
+      startMarker: 'circle', endMarker: 'arrow',
+      style: {
+        pathType: 'straight',
+        color: { type: 'gradient' as const, angle: 90, stops: [{ position: 0, color: '#61b4c1' }, { position: 100, color: '#030303' }] },
+      },
+      layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false,
+    };
+    const input = {
+      shapes: [], frames: [], swimlanes: [],
+      links: [{ link, from: { x: 0, y: 0 }, to: { x: 200, y: 0 } }],
+    } as unknown as RenderInput;
+
+    const { svg } = renderCanvas(input);
+
+    expect(svg).toMatch(/<marker id="sf-marker-circle-0"[^>]*>.*?stroke="#61b4c1"/s);
+    expect(svg).toMatch(/<marker id="sf-marker-arrow-1"[^>]*>.*?stroke="#030303"/s);
+    expect(svg).not.toContain('#64748b');
+  });
+
   it('exports linear and mesh gradients as vector SVG definitions', () => {
     const gradient = { type: 'gradient' as const, angle: 45, stops: [{ position: 0, color: '#fff' }, { position: 100, color: '#000' }] };
     const base = (id: string, shapeType: string, x: number) => ({
@@ -156,5 +181,52 @@ Model Demo {
   it('renders the link between the two entities', () => {
     const { svg } = render(SFL);
     expect(svg).toContain('sf-link-go');
+  });
+
+  it('lets a link declare an explicit order that overrides its declaration position', () => {
+    // "one" is declared first but has the higher order (5), so it must paint
+    // last/on top; "two" is declared second but has the lower order (1), so
+    // it sorts ahead of "one" and paints underneath. Document order remains
+    // the fallback only when no order is set — see SFL spec §13.
+    const SFL_ORDER = `sfl 1.2
+
+Model OrderDemo {
+  Entity a {
+    kind: process
+    text: "A"
+    layout {
+      position: 0, 0
+      size: 100, 60
+    }
+  }
+
+  Entity b {
+    kind: process
+    text: "B"
+    layout {
+      position: 300, 0
+      size: 100, 60
+    }
+  }
+
+  Link one {
+    from: a, right (0.5)
+    to: b, left (0.5)
+    order: 5
+  }
+
+  Link two {
+    from: a, right (0.5)
+    to: b, left (0.5)
+    order: 1
+  }
+}
+`;
+    const { svg } = render(SFL_ORDER);
+    const oneIndex = svg.indexOf('sf-link-one');
+    const twoIndex = svg.indexOf('sf-link-two');
+    expect(oneIndex).toBeGreaterThan(-1);
+    expect(twoIndex).toBeGreaterThan(-1);
+    expect(twoIndex).toBeLessThan(oneIndex);
   });
 });
