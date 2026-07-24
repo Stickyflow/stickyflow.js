@@ -120,10 +120,22 @@ function linkObject(l: SflLinkOut): any {
     type: 'link',
     from: l.fromId, to: l.toId, fromId: l.fromId, toId: l.toId,
     text: l.text ?? '',
+    // buildLink only draws the text label when showText is truthy. The app's
+    // own JSON import (useJsonImport.ts) always normalizes this to `true` when
+    // absent before anything reaches the renderer; the SFL path bypasses that
+    // import step entirely; without this, showText stayed `undefined` and a
+    // Link's `text` never rendered at all. `showText: false` in SFL still hides it.
+    showText: p.showText !== 'false',
     style: {
       pathType: p.route,
       color: decodeColor(p.stroke),
       strokeWidth: numOf(p.strokeWidth),
+      strokeStyle: p.strokeStyle,
+      opacity: p.opacity !== undefined ? numOf(p.opacity) : undefined,
+      fontSize: numOf(p.fontSize),
+      fontFamily: p.fontFamily,
+      startLabel: p.startLabel,
+      endLabel: p.endLabel,
     },
     startMarker: p.markerStart,
     endMarker: p.markerEnd,

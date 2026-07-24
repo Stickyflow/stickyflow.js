@@ -178,9 +178,20 @@ Model Demo {
     expect(height).toBeGreaterThan(0);
   });
 
-  it('renders the link between the two entities', () => {
+  it('renders the link between the two entities, including its text label', () => {
+    // A Link's `text` used to never render at all: buildLink only draws the
+    // label when `showText` is truthy, and the SFL import never set that field
+    // (the app's own JSON import normalizes it to `true` upstream; the SFL
+    // path bypasses that step).
     const { svg } = render(SFL);
     expect(svg).toContain('sf-link-go');
+    expect(svg).toContain('>next</tspan>');
+  });
+
+  it('lets a link opt out of its text label with showText: false', () => {
+    const SFL_HIDDEN = SFL.replace('text: "next"', 'text: "next"\n    showText: false');
+    const { svg } = render(SFL_HIDDEN);
+    expect(svg).not.toContain('>next</tspan>');
   });
 
   it('keeps ids byte-identical with no idPrefix (golden-snapshot compatibility)', () => {
