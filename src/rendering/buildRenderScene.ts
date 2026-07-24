@@ -352,8 +352,19 @@ function buildTable(table: Table, index: number): RenderNode[] {
     x: table.x, y: table.y, width: table.width, height: rowHeight, rx: table.corner_radius,
     style: simpleContainerStyle(table.header_fill_color ?? '#f1f5f9', 'transparent', 0, []),
   });
+  // Scale column widths to sum exactly to the table's own declared width —
+  // same fix, same reasoning as buildSwimlane's lane scaling: the real app
+  // guarantees this on every resize (see columnScaling.ts's
+  // scaleColumnsToWidth), so it's never violated there, but nothing enforced
+  // it for SFL-declared columns. Without it, a mismatch left dividers/cells
+  // past the table's own bounds (built from table.width alone), clipped by
+  // the scene's viewBox instead of the columns being harmlessly proportioned.
+  const columnTotal = table.columns.reduce((sum, column) => sum + column.width, 0);
+  const columns = columnTotal > 0
+    ? table.columns.map(column => ({ ...column, width: column.width * (table.width / columnTotal) }))
+    : table.columns;
   let columnX = table.x;
-  table.columns.forEach((column, columnIndex) => {
+  columns.forEach((column, columnIndex) => {
     if (columnIndex > 0 && (table.show_vertical_lines ?? true)) nodes.push({
       type: 'path', id: `table-column-${table.id}-${column.id}`, order: order + .1, bounds,
       d: `M ${columnX} ${table.y + gridInset} V ${table.y + height - gridInset}`,

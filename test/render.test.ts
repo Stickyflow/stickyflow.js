@@ -388,6 +388,87 @@ Model M {
     expect(svg).toContain('>Warehouse</tspan>');
   });
 
+  it('renders a table without crashing when no fontSize is set (tableObject had no defaults)', () => {
+    // Same class of bug as the frame title-tab crash: tableObject's font_size
+    // was undefined by default, and buildTable's row-height math (fontSize *
+    // 1.8) propagated NaN into every cell's rendered fontSize, crashing the
+    // SVG number formatter.
+    const SFL_TABLE = `sfl 1.2
+
+Model M {
+  Container t {
+    kind: table
+    text: "users"
+    Columns cols {
+      Column field {
+        text: "Field"
+        layout { width: 150 }
+      }
+      Column type {
+        text: "Type"
+        layout { width: 120 }
+      }
+    }
+    Rows rows {
+      Row row1 {
+        field: "id"
+        type: "uuid"
+      }
+    }
+    layout {
+      position: 0, 0
+      size: 270, 100
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_TABLE);
+    expect(svg).toContain('id="sf-table-t"');
+    expect(svg).toContain('>Field</tspan>');
+    expect(svg).toContain('>id</tspan>');
+  });
+
+  it('scales column widths to fit when they do not sum to the table\'s own declared width', () => {
+    // Same fix, same reasoning as the swimlane lane-scaling test: the real
+    // app guarantees columns always sum to the table's own width on every
+    // resize (columnScaling.ts's scaleColumnsToWidth) — nothing enforced
+    // that for SFL-declared columns.
+    const SFL_MISMATCHED = `sfl 1.2
+
+Model M {
+  Container t {
+    kind: table
+    Columns cols {
+      Column field {
+        text: "Field"
+        layout { width: 150 }
+      }
+      Column type {
+        text: "Type"
+        layout { width: 150 }
+      }
+    }
+    Rows rows {
+      Row row1 {
+        field: "id"
+        type: "uuid"
+      }
+    }
+    layout {
+      position: 0, 0
+      size: 200, 100
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_MISMATCHED);
+    // Declared columns sum to 300 but table.width is 200 — the divider
+    // between the two (unscaled) columns would sit at x=150, outside the
+    // table's own 200-wide bounds. Scaled by 200/300, it should land at 100.
+    const divider = svg.match(/<path id="sf-table-column-t-type"[^>]*d="M ([\d.]+) /);
+    expect(Number(divider?.[1])).toBeCloseTo(100, 0);
+  });
+
   it('renders a frame title tab without crashing when no fontSize is set, and lets showLabel hide it', () => {
     // frameObject had no defaults at all: an untyped `font_size: undefined`
     // reached the title tab's arithmetic and crashed the whole render. Also,

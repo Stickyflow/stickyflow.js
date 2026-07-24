@@ -83,18 +83,23 @@ function frameObject(e: SflEntityOut): any {
 
 function tableObject(e: SflEntityOut): any {
   const p = e.props;
+  // Same reasoning as frameObject/swimlaneObject: buildTable's row-height
+  // math (computeRowHeight: fontSize * 1.8) needs a real number, and an
+  // undefined font_size propagated as NaN into every cell's rendered
+  // fontSize, crashing the SVG number formatter. Falling back to
+  // TABLE_DEFAULTS keeps a bare `kind: table` block renderable.
   return {
     id: e.id, type: 'table', title: e.text ?? 'Table',
     x: e.x, y: e.y, width: e.width, height: e.height,
-    columns: e.table?.columns, rows: e.table?.rows,
+    columns: e.table?.columns ?? [], rows: e.table?.rows ?? [],
     show_header: p.showHeader !== 'false',
     row_height: numOf(p.rowHeight),
-    header_fill_color: p.headerFill, grid_color: p.gridColor, grid_width: numOf(p.gridWidth),
-    border_style: p.borderStyle, header_rule_style: p.headerRuleStyle, font_family: p.fontFamily,
+    header_fill_color: p.headerFill ?? '#f1f5f9', grid_color: p.gridColor ?? '#cbd5e1', grid_width: numOf(p.gridWidth) ?? 1,
+    border_style: p.borderStyle ?? 'single', header_rule_style: p.headerRuleStyle ?? 'single', font_family: p.fontFamily ?? 'Inter',
     show_horizontal_lines: p.showHorizontalLines !== 'false', show_vertical_lines: p.showVerticalLines !== 'false',
-    fill_color: p.fill, stroke_color: p.stroke, stroke_width: numOf(p.strokeWidth),
-    corner_radius: numOf(p.cornerRadius), text_color: p.textColor,
-    font_size: numOf(p.fontSize), font_weight: p.fontWeight,
+    fill_color: p.fill ?? '#ffffff', stroke_color: p.stroke ?? '#475569', stroke_width: numOf(p.strokeWidth) ?? 1,
+    corner_radius: numOf(p.cornerRadius) ?? 12, text_color: p.textColor ?? '#0f172a',
+    font_size: numOf(p.fontSize) ?? 14, font_weight: p.fontWeight ?? 'bold',
     dash: p.dash ? safeJson(p.dash) : undefined, order: e.order,
   };
 }
