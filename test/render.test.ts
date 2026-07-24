@@ -300,6 +300,58 @@ Model LaneDemo {
     expect(svg).not.toContain('sf-frame-process');
   });
 
+  it('gives a swimlane the same title tab a frame gets, instead of silently dropping it', () => {
+    // buildSwimlane never read swimlane.title at all (unlike buildFrame's tab),
+    // even though the SFL/JSON pipeline already carried it all the way through
+    // — the value just got dropped at the very last render step.
+    const SFL_SWIMLANE_TITLE = `sfl 1.2
+
+Model M {
+  Container process {
+    kind: swimlane
+    text: "Order Process"
+    orientation: horizontal
+    lanes: [["Customer", 100], ["Warehouse", 100]]
+    layout {
+      position: 0, 0
+      size: 400, 240
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_SWIMLANE_TITLE);
+    expect(svg).toContain('sf-swimlane-tab-process');
+    expect(svg).toContain('>Order Process</tspan>');
+  });
+
+  it('renders a frame title tab without crashing when no fontSize is set, and lets showLabel hide it', () => {
+    // frameObject had no defaults at all: an untyped `font_size: undefined`
+    // reached the title tab's arithmetic and crashed the whole render. Also,
+    // `showLabel` was never read from SFL, so `showLabel: false` did nothing.
+    const frameDoc = (extra: string) => `sfl 1.2
+
+Model M {
+  Container f {
+    kind: frame
+    text: "Checkout Flow"
+    fill: "#f5f3ff"
+    stroke: "#9b42df"
+${extra}
+    layout {
+      position: 0, 0
+      size: 300, 200
+    }
+  }
+}
+`;
+    const shown = render(frameDoc(''));
+    expect(shown.svg).toContain('sf-frame-tab-f');
+    expect(shown.svg).toContain('>Checkout Flow</tspan>');
+
+    const hidden = render(frameDoc('    showLabel: false'));
+    expect(hidden.svg).not.toContain('sf-frame-tab-f');
+  });
+
   it('lets a link declare an explicit order that overrides its declaration position', () => {
     // "one" is declared first but has the higher order (5), so it must paint
     // last/on top; "two" is declared second but has the lower order (1), so

@@ -206,34 +206,45 @@ function simpleContainerStyle(fill: string, stroke: string, strokeWidth: number,
   return { fill: { kind: 'solid', color: fill || 'transparent' }, stroke: { kind: 'solid', color: stroke }, strokeWidth, dash: dash?.length ? dash : undefined };
 }
 
+// Register-tab title shared by frames and swimlanes (both are containers with
+// the same "title tab above the top-left corner" presentation) instead of
+// placing plain title text inside the body. Caller supplies explicit ids so
+// each container keeps its own existing id scheme.
+function titleTabNodes(
+  tabId: string, titleId: string, x: number, y: number, cornerRadius: number, title: string,
+  tabColor: string, fontFamily: string | undefined, fontSize: number, fontWeight: 'normal' | 'bold', order: number,
+): RenderNode[] {
+  const tabHeight = Math.max(32, fontSize + 18);
+  const tabPadding = 16;
+  const tabWidth = Math.max(120, title.length * fontSize * .62 + tabPadding * 2);
+  const tabX = x + Math.max(12, cornerRadius);
+  const tabY = y - tabHeight;
+  const tabBounds = boxBounds(tabX, tabY, tabWidth, tabHeight, 6);
+  return [
+    {
+      type: 'rect', id: tabId, order: order + .1, bounds: tabBounds,
+      x: tabX, y: tabY, width: tabWidth, height: tabHeight, rx: 8,
+      style: {
+        fill: { kind: 'solid', color: tabColor }, stroke: { kind: 'none' },
+        shadow: { color: '#000000', opacity: .1, blur: 4, dx: 0, dy: 2 },
+      },
+    },
+    {
+      type: 'text', id: titleId, order: order + .2, bounds: tabBounds,
+      x: tabX + tabPadding, y: tabY, width: Math.max(0, tabWidth - tabPadding * 2), height: tabHeight,
+      lines: [title], fontFamily: fontFamily ?? DEFAULT_FONT, fontSize,
+      fontWeight, color: '#ffffff', align: 'left', verticalAlign: 'middle', lineHeight: 1.2,
+    },
+  ];
+}
+
 function buildFrame(frame: Frame, index: number): RenderNode[] {
   if (frame.is_visible === false) return [];
   const order = orderOf(frame, index);
   const bodyBounds = boxBounds(frame.x, frame.y, frame.width, frame.height, frame.stroke_width + 4);
   const nodes: RenderNode[] = [{ type: 'rect', id: `frame-${frame.id}`, order, bounds: bodyBounds, x: frame.x, y: frame.y, width: frame.width, height: frame.height, rx: frame.corner_radius, style: simpleContainerStyle(frame.fill_color, frame.stroke_color, frame.stroke_width, frame.dash) }];
   if ((frame.show_label ?? true) && frame.title) {
-    // Mirror FrameComponent's separate register tab instead of placing plain
-    // title text inside the frame body.
-    const tabHeight = Math.max(32, frame.font_size + 18);
-    const tabPadding = 16;
-    const tabWidth = Math.max(120, frame.title.length * frame.font_size * .62 + tabPadding * 2);
-    const tabX = frame.x + Math.max(12, frame.corner_radius);
-    const tabY = frame.y - tabHeight;
-    const tabBounds = boxBounds(tabX, tabY, tabWidth, tabHeight, 6);
-    nodes.push({
-      type: 'rect', id: `frame-tab-${frame.id}`, order: order + .1, bounds: tabBounds,
-      x: tabX, y: tabY, width: tabWidth, height: tabHeight, rx: 8,
-      style: {
-        fill: { kind: 'solid', color: frame.stroke_color }, stroke: { kind: 'none' },
-        shadow: { color: '#000000', opacity: .1, blur: 4, dx: 0, dy: 2 },
-      },
-    });
-    nodes.push({
-      type: 'text', id: `frame-title-${frame.id}`, order: order + .2, bounds: tabBounds,
-      x: tabX + tabPadding, y: tabY, width: Math.max(0, tabWidth - tabPadding * 2), height: tabHeight,
-      lines: [frame.title], fontFamily: frame.font_family ?? DEFAULT_FONT, fontSize: frame.font_size,
-      fontWeight: frame.font_weight, color: '#ffffff', align: 'left', verticalAlign: 'middle', lineHeight: 1.2,
-    });
+    nodes.push(...titleTabNodes(`frame-tab-${frame.id}`, `frame-title-${frame.id}`, frame.x, frame.y, frame.corner_radius, frame.title, frame.stroke_color, frame.font_family, frame.font_size, frame.font_weight, order));
   }
   return nodes;
 }
@@ -243,6 +254,9 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
   const order = orderOf(swimlane, 5_000 + index), bounds = boxBounds(swimlane.x, swimlane.y, swimlane.width, swimlane.height, swimlane.stroke_width + 4);
   const style = simpleContainerStyle(swimlane.fill_color, swimlane.stroke_color, swimlane.stroke_width, swimlane.dash);
   const nodes: RenderNode[] = [{ type: 'rect', id: `swimlane-${swimlane.id}`, order, bounds, x: swimlane.x, y: swimlane.y, width: swimlane.width, height: swimlane.height, rx: swimlane.corner_radius, style }];
+  if (swimlane.title) {
+    nodes.push(...titleTabNodes(`swimlane-tab-${swimlane.id}`, `swimlane-title-${swimlane.id}`, swimlane.x, swimlane.y, swimlane.corner_radius, swimlane.title, swimlane.stroke_color, swimlane.font_family, swimlane.font_size, swimlane.font_weight, order));
+  }
   let cursor = 0;
   swimlane.lanes.slice(0, -1).forEach((lane, laneIndex) => {
     cursor += lane.size;

@@ -53,18 +53,30 @@ function shapeObject(e: SflEntityOut): any {
 
 function frameObject(e: SflEntityOut): any {
   const p = e.props;
+  // Unlike shapes (which may legitimately have no fill/stroke at all, see
+  // shapeObject), a frame in the app is always created with concrete
+  // FRAME_DEFAULTS values — there's no "intentionally unset" state for a
+  // frame's own styling. Falling back to those same defaults here (rather
+  // than leaving fields undefined) matches that and avoids the title tab
+  // crashing on e.g. an undefined font_size.
   return {
     id: e.id,
     type: 'frame',
     title: e.text ?? null,
     x: e.x, y: e.y, width: e.width, height: e.height, w: e.width, h: e.height,
-    fill_color: p.fill, stroke_color: p.stroke,
-    stroke_width: numOf(p.strokeWidth),
-    corner_radius: numOf(p.cornerRadius),
-    text_color: p.textColor,
-    font_size: numOf(p.fontSize),
-    font_weight: p.fontWeight,
+    fill_color: p.fill ?? 'rgba(155, 66, 223, 0.05)',
+    stroke_color: p.stroke ?? '#9b42df',
+    stroke_width: numOf(p.strokeWidth) ?? 2,
+    corner_radius: numOf(p.cornerRadius) ?? 12,
+    text_color: p.textColor ?? '#9b42df',
+    font_size: numOf(p.fontSize) ?? 14,
+    font_weight: p.fontWeight ?? 'bold',
+    font_family: p.fontFamily,
     dash: p.dash ? safeJson(p.dash) : undefined,
+    // buildFrame only draws the title tab when show_label is truthy (default
+    // true when unset). This was never read from SFL at all, so `showLabel:
+    // false` silently did nothing — same class of gap as a link's showText.
+    show_label: p.showLabel !== 'false',
     order: e.order,
   };
 }
