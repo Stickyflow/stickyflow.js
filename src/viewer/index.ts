@@ -34,10 +34,10 @@ export interface Viewer {
   select(ids: string[]): void;
   fit(): void;
   /**
-   * Swap in a freshly-rendered diagram (new SFL source or svg string) after a
-   * `textChange` (or any other) event — the viewer never mutates its own
-   * model, so this is how a host reflects an edit it accepted. Resets camera
-   * and selection, same as mounting a new diagram.
+   * Swap in a freshly-rendered diagram (new SFL source or svg string) — e.g.
+   * after `stickyflow/interaction` reports an edit the host accepted. The
+   * viewer never mutates its own model, so this is how a host reflects a
+   * change back. Resets camera and selection, same as mounting a new diagram.
    */
   update(next: ViewerSource): void;
   destroy(): void;
@@ -92,5 +92,5 @@ export function createViewer(options: ViewerOptions): Viewer {
 
 export type { OwnerRef, ViewerEventName, ViewerEventHandler, Unsubscribe } from './events';
 export type {
-  OwnerPointerEvent, SelectionChangeEvent, ViewerErrorEvent, ViewerEventMap, Modifiers, TextChangeEvent,
+  OwnerPointerEvent, SelectionChangeEvent, ViewerErrorEvent, ViewerEventMap, Modifiers,
 } from './events';

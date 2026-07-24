@@ -8,6 +8,7 @@ export default defineConfig([
     entry: {
       index: 'src/index.ts',
       'viewer/index': 'src/viewer/index.ts',
+      'interaction/index': 'src/interaction/index.ts',
       'web-component/index': 'src/web-component/index.ts',
     },
     format: ['esm', 'cjs'],

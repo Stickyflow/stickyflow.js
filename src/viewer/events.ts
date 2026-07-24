@@ -1,7 +1,10 @@
 // Pure viewer event types + payload builders (no DOM). Every payload is
 // serializable so a host (e.g. a chatbot) can forward it straight into model
-// context. This file is the interaction tier's vocabulary and is node-testable.
+// context. This file is the read-only viewer tier's vocabulary and is
+// node-testable. Mutating events (textChange, future moveChange) live in
+// `stickyflow/interaction` instead — see src/interaction/events.ts.
 import type { SceneRole } from '../rendering/renderScene';
+import { Emitter as GenericEmitter, type Unsubscribe } from '../shared/emitter';
 
 export type JsonValue =
   | string | number | boolean | null
@@ -34,32 +37,18 @@ export interface ViewerErrorEvent {
   message: string;
 }
 
-/**
- * Fired after a double-click text edit is committed (Enter or blur, value
- * changed). The viewer does not mutate its own model or emit SFL — a host
- * (e.g. a chatbot integration) owns turning this into new source and calling
- * `viewer.update()`, the same way a controlled `<input>` needs its parent to
- * pass back a new value or the edit visually reverts.
- */
-export interface TextChangeEvent {
-  diagramId: string;
-  owner: OwnerRef;
-  text: string;
-}
-
 export interface ViewerEventMap {
   ready: { diagramId: string };
   entityClick: OwnerPointerEvent;
   linkClick: OwnerPointerEvent;
   ownerHover: OwnerPointerEvent | { diagramId: string; owner: null };
   selectionChange: SelectionChangeEvent;
-  textChange: TextChangeEvent;
   error: ViewerErrorEvent;
 }
 
 export type ViewerEventName = keyof ViewerEventMap;
 export type ViewerEventHandler<T extends ViewerEventName> = (event: ViewerEventMap[T]) => void;
-export type Unsubscribe = () => void;
+export type { Unsubscribe };
 
 export const NO_MODIFIERS: Modifiers = { shift: false, ctrl: false, meta: false, alt: false };
 
@@ -68,20 +57,5 @@ export function ownerPointerEvent(diagramId: string, owner: OwnerRef, modifiers:
   return { diagramId, owner, modifiers };
 }
 
-/** Minimal, framework-free event emitter shared by the viewer. */
-export class Emitter {
-  private handlers = new Map<ViewerEventName, Set<(event: never) => void>>();
-
-  on<T extends ViewerEventName>(name: T, handler: ViewerEventHandler<T>): Unsubscribe {
-    let set = this.handlers.get(name);
-    if (!set) { set = new Set(); this.handlers.set(name, set); }
-    set.add(handler as (event: never) => void);
-    return () => set!.delete(handler as (event: never) => void);
-  }
-
-  emit<T extends ViewerEventName>(name: T, event: ViewerEventMap[T]): void {
-    this.handlers.get(name)?.forEach(handler => (handler as ViewerEventHandler<T>)(event));
-  }
-
-  clear(): void { this.handlers.clear(); }
-}
+/** The viewer tier's own emitter, typed to ViewerEventMap. */
+export class Emitter extends GenericEmitter<ViewerEventMap> {}

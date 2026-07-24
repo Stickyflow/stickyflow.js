@@ -21,6 +21,11 @@
       "import": "./dist/viewer/index.js",
       "require": "./dist/viewer/index.cjs"
     },
+    "./interaction": {
+      "types": "./dist/interaction/index.d.ts",
+      "import": "./dist/interaction/index.js",
+      "require": "./dist/interaction/index.cjs"
+    },
     "./web-component": {
       "types": "./dist/web-component/index.d.ts",
       "import": "./dist/web-component/index.js",
