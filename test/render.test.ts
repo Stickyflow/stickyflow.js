@@ -355,6 +355,39 @@ Model M {
     expect(vertical).toContain('>Customer</tspan>');
   });
 
+  it('scales lane sizes to fit when they do not sum to the swimlane\'s own declared height', () => {
+    // The real canvas app guarantees lanes always sum to the swimlane's own
+    // dimension on every resize (laneScaling.ts's scaleLanesToSize) — nothing
+    // enforced that for SFL-declared lanes. Lanes summing to 260 in a
+    // declared 400x160 swimlane used to leave the second divider/label at
+    // world y=230 while the swimlane's own bounds (built from height=160)
+    // only extended to ~160 — the second lane's divider and label fell
+    // outside the viewBox and were silently clipped instead of the (harmless)
+    // lanes just being proportioned to fit, exactly like a resize would.
+    const SFL_MISMATCHED = `sfl 1.2
+
+Model M {
+  Container p {
+    kind: swimlane
+    orientation: horizontal
+    lanes: [["Customer", 130], ["Warehouse", 130]]
+    layout {
+      position: 0, 0
+      size: 400, 160
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_MISMATCHED);
+    // Both lanes scale down by the same factor (160/260) so the divider and
+    // second lane's label pivot land inside the swimlane's own 160-tall body,
+    // not at the un-scaled cursor position (130).
+    const divider = svg.match(/<path id="sf-swimlane-divider-p-0"[^>]*d="M 0 ([\d.]+) H/);
+    expect(Number(divider?.[1])).toBeCloseTo(80, 0); // 130 * (160/260)
+    expect(svg).toContain('>Customer</tspan>');
+    expect(svg).toContain('>Warehouse</tspan>');
+  });
+
   it('renders a frame title tab without crashing when no fontSize is set, and lets showLabel hide it', () => {
     // frameObject had no defaults at all: an untyped `font_size: undefined`
     // reached the title tab's arithmetic and crashed the whole render. Also,

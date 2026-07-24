@@ -258,8 +258,24 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
   // the real canvas app's SwimlaneComponent.tsx, which explicitly has none).
   // swimlane.title is real data (round-trips through SFL) but is not drawn.
   const nodes: RenderNode[] = [{ type: 'rect', id: `swimlane-${swimlane.id}`, order, bounds, x: swimlane.x, y: swimlane.y, width: swimlane.width, height: swimlane.height, rx: swimlane.corner_radius, style }];
+  // Scale lane sizes to sum exactly to the swimlane's own perpendicular
+  // dimension (height for horizontal, width for vertical) before laying out
+  // dividers/labels. The real canvas app enforces this on every resize (see
+  // laneScaling.ts's scaleLanesToSize) so it's never violated there — but
+  // nothing enforced it for SFL-declared lanes. A mismatch (hand-written or
+  // LLM-generated SFL where the sizes don't add up to the declared width/
+  // height — not a hypothetical: this is the "chatbot" case the format is
+  // for) meant the cursor-based layout below drifted past the swimlane's own
+  // bounds, which are computed from width/height alone; the far dividers and
+  // labels then fell outside the scene's viewBox and were silently clipped
+  // instead of the lanes simply being (harmlessly) proportioned to fit.
+  const targetSize = swimlane.orientation === 'horizontal' ? swimlane.height : swimlane.width;
+  const laneTotal = swimlane.lanes.reduce((sum, lane) => sum + lane.size, 0);
+  const lanes = laneTotal > 0 && targetSize > 0
+    ? swimlane.lanes.map(lane => ({ ...lane, size: lane.size * (targetSize / laneTotal) }))
+    : swimlane.lanes;
   let cursor = 0;
-  swimlane.lanes.slice(0, -1).forEach((lane, laneIndex) => {
+  lanes.slice(0, -1).forEach((lane, laneIndex) => {
     cursor += lane.size;
     const d = swimlane.orientation === 'horizontal'
       ? `M ${swimlane.x} ${swimlane.y + cursor} H ${swimlane.x + swimlane.width}`
@@ -269,9 +285,9 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
   if (swimlane.show_lane_labels) {
     cursor = 0;
     const fontSize = swimlane.font_size;
-    swimlane.lanes.forEach((lane, laneIndex) => {
+    lanes.forEach((lane, laneIndex) => {
       const horizontal = swimlane.orientation === 'horizontal';
-      const base = { id: `swimlane-label-${swimlane.id}-${lane.id}`, order: order + .5 + laneIndex / 100, bounds, fontFamily: swimlane.font_family ?? DEFAULT_FONT, fontSize, fontWeight: swimlane.font_weight, color: swimlane.text_color, lineHeight: 1.2 } as const;
+      const base = { id: `swimlane-label-${swimlane.id}-${lane.id}`, order: order + .5 + laneIndex / 100, fontFamily: swimlane.font_family ?? DEFAULT_FONT, fontSize, fontWeight: swimlane.font_weight, color: swimlane.text_color, lineHeight: 1.2 } as const;
       if (horizontal) {
         // A horizontal-orientation lane is a wide, short strip (full width,
         // thin height) — plain horizontal text would compete with shapes for
@@ -283,17 +299,34 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
         // available width can force several short lines whose total height
         // exceeds the lane and bleeds into the neighboring lane's label —
         // worse than an occasional long label overflowing past the edge.
+        //
+        // Bounds must be the ROTATED box, not the shared swimlane `bounds`:
+        // this text's "width" (its reading length) runs along the swimlane's
+        // Y axis after rotation, which the swimlane's own un-rotated bounds
+        // never accounted for — the SVG viewBox then clipped the label at
+        // both ends (no font-metrics system exists yet to size this exactly,
+        // see ADR-01, so estimated text width plus a safety margin here,
+        // rather than an exact fit, is what keeps it from clipping). Bold
+        // text in particular renders visibly wider than the .58-factor
+        // estimate other text uses (see wrapText). Kept modest: the declared
+        // `width` below is already generous (lane.size - 16, well over the
+        // typical label's estimated need), so this margin only has to cover
+        // estimate error, not the label's whole footprint — a large margin
+        // here inflates the scene's overall bounds for every swimlane, most
+        // of which don't need it, shrinking the visible diagram when fit
+        // into a fixed-size box.
         const thickness = fontSize * 1.4;
         const cx = swimlane.x + 10 + thickness / 2, cy = swimlane.y + cursor + lane.size / 2;
         const width = Math.max(20, lane.size - 16);
+        const labelBounds = rotatedBounds(cx - width / 2, cy - thickness / 2, width, thickness, -90, 12);
         nodes.push({
-          ...base, type: 'text', x: cx - width / 2, y: cy - thickness / 2, width, height: thickness, lines: [lane.label],
+          ...base, type: 'text', bounds: labelBounds, x: cx - width / 2, y: cy - thickness / 2, width, height: thickness, lines: [lane.label],
           align: 'center', verticalAlign: 'middle', rotation: -90, rotationCenter: { x: cx, y: cy },
         });
       } else {
         const x = swimlane.x + cursor + 8, y = swimlane.y + 8;
         const width = Math.max(0, lane.size - 16), height = Math.max(0, swimlane.height - 16);
-        nodes.push({ ...base, type: 'text', x, y, width, height, lines: [lane.label], align: 'left', verticalAlign: 'top' });
+        nodes.push({ ...base, type: 'text', bounds, x, y, width, height, lines: [lane.label], align: 'left', verticalAlign: 'top' });
       }
       cursor += lane.size;
     });
