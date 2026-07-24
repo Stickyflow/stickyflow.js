@@ -90,8 +90,13 @@ function shapeStyle(shape: Shape, diagnostics: RenderDiagnostic[]): SceneStyle {
   const shadow = shape.shadowStyle ?? (shape.hasShadow ? { enabled: true, color: '#000000', opacity: 0.25, blur: 10, angle: 45, distance: 5 } : undefined);
   const angle = finite(shadow?.angle, 45) * Math.PI / 180;
   return {
-    fill: paint(shape.fillColor ?? defaults.fillColor, diagnostics, shape.id),
-    stroke: paint(shape.strokeColor ?? defaults.strokeColor, diagnostics, shape.id),
+    // No SHAPE_DEFAULTS fallback here: the interactive canvas (Konva) leaves an
+    // unset fillColor/strokeColor as `undefined`, rendering no paint at all —
+    // paint() already returns { kind: 'none' } for a falsy value. Substituting
+    // a default color here (as this used to) diverges from the canvas: an
+    // entity with no fill set would render opaque white instead of transparent.
+    fill: paint(shape.fillColor, diagnostics, shape.id),
+    stroke: paint(shape.strokeColor, diagnostics, shape.id),
     strokeWidth,
     dash: dash?.length ? dash : undefined,
     lineCap: dotted ? 'round' : 'butt',

@@ -31,6 +31,26 @@ describe('render core runs headless through the package (real app source)', () =
     expect(height).toBeGreaterThan(0);
   });
 
+  it('renders no fill/stroke (not a default color) when none is set, matching the interactive canvas', () => {
+    // The Konva canvas leaves an unset fillColor/strokeColor as `undefined`,
+    // painting nothing. Silently substituting SHAPE_DEFAULTS here (as this
+    // used to) made an unfilled entity render opaque white in stickyflow.js
+    // while the app showed it transparent — e.g. white text became invisible
+    // against a fill the entity's own style never actually specified.
+    const input = {
+      shapes: [{
+        id: 'unfilled', boardId: 'board', shapeType: 'pill', x: 0, y: 0, width: 120, height: 60,
+        text: 'no fill set', layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
+      }],
+      frames: [], swimlanes: [], links: [],
+    } as unknown as RenderInput;
+
+    const { svg } = renderCanvas(input);
+
+    expect(svg).toMatch(/<rect id="sf-shape-unfilled"[^>]*fill="none"/);
+    expect(svg).not.toContain('fill="#ffffff"');
+  });
+
   it('exports linear and mesh gradients as vector SVG definitions', () => {
     const gradient = { type: 'gradient' as const, angle: 45, stops: [{ position: 0, color: '#fff' }, { position: 100, color: '#000' }] };
     const base = (id: string, shapeType: string, x: number) => ({
