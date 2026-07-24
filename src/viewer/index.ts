@@ -16,6 +16,9 @@ export interface ViewerOptions {
   svg?: string;
   /** Bind selection/hover/zoom/pan. Default false = static display only. */
   interactive?: boolean;
+  /** Click-to-select and hover events. Default true. Pan/zoom stay on either
+   *  way — set false for a navigation-only viewer with nothing to select. */
+  selectable?: boolean;
   diagramId?: string;
   renderOptions?: RenderOptions;
 }
@@ -62,7 +65,7 @@ export function createViewer(options: ViewerOptions): Viewer {
       throw new Error(`createViewer: incompatible DOM contract (svg=${version}). Renderer and viewer versions differ.`);
     }
     display = mountDisplay(options.container, svgString);
-    interaction = options.interactive ? bindInteraction(display, emitter, diagramId) : null;
+    interaction = options.interactive ? bindInteraction(display, emitter, diagramId, { selectable: options.selectable }) : null;
   };
 
   mount(resolveSvg(options));

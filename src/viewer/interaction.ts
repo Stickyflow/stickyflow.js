@@ -19,7 +19,14 @@ export interface InteractionHandle {
 
 const DRAG_THRESHOLD = 4;
 
-export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagramId: string): InteractionHandle {
+export interface BindInteractionOptions {
+  /** Click-to-select and hover events. Default true. Pan/zoom stay on either
+   *  way — set false for a navigation-only viewer with nothing to select. */
+  selectable?: boolean;
+}
+
+export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagramId: string, options: BindInteractionOptions = {}): InteractionHandle {
+  const selectable = options.selectable ?? true;
   const svg = display.svg;
   let selection = new Set<string>();
   const owners = new Map<string, OwnerRef>();
@@ -64,6 +71,7 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
       if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > DRAG_THRESHOLD) down.moved = true;
       if (down.moved) { display.panBy(e.movementX, e.movementY); return; }
     }
+    if (!selectable) return;
     const owner = resolveOwner(e.target as Element | null);
     emitter.emit('ownerHover', owner ? { diagramId, owner, modifiers: modifiersOf(e) } : { diagramId, owner: null });
   };
@@ -71,7 +79,7 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   const onPointerUp = (e: PointerEvent) => {
     const wasDrag = down?.moved ?? false;
     down = null;
-    if (wasDrag) return;
+    if (wasDrag || !selectable) return;
     const owner = resolveOwner(e.target as Element | null);
     if (!owner) { setSelection(selectionReducer(selection, { type: 'clear' })); return; }
     owners.set(owner.id, owner);
@@ -80,14 +88,21 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   };
 
   // --- wheel zoom ----------------------------------------------------------
+  // Only zooms with Ctrl/Cmd held (same convention as Google Maps, Figma,
+  // CodeSandbox, etc. — and how browsers report trackpad pinch as a wheel
+  // event, so this doubles as pinch-to-zoom for free). A bare wheel event is
+  // left alone so the page keeps scrolling normally when the cursor happens
+  // to pass over an embedded diagram — the previous unconditional
+  // preventDefault() hijacked the page's scroll the instant it did.
   const onWheel = (e: WheelEvent) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
     display.zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX, e.clientY);
   };
 
   // --- keyboard ------------------------------------------------------------
   const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') setSelection(selectionReducer(selection, { type: 'clear' }));
+    if (selectable && e.key === 'Escape') setSelection(selectionReducer(selection, { type: 'clear' }));
   };
 
   svg.addEventListener('pointerdown', onPointerDown);
