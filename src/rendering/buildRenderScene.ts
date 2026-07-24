@@ -206,6 +206,19 @@ function simpleContainerStyle(fill: string, stroke: string, strokeWidth: number,
   return { fill: { kind: 'solid', color: fill || 'transparent' }, stroke: { kind: 'solid', color: stroke }, strokeWidth, dash: dash?.length ? dash : undefined };
 }
 
+// SVG <rect rx="…"> only rounds all four corners uniformly. A table header
+// fill sits flush against the row grid below it — its bottom edge is an
+// internal seam, not an outer boundary — so rounding it too makes the fill's
+// rounded bottom corners peek out past the header/row divider line. The real
+// canvas app avoids this with Konva's per-corner cornerRadius array
+// ([topLeft, topRight, 0, 0]); SVG has no equivalent rect attribute, so this
+// draws the same shape as an explicit path instead.
+function topRoundedRectPath(x: number, y: number, width: number, height: number, radius: number): string {
+  const r = Math.max(0, Math.min(radius, width / 2, height));
+  if (r === 0) return `M ${x} ${y} H ${x + width} V ${y + height} H ${x} Z`;
+  return `M ${x} ${y + r} A ${r} ${r} 0 0 1 ${x + r} ${y} H ${x + width - r} A ${r} ${r} 0 0 1 ${x + width} ${y + r} V ${y + height} H ${x} Z`;
+}
+
 // Register-tab title shared by frames and swimlanes (both are containers with
 // the same "title tab above the top-left corner" presentation) instead of
 // placing plain title text inside the body. Caller supplies explicit ids so
@@ -348,8 +361,8 @@ function buildTable(table: Table, index: number): RenderNode[] {
     style: simpleContainerStyle(table.fill_color, 'transparent', 0, []),
   }];
   if (table.show_header) nodes.push({
-    type: 'rect', id: `table-header-fill-${table.id}`, order: order + .06, bounds,
-    x: table.x, y: table.y, width: table.width, height: rowHeight, rx: table.corner_radius,
+    type: 'path', id: `table-header-fill-${table.id}`, order: order + .06, bounds,
+    d: topRoundedRectPath(table.x, table.y, table.width, rowHeight, table.corner_radius),
     style: simpleContainerStyle(table.header_fill_color ?? '#f1f5f9', 'transparent', 0, []),
   });
   // Scale column widths to sum exactly to the table's own declared width —

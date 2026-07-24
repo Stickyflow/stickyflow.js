@@ -469,6 +469,47 @@ Model M {
     expect(Number(divider?.[1])).toBeCloseTo(100, 0);
   });
 
+  it('rounds only the header fill\'s top corners, not the bottom ones that sit against the row grid', () => {
+    // A plain <rect rx="…"> rounds all four corners uniformly. The header
+    // fill is much shorter than the table (just one row tall), so rounding
+    // its bottom corners too made them peek out past the header/row divider
+    // line — visible as the fill "bleeding" below the grid line at both
+    // corners. The real app avoids this with Konva's per-corner
+    // cornerRadius array ([topLeft, topRight, 0, 0]); SVG has no rect
+    // equivalent, so the header fill is drawn as an explicit path instead.
+    const SFL_TABLE = `sfl 1.2
+
+Model M {
+  Container t {
+    kind: table
+    cornerRadius: 12
+    Columns cols {
+      Column field {
+        text: "Field"
+        layout { width: 150 }
+      }
+    }
+    Rows rows {
+      Row row1 {
+        field: "id"
+      }
+    }
+    layout {
+      position: 0, 0
+      size: 150, 100
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_TABLE);
+    // A path (not a rect with uniform rx) whose only two arcs are at the top.
+    const header = svg.match(/<path id="sf-table-header-fill-t"[^>]*d="([^"]+)"/)?.[1];
+    expect(header).toBeTruthy();
+    expect((header?.match(/A /g) ?? []).length).toBe(2);
+    // Bottom edge is a plain straight line (H after the last V), not an arc.
+    expect(header).toMatch(/V [\d.]+ H [\d.]+ Z$/);
+  });
+
   it('renders a frame title tab without crashing when no fontSize is set, and lets showLabel hide it', () => {
     // frameObject had no defaults at all: an untyped `font_size: undefined`
     // reached the title tab's arithmetic and crashed the whole render. Also,
