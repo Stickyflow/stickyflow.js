@@ -21,8 +21,14 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   const owners = new Map<string, OwnerRef>();
 
   const paintSelection = () => {
+    // Only the primary node per owner (data-sf-primary — see buildRenderScene's
+    // tag()) gets the selection attribute, not every sub-node sharing the
+    // owner's sfId. Painting all of them applied the selection style (a
+    // stroke override, see SflDiagram.css) to text labels too — glyphs aren't
+    // meant to be stroked, so a selected entity's own label rendered as a
+    // disfigured blob instead of a clean highlight on the shape itself.
     svg.querySelectorAll('[data-sf-selected]').forEach(el => el.removeAttribute('data-sf-selected'));
-    selection.forEach(id => svg.querySelectorAll(`[data-sf-id="${CSS.escape(id)}"]`)
+    selection.forEach(id => svg.querySelectorAll(`[data-sf-id="${CSS.escape(id)}"][data-sf-primary]`)
       .forEach(el => el.setAttribute('data-sf-selected', 'true')));
   };
 

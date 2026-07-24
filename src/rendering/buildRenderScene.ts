@@ -15,13 +15,20 @@ import type {
 
 // Interactive DOM contract (ADR-03): stamp every node of an owner with a shared
 // role + id so the viewer can map any sub-node (text, divider, cell) back to its
-// entity; the first (primary) node also gets an aria-label and becomes focusable.
+// entity. The first (primary) node is always marked sfPrimary — unconditionally,
+// not just when an ariaLabel happens to be given (a title-less frame/table or a
+// swimlane, which never gets one, still needs a single node the viewer can paint
+// a selection indicator onto) — and additionally becomes focusable when a label
+// is available.
 function tag(nodes: RenderNode[], sfRole: SceneRole, sfId: string, sfKind?: string, ariaLabel?: string): RenderNode[] {
   nodes.forEach((node, index) => {
     node.sfRole = sfRole;
     node.sfId = sfId;
     if (sfKind) node.sfKind = sfKind;
-    if (index === 0 && ariaLabel) node.ariaLabel = ariaLabel;
+    if (index === 0) {
+      node.sfPrimary = true;
+      if (ariaLabel) node.ariaLabel = ariaLabel;
+    }
   });
   return nodes;
 }

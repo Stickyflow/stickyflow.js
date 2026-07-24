@@ -39,6 +39,26 @@ describe('interactive DOM contract', () => {
     expect(svg).toMatch(/data-sf-role="link"[^>]*data-sf-id="go"/);
   });
 
+  it('marks exactly one node per owner as sf-primary — the shape/link itself, never its text label', () => {
+    // The viewer paints a selection indicator only onto data-sf-primary nodes
+    // (see interaction.ts's paintSelection). Marking every sub-node sharing an
+    // owner's id — the previous behavior — applied the selection style to text
+    // labels too, and a stroke isn't a meaningful thing to put on glyphs: a
+    // selected entity's own label rendered as a disfigured blob instead of a
+    // clean highlight on the shape. This must hold for every owner type, not
+    // just shapes with text — a title-less frame/table or a swimlane never
+    // gets an aria-label, but still needs exactly one primary node.
+    const { svg } = render(SFL_SAMPLE);
+    // "start" is a rounded_rectangle entity with a text label in the sample.
+    const startPrimaryCount = (svg.match(/data-sf-id="start"[^>]*data-sf-primary="true"/g) ?? []).length;
+    expect(startPrimaryCount).toBe(1);
+    expect(svg).toMatch(/<rect id="sf-shape-start"[^>]*data-sf-primary="true"/);
+    expect(svg).not.toMatch(/<text id="sf-shape-text-start"[^>]*data-sf-primary/);
+    // "go" is the link with a text label in the sample.
+    expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-primary="true"/);
+    expect(svg).not.toMatch(/<text id="sf-link-text-go"[^>]*data-sf-primary/);
+  });
+
   it('escapes owner ids and labels in data attributes', () => {
     const { svg } = renderCanvas({
       shapes: [{

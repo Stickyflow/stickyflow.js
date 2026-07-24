@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="264px" height="152px" viewBox="-12 -2 264 152" role="img" data-sf-contract="1">
   <defs></defs>
-  <rect id="sf-table-users" data-sf-role="table" data-sf-id="users" tabindex="0" aria-label="Users" fill="#ffffff" stroke="transparent" stroke-width="0" x="10" y="20" width="220" height="108" rx="8"/>
+  <rect id="sf-table-users" data-sf-role="table" data-sf-id="users" data-sf-primary="true" tabindex="0" aria-label="Users" fill="#ffffff" stroke="transparent" stroke-width="0" x="10" y="20" width="220" height="108" rx="8"/>
   <path id="sf-table-header-fill-users" data-sf-role="table" data-sf-id="users" fill="#f1f5f9" stroke="transparent" stroke-width="0" d="M 10 28 A 8 8 0 0 1 18 20 H 222 A 8 8 0 0 1 230 28 V 56 H 10 Z"/>
   <path id="sf-table-column-users-pk" data-sf-role="table" data-sf-id="users" fill="none" stroke="#9b42df" stroke-width="1" d="M 170 21 V 127"/>
   <path id="sf-table-row-users-0" data-sf-role="table" data-sf-id="users" fill="none" stroke="#9b42df" stroke-width="1" d="M 11 56 H 229"/>

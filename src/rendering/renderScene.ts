@@ -38,6 +38,14 @@ export interface SceneBase {
   sfKind?: string;
   /** Human label for the focusable owner node; drives tabindex + aria-label. */
   ariaLabel?: string;
+  /**
+   * True on exactly one node per owner (the first one built) — surfaced as
+   * data-sf-primary. The viewer paints a selection indicator only onto this
+   * node, not every sub-node sharing the owner's sfId: without it, selecting
+   * an entity with a text label applied the same selection stroke to the
+   * label's glyphs too, since text elements aren't meant to be stroked at all.
+   */
+  sfPrimary?: boolean;
 }
 
 export interface SceneRect extends SceneBase {

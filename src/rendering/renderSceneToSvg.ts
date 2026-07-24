@@ -37,6 +37,7 @@ function contractAttrs(node: RenderNode): string {
   if (node.sfRole) parts.push(`data-sf-role="${node.sfRole}"`);
   if (node.sfId) parts.push(`data-sf-id="${xml(node.sfId)}"`);
   if (node.sfKind) parts.push(`data-sf-kind="${xml(node.sfKind)}"`);
+  if (node.sfPrimary) parts.push('data-sf-primary="true"');
   // aria-label is a single readable line: collapse newlines/whitespace from
   // multi-line entity text so no raw control chars land in the attribute.
   if (node.ariaLabel) parts.push(`tabindex="0" aria-label="${xml(node.ariaLabel.replace(/\s+/g, ' ').trim())}"`);
