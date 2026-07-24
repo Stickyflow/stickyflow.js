@@ -253,10 +253,11 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
   if (swimlane.is_visible === false) return [];
   const order = orderOf(swimlane, 5_000 + index), bounds = boxBounds(swimlane.x, swimlane.y, swimlane.width, swimlane.height, swimlane.stroke_width + 4);
   const style = simpleContainerStyle(swimlane.fill_color, swimlane.stroke_color, swimlane.stroke_width, swimlane.dash);
+  // Unlike Frame, a swimlane never gets a title tab — the per-lane labels
+  // already identify each row, so an outer title would be redundant (matches
+  // the real canvas app's SwimlaneComponent.tsx, which explicitly has none).
+  // swimlane.title is real data (round-trips through SFL) but is not drawn.
   const nodes: RenderNode[] = [{ type: 'rect', id: `swimlane-${swimlane.id}`, order, bounds, x: swimlane.x, y: swimlane.y, width: swimlane.width, height: swimlane.height, rx: swimlane.corner_radius, style }];
-  if (swimlane.title) {
-    nodes.push(...titleTabNodes(`swimlane-tab-${swimlane.id}`, `swimlane-title-${swimlane.id}`, swimlane.x, swimlane.y, swimlane.corner_radius, swimlane.title, swimlane.stroke_color, swimlane.font_family, swimlane.font_size, swimlane.font_weight, order));
-  }
   let cursor = 0;
   swimlane.lanes.slice(0, -1).forEach((lane, laneIndex) => {
     cursor += lane.size;
@@ -267,11 +268,32 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
   });
   if (swimlane.show_lane_labels) {
     cursor = 0;
+    const fontSize = swimlane.font_size;
     swimlane.lanes.forEach((lane, laneIndex) => {
       const horizontal = swimlane.orientation === 'horizontal';
-      const x = swimlane.x + (horizontal ? 10 : cursor + 8), y = swimlane.y + (horizontal ? cursor + 8 : 8);
-      const width = horizontal ? swimlane.width - 20 : lane.size - 16, height = horizontal ? lane.size - 16 : swimlane.height - 16;
-      nodes.push({ type: 'text', id: `swimlane-label-${swimlane.id}-${lane.id}`, order: order + .5 + laneIndex / 100, bounds, x, y, width: Math.max(0, width), height: Math.max(0, height), lines: [lane.label], fontFamily: swimlane.font_family ?? DEFAULT_FONT, fontSize: swimlane.font_size, fontWeight: swimlane.font_weight, color: swimlane.text_color, align: 'left', verticalAlign: 'top', lineHeight: 1.2 });
+      const base = { id: `swimlane-label-${swimlane.id}-${lane.id}`, order: order + .5 + laneIndex / 100, bounds, fontFamily: swimlane.font_family ?? DEFAULT_FONT, fontSize, fontWeight: swimlane.font_weight, color: swimlane.text_color, lineHeight: 1.2 } as const;
+      if (horizontal) {
+        // A horizontal-orientation lane is a wide, short strip (full width,
+        // thin height) — plain horizontal text would compete with shapes for
+        // that limited height. Rotate -90° to read bottom-to-top along the
+        // lane's left edge instead, the conventional swimlane/pool-header
+        // treatment (matches the real canvas app's SwimlaneComponent.tsx).
+        // The lane's own height becomes the label's available reading
+        // length, so wrapText (not a single line) has to use it as the width.
+        const thickness = fontSize * 1.6;
+        const cx = swimlane.x + 10 + thickness / 2, cy = swimlane.y + cursor + lane.size / 2;
+        const width = Math.max(20, lane.size - 24);
+        const lines = wrapText(lane.label, width, fontSize);
+        const height = Math.max(thickness, lines.length * fontSize * 1.2);
+        nodes.push({
+          ...base, type: 'text', x: cx - width / 2, y: cy - height / 2, width, height, lines,
+          align: 'center', verticalAlign: 'middle', rotation: -90, rotationCenter: { x: cx, y: cy },
+        });
+      } else {
+        const x = swimlane.x + cursor + 8, y = swimlane.y + 8;
+        const width = Math.max(0, lane.size - 16), height = Math.max(0, swimlane.height - 16);
+        nodes.push({ ...base, type: 'text', x, y, width, height, lines: [lane.label], align: 'left', verticalAlign: 'top' });
+      }
       cursor += lane.size;
     });
   }

@@ -300,10 +300,13 @@ Model LaneDemo {
     expect(svg).not.toContain('sf-frame-process');
   });
 
-  it('gives a swimlane the same title tab a frame gets, instead of silently dropping it', () => {
-    // buildSwimlane never read swimlane.title at all (unlike buildFrame's tab),
-    // even though the SFL/JSON pipeline already carried it all the way through
-    // — the value just got dropped at the very last render step.
+  it('never draws a title tab for a swimlane (matches the real canvas app, unlike a frame)', () => {
+    // SwimlaneComponent.tsx (the real app) is explicit that a swimlane has no
+    // overall title tab — the per-lane labels already identify each row, so
+    // an outer title would be redundant. swimlane.title still round-trips as
+    // data; it just isn't drawn. An earlier version of this package added a
+    // tab here to mirror Frame, which was wrong — verified against the real
+    // component before reverting it.
     const SFL_SWIMLANE_TITLE = `sfl 1.2
 
 Model M {
@@ -320,8 +323,36 @@ Model M {
 }
 `;
     const { svg } = render(SFL_SWIMLANE_TITLE);
-    expect(svg).toContain('sf-swimlane-tab-process');
-    expect(svg).toContain('>Order Process</tspan>');
+    expect(svg).not.toContain('sf-swimlane-tab-process');
+    expect(svg).not.toContain('>Order Process</tspan>');
+  });
+
+  it('rotates lane labels -90° for horizontal orientation, reading bottom-to-top like the real canvas app', () => {
+    // A horizontal-orientation lane is a wide, short strip; plain horizontal
+    // text would compete with shapes for that limited height. The real app's
+    // SwimlaneComponent.tsx rotates the label -90° along the lane's left
+    // edge instead — this package never did, until now. Vertical orientation
+    // keeps plain horizontal text in both, so only horizontal needs the fix.
+    const demo = (orientation: 'horizontal' | 'vertical') => `sfl 1.2
+
+Model M {
+  Container p {
+    kind: swimlane
+    orientation: ${orientation}
+    lanes: [["Customer", 100], ["Warehouse", 100]]
+    layout {
+      position: 0, 0
+      size: 400, 240
+    }
+  }
+}
+`;
+    const horizontal = render(demo('horizontal')).svg;
+    const vertical = render(demo('vertical')).svg;
+    expect(horizontal).toMatch(/<text id="sf-swimlane-label-p-lane-1"[^>]*transform="rotate\(-90/);
+    expect(vertical).not.toContain('rotate(-90');
+    expect(horizontal).toContain('>Customer</tspan>');
+    expect(vertical).toContain('>Customer</tspan>');
   });
 
   it('renders a frame title tab without crashing when no fontSize is set, and lets showLabel hide it', () => {
