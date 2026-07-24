@@ -278,15 +278,16 @@ function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
         // that limited height. Rotate -90° to read bottom-to-top along the
         // lane's left edge instead, the conventional swimlane/pool-header
         // treatment (matches the real canvas app's SwimlaneComponent.tsx).
-        // The lane's own height becomes the label's available reading
-        // length, so wrapText (not a single line) has to use it as the width.
-        const thickness = fontSize * 1.6;
+        // Single line, not wrapped: a lane label is normally one short word,
+        // and wrapping it to fit the lane's own (often small) height as the
+        // available width can force several short lines whose total height
+        // exceeds the lane and bleeds into the neighboring lane's label —
+        // worse than an occasional long label overflowing past the edge.
+        const thickness = fontSize * 1.4;
         const cx = swimlane.x + 10 + thickness / 2, cy = swimlane.y + cursor + lane.size / 2;
-        const width = Math.max(20, lane.size - 24);
-        const lines = wrapText(lane.label, width, fontSize);
-        const height = Math.max(thickness, lines.length * fontSize * 1.2);
+        const width = Math.max(20, lane.size - 16);
         nodes.push({
-          ...base, type: 'text', x: cx - width / 2, y: cy - height / 2, width, height, lines,
+          ...base, type: 'text', x: cx - width / 2, y: cy - thickness / 2, width, height: thickness, lines: [lane.label],
           align: 'center', verticalAlign: 'middle', rotation: -90, rotationCenter: { x: cx, y: cy },
         });
       } else {
