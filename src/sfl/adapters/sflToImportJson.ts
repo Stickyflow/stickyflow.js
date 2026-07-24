@@ -89,7 +89,7 @@ function linkObject(l: SflLinkOut): any {
     text: l.text ?? '',
     style: {
       pathType: p.route,
-      color: p.stroke,
+      color: decodeColor(p.stroke),
       strokeWidth: numOf(p.strokeWidth),
     },
     startMarker: p.markerStart,

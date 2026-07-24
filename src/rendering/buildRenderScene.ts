@@ -158,7 +158,12 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
   const x = finite(shape.x, 0), y = finite(shape.y, 0), width = Math.max(0, finite(shape.width, 100)), height = Math.max(0, finite(shape.height, 100));
   const rotation = finite(shape.rotation, 0), strokeWidth = finite(shape.strokeWidth, 2);
   const bounds = rotatedBounds(x, y, width, height, rotation, strokeWidth + (shape.hasShadow ? 20 : 2));
-  const style = shapeStyle(shape, diagnostics), order = orderOf(shape, 20_000 + index);
+  // Fallback band below links' (see buildLink): connectors and their markers
+  // should paint on top of the shapes they touch, matching how virtually every
+  // diagramming tool draws connector arrowheads — visible, not tucked under
+  // the shape's fill. SFL never actually sets order_key today (see note at
+  // buildLink), so this fallback is what determines stacking in practice.
+  const style = shapeStyle(shape, diagnostics), order = orderOf(shape, 10_000 + index);
   const nodes: RenderNode[] = [];
   const base = { id: `shape-${shape.id}`, order, bounds, rotation, style };
   const path = localShapePath(shape.shapeType, x, y, width, height);
@@ -397,7 +402,9 @@ function buildLink(item: RenderInput['links'][number], index: number): RenderNod
   const bounds = { minX: Math.min(...xs) - extra, minY: Math.min(...ys) - extra, maxX: Math.max(...xs) + extra, maxY: Math.max(...ys) + extra };
   const color = getLinkStrokeColor(link.style?.color) || '#64748b';
   const style: SceneStyle = { fill: { kind: 'none' }, stroke: typeof link.style?.color === 'object' && link.style.color.type === 'gradient' ? { kind: 'linear-gradient', angle: 0, stops: link.style.color.stops.map(s => ({ offset: s.position, color: s.color })) } : { kind: 'solid', color }, strokeWidth, dash: getDashArray(strokeWidth, link.style?.strokeStyle ?? 'solid'), lineCap: 'round', lineJoin: 'round', opacity: finite(link.style?.opacity, 1) };
-  const order = orderOf(link, 10_000 + index);
+  // Fallback band above shapes' (see buildShape): connectors and their end
+  // markers should paint on top of the shapes they connect, not underneath.
+  const order = orderOf(link, 20_000 + index);
   const path: ScenePath = { type: 'path', id: `link-${link.id}`, order, bounds, d: pathData(points, pathType, segments, strokeWidth), style, markerStart: marker(link, 'start'), markerEnd: marker(link, 'end') };
   const nodes: RenderNode[] = [path];
   if (link.showText && link.text) {
