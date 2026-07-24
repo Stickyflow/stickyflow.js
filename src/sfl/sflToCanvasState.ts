@@ -37,6 +37,10 @@ export interface SflEntityOut {
     columns: Array<{ id: string; label: string; width: number; type: 'text' | 'boolean' }>;
     rows: Array<{ id: string; cells: Record<string, string | boolean> }>;
   };
+  swimlane?: {
+    orientation: 'horizontal' | 'vertical';
+    lanes: Array<{ id: string; label: string; size: number; color?: string }>;
+  };
 }
 
 export interface SflLinkOut {
@@ -217,9 +221,10 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     const shapeType = asString(p.get('shape'));
 
     // präsentationale Props (alles außer den strukturellen Schlüsseln) als Strings
-    const structural = new Set(['id', 'kind', 'text', 'shape', 'parent', 'order']);
+    const structural = new Set(['id', 'kind', 'text', 'shape', 'parent', 'order', 'orientation', 'lanes']);
     const props: Record<string, string> = {};
     let tableData: SflEntityOut['table'];
+    let swimlaneData: SflEntityOut['swimlane'];
     for (const [k, v] of p) {
       if (structural.has(k)) continue;
       const s = asString(v);
@@ -283,6 +288,26 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       const rowHeight = asNumber(layoutProp(block, 'rowHeight'));
       if (rowHeight !== undefined) props.rowHeight = numStr(rowHeight);
     }
+    if (kind === 'swimlane') {
+      // orientation + lanes are the swimlane-specific structural payload the
+      // canonical emitter writes (canvasStateToSfl): `orientation: horizontal`
+      // and `lanes: [[label, size, color?], …]` as a native nested list. Parse
+      // the list into structured lanes so the render pipeline gets real lanes
+      // instead of collapsing the whole thing into a plain frame.
+      const orientation = asString(p.get('orientation')) === 'vertical' ? 'vertical' : 'horizontal';
+      const lanesValue = p.get('lanes');
+      const lanes = lanesValue?.type === 'list'
+        ? lanesValue.values.flatMap((value, index) => {
+            if (value.type !== 'list') return [];
+            const label = asString(value.values[0]);
+            const size = asNumber(value.values[1]);
+            if (label === undefined || size === undefined) return [];
+            const color = asString(value.values[2]);
+            return [{ id: `lane-${index + 1}`, label, size, ...(color ? { color } : {}) }];
+          })
+        : [];
+      swimlaneData = { orientation, lanes };
+    }
 
     return {
       id: asString(p.get('id')) ?? block.name,
@@ -300,6 +325,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       parentFrameId: frameId ?? asString(p.get('parent')),
       props,
       table: tableData,
+      swimlane: swimlaneData,
     };
   };
 

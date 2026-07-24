@@ -27,7 +27,10 @@ function shapeObject(e: SflEntityOut): any {
     x: e.x, y: e.y, width: e.width, height: e.height, w: e.width, h: e.height,
     rotation: e.rotation ?? 0,
     fillColor: decodeColor(p.fill),
-    strokeColor: p.stroke,
+    // decodeColor (not raw passthrough) so a shape stroke can be a gradient too,
+    // exactly like fillColor and like a link's stroke — paint() renders the
+    // decoded gradient object; a plain hex/rgba/name still passes through verbatim.
+    strokeColor: decodeColor(p.stroke),
     strokeWidth: numOf(p.strokeWidth),
     textColor: p.textColor,
     fontSize: numOf(p.fontSize),
@@ -39,6 +42,10 @@ function shapeObject(e: SflEntityOut): any {
     shadowStyle: decodeShadow(p.shadow),
     dash: p.dash ? safeJson(p.dash) : undefined,
     strokeStyle: p.strokeStyle,
+    // buildRenderScene reads element opacity from shapeStyle.opacity, so a bare
+    // SFL `opacity: 0.5` has to be threaded into that nested object or it's a
+    // no-op (the flat top-level field the renderer never looks at).
+    shapeStyle: p.opacity !== undefined ? { opacity: numOf(p.opacity) } : undefined,
     parent_frame_id: e.parentFrameId,
     order: e.order,
   };
@@ -80,6 +87,32 @@ function tableObject(e: SflEntityOut): any {
   };
 }
 
+function swimlaneObject(e: SflEntityOut): any {
+  const p = e.props;
+  // buildSwimlane reads snake_case container fields plus the swimlane-specific
+  // orientation/lanes. Sensible fallbacks (mirroring SWIMLANE_DEFAULTS) keep a
+  // bare `kind: swimlane` block renderable even when the SFL omits styling.
+  return {
+    id: e.id,
+    type: 'swimlane',
+    title: e.text ?? null,
+    x: e.x, y: e.y, width: e.width, height: e.height,
+    orientation: e.swimlane?.orientation ?? 'horizontal',
+    lanes: e.swimlane?.lanes ?? [],
+    fill_color: p.fill ?? 'transparent',
+    stroke_color: p.stroke ?? '#6b7280',
+    stroke_width: numOf(p.strokeWidth) ?? 2,
+    corner_radius: numOf(p.cornerRadius) ?? 12,
+    dash: p.dash ? safeJson(p.dash) : undefined,
+    text_color: p.textColor ?? '#6b7280',
+    font_size: numOf(p.fontSize) ?? 22,
+    font_weight: p.fontWeight ?? 'bold',
+    font_family: p.fontFamily,
+    show_lane_labels: p.showLaneLabels !== 'false',
+    order: e.order,
+  };
+}
+
 function linkObject(l: SflLinkOut): any {
   const p = l.props;
   return {
@@ -116,6 +149,7 @@ export function sflToImportJson(sfl: string): any {
   // gruppierte Elemente → Group-Buckets, sonst → canvas-Buckets
   const canvas = emptyBuckets();
   const frames: any[] = [];
+  const swimlanes: any[] = [];
   const tables: any[] = [];
   const groupBuckets = new Map<string, Buckets>();
   const bucketFor = (id: string): Buckets => {
@@ -129,7 +163,8 @@ export function sflToImportJson(sfl: string): any {
   // Reihenfolge nach order (Stapel) → der Import vergibt order_keys in Array-Folge
   const ordered = [...state.entities].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   for (const e of ordered) {
-    if (e.entityType === 'frame' || e.entityType === 'swimlane') { frames.push(frameObject(e)); continue; }
+    if (e.entityType === 'swimlane') { swimlanes.push(swimlaneObject(e)); continue; }
+    if (e.entityType === 'frame') { frames.push(frameObject(e)); continue; }
     if (e.entityType === 'table') { tables.push(tableObject(e)); continue; }
     bucketFor(e.id).shapes.push(shapeObject(e));
   }
@@ -159,7 +194,7 @@ export function sflToImportJson(sfl: string): any {
 
   return {
     project: { export_type: 'stickyflow_canvas_v3', name: 'SFL Import' },
-    canvas: { entities: { notes: [], shapes: canvas.shapes, links: canvas.links, frames, tables } },
+    canvas: { entities: { notes: [], shapes: canvas.shapes, links: canvas.links, frames, swimlanes, tables } },
     layers: { groups: flatGroups },
   };
 }

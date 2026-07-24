@@ -183,6 +183,60 @@ Model Demo {
     expect(svg).toContain('sf-link-go');
   });
 
+  it('applies a gradient stroke and opacity declared on a shape via SFL', () => {
+    // Both used to be dropped: shape stroke passed through raw (so a gradient
+    // string never became a paint), and SFL `opacity` was never mapped onto the
+    // shapeStyle.opacity field the renderer actually reads.
+    const SFL_SHAPE = `sfl 1.2
+
+Model M {
+  Entity e {
+    text: "x"
+    style {
+      shape: rounded_rectangle
+      fill: "#6366f1"
+      stroke: "gradient(90, #61b4c1 0%, #030303 100%)"
+      opacity: 0.5
+    }
+    layout {
+      position: 0, 0
+      size: 160, 90
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_SHAPE);
+    expect(svg).toContain('<linearGradient');
+    expect(svg).toMatch(/opacity="0\.5"/);
+  });
+
+  it('renders a swimlane with real lanes from SFL text instead of collapsing it to a frame', () => {
+    // A `kind: swimlane` container carries orientation + a lanes nested-list.
+    // The SFL import used to route this through frameObject (losing the lanes);
+    // now it must produce actual lane dividers and per-lane labels.
+    const SFL_SWIMLANE = `sfl 1.2
+
+Model LaneDemo {
+  Container process {
+    kind: swimlane
+    text: "Order process"
+    orientation: horizontal
+    lanes: [["Customer", 120], ["Warehouse", 120]]
+    layout {
+      position: 0, 0
+      size: 400, 240
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_SWIMLANE);
+    expect(svg).toContain('sf-swimlane-process');
+    expect(svg).toContain('swimlane-divider-process');
+    expect(svg).toContain('>Customer</tspan>');
+    expect(svg).toContain('>Warehouse</tspan>');
+    expect(svg).not.toContain('sf-frame-process');
+  });
+
   it('lets a link declare an explicit order that overrides its declaration position', () => {
     // "one" is declared first but has the higher order (5), so it must paint
     // last/on top; "two" is declared second but has the lower order (1), so

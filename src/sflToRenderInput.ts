@@ -6,13 +6,16 @@
 // RenderInput the render core expects — no store, no DOM, no fork of app code.
 //
 // Known gaps (documented, not hidden):
-//   - Swimlanes: the app's SFL import already collapses swimlanes into frames
-//     (sflToImportJson emits them via frameObject without lane data), so lanes
-//     do not survive SFL round-trip yet. Rendered as frames.
 //   - Link waypoints: v3 JSON carries segmentOffsets, not absolute waypoints, so
 //     orthogonal links use the router's default routing rather than saved bends.
+//
+// Swimlanes DO survive the SFL round-trip now: a `kind: swimlane` container with
+// `orientation` + a `lanes: [[label, size, color?], …]` list is parsed into real
+// lanes (sflToCanvasState) and emitted as a swimlane object (sflToImportJson),
+// rendered by buildSwimlane rather than collapsed into a plain frame.
 import type { Shape } from './model/shapes';
 import type { Frame } from './model/frames';
+import type { Swimlane } from './model/swimlanes';
 import type { Table } from './model/tables';
 import type { Link } from './model/links';
 import type { Point, RenderInput, ResolvedExportLink } from './rendering/renderScene';
@@ -20,7 +23,7 @@ import { sflToImportJson } from './sfl';
 
 interface EntityBuckets { shapes: unknown[]; links: unknown[] }
 interface V3Json {
-  canvas?: { entities?: { shapes?: unknown[]; links?: unknown[]; frames?: unknown[]; tables?: unknown[] } };
+  canvas?: { entities?: { shapes?: unknown[]; links?: unknown[]; frames?: unknown[]; swimlanes?: unknown[]; tables?: unknown[] } };
   layers?: { groups?: Array<{ entities?: EntityBuckets }> };
 }
 
@@ -58,14 +61,15 @@ export function sflToRenderInput(sfl: string): RenderInput {
     ...groups.flatMap(group => group.entities?.links ?? []),
   ] as unknown as Link[];
   const frames = (canvas.frames ?? []) as unknown as Frame[];
+  const swimlanes = (canvas.swimlanes ?? []) as unknown as Swimlane[];
   const tables = (canvas.tables ?? []) as unknown as Table[];
 
-  const positioned: PositionedElement[] = [...shapes, ...frames, ...tables] as unknown as PositionedElement[];
+  const positioned: PositionedElement[] = [...shapes, ...frames, ...swimlanes, ...tables] as unknown as PositionedElement[];
   const resolvedLinks: ResolvedExportLink[] = links.map(link => ({
     link,
     from: pointFor(link, 'from', positioned),
     to: pointFor(link, 'to', positioned),
   }));
 
-  return { shapes, frames, swimlanes: [], tables, links: resolvedLinks };
+  return { shapes, frames, swimlanes, tables, links: resolvedLinks };
 }
