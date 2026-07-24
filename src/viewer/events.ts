@@ -34,12 +34,26 @@ export interface ViewerErrorEvent {
   message: string;
 }
 
+/**
+ * Fired after a double-click text edit is committed (Enter or blur, value
+ * changed). The viewer does not mutate its own model or emit SFL — a host
+ * (e.g. a chatbot integration) owns turning this into new source and calling
+ * `viewer.update()`, the same way a controlled `<input>` needs its parent to
+ * pass back a new value or the edit visually reverts.
+ */
+export interface TextChangeEvent {
+  diagramId: string;
+  owner: OwnerRef;
+  text: string;
+}
+
 export interface ViewerEventMap {
   ready: { diagramId: string };
   entityClick: OwnerPointerEvent;
   linkClick: OwnerPointerEvent;
   ownerHover: OwnerPointerEvent | { diagramId: string; owner: null };
   selectionChange: SelectionChangeEvent;
+  textChange: TextChangeEvent;
   error: ViewerErrorEvent;
 }
 

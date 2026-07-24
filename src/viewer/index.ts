@@ -20,12 +20,26 @@ export interface ViewerOptions {
   renderOptions?: RenderOptions;
 }
 
+/** Either form accepted by both the initial mount and update(): SFL source or a pre-rendered svg. */
+export interface ViewerSource {
+  source?: string;
+  svg?: string;
+  renderOptions?: RenderOptions;
+}
+
 export interface Viewer {
   readonly svg: SVGSVGElement;
   on<T extends ViewerEventName>(name: T, handler: ViewerEventHandler<T>): Unsubscribe;
   getSelection(): OwnerRef[];
   select(ids: string[]): void;
   fit(): void;
+  /**
+   * Swap in a freshly-rendered diagram (new SFL source or svg string) after a
+   * `textChange` (or any other) event — the viewer never mutates its own
+   * model, so this is how a host reflects an edit it accepted. Resets camera
+   * and selection, same as mounting a new diagram.
+   */
+  update(next: ViewerSource): void;
   destroy(): void;
 }
 
@@ -33,28 +47,41 @@ export function createViewer(options: ViewerOptions): Viewer {
   const diagramId = options.diagramId ?? 'diagram';
   const emitter = new Emitter();
 
-  const svgString = options.svg ?? (options.source != null ? render(options.source, options.renderOptions).svg : null);
-  if (svgString == null) throw new Error('createViewer: provide either `source` (SFL) or `svg`.');
+  const resolveSvg = (next: ViewerSource): string => {
+    const svgString = next.svg ?? (next.source != null ? render(next.source, next.renderOptions ?? options.renderOptions).svg : null);
+    if (svgString == null) throw new Error('createViewer: provide either `source` (SFL) or `svg`.');
+    return svgString;
+  };
 
-  const version = parseContractVersion(svgString);
-  if (!isContractCompatible(version)) {
-    throw new Error(`createViewer: incompatible DOM contract (svg=${version}). Renderer and viewer versions differ.`);
-  }
+  let display: DisplayHandle;
+  let interaction: InteractionHandle | null;
 
-  const display: DisplayHandle = mountDisplay(options.container, svgString);
-  const interaction: InteractionHandle | null = options.interactive
-    ? bindInteraction(display, emitter, diagramId)
-    : null;
+  const mount = (svgString: string) => {
+    const version = parseContractVersion(svgString);
+    if (!isContractCompatible(version)) {
+      throw new Error(`createViewer: incompatible DOM contract (svg=${version}). Renderer and viewer versions differ.`);
+    }
+    display = mountDisplay(options.container, svgString);
+    interaction = options.interactive ? bindInteraction(display, emitter, diagramId) : null;
+  };
+
+  mount(resolveSvg(options));
 
   // ready fires after the caller has had a chance to attach on('ready').
   queueMicrotask(() => emitter.emit('ready', { diagramId }));
 
   return {
-    svg: display.svg,
+    get svg() { return display.svg; },
     on: (name, handler) => emitter.on(name, handler),
     getSelection: () => interaction?.getSelection() ?? [],
     select: (ids) => interaction?.select(ids),
     fit: () => display.fit(),
+    update(next) {
+      const svgString = resolveSvg(next);
+      interaction?.destroy();
+      display.destroy();
+      mount(svgString);
+    },
     destroy() {
       interaction?.destroy();
       display.destroy();
@@ -65,5 +92,5 @@ export function createViewer(options: ViewerOptions): Viewer {
 
 export type { OwnerRef, ViewerEventName, ViewerEventHandler, Unsubscribe } from './events';
 export type {
-  OwnerPointerEvent, SelectionChangeEvent, ViewerErrorEvent, ViewerEventMap, Modifiers,
+  OwnerPointerEvent, SelectionChangeEvent, ViewerErrorEvent, ViewerEventMap, Modifiers, TextChangeEvent,
 } from './events';
