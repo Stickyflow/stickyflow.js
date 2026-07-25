@@ -216,7 +216,10 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     const p = mergedProps(block);
     const pos = tupleVals(layoutProp(block, 'position')) ?? [0, 0];
     const size = tupleVals(layoutProp(block, 'size')) ?? [0, 0];
-    const kind = asString(p.get('kind')) ?? '';
+    // A `Table` block (§12.1a) carries its kind in the block keyword itself,
+    // not a `kind:` property — `Container … { kind: table }` (pre-§12.1a) is
+    // still read the same way via the property fallback.
+    const kind = block.kind === 'Table' ? 'table' : (asString(p.get('kind')) ?? '');
     if (kind === 'note') return null;
     const shapeType = asString(p.get('shape'));
 
@@ -333,7 +336,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
   // Container-Blocks (Subgroups sammeln ihre eigenen Mitglieder selbst).
   const directMemberIds = (block: SflBlock): string[] =>
     childBlocks(block)
-      .filter(b => b.kind === 'Entity' || b.kind === 'Container')
+      .filter(b => b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table')
       .map(b => asString(directProps(b).get('id')) ?? b.name);
 
   // rekursiver Walk: Container (Frame/Swimlane/…, immer mit eigener Position/
@@ -352,7 +355,11 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         // Kinder relativ zur absoluten Container-Position; im Container gefundene
         // Groups wandern (flach) in die Ergebnisliste, mit parentFrameId = Container.
         localGroups.push(...walk(child, { x: ent.x, y: ent.y }, ent.id));
-      } else if (child.kind === 'Entity') {
+      } else if (child.kind === 'Entity' || child.kind === 'Table') {
+        // Table (§12.1a) is a positioned board member like Entity — never a
+        // Container: it never holds further Entities/Groups/Links, so unlike
+        // the Container branch above, it doesn't recurse into walk(). Its own
+        // Columns/Rows are read separately inside buildEntity.
         const ent = buildEntity(child, origin, frameId);
         if (ent) entities.push(ent);
       } else if (child.kind === 'Group') {
@@ -381,7 +388,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
   const idByName = new Map<string, string>();
   const indexNames = (blocks: SflBlock[]) => {
     for (const b of blocks) {
-      if (b.kind === 'Entity' || b.kind === 'Container') {
+      if (b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table') {
         idByName.set(b.name, asString(directProps(b).get('id')) ?? b.name);
       }
       indexNames(childBlocks(b));

@@ -4,15 +4,19 @@
 // one-to-one. Entry order is preserved as parsed; the canonical emitter (§15)
 // re-orders on output, so the AST itself is round-trip-neutral.
 
-// `Container` = räumlicher Container (Frame/Swimlane/…, unterschieden per
-// `kind:`); enthält gruppierte oder einzelne Entities. `Entity` bleibt das Blatt.
-// `Layout`/`Style` sind wiederverwendbare, referenzierbare Blätter (§8/§9).
+// `Container` = räumlicher Container, der beliebige Entities/Links/Groups
+// aufnimmt (Frame/Swimlane, unterschieden per `kind:`). `Table` ist bewusst
+// KEIN Container: ihr Inhalt ist ein festes Schema (Columns/Rows), keine frei
+// platzierbaren Kinder — deshalb eigener BlockKind statt `kind: table` auf
+// `Container` (§12.1a). `Entity` bleibt das Blatt. `Layout`/`Style` sind
+// wiederverwendbare, referenzierbare Blätter (§8/§9). `Container t { kind:
+// table … }` bleibt als Alt-Syntax parsebar.
 export type BlockKind =
-  | 'Project' | 'Model' | 'Group' | 'Container' | 'Entity' | 'Link' | 'Layout' | 'Style'
+  | 'Project' | 'Model' | 'Group' | 'Container' | 'Table' | 'Entity' | 'Link' | 'Layout' | 'Style'
   | 'Columns' | 'Column' | 'Rows' | 'Row';
 
 export const BLOCK_KINDS: readonly BlockKind[] = [
-  'Project', 'Model', 'Group', 'Container', 'Entity', 'Link', 'Layout', 'Style',
+  'Project', 'Model', 'Group', 'Container', 'Table', 'Entity', 'Link', 'Layout', 'Style',
   'Columns', 'Column', 'Rows', 'Row',
 ];
 

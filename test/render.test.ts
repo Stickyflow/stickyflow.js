@@ -428,6 +428,41 @@ Model M {
     expect(svg).toContain('>id</tspan>');
   });
 
+  it('renders a dedicated `Table` block (§12.1a) identically to legacy `Container … { kind: table }`', () => {
+    const SFL_TABLE_NEW = `sfl 1.2
+
+Model M {
+  Table t {
+    text: "users"
+    Columns cols {
+      Column field {
+        text: "Field"
+        width: 150
+      }
+      Column type {
+        text: "Type"
+        width: 120
+      }
+    }
+    Rows rows {
+      Row row1 {
+        field: "id"
+        type: "uuid"
+      }
+    }
+    layout {
+      position: 0, 0
+      size: 270, 100
+    }
+  }
+}
+`;
+    const { svg } = render(SFL_TABLE_NEW);
+    expect(svg).toContain('id="sf-table-t"');
+    expect(svg).toContain('>Field</tspan>');
+    expect(svg).toContain('>id</tspan>');
+  });
+
   it('scales column widths to fit when they do not sum to the table\'s own declared width', () => {
     // Same fix, same reasoning as the swimlane lane-scaling test: the real
     // app guarantees columns always sum to the table's own width on every
