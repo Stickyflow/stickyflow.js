@@ -239,7 +239,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
           return {
             id: column.name,
             label: asString(columnProps.get('text')) ?? column.name,
-            width: asNumber(localLayoutProps(column).get('width')) ?? 120,
+            width: asNumber(columnProps.get('width')) ?? 120,
             type: asString(columnProps.get('cellType')) === 'boolean' ? 'boolean' : 'text',
           };
         });

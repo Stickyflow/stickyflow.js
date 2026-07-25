@@ -402,11 +402,11 @@ Model M {
     Columns cols {
       Column field {
         text: "Field"
-        layout { width: 150 }
+        width: 150
       }
       Column type {
         text: "Type"
-        layout { width: 120 }
+        width: 120
       }
     }
     Rows rows {
@@ -441,11 +441,11 @@ Model M {
     Columns cols {
       Column field {
         text: "Field"
-        layout { width: 150 }
+        width: 150
       }
       Column type {
         text: "Type"
-        layout { width: 150 }
+        width: 150
       }
     }
     Rows rows {
@@ -486,7 +486,7 @@ Model M {
     Columns cols {
       Column field {
         text: "Field"
-        layout { width: 150 }
+        width: 150
       }
     }
     Rows rows {
