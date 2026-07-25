@@ -43,18 +43,19 @@ below and enforced by `test/boundary.test.ts`.
 
 ## Known gaps (documented, not hidden)
 
-- **Swimlanes** don't render from SFL: the SFL import collapses them into frames
-  without lane data (`sflToImportJson`), so lanes don't survive the round-trip
-  yet. Entity/frame/table/link paths are covered. (Rendering swimlanes directly
-  via `renderCanvas` works.)
 - **Link waypoints**: v3 JSON carries `segmentOffsets`, not absolute waypoints, so
   orthogonal links use default routing rather than saved bends.
 - **Text outlines** (`textMode: 'outlines'`) are intentionally excluded — they pull
   `opentype.js` + font assets. The FontRegistry decision (ADR-01) addresses this
   before it enters the core path.
-- **Node dragging / editing** is not built yet — the viewer is read-only
-  interaction (select/hover/zoom/pan). Live mutation (the controlled-component
-  round-trip) is the planned next tier.
+- **Model mutation is host-driven, not a library API yet**: `stickyflow/interaction`
+  emits `textChange`/`moveChange`/`resizeChange` events with the new value; the
+  host is responsible for patching its own SFL source and calling
+  `viewer.update()` (see the docs site's `patchSflText.ts` for example patchers).
+  A canonical `patchSfl(...)` helper in the package itself — so hosts don't each
+  hand-roll their own regex/AST patcher — is the natural next step toward the
+  full controlled-component vision (SFL as `value`/`onChange`, like Mermaid text
+  but bidirectional).
 
 > The app still keeps its own copy of the render/SFL files (a transitional dual
 > copy, guarded by the golden suite). This package's `buildRenderScene` carries
