@@ -59,6 +59,25 @@ describe('interactive DOM contract', () => {
     expect(svg).not.toMatch(/<text id="sf-link-text-go"[^>]*data-sf-primary/);
   });
 
+  it('tags links with their connected entity ids and route type', () => {
+    // A DOM-only interaction layer (e.g. a drag handler moving "start") has no
+    // other way to find which links are attached to it — the DOM never
+    // otherwise records link connectivity, only each owner's own id/role/kind.
+    const { svg } = render(SFL_SAMPLE);
+    expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-from="start"/);
+    expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-to="finish"/);
+    expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-route="orthogonal"/);
+  });
+
+  it('tags links with their pinned connection sides, when the source sets one', () => {
+    // A live drag preview needs the real pinned side to anchor its preview at
+    // the same point the static renderer used — without it, the preview would
+    // fall back to guessing a side from the shapes' current relative position.
+    const { svg } = render(SFL_SAMPLE);
+    expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-from-side="bottom"/);
+    expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-to-side="top"/);
+  });
+
   it('escapes owner ids and labels in data attributes', () => {
     const { svg } = renderCanvas({
       shapes: [{

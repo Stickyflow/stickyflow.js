@@ -10,6 +10,13 @@ export function findOwnerNode(svg: SVGSVGElement, id: string, predicate: (el: El
   return null;
 }
 
+/** Every descendant of `svg` sharing `data-sf-id="id"` — a shape's body plus
+ *  its label plus any extra sub-shapes (e.g. a cylinder's cap ellipses), so a
+ *  drag can move all of them together, not just the primary node. */
+export function findAllOwnerNodes(svg: SVGSVGElement, id: string): SVGGraphicsElement[] {
+  return Array.from(svg.querySelectorAll(`[data-sf-id="${CSS.escape(id)}"]`)) as unknown as SVGGraphicsElement[];
+}
+
 export const isPrimary = (el: Element): boolean => el.hasAttribute('data-sf-primary');
 export const isTextLabel = (el: Element): boolean => el.tagName.toLowerCase() === 'text' && !el.hasAttribute('data-sf-primary');
 

@@ -3,6 +3,7 @@ import type { Link, MarkerType, PathType } from '../model/links';
 import type { Shape } from '../model/shapes';
 import type { Swimlane } from '../model/swimlanes';
 import type { Table } from '../model/tables';
+import type { Side } from '../model/geometry/router';
 
 export interface Point { x: number; y: number }
 export interface Bounds { minX: number; minY: number; maxX: number; maxY: number }
@@ -46,6 +47,32 @@ export interface SceneBase {
    * label's glyphs too, since text elements aren't meant to be stroked at all.
    */
   sfPrimary?: boolean;
+  /**
+   * A link's connected entity ids, surfaced as data-sf-from/data-sf-to. Without
+   * this, a DOM-only interaction layer (e.g. a drag handler) has no way to find
+   * which links are attached to a shape being moved — the rendered SVG never
+   * otherwise records link connectivity, only each owner's own id/role/kind.
+   */
+  sfFromId?: string;
+  sfToId?: string;
+  /**
+   * A link's route/path type, surfaced as data-sf-route — lets a live drag
+   * preview call the real router (`model/geometry/connectionLine.ts`'s
+   * getPathPoints, reused directly by `stickyflow/interaction`) with the
+   * right pathType instead of guessing.
+   */
+  sfRoute?: PathType;
+  /**
+   * The `side` an endpoint's connection point is pinned to (when the SFL
+   * source sets one, e.g. `from: entity, right (0.5)`), surfaced as
+   * data-sf-from-side/data-sf-to-side. A live drag preview needs this to
+   * reproduce the same anchor point the static renderer used — without it,
+   * the router falls back to guessing a side from the shapes' relative
+   * position, which can visibly differ from the pinned side once a shape
+   * moves.
+   */
+  sfFromSide?: Side;
+  sfToSide?: Side;
 }
 
 export interface SceneRect extends SceneBase {

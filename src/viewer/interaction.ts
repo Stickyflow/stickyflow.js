@@ -62,14 +62,26 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   const modifiersOf = (e: MouseEvent | KeyboardEvent) => ({ shift: e.shiftKey, ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey });
 
   // --- selection + click ---------------------------------------------------
-  let down: { x: number; y: number; moved: boolean } | null = null;
+  // `panable` is decided once, at pointerdown: a drag starting on empty chrome
+  // pans the camera; a drag starting on an owner (entity/link/…) does not —
+  // otherwise dragging a shape would fight camera panning, and once
+  // `stickyflow/interaction` binds shape movement on top of this same svg, it
+  // would have no way to claim that gesture (this tier can't know about that
+  // tier — one-way dependency — so it backs off from any owned target instead).
+  let down: { x: number; y: number; moved: boolean; panable: boolean } | null = null;
 
-  const onPointerDown = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY, moved: false }; };
+  const onPointerDown = (e: PointerEvent) => {
+    const owner = resolveOwner(e.target as Element | null);
+    down = { x: e.clientX, y: e.clientY, moved: false, panable: !owner };
+  };
 
   const onPointerMove = (e: PointerEvent) => {
     if (down) {
       if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > DRAG_THRESHOLD) down.moved = true;
-      if (down.moved) { display.panBy(e.movementX, e.movementY); return; }
+      if (down.moved) {
+        if (down.panable) display.panBy(e.movementX, e.movementY);
+        return;
+      }
     }
     if (!selectable) return;
     const owner = resolveOwner(e.target as Element | null);

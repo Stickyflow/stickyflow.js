@@ -506,7 +506,13 @@ function buildLink(item: RenderInput['links'][number], index: number): RenderNod
   // Fallback band above shapes' (see buildShape): connectors and their end
   // markers should paint on top of the shapes they connect, not underneath.
   const order = orderOf(link, 20_000 + index);
-  const path: ScenePath = { type: 'path', id: `link-${link.id}`, order, bounds, d: pathData(points, pathType, segments, strokeWidth), style, markerStart: marker(link, 'start'), markerEnd: marker(link, 'end') };
+  const path: ScenePath = {
+    type: 'path', id: `link-${link.id}`, order, bounds, d: pathData(points, pathType, segments, strokeWidth), style,
+    markerStart: marker(link, 'start'), markerEnd: marker(link, 'end'),
+    sfFromId: link.fromId, sfToId: link.toId, sfRoute: pathType,
+    sfFromSide: link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : undefined,
+    sfToSide: link.toPoint && 'side' in link.toPoint ? link.toPoint.side : undefined,
+  };
   const nodes: RenderNode[] = [path];
   if (link.showText && link.text) {
     const fontSize = finite(link.style?.fontSize, 10), width = Math.min(250, Math.max(fontSize * 2, link.text.length * fontSize * .65 + 10));

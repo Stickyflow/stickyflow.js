@@ -1,7 +1,5 @@
 // Event vocabulary for the mutating tier (`stickyflow/interaction`), kept
-// separate from the read-only `stickyflow/viewer` tier's ViewerEventMap —
-// this is where future mutating events (e.g. a later moveChange for dragging)
-// belong, not in the viewer.
+// separate from the read-only `stickyflow/viewer` tier's ViewerEventMap.
 import type { OwnerRef } from '../viewer';
 import { Emitter as GenericEmitter } from '../shared/emitter';
 
@@ -17,10 +15,26 @@ export interface TextChangeEvent {
   text: string;
 }
 
-export interface TextEditEventMap {
-  textChange: TextChangeEvent;
+/**
+ * Fired after a shape drag is released (pointer moved past the drag
+ * threshold at least once). `dx`/`dy` are in the diagram's own SFL/user-space
+ * units, already accounting for the current pan/zoom — add them straight to
+ * the entity's `layout { position }` in your source. Same "controlled
+ * component" contract as TextChangeEvent: the viewer's own SVG stays visually
+ * moved (a live preview) until the host reflects the accepted change via
+ * `viewer.update()`; it snaps back to the old position otherwise.
+ */
+export interface MoveChangeEvent {
+  owner: OwnerRef;
+  dx: number;
+  dy: number;
 }
 
-export type TextEditEventName = keyof TextEditEventMap;
-export class Emitter extends GenericEmitter<TextEditEventMap> {}
+export interface InteractionEventMap {
+  textChange: TextChangeEvent;
+  moveChange: MoveChangeEvent;
+}
+
+export type InteractionEventName = keyof InteractionEventMap;
+export class Emitter extends GenericEmitter<InteractionEventMap> {}
 export type { Unsubscribe } from '../shared/emitter';
