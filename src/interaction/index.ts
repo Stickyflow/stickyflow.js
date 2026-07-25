@@ -35,3 +35,9 @@ export function bindEditing(viewer: Viewer): Interaction {
 
 export type { TextChangeEvent, MoveChangeEvent, ResizeChangeEvent, InteractionEventMap, InteractionEventName } from './events';
 export type { Unsubscribe } from '../shared/emitter';
+
+// Pure (no DOM) — turns the three change events straight into updated SFL
+// text, so a host doesn't have to write its own patcher. Usable from Node
+// too (e.g. a server-side chatbot host with no viewer at all), unlike the
+// DOM-bound bindEditing() above.
+export { applyTextChange, applyMoveChange, applyResizeChange } from './patchSfl';

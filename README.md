@@ -48,14 +48,15 @@ below and enforced by `test/boundary.test.ts`.
 - **Text outlines** (`textMode: 'outlines'`) are intentionally excluded — they pull
   `opentype.js` + font assets. The FontRegistry decision (ADR-01) addresses this
   before it enters the core path.
-- **Model mutation is host-driven, not a library API yet**: `stickyflow/interaction`
-  emits `textChange`/`moveChange`/`resizeChange` events with the new value; the
-  host is responsible for patching its own SFL source and calling
-  `viewer.update()` (see the docs site's `patchSflText.ts` for example patchers).
-  A canonical `patchSfl(...)` helper in the package itself — so hosts don't each
-  hand-roll their own regex/AST patcher — is the natural next step toward the
-  full controlled-component vision (SFL as `value`/`onChange`, like Mermaid text
-  but bidirectional).
+- **No reverse SFL emitter (`canvasStateToSfl`) yet**: `stickyflow/interaction`
+  still emits `textChange`/`moveChange`/`resizeChange` events for the host to
+  apply, rather than mutating a canonical model and serializing it back itself.
+  `applyTextChange`/`applyMoveChange`/`applyResizeChange` (also from
+  `stickyflow/interaction`, pure/no DOM) turn those events straight into
+  updated SFL text via targeted line patches — not a full parse-mutate-emit
+  round trip — so this is a thinner gap than it used to be, but a true
+  controlled-component API (SFL as `value`/`onChange`, the model itself owning
+  the mutation) is still the fuller version of this vision.
 
 > The app still keeps its own copy of the render/SFL files (a transitional dual
 > copy, guarded by the golden suite). This package's `buildRenderScene` carries
@@ -125,6 +126,41 @@ pays nothing for viewer JS. The web component sits on top and composes both.
   document.querySelector('stickyflow-diagram').source = sflText; // or the source="" attribute
 </script>
 ```
+
+## Editing: `stickyflow/interaction`
+
+A third, opt-in tier layered on top of `stickyflow/viewer` (never the other way
+round): double-click to edit text, drag to move (a multi-selection moves
+together), drag a corner handle to resize — all with a live preview (real
+router, real text re-wrap) while the gesture is in progress. The package never
+mutates its own model — it's a **controlled component**: each gesture only
+emits an event with what changed, and the diagram visually reverts unless the
+host calls `viewer.update()` with new content.
+
+```ts
+import { createViewer } from 'stickyflow/viewer'
+import { bindEditing, applyTextChange, applyMoveChange, applyResizeChange } from 'stickyflow/interaction'
+
+const viewer = createViewer({ container, source, interactive: true })
+const editing = bindEditing(viewer)
+
+let currentSource = source
+editing.on('textChange', event => { currentSource = applyTextChange(currentSource, event); viewer.update({ source: currentSource }) })
+editing.on('moveChange', event => { currentSource = applyMoveChange(currentSource, event); viewer.update({ source: currentSource }) })
+editing.on('resizeChange', event => { currentSource = applyResizeChange(currentSource, event); viewer.update({ source: currentSource }) })
+```
+
+`applyTextChange`/`applyMoveChange`/`applyResizeChange` are pure (no DOM, run
+in Node too) and ship so a host doesn't have to hand-roll its own SFL patcher.
+They patch only the touched property's own line(s) — via brace-depth block
+location, not a full parse-mutate-emit round trip (there's no reverse
+serializer in this package yet, see *Known gaps*) — so everything else in the
+document (comments, formatting, unrelated blocks) survives untouched, and
+`applyMoveChange` resolves the entity's *current* position through the real
+parser first, so a delta lands correctly even when the position is inherited
+from a composed `Layout` reference rather than set inline. A host is free to
+ignore these and patch its own structured state instead — the events carry
+everything needed either way.
 
 Inside the viewer the split continues:
 
