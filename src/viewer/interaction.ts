@@ -63,16 +63,23 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
 
   // --- selection + click ---------------------------------------------------
   // `panable` is decided once, at pointerdown: a drag starting on empty chrome
-  // pans the camera; a drag starting on an owner (entity/link/…) does not —
-  // otherwise dragging a shape would fight camera panning, and once
-  // `stickyflow/interaction` binds shape movement on top of this same svg, it
-  // would have no way to claim that gesture (this tier can't know about that
-  // tier — one-way dependency — so it backs off from any owned target instead).
+  // pans the camera; a drag starting on an owner (entity/link/…) or a resize
+  // handle does not — otherwise dragging a shape (or resizing it) would fight
+  // camera panning, and once `stickyflow/interaction` binds shape movement/
+  // resize on top of this same svg, it would have no way to claim that
+  // gesture (this tier can't know about that tier — one-way dependency — so
+  // it backs off from any owned target instead). Resize handles specifically
+  // are the one interaction-tier target this tier CAN recognize by attribute
+  // name even without knowing about that tier — it drew them itself, in
+  // selectionOverlay.ts — unlike an owner's own click target, which handles
+  // don't have (data-sf-id only ever lives on scene nodes, not this overlay).
   let down: { x: number; y: number; moved: boolean; panable: boolean } | null = null;
 
   const onPointerDown = (e: PointerEvent) => {
-    const owner = resolveOwner(e.target as Element | null);
-    down = { x: e.clientX, y: e.clientY, moved: false, panable: !owner };
+    const target = e.target as Element | null;
+    const owner = resolveOwner(target);
+    const onResizeHandle = !!target?.closest('[data-sf-resize-handle]');
+    down = { x: e.clientX, y: e.clientY, moved: false, panable: !owner && !onResizeHandle };
   };
 
   const onPointerMove = (e: PointerEvent) => {
@@ -92,8 +99,13 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
     const wasDrag = down?.moved ?? false;
     down = null;
     if (wasDrag || !selectable) return;
-    const owner = resolveOwner(e.target as Element | null);
-    if (!owner) { setSelection(selectionReducer(selection, { type: 'clear' })); return; }
+    const target = e.target as Element | null;
+    const owner = resolveOwner(target);
+    // A bare (non-drag) click landing on a resize handle isn't a click on
+    // empty chrome — it's an aborted resize attempt. Clearing selection here
+    // would make the handles the reader was just trying to grab vanish out
+    // from under them.
+    if (!owner) { if (!target?.closest('[data-sf-resize-handle]')) setSelection(selectionReducer(selection, { type: 'clear' })); return; }
     owners.set(owner.id, owner);
     setSelection(selectionReducer(selection, clickAction(owner.id, modifiersOf(e))));
     emitter.emit(owner.role === 'link' ? 'linkClick' : 'entityClick', { diagramId, owner, modifiers: modifiersOf(e) });

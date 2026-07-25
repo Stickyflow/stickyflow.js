@@ -78,6 +78,15 @@ describe('interactive DOM contract', () => {
     expect(svg).toMatch(/<path id="sf-link-go"[^>]*data-sf-to-side="top"/);
   });
 
+  it('tags text nodes with vertical alignment and line height', () => {
+    // A live resize preview needs both to re-wrap a label at the new width
+    // using the exact formula textSvg() does — text-anchor already recovers
+    // horizontal align, but nothing else in the rendered SVG encodes these.
+    const { svg } = render(SFL_SAMPLE);
+    expect(svg).toMatch(/<text id="sf-shape-text-start"[^>]*data-sf-valign="middle"/);
+    expect(svg).toMatch(/<text id="sf-shape-text-start"[^>]*data-sf-line-height="1.3"/);
+  });
+
   it('escapes owner ids and labels in data attributes', () => {
     const { svg } = renderCanvas({
       shapes: [{

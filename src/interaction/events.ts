@@ -30,9 +30,31 @@ export interface MoveChangeEvent {
   dy: number;
 }
 
+/**
+ * Fired after a corner-handle resize is released. Both a delta form
+ * (dx/dy/dWidth/dHeight — dx/dy are 0 unless the top or left edge moved,
+ * e.g. dragging the top-left handle) and the resulting absolute bounds
+ * (x/y/width/height) are included: a size is just as often inherited from a
+ * shared `Layout` block as set inline on the entity, so a host can't always
+ * "add a delta to the entity's own size" — it may not have one to add to.
+ * Same controlled-component contract as MoveChangeEvent.
+ */
+export interface ResizeChangeEvent {
+  owner: OwnerRef;
+  dx: number;
+  dy: number;
+  dWidth: number;
+  dHeight: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
+  resizeChange: ResizeChangeEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

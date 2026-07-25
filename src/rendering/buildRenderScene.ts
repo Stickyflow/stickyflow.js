@@ -1,4 +1,4 @@
-import type { GradientColorObject, MeshGradientObject, Shape, ShapeType } from '../model/shapes';
+import type { GradientColorObject, MeshGradientObject, Shape } from '../model/shapes';
 import { SHAPE_DEFAULTS } from '../model/shapes';
 import type { Frame } from '../model/frames';
 import type { Link, MarkerType } from '../model/links';
@@ -6,6 +6,8 @@ import { getLinkStrokeColor } from '../model/links';
 import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
 import { tableBorderGeometry } from '../model/geometry/tables';
+import { localShapePath } from '../model/geometry/shapes';
+import { wrapText } from '../model/geometry/text';
 import { getDashArray, getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../model/geometry/connectionLine';
 import type { PathSegment } from '../model/geometry/router';
 import type {
@@ -113,51 +115,6 @@ function shapeStyle(shape: Shape, diagnostics: RenderDiagnostic[]): SceneStyle {
       dx: Math.cos(angle) * finite(shadow.distance, 5), dy: Math.sin(angle) * finite(shadow.distance, 5),
     } : undefined,
   };
-}
-
-const polygonPath = (points: number[]): string =>
-  points.length < 4 ? '' : `M ${points[0]} ${points[1]} ${points.slice(2).reduce((s, n, i) => s + (i % 2 ? ` ${n}` : ` L ${n}`), '')} Z`;
-
-function localShapePath(type: ShapeType, x: number, y: number, width: number, height: number): string | null {
-  const p = (...coords: number[]) => polygonPath(coords);
-  switch (type) {
-    case 'diamond': return p(x + width / 2, y, x + width, y + height / 2, x + width / 2, y + height, x, y + height / 2);
-    case 'triangle': return p(x + width / 2, y, x, y + height, x + width, y + height);
-    case 'parallelogram': return p(x + width * .15, y, x + width, y, x + width * .85, y + height, x, y + height);
-    case 'trapezoid': return p(x + width * .2, y, x + width * .8, y, x + width, y + height, x, y + height);
-    case 'hexagon': {
-      const radius = Math.min(width, height) / 2, cx = x + width / 2, cy = y + height / 2;
-      const points: number[] = [];
-      for (let i = 0; i < 6; i++) points.push(cx + radius * Math.cos(i * Math.PI / 3), cy + radius * Math.sin(i * Math.PI / 3));
-      return p(...points);
-    }
-    case 'document': {
-      const wave = height * .15;
-      return `M ${x} ${y} H ${x + width} V ${y + height - wave} ` +
-        `Q ${x + width * .875} ${y + height + wave * .15} ${x + width * .75} ${y + height - wave} ` +
-        `Q ${x + width * .625} ${y + height + wave * .15} ${x + width * .5} ${y + height - wave} ` +
-        `Q ${x + width * .375} ${y + height + wave * .15} ${x + width * .25} ${y + height - wave} ` +
-        `Q ${x + width * .125} ${y + height + wave * .15} ${x} ${y + height - wave} Z`;
-    }
-    default: return null;
-  }
-}
-
-function wrapText(text: string, width: number, fontSize: number): string[] {
-  const maxChars = Math.max(1, Math.floor(width / Math.max(1, fontSize * .58)));
-  const result: string[] = [];
-  for (const rawLine of text.split('\n')) {
-    const words = rawLine.split(/\s+/).filter(Boolean);
-    if (!words.length) { result.push(''); continue; }
-    let line = '';
-    for (const word of words) {
-      if (!line) line = word;
-      else if (`${line} ${word}`.length <= maxChars) line += ` ${word}`;
-      else { result.push(line); line = word; }
-    }
-    result.push(line);
-  }
-  return result;
 }
 
 function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]): RenderNode[] {

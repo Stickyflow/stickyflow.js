@@ -187,7 +187,12 @@ function textSvg(node: SceneText, defs: Defs): string {
   // while treating the remaining SVG user units as CSS pixels. Explicit px units
   // keep text and geometry on the same scale after "Convert to Shape".
   const fontSize = `${num(node.fontSize)}px`;
-  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
+  // verticalAlign/lineHeight aren't otherwise recoverable from the rendered
+  // SVG (unlike align, which text-anchor already encodes) — a live resize
+  // preview (stickyflow/interaction's resizeDrag.ts) needs both to re-wrap a
+  // shape's label at the new width using the exact same formula this
+  // function does, not a guessed default.
+  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
 }
 
 function nodeSvg(node: RenderNode, defs: Defs): string {

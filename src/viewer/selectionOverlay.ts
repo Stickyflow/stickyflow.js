@@ -13,6 +13,8 @@ const RING_COLOR = '#9b42df';
 const HANDLE_STROKE = '#992dff';
 const HANDLE_SIZE = 6;
 
+export type ResizeHandle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
 function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
   return doc.createElementNS(NS, tag) as SVGElementTagNameMap[K];
 }
@@ -41,11 +43,13 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
   ring.setAttribute('stroke-width', '3');
   g.appendChild(ring);
 
-  const corners: Array<[number, number]> = [
-    [bbox.x, bbox.y], [bbox.x + bbox.width, bbox.y],
-    [bbox.x, bbox.y + bbox.height], [bbox.x + bbox.width, bbox.y + bbox.height],
+  const corners: Array<[number, number, ResizeHandle, string]> = [
+    [bbox.x, bbox.y, 'top-left', 'nwse-resize'],
+    [bbox.x + bbox.width, bbox.y, 'top-right', 'nesw-resize'],
+    [bbox.x, bbox.y + bbox.height, 'bottom-left', 'nesw-resize'],
+    [bbox.x + bbox.width, bbox.y + bbox.height, 'bottom-right', 'nwse-resize'],
   ];
-  for (const [cx, cy] of corners) {
+  for (const [cx, cy, name, cursor] of corners) {
     const handle = el(doc, 'rect');
     handle.setAttribute('x', String(cx - HANDLE_SIZE / 2));
     handle.setAttribute('y', String(cy - HANDLE_SIZE / 2));
@@ -54,6 +58,13 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
     handle.setAttribute('fill', 'white');
     handle.setAttribute('stroke', HANDLE_STROKE);
     handle.setAttribute('stroke-width', '1');
+    // The overlay group turns pointer-events off (so the ring never steals
+    // clicks meant for the shape underneath) — handles opt back in, and
+    // `stickyflow/interaction`'s resizeDrag.ts looks for exactly this
+    // attribute to tell a resize-handle grab apart from a body drag.
+    handle.setAttribute('data-sf-resize-handle', name);
+    handle.style.pointerEvents = 'auto';
+    handle.style.cursor = cursor;
     g.appendChild(handle);
   }
   return g;
