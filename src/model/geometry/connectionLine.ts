@@ -38,6 +38,34 @@ export interface PathPointsResult {
   segments: PathSegment[]
 }
 
+/** Rounded-corner SVG path data for an orthogonal route's segments — shared by
+ *  the static renderer (buildRenderScene.ts) and a live drag preview
+ *  (stickyflow/interaction's moveDrag.ts), so a link doesn't visibly change
+ *  corner style between "being dragged" and "just rendered". */
+export function roundedOrthogonalPathData(segments: PathSegment[], radius: number): string {
+  if (!segments.length) return ''
+  const raw = [segments[0].start, ...segments.map(segment => segment.end)]
+  const points = raw.filter((point, index) => index === 0 || point.x !== raw[index - 1].x || point.y !== raw[index - 1].y)
+  const corners = points.filter((point, index) => {
+    if (index === 0 || index === points.length - 1) return true
+    const previous = points[index - 1], next = points[index + 1]
+    return !((previous.x === point.x && point.x === next.x) || (previous.y === point.y && point.y === next.y))
+  })
+  if (corners.length < 2) return ''
+  let d = `M ${corners[0].x} ${corners[0].y}`
+  for (let index = 1; index < corners.length - 1; index++) {
+    const previous = corners[index - 1], corner = corners[index], next = corners[index + 1]
+    const incoming = Math.hypot(corner.x - previous.x, corner.y - previous.y)
+    const outgoing = Math.hypot(next.x - corner.x, next.y - corner.y)
+    const r = Math.min(radius, incoming * .4, outgoing * .4)
+    const before = { x: corner.x + (previous.x - corner.x) / incoming * r, y: corner.y + (previous.y - corner.y) / incoming * r }
+    const after = { x: corner.x + (next.x - corner.x) / outgoing * r, y: corner.y + (next.y - corner.y) / outgoing * r }
+    d += ` L ${before.x} ${before.y} Q ${corner.x} ${corner.y} ${after.x} ${after.y}`
+  }
+  const last = corners[corners.length - 1]
+  return `${d} L ${last.x} ${last.y}`
+}
+
 const ORTHOGONAL_EPSILON = 0.5 // px tolerance for float rounding
 
 // Guarantees the "orthogonal" pathType actually lives up to its name: every segment

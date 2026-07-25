@@ -12,6 +12,17 @@ export interface DisplayHandle {
   zoomBy(factor: number, clientX?: number, clientY?: number): void;
   /** Pan by a pixel delta. */
   panBy(dxPixels: number, dyPixels: number): void;
+  /**
+   * Swap the diagram content into the SAME root `<svg>` element (replace
+   * children + presentational attributes, but not the element itself, and
+   * not the current viewBox — the camera is left exactly where it was,
+   * call fit() after if you want the new content's natural bounds instead).
+   * Deliberately not a destroy+remount: anything holding a reference to
+   * `svg` — including `stickyflow/interaction`'s own event listeners, bound
+   * once when a host calls bindEditing() — would otherwise be left attached
+   * to a removed element after the very first update(), silently going dead.
+   */
+  updateContent(svgString: string): void;
   destroy(): void;
 }
 
@@ -27,6 +38,11 @@ function readViewBox(svg: SVGSVGElement): ViewBox {
   return { x: raw[0], y: raw[1], w: raw[2], h: raw[3] };
 }
 
+// Attributes the camera owns on the live <svg> — never overwritten by a
+// content swap, since they encode view state (or DOM plumbing) rather than
+// anything the renderer's own output should dictate after the first mount.
+const CAMERA_OWNED_ATTRS = new Set(['viewbox', 'width', 'height']);
+
 /** Mount an SVG string into a container and return camera controls. */
 export function mountDisplay(container: HTMLElement, svgString: string): DisplayHandle {
   const svg = parseSvg(svgString);
@@ -35,7 +51,7 @@ export function mountDisplay(container: HTMLElement, svgString: string): Display
   svg.style.display = 'block';
   svg.style.touchAction = 'none';
 
-  const natural = readViewBox(svg);
+  let natural = readViewBox(svg);
   let view: ViewBox = { ...natural };
 
   const apply = () => svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
@@ -68,6 +84,15 @@ export function mountDisplay(container: HTMLElement, svgString: string): Display
       view.x -= dxPixels / scale;
       view.y -= dyPixels / scale;
       apply();
+    },
+    updateContent(nextSvgString) {
+      const next = parseSvg(nextSvgString);
+      Array.from(svg.attributes).forEach(attr => { if (!CAMERA_OWNED_ATTRS.has(attr.name.toLowerCase())) svg.removeAttribute(attr.name); });
+      Array.from(next.attributes).forEach(attr => { if (!CAMERA_OWNED_ATTRS.has(attr.name.toLowerCase())) svg.setAttribute(attr.name, attr.value); });
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      while (next.firstChild) svg.appendChild(next.firstChild);
+      natural = readViewBox(next);
+      // view/viewBox untouched on purpose — see the doc comment on this method.
     },
     destroy() { svg.remove(); },
   };

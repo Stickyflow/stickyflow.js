@@ -6,7 +6,7 @@ import { getLinkStrokeColor } from '../model/links';
 import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
 import { tableBorderGeometry } from '../model/geometry/tables';
-import { getDashArray, getLineMidpoint, getPathPoints } from '../model/geometry/connectionLine';
+import { getDashArray, getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../model/geometry/connectionLine';
 import type { PathSegment } from '../model/geometry/router';
 import type {
   Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene, SceneRole,
@@ -446,30 +446,6 @@ function marker(link: Link, end: 'start' | 'end'): MarkerType {
   if (end === 'start' && direction === 'backward') return 'arrow';
   if (end === 'end' && direction === 'forward') return 'arrow';
   return 'none';
-}
-
-function roundedOrthogonalPathData(segments: PathSegment[], radius: number): string {
-  if (!segments.length) return '';
-  const raw = [segments[0].start, ...segments.map(segment => segment.end)];
-  const points = raw.filter((point, index) => index === 0 || point.x !== raw[index - 1].x || point.y !== raw[index - 1].y);
-  const corners = points.filter((point, index) => {
-    if (index === 0 || index === points.length - 1) return true;
-    const previous = points[index - 1], next = points[index + 1];
-    return !((previous.x === point.x && point.x === next.x) || (previous.y === point.y && point.y === next.y));
-  });
-  if (corners.length < 2) return '';
-  let d = `M ${corners[0].x} ${corners[0].y}`;
-  for (let index = 1; index < corners.length - 1; index++) {
-    const previous = corners[index - 1], corner = corners[index], next = corners[index + 1];
-    const incoming = Math.hypot(corner.x - previous.x, corner.y - previous.y);
-    const outgoing = Math.hypot(next.x - corner.x, next.y - corner.y);
-    const r = Math.min(radius, incoming * .4, outgoing * .4);
-    const before = { x: corner.x + (previous.x - corner.x) / incoming * r, y: corner.y + (previous.y - corner.y) / incoming * r };
-    const after = { x: corner.x + (next.x - corner.x) / outgoing * r, y: corner.y + (next.y - corner.y) / outgoing * r };
-    d += ` L ${before.x} ${before.y} Q ${corner.x} ${corner.y} ${after.x} ${after.y}`;
-  }
-  const last = corners[corners.length - 1];
-  return `${d} L ${last.x} ${last.y}`;
 }
 
 function pathData(points: number[], pathType: string, segments: PathSegment[], strokeWidth: number): string {

@@ -28,6 +28,9 @@ export interface ViewerSource {
   source?: string;
   svg?: string;
   renderOptions?: RenderOptions;
+  /** update() only: fit the camera to the new diagram's natural bounds instead
+   *  of carrying over the reader's current pan/zoom (the default — see update()). */
+  resetView?: boolean;
 }
 
 export interface Viewer {
@@ -40,7 +43,13 @@ export interface Viewer {
    * Swap in a freshly-rendered diagram (new SFL source or svg string) — e.g.
    * after `stickyflow/interaction` reports an edit the host accepted. The
    * viewer never mutates its own model, so this is how a host reflects a
-   * change back. Resets camera and selection, same as mounting a new diagram.
+   * change back. Updates the SAME root svg element's content in place (never
+   * replaces it), so the reader's current pan/zoom stays exactly where it
+   * was and anything holding a live reference to `.svg` — including
+   * `stickyflow/interaction`'s own event listeners — keeps working; pass
+   * `resetView: true` to fit the new diagram's natural bounds instead (e.g.
+   * when swapping to an unrelated one). Still-selected owners that exist in
+   * the new content stay selected; ones that don't are dropped.
    */
   update(next: ViewerSource): void;
   destroy(): void;
@@ -81,9 +90,18 @@ export function createViewer(options: ViewerOptions): Viewer {
     fit: () => display.fit(),
     update(next) {
       const svgString = resolveSvg(next);
-      interaction?.destroy();
-      display.destroy();
-      mount(svgString);
+      const version = parseContractVersion(svgString);
+      if (!isContractCompatible(version)) {
+        throw new Error(`viewer.update: incompatible DOM contract (svg=${version}). Renderer and viewer versions differ.`);
+      }
+      display.updateContent(svgString);
+      if (next.resetView) display.fit();
+      // The old selection overlay was just wiped out along with the old
+      // content — reusing select() (rather than a new API) both re-paints it
+      // against the fresh DOM for owners that still exist, and drops any that
+      // don't (findOwnerNode comes back null, paintSelection skips them).
+      const stillSelected = interaction?.getSelection() ?? [];
+      if (stillSelected.length) interaction?.select(stillSelected.map(o => o.id));
     },
     destroy() {
       interaction?.destroy();

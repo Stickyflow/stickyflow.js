@@ -5,8 +5,8 @@
 import type { Viewer, OwnerRef } from '../viewer';
 import { resolveOwner } from '../viewer/contract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../viewer/domQuery';
-import { getPathPoints } from '../model/geometry/connectionLine';
-import { portToPoint, type Side, type Bounds } from '../model/geometry/router';
+import { getPathPoints, roundedOrthogonalPathData } from '../model/geometry/connectionLine';
+import { portToPoint, type Side, type Bounds, type PathSegment } from '../model/geometry/router';
 import type { Link, PathType } from '../model/links';
 import { Emitter } from './events';
 
@@ -21,17 +21,16 @@ const centerOf = (b: Bounds) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 }
 const offsetBounds = (b: Bounds, dx: number, dy: number): Bounds => ({ x: b.x + dx, y: b.y + dy, width: b.width, height: b.height });
 const anchorPoint = (b: Bounds, side: Side | null) => (side ? portToPoint(b, { side, offset: 0.5 }) : centerOf(b));
 
-/** Same shape the real renderer's `d` would take for this pathType, minus
- *  orthogonal corner-rounding — not worth porting for a drag preview that's
- *  replaced by the real render the instant the host reflects the drop. */
-function previewPathData(points: number[], segments: { start: { x: number; y: number }; end: { x: number; y: number } }[], pathType: PathType): string {
+/** The exact same `d` shape the real renderer would produce for this pathType
+ *  (see buildRenderScene.ts's own pathData) — including orthogonal corner
+ *  rounding, via the shared roundedOrthogonalPathData, so a link doesn't
+ *  visibly change corner style between "being dragged" and "just rendered". */
+function previewPathData(points: number[], segments: PathSegment[], pathType: PathType, strokeWidth: number): string {
   if (pathType === 'curved' && points.length >= 8) {
     return `M ${points[0]} ${points[1]} C ${points[2]} ${points[3]} ${points[4]} ${points[5]} ${points[6]} ${points[7]}`;
   }
   if (pathType === 'orthogonal' && segments.length) {
-    let d = `M ${segments[0].start.x} ${segments[0].start.y}`;
-    for (const s of segments) d += ` L ${s.end.x} ${s.end.y}`;
-    return d;
+    return roundedOrthogonalPathData(segments, Math.max(16, strokeWidth * 4));
   }
   if (points.length < 4) return '';
   let d = `M ${points[0]} ${points[1]}`;
@@ -49,6 +48,8 @@ interface LiveLink {
   otherBounds: Bounds;
   /** True if the dragged entity is this link's `from` (affects which end moves). */
   draggedIsFrom: boolean;
+  /** For orthogonal corner-rounding radius — matches buildRenderScene's own formula. */
+  strokeWidth: number;
 }
 
 /** Links attached to `entityId`, live-routed through the real router while
@@ -73,6 +74,7 @@ function findLiveLinks(svg: SVGSVGElement, entityId: string): LiveLink[] {
       toSide: path.getAttribute('data-sf-to-side') as Side | null,
       otherBounds: otherPrimary.getBBox(),
       draggedIsFrom,
+      strokeWidth: Number(path.getAttribute('stroke-width')) || 2,
     });
   });
   return links;
@@ -127,7 +129,7 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
         toPoint: link.toSide ? { side: link.toSide, offset: 0.5 } : undefined,
       };
       const { points, segments } = getPathPoints(fakeLink, from, to, link.pathType);
-      link.path.setAttribute('d', previewPathData(points, segments, link.pathType));
+      link.path.setAttribute('d', previewPathData(points, segments, link.pathType, link.strokeWidth));
     });
   };
 
