@@ -100,4 +100,27 @@ describe('interactive DOM contract', () => {
     expect(svg).toContain('&quot;');
     expect(svg).toContain('aria-label="&lt;x&gt;"');
   });
+
+  it('never emits a literal <script>, a live event-handler attribute, or an unescaped tag break-out from user-supplied text — output is safe to insert via innerHTML', () => {
+    // A hostile label attempting to break out of an attribute AND inject a
+    // new element — the two classic SVG/HTML injection shapes in one string.
+    // The payload text is EXPECTED to appear in the output — as escaped,
+    // inert, on-screen diagram text (e.g. 'onerror=&quot;...&quot;' is just a
+    // visible label, not a live attribute) — these assertions check for the
+    // raw, unescaped constructs specifically, not the substrings in general.
+    const payload = '"><script>alert(1)</script><image href="javascript:alert(2)" onerror="alert(3)"/>';
+    const { svg } = renderCanvas({
+      shapes: [{
+        id: 'a', boardId: 'b', shapeType: 'rectangle', x: 0, y: 0, width: 80, height: 40,
+        text: payload, fillColor: '#fff', strokeColor: '#000', strokeWidth: 1,
+        layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
+      }],
+      frames: [], swimlanes: [], links: [],
+    } as unknown as Parameters<typeof renderCanvas>[0]);
+    expect(svg).not.toContain('<script>');
+    expect(svg).not.toContain('<image ');
+    expect(svg).not.toContain('onerror="'); // a real attribute, not the escaped 'onerror=&quot;'
+    expect(svg).not.toContain('href="javascript:');
+    expect(svg).toContain('&quot;&gt;&lt;script&gt;'); // confirms it round-tripped as inert text, not silently dropped
+  });
 });

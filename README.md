@@ -57,6 +57,26 @@ below and enforced by `test/boundary.test.ts`.
   round trip — so this is a thinner gap than it used to be, but a true
   controlled-component API (SFL as `value`/`onChange`, the model itself owning
   the mutation) is still the fuller version of this vision.
+- **Large diagrams still pay full JS recompute on commit**: `viewer.update()`'s
+  DOM write is incremental (`patchSceneNodes`, only what differs), but the
+  geometry it diffs against is recomputed for the whole scene graph every
+  time — text measurement, link routing, everything — not just the changed
+  entity. Fine at the hundreds-of-shapes scale this package targets; a
+  many-thousand-node board would need incremental geometry, which doesn't
+  exist yet.
+- **No conflict handling for concurrent writers**: `applyMoveChange` and
+  friends patch whatever SFL string you pass in — there's no version stamp or
+  check that it's still the text the drag started from. Two writers racing
+  (a user dragging while an LLM or a collaborator's change lands) can produce
+  a patch applied against stale text. A host serializing writes today avoids
+  this; a built-in guard (a version/hash per patch call) doesn't exist yet.
+- **Accessibility covers structure, not meaning**: the DOM contract gives every
+  node a role, an id, and a focusable/labelled primary (`tabindex`,
+  `aria-label`) — enough for a screen reader to enumerate what's on the board
+  and read each label. It does not yet describe *relationships* (which link
+  connects which entities, table semantics beyond a labelled grid, a
+  meaningful reading order for a non-trivial layout) — a sighted user reads
+  those from position; a screen reader user currently can't.
 
 > The app still keeps its own copy of the render/SFL files (a transitional dual
 > copy, guarded by the golden suite). This package's `buildRenderScene` carries
@@ -77,6 +97,33 @@ sub-nodes) across machines. Now that this package owns the file, the tie-break i
 a locale-independent code-point compare. The change is byte-neutral on the
 current fixtures (ASCII ids), so no golden was regenerated — it removes a latent
 cross-machine hazard without altering output.
+
+**Text layout is deterministic; drawn glyphs aren't.** `wrapText` computes line
+breaks and text bounds from a fixed character-width model
+(`width / (fontSize * 0.58)`, `model/geometry/text.ts`) — not `measureText` or
+any browser/OS font metric — so line breaks, label heights, and therefore link
+anchors and the diagram's own bounds are identical on every machine, regardless
+of installed fonts. What isn't identical is the exact pixel shape of each
+glyph the browser paints inside that layout: two systems missing the requested
+`fontFamily` fall back to different substitute fonts, so a rendered word can
+look subtly different even though its wrapping and bounding box are provably
+the same SVG output. Exact glyph-level determinism would need real font
+metrics baked in (the FontRegistry decision, ADR-01) — out of scope until
+then.
+
+## Security
+
+`render()`'s output is meant to be inserted via `innerHTML` (that's how the
+docs examples and `stickyflow/viewer` use it), so everything user-supplied —
+entity/link text, ids — is escaped before it reaches the SVG string
+(`renderSceneToSvg.ts`'s `xml()`: `& < > " '`), and ids are additionally
+restricted to a safe character set (`safeId`). There is no `<script>`,
+`<foreignObject>`, or event-handler attribute anywhere in the renderer's own
+output, and no attribute ever carries a user-supplied URL — `href`/`url(...)`
+only ever point at gradients/markers/filters this package generates itself, by
+its own generated id. `test/domContract.test.ts` asserts this against an
+actively hostile payload (an attribute break-out plus an inline
+`<script>`/`onerror` string), not just plain text.
 
 ## Interactive DOM contract (ADR-03)
 
