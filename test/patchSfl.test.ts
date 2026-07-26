@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnectChange } from '../src/interaction/patchSfl';
-import { sflToCanvasState } from '../src/sfl';
+import {
+  applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnectChange,
+  insertEntity, removeEntity, insertLink, removeLink,
+} from '../src/interaction/patchSfl';
+import { sflToCanvasState, parse } from '../src/sfl';
 import type { OwnerRef } from '../src/viewer';
 
 const owner = (id: string, role: OwnerRef['role'] = 'entity'): OwnerRef => ({ role, id });
@@ -130,5 +133,138 @@ describe('applyLinkReconnectChange', () => {
   it('is a no-op for an unknown owner id', () => {
     const event = { owner: owner('missing', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.5 };
     expect(applyLinkReconnectChange(sfl, event)).toBe(sfl);
+  });
+});
+
+describe('insertEntity', () => {
+  const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    layout { position: 0, 0; size: 100, 60 }\n  }\n  Container f {\n    kind: frame\n    text: "F"\n    layout { position: 200, 200; size: 400, 300 }\n  }\n}\n`;
+
+  it('appends a new shape as an Entity block at the end of the Model', () => {
+    const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: 'B', x: 300, y: 0, width: 120, height: 60 });
+    expect(() => parse(next)).not.toThrow();
+    const entity = sflToCanvasState(next).entities.find(e => e.id === 'b');
+    expect(entity?.entityType).toBe('shape');
+    expect(entity?.text).toBe('B');
+    expect([entity?.x, entity?.y, entity?.width, entity?.height]).toEqual([300, 0, 120, 60]);
+    // The existing entities are untouched, still present, in their original form.
+    expect(next).toContain('Entity a {');
+    expect(next).toContain('Container f {');
+  });
+
+  it('writes `kind: frame`/`kind: swimlane` for a Container, and neither for a Table', () => {
+    const withFrame = insertEntity(sfl, { id: 'g', kind: 'frame', x: 0, y: 500, width: 200, height: 100 });
+    expect(sflToCanvasState(withFrame).entities.find(e => e.id === 'g')?.entityType).toBe('frame');
+
+    const withSwimlane = insertEntity(sfl, { id: 'p', kind: 'swimlane', x: 0, y: 500, width: 200, height: 100 });
+    expect(sflToCanvasState(withSwimlane).entities.find(e => e.id === 'p')?.entityType).toBe('swimlane');
+
+    const withTable = insertEntity(sfl, { id: 't', kind: 'table', x: 0, y: 500, width: 200, height: 100 });
+    expect(withTable).toContain('Table t {');
+    expect(withTable).not.toMatch(/Table t \{[^}]*kind:/s);
+    expect(sflToCanvasState(withTable).entities.find(e => e.id === 't')?.entityType).toBe('table');
+  });
+
+  it('nests inside parentId with a frame-relative position, given absolute x/y', () => {
+    const next = insertEntity(sfl, { id: 'child', kind: 'shape', x: 210, y: 210, width: 50, height: 50, parentId: 'f' });
+    expect(next).toMatch(/Container f \{[\s\S]*Entity child \{[\s\S]*position: 10, 10[\s\S]*\}[\s\S]*\}/);
+    const child = sflToCanvasState(next).entities.find(e => e.id === 'child');
+    expect(child?.parentFrameId).toBe('f'); // resolved back to the same absolute position
+    expect([child?.x, child?.y]).toEqual([210, 210]);
+  });
+
+  it('injects `body` verbatim, indented, as extra lines in the new block', () => {
+    const next = insertEntity(sfl, {
+      id: 'styled', kind: 'shape', x: 0, y: 0, width: 10, height: 10,
+      body: 'style {\n  shape: pill\n  fill: "#fff"\n}',
+    });
+    expect(next).toContain('shape: pill');
+    expect(sflToCanvasState(next).entities.find(e => e.id === 'styled')?.shapeType).toBe('pill');
+  });
+
+  it('is a no-op when the id already exists, is invalid, or the parentId is unknown', () => {
+    expect(insertEntity(sfl, { id: 'a', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
+    expect(insertEntity(sfl, { id: 'has space', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
+    expect(insertEntity(sfl, { id: 'new', kind: 'shape', x: 0, y: 0, width: 1, height: 1, parentId: 'missing' })).toBe(sfl);
+  });
+});
+
+describe('removeEntity', () => {
+  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n  Link l2 {\n    from: b\n    to: c\n  }\n}\n`;
+
+  it('removes the entity block', () => {
+    const next = removeEntity(sfl, 'b', { alsoRemoveLinks: false });
+    expect(next).not.toContain('Entity b {');
+    expect(next).toContain('Entity a {');
+    expect(next).toContain('Entity c {');
+  });
+
+  it('by default also removes links that reference the removed entity', () => {
+    const next = removeEntity(sfl, 'b');
+    expect(next).not.toContain('Entity b {');
+    expect(next).not.toContain('Link l1 {'); // referenced b via to:
+    expect(next).not.toContain('Link l2 {'); // referenced b via from:
+    expect(() => parse(next)).not.toThrow();
+  });
+
+  it('leaves links dangling when alsoRemoveLinks is false', () => {
+    const next = removeEntity(sfl, 'b', { alsoRemoveLinks: false });
+    expect(next).toContain('Link l1 {');
+    expect(next).toContain('Link l2 {');
+  });
+
+  it('does not corrupt the document when a referenced link is nested INSIDE the removed entity', () => {
+    const nested = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    Entity x { layout { position: 10, 10 } }\n    Entity y { layout { position: 50, 10 } }\n    Link inner {\n      from: x\n      to: y\n    }\n    layout { position: 0, 0; size: 300, 200 }\n  }\n  Entity outside { layout { position: 500, 0 } }\n}\n`;
+    const next = removeEntity(nested, 'f');
+    expect(next).not.toContain('Container f {');
+    expect(next).not.toContain('Link inner {');
+    expect(next).toContain('Entity outside {'); // untouched, well past the removed range
+    expect(() => parse(next)).not.toThrow();
+  });
+
+  it('is a no-op for an unknown id', () => {
+    expect(removeEntity(sfl, 'missing')).toBe(sfl);
+  });
+});
+
+describe('insertLink', () => {
+  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n}\n`;
+
+  it('appends a new Link with sides and fractions', () => {
+    const next = insertLink(sfl, { id: 'l1', fromId: 'a', toId: 'b', fromSide: 'right', fromFraction: 0.5, toSide: 'left', toFraction: 0.25, text: 'go' });
+    expect(() => parse(next)).not.toThrow();
+    const link = sflToCanvasState(next).links.find(l => l.id === 'l1');
+    expect(link?.fromId).toBe('a');
+    expect(link?.toId).toBe('b');
+    expect(link?.fromSide).toBe('right');
+    expect(link?.toFraction).toBe(0.25);
+    expect(link?.text).toBe('go');
+  });
+
+  it('writes a bare from/to (no side) when none is given', () => {
+    const next = insertLink(sfl, { id: 'l1', fromId: 'a', toId: 'b' });
+    expect(next).toMatch(/from: a\s*$/m);
+    expect(next).toMatch(/to: b\s*$/m);
+  });
+
+  it('is a no-op when the id already exists or an endpoint entity does not', () => {
+    const withL1 = insertLink(sfl, { id: 'l1', fromId: 'a', toId: 'b' });
+    expect(insertLink(withL1, { id: 'l1', fromId: 'a', toId: 'b' })).toBe(withL1);
+    expect(insertLink(sfl, { id: 'l2', fromId: 'a', toId: 'missing' })).toBe(sfl);
+    expect(insertLink(sfl, { id: 'l2', fromId: 'missing', toId: 'b' })).toBe(sfl);
+  });
+});
+
+describe('removeLink', () => {
+  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n}\n`;
+
+  it('removes the link block, leaving its entities untouched', () => {
+    const next = removeLink(sfl, 'l1');
+    expect(next).not.toContain('Link l1 {');
+    expect(next).toContain('Entity a {');
+    expect(next).toContain('Entity b {');
+  });
+
+  it('is a no-op for an unknown id', () => {
+    expect(removeLink(sfl, 'missing')).toBe(sfl);
   });
 });

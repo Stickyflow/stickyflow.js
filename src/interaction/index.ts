@@ -45,3 +45,10 @@ export type { Unsubscribe } from '../shared/emitter';
 // server-side chatbot host with no viewer at all), unlike the DOM-bound
 // bindEditing() above.
 export { applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnectChange } from './patchSfl';
+
+// Structural changes (create/delete) — no matching UI gesture exists yet, so
+// these aren't tied to an interaction event the way the apply*Change
+// functions above are; call them directly (e.g. from a host reflecting an
+// LLM-authored change) and pass the result to viewer.update() the same way.
+export { insertEntity, removeEntity, insertLink, removeLink } from './patchSfl';
+export type { InsertEntityOptions, RemoveEntityOptions, InsertLinkOptions } from './patchSfl';
