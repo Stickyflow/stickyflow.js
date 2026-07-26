@@ -43,8 +43,15 @@ below and enforced by `test/boundary.test.ts`.
 
 ## Known gaps (documented, not hidden)
 
-- **Link waypoints**: v3 JSON carries `segmentOffsets`, not absolute waypoints, so
-  orthogonal links use default routing rather than saved bends.
+- **Absolute link waypoints have no SFL representation.** A manually-adjusted
+  orthogonal route's per-segment perpendicular offsets (`segments:` in SFL,
+  `segmentOffsets` once parsed) *do* round-trip and render correctly — fixed:
+  `segments:` parses as a `list` value, which the generic string-props reader
+  (`asString`, used for every other Link property) silently couldn't
+  stringify, so the value never reached the renderer at all before. Absolute
+  waypoints (`Link.waypoints`, a list of literal points rather than relative
+  offsets) are a separate, narrower gap: nothing writes them to SFL text in
+  the first place, so there's nothing yet to read back.
 - **Text outlines** (`textMode: 'outlines'`) are intentionally excluded — they pull
   `opentype.js` + font assets. The FontRegistry decision (ADR-01) addresses this
   before it enters the core path.

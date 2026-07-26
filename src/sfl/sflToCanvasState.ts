@@ -51,6 +51,9 @@ export interface SflLinkOut {
   fromSide?: Side; fromFraction?: number;
   toSide?: Side; toFraction?: number;
   order?: number;
+  /** Per-segment perpendicular offsets for a manually-adjusted orthogonal
+   *  route — absent means "use the router's default bend". */
+  segments?: number[];
   props: Record<string, string>;
 }
 
@@ -85,6 +88,13 @@ const asNumber = (v?: SflValue): number | undefined =>
 
 const tupleVals = (v?: SflValue): number[] | undefined =>
   v && v.type === 'tuple' ? v.values : undefined;
+
+// `segments: [10, 20, 30]` (bracketed) — a `list`, not a `tuple` (§7.1), so
+// tupleVals doesn't cover it. asString() also doesn't (only string/ident/
+// number), which is why this needed its own reader instead of flowing
+// through the generic string-props map like most Link properties.
+const listNumbers = (v?: SflValue): number[] | undefined =>
+  v && v.type === 'list' ? v.values.flatMap(item => item.type === 'number' ? [item.value] : []) : undefined;
 
 const numStr = (n: number): string => (Number.isInteger(n) ? String(n) : String(n));
 
@@ -407,7 +417,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     };
     const f = endpoint(fromV);
     const t = endpoint(toV);
-    const structural = new Set(['id', 'from', 'to', 'text', 'order']);
+    const structural = new Set(['id', 'from', 'to', 'text', 'order', 'segments']);
     const props: Record<string, string> = {};
     for (const [k, v] of p) {
       if (structural.has(k)) continue;
@@ -421,6 +431,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       fromSide: f.side, fromFraction: f.fraction,
       toSide: t.side, toFraction: t.fraction,
       order: asNumber(p.get('order')),
+      segments: listNumbers(p.get('segments')),
       props,
     };
   });

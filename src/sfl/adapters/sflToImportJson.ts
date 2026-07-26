@@ -156,7 +156,11 @@ function linkObject(l: SflLinkOut): any {
     },
     startMarker: p.markerStart,
     endMarker: p.markerEnd,
-    segmentOffsets: p.segments ? safeJson(p.segments) : undefined,
+    // Was silently lost on read before: `segments:` parses as a `list`
+    // SflValue, which the generic string-props map's asString() can't
+    // stringify (only string/ident/number) — sflToCanvasState reads it into
+    // its own `l.segments` field instead of routing it through `p`.
+    segmentOffsets: l.segments,
     fromPoint: l.fromSide ? { side: l.fromSide, offset: l.fromFraction } : undefined,
     toPoint: l.toSide ? { side: l.toSide, offset: l.toFraction } : undefined,
     order: l.order,

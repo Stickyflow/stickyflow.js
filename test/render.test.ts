@@ -188,6 +188,44 @@ Model Demo {
     expect(svg).toContain('>next</tspan>');
   });
 
+  it('bends an orthogonal link per its `segments:` offsets instead of always using the router\'s default route', () => {
+    // `segments:` parses as a `list` SflValue — asString() (used for every
+    // other Link property) only stringifies string/ident/number, so this
+    // used to be silently dropped between sflToCanvasState and the render
+    // input, and every link rendered with the router's default bend
+    // regardless of any saved offsets. Proven here end-to-end (SFL text ->
+    // SVG), not just at the intermediate data-structure level.
+    //
+    // right -> left with a real diagonal offset (not axis-aligned, unlike
+    // the shared SFL fixture's straight bottom-to-top pair above) so the
+    // route actually has a movable middle segment for `segments[2]` to
+    // shift — an aligned pair collapses to a trivial 2-point straight line
+    // with nothing offset[2] could visibly move.
+    const linkSfl = (segments?: string) => `sfl 1.2
+
+Model M {
+  Entity a {
+    layout { position: 0, 0; size: 100, 60 }
+  }
+  Entity b {
+    layout { position: 300, 150; size: 100, 60 }
+  }
+  Link go {
+    from: a, right (0.5)
+    to: b, left (0.5)
+    route: orthogonal
+${segments ? `    segments: ${segments}\n` : ''}  }
+}
+`;
+    const linkPath = (svg: string) => svg.match(/<path id="sf-link-go"[^>]*\sd="([^"]+)"/)?.[1];
+    const baselineD = linkPath(render(linkSfl()).svg);
+    expect(baselineD).toBeTruthy();
+
+    const bentD = linkPath(render(linkSfl('[0, 0, 60, 0]')).svg);
+    expect(bentD).toBeTruthy();
+    expect(bentD).not.toBe(baselineD);
+  });
+
   it('lets a link opt out of its text label with showText: false', () => {
     const SFL_HIDDEN = SFL.replace('text: "next"', 'text: "next"\n    showText: false');
     const { svg } = render(SFL_HIDDEN);
