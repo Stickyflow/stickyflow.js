@@ -161,9 +161,14 @@ export interface Link {
   text?:      string       // Text label on connection line
   showText?:  boolean      // Show/hide text label
   style?:     LinkStyle    // Visual styling
-  // Feste Verbindungspunkte als Offsets (0-1 relativ zu Element-Grenzen) oder absolute Koordinaten
-  fromPoint?: { side: 'top' | 'right' | 'bottom' | 'left', offset: number } | { x: number; y: number; isAbsolute: true }
-  toPoint?:   { side: 'top' | 'right' | 'bottom' | 'left', offset: number } | { x: number; y: number; isAbsolute: true }
+  // Feste Verbindungspunkte als Offsets (0-1 relativ zu Element-Grenzen) oder absolute Koordinaten.
+  // `offset` is genuinely optional, not just typed loosely: SFL §10 lets the
+  // fraction in `side (fraction)` be omitted, and the SFL adapter passes that
+  // straight through as `undefined` — it does not invent a 0.5 on its behalf.
+  // Marking this required previously let `sflToRenderInput.ts` multiply a width
+  // by `undefined` without a type error.
+  fromPoint?: { side: 'top' | 'right' | 'bottom' | 'left', offset?: number } | { x: number; y: number; isAbsolute: true }
+  toPoint?:   { side: 'top' | 'right' | 'bottom' | 'left', offset?: number } | { x: number; y: number; isAbsolute: true }
   
   // 🎯 NEW MIRO-STYLE: Per-segment offsets for multi-handle path adjustment
   // Array of perpendicular offsets, one per movable segment (middle segments only, not start/end)

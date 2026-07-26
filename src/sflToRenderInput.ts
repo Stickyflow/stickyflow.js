@@ -36,11 +36,20 @@ function pointFor(link: Link, end: 'from' | 'to', elements: PositionedElement[])
   if (explicit && 'isAbsolute' in explicit) return { x: explicit.x, y: explicit.y };
   if (!element) return { x: 0, y: 0 };
   if (explicit && 'side' in explicit) {
+    // Spec §10: the fraction in `side (fraction)` is optional, and a renderer
+    // "may assume 0.5" when it's absent — `from: entity, right` alone is valid
+    // SFL. `explicit.offset` is `undefined` in exactly that case (traced back
+    // through sflToCanvasState's `fraction?: number`), and multiplying a width
+    // by `undefined` silently produces NaN — not just for this one endpoint,
+    // but for the whole scene once it poisons the bounds computed from it. This
+    // is the only site that reads a parsed link's `.offset`; everywhere else
+    // (getPathPoints, buildRenderScene) only reads `.side`.
+    const offset = explicit.offset ?? 0.5;
     switch (explicit.side) {
-      case 'top': return { x: element.x + element.width * explicit.offset, y: element.y };
-      case 'right': return { x: element.x + element.width, y: element.y + element.height * explicit.offset };
-      case 'bottom': return { x: element.x + element.width * explicit.offset, y: element.y + element.height };
-      case 'left': return { x: element.x, y: element.y + element.height * explicit.offset };
+      case 'top': return { x: element.x + element.width * offset, y: element.y };
+      case 'right': return { x: element.x + element.width, y: element.y + element.height * offset };
+      case 'bottom': return { x: element.x + element.width * offset, y: element.y + element.height };
+      case 'left': return { x: element.x, y: element.y + element.height * offset };
     }
   }
   return { x: element.x + element.width / 2, y: element.y + element.height / 2 };

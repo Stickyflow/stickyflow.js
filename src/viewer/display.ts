@@ -136,6 +136,12 @@ export function mountDisplay(container: HTMLElement, svgString: string): Display
     fit() { view = { ...natural }; apply(); },
     zoomBy(factor, clientX, clientY) {
       const rect = svg.getBoundingClientRect();
+      // A detached or not-yet-laid-out svg measures 0x0, and dividing by that
+      // puts NaN into the viewBox — which does not merely stop the zoom, it
+      // blanks the whole diagram with no error anywhere. Bail instead: there is
+      // no meaningful anchor point on a box with no size. (pxPerUnit() below
+      // already guards the same way for panning.)
+      if (rect.width <= 0 || rect.height <= 0) return;
       const cx = clientX ?? rect.left + rect.width / 2;
       const cy = clientY ?? rect.top + rect.height / 2;
       // Anchor: keep the world point under the cursor fixed while scaling.

@@ -188,6 +188,34 @@ Model Demo {
     expect(svg).toContain('>next</tspan>');
   });
 
+  it('gives a finite scene height when a link endpoint omits its fraction (spec §10: optional, defaults to 0.5)', () => {
+    // `from: a, right` with no `(fraction)` is valid SFL — the fraction may be
+    // omitted, and a renderer "may assume 0.5". sflToRenderInput's pointFor()
+    // used to multiply an element's width/height by that missing fraction
+    // directly (`element.width * explicit.offset`), and `width * undefined` is
+    // NaN — which then poisons the whole scene's bounds, not just this one
+    // link: render() silently returned `height: NaN` with zero diagnostics, and
+    // a NaN-valued SVG viewBox is rejected by browsers outright, effectively
+    // freezing pan/zoom on top of it.
+    const withoutFraction = `sfl 1.2
+
+Model m {
+  Entity a { text: "A"
+    layout { position: 60, 60
+      size: 160, 70 } }
+  Entity b { text: "B"
+    layout { position: 500, 60
+      size: 160, 70 } }
+  Link l1 { from: a, right
+    to: b, left }
+}
+`;
+    const { height, width, diagnostics } = render(withoutFraction);
+    expect(Number.isFinite(height)).toBe(true);
+    expect(Number.isFinite(width)).toBe(true);
+    expect(diagnostics).toEqual([]);
+  });
+
   it('bends an orthogonal link per its `segments:` offsets instead of always using the router\'s default route', () => {
     // `segments:` parses as a `list` SflValue — asString() (used for every
     // other Link property) only stringifies string/ident/number, so this
