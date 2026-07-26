@@ -276,6 +276,19 @@ npx vite demo      # then open the printed URL
 - `web-component.html` — `<stickyflow-diagram>` static **and** interactive
   side by side.
 
+### Examples (standalone projects)
+
+`demo/` above runs against this package directly. `examples/` holds self-contained
+projects with their own `package.json`, each consuming the package the way a real
+host would:
+
+- **`examples/sfl-chat`** — an LLM answers in SFL, the diagram renders and stays
+  editable, and your canvas edits become the context for the next turn. The full
+  round trip this package exists for, in about 200 lines. Needs an OpenAI key;
+  see its own README.
+
+Neither `demo/` nor `examples/` ships in the npm tarball (`files` is an allowlist).
+
 ## Build & distribution
 
 The package is self-contained (`npm install` here pulls only `tsup`, `typescript`,
