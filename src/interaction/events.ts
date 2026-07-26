@@ -1,6 +1,7 @@
 // Event vocabulary for the mutating tier (`stickyflow/interaction`), kept
 // separate from the read-only `stickyflow/viewer` tier's ViewerEventMap.
 import type { OwnerRef } from '../viewer';
+import type { Side } from '../model/geometry/router';
 import { Emitter as GenericEmitter } from '../shared/emitter';
 
 /**
@@ -51,10 +52,31 @@ export interface ResizeChangeEvent {
   height: number;
 }
 
+/**
+ * Fired after dragging a link's start or end handle onto a new anchor point
+ * is released — either a different spot on the same entity (re-pinning the
+ * side/fraction) or an entirely different entity. `target` is whatever was
+ * under the pointer at drop; `side`/`fraction` are that entity's own anchor
+ * (fraction 0..1 along the side, same meaning as the `(0.5)` in
+ * `from: a, right (0.5)`). Only fires on a VALID drop (released over some
+ * entity) — dropped over empty canvas cancels the gesture: the live preview
+ * reverts and no event fires, same as pressing Escape mid-drag would. Same
+ * controlled-component contract as MoveChangeEvent: nothing is real until
+ * the host reflects it via `viewer.update()`.
+ */
+export interface LinkReconnectEvent {
+  owner: OwnerRef;
+  end: 'from' | 'to';
+  target: OwnerRef;
+  side: Side;
+  fraction: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
   resizeChange: ResizeChangeEvent;
+  linkReconnect: LinkReconnectEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyTextChange, applyMoveChange, applyResizeChange } from '../src/interaction/patchSfl';
+import { applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnectChange } from '../src/interaction/patchSfl';
 import { sflToCanvasState } from '../src/sfl';
 import type { OwnerRef } from '../src/viewer';
 
@@ -100,5 +100,35 @@ describe('applyResizeChange', () => {
   it('is a no-op for an unknown owner id', () => {
     const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n}\n`;
     expect(applyResizeChange(sfl, { ...event, owner: owner('missing') })).toBe(sfl);
+  });
+});
+
+describe('applyLinkReconnectChange', () => {
+  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l {\n    from: a, right (0.5)\n    to: b, left (0.5)\n    text: "creates"\n  }\n}\n`;
+
+  it('reconnects the `to` end to a different entity, side, and fraction', () => {
+    const event = { owner: owner('l', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.25 };
+    const next = applyLinkReconnectChange(sfl, event);
+    expect(next).toContain('to: c, top (0.25)');
+    expect(next).toContain('from: a, right (0.5)'); // untouched
+    expect(next).toContain('text: "creates"'); // untouched sibling property
+  });
+
+  it('reconnects the `from` end to a different spot on the SAME entity', () => {
+    const event = { owner: owner('l', 'link'), end: 'from' as const, target: owner('a'), side: 'bottom' as const, fraction: 0.8 };
+    const next = applyLinkReconnectChange(sfl, event);
+    expect(next).toContain('from: a, bottom (0.8)');
+    expect(next).toContain('to: b, left (0.5)'); // untouched
+  });
+
+  it('rounds the fraction to two decimal places', () => {
+    const event = { owner: owner('l', 'link'), end: 'to' as const, target: owner('c'), side: 'left' as const, fraction: 0.123456 };
+    const next = applyLinkReconnectChange(sfl, event);
+    expect(next).toContain('to: c, left (0.12)');
+  });
+
+  it('is a no-op for an unknown owner id', () => {
+    const event = { owner: owner('missing', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.5 };
+    expect(applyLinkReconnectChange(sfl, event)).toBe(sfl);
   });
 });

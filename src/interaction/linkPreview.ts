@@ -16,7 +16,7 @@ export const anchorPoint = (b: Bounds, side: Side | null) => (side ? portToPoint
  *  (see buildRenderScene.ts's own pathData) — including orthogonal corner
  *  rounding, via the shared roundedOrthogonalPathData, so a link doesn't
  *  visibly change corner style between "being dragged" and "just rendered". */
-function previewPathData(points: number[], segments: PathSegment[], pathType: PathType, strokeWidth: number): string {
+export function previewPathData(points: number[], segments: PathSegment[], pathType: PathType, strokeWidth: number): string {
   if (pathType === 'curved' && points.length >= 8) {
     return `M ${points[0]} ${points[1]} C ${points[2]} ${points[3]} ${points[4]} ${points[5]} ${points[6]} ${points[7]}`;
   }

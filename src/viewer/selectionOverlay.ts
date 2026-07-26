@@ -14,6 +14,7 @@ const HANDLE_STROKE = '#992dff';
 const HANDLE_SIZE = 6;
 
 export type ResizeHandle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type LinkEndpoint = 'from' | 'to';
 
 function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
   return doc.createElementNS(NS, tag) as SVGElementTagNameMap[K];
@@ -85,12 +86,22 @@ export function linkSelectionOverlay(doc: Document, primary: SVGPathElement, id:
   g.appendChild(halo);
 
   const length = primary.getTotalLength();
-  for (const point of [primary.getPointAtLength(0), primary.getPointAtLength(length)]) {
+  const ends: Array<[number, LinkEndpoint]> = [[0, 'from'], [length, 'to']];
+  for (const [atLength, end] of ends) {
+    const point = primary.getPointAtLength(atLength);
     const dot = el(doc, 'circle');
     dot.setAttribute('cx', String(point.x));
     dot.setAttribute('cy', String(point.y));
-    dot.setAttribute('r', '4');
+    dot.setAttribute('r', '5');
     dot.setAttribute('fill', RING_COLOR);
+    dot.setAttribute('stroke', 'white');
+    dot.setAttribute('stroke-width', '1.5');
+    // Same opt-back-into-pointer-events pattern as the resize handles above —
+    // `stickyflow/interaction`'s linkEndpointDrag.ts looks for this attribute
+    // to tell an endpoint-reconnect grab apart from selecting the link itself.
+    dot.setAttribute('data-sf-link-endpoint', end);
+    dot.style.pointerEvents = 'auto';
+    dot.style.cursor = 'crosshair';
     g.appendChild(dot);
   }
   return g;

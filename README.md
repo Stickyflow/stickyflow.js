@@ -178,15 +178,18 @@ pays nothing for viewer JS. The web component sits on top and composes both.
 
 A third, opt-in tier layered on top of `stickyflow/viewer` (never the other way
 round): double-click to edit text, drag to move (a multi-selection moves
-together), drag a corner handle to resize — all with a live preview (real
-router, real text re-wrap) while the gesture is in progress. The package never
-mutates its own model — it's a **controlled component**: each gesture only
-emits an event with what changed, and the diagram visually reverts unless the
-host calls `viewer.update()` with new content.
+together), drag a corner handle to resize, drag either endpoint of a selected
+link onto a new anchor — a different spot on the same entity, or a different
+entity entirely — to reconnect it. All with a live preview (real router, real
+text re-wrap) while the gesture is in progress. The package never mutates its
+own model — it's a **controlled component**: each gesture only emits an event
+with what changed, and the diagram visually reverts unless the host calls
+`viewer.update()` with new content (a link-reconnect drag released over empty
+canvas cancels the same way — the event simply never fires).
 
 ```ts
 import { createViewer } from 'stickyflow/viewer'
-import { bindEditing, applyTextChange, applyMoveChange, applyResizeChange } from 'stickyflow/interaction'
+import { bindEditing, applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnectChange } from 'stickyflow/interaction'
 
 const viewer = createViewer({ container, source, interactive: true })
 const editing = bindEditing(viewer)
@@ -195,10 +198,12 @@ let currentSource = source
 editing.on('textChange', event => { currentSource = applyTextChange(currentSource, event); viewer.update({ source: currentSource }) })
 editing.on('moveChange', event => { currentSource = applyMoveChange(currentSource, event); viewer.update({ source: currentSource }) })
 editing.on('resizeChange', event => { currentSource = applyResizeChange(currentSource, event); viewer.update({ source: currentSource }) })
+editing.on('linkReconnect', event => { currentSource = applyLinkReconnectChange(currentSource, event); viewer.update({ source: currentSource }) })
 ```
 
-`applyTextChange`/`applyMoveChange`/`applyResizeChange` are pure (no DOM, run
-in Node too) and ship so a host doesn't have to hand-roll its own SFL patcher.
+`applyTextChange`/`applyMoveChange`/`applyResizeChange`/`applyLinkReconnectChange`
+are pure (no DOM, run in Node too) and ship so a host doesn't have to hand-roll
+its own SFL patcher.
 They patch only the touched property's own line(s) — via brace-depth block
 location, not a full parse-mutate-emit round trip (there's no reverse
 serializer in this package yet, see *Known gaps*) — so everything else in the

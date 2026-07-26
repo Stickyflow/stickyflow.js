@@ -16,7 +16,8 @@
 // the document — comments, formatting, unrelated blocks — is untouched
 // automatically, because it's simply never read.
 import { sflToCanvasState } from '../sfl';
-import type { TextChangeEvent, MoveChangeEvent, ResizeChangeEvent } from './events';
+import type { Side } from '../model/geometry/router';
+import type { TextChangeEvent, MoveChangeEvent, ResizeChangeEvent, LinkReconnectEvent } from './events';
 
 const OWNER_HEADER = /^\s*(Entity|Container|Link)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 
@@ -91,6 +92,7 @@ function findDirectProperty(lines: string[], range: LineRange, key: string): num
 
 const indentOf = (line: string): string => line.match(/^[ \t]*/)?.[0] ?? '';
 const round1 = (n: number): number => Math.round(n * 10) / 10;
+const round2 = (n: number): number => Math.round(n * 100) / 100;
 const escapeSflString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
 function setOrInsertText(lines: string[], range: LineRange, text: string): void {
@@ -133,6 +135,22 @@ function setOrInsertLayoutTuples(lines: string[], range: LineRange, props: Reado
   }
 }
 
+/** Sets (or inserts) a Link's `from:`/`to:` endpoint — replaces the whole
+ *  `path, side (fraction)` value, since a reconnect always changes all three
+ *  parts together (a new target implies a new side/fraction on it too). */
+function setEndpoint(lines: string[], range: LineRange, key: 'from' | 'to', targetName: string, side: Side, fraction: number): void {
+  const value = `${targetName}, ${side} (${round2(fraction)})`;
+  const existing = findDirectProperty(lines, range, key);
+  if (existing !== null) {
+    lines[existing] = lines[existing].replace(new RegExp(`${key}\\b\\s*:.*$`), `${key}: ${value}`);
+    return;
+  }
+  // from/to are required by the grammar — every real Link already has both;
+  // this only matters for a hand-edited, otherwise-malformed document.
+  const indent = `${indentOf(lines[range.start])}    `;
+  lines.splice(range.start + 1, 0, `${indent}${key}: ${value}`);
+}
+
 /** Applies a `textChange` event's new label to the owner's `text:` —
  *  inserted right after its opening brace if it doesn't have one yet (e.g. a
  *  previously unlabeled link). Works for both Entity and Link owners; a no-op
@@ -170,5 +188,17 @@ export function applyResizeChange(sfl: string, event: ResizeChangeEvent): string
   const range = findOwnerBlock(lines, event.owner.id);
   if (!range) return sfl;
   setOrInsertLayoutTuples(lines, range, [['position', event.x, event.y], ['size', event.width, event.height]]);
+  return lines.join('\n');
+}
+
+/** Applies a `linkReconnect` event's new anchor to the link's `from:`/`to:`
+ *  endpoint (whichever `event.end` names) — the target entity, side, and
+ *  fraction all change together as one value. A no-op if `owner.id` (the
+ *  link) isn't found in `sfl` at all. */
+export function applyLinkReconnectChange(sfl: string, event: LinkReconnectEvent): string {
+  const lines = sfl.split('\n');
+  const range = findOwnerBlock(lines, event.owner.id);
+  if (!range) return sfl;
+  setEndpoint(lines, range, event.end, event.target.id, event.side, event.fraction);
   return lines.join('\n');
 }
