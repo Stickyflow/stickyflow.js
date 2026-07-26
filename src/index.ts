@@ -21,4 +21,5 @@ export type {
 // The staged pipeline behind render(): SFL → canvas state → v3 JSON →
 // RenderInput. Exposed for tools that need an intermediate representation.
 export { sflToCanvasState, sflToImportJson } from './sfl';
+export type { SflCanvasState, SflEntityOut, SflLinkOut, SflGroupOut } from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';
