@@ -35,6 +35,19 @@ function nearestPort(bounds: Bounds, point: { x: number; y: number }): { side: S
   return best;
 }
 
+/** Which of the four sides `to` sits in, as seen from `from` — same
+ *  angle-quadrant heuristic getPathPoints itself falls back to when a link
+ *  has no pinned side at all. Used only while the dragged end is "free"
+ *  (not currently over any entity), so the ghost preview still points a
+ *  sensible direction instead of keeping whatever side it last had. */
+function sideFromDirection(from: { x: number; y: number }, to: { x: number; y: number }): Side {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  if (angle >= -Math.PI / 4 && angle < Math.PI / 4) return 'right';
+  if (angle >= Math.PI / 4 && angle < (3 * Math.PI) / 4) return 'bottom';
+  if (angle >= (-3 * Math.PI) / 4 && angle < -Math.PI / 4) return 'top';
+  return 'left';
+}
+
 interface Candidate {
   owner: OwnerRef;
   bounds: Bounds;
@@ -160,13 +173,20 @@ export function bindLinkEndpointDrag(viewer: Viewer, emitter: Emitter): LinkEndp
         break;
       }
     }
-    // No entity under the pointer right now — leave the preview exactly as
-    // it last validly was rather than jumping to the raw cursor position;
-    // a link that isn't attached to anything has no meaningful place to draw.
-    if (!target) return;
-    const port = nearestPort(target.bounds, point);
-    drag.hit = { owner: target.owner, side: port.side, offset: port.offset };
-    applyPreview(portToPoint(target.bounds, port), port.side);
+    if (target) {
+      // Over an entity — snap to the nearest point on its perimeter, same as
+      // the eventual drop would use.
+      const port = nearestPort(target.bounds, point);
+      drag.hit = { owner: target.owner, side: port.side, offset: port.offset };
+      applyPreview(portToPoint(target.bounds, port), port.side);
+    } else {
+      // Over empty canvas — a "ghost" preview that follows the raw cursor
+      // instead of freezing the link at its last valid position, so the
+      // drag reads as continuous. Dropping here still cancels (drag.hit
+      // stays null): nothing under the cursor means nothing to connect to.
+      drag.hit = null;
+      applyPreview(point, sideFromDirection(drag.fixedPoint, point));
+    }
   };
 
   const onPointerUp = (e: PointerEvent) => {

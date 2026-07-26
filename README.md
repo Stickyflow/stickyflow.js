@@ -180,8 +180,11 @@ A third, opt-in tier layered on top of `stickyflow/viewer` (never the other way
 round): double-click to edit text, drag to move (a multi-selection moves
 together), drag a corner handle to resize, drag either endpoint of a selected
 link onto a new anchor — a different spot on the same entity, or a different
-entity entirely — to reconnect it. All with a live preview (real router, real
-text re-wrap) while the gesture is in progress. The package never mutates its
+entity entirely — to reconnect it. The dragged endpoint follows the cursor as
+a free "ghost" over empty canvas and snaps to the nearest point on whichever
+entity's under the pointer, so the gesture reads as continuous rather than
+freezing until you land exactly on a target. All with a live preview (real
+router, real text re-wrap) while the gesture is in progress. The package never mutates its
 own model — it's a **controlled component**: each gesture only emits an event
 with what changed, and the diagram visually reverts unless the host calls
 `viewer.update()` with new content (a link-reconnect drag released over empty
