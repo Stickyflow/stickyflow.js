@@ -119,6 +119,58 @@ describe('render core runs headless through the package (real app source)', () =
     expect(svg).toContain('sf-marker-zero_many');
     expect(svg).toContain('>0..*</tspan>');
   });
+
+  it('cuts a real gap in a link\'s stroke where its text label sits, instead of drawing the label on top of an unbroken line', () => {
+    // Matches the interactive canvas app's own ConnectionLine (which literally
+    // splits into two Konva Lines around the label) — here as a single path's
+    // stroke-dasharray instead, since other code (selectionOverlay.ts,
+    // linkEndpointDrag.ts) reads getTotalLength()/getPointAtLength() on this
+    // path assuming it spans the link end-to-end, which splitting into two
+    // real <path> elements would break.
+    const link = {
+      id: 'labeled', fromId: 'from', toId: 'to', text: 'HTTP Request', showText: true,
+      style: { pathType: 'straight', color: '#334155' },
+      layer_group: 'content', order_key: 'a', is_visible: true, is_locked: false,
+    };
+    const input = {
+      shapes: [], frames: [], swimlanes: [],
+      links: [{ link, from: { x: 0, y: 0 }, to: { x: 400, y: 0 } }],
+    } as unknown as RenderInput;
+
+    const { svg } = renderCanvas(input);
+
+    expect(svg).toContain('data-sf-label-gap="true"');
+    const dasharray = svg.match(/id="sf-link-labeled"[^>]*stroke-dasharray="([^"]+)"/)?.[1];
+    expect(dasharray).toBeDefined();
+    const [dashBefore, gapLength] = dasharray!.split(' ').map(Number);
+    expect(dashBefore).toBeGreaterThan(0);
+    expect(gapLength).toBeGreaterThan(0);
+    // getTotalLength()-dependent consumers need the `d` itself untouched —
+    // the gap is purely a paint-time dasharray, not a shorter/split path.
+    expect(svg).toContain('d="M 0 0 L 400 0"');
+  });
+
+  it('leaves a dashed link\'s own stroke pattern alone when it has a text label, rather than overwriting it with a label gap', () => {
+    // A single stroke-dasharray can't encode both a line-style dash pattern and
+    // a label gap at once — narrow, documented tradeoff (see buildLink): a
+    // dashed/dotted link with a label keeps the pre-existing "line runs
+    // through the label" look instead of silently dropping its dash style.
+    const link = {
+      id: 'dashedLabeled', fromId: 'from', toId: 'to', text: 'retry', showText: true,
+      style: { pathType: 'straight', color: '#334155', strokeStyle: 'dashed' },
+      layer_group: 'content', order_key: 'a', is_visible: true, is_locked: false,
+    };
+    const input = {
+      shapes: [], frames: [], swimlanes: [],
+      links: [{ link, from: { x: 0, y: 0 }, to: { x: 400, y: 0 } }],
+    } as unknown as RenderInput;
+
+    const { svg } = renderCanvas(input);
+
+    expect(svg).not.toContain('data-sf-label-gap');
+    // getDashArray(strokeWidth=2, 'dashed') = [strokeWidth*8, strokeWidth*4]
+    expect(svg).toMatch(/id="sf-link-dashedLabeled"[^>]*stroke-dasharray="16 8"/);
+  });
 });
 
 describe('render(sflSource) — end-to-end SFL text to SVG, headless', () => {

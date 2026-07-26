@@ -43,6 +43,7 @@ function contractAttrs(node: RenderNode): string {
   if (node.sfRoute) parts.push(`data-sf-route="${node.sfRoute}"`);
   if (node.sfFromSide) parts.push(`data-sf-from-side="${node.sfFromSide}"`);
   if (node.sfToSide) parts.push(`data-sf-to-side="${node.sfToSide}"`);
+  if (node.sfLabelGap) parts.push('data-sf-label-gap="true"');
   // aria-label is a single readable line: collapse newlines/whitespace from
   // multi-line entity text so no raw control chars land in the attribute.
   if (node.ariaLabel) parts.push(`tabindex="0" aria-label="${xml(node.ariaLabel.replace(/\s+/g, ' ').trim())}"`);

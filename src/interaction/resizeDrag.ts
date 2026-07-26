@@ -210,10 +210,11 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
       ? { el: textEl, rawText, strokeWidth: Number(primary.getAttribute('stroke-width')) || 2 }
       : null;
     handleEl.setPointerCapture?.(e.pointerId);
+    const startBounds = primary.getBBox();
     drag = {
       owner, handle, kind, isComposite, geometryNodes, overlay, text,
-      startBounds: primary.getBBox(),
-      liveLinks: findLiveLinks(svg, ownerId),
+      startBounds,
+      liveLinks: findLiveLinks(svg, ownerId, startBounds),
       pointerId: e.pointerId,
       moved: false,
     };

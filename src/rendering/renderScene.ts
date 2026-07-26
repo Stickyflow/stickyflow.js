@@ -73,6 +73,14 @@ export interface SceneBase {
    */
   sfFromSide?: Side;
   sfToSide?: Side;
+  /**
+   * Surfaced as data-sf-label-gap — true when this link's stroke has a
+   * dasharray-cut gap for its text label (see model/geometry/connectionLine's
+   * labelGapDash). A live drag preview needs this to know whether to keep
+   * recomputing that gap each frame, since the dasharray it lives in is
+   * otherwise indistinguishable from a dashed/dotted line style's own pattern.
+   */
+  sfLabelGap?: boolean;
 }
 
 export interface SceneRect extends SceneBase {

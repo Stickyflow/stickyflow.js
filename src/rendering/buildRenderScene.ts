@@ -8,7 +8,7 @@ import { computeRowHeight, type Table } from '../model/tables';
 import { tableBorderGeometry } from '../model/geometry/tables';
 import { localShapePath } from '../model/geometry/shapes';
 import { wrapText } from '../model/geometry/text';
-import { getDashArray, getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../model/geometry/connectionLine';
+import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash, roundedOrthogonalPathData } from '../model/geometry/connectionLine';
 import type { PathSegment } from '../model/geometry/router';
 import type {
   Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene, SceneRole,
@@ -435,7 +435,24 @@ function buildLink(item: RenderInput['links'][number], index: number): RenderNod
   const xs = points.filter((_, i) => i % 2 === 0), ys = points.filter((_, i) => i % 2 === 1);
   const bounds = { minX: Math.min(...xs) - extra, minY: Math.min(...ys) - extra, maxX: Math.max(...xs) + extra, maxY: Math.max(...ys) + extra };
   const color = getLinkStrokeColor(link.style?.color) || '#64748b';
-  const style: SceneStyle = { fill: { kind: 'none' }, stroke: typeof link.style?.color === 'object' && link.style.color.type === 'gradient' ? { kind: 'linear-gradient', angle: 0, stops: link.style.color.stops.map(s => ({ offset: s.position, color: s.color })) } : { kind: 'solid', color }, strokeWidth, dash: getDashArray(strokeWidth, link.style?.strokeStyle ?? 'solid'), lineCap: 'round', lineJoin: 'round', opacity: finite(link.style?.opacity, 1) };
+
+  const hasLabel = !!(link.showText && link.text);
+  const fontSize = finite(link.style?.fontSize, 10);
+  const labelWidth = Math.min(250, Math.max(fontSize * 2, (link.text?.length ?? 0) * fontSize * .65 + 10));
+  const wrappedLines = hasLabel ? wrapText(link.text!, labelWidth, fontSize) : [];
+  const labelHeight = wrappedLines.length * fontSize * 1.4;
+
+  const contentDash = getDashArray(strokeWidth, link.style?.strokeStyle ?? 'solid');
+  // A line-style dash pattern (dashed/dotted) and a label-gap dash pattern
+  // can't both live in the one `stroke-dasharray` a path has — narrow,
+  // documented tradeoff: a dashed/dotted link with a label keeps the older
+  // "line runs through the label" look rather than interleaving two patterns.
+  const gap = hasLabel && !contentDash ? labelGapDash(points, pathType, labelWidth, labelHeight) : null;
+  // The third value only needs to outlast the path — it lets the dash pattern
+  // draw solid from the gap to the end without ever reaching a second cycle.
+  const dash = gap ? [gap.dashBefore, gap.gapLength, 1e6] : contentDash;
+
+  const style: SceneStyle = { fill: { kind: 'none' }, stroke: typeof link.style?.color === 'object' && link.style.color.type === 'gradient' ? { kind: 'linear-gradient', angle: 0, stops: link.style.color.stops.map(s => ({ offset: s.position, color: s.color })) } : { kind: 'solid', color }, strokeWidth, dash, lineCap: 'round', lineJoin: 'round', opacity: finite(link.style?.opacity, 1) };
   // Fallback band above shapes' (see buildShape): connectors and their end
   // markers should paint on top of the shapes they connect, not underneath.
   const order = orderOf(link, 20_000 + index);
@@ -445,11 +462,11 @@ function buildLink(item: RenderInput['links'][number], index: number): RenderNod
     sfFromId: link.fromId, sfToId: link.toId, sfRoute: pathType,
     sfFromSide: link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : undefined,
     sfToSide: link.toPoint && 'side' in link.toPoint ? link.toPoint.side : undefined,
+    sfLabelGap: !!gap,
   };
   const nodes: RenderNode[] = [path];
-  if (link.showText && link.text) {
-    const fontSize = finite(link.style?.fontSize, 10), width = Math.min(250, Math.max(fontSize * 2, link.text.length * fontSize * .65 + 10));
-    nodes.push({ type: 'text', id: `link-text-${link.id}`, order: order + .5, bounds, x: midpoint.x - width / 2, y: midpoint.y - fontSize, width, height: fontSize * 2, lines: wrapText(link.text, width, fontSize), fontFamily: link.style?.fontFamily ?? DEFAULT_FONT, fontSize, fontWeight: 'normal', color, align: 'center', verticalAlign: 'middle', lineHeight: 1.4 });
+  if (hasLabel) {
+    nodes.push({ type: 'text', id: `link-text-${link.id}`, order: order + .5, bounds, x: midpoint.x - labelWidth / 2, y: midpoint.y - fontSize, width: labelWidth, height: fontSize * 2, lines: wrappedLines, fontFamily: link.style?.fontFamily ?? DEFAULT_FONT, fontSize, fontWeight: 'normal', color, align: 'center', verticalAlign: 'middle', lineHeight: 1.4 });
   }
   const endpointFontSize = finite(link.style?.fontSize, 10);
   (['start', 'end'] as const).forEach((end, labelIndex) => {

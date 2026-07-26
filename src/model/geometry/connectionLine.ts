@@ -566,3 +566,62 @@ export const splitPathAroundLabel = (
 
   return { before, after, bezier: false }
 }
+
+const bezierArcLength = (p0: Point, p1: Point, p2: Point, p3: Point, samples = 40): number => {
+  let total = 0
+  let prev = p0
+  for (let i = 1; i <= samples; i++) {
+    const pt = cubicBezierPoint(p0, p1, p2, p3, i / samples)
+    total += Math.hypot(pt.x - prev.x, pt.y - prev.y)
+    prev = pt
+  }
+  return total
+}
+
+export interface LabelGapDash {
+  /** Stroke length to draw before the gap starts. */
+  dashBefore: number
+  /** Length of the gap itself — no stroke drawn here. */
+  gapLength: number
+}
+
+/**
+ * `splitPathAroundLabel` above physically cuts a link's path into a "before"
+ * and "after" piece so a Konva `Line` (or, for the static SVG renderer, an SVG
+ * `<path>`) can be drawn without a stroke behind the label. A single `<path>`
+ * element has no equivalent of "draw two separate lines" — but it does support
+ * `stroke-dasharray`, and drawing "some length, then a gap, then the rest" is
+ * exactly what a dasharray already does. This measures the same split
+ * `splitPathAroundLabel` computed and returns it as the two numbers a
+ * dasharray needs, so the renderer can keep everything on the ONE path element
+ * that owns the link's clickable hit area, its end markers, and (critically)
+ * the full end-to-end length other code reads via getTotalLength()/
+ * getPointAtLength() — endpoint dots (selectionOverlay.ts) and drag-to-
+ * reconnect (linkEndpointDrag.ts) both assume that length spans the whole
+ * link, which splitting into two real elements would break.
+ *
+ * Returns null under the same conditions splitPathAroundLabel does (a
+ * degenerate path) or when the gap ends up covering the whole path (this can
+ * only happen if the path is shorter than MIN_VISIBLE_STUB*2 — right at that
+ * floor, a gap does not necessarily leave any measurable stub outside
+ * floating-point noise). Either way, the caller should fall back to an
+ * uninterrupted line.
+ */
+export function labelGapDash(points: number[], pathType: PathType, gapWidth: number, gapHeight: number): LabelGapDash | null {
+  const split = splitPathAroundLabel(points, pathType, gapWidth, gapHeight)
+  if (!split || (!split.before && !split.after)) return null
+
+  const pieceLength = (piece: number[]): number => split.bezier
+    ? bezierArcLength({ x: piece[0], y: piece[1] }, { x: piece[2], y: piece[3] }, { x: piece[4], y: piece[5] }, { x: piece[6], y: piece[7] })
+    : polylineLength(piece)
+
+  const totalLength = split.bezier
+    ? bezierArcLength({ x: points[0], y: points[1] }, { x: points[2], y: points[3] }, { x: points[4], y: points[5] }, { x: points[6], y: points[7] })
+    : polylineLength(points)
+
+  const dashBefore = split.before ? pieceLength(split.before) : 0
+  const afterLength = split.after ? pieceLength(split.after) : 0
+  const gapLength = Math.max(0, totalLength - dashBefore - afterLength)
+  if (gapLength <= 0) return null
+  return { dashBefore, gapLength }
+}

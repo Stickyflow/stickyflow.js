@@ -106,7 +106,7 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
       // Links attached to more than one group member are handled separately
       // (see internalLinks below) — excluding them here stops the same
       // <path> from being both rigidly translated AND re-routed.
-      const liveLinks = findLiveLinks(svg, o.id).filter(link => {
+      const liveLinks = findLiveLinks(svg, o.id, draggedBounds).filter(link => {
         const otherId = link.path.getAttribute(link.draggedIsFrom ? 'data-sf-to' : 'data-sf-from');
         return !otherId || !groupIds.has(otherId);
       });
