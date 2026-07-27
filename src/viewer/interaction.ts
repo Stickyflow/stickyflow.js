@@ -96,7 +96,10 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
     if (down) {
       if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > DRAG_THRESHOLD) down.moved = true;
       if (down.moved) {
-        if (down.panable) display.panBy(e.movementX, e.movementY);
+        // Ctrl/Cmd-gated, same as onWheel's zoom below — a bare drag over empty
+        // chrome does nothing instead, so it never fights a host page's own
+        // scroll/selection gestures when this is embedded inline.
+        if (down.panable && (e.ctrlKey || e.metaKey)) display.panBy(e.movementX, e.movementY);
         return;
       }
     }
