@@ -8,6 +8,13 @@ export interface DisplayHandle {
   readonly svg: SVGSVGElement;
   /** Reset the camera to the diagram's natural bounds. */
   fit(): void;
+  /** The current camera — the same view-space rectangle backing the live
+   *  `<svg>`'s own viewBox, in the diagram's own SFL/user-space units. A host
+   *  reading `svg.getAttribute('viewBox')` and splitting the string itself
+   *  was the only way to get this before; this is that same rectangle,
+   *  already parsed, and kept as this module's own in-memory source of truth
+   *  rather than a re-read off the DOM. */
+  getViewport(): ViewBox;
   /** Zoom around a client point (defaults to viewport centre). factor>1 zooms in. */
   zoomBy(factor: number, clientX?: number, clientY?: number): void;
   /** Pan by a pixel delta. */
@@ -134,6 +141,7 @@ export function mountDisplay(container: HTMLElement, svgString: string): Display
   return {
     svg,
     fit() { view = { ...natural }; apply(); },
+    getViewport() { return { ...view }; },
     zoomBy(factor, clientX, clientY) {
       const rect = svg.getBoundingClientRect();
       // A detached or not-yet-laid-out svg measures 0x0, and dividing by that

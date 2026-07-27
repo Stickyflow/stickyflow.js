@@ -326,3 +326,11 @@ export const SHAPE_DEFAULTS = {
     rotation: 0,
   }
 } as const;
+
+/** Every valid `shape:` value, as a real runtime array — `ShapeType` itself
+ *  is erased at compile time, so a host building something like a shape
+ *  picker had no way to iterate it and previously had to hand-copy the list
+ *  (see examples/sfl-chat before this export existed), which drifts the
+ *  moment a shape is added or removed here. Derived from SHAPE_DEFAULTS'
+ *  own keys rather than declared separately, so the two can't disagree. */
+export const SHAPE_TYPES = Object.keys(SHAPE_DEFAULTS) as ShapeType[];

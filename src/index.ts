@@ -23,3 +23,9 @@ export type {
 export { sflToCanvasState, sflToImportJson } from './sfl';
 export type { SflCanvasState, SflEntityOut, SflLinkOut, SflGroupOut } from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';
+
+/** Every valid `shape:` value (as a real, iterable runtime array — `ShapeType`
+ *  itself only exists at compile time) — for hosts building a shape picker or
+ *  similar UI that needs the canonical, always-current list. */
+export { SHAPE_TYPES } from './model/shapes';
+export type { ShapeType } from './model/shapes';

@@ -3,7 +3,7 @@
 // (../render) — never the other way round; that one-way rule is the separation
 // between the docs/display tier and the interaction tier.
 import { render, type RenderOptions } from '../render';
-import { mountDisplay, type DisplayHandle } from './display';
+import { mountDisplay, type DisplayHandle, type ViewBox } from './display';
 import { bindInteraction, type InteractionHandle } from './interaction';
 import { parseContractVersion, isContractCompatible } from './contract';
 import { Emitter, type OwnerRef, type ViewerEventName, type ViewerEventHandler, type Unsubscribe } from './events';
@@ -39,6 +39,11 @@ export interface Viewer {
   getSelection(): OwnerRef[];
   select(ids: string[]): void;
   fit(): void;
+  /** The camera's current view-space rectangle, in the diagram's own
+   *  SFL/user-space units — e.g. to place a newly inserted entity centered
+   *  on whatever the reader is currently looking at instead of at a fixed
+   *  spot they'd then have to go find. */
+  getViewport(): ViewBox;
   /**
    * Swap in a freshly-rendered diagram (new SFL source or svg string) — e.g.
    * after `stickyflow/interaction` reports an edit the host accepted. The
@@ -88,6 +93,7 @@ export function createViewer(options: ViewerOptions): Viewer {
     getSelection: () => interaction?.getSelection() ?? [],
     select: (ids) => interaction?.select(ids),
     fit: () => display.fit(),
+    getViewport: () => display.getViewport(),
     update(next) {
       const svgString = resolveSvg(next);
       const version = parseContractVersion(svgString);
@@ -115,3 +121,4 @@ export type { OwnerRef, ViewerEventName, ViewerEventHandler, Unsubscribe } from 
 export type {
   OwnerPointerEvent, SelectionChangeEvent, ViewerErrorEvent, ViewerEventMap, Modifiers,
 } from './events';
+export type { ViewBox } from './display';
