@@ -98,12 +98,35 @@ export interface DeleteEvent {
   owners: OwnerRef[];
 }
 
+/**
+ * Fired after dragging a quick-duplicate bubble (see viewer/selectionOverlay.ts
+ * — only shown for a single selected entity) onto a DIFFERENT existing entity
+ * and releasing — the same live preview and nearest-perimeter-port snapping
+ * as LinkReconnectEvent, just creating a brand new link instead of moving an
+ * existing one's endpoint. `direction` is the bubble's own side on the
+ * SOURCE entity (fixed, always fraction 0.5, exactly like the duplicate
+ * case); `side`/`fraction` are the drop point on the TARGET's own perimeter,
+ * snapped to wherever on it the pointer actually released. Only fires on a
+ * valid drop over a different entity — empty canvas or dropping back onto
+ * the source itself cancels with no event, same as LinkReconnectEvent. A
+ * short (non-drag) click on the bubble still fires `quickDuplicate` instead
+ * — see bindQuickDuplicate.
+ */
+export interface LinkToEvent {
+  owner: OwnerRef;
+  direction: 'top' | 'right' | 'bottom' | 'left';
+  target: OwnerRef;
+  side: Side;
+  fraction: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
   resizeChange: ResizeChangeEvent;
   linkReconnect: LinkReconnectEvent;
   quickDuplicate: QuickDuplicateEvent;
+  linkTo: LinkToEvent;
   delete: DeleteEvent;
 }
 

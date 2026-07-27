@@ -76,15 +76,17 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
 
 /**
  * Four small "quick duplicate" dots centered on each side of a SINGLY
- * selected entity's bbox, offset outside it — click one to create a copy of
- * the entity in that direction, auto-connected with a link (see
- * `stickyflow/interaction`'s quickDuplicate.ts). Matches the interactive
- * canvas app's own spacing (8px radius, 23px offset) and, deliberately
- * simpler than that app's version, has no separate hover-highlight state or
- * click-vs-drag timing window: no other overlay element in this package
- * changes appearance on hover (resize handles/link endpoints only change the
- * cursor), and there's no "drag a bubble to an existing entity to just link
- * them" gesture here — only the duplicate-and-link click.
+ * selected entity's bbox, offset outside it. A bare click creates a copy of
+ * the entity in that direction, auto-connected with a link; dragging one onto
+ * a DIFFERENT existing entity instead draws a live link preview and connects
+ * to that entity on drop, snapping to the nearest point on its perimeter (see
+ * `stickyflow/interaction`'s quickDuplicate.ts — both gestures share this one
+ * bubble, told apart the same movement-threshold way every other drag in this
+ * package is). Matches the interactive canvas app's own spacing (8px radius,
+ * 23px offset); deliberately simpler in one respect — no separate
+ * hover-highlight state, since no other overlay element in this package
+ * changes appearance on hover either (resize handles/link endpoints only
+ * change the cursor) and the live link preview itself is feedback enough.
  */
 /** Bubble centers for a given bbox — shared with resizeDrag.ts's live
  *  reposition (see updateQuickDuplicateBubbles) so both places compute the

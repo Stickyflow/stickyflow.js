@@ -22,8 +22,11 @@ const SCREEN_DRAG_THRESHOLD = 3;
 
 /** The point+side on `bounds` closest to `point` — checks all four sides and
  *  keeps the nearest, so the drop snaps to wherever on the shape's perimeter
- *  the pointer actually is, not just whichever side "faces" some direction. */
-function nearestPort(bounds: Bounds, point: { x: number; y: number }): { side: Side; offset: number } {
+ *  the pointer actually is, not just whichever side "faces" some direction.
+ *  Exported for quickDuplicate.ts's drag-to-existing-target gesture, which
+ *  needs the identical "snap to the nearest point on whatever's under the
+ *  cursor" behavior for the NEW link's target end. */
+export function nearestPort(bounds: Bounds, point: { x: number; y: number }): { side: Side; offset: number } {
   let best: { side: Side; offset: number } = { side: 'right', offset: 0.5 };
   let bestDist = Infinity;
   for (const side of SIDES) {
@@ -40,7 +43,7 @@ function nearestPort(bounds: Bounds, point: { x: number; y: number }): { side: S
  *  has no pinned side at all. Used only while the dragged end is "free"
  *  (not currently over any entity), so the ghost preview still points a
  *  sensible direction instead of keeping whatever side it last had. */
-function sideFromDirection(from: { x: number; y: number }, to: { x: number; y: number }): Side {
+export function sideFromDirection(from: { x: number; y: number }, to: { x: number; y: number }): Side {
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
   if (angle >= -Math.PI / 4 && angle < Math.PI / 4) return 'right';
   if (angle >= Math.PI / 4 && angle < (3 * Math.PI) / 4) return 'bottom';

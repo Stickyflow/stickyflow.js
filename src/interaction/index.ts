@@ -44,7 +44,7 @@ export function bindEditing(viewer: Viewer): Interaction {
 }
 
 export type {
-  TextChangeEvent, MoveChangeEvent, ResizeChangeEvent, LinkReconnectEvent, QuickDuplicateEvent, DeleteEvent,
+  TextChangeEvent, MoveChangeEvent, ResizeChangeEvent, LinkReconnectEvent, QuickDuplicateEvent, LinkToEvent, DeleteEvent,
   InteractionEventMap, InteractionEventName,
 } from './events';
 export type { Unsubscribe } from '../shared/emitter';
@@ -58,7 +58,9 @@ export { applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnect
 // Structural changes (create/delete). `insertEntity`/`insertLink` are also
 // what a host composes `quickDuplicate` into (this tier only reports which
 // entity/side was clicked — copying the source's style/size and generating
-// new ids is a host decision, see examples/sfl-chat); `removeEntity`/
+// new ids is a host decision, see examples/sfl-chat); `insertLink` alone is
+// what a host composes `linkTo` into (dragging a quick-duplicate bubble onto
+// an existing entity instead of releasing it as a bare click); `removeEntity`/
 // `removeLink` are what a host calls in response to `delete`. Also callable
 // directly with no matching gesture at all — e.g. reflecting an LLM-authored
 // change — and pass the result to viewer.update() the same way.
