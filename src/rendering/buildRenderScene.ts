@@ -492,7 +492,15 @@ export function buildRenderScene(input: RenderInput): RenderScene {
     ...input.frames.flatMap((frame, i) => tag(buildFrame(frame, i), 'frame', frame.id, undefined, frame.title ?? undefined)),
     ...input.swimlanes.flatMap((swimlane, i) => tag(buildSwimlane(swimlane, i), 'swimlane', swimlane.id)),
     ...(input.tables ?? []).flatMap((table, i) => tag(buildTable(table, i), 'table', table.id, undefined, table.title ?? undefined)),
-    ...input.links.flatMap((item, i) => tag(buildLink(item, i), 'link', item.link.id, undefined, item.link.text || undefined)),
+    // Falls back to "fromId → toId" rather than leaving ariaLabel undefined
+    // for an unlabeled link (most of them — `text:` is optional): tag()'s own
+    // tabindex is gated on ariaLabel being present, so a link with no text
+    // was never focusable at all, and stickyflow/interaction's Backspace
+    // handler needs focus (see viewer/interaction.ts's onPointerUp) — an
+    // unlabeled link could be SELECTED by clicking it but never actually
+    // deleted with the keyboard. Shapes don't have this gap since they
+    // already fall back to their own shapeType a few lines below.
+    ...input.links.flatMap((item, i) => tag(buildLink(item, i), 'link', item.link.id, undefined, item.link.text || `${item.link.fromId} → ${item.link.toId}`)),
     ...input.shapes.flatMap((shape, index) => tag(buildShape(shape, index, diagnostics), 'entity', shape.id, shape.shapeType, shape.text || shape.shapeType)),
     // Locale-independent code-point tie-break (ADR-02): localeCompare depends on
     // the host ICU/locale and could reorder equal-order nodes across machines.
