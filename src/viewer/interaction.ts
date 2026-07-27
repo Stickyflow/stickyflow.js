@@ -9,7 +9,7 @@ import { resolveOwner } from './contract';
 import { selectionReducer, clickAction } from './selection';
 import { Emitter, type OwnerRef } from './events';
 import { findOwnerNode, isPrimary } from './domQuery';
-import { shapeSelectionOverlay, linkSelectionOverlay } from './selectionOverlay';
+import { shapeSelectionOverlay, linkSelectionOverlay, quickDuplicateBubbles } from './selectionOverlay';
 
 export interface InteractionHandle {
   getSelection(): OwnerRef[];
@@ -47,6 +47,13 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
         ? linkSelectionOverlay(doc, primary as unknown as SVGPathElement, id)
         : shapeSelectionOverlay(doc, primary, id);
       svg.appendChild(overlay);
+      // Only a single selected entity gets quick-duplicate bubbles — matching
+      // the interactive canvas app's own "isSelected && !isMultiSelected"
+      // gate, and entities only (not links/frames/tables/swimlanes): the
+      // whole feature is about spinning off one more shape of the same kind.
+      if (owner?.role === 'entity' && selection.size === 1) {
+        svg.appendChild(quickDuplicateBubbles(doc, primary, id));
+      }
     });
   };
 
@@ -81,7 +88,8 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
     const owner = resolveOwner(target);
     const onResizeHandle = !!target?.closest('[data-sf-resize-handle]');
     const onLinkEndpoint = !!target?.closest('[data-sf-link-endpoint]');
-    down = { x: e.clientX, y: e.clientY, moved: false, panable: !owner && !onResizeHandle && !onLinkEndpoint };
+    const onQuickDuplicate = !!target?.closest('[data-sf-quick-duplicate]');
+    down = { x: e.clientX, y: e.clientY, moved: false, panable: !owner && !onResizeHandle && !onLinkEndpoint && !onQuickDuplicate };
   };
 
   const onPointerMove = (e: PointerEvent) => {
@@ -107,10 +115,18 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
     // isn't a click on empty chrome — it's an aborted resize/reconnect
     // attempt. Clearing selection here would make the handles the reader was
     // just trying to grab vanish out from under them.
-    if (!owner) { if (!target?.closest('[data-sf-resize-handle], [data-sf-link-endpoint]')) setSelection(selectionReducer(selection, { type: 'clear' })); return; }
+    if (!owner) { if (!target?.closest('[data-sf-resize-handle], [data-sf-link-endpoint], [data-sf-quick-duplicate]')) setSelection(selectionReducer(selection, { type: 'clear' })); return; }
     owners.set(owner.id, owner);
     setSelection(selectionReducer(selection, clickAction(owner.id, modifiersOf(e))));
     emitter.emit(owner.role === 'link' ? 'linkClick' : 'entityClick', { diagramId, owner, modifiers: modifiersOf(e) });
+    // A click's native focusing step only reaches the actual target's focusable
+    // ANCESTORS — and the primary node (the one with tabindex="0") is a sibling
+    // of its own text label, not an ancestor, so a click landing on the label
+    // (which paints on top of the shape and so catches most real clicks) left
+    // nothing focused. Every keydown-based feature (Escape-clears-selection
+    // here, and stickyflow/interaction's Backspace-to-delete) depends on that
+    // focus, so it's forced explicitly rather than left to the browser default.
+    findOwnerNode(svg, owner.id, isPrimary)?.focus({ preventScroll: true });
   };
 
   // --- wheel zoom ----------------------------------------------------------

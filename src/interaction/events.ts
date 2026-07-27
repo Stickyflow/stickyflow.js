@@ -72,11 +72,39 @@ export interface LinkReconnectEvent {
   fraction: number;
 }
 
+/**
+ * Fired on a (non-drag) click of one of an entity's four quick-duplicate
+ * bubbles (see viewer/selectionOverlay.ts's quickDuplicateBubbles — only
+ * shown for a single selected entity). Reports only what was clicked and
+ * which side, the same "controlled component" way every event here does —
+ * this package has no reverse SFL emitter, so it can't invent the new
+ * entity's id, copy its style, or decide a duplicate's spacing convention
+ * itself; a host composes that from `insertEntity`/`insertLink` (see
+ * examples/sfl-chat for a worked implementation).
+ */
+export interface QuickDuplicateEvent {
+  owner: OwnerRef;
+  direction: 'top' | 'right' | 'bottom' | 'left';
+}
+
+/**
+ * Fired when Backspace/Delete is pressed while one or more owners are
+ * selected. `owners` is the full current selection at the moment of the
+ * keypress (matches viewer.getSelection()) — a host removes each one (e.g.
+ * via `removeEntity`/`removeLink`) and calls `viewer.update()`; nothing is
+ * actually deleted by this tier itself.
+ */
+export interface DeleteEvent {
+  owners: OwnerRef[];
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
   resizeChange: ResizeChangeEvent;
   linkReconnect: LinkReconnectEvent;
+  quickDuplicate: QuickDuplicateEvent;
+  delete: DeleteEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

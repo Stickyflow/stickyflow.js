@@ -12,9 +12,12 @@ const NS = 'http://www.w3.org/2000/svg';
 const RING_COLOR = '#9b42df';
 const HANDLE_STROKE = '#992dff';
 const HANDLE_SIZE = 6;
+const BUBBLE_RADIUS = 8;
+const BUBBLE_OFFSET = BUBBLE_RADIUS + 15; // 23 — matches the interactive canvas app's own spacing
 
 export type ResizeHandle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type LinkEndpoint = 'from' | 'to';
+export type QuickDuplicateDirection = 'top' | 'right' | 'bottom' | 'left';
 
 function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
   return doc.createElementNS(NS, tag) as SVGElementTagNameMap[K];
@@ -67,6 +70,55 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
     handle.style.pointerEvents = 'auto';
     handle.style.cursor = cursor;
     g.appendChild(handle);
+  }
+  return g;
+}
+
+/**
+ * Four small "quick duplicate" dots centered on each side of a SINGLY
+ * selected entity's bbox, offset outside it — click one to create a copy of
+ * the entity in that direction, auto-connected with a link (see
+ * `stickyflow/interaction`'s quickDuplicate.ts). Matches the interactive
+ * canvas app's own spacing (8px radius, 23px offset) and, deliberately
+ * simpler than that app's version, has no separate hover-highlight state or
+ * click-vs-drag timing window: no other overlay element in this package
+ * changes appearance on hover (resize handles/link endpoints only change the
+ * cursor), and there's no "drag a bubble to an existing entity to just link
+ * them" gesture here — only the duplicate-and-link click.
+ */
+export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
+  const bbox = primary.getBBox();
+  const g = overlayGroup(doc, id, primary);
+  const cx = bbox.x + bbox.width / 2, cy = bbox.y + bbox.height / 2;
+
+  const positions: Array<[number, number, QuickDuplicateDirection]> = [
+    [cx, bbox.y - BUBBLE_OFFSET, 'top'],
+    [bbox.x + bbox.width + BUBBLE_OFFSET, cy, 'right'],
+    [cx, bbox.y + bbox.height + BUBBLE_OFFSET, 'bottom'],
+    [bbox.x - BUBBLE_OFFSET, cy, 'left'],
+  ];
+  for (const [bx, by, direction] of positions) {
+    const dot = el(doc, 'circle');
+    dot.setAttribute('cx', String(bx));
+    dot.setAttribute('cy', String(by));
+    dot.setAttribute('r', String(BUBBLE_RADIUS));
+    dot.setAttribute('fill', '#e8e8e8');
+    dot.setAttribute('stroke', '#ccc');
+    dot.setAttribute('stroke-width', '1.5');
+    // Same opt-back-into-pointer-events pattern as resize handles/link
+    // endpoints above — quickDuplicate.ts looks for this attribute.
+    dot.setAttribute('data-sf-quick-duplicate', direction);
+    dot.style.pointerEvents = 'auto';
+    dot.style.cursor = 'pointer';
+    g.appendChild(dot);
+
+    const plus = el(doc, 'path');
+    const s = 4;
+    plus.setAttribute('d', `M ${bx - s} ${by} L ${bx + s} ${by} M ${bx} ${by - s} L ${bx} ${by + s}`);
+    plus.setAttribute('stroke', '#999');
+    plus.setAttribute('stroke-width', '1.5');
+    plus.setAttribute('stroke-linecap', 'round');
+    g.appendChild(plus);
   }
   return g;
 }
