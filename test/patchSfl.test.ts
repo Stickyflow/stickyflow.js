@@ -41,6 +41,20 @@ describe('applyTextChange', () => {
     expect(next).toContain("// a's own comment");
     expect(next).toContain('text: "Keep me"');
   });
+
+  it('replaces text in place on a single-line entity, without duplicating it as a stray sibling line', () => {
+    // Regression: findDirectProperty used to match only `^\s*key\s*:`, which
+    // can never be true for a property packed onto a compact one-line block —
+    // every apply*Change call "found" nothing and fell through to its insert
+    // path, which for a single-line owner spliced the new line in as a
+    // SIBLING of the block (past its closing brace) rather than replacing
+    // anything. The real property was silently never touched again.
+    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "Old"; layout { position: 0, 0 } }\n}\n`;
+    const next = applyTextChange(sfl, { owner: owner('a'), text: 'New' });
+    expect(next).toContain('text: "New"');
+    expect(next).not.toContain('text: "Old"');
+    expect(next.match(/text:/g)?.length).toBe(1);
+  });
 });
 
 describe('applyMoveChange', () => {
@@ -80,6 +94,25 @@ describe('applyMoveChange', () => {
     const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n}\n`;
     expect(applyMoveChange(sfl, { owner: owner('missing'), dx: 1, dy: 1 })).toBe(sfl);
   });
+
+  it('updates position in place on a single-line layout block, without duplicating it as a stray sibling line', () => {
+    // Regression (see applyTextChange's matching test for the full mechanism):
+    // a compact `layout { position: 80, 80; size: 200, 80 }` is routine LLM
+    // output (fewer tokens) and valid SFL either way — this used to make
+    // every move on such an entity silently insert a dead duplicate `position:`
+    // line beside the real one instead of updating it, so the entity never
+    // actually moved on commit (it only looked like it had, until the
+    // viewer's next re-render snapped it back to the untouched original).
+    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n    layout { position: 80, 80; size: 200, 80 }\n  }\n}\n`;
+    const next = applyMoveChange(sfl, { owner: owner('a'), dx: 20, dy: 20 });
+    expect(next).toContain('layout { position: 100, 100; size: 200, 80 }');
+    expect(next.match(/position:/g)?.length).toBe(1);
+    // Applying a second move on the already-patched document must keep
+    // replacing in place, not just work once by accident.
+    const again = applyMoveChange(next, { owner: owner('a'), dx: 5, dy: -5 });
+    expect(again).toContain('layout { position: 105, 95; size: 200, 80 }');
+    expect(again.match(/position:/g)?.length).toBe(1);
+  });
 });
 
 describe('applyResizeChange', () => {
@@ -103,6 +136,21 @@ describe('applyResizeChange', () => {
   it('is a no-op for an unknown owner id', () => {
     const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n}\n`;
     expect(applyResizeChange(sfl, { ...event, owner: owner('missing') })).toBe(sfl);
+  });
+
+  it('sets position and size in place on a single-line layout block, without duplicating either as a stray sibling line', () => {
+    // The entity itself spans multiple lines with `layout {}` as its own
+    // (single-line) child — the structure real SFL actually has, including
+    // every fixture in this file and everything an LLM has produced in
+    // practice. A `layout{}` sharing its OWN physical line with the entity's
+    // opening brace too (`Entity a { layout { ... } }` all on one line) is a
+    // narrower, separately-known gap: findChildBlock's line-based header
+    // search can't see a child header that starts mid-line.
+    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n    layout { position: 0, 0; size: 100, 50 }\n  }\n}\n`;
+    const next = applyResizeChange(sfl, event);
+    expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
+    expect(next.match(/position:/g)?.length).toBe(1);
+    expect(next.match(/size:/g)?.length).toBe(1);
   });
 });
 
@@ -133,6 +181,22 @@ describe('applyLinkReconnectChange', () => {
   it('is a no-op for an unknown owner id', () => {
     const event = { owner: owner('missing', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.5 };
     expect(applyLinkReconnectChange(sfl, event)).toBe(sfl);
+  });
+
+  it('reconnects in place on a single-line Link block, without duplicating the endpoint as a stray sibling line', () => {
+    // Regression: this was the more visibly broken half of the bug — the
+    // insert-fallback for a single-line Link (`Link l { from: a; to: b }`,
+    // the compact form an LLM routinely writes) spliced the new `to:` in as
+    // a MODEL-level sibling line, past the link's own closing brace. The SFL
+    // still parsed (a stray top-level property is silently ignored, not an
+    // error) with two `to:` values effectively present for the same link —
+    // exactly the "two endpoints, contradiction" shape a reader (human or an
+    // LLM asked to comment on the document) would flag on sight.
+    const compact = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l { from: a, right (0.5); to: b, left (0.5) }\n}\n`;
+    const event = { owner: owner('l', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.25 };
+    const next = applyLinkReconnectChange(compact, event);
+    expect(next).toContain('Link l { from: a, right (0.5); to: c, top (0.25) }');
+    expect(next.match(/\bto:/g)?.length).toBe(1);
   });
 });
 

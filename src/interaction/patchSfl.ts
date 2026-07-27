@@ -32,6 +32,18 @@ function stripStringsAndComments(line: string): string {
   return line.replace(/\/\/.*$/, '').replace(/"(?:[^"\\]|\\.)*"/g, '""');
 }
 
+// Same idea as stripStringsAndComments, but LENGTH-PRESERVING: string and
+// comment bodies become blank space rather than being collapsed, so a
+// character offset computed against the masked text is still valid for
+// slicing the ORIGINAL line. findDirectProperty below needs that — it
+// returns exact column spans to splice, and stripStringsAndComments' `""`
+// collapse would shift every offset after a string on the same line.
+function maskStringsAndComments(line: string): string {
+  return line
+    .replace(/\/\/.*$/, m => ' '.repeat(m.length))
+    .replace(/"(?:[^"\\]|\\.)*"/g, m => `"${' '.repeat(m.length - 2)}"`);
+}
+
 function braceDelta(line: string): number {
   let delta = 0;
   for (const ch of stripStringsAndComments(line)) {
@@ -78,7 +90,13 @@ function findOwnerBlock(lines: string[], id: string): LineRange | null {
 /** A direct child block matching `headerRe` inside `range` — depth-limited
  *  to an immediate child, so e.g. a Container's own `layout {}` is never
  *  confused with a nested Entity's (Containers can hold frame-relative
- *  child entities, each with their own `layout {}` one level deeper). */
+ *  child entities, each with their own `layout {}` one level deeper).
+ *
+ *  Known narrow gap: `headerRe` is matched per LINE (`i > range.start`), so a
+ *  child header sharing its owner's own opening-brace line (`Entity a {
+ *  layout { ... } }`, all one line) isn't found — only the realistic case,
+ *  where the child has its own line even if that line is itself compact
+ *  (`Entity a {\n  layout { position: 0,0; size: 100,50 }\n}`), is. */
 function findChildBlock(lines: string[], range: LineRange, headerRe: RegExp): LineRange | null {
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
@@ -90,16 +108,97 @@ function findChildBlock(lines: string[], range: LineRange, headerRe: RegExp): Li
   return null;
 }
 
-/** A `key: ...` property one level directly inside `range` — not one
- *  belonging to a nested child block. */
-function findDirectProperty(lines: string[], range: LineRange, key: string): number | null {
-  const re = new RegExp(`^\\s*${key}\\b\\s*:`);
+interface PropertySpan { line: number; start: number; end: number }
+
+/**
+ * A `key: value` property directly inside `range` (not one belonging to a
+ * nested child block) — returns the exact character span of its VALUE, from
+ * just past the colon to the next `;`/the block's own closing `}`/end of
+ * line, so a caller can splice precisely that span.
+ *
+ * This used to match only `^\s*key\s*:` per line, which silently could never
+ * find a property packed onto a single-line block's own header line (e.g.
+ * `layout { position: 80, 80; size: 200, 80 }`, or a whole `Link l1 { from:
+ * a; to: b }`) — that property IS at depth 1, just not at the start of a
+ * line. Every `apply*Change` function routes through here, so on any
+ * single-line-formatted block (routine output from an LLM optimizing for
+ * fewer tokens, and valid SFL either way) the old version always reported
+ * "not found," and every caller's insert-fallback then spliced a DUPLICATE
+ * property in beside the block instead of updating the real one — the real
+ * value never changed, while stray, unread lines accumulated with every
+ * edit. A char-by-char depth walk (mirroring blockEndLine's own reasoning)
+ * finds the property wherever it sits on the line.
+ */
+function findDirectProperty(lines: string[], range: LineRange, key: string): PropertySpan | null {
+  const keyRe = new RegExp(`\\b${key}\\b\\s*:\\s*`, 'g');
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
-    if (depth === 1 && i > range.start && re.test(lines[i])) return i;
-    depth += braceDelta(lines[i]);
+    const masked = maskStringsAndComments(lines[i]);
+    // Depth just BEFORE each character, so a match's own depth is a lookup
+    // rather than a re-walk from the start of the line.
+    const depthAt: number[] = new Array(masked.length);
+    let d = depth;
+    for (let c = 0; c < masked.length; c++) {
+      depthAt[c] = d;
+      if (masked[c] === '{') d++;
+      else if (masked[c] === '}') d--;
+    }
+    keyRe.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = keyRe.exec(masked))) {
+      if (depthAt[m.index] === 1) {
+        const valueStart = m.index + m[0].length;
+        let valueEnd = masked.length;
+        let vd = depthAt[valueStart] ?? 1;
+        for (let c = valueStart; c < masked.length; c++) {
+          const ch = masked[c];
+          if (ch === '{') vd++;
+          else if (ch === '}') { if (vd <= 1) { valueEnd = c; break; } vd--; }
+          else if (ch === ';' && vd === 1) { valueEnd = c; break; }
+        }
+        // Trailing whitespace before the terminator belongs to formatting, not
+        // the value — leaving it in the span would eat the space before a
+        // block's closing `}` (no `;` follows a block's last property), e.g.
+        // turning `to: a, left (0.5) }` into `to: <new value>}`.
+        while (valueEnd > valueStart && /\s/.test(masked[valueEnd - 1])) valueEnd--;
+        return { line: i, start: valueStart, end: valueEnd };
+      }
+      keyRe.lastIndex = m.index + 1; // don't let a zero/short match stall the scan
+    }
+    depth = d;
   }
   return null;
+}
+
+/**
+ * Inserts `text` (a single already-indented property line's worth of
+ * content, no trailing newline) as a new direct child of `range`. For a
+ * multi-line block this is a new line right after the opening one — the
+ * existing convention. For a SINGLE-line block (`range.start === range.end`,
+ * e.g. `layout { size: 200, 80 }`) there IS no "line after the opening
+ * line" that's still inside the block — splicing one in the old way landed
+ * it as a sibling of the block, past its closing brace, which is the other
+ * half of the bug findDirectProperty's doc comment describes. Instead this
+ * inserts inline, right before that line's own closing `}`, keeping the
+ * block on one line.
+ */
+function insertDirectProperty(lines: string[], range: LineRange, indent: string, key: string, value: string): void {
+  if (range.start === range.end) {
+    const line = lines[range.start];
+    // The block's own closing brace — correct as long as the block isn't
+    // sharing its physical line with an outer block's braces too (e.g. an
+    // entity and its layout both squeezed onto one line); that narrower case
+    // isn't handled precisely, same as the rest of this file's line-based
+    // matching in general.
+    const closeAt = line.lastIndexOf('}');
+    if (closeAt !== -1) {
+      const before = line.slice(0, closeAt).replace(/\s+$/, '');
+      const sep = /\{$/.test(before) ? ' ' : '; ';
+      lines[range.start] = `${before}${sep}${key}: ${value} }${line.slice(closeAt + 1)}`;
+      return;
+    }
+  }
+  lines.splice(range.start + 1, 0, `${indent}${key}: ${value}`);
 }
 
 /** The full line range of the first top-level block of grammar kind `kind`
@@ -142,11 +241,12 @@ function setOrInsertText(lines: string[], range: LineRange, text: string): void 
   const value = `"${escapeSflString(text)}"`;
   const existing = findDirectProperty(lines, range, 'text');
   if (existing !== null) {
-    lines[existing] = lines[existing].replace(/text\b\s*:\s*"(?:[^"\\]|\\.)*"/, `text: ${value}`);
+    const line = lines[existing.line];
+    lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
     return;
   }
   const indent = `${indentOf(lines[range.start])}    `;
-  lines.splice(range.start + 1, 0, `${indent}text: ${value}`);
+  insertDirectProperty(lines, range, indent, 'text', value);
 }
 
 /** Sets (or inserts) one or more numeric-tuple properties — `position`,
@@ -167,14 +267,20 @@ function setOrInsertLayoutTuples(lines: string[], range: LineRange, props: Reado
     return;
   }
   for (const [key, a, b] of props) {
+    const value = `${round1(a)}, ${round1(b)}`;
     const existing = findDirectProperty(lines, layout, key);
     if (existing !== null) {
-      lines[existing] = lines[existing].replace(new RegExp(`${key}\\b\\s*:.*$`), `${key}: ${round1(a)}, ${round1(b)}`);
+      const line = lines[existing.line];
+      lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
       continue;
     }
     const indent = `${indentOf(lines[layout.start])}    `;
-    lines.splice(layout.start + 1, 0, `${indent}${key}: ${round1(a)}, ${round1(b)}`);
-    layout = { start: layout.start, end: layout.end + 1 };
+    const lengthBefore = lines.length;
+    insertDirectProperty(lines, layout, indent, key, value);
+    // A single-line layout stays a single line (insertDirectProperty edits it
+    // inline); a multi-line one gains a new line, which shifts `end` by one
+    // so the NEXT prop in this same loop still resolves against the right range.
+    layout = { start: layout.start, end: layout.end + (lines.length - lengthBefore) };
   }
 }
 
@@ -185,13 +291,14 @@ function setEndpoint(lines: string[], range: LineRange, key: 'from' | 'to', targ
   const value = `${targetName}, ${side} (${round2(fraction)})`;
   const existing = findDirectProperty(lines, range, key);
   if (existing !== null) {
-    lines[existing] = lines[existing].replace(new RegExp(`${key}\\b\\s*:.*$`), `${key}: ${value}`);
+    const line = lines[existing.line];
+    lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
     return;
   }
   // from/to are required by the grammar — every real Link already has both;
   // this only matters for a hand-edited, otherwise-malformed document.
   const indent = `${indentOf(lines[range.start])}    `;
-  lines.splice(range.start + 1, 0, `${indent}${key}: ${value}`);
+  insertDirectProperty(lines, range, indent, key, value);
 }
 
 /** Applies a `textChange` event's new label to the owner's `text:` —
