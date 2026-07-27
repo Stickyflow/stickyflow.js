@@ -13,7 +13,7 @@
 import type { Viewer, OwnerRef } from '../viewer';
 import { resolveOwner } from '../viewer/contract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel } from '../viewer/domQuery';
-import type { ResizeHandle } from '../viewer/selectionOverlay';
+import { updateQuickDuplicateBubbles, type ResizeHandle } from '../viewer/selectionOverlay';
 import { localShapePath } from '../model/geometry/shapes';
 import { wrapText } from '../model/geometry/text';
 import type { Bounds } from '../model/geometry/router';
@@ -133,6 +133,11 @@ interface DragState {
   isComposite: boolean;
   geometryNodes: SVGGraphicsElement[];
   overlay: SVGGElement | null;
+  // The quick-duplicate bubbles live in their OWN sibling group sharing the
+  // same data-sf-selection-overlay id (see selectionOverlay.ts) — not inside
+  // `overlay` itself, which only ever holds the ring/handles — so tracking a
+  // live resize needs this looked up and repositioned separately.
+  bubbles: SVGGElement | null;
   startBounds: Bounds;
   liveLinks: LiveLink[];
   pointerId: number;
@@ -180,6 +185,7 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
       });
     }
     if (drag.text) applyLiveText(drag.text.el, drag.text.rawText, bounds, drag.text.strokeWidth);
+    if (drag.bubbles) updateQuickDuplicateBubbles(drag.bubbles, bounds);
     updateLiveLinks(drag.liveLinks, bounds);
   };
 
@@ -191,6 +197,8 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
     const overlay = handleEl.closest('[data-sf-selection-overlay]') as SVGGElement | null;
     const ownerId = overlay?.getAttribute('data-sf-selection-overlay');
     if (!ownerId) return;
+    const bubbles = [...svg.querySelectorAll<SVGGElement>(`[data-sf-selection-overlay="${CSS.escape(ownerId)}"]`)]
+      .find(g => g !== overlay && g.querySelector('circle[data-sf-quick-duplicate]')) ?? null;
     const primary = findOwnerNode(svg, ownerId, isPrimary);
     if (!primary) return;
     const owner = resolveOwner(primary);
@@ -212,7 +220,7 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
     handleEl.setPointerCapture?.(e.pointerId);
     const startBounds = primary.getBBox();
     drag = {
-      owner, handle, kind, isComposite, geometryNodes, overlay, text,
+      owner, handle, kind, isComposite, geometryNodes, overlay, bubbles, text,
       startBounds,
       liveLinks: findLiveLinks(svg, ownerId, startBounds),
       pointerId: e.pointerId,

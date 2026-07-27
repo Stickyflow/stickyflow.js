@@ -86,17 +86,23 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
  * cursor), and there's no "drag a bubble to an existing entity to just link
  * them" gesture here — only the duplicate-and-link click.
  */
-export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
-  const bbox = primary.getBBox();
-  const g = overlayGroup(doc, id, primary);
+/** Bubble centers for a given bbox — shared with resizeDrag.ts's live
+ *  reposition (see updateQuickDuplicateBubbles) so both places compute the
+ *  exact same four points from a set of bounds. */
+function quickDuplicatePositions(bbox: { x: number; y: number; width: number; height: number }): Array<[number, number, QuickDuplicateDirection]> {
   const cx = bbox.x + bbox.width / 2, cy = bbox.y + bbox.height / 2;
-
-  const positions: Array<[number, number, QuickDuplicateDirection]> = [
+  return [
     [cx, bbox.y - BUBBLE_OFFSET, 'top'],
     [bbox.x + bbox.width + BUBBLE_OFFSET, cy, 'right'],
     [cx, bbox.y + bbox.height + BUBBLE_OFFSET, 'bottom'],
     [bbox.x - BUBBLE_OFFSET, cy, 'left'],
   ];
+}
+
+export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
+  const bbox = primary.getBBox();
+  const g = overlayGroup(doc, id, primary);
+  const positions = quickDuplicatePositions(bbox);
   for (const [bx, by, direction] of positions) {
     const dot = el(doc, 'circle');
     dot.setAttribute('cx', String(bx));
@@ -121,6 +127,30 @@ export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement
     g.appendChild(plus);
   }
   return g;
+}
+
+/** Live-reposition an existing quickDuplicateBubbles() group at a new bbox —
+ *  used by resizeDrag.ts so the bubbles track a shape's live-resized bounds
+ *  instead of only jumping to the new spot once the drag ends and the whole
+ *  selection overlay is repainted from scratch. Zips positions to circles by
+ *  index rather than by direction: insertion order in quickDuplicateBubbles()
+ *  above is always top/right/bottom/left, so it's stable, and a circle's own
+ *  very next sibling is always its plus icon (the two are appended as a pair
+ *  above) — no need to re-derive the pairing by attribute matching. */
+export function updateQuickDuplicateBubbles(g: SVGGElement, bbox: { x: number; y: number; width: number; height: number }): void {
+  const positions = quickDuplicatePositions(bbox);
+  const dots = g.querySelectorAll('circle[data-sf-quick-duplicate]');
+  positions.forEach(([bx, by], i) => {
+    const dot = dots[i];
+    if (!dot) return;
+    dot.setAttribute('cx', String(bx));
+    dot.setAttribute('cy', String(by));
+    const plus = dot.nextElementSibling;
+    if (plus) {
+      const s = 4;
+      plus.setAttribute('d', `M ${bx - s} ${by} L ${bx + s} ${by} M ${bx} ${by - s} L ${bx} ${by + s}`);
+    }
+  });
 }
 
 /** Purple halo along a link's own path, plus small dots at its two endpoints. */

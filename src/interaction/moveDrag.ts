@@ -32,8 +32,15 @@ interface DraggedEntity {
   owner: OwnerRef;
   nodes: SVGGraphicsElement[];
   baseTransforms: (string | null)[];
-  overlay: SVGGElement | null;
-  overlayBaseTransform: string | null;
+  // PLURAL: paintSelection() can append more than one group sharing the same
+  // data-sf-selection-overlay id — the ring/handles AND, for a single
+  // selected entity, the quick-duplicate bubbles (selectionOverlay.ts's
+  // quickDuplicateBubbles) both carry it. A prior version here used
+  // querySelector (singular) and only ever found the first one, which is why
+  // the bubbles used to sit still until the drag ended and paintSelection()
+  // repainted everything at the final position.
+  overlays: SVGGElement[];
+  overlayBaseTransforms: (string | null)[];
   draggedBounds: Bounds;
   liveLinks: LiveLink[];
 }
@@ -72,10 +79,7 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
     if (!drag) return;
     for (const entity of drag.entities) {
       applyGroupTransform(entity.nodes, entity.baseTransforms, dx, dy);
-      if (entity.overlay) {
-        const base = entity.overlayBaseTransform;
-        entity.overlay.setAttribute('transform', base ? `translate(${dx} ${dy}) ${base}` : `translate(${dx} ${dy})`);
-      }
+      applyGroupTransform(entity.overlays, entity.overlayBaseTransforms, dx, dy);
       updateLiveLinks(entity.liveLinks, offsetBounds(entity.draggedBounds, dx, dy));
     }
     for (const link of drag.internalLinks) applyGroupTransform(link.nodes, link.baseTransforms, dx, dy);
@@ -101,7 +105,7 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
       const nodes = findAllOwnerNodes(svg, o.id);
       const primary = findOwnerNode(svg, o.id, isPrimary);
       if (!nodes.length || !primary) continue;
-      const overlay = svg.querySelector<SVGGElement>(`[data-sf-selection-overlay="${CSS.escape(o.id)}"]`);
+      const overlays = [...svg.querySelectorAll<SVGGElement>(`[data-sf-selection-overlay="${CSS.escape(o.id)}"]`)];
       const draggedBounds = primary.getBBox();
       // Links attached to more than one group member are handled separately
       // (see internalLinks below) — excluding them here stops the same
@@ -112,7 +116,7 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
       });
       entities.push({
         owner: o, nodes, baseTransforms: nodes.map(n => n.getAttribute('transform')),
-        overlay, overlayBaseTransform: overlay?.getAttribute('transform') ?? null,
+        overlays, overlayBaseTransforms: overlays.map(g => g.getAttribute('transform')),
         draggedBounds, liveLinks,
       });
     }
