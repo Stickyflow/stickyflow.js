@@ -215,6 +215,26 @@ describe('insertEntity', () => {
     expect(next).toContain('Container f {');
   });
 
+  it('escapes a multi-line label instead of emitting a literal newline', () => {
+    // Real bug: quick-duplicating a shape whose label had two lines ("Kai
+    // Havertz\nST · drops deep" — the model writes these constantly) produced
+    // a raw line break inside a short "…" string, which the lexer rejects
+    // outright. The patch then silently failed while the caller had already
+    // adopted the unparseable text. Tabs and quotes ride along the same path.
+    const label = 'Kai Havertz\nST · drops "deep"\tfast';
+    const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: label, x: 300, y: 0, width: 120, height: 60 });
+    expect(() => parse(next)).not.toThrow();
+    expect(sflToCanvasState(next).entities.find(e => e.id === 'b')?.text).toBe(label);
+    // The emitted line carries escapes, not an actual break.
+    expect(next).toContain('text: "Kai Havertz\\nST · drops \\"deep\\"\\tfast"');
+  });
+
+  it('round-trips a multi-line label through a rename', () => {
+    const renamed = applyTextChange(sfl, { owner: owner('a'), text: 'line one\nline two' });
+    expect(() => parse(renamed)).not.toThrow();
+    expect(sflToCanvasState(renamed).entities.find(e => e.id === 'a')?.text).toBe('line one\nline two');
+  });
+
   it('writes `kind: frame`/`kind: swimlane` for a Container, and neither for a Table', () => {
     const withFrame = insertEntity(sfl, { id: 'g', kind: 'frame', x: 0, y: 500, width: 200, height: 100 });
     expect(sflToCanvasState(withFrame).entities.find(e => e.id === 'g')?.entityType).toBe('frame');

@@ -235,7 +235,24 @@ function indentBlock(body: string, indent: string): string[] {
 const indentOf = (line: string): string => line.match(/^[ \t]*/)?.[0] ?? '';
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 const round2 = (n: number): number => Math.round(n * 100) / 100;
-const escapeSflString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+/**
+ * Escapes a value for a short `"…"` string, which is the only string form this
+ * file emits. The lexer accepts exactly four escapes there (`\"`, `\\`, `\n`,
+ * `\t`) and *throws* on a literal newline — so a multi-line label (a shape
+ * captioned "Kai Havertz\nST · drops deep", say) written out raw produced SFL
+ * that no longer parses, and every patch carrying one silently failed.
+ *
+ * Order matters: backslashes first, so the escapes added afterwards aren't
+ * escaped a second time. CR has no escape sequence in the grammar at all, so
+ * CRLF/CR is normalised to LF rather than being emitted as something the lexer
+ * would reject.
+ */
+const escapeSflString = (value: string): string => value
+  .replace(/\\/g, '\\\\')
+  .replace(/"/g, '\\"')
+  .replace(/\r\n?/g, '\n')
+  .replace(/\n/g, '\\n')
+  .replace(/\t/g, '\\t');
 
 function setOrInsertText(lines: string[], range: LineRange, text: string): void {
   const value = `"${escapeSflString(text)}"`;
