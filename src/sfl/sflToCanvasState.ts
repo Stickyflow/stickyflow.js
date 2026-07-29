@@ -276,9 +276,16 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     return 'shape';
   };
 
-  // Legacy-Entity-Kind aus der Text-Ära; alte .sfl-Dokumente mit kind: note
-  // werden beim Import still verworfen (keine Entity, kein Diagnostic).
-  const buildEntity = (block: SflBlock, origin: { x: number; y: number }, frameId?: string): SflEntityOut | null => {
+  // `kind:` is informational — it names what an entity IS, and does not by
+  // itself decide anything about rendering (the shape comes from `style`).
+  // `kind: note` used to be the single exception: a leftover from the text-era
+  // Note entity, it caused the whole block to be dropped silently, no entity
+  // and no diagnostic. Notes have not existed for a long time, so all that
+  // exception did was delete perfectly ordinary boxes — an annotation captioned
+  // `kind: note` is exactly what a model reaches for, while `kind: annotation`
+  // one line over survives. Removed: it now builds a shape like every other
+  // unrecognised kind.
+  const buildEntity = (block: SflBlock, origin: { x: number; y: number }, frameId?: string): SflEntityOut => {
     const p = mergedProps(block);
     const pos = tupleVals(layoutProp(block, 'position')) ?? [0, 0];
     const size = tupleVals(layoutProp(block, 'size')) ?? [0, 0];
@@ -286,7 +293,6 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     // not a `kind:` property — `Container … { kind: table }` (pre-§12.1a) is
     // still read the same way via the property fallback.
     const kind = block.kind === 'Table' ? 'table' : (asString(p.get('kind')) ?? '');
-    if (kind === 'note') return null;
     const shapeType = asString(p.get('shape'));
 
     // präsentationale Props (alles außer den strukturellen Schlüsseln) als Strings
@@ -416,7 +422,6 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     for (const child of childBlocks(block)) {
       if (child.kind === 'Container') {
         const ent = buildEntity(child, origin, frameId);
-        if (!ent) continue; // Container ist nie kind: note, aber buildEntity bleibt defensiv nullable
         entities.push(ent);
         // Kinder relativ zur absoluten Container-Position; im Container gefundene
         // Groups wandern (flach) in die Ergebnisliste, mit parentFrameId = Container.
@@ -426,8 +431,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         // Container: it never holds further Entities/Groups/Links, so unlike
         // the Container branch above, it doesn't recurse into walk(). Its own
         // Columns/Rows are read separately inside buildEntity.
-        const ent = buildEntity(child, origin, frameId);
-        if (ent) entities.push(ent);
+        entities.push(buildEntity(child, origin, frameId));
       } else if (child.kind === 'Group') {
         const p = mergedProps(child); // Style-Referenz + lokales style{} erlaubt (§11)
         const subGroups = walk(child, origin, frameId); // transparent: kein eigener Ursprung

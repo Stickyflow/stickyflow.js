@@ -268,6 +268,35 @@ Model m {
     expect(diagnostics).toEqual([]);
   });
 
+  it('renders `kind: note` as an ordinary shape instead of silently dropping it', () => {
+    // `kind: note` used to be a special case left over from the text-era Note
+    // entity: the block was discarded outright, no entity and no diagnostic.
+    // Notes are long gone, so all that did was delete ordinary annotation
+    // boxes — and `kind:` is informational everywhere else, so an unrecognised
+    // value has to behave like every other unrecognised value.
+    const withNote = `sfl 1.2
+
+Model m {
+  Entity a {
+    kind: note
+    text: "LB concern"
+    layout { position: 0, 0
+      size: 190, 72 }
+    style { shape: rounded_rectangle }
+  }
+}
+`;
+    const state = sflToCanvasState(withNote);
+    expect(state.entities.map(e => e.id)).toEqual(['a']);
+    expect(state.entities[0].entityType).toBe('shape');
+    expect(state.entities[0].kind).toBe('note');
+
+    const { svg, diagnostics } = render(withNote);
+    expect(diagnostics).toEqual([]);
+    expect(svg).toContain('data-sf-id="a"');
+    expect(svg).toContain('LB concern');
+  });
+
   it('reports a diagnostic for a Style declared inside Model instead of at the top level', () => {
     // Real bug, hit live: an LLM nested every `Style` block inside `Model`
     // instead of before it. `: LivingRoom` etc. then matched nothing in
