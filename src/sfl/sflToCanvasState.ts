@@ -67,10 +67,26 @@ export interface SflGroupOut {
   parentFrameId?: string;
 }
 
+/**
+ * Mirrors `RenderDiagnostic` (src/rendering/renderScene.ts) structurally
+ * rather than importing it — `sfl/` has no dependency on `rendering/`, and the
+ * two shapes only ever need to line up, never share an identity. Anything
+ * pushed here flows straight through sflToImportJson → sflToRenderInput →
+ * buildRenderScene's own diagnostics array (seeded from this one) without
+ * conversion.
+ */
+export interface SflDiagnostic {
+  severity: 'warning' | 'error';
+  code: string;
+  message: string;
+  entityId?: string;
+}
+
 export interface SflCanvasState {
   entities: SflEntityOut[];
   links: SflLinkOut[];
   groups: SflGroupOut[];
+  diagnostics: SflDiagnostic[];
 }
 
 // ── Wert-Helfer ──────────────────────────────────────────────────────────────
@@ -138,6 +154,44 @@ function classifyRefs(
   return { styleRef, layoutRef };
 }
 
+/**
+ * A `: Foo` composition ref that matches neither map degrades completely
+ * silently everywhere else in this file (classifyRefs just drops it, and
+ * every caller downstream — mergedProps, layoutProp, resolveStyle,
+ * resolveLayout — falls through to "nothing referenced" with no error path
+ * at all). The most common real cause: a `Style`/`Layout` block declared
+ * INSIDE `Model` instead of at the top level alongside it, so it never made
+ * it into styleBlocks/layoutBlocks in the first place — every entity that
+ * references it then silently gets no shape and no fill/stroke (renders as
+ * an invisible box, only its text showing).
+ *
+ * One dedicated pass over the whole tree, rather than checking inline from
+ * classifyRefs' many call sites, so each unresolved ref is reported exactly
+ * once per block that uses it, not once per place that happens to resolve it.
+ */
+function collectUnresolvedRefs(
+  doc: SflDocument,
+  styleBlocks: Map<string, SflBlock>,
+  layoutBlocks: Map<string, SflBlock>,
+): SflDiagnostic[] {
+  const diagnostics: SflDiagnostic[] = [];
+  const visit = (block: SflBlock) => {
+    for (const ref of block.composition) {
+      if (!styleBlocks.has(ref) && !layoutBlocks.has(ref)) {
+        diagnostics.push({
+          severity: 'warning',
+          code: 'unresolved-style-or-layout',
+          entityId: block.name,
+          message: `"${ref}" is not a Style or Layout defined at the top level of the document — "${block.name}" gets no shape, fill, or stroke from it.`,
+        });
+      }
+    }
+    for (const child of childBlocks(block)) visit(child);
+  };
+  for (const block of doc.blocks) visit(block);
+  return diagnostics;
+}
+
 // ── Hauptfunktion ────────────────────────────────────────────────────────────
 
 export function sflToCanvasState(sflText: string): SflCanvasState {
@@ -157,6 +211,8 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       for (const inner of childBlocks(b)) if (inner.kind === 'Model' && !model) model = inner;
     }
   }
+  const diagnostics = collectUnresolvedRefs(doc, styleBlocks, layoutBlocks);
+
   const resolvedStyles = new Map<string, Map<string, SflValue>>();
   const resolveStyle = (name: string, seen: Set<string> = new Set()): Map<string, SflValue> => {
     const cached = resolvedStyles.get(name);
@@ -436,5 +492,5 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     };
   });
 
-  return { entities, links, groups };
+  return { entities, links, groups, diagnostics };
 }

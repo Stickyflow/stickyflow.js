@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, renderCanvas } from '../src/index';
+import { render, renderCanvas, sflToCanvasState } from '../src/index';
 import type { RenderInput } from '../src/index';
 
 // This whole suite runs under environment: 'node' (see vitest.config.ts). If any
@@ -266,6 +266,70 @@ Model m {
     expect(Number.isFinite(height)).toBe(true);
     expect(Number.isFinite(width)).toBe(true);
     expect(diagnostics).toEqual([]);
+  });
+
+  it('reports a diagnostic for a Style declared inside Model instead of at the top level', () => {
+    // Real bug, hit live: an LLM nested every `Style` block inside `Model`
+    // instead of before it. `: LivingRoom` etc. then matched nothing in
+    // sflToCanvasState's styleBlocks map (only top-level siblings of Model are
+    // scanned there) and silently fell through to no shape, no fill, no
+    // stroke — an entity with only its text visible, and zero diagnostics
+    // reported anywhere. This is the one thing this whole feature exists to
+    // catch.
+    const stylesInsideModel = `sfl 1.2
+
+Model m {
+  Style LivingRoom {
+    shape: rectangle
+    fill: "#e0f2fe"
+    stroke: "#0284c7"
+  }
+
+  Entity living : LivingRoom {
+    text: "Living room"
+    layout { position: 80, 100
+      size: 360, 270 }
+  }
+}
+`;
+    const state = sflToCanvasState(stylesInsideModel);
+    expect(state.entities[0].shapeType).toBeUndefined();
+    expect(state.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ severity: 'warning', code: 'unresolved-style-or-layout', entityId: 'living' }),
+    ]));
+
+    const { diagnostics, svg } = render(stylesInsideModel);
+    expect(diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'unresolved-style-or-layout', entityId: 'living' }),
+    ]));
+    // The actual visible symptom: no fill/stroke ever reaches the SVG.
+    expect(svg).toMatch(/data-sf-id="living"[^>]*fill="none"/);
+  });
+
+  it('reports no diagnostic once the same Style is moved to the top level, where it belongs', () => {
+    const stylesAtTopLevel = `sfl 1.2
+
+Style LivingRoom {
+  shape: rectangle
+  fill: "#e0f2fe"
+  stroke: "#0284c7"
+}
+
+Model m {
+  Entity living : LivingRoom {
+    text: "Living room"
+    layout { position: 80, 100
+      size: 360, 270 }
+  }
+}
+`;
+    const state = sflToCanvasState(stylesAtTopLevel);
+    expect(state.entities[0].shapeType).toBe('rectangle');
+    expect(state.diagnostics).toEqual([]);
+
+    const { diagnostics, svg } = render(stylesAtTopLevel);
+    expect(diagnostics).toEqual([]);
+    expect(svg).toMatch(/data-sf-id="living"[^>]*fill="#e0f2fe"/);
   });
 
   it('bends an orthogonal link per its `segments:` offsets instead of always using the router\'s default route', () => {

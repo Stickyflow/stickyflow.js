@@ -229,5 +229,6 @@ export function sflToImportJson(sfl: string): any {
     project: { export_type: 'stickyflow_canvas_v3', name: 'SFL Import' },
     canvas: { entities: { notes: [], shapes: canvas.shapes, links: canvas.links, frames, swimlanes, tables } },
     layers: { groups: flatGroups },
+    diagnostics: state.diagnostics,
   };
 }

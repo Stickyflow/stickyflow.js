@@ -487,7 +487,10 @@ function sceneBounds(nodes: RenderNode[]): Bounds {
 }
 
 export function buildRenderScene(input: RenderInput): RenderScene {
-  const diagnostics: RenderDiagnostic[] = [];
+  // Diagnostics already known before scene-building starts (e.g. an
+  // unresolved Style/Layout ref from sflToCanvasState) merge with whatever
+  // this function discovers on its own below (empty-mesh-gradient, etc.).
+  const diagnostics: RenderDiagnostic[] = [...(input.diagnostics ?? [])];
   const nodes = [
     ...input.frames.flatMap((frame, i) => tag(buildFrame(frame, i), 'frame', frame.id, undefined, frame.title ?? undefined)),
     ...input.swimlanes.flatMap((swimlane, i) => tag(buildSwimlane(swimlane, i), 'swimlane', swimlane.id)),

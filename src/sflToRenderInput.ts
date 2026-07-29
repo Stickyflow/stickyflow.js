@@ -18,13 +18,14 @@ import type { Frame } from './model/frames';
 import type { Swimlane } from './model/swimlanes';
 import type { Table } from './model/tables';
 import type { Link } from './model/links';
-import type { Point, RenderInput, ResolvedExportLink } from './rendering/renderScene';
+import type { Point, RenderDiagnostic, RenderInput, ResolvedExportLink } from './rendering/renderScene';
 import { sflToImportJson } from './sfl';
 
 interface EntityBuckets { shapes: unknown[]; links: unknown[] }
 interface V3Json {
   canvas?: { entities?: { shapes?: unknown[]; links?: unknown[]; frames?: unknown[]; swimlanes?: unknown[]; tables?: unknown[] } };
   layers?: { groups?: Array<{ entities?: EntityBuckets }> };
+  diagnostics?: RenderDiagnostic[];
 }
 
 type PositionedElement = { id: string; x: number; y: number; width: number; height: number };
@@ -80,5 +81,5 @@ export function sflToRenderInput(sfl: string): RenderInput {
     to: pointFor(link, 'to', positioned),
   }));
 
-  return { shapes, frames, swimlanes, tables, links: resolvedLinks };
+  return { shapes, frames, swimlanes, tables, links: resolvedLinks, diagnostics: json.diagnostics ?? [] };
 }

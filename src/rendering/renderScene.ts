@@ -138,6 +138,11 @@ export interface RenderInput {
   swimlanes: Swimlane[];
   tables?: Table[];
   links: ResolvedExportLink[];
+  /** Diagnostics already known before scene-building even starts — e.g. an
+   *  unresolved Style/Layout ref from sflToCanvasState. buildRenderScene seeds
+   *  its own diagnostics array from these rather than starting empty, so they
+   *  merge with whatever it discovers itself (empty-mesh-gradient, etc.). */
+  diagnostics?: RenderDiagnostic[];
 }
 
 export interface ResolvedLinkGeometry {
