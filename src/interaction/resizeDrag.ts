@@ -11,7 +11,7 @@
 // the already-wrapped tspans, which would double-wrap on re-join.
 // (DOM code — browser-verified, like moveDrag.ts.)
 import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner } from '../viewer/contract';
+import { resolveOwner, isCameraGesture } from '../viewer/contract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel } from '../viewer/domQuery';
 import { updateQuickDuplicateBubbles, type ResizeHandle } from '../viewer/selectionOverlay';
 import { localShapePath } from '../model/geometry/shapes';
@@ -191,6 +191,9 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
 
   const onPointerDown = (e: PointerEvent) => {
     if (e.button !== 0 || drag) return;
+    // Ctrl/Cmd means the reader is panning the camera (viewer/contract.ts's
+    // isCameraGesture) — yield rather than turning that into a mutation.
+    if (isCameraGesture(e)) return;
     const handleEl = (e.target as Element | null)?.closest?.('[data-sf-resize-handle]') as SVGGraphicsElement | null;
     if (!handleEl) return;
     const handle = handleEl.getAttribute('data-sf-resize-handle') as ResizeHandle;

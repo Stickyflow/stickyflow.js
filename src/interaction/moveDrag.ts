@@ -3,7 +3,7 @@
 // orthogonal link still looks orthogonal and a curved one still curves while
 // dragging. (DOM code — browser-verified, like textEdit.ts.)
 import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner } from '../viewer/contract';
+import { resolveOwner, isCameraGesture } from '../viewer/contract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../viewer/domQuery';
 import type { Bounds } from '../model/geometry/router';
 import { findLiveLinks, updateLiveLinks, type LiveLink } from './linkPreview';
@@ -87,6 +87,9 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
 
   const onPointerDown = (e: PointerEvent) => {
     if (e.button !== 0 || drag) return;
+    // Ctrl/Cmd means the reader is panning the camera (viewer/contract.ts's
+    // isCameraGesture) — yield rather than turning that into a mutation.
+    if (isCameraGesture(e)) return;
     const owner = resolveOwner(e.target as Element | null);
     if (!owner || !MOVABLE_ROLES.has(owner.role)) return;
 

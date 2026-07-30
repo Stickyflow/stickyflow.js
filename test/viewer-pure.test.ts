@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, DOM_CONTRACT_VERSION } from '../src/index';
-import { parseContractVersion, isContractCompatible, resolveOwner, type AttrElement } from '../src/viewer/contract';
+import { parseContractVersion, isContractCompatible, resolveOwner, isCameraGesture, type AttrElement } from '../src/viewer/contract';
 import { selectionReducer, clickAction } from '../src/viewer/selection';
 import { Emitter } from '../src/viewer/events';
 import { SFL_SAMPLE } from './fixtures';
@@ -41,6 +41,19 @@ describe('owner resolution (DOM-agnostic)', () => {
 
   it('rejects an unknown role', () => {
     expect(resolveOwner(fake({ 'data-sf-role': 'bogus', 'data-sf-id': 'x' }))).toBeNull();
+  });
+});
+
+describe('camera gesture modifier', () => {
+  // Both tiers key off this one predicate: the viewer pans/zooms when it holds,
+  // and every mutating gesture in stickyflow/interaction declines. Panning a
+  // zoomed-in diagram depends on the two agreeing, which is why it is a shared
+  // function rather than the same two keys tested in five places.
+  it('is Ctrl or Cmd, and nothing else', () => {
+    expect(isCameraGesture({ ctrlKey: true, metaKey: false })).toBe(true);
+    expect(isCameraGesture({ ctrlKey: false, metaKey: true })).toBe(true);
+    expect(isCameraGesture({ ctrlKey: true, metaKey: true })).toBe(true);
+    expect(isCameraGesture({ ctrlKey: false, metaKey: false })).toBe(false);
   });
 });
 

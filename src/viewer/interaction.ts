@@ -5,7 +5,7 @@
 // visual indicator. Mutating interactions (text edit, future drag) live in the
 // separate `stickyflow/interaction` package instead — see src/interaction/.
 import type { DisplayHandle } from './display';
-import { resolveOwner } from './contract';
+import { resolveOwner, isCameraGesture } from './contract';
 import { selectionReducer, clickAction } from './selection';
 import { Emitter, type OwnerRef } from './events';
 import { findOwnerNode, isPrimary } from './domQuery';
@@ -69,37 +69,34 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   const modifiersOf = (e: MouseEvent | KeyboardEvent) => ({ shift: e.shiftKey, ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey });
 
   // --- selection + click ---------------------------------------------------
-  // `panable` is decided once, at pointerdown: a drag starting on empty chrome
-  // pans the camera; a drag starting on an owner (entity/link/…), a resize
-  // handle, or a link endpoint does not — otherwise dragging a shape (or
-  // resizing/reconnecting it) would fight camera panning, and once
-  // `stickyflow/interaction` binds shape movement/resize/reconnect on top of
-  // this same svg, it would have no way to claim that gesture (this tier
-  // can't know about that tier — one-way dependency — so it backs off from
-  // any owned target instead). Resize handles and link endpoints specifically
-  // are the interaction-tier targets this tier CAN recognize by attribute
-  // name even without knowing about that tier — it drew them itself, in
-  // selectionOverlay.ts — unlike an owner's own click target, which handles
-  // don't have (data-sf-id only ever lives on scene nodes, not this overlay).
+  // `panable` is decided once, at pointerdown, and the deciding question is the
+  // MODIFIER, not what sits under the cursor: Ctrl/Cmd held means the reader is
+  // driving the camera, so a drag pans wherever it began — including on top of a
+  // shape. That is what makes a zoomed-in diagram navigable at all; gating pan on
+  // "started over empty canvas" (as this once did) meant the more the shapes
+  // filled the viewport, the less of it could be reached.
+  //
+  // The other half of the rule lives in `stickyflow/interaction`: move, resize,
+  // reconnect and quick-duplicate each decline while the modifier is held, so
+  // nothing fights the camera for the gesture. Both halves read the same
+  // predicate (isCameraGesture) rather than re-testing the keys independently.
+  //
+  // A bare drag (no modifier) still pans only over empty chrome, so an embedded
+  // diagram never hijacks a host page's own scroll/selection gestures.
   let down: { x: number; y: number; moved: boolean; panable: boolean } | null = null;
 
   const onPointerDown = (e: PointerEvent) => {
     const target = e.target as Element | null;
-    const owner = resolveOwner(target);
-    const onResizeHandle = !!target?.closest('[data-sf-resize-handle]');
-    const onLinkEndpoint = !!target?.closest('[data-sf-link-endpoint]');
-    const onQuickDuplicate = !!target?.closest('[data-sf-quick-duplicate]');
-    down = { x: e.clientX, y: e.clientY, moved: false, panable: !owner && !onResizeHandle && !onLinkEndpoint && !onQuickDuplicate };
+    const overContent = !!resolveOwner(target)
+      || !!target?.closest('[data-sf-resize-handle], [data-sf-link-endpoint], [data-sf-quick-duplicate]');
+    down = { x: e.clientX, y: e.clientY, moved: false, panable: isCameraGesture(e) || !overContent };
   };
 
   const onPointerMove = (e: PointerEvent) => {
     if (down) {
       if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > DRAG_THRESHOLD) down.moved = true;
       if (down.moved) {
-        // Ctrl/Cmd-gated, same as onWheel's zoom below — a bare drag over empty
-        // chrome does nothing instead, so it never fights a host page's own
-        // scroll/selection gestures when this is embedded inline.
-        if (down.panable && (e.ctrlKey || e.metaKey)) display.panBy(e.movementX, e.movementY);
+        if (down.panable && isCameraGesture(e)) display.panBy(e.movementX, e.movementY);
         return;
       }
     }
@@ -140,7 +137,7 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   // to pass over an embedded diagram — the previous unconditional
   // preventDefault() hijacked the page's scroll the instant it did.
   const onWheel = (e: WheelEvent) => {
-    if (!(e.ctrlKey || e.metaKey)) return;
+    if (!isCameraGesture(e)) return;
     e.preventDefault();
     display.zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX, e.clientY);
   };

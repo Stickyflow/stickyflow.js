@@ -10,6 +10,22 @@ export interface AttrElement {
   closest(selector: string): AttrElement | null;
 }
 
+/**
+ * Whether a pointer/wheel event is asking to drive the CAMERA rather than the
+ * content — Ctrl/Cmd held. Defined here, in the tier that owns the camera, so
+ * both sides of the rule read from one place: the viewer treats it as pan/zoom,
+ * and every mutating gesture in `stickyflow/interaction` (move, resize, link
+ * reconnect, quick-duplicate) declines when it is set.
+ *
+ * Without that second half, panning was impossible the moment shapes filled the
+ * viewport: the camera only panned when a drag STARTED on empty canvas, and any
+ * drag starting on a shape became a move instead — so the more you zoomed in,
+ * the less of the diagram you could reach.
+ */
+export function isCameraGesture(e: { ctrlKey: boolean; metaKey: boolean }): boolean {
+  return e.ctrlKey || e.metaKey;
+}
+
 /** Read the versioned handshake the renderer stamped on the root <svg>. */
 export function parseContractVersion(svg: string): number | null {
   const match = /data-sf-contract="(\d+)"/.exec(svg);

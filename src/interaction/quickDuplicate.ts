@@ -12,7 +12,7 @@
 //     itself cancels silently, same as a link reconnect drop-on-nothing does.
 // (DOM code — browser-verified, like moveDrag.ts/resizeDrag.ts/linkEndpointDrag.ts.)
 import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner } from '../viewer/contract';
+import { resolveOwner, isCameraGesture } from '../viewer/contract';
 import { findOwnerNode, isPrimary } from '../viewer/domQuery';
 import { portToPoint, type Bounds, type Side } from '../model/geometry/router';
 import { getPathPoints } from '../model/geometry/connectionLine';
@@ -83,6 +83,9 @@ export function bindQuickDuplicate(viewer: Viewer, emitter: Emitter): QuickDupli
 
   const onPointerDown = (e: PointerEvent) => {
     if (e.button !== 0 || drag) return;
+    // Ctrl/Cmd means the reader is panning the camera (viewer/contract.ts's
+    // isCameraGesture) — yield rather than turning that into a mutation.
+    if (isCameraGesture(e)) return;
     const bubble = (e.target as Element | null)?.closest('[data-sf-quick-duplicate]');
     if (!bubble) return;
     const direction = bubble.getAttribute('data-sf-quick-duplicate') as Direction;

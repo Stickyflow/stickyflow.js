@@ -4,7 +4,7 @@
 // path looks exactly as it will once committed. (DOM code — browser-verified,
 // like the rest of this tier.)
 import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner } from '../viewer/contract';
+import { resolveOwner, isCameraGesture } from '../viewer/contract';
 import { findOwnerNode, isPrimary } from '../viewer/domQuery';
 import type { LinkEndpoint } from '../viewer/selectionOverlay';
 import { portToPoint, projectOffsetOnSide, chooseSide, type Bounds, type Side } from '../model/geometry/router';
@@ -106,6 +106,9 @@ export function bindLinkEndpointDrag(viewer: Viewer, emitter: Emitter): LinkEndp
 
   const onPointerDown = (e: PointerEvent) => {
     if (e.button !== 0 || drag) return;
+    // Ctrl/Cmd means the reader is panning the camera (viewer/contract.ts's
+    // isCameraGesture) — yield rather than turning that into a mutation.
+    if (isCameraGesture(e)) return;
     const target = e.target as Element | null;
     const end = target?.closest('[data-sf-link-endpoint]')?.getAttribute('data-sf-link-endpoint') as LinkEndpoint | null | undefined;
     if (!end) return;
