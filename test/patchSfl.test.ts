@@ -113,6 +113,20 @@ describe('applyMoveChange', () => {
     expect(again).toContain('layout { position: 105, 95; size: 200, 80 }');
     expect(again.match(/position:/g)?.length).toBe(1);
   });
+
+  it('updates position in place when the layout block shares its OWN physical line with the entity\'s opening brace too', () => {
+    // Same regression as applyResizeChange's matching test, hit via a plain
+    // drag instead of a resize handle: `Entity a : Style { text: "A"; layout
+    // { position: 80, 80; size: 200, 80 } }` all on one line - what an LLM
+    // asked to write compact SFL for a whole diagram routinely produces for
+    // EVERY entity, not just one. Dropping the shape used to silently revert
+    // to its pre-drag position because the patched document no longer parsed.
+    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "A"; layout { position: 80, 80; size: 200, 80 } }\n}\n`;
+    const next = applyMoveChange(sfl, { owner: owner('a'), dx: 20, dy: 20 });
+    expect(next).toContain('layout { position: 100, 100; size: 200, 80 }');
+    expect(next.match(/position:/g)?.length).toBe(1);
+    expect(() => parse(next)).not.toThrow();
+  });
 });
 
 describe('applyResizeChange', () => {
@@ -142,15 +156,38 @@ describe('applyResizeChange', () => {
     // The entity itself spans multiple lines with `layout {}` as its own
     // (single-line) child — the structure real SFL actually has, including
     // every fixture in this file and everything an LLM has produced in
-    // practice. A `layout{}` sharing its OWN physical line with the entity's
-    // opening brace too (`Entity a { layout { ... } }` all on one line) is a
-    // narrower, separately-known gap: findChildBlock's line-based header
-    // search can't see a child header that starts mid-line.
+    // practice.
     const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n    layout { position: 0, 0; size: 100, 50 }\n  }\n}\n`;
     const next = applyResizeChange(sfl, event);
     expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
     expect(next.match(/position:/g)?.length).toBe(1);
     expect(next.match(/size:/g)?.length).toBe(1);
+  });
+
+  it('sets position and size in place when the layout block shares its OWN physical line with the entity\'s opening brace too', () => {
+    // Regression: `Entity a { text: "A"; layout { position: 0, 0; size: 100,
+    // 50 } }` all on one line - routine LLM output optimizing for fewer
+    // tokens, and valid SFL either way. findChildBlock's header search is
+    // per LINE, so it could never see a child header starting mid-line; the
+    // old insert-fallback then spliced a stray, unparseable `layout {}` in
+    // as a sibling PAST the entity's own closing brace, breaking the whole
+    // document. A drag/resize on a document shaped like this used to look
+    // like it worked and then silently snap back on the next re-render, once
+    // the app's caller rejected the now-invalid SFL and reverted.
+    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "A"; layout { position: 0, 0; size: 100, 50 } }\n}\n`;
+    const next = applyResizeChange(sfl, event);
+    expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
+    expect(next.match(/position:/g)?.length).toBe(1);
+    expect(next.match(/size:/g)?.length).toBe(1);
+    expect(() => parse(next)).not.toThrow();
+  });
+
+  it('inserts a brand-new layout block inline when the entity itself is single-line and has no layout at all', () => {
+    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "A" }\n}\n`;
+    const next = applyResizeChange(sfl, event);
+    expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
+    expect(next).not.toMatch(/\n\s*layout\s*\{/); // stayed inline, not spliced as a new sibling line
+    expect(() => parse(next)).not.toThrow();
   });
 });
 
