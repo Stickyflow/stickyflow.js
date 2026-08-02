@@ -18,12 +18,14 @@ import type { Frame } from './model/frames';
 import type { Swimlane } from './model/swimlanes';
 import type { Table } from './model/tables';
 import type { Link } from './model/links';
+import type { FreeformPath } from './model/paths';
+import type { Chart } from './model/charts';
 import type { Point, RenderDiagnostic, RenderInput, ResolvedExportLink } from './rendering/renderScene';
 import { sflToImportJson } from './sfl';
 
 interface EntityBuckets { shapes: unknown[]; links: unknown[] }
 interface V3Json {
-  canvas?: { entities?: { shapes?: unknown[]; links?: unknown[]; frames?: unknown[]; swimlanes?: unknown[]; tables?: unknown[] } };
+  canvas?: { entities?: { shapes?: unknown[]; links?: unknown[]; frames?: unknown[]; swimlanes?: unknown[]; tables?: unknown[]; paths?: unknown[]; charts?: unknown[] } };
   layers?: { groups?: Array<{ entities?: EntityBuckets }> };
   diagnostics?: RenderDiagnostic[];
 }
@@ -73,13 +75,15 @@ export function sflToRenderInput(sfl: string): RenderInput {
   const frames = (canvas.frames ?? []) as unknown as Frame[];
   const swimlanes = (canvas.swimlanes ?? []) as unknown as Swimlane[];
   const tables = (canvas.tables ?? []) as unknown as Table[];
+  const paths = (canvas.paths ?? []) as unknown as FreeformPath[];
+  const charts = (canvas.charts ?? []) as unknown as Chart[];
 
-  const positioned: PositionedElement[] = [...shapes, ...frames, ...swimlanes, ...tables] as unknown as PositionedElement[];
+  const positioned: PositionedElement[] = [...shapes, ...frames, ...swimlanes, ...tables, ...paths, ...charts] as unknown as PositionedElement[];
   const resolvedLinks: ResolvedExportLink[] = links.map(link => ({
     link,
     from: pointFor(link, 'from', positioned),
     to: pointFor(link, 'to', positioned),
   }));
 
-  return { shapes, frames, swimlanes, tables, links: resolvedLinks, diagnostics: json.diagnostics ?? [] };
+  return { shapes, frames, swimlanes, tables, paths, charts, links: resolvedLinks, diagnostics: json.diagnostics ?? [] };
 }

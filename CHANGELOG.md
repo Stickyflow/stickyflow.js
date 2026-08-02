@@ -17,6 +17,9 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+- Add full SFL parsing and headless SVG rendering for freeform `Path` and `Chart` entities.
+- Preserve explicit `[x, y]` series data for line and scatter charts while retaining legacy flat line-series support.
+
 ## [0.1.0] - 2026-07-26
 
 First versioned release. Not yet published to npm.

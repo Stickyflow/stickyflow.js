@@ -12,12 +12,12 @@
 // wiederverwendbare, referenzierbare Blätter (§8/§9). `Container t { kind:
 // table … }` bleibt als Alt-Syntax parsebar.
 export type BlockKind =
-  | 'Project' | 'Model' | 'Group' | 'Container' | 'Table' | 'Entity' | 'Link' | 'Layout' | 'Style'
-  | 'Columns' | 'Column' | 'Rows' | 'Row';
+  | 'Project' | 'Model' | 'Group' | 'Container' | 'Table' | 'Path' | 'Chart' | 'Entity' | 'Link' | 'Layout' | 'Style'
+  | 'Columns' | 'Column' | 'Rows' | 'Row' | 'Axis' | 'Series';
 
 export const BLOCK_KINDS: readonly BlockKind[] = [
-  'Project', 'Model', 'Group', 'Container', 'Table', 'Entity', 'Link', 'Layout', 'Style',
-  'Columns', 'Column', 'Rows', 'Row',
+  'Project', 'Model', 'Group', 'Container', 'Table', 'Path', 'Chart', 'Entity', 'Link', 'Layout', 'Style',
+  'Columns', 'Column', 'Rows', 'Row', 'Axis', 'Series',
 ];
 
 export type Side = 'top' | 'bottom' | 'left' | 'right';

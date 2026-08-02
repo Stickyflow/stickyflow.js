@@ -5,6 +5,8 @@ import type { Link, MarkerType } from '../model/links';
 import { getLinkStrokeColor } from '../model/links';
 import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
+import type { FreeformPath, PathPoint } from '../model/paths';
+import type { Chart, ChartAxis } from '../model/charts';
 import { tableBorderGeometry } from '../model/geometry/tables';
 import { localShapePath } from '../model/geometry/shapes';
 import { wrapText } from '../model/geometry/text';
@@ -12,7 +14,7 @@ import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash, roundedOrth
 import type { PathSegment } from '../model/geometry/router';
 import type {
   Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene, SceneRole,
-  ScenePaint, ScenePath, SceneStyle,
+  ScenePaint, ScenePath, SceneStyle, SceneText,
 } from './renderScene';
 
 // Interactive DOM contract (ADR-03): stamp every node of an owner with a shared
@@ -41,8 +43,9 @@ const EMPTY_BOUNDS: Bounds = { minX: 0, minY: 0, maxX: 100, maxY: 100 };
 const finite = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
-const orderOf = (entity: { order_key?: string; orderKey?: string }, fallback: number): number => {
+const orderOf = (entity: { order_key?: string; orderKey?: string; order?: number }, fallback: number): number => {
   const key = entity.order_key ?? entity.orderKey;
+  if (!key && typeof entity.order === 'number') return entity.order;
   if (!key) return fallback;
   let rank = 0;
   for (let i = 0; i < Math.min(key.length, 8); i++) rank = rank * 128 + key.charCodeAt(i);
@@ -395,6 +398,107 @@ function buildTable(table: Table, index: number): RenderNode[] {
   return nodes;
 }
 
+function freeformPathData(points: PathPoint[], tension: number, closed: boolean): string {
+  if (!points.length) return '';
+  if (points.length < 3 || tension <= 0) {
+    return `M ${points[0].x} ${points[0].y} ${points.slice(1).map(point => `L ${point.x} ${point.y}`).join(' ')}${closed ? ' Z' : ''}`;
+  }
+  const pointAt = (index: number): PathPoint => closed
+    ? points[(index + points.length) % points.length]
+    : points[Math.max(0, Math.min(points.length - 1, index))];
+  const segmentCount = closed ? points.length : points.length - 1;
+  const commands = [`M ${points[0].x} ${points[0].y}`];
+  for (let i = 0; i < segmentCount; i++) {
+    const p0 = pointAt(i - 1), p1 = pointAt(i), p2 = pointAt(i + 1), p3 = pointAt(i + 2);
+    const factor = tension / 6;
+    commands.push(`C ${p1.x + (p2.x - p0.x) * factor} ${p1.y + (p2.y - p0.y) * factor} ${p2.x - (p3.x - p1.x) * factor} ${p2.y - (p3.y - p1.y) * factor} ${p2.x} ${p2.y}`);
+  }
+  if (closed) commands.push('Z');
+  return commands.join(' ');
+}
+
+function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
+  if (path.is_visible === false || path.points.length < 2) return [];
+  const strokeWidth = finite(path.stroke_width, 2);
+  const extra = strokeWidth + 12;
+  const bounds = {
+    minX: Math.min(...path.points.map(point => point.x)) - extra,
+    minY: Math.min(...path.points.map(point => point.y)) - extra,
+    maxX: Math.max(...path.points.map(point => point.x)) + extra,
+    maxY: Math.max(...path.points.map(point => point.y)) + extra,
+  };
+  return [{
+    type: 'path', id: `path-${path.id}`, order: orderOf(path, 30_000 + index), bounds,
+    d: freeformPathData(path.points, finite(path.tension, 0), path.closed === true),
+    markerStart: path.start_marker, markerEnd: path.end_marker,
+    style: {
+      fill: path.closed ? { kind: 'solid', color: path.fill_color ?? 'transparent' } : { kind: 'none' },
+      stroke: { kind: 'solid', color: path.stroke_color ?? '#7c3aed' }, strokeWidth,
+      dash: path.dash?.length ? path.dash : undefined, lineCap: 'round', lineJoin: 'round', opacity: finite(path.opacity, 1),
+    },
+  }];
+}
+
+const CHART_COLORS = ['#7c3aed', '#0ea5e9', '#f97316', '#10b981', '#ec4899', '#eab308'];
+const mapChartValue = (value: number, axis: ChartAxis, extent: number): number => axis.max === axis.min ? 0 : (value - axis.min) / (axis.max - axis.min) * extent;
+function chartTicks(axis: ChartAxis): number[] {
+  if (!(axis.step > 0)) return axis.min === axis.max ? [axis.min] : [axis.min, axis.max];
+  const ticks: number[] = [];
+  for (let value = axis.min; value <= axis.max + 1e-9 && ticks.length < 1000; value += axis.step) ticks.push(Math.round(value * 1000) / 1000);
+  return ticks;
+}
+
+function chartText(id: string, order: number, bounds: Bounds, x: number, y: number, width: number, height: number, text: string, chart: Chart, align: 'left' | 'center' | 'right' = 'left', rotation?: number): SceneText {
+  return { type: 'text', id, order, bounds, x, y, width, height, lines: [text], fontFamily: chart.font_family ?? DEFAULT_FONT, fontSize: Math.max(9, finite(chart.font_size, 12)), fontWeight: 'normal', color: chart.text_color ?? '#0f172a', align, verticalAlign: 'top', lineHeight: 1.2, rotation, rotationCenter: rotation ? { x, y } : undefined };
+}
+
+function buildChart(chart: Chart, index: number): RenderNode[] {
+  if (chart.is_visible === false) return [];
+  const order = orderOf(chart, 20_000 + index), bounds = boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2);
+  const showLabels = chart.show_axis_labels !== false, showLegend = chart.show_legend !== false;
+  const padLeft = showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
+  const padBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
+  const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
+  const plot = { x: chart.x + padLeft, y: chart.y + padTop, width: Math.max(1, chart.width - padLeft - 24), height: Math.max(1, chart.height - padTop - padBottom) };
+  const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
+  let offset = .01;
+  if (chart.title) nodes.push({ ...chartText(`chart-title-${chart.id}`, order + offset++, bounds, plot.x, chart.y + 12, plot.width, 20, chart.title, chart), fontWeight: 'bold', fontSize: Math.max(10, finite(chart.font_size, 12)) + 2 });
+  if (showLegend) {
+    let x = plot.x + plot.width;
+    [...chart.series].reverse().forEach((series, reverseIndex) => {
+      const seriesIndex = chart.series.length - 1 - reverseIndex, width = Math.max(42, series.label.length * finite(chart.font_size, 12) * .58 + 22);
+      x -= width;
+      nodes.push({ type: 'rect', id: `chart-legend-swatch-${chart.id}-${series.id}`, order: order + offset++, bounds, x, y: chart.y + 16, width: 10, height: 10, rx: 3, style: { fill: { kind: 'solid', color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length] } } });
+      nodes.push(chartText(`chart-legend-${chart.id}-${series.id}`, order + offset++, bounds, x + 15, chart.y + 13, width - 15, 18, series.label, chart));
+    });
+  }
+  if (chart.show_grid !== false) {
+    const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } }, gridWidth = finite(chart.grid_width, 1);
+    chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });
+    chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + offset++, bounds, x: plot.x, y: y - gridWidth / 2, width: plot.width, height: gridWidth, style: gridStyle }); });
+  }
+  chart.series.forEach((series, seriesIndex) => {
+    const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+    const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
+    const pairs = explicit ? series.values as [number, number][] : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
+    if (chart.chart_type === 'bar') {
+      const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, (slot - 8) / Math.max(1, chart.series.length));
+      series.values.forEach((value, i) => { const yValue = Array.isArray(value) ? value[1] : value; const height = Math.max(0, mapChartValue(yValue, chart.axis_y, plot.height)); nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x: plot.x + i * slot + 4 + seriesIndex * barWidth, y: plot.y + plot.height - height, width: Math.max(1, barWidth - 2), height, rx: 2, style: { fill: { kind: 'solid', color } } }); });
+    } else {
+      const pixels = pairs.map(([x, y]) => ({ x: plot.x + mapChartValue(x, chart.axis_x, plot.width), y: plot.y + plot.height - mapChartValue(y, chart.axis_y, plot.height) }));
+      if (chart.chart_type === 'line' && pixels.length) nodes.push({ type: 'path', id: `chart-line-${chart.id}-${series.id}`, order: order + offset++, bounds, d: `M ${pixels.map((point, i) => `${i ? 'L' : ''} ${point.x} ${point.y}`).join(' ')}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
+      pixels.forEach((point, i) => nodes.push({ type: 'ellipse', id: `chart-point-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, cx: point.x, cy: point.y, rx: chart.chart_type === 'scatter' ? 4 : 3, ry: chart.chart_type === 'scatter' ? 4 : 3, style: { fill: { kind: 'solid', color } } }));
+    }
+  });
+  if (showLabels) {
+    chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
+    chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
+    if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + offset++, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));
+    if (chart.axis_y.label) nodes.push(chartText(`chart-y-label-${chart.id}`, order + offset++, bounds, chart.x + 12, plot.y + plot.height, plot.height, 18, chart.axis_y.label, chart, 'center', -90));
+  }
+  return nodes;
+}
+
 function marker(link: Link, end: 'start' | 'end'): MarkerType {
   const explicit = end === 'start' ? (link.startMarker ?? link.start_marker) : (link.endMarker ?? link.end_marker);
   if (explicit) return explicit;
@@ -495,6 +599,8 @@ export function buildRenderScene(input: RenderInput): RenderScene {
     ...input.frames.flatMap((frame, i) => tag(buildFrame(frame, i), 'frame', frame.id, undefined, frame.title ?? undefined)),
     ...input.swimlanes.flatMap((swimlane, i) => tag(buildSwimlane(swimlane, i), 'swimlane', swimlane.id)),
     ...(input.tables ?? []).flatMap((table, i) => tag(buildTable(table, i), 'table', table.id, undefined, table.title ?? undefined)),
+    ...(input.paths ?? []).flatMap((path, i) => tag(buildFreeformPath(path, i), 'path', path.id, 'path', 'Path')),
+    ...(input.charts ?? []).flatMap((chart, i) => tag(buildChart(chart, i), 'chart', chart.id, chart.chart_type, chart.title ?? 'Chart')),
     // Falls back to "fromId → toId" rather than leaving ariaLabel undefined
     // for an unlabeled link (most of them — `text:` is optional): tag()'s own
     // tabindex is gated on ariaLabel being present, so a link with no text

@@ -104,6 +104,36 @@ function tableObject(e: SflEntityOut): any {
   };
 }
 
+function pathObject(e: SflEntityOut): any {
+  const p = e.props;
+  return {
+    id: e.id, type: 'path', x: e.x, y: e.y, width: e.width, height: e.height,
+    points: e.path?.points ?? [], tension: e.path?.tension ?? 0,
+    start_marker: e.path?.startMarker ?? 'none', end_marker: e.path?.endMarker ?? 'none',
+    closed: e.path?.closed ?? false, stroke_color: decodeColor(p.stroke) ?? '#7c3aed',
+    stroke_width: numOf(p.strokeWidth) ?? 2, dash: p.dash ? safeJson(p.dash) : [],
+    opacity: numOf(p.opacity) ?? 1, fill_color: decodeColor(p.fill) ?? 'transparent', order: e.order,
+  };
+}
+
+function chartObject(e: SflEntityOut): any {
+  const p = e.props;
+  return {
+    id: e.id, type: 'chart', title: e.text ?? null,
+    x: e.x, y: e.y, width: e.width, height: e.height,
+    chart_type: e.chart?.chartType ?? 'bar',
+    axis_x: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
+    axis_y: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
+    series: e.chart?.series ?? [],
+    fill_color: decodeColor(p.fill) ?? '#ffffff', stroke_color: decodeColor(p.stroke) ?? '#475569',
+    stroke_width: numOf(p.strokeWidth) ?? 1, corner_radius: numOf(p.cornerRadius) ?? 12,
+    grid_color: p.gridColor ?? '#e2e8f0', grid_width: numOf(p.gridWidth) ?? 1,
+    text_color: p.textColor ?? '#0f172a', font_size: numOf(p.fontSize) ?? 12,
+    font_family: p.fontFamily ?? 'Inter', show_grid: p.showGrid !== 'false',
+    show_axis_labels: p.showAxisLabels !== 'false', show_legend: p.showLegend !== 'false', order: e.order,
+  };
+}
+
 function swimlaneObject(e: SflEntityOut): any {
   const p = e.props;
   // buildSwimlane reads snake_case container fields plus the swimlane-specific
@@ -184,6 +214,8 @@ export function sflToImportJson(sfl: string): any {
   const frames: any[] = [];
   const swimlanes: any[] = [];
   const tables: any[] = [];
+  const paths: any[] = [];
+  const charts: any[] = [];
   const groupBuckets = new Map<string, Buckets>();
   const bucketFor = (id: string): Buckets => {
     const gid = groupOfEntity.get(id);
@@ -199,6 +231,8 @@ export function sflToImportJson(sfl: string): any {
     if (e.entityType === 'swimlane') { swimlanes.push(swimlaneObject(e)); continue; }
     if (e.entityType === 'frame') { frames.push(frameObject(e)); continue; }
     if (e.entityType === 'table') { tables.push(tableObject(e)); continue; }
+    if (e.entityType === 'path') { paths.push(pathObject(e)); continue; }
+    if (e.entityType === 'chart') { charts.push(chartObject(e)); continue; }
     bucketFor(e.id).shapes.push(shapeObject(e));
   }
   // Links tragen kein layout{} und damit kein order_key — ein deklariertes
@@ -227,7 +261,7 @@ export function sflToImportJson(sfl: string): any {
 
   return {
     project: { export_type: 'stickyflow_canvas_v3', name: 'SFL Import' },
-    canvas: { entities: { notes: [], shapes: canvas.shapes, links: canvas.links, frames, swimlanes, tables } },
+    canvas: { entities: { notes: [], shapes: canvas.shapes, links: canvas.links, frames, swimlanes, tables, paths, charts } },
     layers: { groups: flatGroups },
     diagnostics: state.diagnostics,
   };

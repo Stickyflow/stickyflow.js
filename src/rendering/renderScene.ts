@@ -1,5 +1,7 @@
 import type { Frame } from '../model/frames';
 import type { Link, MarkerType, PathType } from '../model/links';
+import type { FreeformPath } from '../model/paths';
+import type { Chart } from '../model/charts';
 import type { Shape } from '../model/shapes';
 import type { Swimlane } from '../model/swimlanes';
 import type { Table } from '../model/tables';
@@ -26,7 +28,7 @@ export interface SceneStyle {
 }
 
 /** Semantic role of a node's owner in the interactive DOM contract (§9). */
-export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table';
+export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
 
 export interface SceneBase {
   id: string; order: number; bounds: Bounds;
@@ -137,6 +139,8 @@ export interface RenderInput {
   frames: Frame[];
   swimlanes: Swimlane[];
   tables?: Table[];
+  paths?: FreeformPath[];
+  charts?: Chart[];
   links: ResolvedExportLink[];
   /** Diagnostics already known before scene-building even starts — e.g. an
    *  unresolved Style/Layout ref from sflToCanvasState. buildRenderScene seeds
