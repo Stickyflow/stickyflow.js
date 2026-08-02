@@ -21,10 +21,23 @@ export function localShapePath(type: ShapeType, x: number, y: number, width: num
     case 'parallelogram': return p(x + width * .15, y, x + width, y, x + width * .85, y + height, x, y + height)
     case 'trapezoid': return p(x + width * .2, y, x + width * .8, y, x + width, y + height, x, y + height)
     case 'hexagon': {
-      const radius = Math.min(width, height) / 2, cx = x + width / 2, cy = y + height / 2
-      const points: number[] = []
-      for (let i = 0; i < 6; i++) points.push(cx + radius * Math.cos(i * Math.PI / 3), cy + radius * Math.sin(i * Math.PI / 3))
-      return p(...points)
+      // Flat-topped hexagon spanning the full bounding box (not a regular
+      // hexagon inscribed by min(width, height)) - connection points are
+      // computed purely from the bounding box edges (see sflToRenderInput's
+      // pointFor / router.ts's portToPoint), so a shape that doesn't reach
+      // those edges leaves links floating short of the visible outline. The
+      // left/right tips and the full top/bottom edges sit exactly on the
+      // box, which keeps the default (offset 0.5) connection on every side
+      // flush against the shape.
+      const cut = Math.min(width, height) / 4
+      return p(
+        x + cut, y,
+        x + width - cut, y,
+        x + width, y + height / 2,
+        x + width - cut, y + height,
+        x + cut, y + height,
+        x, y + height / 2
+      )
     }
     case 'document': {
       const wave = height * .15
