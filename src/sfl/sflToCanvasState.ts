@@ -23,7 +23,7 @@ import type {
 
 export interface SflEntityOut {
   id: string;
-  entityType: 'shape' | 'frame' | 'swimlane' | 'table';
+  entityType: 'shape' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
   kind: string;
   text?: string;
   shapeType?: string;
@@ -40,6 +40,16 @@ export interface SflEntityOut {
   swimlane?: {
     orientation: 'horizontal' | 'vertical';
     lanes: Array<{ id: string; label: string; size: number; color?: string }>;
+  };
+  path?: {
+    points: Array<{ x: number; y: number }>;
+    tension?: number; startMarker?: string; endMarker?: string; closed?: boolean;
+  };
+  chart?: {
+    chartType: 'bar' | 'line' | 'scatter';
+    axisX: { min: number; max: number; step: number; label?: string };
+    axisY: { min: number; max: number; step: number; label?: string };
+    series: Array<{ id: string; label: string; color?: string; values: number[] | [number, number][] }>;
   };
 }
 
@@ -273,6 +283,8 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     if (kind === 'frame') return 'frame';
     if (kind === 'swimlane') return 'swimlane';
     if (kind === 'table') return 'table';
+    if (kind === 'path') return 'path';
+    if (kind === 'chart') return 'chart';
     return 'shape';
   };
 
@@ -292,7 +304,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     // A `Table` block (§12.1a) carries its kind in the block keyword itself,
     // not a `kind:` property — `Container … { kind: table }` (pre-§12.1a) is
     // still read the same way via the property fallback.
-    const kind = block.kind === 'Table' ? 'table' : (asString(p.get('kind')) ?? '');
+    const kind = block.kind === 'Table' ? 'table' : block.kind === 'Path' ? 'path' : block.kind === 'Chart' ? 'chart' : (asString(p.get('kind')) ?? '');
     const shapeType = asString(p.get('shape'));
 
     // präsentationale Props (alles außer den strukturellen Schlüsseln) als Strings
@@ -300,6 +312,8 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     const props: Record<string, string> = {};
     let tableData: SflEntityOut['table'];
     let swimlaneData: SflEntityOut['swimlane'];
+    let pathData: SflEntityOut['path'];
+    let chartData: SflEntityOut['chart'];
     for (const [k, v] of p) {
       if (structural.has(k)) continue;
       const s = asString(v);
@@ -384,6 +398,37 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       swimlaneData = { orientation, lanes };
     }
 
+    if (kind === 'path') {
+      const pointsValue = p.get('points');
+      const points = pointsValue?.type === 'list' ? pointsValue.values.flatMap(v => {
+        if (v.type !== 'list' || v.values.length < 2) return [];
+        const x = asNumber(v.values[0]), y = asNumber(v.values[1]);
+        return x !== undefined && y !== undefined ? [{ x: origin.x + x, y: origin.y + y }] : [];
+      }) : [];
+      pathData = { points, tension: asNumber(p.get('tension')), startMarker: asString(p.get('startMarker')), endMarker: asString(p.get('endMarker')), closed: asString(p.get('closed')) === 'true' };
+    }
+
+    if (kind === 'chart') {
+      const readAxis = (axisBlock: SflBlock | undefined) => {
+        const axisProps = axisBlock ? directProps(axisBlock) : new Map<string, SflValue>();
+        return { min: asNumber(axisProps.get('min')) ?? 0, max: asNumber(axisProps.get('max')) ?? 10, step: asNumber(axisProps.get('step')) ?? 1, label: asString(axisProps.get('label')) };
+      };
+      const axes = childBlocks(block).filter(child => child.kind === 'Axis');
+      const series = childBlocks(block).filter(child => child.kind === 'Series').map(seriesBlock => {
+        const seriesProps = directProps(seriesBlock), value = seriesProps.get('values');
+        const values: number[] | [number, number][] = [];
+        if (value?.type === 'list') for (const item of value.values) {
+          if (item.type === 'number') (values as number[]).push(item.value);
+          else if (item.type === 'list' && item.values.length === 2) {
+            const x = asNumber(item.values[0]), y = asNumber(item.values[1]);
+            if (x !== undefined && y !== undefined) (values as [number, number][]).push([x, y]);
+          }
+        }
+        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), values };
+      });
+      chartData = { chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | undefined) ?? 'bar', axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y')), series };
+    }
+
     return {
       id: asString(p.get('id')) ?? block.name,
       entityType: entityTypeOf(kind),
@@ -401,6 +446,8 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       props,
       table: tableData,
       swimlane: swimlaneData,
+      path: pathData,
+      chart: chartData,
     };
   };
 
@@ -408,7 +455,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
   // Container-Blocks (Subgroups sammeln ihre eigenen Mitglieder selbst).
   const directMemberIds = (block: SflBlock): string[] =>
     childBlocks(block)
-      .filter(b => b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table')
+      .filter(b => b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table' || b.kind === 'Path' || b.kind === 'Chart')
       .map(b => asString(directProps(b).get('id')) ?? b.name);
 
   // rekursiver Walk: Container (Frame/Swimlane/…, immer mit eigener Position/
@@ -426,7 +473,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         // Kinder relativ zur absoluten Container-Position; im Container gefundene
         // Groups wandern (flach) in die Ergebnisliste, mit parentFrameId = Container.
         localGroups.push(...walk(child, { x: ent.x, y: ent.y }, ent.id));
-      } else if (child.kind === 'Entity' || child.kind === 'Table') {
+      } else if (child.kind === 'Entity' || child.kind === 'Table' || child.kind === 'Path' || child.kind === 'Chart') {
         // Table (§12.1a) is a positioned board member like Entity — never a
         // Container: it never holds further Entities/Groups/Links, so unlike
         // the Container branch above, it doesn't recurse into walk(). Its own
@@ -458,7 +505,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
   const idByName = new Map<string, string>();
   const indexNames = (blocks: SflBlock[]) => {
     for (const b of blocks) {
-      if (b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table') {
+      if (b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table' || b.kind === 'Path' || b.kind === 'Chart') {
         idByName.set(b.name, asString(directProps(b).get('id')) ?? b.name);
       }
       indexNames(childBlocks(b));

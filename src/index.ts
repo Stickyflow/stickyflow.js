@@ -29,3 +29,5 @@ export { sflToRenderInput } from './sflToRenderInput';
  *  similar UI that needs the canonical, always-current list. */
 export { SHAPE_TYPES } from './model/shapes';
 export type { ShapeType } from './model/shapes';
+export type { FreeformPath, PathPoint } from './model/paths';
+export type { Chart, ChartAxis, ChartSeries, ChartType } from './model/charts';
