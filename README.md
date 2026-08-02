@@ -284,8 +284,14 @@ host would:
 
 - **`examples/sfl-chat`** — an LLM answers in SFL, the diagram renders and stays
   editable, and your canvas edits become the context for the next turn. The full
-  round trip this package exists for, in about 200 lines. Needs an OpenAI key;
-  see its own README.
+  round trip this package exists for, in about 200 lines. Needs an OpenAI and/or
+  Anthropic key; see its own README.
+- **`examples/sfl-vue`** — the same round trip consumed from a Vue project
+  through `stickyflow/web-component`'s `<stickyflow-diagram>` tag instead of
+  the raw viewer/interaction API — the "least setup, no editing" counterpart
+  to sfl-chat's "full control, includes editing." Proof that the package
+  works outside a vanilla-TS host, not just a claim. See its own README for
+  exactly which sfl-chat features it does and doesn't carry over, and why.
 
 Neither `demo/` nor `examples/` ships in the npm tarball (`files` is an allowlist).
 
