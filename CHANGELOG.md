@@ -19,6 +19,7 @@ Two things count as breaking here that are easy to overlook:
 
 - Add full SFL parsing and headless SVG rendering for freeform `Path` and `Chart` entities.
 - Preserve explicit `[x, y]` series data for line and scatter charts while retaining legacy flat line-series support.
+- Add the registry-ready polar `radar` chart type with category labels, radial scale, polygon grid and multi-series rendering.
 
 ## [0.1.0] - 2026-07-26
 
