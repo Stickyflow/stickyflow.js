@@ -92,11 +92,14 @@ function findOwnerBlock(lines: string[], id: string): LineRange | null {
  *  confused with a nested Entity's (Containers can hold frame-relative
  *  child entities, each with their own `layout {}` one level deeper).
  *
- *  Known narrow gap: `headerRe` is matched per LINE (`i > range.start`), so a
- *  child header sharing its owner's own opening-brace line (`Entity a {
- *  layout { ... } }`, all one line) isn't found — only the realistic case,
- *  where the child has its own line even if that line is itself compact
- *  (`Entity a {\n  layout { position: 0,0; size: 100,50 }\n}`), is. */
+ *  Narrow gap: `headerRe` is matched per LINE (`i > range.start`), so a child
+ *  header sharing its owner's own opening-brace line (`Entity a { layout {
+ *  ... } }`, all one line) isn't found here — only the realistic case, where
+ *  the child has its own line even if that line is itself compact (`Entity a
+ *  {\n  layout { position: 0,0; size: 100,50 }\n}`), is. The one caller that
+ *  needs the single-line case too (setOrInsertLayoutTuples, for `layout {}`)
+ *  works around it directly rather than fixing it here — see that function's
+ *  own comment. */
 function findChildBlock(lines: string[], range: LineRange, headerRe: RegExp): LineRange | null {
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
@@ -128,8 +131,16 @@ interface PropertySpan { line: number; start: number; end: number }
  * value never changed, while stray, unread lines accumulated with every
  * edit. A char-by-char depth walk (mirroring blockEndLine's own reasoning)
  * finds the property wherever it sits on the line.
+ *
+ * `targetDepth` defaults to 1 (a property directly inside `range` itself).
+ * Passing 2 finds one nested one level deeper without needing that inner
+ * block's own range - see setOrInsertLayoutTuples' single-line-owner branch,
+ * where the child `layout {}` block can't be isolated as its own LineRange
+ * in the first place (it shares its owner's one physical line), but
+ * `position`/`size` sitting two braces deep can still be found and spliced
+ * directly against the owner's own range.
  */
-function findDirectProperty(lines: string[], range: LineRange, key: string): PropertySpan | null {
+function findDirectProperty(lines: string[], range: LineRange, key: string, targetDepth = 1): PropertySpan | null {
   const keyRe = new RegExp(`\\b${key}\\b\\s*:\\s*`, 'g');
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
@@ -146,15 +157,15 @@ function findDirectProperty(lines: string[], range: LineRange, key: string): Pro
     keyRe.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = keyRe.exec(masked))) {
-      if (depthAt[m.index] === 1) {
+      if (depthAt[m.index] === targetDepth) {
         const valueStart = m.index + m[0].length;
         let valueEnd = masked.length;
-        let vd = depthAt[valueStart] ?? 1;
+        let vd = depthAt[valueStart] ?? targetDepth;
         for (let c = valueStart; c < masked.length; c++) {
           const ch = masked[c];
           if (ch === '{') vd++;
-          else if (ch === '}') { if (vd <= 1) { valueEnd = c; break; } vd--; }
-          else if (ch === ';' && vd === 1) { valueEnd = c; break; }
+          else if (ch === '}') { if (vd <= targetDepth) { valueEnd = c; break; } vd--; }
+          else if (ch === ';' && vd === targetDepth) { valueEnd = c; break; }
         }
         // Trailing whitespace before the terminator belongs to formatting, not
         // the value — leaving it in the span would eat the space before a
@@ -277,7 +288,39 @@ function setOrInsertText(lines: string[], range: LineRange, text: string): void 
  *  invalidates an index computed before it. */
 function setOrInsertLayoutTuples(lines: string[], range: LineRange, props: ReadonlyArray<readonly [key: string, a: number, b: number]>): void {
   let layout = findChildBlock(lines, range, /^\s*layout\s*\{/);
+  // A single-line owner (`Entity a { text: "A"; layout { position: 0, 0 } }`,
+  // all one physical line) can't be found by findChildBlock above - its
+  // header search is per LINE, and there's no line "after" range.start left
+  // inside a range that both starts and ends there (see findChildBlock's own
+  // doc comment). Rather than isolate the layout block's own boundaries (not
+  // expressible as a LineRange when it shares its owner's line), look for
+  // `position`/`size` directly at depth 2 against the OWNER's own range -
+  // two braces deep is exactly where they sit inside `layout {}` regardless
+  // of which physical line that block happens to occupy.
+  if (!layout && range.start === range.end && /\blayout\s*\{/.test(maskStringsAndComments(lines[range.start]))) {
+    for (const [key, a, b] of props) {
+      const existing = findDirectProperty(lines, range, key, 2);
+      if (!existing) continue; // rare: a layout{} present but missing this one tuple - not worth a dedicated inserter
+      const value = `${round1(a)}, ${round1(b)}`;
+      const line = lines[existing.line];
+      lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
+    }
+    return;
+  }
   if (!layout) {
+    // No layout at all yet. On a single-line owner, a new line "after
+    // range.start" would land past that line's own closing brace - outside
+    // the owner entirely (same reasoning as insertDirectProperty's own
+    // single-line branch) - so the block is inserted inline before it instead.
+    if (range.start === range.end) {
+      const line = lines[range.start];
+      const closeAt = line.lastIndexOf('}');
+      const before = line.slice(0, closeAt).replace(/\s+$/, '');
+      const sep = /\{$/.test(before) ? ' ' : '; ';
+      const body = props.map(([key, a, b]) => `${key}: ${round1(a)}, ${round1(b)}`).join('; ');
+      lines[range.start] = `${before}${sep}layout { ${body} } }${line.slice(closeAt + 1)}`;
+      return;
+    }
     const indent = `${indentOf(lines[range.start])}    `;
     const body = props.map(([key, a, b]) => `${indent}    ${key}: ${round1(a)}, ${round1(b)}`);
     lines.splice(range.start + 1, 0, `${indent}layout {`, ...body, `${indent}}`);
