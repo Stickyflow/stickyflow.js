@@ -1,6 +1,6 @@
-export type ChartType = 'bar' | 'line' | 'scatter';
+export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
 export interface ChartAxis { min: number; max: number; step: number; label?: string }
-export interface ChartSeries { id: string; label: string; color?: string; values: number[] | [number, number][] }
+export interface ChartSeries { id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] }
 
 export interface Chart {
   id: string;
@@ -9,6 +9,7 @@ export interface Chart {
   chart_type: ChartType;
   axis_x: ChartAxis;
   axis_y: ChartAxis;
+  config?: { categories?: string[]; areaOpacity?: number };
   series: ChartSeries[];
   stroke_color?: string;
   stroke_width?: number;
