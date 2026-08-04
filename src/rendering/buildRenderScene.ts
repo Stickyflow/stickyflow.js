@@ -472,7 +472,9 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
       nodes.push(chartText(`chart-legend-${chart.id}-${series.id}`, order + offset++, bounds, x + 15, chart.y + 13, width - 15, 18, series.label, chart));
     });
   }
-  if (chart.chart_type === 'radar') {
+  if (chart.chart_type === 'radar' || chart.chart_type === 'radial') {
+    const circular = chart.chart_type === 'radial';
+    const areaOpacity = Math.max(0, Math.min(1, chart.config?.areaOpacity ?? .16));
     const configured = chart.config?.categories?.filter(Boolean) ?? [];
     const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));
     const categoryCount = Math.max(3, configured.length || dataCount);
@@ -489,7 +491,12 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
     };
     const polygon = (pointRadius: number) => `M ${Array.from({ length: categoryCount }, (_, pointIndex) => { const p = point(pointRadius, pointIndex); return `${pointIndex ? 'L ' : ''}${p.x} ${p.y}`; }).join(' ')} Z`;
     if (chart.show_grid !== false) {
-      chartTicks(chart.axis_y).filter(tick => tick > chart.axis_y.min).forEach(tick => nodes.push({ type: 'path', id: `chart-radar-ring-${chart.id}-${tick}`, order: order + offset++, bounds, d: polygon(radial(tick)), style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } }));
+      chartTicks(chart.axis_y).filter(tick => tick > chart.axis_y.min).forEach(tick => {
+        const ringRadius = radial(tick);
+        nodes.push(circular
+          ? { type: 'ellipse', id: `chart-radial-ring-${chart.id}-${tick}`, order: order + offset++, bounds, cx, cy, rx: ringRadius, ry: ringRadius, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } }
+          : { type: 'path', id: `chart-radar-ring-${chart.id}-${tick}`, order: order + offset++, bounds, d: polygon(ringRadius), style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } });
+      });
       categories.forEach((_, categoryIndex) => { const edge = point(radius, categoryIndex); nodes.push({ type: 'path', id: `chart-radar-spoke-${chart.id}-${categoryIndex}`, order: order + offset++, bounds, d: `M ${cx} ${cy} L ${edge.x} ${edge.y}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } }); });
     }
     if (showLabels) categories.forEach((category, categoryIndex) => {
@@ -499,8 +506,8 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
     chart.series.forEach((series, seriesIndex) => {
       const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length], values = series.values as number[];
       const seriesPoints = categories.map((_, categoryIndex) => point(radial(values[categoryIndex] ?? chart.axis_y.min), categoryIndex));
-      const seriesPath = `M ${seriesPoints.map((seriesPoint, pointIndex) => `${pointIndex ? 'L ' : ''}${seriesPoint.x} ${seriesPoint.y}`).join(' ')} Z`;
-      nodes.push({ type: 'path', id: `chart-radar-fill-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: { kind: 'solid', color }, stroke: { kind: 'none' }, opacity: .16 } });
+      const seriesPath = circular ? freeformPathData(seriesPoints, .5, true) : `M ${seriesPoints.map((seriesPoint, pointIndex) => `${pointIndex ? 'L ' : ''}${seriesPoint.x} ${seriesPoint.y}`).join(' ')} Z`;
+      nodes.push({ type: 'path', id: `chart-radar-fill-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: { kind: 'solid', color }, stroke: { kind: 'none' }, opacity: Math.max(0, Math.min(1, series.opacity ?? areaOpacity)) } });
       nodes.push({ type: 'path', id: `chart-radar-series-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
       seriesPoints.forEach((seriesPoint, pointIndex) => nodes.push({ type: 'ellipse', id: `chart-radar-point-${chart.id}-${series.id}-${pointIndex}`, order: order + offset++, bounds, cx: seriesPoint.x, cy: seriesPoint.y, rx: 3, ry: 3, style: { fill: { kind: 'solid', color } } }));
     });

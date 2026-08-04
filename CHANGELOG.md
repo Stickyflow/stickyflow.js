@@ -1,5 +1,7 @@
 # Changelog
 
+- Added circular `radial` charts and configurable polar `areaOpacity`.
+
 All notable changes to this package are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

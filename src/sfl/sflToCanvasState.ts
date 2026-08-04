@@ -46,11 +46,12 @@ export interface SflEntityOut {
     tension?: number; startMarker?: string; endMarker?: string; closed?: boolean;
   };
   chart?: {
-    chartType: 'bar' | 'line' | 'scatter' | 'radar';
+    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
     categories?: string[];
+    areaOpacity?: number;
     axisX: { min: number; max: number; step: number; label?: string };
     axisY: { min: number; max: number; step: number; label?: string };
-    series: Array<{ id: string; label: string; color?: string; values: number[] | [number, number][] }>;
+    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] }>;
   };
 }
 
@@ -425,13 +426,13 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
             if (x !== undefined && y !== undefined) (values as [number, number][]).push([x, y]);
           }
         }
-        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), values };
+        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), opacity: asNumber(seriesProps.get('opacity')), values };
       });
       const categoriesValue = p.get('categories');
       const categories = categoriesValue?.type === 'list'
         ? categoriesValue.values.flatMap(value => { const category = asString(value); return category === undefined ? [] : [category]; })
         : undefined;
-      chartData = { chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | undefined) ?? 'bar', categories, axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')), series };
+      chartData = { chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | undefined) ?? 'bar', categories, areaOpacity: asNumber(p.get('areaOpacity')), axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')), series };
     }
 
     return {

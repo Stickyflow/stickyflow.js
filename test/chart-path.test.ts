@@ -134,4 +134,36 @@ Model board {
     expect(svg).toContain('sf-chart-radar-ring-radar-1');
     expect(svg).toContain('sf-chart-radar-series-radar-product_a');
   });
+
+  it('renders circular radial rings and preserves area opacity', () => {
+    const source = `sfl 1.2
+Model board {
+  Chart radial_chart {
+    type: radial
+    categories: ["Speed", "Quality", "Cost", "Reliability"]
+    areaOpacity: 0.4
+    Axis value {
+      min: 0
+      max: 5
+      step: 1
+    }
+    Series product_a {
+      opacity: 0.55
+      values: [3, 4, 2, 5]
+    }
+    layout {
+      position: 0, 0
+      size: 500, 400
+    }
+  }
+}`;
+    const state = sflToCanvasState(source);
+    expect(state.entities[0].chart?.chartType).toBe('radial');
+    expect(state.entities[0].chart?.areaOpacity).toBe(0.4);
+    const { svg } = render(source);
+    expect(svg).toContain('data-sf-kind="radial"');
+    expect(svg).toContain('sf-chart-radial-ring-radial_chart-1');
+    expect(state.entities[0].chart?.series[0].opacity).toBe(0.55);
+    expect(svg).toContain('opacity="0.55"');
+  });
 });
