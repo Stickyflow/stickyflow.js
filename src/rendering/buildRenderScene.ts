@@ -6,7 +6,7 @@ import { getLinkStrokeColor } from '../model/links';
 import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
 import type { FreeformPath, PathPoint } from '../model/paths';
-import type { Chart, ChartAxis } from '../model/charts';
+import type { Chart, ChartAxis, ChartSeries, ChartZone } from '../model/charts';
 import { tableBorderGeometry } from '../model/geometry/tables';
 import { localShapePath } from '../model/geometry/shapes';
 import { wrapText } from '../model/geometry/text';
@@ -16,6 +16,13 @@ import type {
   Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene, SceneRole,
   ScenePaint, ScenePath, SceneStyle, SceneText,
 } from './renderScene';
+import {
+  axisBands, bandIndexForValue, computeBoxplotStats, contrastTextColor,
+  mapValueToPixel as mapChartValue, ticksFor as chartTicks, zoneSolidColor,
+} from './chartScale';
+import { computeHexBins } from './hexbin';
+import { squarifyTreemap } from './treemap';
+import { layoutSankey } from './sankey';
 
 // Interactive DOM contract (ADR-03): stamp every node of an owner with a shared
 // role + id so the viewer can map any sub-node (text, divider, cell) back to its
@@ -440,30 +447,547 @@ function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
 }
 
 const CHART_COLORS = ['#7c3aed', '#0ea5e9', '#f97316', '#10b981', '#ec4899', '#eab308'];
-const mapChartValue = (value: number, axis: ChartAxis, extent: number): number => axis.max === axis.min ? 0 : (value - axis.min) / (axis.max - axis.min) * extent;
-function chartTicks(axis: ChartAxis): number[] {
-  if (!(axis.step > 0)) return axis.min === axis.max ? [axis.min] : [axis.min, axis.max];
-  const ticks: number[] = [];
-  for (let value = axis.min; value <= axis.max + 1e-9 && ticks.length < 1000; value += axis.step) ticks.push(Math.round(value * 1000) / 1000);
-  return ticks;
-}
+
+const DEFAULT_MATRIX_ZONES: ChartZone[] = [
+  { label: 'Do First', color: '#7c3aed' },
+  { label: 'Schedule', color: '#0ea5e9' },
+  { label: 'Delegate', color: '#f97316' },
+  { label: 'Eliminate', color: '#10b981' },
+];
+const DEFAULT_HEATMAP_ZONES: ChartZone[] = [
+  { label: 'Low', color: '#ddd6fe' },
+  { label: 'Medium', color: '#a78bfa' },
+  { label: 'High', color: '#6d28d9' },
+];
+const DEFAULT_ZONE_FILL = '#94a3b8';
+
+interface PlotArea { x: number; y: number; width: number; height: number }
 
 function chartText(id: string, order: number, bounds: Bounds, x: number, y: number, width: number, height: number, text: string, chart: Chart, align: 'left' | 'center' | 'right' = 'left', rotation?: number): SceneText {
   return { type: 'text', id, order, bounds, x, y, width, height, lines: [text], fontFamily: chart.font_family ?? DEFAULT_FONT, fontSize: Math.max(9, finite(chart.font_size, 12)), fontWeight: 'normal', color: chart.text_color ?? '#0f172a', align, verticalAlign: 'top', lineHeight: 1.2, rotation, rotationCenter: rotation ? { x, y } : undefined };
+}
+
+// Like chartText but for a pre-wrapped multi-line label (mekko segments,
+// treemap tiles) instead of chart.text_color/font_size - callers already
+// know the exact color (often contrastTextColor against a data-driven fill)
+// and a smaller font size for cramped tile/segment labels.
+function chartLines(id: string, order: number, bounds: Bounds, x: number, y: number, width: number, height: number, lines: string[], chart: Chart, color: string, fontSize: number, align: 'left' | 'center' | 'right' = 'left'): SceneText {
+  return { type: 'text', id, order, bounds, x, y, width, height, lines, fontFamily: chart.font_family ?? DEFAULT_FONT, fontSize, fontWeight: 'normal', color, align, verticalAlign: 'top', lineHeight: 1.2 };
+}
+
+// Quadrant/matrix chart (Eisenhower-style): axis_x/axis_y's `thresholds`
+// divide the plot into a grid of named zones; each series is one labeled
+// point placed at its [x, y] value, optionally bubble-sized via `size`.
+function buildMatrixMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const xBands = axisBands(chart.axis_x);
+  const yBands = axisBands(chart.axis_y);
+  const cols = xBands.length - 1, rows = yBands.length - 1;
+  const zones = chart.config?.zones?.length ? chart.config.zones : DEFAULT_MATRIX_ZONES;
+  const fontSize = Math.max(10, finite(chart.font_size, 12));
+  const showLabels = chart.show_axis_labels !== false;
+  const showGrid = chart.show_grid !== false;
+  const strokeWidth = finite(chart.stroke_width, 1);
+
+  const bandPixelRange = (bandsArr: number[], bandIndex: number, axis: ChartAxis, extentPx: number, flip: boolean): [number, number] => {
+    const a = mapChartValue(bandsArr[bandIndex], axis, extentPx);
+    const b = mapChartValue(bandsArr[bandIndex + 1], axis, extentPx);
+    const lo = Math.min(a, b), hi = Math.max(a, b);
+    return flip ? [extentPx - hi, extentPx - lo] : [lo, hi];
+  };
+
+  // Row-major top-left -> bottom-right: iterate y-bands from the highest
+  // (top of screen) down to the lowest, x-bands left to right.
+  const cells: Array<{ x: number; y: number; width: number; height: number; zoneIndex: number }> = [];
+  for (let rowBand = rows - 1; rowBand >= 0; rowBand--) {
+    const displayRow = rows - 1 - rowBand;
+    const [y0, y1] = bandPixelRange(yBands, rowBand, chart.axis_y, plot.height, true);
+    for (let colBand = 0; colBand < cols; colBand++) {
+      const [x0, x1] = bandPixelRange(xBands, colBand, chart.axis_x, plot.width, false);
+      cells.push({ x: plot.x + x0, y: plot.y + y0, width: x1 - x0, height: y1 - y0, zoneIndex: displayRow * cols + colBand });
+    }
+  }
+
+  if (showGrid) cells.forEach((cell, i) => {
+    nodes.push({ type: 'rect', id: `chart-matrix-zone-${chart.id}-${i}`, order: order + offset++, bounds, x: cell.x, y: cell.y, width: cell.width, height: cell.height, style: { fill: { kind: 'solid', color: zoneSolidColor(zones[cell.zoneIndex]?.color) || DEFAULT_ZONE_FILL }, opacity: .14 } });
+  });
+  if (showGrid) {
+    xBands.slice(1, -1).forEach(t => {
+      const px = plot.x + mapChartValue(t, chart.axis_x, plot.width);
+      nodes.push({ type: 'rect', id: `chart-matrix-xdiv-${chart.id}-${t}`, order: order + offset++, bounds, x: px - strokeWidth / 2, y: plot.y, width: strokeWidth, height: plot.height, style: { fill: { kind: 'solid', color: chart.stroke_color ?? '#475569' } } });
+    });
+    yBands.slice(1, -1).forEach(t => {
+      const py = plot.y + plot.height - mapChartValue(t, chart.axis_y, plot.height);
+      nodes.push({ type: 'rect', id: `chart-matrix-ydiv-${chart.id}-${t}`, order: order + offset++, bounds, x: plot.x, y: py - strokeWidth / 2, width: plot.width, height: strokeWidth, style: { fill: { kind: 'solid', color: chart.stroke_color ?? '#475569' } } });
+    });
+  }
+  if (showLabels) cells.forEach((cell, i) => {
+    const zone = zones[cell.zoneIndex];
+    if (!zone?.label) return;
+    nodes.push({ ...chartText(`chart-matrix-zone-label-${chart.id}-${i}`, order + offset++, bounds, cell.x + 8, cell.y + 8, Math.max(1, cell.width - 16), fontSize + 6, zone.label, chart), fontWeight: 'bold', color: zoneSolidColor(zone.color) || chart.text_color || '#0f172a' });
+  });
+  chart.series.forEach((series, index) => {
+    const [px, py] = (series.values[0] as [number, number] | undefined) ?? [chart.axis_x.min, chart.axis_y.min];
+    const x = plot.x + mapChartValue(px, chart.axis_x, plot.width);
+    const y = plot.y + plot.height - mapChartValue(py, chart.axis_y, plot.height);
+    const color = series.color ?? CHART_COLORS[index % CHART_COLORS.length];
+    const radius = Math.max(3, series.size ?? 6);
+    nodes.push({ type: 'ellipse', id: `chart-matrix-point-${chart.id}-${series.id}`, order: order + offset++, bounds, cx: x, cy: y, rx: radius, ry: radius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1.5 } });
+    nodes.push(chartText(`chart-matrix-label-${chart.id}-${series.id}`, order + offset++, bounds, x + radius + 4, y - fontSize / 2, 120, fontSize + 4, series.label, chart));
+  });
+  return nodes;
+}
+
+// Grid heatmap: axis_x.categories are column headers, each series is one row
+// (series.label = row header, series.values = one plain number per column).
+// A cell's color comes from bucketing its value into one of axis_y's
+// `thresholds` bands and looking up config.zones' ascending low->high color
+// for that band.
+function buildHeatmapMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const rows = chart.series;
+  const columns = chart.axis_x.categories?.length ? chart.axis_x.categories : ((rows[0]?.values as number[] | undefined)?.map((_, i) => String(i + 1)) ?? []);
+  const bandsArr = axisBands(chart.axis_y);
+  const zones = chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES;
+  const fontSize = Math.max(10, finite(chart.font_size, 12));
+  const showLabels = chart.show_axis_labels !== false;
+  const showLegend = chart.show_legend !== false;
+
+  const rowHeaderWidth = showLabels ? Math.min(96, Math.max(0, plot.width * .3)) : 0;
+  const colHeaderHeight = showLabels ? 24 : 0;
+  const legendHeight = showLegend ? 22 : 0;
+  const gridX = plot.x + rowHeaderWidth, gridY = plot.y + colHeaderHeight;
+  const gridWidth = Math.max(1, plot.width - rowHeaderWidth);
+  const gridHeight = Math.max(1, plot.height - colHeaderHeight - legendHeight);
+  const cellW = columns.length ? gridWidth / columns.length : gridWidth;
+  const cellH = rows.length ? gridHeight / rows.length : gridHeight;
+
+  rows.forEach((series, rowIndex) => {
+    const values = series.values as number[];
+    columns.forEach((_, colIndex) => {
+      const value = values[colIndex] ?? 0;
+      const color = zoneSolidColor(zones[bandIndexForValue(value, bandsArr)]?.color) || DEFAULT_ZONE_FILL;
+      const x = gridX + colIndex * cellW, y = gridY + rowIndex * cellH;
+      nodes.push({ type: 'rect', id: `chart-heatmap-cell-${chart.id}-${series.id}-${colIndex}`, order: order + offset++, bounds, x, y, width: cellW, height: cellH, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } });
+      nodes.push({ ...chartText(`chart-heatmap-value-${chart.id}-${series.id}-${colIndex}`, order + offset++, bounds, x, y + cellH / 2 - fontSize / 2, cellW, fontSize + 2, String(value), chart, 'center'), color: contrastTextColor(color) });
+    });
+  });
+  if (rowHeaderWidth > 0) rows.forEach((series, rowIndex) => {
+    nodes.push(chartText(`chart-heatmap-row-${chart.id}-${series.id}`, order + offset++, bounds, plot.x, gridY + rowIndex * cellH + cellH / 2 - fontSize / 2, rowHeaderWidth - 8, fontSize + 2, series.label, chart));
+  });
+  if (colHeaderHeight > 0) columns.forEach((label, colIndex) => {
+    nodes.push(chartText(`chart-heatmap-col-${chart.id}-${colIndex}`, order + offset++, bounds, gridX + colIndex * cellW, plot.y, cellW, fontSize + 2, label, chart, 'center'));
+  });
+  if (legendHeight > 0) {
+    const legendItemWidths = zones.map(zone => Math.max(64, (zone.label?.length ?? 0) * (fontSize - 1) * .55 + 40));
+    let legendX = gridX;
+    const legendY = gridY + gridHeight + 6;
+    zones.forEach((zone, i) => {
+      const [lo, hi] = [bandsArr[i], bandsArr[i + 1]];
+      nodes.push({ type: 'rect', id: `chart-heatmap-legend-swatch-${chart.id}-${i}`, order: order + offset++, bounds, x: legendX, y: legendY + 2, width: 10, height: 10, rx: 2, style: { fill: { kind: 'solid', color: zoneSolidColor(zone.color) || DEFAULT_ZONE_FILL } } });
+      nodes.push(chartText(`chart-heatmap-legend-${chart.id}-${i}`, order + offset++, bounds, legendX + 15, legendY, legendItemWidths[i] - 15, fontSize, zone.label ? `${zone.label} (${lo}-${hi})` : `${lo}-${hi}`, chart));
+      legendX += legendItemWidths[i];
+    });
+  }
+  return nodes;
+}
+
+// Hexbin density chart: each series is its own point cloud, independently
+// binned into a flat-top hex grid (computeHexBins) - opacity scales with
+// each cell's count relative to that series' own densest cell.
+function buildHexbinMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const radius = chart.config?.hexRadius ?? 14;
+  const hexPath = (cx: number, cy: number, r: number): string => {
+    const pts: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (-60 + 60 * i) * Math.PI / 180;
+      pts.push(`${i === 0 ? 'M' : 'L'} ${cx + r * Math.cos(angle)} ${cy + r * Math.sin(angle)}`);
+    }
+    return `${pts.join(' ')} Z`;
+  };
+  chart.series.forEach((series, seriesIndex) => {
+    const pixelPoints = (series.values as [number, number][]).map(([vx, vy]) => ({
+      x: plot.x + mapChartValue(vx, chart.axis_x, plot.width),
+      y: plot.y + plot.height - mapChartValue(vy, chart.axis_y, plot.height),
+    }));
+    const bins = computeHexBins(pixelPoints, radius);
+    const maxCount = Math.max(1, ...bins.map(bin => bin.count));
+    const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+    bins.forEach((bin, i) => {
+      nodes.push({ type: 'path', id: `chart-hexbin-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, d: hexPath(bin.cx, bin.cy, radius), style: { fill: { kind: 'solid', color }, opacity: Math.max(.15, bin.count / maxCount) } });
+    });
+  });
+  return nodes;
+}
+
+// Marimekko/Mekko chart: same rows(series) x columns(axis_x.categories)
+// grid shape as heatmap - column WIDTH is proportional to that column's
+// share of the grand total, each column is a 100%-stacked bar of its own
+// series' shares (config.mekkoVaryHeight additionally scales column HEIGHT
+// by its share of the largest column).
+function buildMekkoMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const rows = chart.series;
+  const columns = chart.axis_x.categories?.length ? chart.axis_x.categories : ((rows[0]?.values as number[] | undefined)?.map((_, i) => String(i + 1)) ?? []);
+  const fontSize = Math.max(10, finite(chart.font_size, 12));
+  const smallFontSize = Math.max(9, fontSize - 2);
+  const varyHeight = chart.config?.mekkoVaryHeight ?? false;
+  const showLabels = chart.show_axis_labels !== false;
+  const showGrid = chart.show_grid !== false;
+  const showLegend = chart.show_legend !== false;
+  const COLUMN_GAP = 4;
+  const PERCENT_TICKS = [0, 25, 50, 75, 100];
+
+  const leftGutter = showLabels ? 30 : 0, topGutter = showLabels ? 18 : 0, bottomGutter = showLabels ? 32 : 0;
+  const gridX = plot.x + leftGutter, gridY = plot.y + topGutter;
+  const gridWidth = Math.max(1, plot.width - leftGutter);
+  const gridHeight = Math.max(1, plot.height - topGutter - bottomGutter);
+
+  const columnTotals = columns.map((_, colIndex) => rows.reduce((sum, series) => sum + ((series.values as number[])[colIndex] ?? 0), 0));
+  const grandTotal = columnTotals.reduce((sum, total) => sum + total, 0);
+  const maxColumnTotal = Math.max(1, ...columnTotals);
+  const gapWidth = COLUMN_GAP * Math.max(0, columns.length - 1);
+  const availableWidth = Math.max(1, gridWidth - gapWidth);
+  const columnWidths = columnTotals.map(total => grandTotal > 0 ? (total / grandTotal) * availableWidth : availableWidth / columns.length);
+  const columnX = columnWidths.reduce<number[]>((acc, width, i) => { acc.push(i === 0 ? gridX : acc[i - 1] + columnWidths[i - 1] + COLUMN_GAP); return acc; }, []);
+  const columnHeights = columnTotals.map(total => varyHeight ? gridHeight * (total / maxColumnTotal) : gridHeight);
+  const columnY = columnHeights.map(height => gridY + (gridHeight - height));
+
+  if (showGrid) PERCENT_TICKS.forEach(p => {
+    const y = gridY + gridHeight * (1 - p / 100);
+    nodes.push({ type: 'rect', id: `chart-mekko-grid-${chart.id}-${p}`, order: order + offset++, bounds, x: gridX, y: y - finite(chart.grid_width, 1) / 2, width: gridWidth, height: finite(chart.grid_width, 1), style: { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } } });
+  });
+  if (showLabels) PERCENT_TICKS.forEach(p => {
+    const y = gridY + gridHeight * (1 - p / 100);
+    nodes.push(chartText(`chart-mekko-pct-${chart.id}-${p}`, order + offset++, bounds, plot.x, y - smallFontSize / 2, leftGutter - 6, smallFontSize + 2, `${p}%`, chart, 'right'));
+  });
+  columns.forEach((label, colIndex) => {
+    const x = columnX[colIndex], width = columnWidths[colIndex], total = columnTotals[colIndex];
+    let cumulative = 0;
+    rows.forEach((series, rowIndex) => {
+      const value = (series.values as number[])[colIndex] ?? 0;
+      const share = total > 0 ? value / total : 0;
+      const height = share * columnHeights[colIndex];
+      const y = columnY[colIndex] + cumulative;
+      cumulative += height;
+      const color = series.color || CHART_COLORS[rowIndex % CHART_COLORS.length];
+      nodes.push({ type: 'rect', id: `chart-mekko-seg-${chart.id}-${colIndex}-${series.id}`, order: order + offset++, bounds, x, y, width, height, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
+      if (showLegend && height >= 16 && width >= 34) {
+        nodes.push(chartLines(`chart-mekko-seg-label-${chart.id}-${colIndex}-${series.id}`, order + offset++, bounds, x + 4, y + 3, Math.max(1, width - 8), Math.max(1, height - 6), [series.label, String(value)], chart, contrastTextColor(color), smallFontSize));
+      }
+    });
+    if (showLabels) {
+      nodes.push(chartText(`chart-mekko-total-${chart.id}-${colIndex}`, order + offset++, bounds, x, plot.y, width, smallFontSize + 2, String(total), chart, 'center'));
+      nodes.push(chartText(`chart-mekko-col-label-${chart.id}-${colIndex}`, order + offset++, bounds, x, gridY + gridHeight + 4, width, smallFontSize * 2 + 4, label, chart, 'center'));
+    }
+  });
+  return nodes;
+}
+
+// Treemap: each series IS one leaf tile (single value) - a leaf's optional
+// `group` assigns it to a top-level branch. Ungrouped renders a flat
+// single-level treemap; grouped runs two squarify passes (branches, then
+// each branch's own leaves within it). Leaf fill is value-bucketed via
+// axis_y.thresholds + config.zones, same convention as heatmap.
+function buildTreemapMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const leaves = chart.series;
+  const bandsArr = axisBands(chart.axis_y);
+  const zones = chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES;
+  const fontSize = Math.max(10, finite(chart.font_size, 12));
+  const smallFontSize = Math.max(9, fontSize - 2);
+  const showLabels = chart.show_axis_labels !== false;
+  const showLegend = chart.show_legend !== false;
+  const HEADER_HEIGHT = 20;
+
+  const leafValue = (leaf: ChartSeries) => (leaf.values as number[])[0] ?? 0;
+  const leafColor = (leaf: ChartSeries) => leaf.color || zoneSolidColor(zones[bandIndexForValue(leafValue(leaf), bandsArr)]?.color) || DEFAULT_ZONE_FILL;
+
+  const legendItemWidths = zones.map(zone => Math.max(64, (zone.label?.length ?? 0) * (fontSize - 1) * .55 + 40));
+  const legendHeight = showLegend ? 28 : 0;
+  const gridWidth = Math.max(1, plot.width);
+  const gridHeight = Math.max(1, plot.height - legendHeight);
+
+  const tiles: Array<{ leaf: ChartSeries; x: number; y: number; width: number; height: number }> = [];
+  const headers: Array<{ label: string; x: number; y: number; width: number }> = [];
+
+  const grouped = leaves.some(leaf => leaf.group);
+  if (grouped) {
+    const groupOrder: string[] = [];
+    for (const leaf of leaves) { const key = leaf.group ?? ''; if (!groupOrder.includes(key)) groupOrder.push(key); }
+    const groupItems = groupOrder.map(key => ({ key, label: key || 'Other', value: leaves.filter(leaf => (leaf.group ?? '') === key).reduce((sum, leaf) => sum + leafValue(leaf), 0) }));
+    for (const groupRect of squarifyTreemap(groupItems, 0, 0, gridWidth, gridHeight)) {
+      const headerH = showLabels ? Math.min(HEADER_HEIGHT, groupRect.height) : 0;
+      if (showLabels) headers.push({ label: groupRect.item.label, x: plot.x + groupRect.x, y: plot.y + groupRect.y, width: groupRect.width });
+      const innerLeaves = leaves.filter(leaf => (leaf.group ?? '') === groupRect.item.key);
+      const leafItems = innerLeaves.map(leaf => ({ leaf, value: leafValue(leaf) }));
+      for (const tile of squarifyTreemap(leafItems, groupRect.x, groupRect.y + headerH, groupRect.width, Math.max(0, groupRect.height - headerH))) {
+        tiles.push({ leaf: tile.item.leaf, x: plot.x + tile.x, y: plot.y + tile.y, width: tile.width, height: tile.height });
+      }
+    }
+  } else {
+    const leafItems = leaves.map(leaf => ({ leaf, value: leafValue(leaf) }));
+    for (const tile of squarifyTreemap(leafItems, 0, 0, gridWidth, gridHeight)) {
+      tiles.push({ leaf: tile.item.leaf, x: plot.x + tile.x, y: plot.y + tile.y, width: tile.width, height: tile.height });
+    }
+  }
+
+  tiles.forEach(({ leaf, x, y, width, height }) => {
+    const value = leafValue(leaf);
+    const color = leafColor(leaf);
+    nodes.push({ type: 'rect', id: `chart-treemap-tile-${chart.id}-${leaf.id}`, order: order + offset++, bounds, x, y, width, height, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
+    if (showLabels && width >= 34 && height >= 18) {
+      nodes.push(chartLines(`chart-treemap-label-${chart.id}-${leaf.id}`, order + offset++, bounds, x + 4, y + 3, Math.max(1, width - 8), Math.max(1, height - 6), [leaf.label, String(value)], chart, contrastTextColor(color), smallFontSize));
+    }
+  });
+  headers.forEach((header, index) => {
+    nodes.push({ type: 'rect', id: `chart-treemap-header-${chart.id}-${index}`, order: order + offset++, bounds, x: header.x, y: header.y, width: header.width, height: HEADER_HEIGHT, style: { fill: { kind: 'solid', color: '#e5e7eb' } } });
+    nodes.push(chartText(`chart-treemap-header-label-${chart.id}-${index}`, order + offset++, bounds, header.x, header.y + HEADER_HEIGHT / 2 - smallFontSize / 2, header.width, smallFontSize + 2, header.label, chart, 'center'));
+  });
+  if (legendHeight > 0) {
+    let legendX = plot.x;
+    const legendY = plot.y + gridHeight + 6;
+    zones.forEach((zone, i) => {
+      const [lo, hi] = [bandsArr[i], bandsArr[i + 1]];
+      nodes.push({ type: 'rect', id: `chart-treemap-legend-swatch-${chart.id}-${i}`, order: order + offset++, bounds, x: legendX, y: legendY + 2, width: 10, height: 10, rx: 2, style: { fill: { kind: 'solid', color: zoneSolidColor(zone.color) || DEFAULT_ZONE_FILL } } });
+      nodes.push(chartText(`chart-treemap-legend-${chart.id}-${i}`, order + offset++, bounds, legendX + 15, legendY, legendItemWidths[i] - 15, fontSize, zone.label ? `${zone.label} (${lo}-${hi})` : `${lo}-${hi}`, chart));
+      legendX += legendItemWidths[i];
+    });
+  }
+  return nodes;
+}
+
+// Sankey diagram: chart.config.zones doubles as the NODE list, each series
+// IS one flow LINK with source/target referencing node labels and a
+// single-element `values` array as the flow amount. Layout geometry lives
+// in sankey.ts (pure); this only turns that layout into scene nodes -
+// a link's curved band is a single closed bezier path (matches the Konva
+// custom sceneFunc the main app's renderer uses for the same shape).
+function buildSankeyMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const fontSize = Math.max(10, finite(chart.font_size, 12));
+  const smallFontSize = Math.max(9, fontSize - 2);
+  const showLabels = chart.show_axis_labels !== false;
+  const LABEL_GUTTER = 92;
+
+  const nodeInputs = (chart.config?.zones ?? []).map(zone => ({ id: zone.label, label: zone.label, color: zoneSolidColor(zone.color) }));
+  const linkInputs = chart.series
+    .filter(series => series.source && series.target)
+    .map(series => ({ source: series.source!, target: series.target!, value: (series.values as number[])[0] ?? 0, color: series.color }));
+
+  const availableWidth = Math.max(1, plot.width - (showLabels ? LABEL_GUTTER * 2 : 0));
+  const originX = showLabels ? LABEL_GUTTER : 0;
+  const { nodes: sankeyNodes, links } = layoutSankey(nodeInputs, linkInputs, availableWidth, plot.height);
+  const numColumns = Math.max(1, ...sankeyNodes.map(n => n.column + 1));
+  const colorOf = (id: string) => sankeyNodes.find(n => n.id === id)?.color || DEFAULT_ZONE_FILL;
+  const baseX = plot.x + originX, baseY = plot.y;
+
+  links.forEach((link, index) => {
+    const x0 = baseX + link.x0, x1 = baseX + link.x1;
+    const y0Top = baseY + link.sourceY0, y0Bottom = baseY + link.sourceY1;
+    const y1Top = baseY + link.targetY0, y1Bottom = baseY + link.targetY1;
+    const midX = (x0 + x1) / 2;
+    const d = `M ${x0} ${y0Top} C ${midX} ${y0Top} ${midX} ${y1Top} ${x1} ${y1Top} L ${x1} ${y1Bottom} C ${midX} ${y1Bottom} ${midX} ${y0Bottom} ${x0} ${y0Bottom} Z`;
+    const color = link.color || colorOf(link.target);
+    nodes.push({ type: 'path', id: `chart-sankey-link-${chart.id}-${index}`, order: order + offset++, bounds, d, style: { fill: { kind: 'solid', color }, opacity: link.color ? .85 : .45 } });
+  });
+  sankeyNodes.forEach(node => {
+    const isLastColumn = node.column === numColumns - 1;
+    const x = baseX + node.x, y = baseY + node.y;
+    nodes.push({ type: 'rect', id: `chart-sankey-node-${chart.id}-${node.id}`, order: order + offset++, bounds, x, y, width: node.width, height: node.height, style: { fill: { kind: 'solid', color: node.color || DEFAULT_ZONE_FILL } } });
+    if (showLabels) {
+      const labelX = isLastColumn ? x - LABEL_GUTTER + 8 : x + node.width + 6;
+      nodes.push({
+        type: 'text', id: `chart-sankey-label-${chart.id}-${node.id}`, order: order + offset++, bounds,
+        x: labelX, y, width: LABEL_GUTTER - 12, height: Math.max(1, node.height), lines: [node.label],
+        fontFamily: chart.font_family ?? DEFAULT_FONT, fontSize: smallFontSize, fontWeight: 'normal',
+        color: chart.text_color ?? '#0f172a', align: isLastColumn ? 'right' : 'left', verticalAlign: 'middle', lineHeight: 1.2,
+      });
+    }
+  });
+  return nodes;
+}
+
+// Pie/donut: each series IS one slice (single value). Donut is a pie with
+// config.innerRadius > 0 - a masking circle drawn on top of the slices,
+// same technique as the radar/radial center hole above.
+function buildPieMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const cx = plot.x + plot.width / 2, cy = plot.y + plot.height / 2;
+  const radius = Math.max(8, Math.min(plot.width, plot.height) / 2 - 12);
+  const innerRadius = Math.max(0, Math.min(chart.config?.innerRadius ?? 0, radius - 10));
+  const fontSize = Math.max(9, finite(chart.font_size, 12) - 1);
+  const showLabels = chart.show_axis_labels !== false;
+  const showGrid = chart.show_grid !== false;
+  const MIN_LABEL_SWEEP = 14;
+  const DEG_TO_RAD = Math.PI / 180;
+
+  const total = chart.series.reduce((sum, series) => sum + ((series.values as number[])[0] ?? 0), 0);
+  let cumulative = -90; // start at 12 o'clock, sweep clockwise
+  const slices = chart.series.map((series, index) => {
+    const value = Math.max(0, (series.values as number[])[0] ?? 0);
+    const share = total > 0 ? value / total : 0;
+    const sweep = share * 360;
+    const start = cumulative;
+    cumulative += sweep;
+    return { series, value, share, start, sweep, color: series.color || CHART_COLORS[index % CHART_COLORS.length] };
+  }).filter(slice => slice.sweep > 0);
+
+  const arcPoint = (angleDeg: number, r: number) => ({ x: cx + Math.cos(angleDeg * DEG_TO_RAD) * r, y: cy + Math.sin(angleDeg * DEG_TO_RAD) * r });
+
+  slices.forEach(slice => {
+    const startPoint = arcPoint(slice.start, radius);
+    const largeArc = slice.sweep > 180 ? 1 : 0;
+    // A full circle can't be a single SVG arc (start === end) - split it at
+    // the halfway point into two arcs, same visual result as Konva's Wedge.
+    const d = slice.sweep >= 359.999
+      ? (() => {
+        const mid = arcPoint(slice.start + slice.sweep / 2, radius);
+        return `M ${startPoint.x} ${startPoint.y} A ${radius} ${radius} 0 1 1 ${mid.x} ${mid.y} A ${radius} ${radius} 0 1 1 ${startPoint.x} ${startPoint.y} Z`;
+      })()
+      : (() => {
+        const endPoint = arcPoint(slice.start + slice.sweep, radius);
+        return `M ${cx} ${cy} L ${startPoint.x} ${startPoint.y} A ${radius} ${radius} 0 ${largeArc} 1 ${endPoint.x} ${endPoint.y} Z`;
+      })();
+    nodes.push({ type: 'path', id: `chart-pie-slice-${chart.id}-${slice.series.id}`, order: order + offset++, bounds, d, style: { fill: { kind: 'solid', color: slice.color }, stroke: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, strokeWidth: 2 } });
+  });
+  if (innerRadius > 0) {
+    nodes.push({ type: 'ellipse', id: `chart-pie-hole-${chart.id}`, order: order + offset++, bounds, cx, cy, rx: innerRadius, ry: innerRadius, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' } } });
+    if (showGrid) nodes.push({ type: 'ellipse', id: `chart-pie-hole-ring-${chart.id}`, order: order + offset++, bounds, cx, cy, rx: innerRadius, ry: innerRadius, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } });
+  }
+  if (showLabels) slices.filter(slice => slice.sweep >= MIN_LABEL_SWEEP).forEach(slice => {
+    const midAngle = slice.start + slice.sweep / 2;
+    const labelRadius = innerRadius + (radius - innerRadius) * .62;
+    const point = arcPoint(midAngle, labelRadius);
+    const percent = Math.round(slice.share * 100);
+    nodes.push(chartLines(`chart-pie-label-${chart.id}-${slice.series.id}`, order + offset++, bounds, point.x - 40, point.y - fontSize, 80, fontSize * 2 + 4, [slice.series.label, `${percent}%`], chart, contrastTextColor(slice.color), fontSize, 'center'));
+  });
+  return nodes;
+}
+
+// Boxplot: each series IS one category/box - `label` names it, `values` are
+// that category's raw samples. Min/Q1/Median/Q3/Max are computed
+// (computeBoxplotStats), whiskers reach the true min/max of the sample
+// (not an IQR-based outlier cutoff), and (when showBoxplotPoints) every raw
+// value is drawn as its own jittered dot over the box, like a strip plot
+// layered on top. Jitter is a deterministic pseudo-random hash of the
+// point's index, not Math.random(), so re-rendering the same data doesn't
+// visually reshuffle the dots.
+function buildBoxplotMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const boxCount = Math.max(1, chart.series.length);
+  const boxWidthFraction = Math.min(1, Math.max(.05, chart.config?.boxWidth ?? .6));
+  const boxCornerRadius = chart.config?.barCornerRadius ?? 2;
+  const showPoints = chart.config?.showBoxplotPoints ?? true;
+  const showAxisLabels = chart.show_axis_labels !== false;
+  const borderColor = chart.config?.barBorderColor || '#000000';
+  const borderWidth = chart.config?.barBorderWidth ?? 1;
+  const fontSize = Math.max(9, finite(chart.font_size, 12) - 2);
+  const jitter = (seed: number) => { const h = Math.sin(seed * 12.9898) * 43758.5453; return (h - Math.floor(h)) - .5; };
+
+  const box = (id: string, series: ChartSeries, seriesIndex: number, minP: number, q1P: number, medianP: number, q3P: number, maxP: number, center: number, thickness: number, horizontal: boolean) => {
+    const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+    const capHalf = thickness * .2;
+    const line = (lid: string, x1: number, y1: number, x2: number, y2: number, width: number) =>
+      nodes.push({ type: 'path', id: lid, order: order + offset++, bounds, d: `M ${x1} ${y1} L ${x2} ${y2}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: width } });
+    if (horizontal) {
+      line(`chart-box-whisker-lo-${id}`, minP, center, q1P, center, 1);
+      line(`chart-box-whisker-hi-${id}`, q3P, center, maxP, center, 1);
+      line(`chart-box-cap-lo-${id}`, minP, center - capHalf, minP, center + capHalf, 1);
+      line(`chart-box-cap-hi-${id}`, maxP, center - capHalf, maxP, center + capHalf, 1);
+      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: q1P, y: center - thickness / 2, width: Math.max(1, q3P - q1P), height: thickness, rx: boxCornerRadius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
+      line(`chart-box-median-${id}`, medianP, center - thickness / 2, medianP, center + thickness / 2, 2);
+    } else {
+      line(`chart-box-whisker-lo-${id}`, center, minP, center, q1P, 1);
+      line(`chart-box-whisker-hi-${id}`, center, q3P, center, maxP, 1);
+      line(`chart-box-cap-lo-${id}`, center - capHalf, minP, center + capHalf, minP, 1);
+      line(`chart-box-cap-hi-${id}`, center - capHalf, maxP, center + capHalf, maxP, 1);
+      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: center - thickness / 2, y: q3P, width: thickness, height: Math.max(1, q1P - q3P), rx: boxCornerRadius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
+      line(`chart-box-median-${id}`, center - thickness / 2, medianP, center + thickness / 2, medianP, 2);
+    }
+    return color;
+  };
+
+  if (chart.config?.horizontal) {
+    const slotHeight = plot.height / boxCount;
+    const thickness = Math.max(4, slotHeight * boxWidthFraction);
+    chart.series.forEach((series, i) => {
+      const stats = computeBoxplotStats(series.values as number[]);
+      if (!stats) return;
+      const id = `${chart.id}-${series.id}`;
+      const center = plot.y + i * slotHeight + slotHeight / 2;
+      const minP = plot.x + mapChartValue(stats.min, chart.axis_y, plot.width);
+      const q1P = plot.x + mapChartValue(stats.q1, chart.axis_y, plot.width);
+      const medianP = plot.x + mapChartValue(stats.median, chart.axis_y, plot.width);
+      const q3P = plot.x + mapChartValue(stats.q3, chart.axis_y, plot.width);
+      const maxP = plot.x + mapChartValue(stats.max, chart.axis_y, plot.width);
+      const color = box(id, series, i, minP, q1P, medianP, q3P, maxP, center, thickness, true);
+      if (showPoints) (series.values as number[]).forEach((value, pi) => {
+        nodes.push({ type: 'ellipse', id: `chart-box-point-${id}-${pi}`, order: order + offset++, bounds, cx: plot.x + mapChartValue(value, chart.axis_y, plot.width), cy: center + jitter(i * 10_000 + pi) * thickness, rx: 3, ry: 3, style: { fill: { kind: 'solid', color }, opacity: .7 } });
+      });
+      if (showAxisLabels) nodes.push(chartText(`chart-box-cat-${id}`, order + offset++, bounds, plot.x - 108, center - fontSize / 2, 100, fontSize + 4, series.label, chart, 'right'));
+    });
+    return nodes;
+  }
+
+  const slotWidth = plot.width / boxCount;
+  const boxWidth = Math.max(4, slotWidth * boxWidthFraction);
+  chart.series.forEach((series, i) => {
+    const stats = computeBoxplotStats(series.values as number[]);
+    if (!stats) return;
+    const id = `${chart.id}-${series.id}`;
+    const center = plot.x + i * slotWidth + slotWidth / 2;
+    const minP = plot.y + plot.height - mapChartValue(stats.min, chart.axis_y, plot.height);
+    const q1P = plot.y + plot.height - mapChartValue(stats.q1, chart.axis_y, plot.height);
+    const medianP = plot.y + plot.height - mapChartValue(stats.median, chart.axis_y, plot.height);
+    const q3P = plot.y + plot.height - mapChartValue(stats.q3, chart.axis_y, plot.height);
+    const maxP = plot.y + plot.height - mapChartValue(stats.max, chart.axis_y, plot.height);
+    const color = box(id, series, i, minP, q1P, medianP, q3P, maxP, center, boxWidth, false);
+    if (showPoints) (series.values as number[]).forEach((value, pi) => {
+      nodes.push({ type: 'ellipse', id: `chart-box-point-${id}-${pi}`, order: order + offset++, bounds, cx: center + jitter(i * 10_000 + pi) * boxWidth, cy: plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height), rx: 3, ry: 3, style: { fill: { kind: 'solid', color }, opacity: .7 } });
+    });
+    if (showAxisLabels) nodes.push(chartText(`chart-box-cat-${id}`, order + offset++, bounds, center - slotWidth / 2, plot.y + plot.height + 4, slotWidth, fontSize + 4, series.label, chart, 'center'));
+  });
+  return nodes;
 }
 
 function buildChart(chart: Chart, index: number): RenderNode[] {
   if (chart.is_visible === false) return [];
   const order = orderOf(chart, 20_000 + index), bounds = boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2);
   const showLabels = chart.show_axis_labels !== false, showLegend = chart.show_legend !== false;
-  const padLeft = showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
-  const padBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
+  // Charts without a numeric tick gutter (their own row/column/zone/node/
+  // slice labels live inside the plot itself) get compact padding; a
+  // horizontal bar/boxplot still needs a left gutter, just for category
+  // names instead of tick numbers - not as wide as the dynamic
+  // longest-label sizing the app's own editor does, but enough for typical
+  // short category names without a live canvas to measure text against.
+  const isCompactChart = ['matrix', 'heatmap', 'hexbin', 'mekko', 'treemap', 'sankey', 'pie'].includes(chart.chart_type);
+  const isHorizontalBarLike = (chart.chart_type === 'bar' || chart.chart_type === 'boxplot') && !!chart.config?.horizontal;
+  const padLeft = isCompactChart ? 24 : isHorizontalBarLike ? (showLabels ? 90 : 24) : showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
+  const padBottom = isCompactChart || isHorizontalBarLike ? 24 : showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
   const plot = { x: chart.x + padLeft, y: chart.y + padTop, width: Math.max(1, chart.width - padLeft - 24), height: Math.max(1, chart.height - padTop - padBottom) };
   const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
   let offset = .01;
   if (chart.title) nodes.push({ ...chartText(`chart-title-${chart.id}`, order + offset++, bounds, plot.x, chart.y + 12, plot.width, 20, chart.title, chart), fontWeight: 'bold', fontSize: Math.max(10, finite(chart.font_size, 12)) + 2 });
-  if (showLegend) {
+  // Heatmap/mekko/treemap/sankey draw their own row/column/node labels or
+  // color-band legend inline - a swatch-per-series legend would be
+  // redundant (or, for heatmap/treemap, outright wrong: cell color comes
+  // from a value band, not chart.series.color). A single-series bar/boxplot
+  // colors each bar/box individually (config.zones or per-series color),
+  // so its one legend swatch wouldn't match any actual bar/box color either.
+  const isSingleSeriesBarLike = (chart.chart_type === 'bar' || chart.chart_type === 'boxplot') && chart.series.length <= 1;
+  const legendExcluded = ['heatmap', 'mekko', 'treemap', 'sankey', 'boxplot'].includes(chart.chart_type) || isSingleSeriesBarLike;
+  if (showLegend && !legendExcluded) {
     let x = plot.x + plot.width;
     [...chart.series].reverse().forEach((series, reverseIndex) => {
       const seriesIndex = chart.series.length - 1 - reverseIndex, width = Math.max(42, series.label.length * finite(chart.font_size, 12) * .58 + 22);
@@ -513,6 +1037,14 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
     });
     return nodes;
   }
+  if (chart.chart_type === 'matrix') { nodes.push(...buildMatrixMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'heatmap') { nodes.push(...buildHeatmapMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'hexbin') { nodes.push(...buildHexbinMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'mekko') { nodes.push(...buildMekkoMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'treemap') { nodes.push(...buildTreemapMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'sankey') { nodes.push(...buildSankeyMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'pie') { nodes.push(...buildPieMarks(chart, plot, bounds, order + offset)); return nodes; }
+  if (chart.chart_type === 'boxplot') { nodes.push(...buildBoxplotMarks(chart, plot, bounds, order + offset)); return nodes; }
   if (chart.show_grid !== false) {
     const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } }, gridWidth = finite(chart.grid_width, 1);
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });

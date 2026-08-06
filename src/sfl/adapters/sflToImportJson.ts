@@ -124,7 +124,21 @@ function chartObject(e: SflEntityOut): any {
     chart_type: e.chart?.chartType ?? 'bar',
     axis_x: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
     axis_y: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
-    config: { categories: e.chart?.categories, areaOpacity: e.chart?.areaOpacity },
+    config: {
+      categories: e.chart?.categories, areaOpacity: e.chart?.areaOpacity,
+      // Bar/boxplot per-category color override is the only zone consumer
+      // whose color can be a gradient/mesh string (`gradient(...)`/
+      // `mesh(...)`) - decode it back into an object, same as fill_color/
+      // stroke_color below; every other zone consumer only ever has a
+      // plain hex string, which decodeColor returns unchanged.
+      zones: e.chart?.zones?.map(z => ({ ...z, color: decodeColor(z.color) })),
+      hexRadius: e.chart?.hexRadius, innerRadius: e.chart?.innerRadius, showSpokes: e.chart?.showSpokes,
+      lineTension: e.chart?.lineTension, horizontal: e.chart?.horizontal,
+      barCornerRadius: e.chart?.barCornerRadius, showBarLabels: e.chart?.showBarLabels,
+      barBorderColor: e.chart?.barBorderColor, barBorderWidth: e.chart?.barBorderWidth,
+      showBoxplotPoints: e.chart?.showBoxplotPoints, boxWidth: e.chart?.boxWidth,
+      mekkoVaryHeight: e.chart?.mekkoVaryHeight,
+    },
     series: e.chart?.series ?? [],
     fill_color: decodeColor(p.fill) ?? '#ffffff', stroke_color: decodeColor(p.stroke) ?? '#475569',
     stroke_width: numOf(p.strokeWidth) ?? 1, corner_radius: numOf(p.cornerRadius) ?? 12,

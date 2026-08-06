@@ -22,6 +22,7 @@ Two things count as breaking here that are easy to overlook:
 - Add full SFL parsing and headless SVG rendering for freeform `Path` and `Chart` entities.
 - Preserve explicit `[x, y]` series data for line and scatter charts while retaining legacy flat line-series support.
 - Add the registry-ready polar `radar` chart type with category labels, radial scale, polygon grid and multi-series rendering.
+- Add vector SVG rendering for the 8 remaining chart types (`matrix`, `heatmap`, `hexbin`, `mekko`, `treemap`, `sankey`, `pie`, `boxplot`), reaching full parity with the main app's 13 chart types. No raster fallback is used — every mark is a genuine `rect`/`ellipse`/`path` primitive, matching the app's own render output shape-for-shape.
 
 ## [0.1.0] - 2026-07-26
 

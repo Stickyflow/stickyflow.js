@@ -46,12 +46,25 @@ export interface SflEntityOut {
     tension?: number; startMarker?: string; endMarker?: string; closed?: boolean;
   };
   chart?: {
-    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
+    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'matrix' | 'heatmap' | 'hexbin' | 'mekko' | 'treemap' | 'sankey' | 'pie' | 'boxplot';
     categories?: string[];
     areaOpacity?: number;
-    axisX: { min: number; max: number; step: number; label?: string };
-    axisY: { min: number; max: number; step: number; label?: string };
-    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] }>;
+    zones?: Array<{ label: string; color?: string }>;
+    hexRadius?: number;
+    innerRadius?: number;
+    showSpokes?: boolean;
+    lineTension?: number;
+    horizontal?: boolean;
+    barCornerRadius?: number;
+    showBarLabels?: boolean;
+    barBorderColor?: string;
+    barBorderWidth?: number;
+    showBoxplotPoints?: boolean;
+    boxWidth?: number;
+    mekkoVaryHeight?: boolean;
+    axisX: { min: number; max: number; step: number; label?: string; thresholds?: number[]; categories?: string[] };
+    axisY: { min: number; max: number; step: number; label?: string; thresholds?: number[] };
+    series: Array<{ id: string; label: string; color?: string; opacity?: number; size?: number; group?: string; source?: string; target?: string; values: number[] | [number, number][] }>;
   };
 }
 
@@ -413,7 +426,22 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     if (kind === 'chart') {
       const readAxis = (axisBlock: SflBlock | undefined) => {
         const axisProps = axisBlock ? directProps(axisBlock) : new Map<string, SflValue>();
-        return { min: asNumber(axisProps.get('min')) ?? 0, max: asNumber(axisProps.get('max')) ?? 10, step: asNumber(axisProps.get('step')) ?? 1, label: asString(axisProps.get('label')) };
+        const thresholdsValue = axisProps.get('thresholds');
+        const thresholds = thresholdsValue?.type === 'list'
+          ? thresholdsValue.values.flatMap(value => { const n = asNumber(value); return n === undefined ? [] : [n]; })
+          : undefined;
+        const categoriesValue = axisProps.get('categories');
+        const categories = categoriesValue?.type === 'list'
+          ? categoriesValue.values.flatMap(value => { const c = asString(value); return c === undefined ? [] : [c]; })
+          : undefined;
+        return {
+          min: asNumber(axisProps.get('min')) ?? 0,
+          max: asNumber(axisProps.get('max')) ?? 10,
+          step: asNumber(axisProps.get('step')) ?? 1,
+          label: asString(axisProps.get('label')),
+          thresholds: thresholds?.length ? thresholds : undefined,
+          categories: categories?.length ? categories : undefined,
+        };
       };
       const axes = childBlocks(block).filter(child => child.kind === 'Axis');
       const series = childBlocks(block).filter(child => child.kind === 'Series').map(seriesBlock => {
@@ -426,13 +454,53 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
             if (x !== undefined && y !== undefined) (values as [number, number][]).push([x, y]);
           }
         }
-        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), opacity: asNumber(seriesProps.get('opacity')), values };
+        return {
+          id: seriesBlock.name,
+          label: asString(seriesProps.get('label')) ?? seriesBlock.name,
+          color: asString(seriesProps.get('color')),
+          opacity: asNumber(seriesProps.get('opacity')),
+          size: asNumber(seriesProps.get('size')),
+          group: asString(seriesProps.get('group')),
+          source: asString(seriesProps.get('source')),
+          target: asString(seriesProps.get('target')),
+          values,
+        };
       });
       const categoriesValue = p.get('categories');
       const categories = categoriesValue?.type === 'list'
         ? categoriesValue.values.flatMap(value => { const category = asString(value); return category === undefined ? [] : [category]; })
         : undefined;
-      chartData = { chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | undefined) ?? 'bar', categories, areaOpacity: asNumber(p.get('areaOpacity')), axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')), series };
+      // Zones: lanes-style [label, color?] pairs (mirrors Swimlane's `lanes`).
+      // `color` stays a verbatim string here (may be a gradient(...)/mesh(...)
+      // encoded string) - decoding into an object is sflToImportJson's job.
+      const zonesValue = p.get('zones');
+      const zones = zonesValue?.type === 'list'
+        ? zonesValue.values.flatMap(entry => {
+          if (entry.type !== 'list' || entry.values.length === 0) return [];
+          const label = asString(entry.values[0]);
+          if (label === undefined) return [];
+          const color = entry.values.length > 1 ? asString(entry.values[1]) : undefined;
+          return [{ label, color }];
+        })
+        : undefined;
+      const showSpokesValue = asString(p.get('showSpokes'));
+      chartData = {
+        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'matrix' | 'heatmap' | 'hexbin' | 'mekko' | 'treemap' | 'sankey' | 'pie' | 'boxplot' | undefined) ?? 'bar',
+        categories, areaOpacity: asNumber(p.get('areaOpacity')), zones,
+        hexRadius: asNumber(p.get('hexRadius')), innerRadius: asNumber(p.get('innerRadius')),
+        showSpokes: showSpokesValue === 'false' ? false : undefined,
+        lineTension: asNumber(p.get('lineTension')),
+        horizontal: asString(p.get('horizontal')) === 'true' ? true : undefined,
+        barCornerRadius: asNumber(p.get('barCornerRadius')),
+        showBarLabels: asString(p.get('showBarLabels')) === 'true' ? true : undefined,
+        barBorderColor: asString(p.get('barBorderColor')),
+        barBorderWidth: asNumber(p.get('barBorderWidth')),
+        showBoxplotPoints: asString(p.get('showBoxplotPoints')) === 'false' ? false : undefined,
+        boxWidth: asNumber(p.get('boxWidth')),
+        mekkoVaryHeight: asString(p.get('mekkoVaryHeight')) === 'true' ? true : undefined,
+        axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
+        series,
+      };
     }
 
     return {

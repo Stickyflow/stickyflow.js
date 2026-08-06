@@ -30,4 +30,4 @@ export { sflToRenderInput } from './sflToRenderInput';
 export { SHAPE_TYPES } from './model/shapes';
 export type { ShapeType } from './model/shapes';
 export type { FreeformPath, PathPoint } from './model/paths';
-export type { Chart, ChartAxis, ChartSeries, ChartType } from './model/charts';
+export type { Chart, ChartAxis, ChartConfig, ChartSeries, ChartType, ChartZone } from './model/charts';
