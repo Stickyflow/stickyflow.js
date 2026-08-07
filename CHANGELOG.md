@@ -23,6 +23,9 @@ Two things count as breaking here that are easy to overlook:
 - Preserve explicit `[x, y]` series data for line and scatter charts while retaining legacy flat line-series support.
 - Add the registry-ready polar `radar` chart type with category labels, radial scale, polygon grid and multi-series rendering.
 - Add vector SVG rendering for the 8 remaining chart types (`matrix`, `heatmap`, `hexbin`, `mekko`, `treemap`, `sankey`, `pie`, `boxplot`), reaching full parity with the main app's 13 chart types. No raster fallback is used — every mark is a genuine `rect`/`ellipse`/`path` primitive, matching the app's own render output shape-for-shape.
+- Fix: `bar`/`boxplot` charts now actually apply `config.zones`' per-category color override — previously the field was parsed and round-tripped but silently ignored by the renderer for these two chart types (every other chart family already read it correctly).
+- Add a `pattern` `ColorValue` kind (`hachure`/`cross-hatch`/`dots`, `PatternColor` in `model/colors.ts`) alongside solid/gradient/mesh, usable anywhere a `ChartZone.color` is read (currently: bar/boxplot's per-category override) and round-trippable through SFL as `pattern(<style>, <color>, <spacing>, <width>, <angle>)`, mirroring `gradient(...)`/`mesh(...)`.
+- Add `ChartConfig.minimalAxes` (sketch-style axes): swaps a cartesian chart's numeric-tick grid/border for a plain arrow-tipped L-axis, matching the main app's own "Sketch axes" toggle. Not yet supported for `hexbin`/`boxplot`, which don't render axis ticks in this package at all yet (a pre-existing gap, not new).
 
 ## [0.1.0] - 2026-07-26
 

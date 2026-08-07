@@ -62,6 +62,7 @@ export interface SflEntityOut {
     showBoxplotPoints?: boolean;
     boxWidth?: number;
     mekkoVaryHeight?: boolean;
+    minimalAxes?: boolean;
     axisX: { min: number; max: number; step: number; label?: string; thresholds?: number[]; categories?: string[] };
     axisY: { min: number; max: number; step: number; label?: string; thresholds?: number[] };
     series: Array<{ id: string; label: string; color?: string; opacity?: number; size?: number; group?: string; source?: string; target?: string; values: number[] | [number, number][] }>;
@@ -498,6 +499,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         showBoxplotPoints: asString(p.get('showBoxplotPoints')) === 'false' ? false : undefined,
         boxWidth: asNumber(p.get('boxWidth')),
         mekkoVaryHeight: asString(p.get('mekkoVaryHeight')) === 'true' ? true : undefined,
+        minimalAxes: asString(p.get('minimalAxes')) === 'true' ? true : undefined,
         axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
         series,
       };

@@ -15,7 +15,8 @@ export interface GradientStop { position: number; color: string; }
 export interface GradientFill { type: 'gradient'; angle: number; stops: GradientStop[]; }
 export interface MeshPoint { id: string; x: number; y: number; color: string; }
 export interface MeshFill { type: 'mesh'; points: MeshPoint[]; }
-export type DecodedColor = string | GradientFill | MeshFill;
+export interface PatternFill { type: 'pattern'; pattern: 'hachure' | 'cross-hatch' | 'dots'; color: string; spacing: number; strokeWidth: number; angle: 0 | 45 | 90 | 135; }
+export type DecodedColor = string | GradientFill | MeshFill | PatternFill;
 
 /** SFL-Farbstring → App-Farbe (String bleibt String; Gradient/Mesh → Objekt). */
 export function decodeColor(s?: string): DecodedColor | undefined {
@@ -39,6 +40,19 @@ export function decodeColor(s?: string): DecodedColor | undefined {
       points.push({ id: `mp-${Date.now()}-${i++}`, color: m[1], x: Number(m[2]), y: Number(m[3]) });
     }
     return { type: 'mesh', points };
+  }
+
+  const pattern = s.match(new RegExp(`^pattern\\(\\s*(hachure|cross-hatch|dots)\\s*,\\s*(${COLOR})\\s*,\\s*([-\\d.]+)\\s*,\\s*([-\\d.]+)\\s*,\\s*([-\\d.]+)\\s*\\)\\s*$`));
+  if (pattern) {
+    const angle = Number(pattern[5]);
+    return {
+      type: 'pattern',
+      pattern: pattern[1] as PatternFill['pattern'],
+      color: pattern[2],
+      spacing: Number(pattern[3]),
+      strokeWidth: Number(pattern[4]),
+      angle: (angle === 0 || angle === 45 || angle === 90 || angle === 135) ? angle : 45,
+    };
   }
 
   return s; // Hex / rgba / benannte Farbe → verbatim

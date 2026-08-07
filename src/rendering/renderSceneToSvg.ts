@@ -1,6 +1,7 @@
 import type { MarkerType } from '../model/links';
 import type { RenderNode, RenderScene, ScenePaint, SceneStyle, SceneText } from './renderScene';
 import { DOM_CONTRACT_VERSION } from './renderScene';
+import { patternSvgMarkup } from './patternFill';
 
 export interface SvgRenderOptions {
   padding?: number;
@@ -71,6 +72,10 @@ class Defs {
     if (!id) {
       id = safeId(`${this.prefix}gradient-${nodeId}-${this.paints.size}`);
       this.paints.set(key, id);
+      if (value.kind === 'pattern') {
+        this.entries.push(patternSvgMarkup(id, value));
+        return `url(#${id})`;
+      }
       if (value.kind === 'mesh-gradient') {
         // SVG 2's native <meshgradient> still has uneven viewer support.
         // Reproduce the Canvas renderer as portable vector SVG instead: a

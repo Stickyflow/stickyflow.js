@@ -138,6 +138,7 @@ function chartObject(e: SflEntityOut): any {
       barBorderColor: e.chart?.barBorderColor, barBorderWidth: e.chart?.barBorderWidth,
       showBoxplotPoints: e.chart?.showBoxplotPoints, boxWidth: e.chart?.boxWidth,
       mekkoVaryHeight: e.chart?.mekkoVaryHeight,
+      minimalAxes: e.chart?.minimalAxes,
     },
     series: e.chart?.series ?? [],
     fill_color: decodeColor(p.fill) ?? '#ffffff', stroke_color: decodeColor(p.stroke) ?? '#475569',

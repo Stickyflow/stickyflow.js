@@ -1,5 +1,6 @@
 import type { GradientColorObject, MeshGradientObject, Shape } from '../model/shapes';
 import { SHAPE_DEFAULTS } from '../model/shapes';
+import type { PatternColor } from '../model/colors';
 import type { Frame } from '../model/frames';
 import type { Link, MarkerType } from '../model/links';
 import { getLinkStrokeColor } from '../model/links';
@@ -81,11 +82,14 @@ function rotatedBounds(x: number, y: number, width: number, height: number, degr
   };
 }
 
-function paint(value: string | GradientColorObject | MeshGradientObject | null | undefined, diagnostics: RenderDiagnostic[], entityId: string): ScenePaint {
+function paint(value: string | GradientColorObject | MeshGradientObject | PatternColor | null | undefined, diagnostics: RenderDiagnostic[], entityId: string): ScenePaint {
   if (!value) return { kind: 'none' };
   if (typeof value === 'string') return { kind: 'solid', color: value };
   if (value.type === 'gradient') {
     return { kind: 'linear-gradient', angle: value.angle, stops: value.stops.map(s => ({ offset: s.position, color: s.color })) };
+  }
+  if (value.type === 'pattern') {
+    return { kind: 'pattern', pattern: value.pattern, color: value.color, spacing: value.spacing, strokeWidth: value.strokeWidth, angle: value.angle };
   }
   if (!value.points.length) {
     diagnostics.push({ severity: 'warning', code: 'empty-mesh-gradient', entityId, message: 'Mesh gradient has no color points.' });
@@ -95,6 +99,18 @@ function paint(value: string | GradientColorObject | MeshGradientObject | null |
     kind: 'mesh-gradient',
     points: value.points.map(point => ({ x: point.x, y: point.y, color: point.color })),
   };
+}
+
+// Bar/Boxplot only: config.zones doubles as a per-category color override
+// (index-matched), and is the one chart color site that can be a gradient/
+// mesh/pattern object (ChartZone['color']) - paint() above already turns
+// that into a proper SVG def, so this is the only chart fill site that
+// needs it; every other zone consumer (matrix/heatmap/treemap/sankey) only
+// ever offers a solid-color picker, so those stay on the plain
+// zoneSolidColor() string narrowing imported from chartScale.ts.
+function chartZoneFill(chart: Chart, categoryIndex: number, fallback: string, diagnostics: RenderDiagnostic[], entityId: string): ScenePaint {
+  const value = chart.config?.zones?.[categoryIndex]?.color ?? fallback;
+  return paint(value, diagnostics, entityId);
 }
 
 function shapeStyle(shape: Shape, diagnostics: RenderDiagnostic[]): SceneStyle {
@@ -881,7 +897,7 @@ function buildPieMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: numb
 // layered on top. Jitter is a deterministic pseudo-random hash of the
 // point's index, not Math.random(), so re-rendering the same data doesn't
 // visually reshuffle the dots.
-function buildBoxplotMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number): RenderNode[] {
+function buildBoxplotMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: number, diagnostics: RenderDiagnostic[]): RenderNode[] {
   const nodes: RenderNode[] = [];
   let offset = 0;
   const boxCount = Math.max(1, chart.series.length);
@@ -896,6 +912,7 @@ function buildBoxplotMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: 
 
   const box = (id: string, series: ChartSeries, seriesIndex: number, minP: number, q1P: number, medianP: number, q3P: number, maxP: number, center: number, thickness: number, horizontal: boolean) => {
     const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+    const fill = chartZoneFill(chart, seriesIndex, color, diagnostics, `chart-box-${id}`);
     const capHalf = thickness * .2;
     const line = (lid: string, x1: number, y1: number, x2: number, y2: number, width: number) =>
       nodes.push({ type: 'path', id: lid, order: order + offset++, bounds, d: `M ${x1} ${y1} L ${x2} ${y2}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: width } });
@@ -904,16 +921,19 @@ function buildBoxplotMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: 
       line(`chart-box-whisker-hi-${id}`, q3P, center, maxP, center, 1);
       line(`chart-box-cap-lo-${id}`, minP, center - capHalf, minP, center + capHalf, 1);
       line(`chart-box-cap-hi-${id}`, maxP, center - capHalf, maxP, center + capHalf, 1);
-      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: q1P, y: center - thickness / 2, width: Math.max(1, q3P - q1P), height: thickness, rx: boxCornerRadius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
+      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: q1P, y: center - thickness / 2, width: Math.max(1, q3P - q1P), height: thickness, rx: boxCornerRadius, style: { fill, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
       line(`chart-box-median-${id}`, medianP, center - thickness / 2, medianP, center + thickness / 2, 2);
     } else {
       line(`chart-box-whisker-lo-${id}`, center, minP, center, q1P, 1);
       line(`chart-box-whisker-hi-${id}`, center, q3P, center, maxP, 1);
       line(`chart-box-cap-lo-${id}`, center - capHalf, minP, center + capHalf, minP, 1);
       line(`chart-box-cap-hi-${id}`, center - capHalf, maxP, center + capHalf, maxP, 1);
-      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: center - thickness / 2, y: q3P, width: thickness, height: Math.max(1, q1P - q3P), rx: boxCornerRadius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
+      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: center - thickness / 2, y: q3P, width: thickness, height: Math.max(1, q1P - q3P), rx: boxCornerRadius, style: { fill, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
       line(`chart-box-median-${id}`, center - thickness / 2, medianP, center + thickness / 2, medianP, 2);
     }
+    // Jittered sample points always render as solid dots (a scatter of tiny
+    // patterned dots would be unreadable) - still tinted by the box's own
+    // resolved color, just never the zone override's gradient/pattern.
     return color;
   };
 
@@ -960,7 +980,7 @@ function buildBoxplotMarks(chart: Chart, plot: PlotArea, bounds: Bounds, order: 
   return nodes;
 }
 
-function buildChart(chart: Chart, index: number): RenderNode[] {
+function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]): RenderNode[] {
   if (chart.is_visible === false) return [];
   const order = orderOf(chart, 20_000 + index), bounds = boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2);
   const showLabels = chart.show_axis_labels !== false, showLegend = chart.show_legend !== false;
@@ -972,11 +992,18 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
   // short category names without a live canvas to measure text against.
   const isCompactChart = ['matrix', 'heatmap', 'hexbin', 'mekko', 'treemap', 'sankey', 'pie'].includes(chart.chart_type);
   const isHorizontalBarLike = (chart.chart_type === 'bar' || chart.chart_type === 'boxplot') && !!chart.config?.horizontal;
-  const padLeft = isCompactChart ? 24 : isHorizontalBarLike ? (showLabels ? 90 : 24) : showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
+  // Sketch-style axes have no numeric Y ticks, so the left gutter collapses
+  // to the same compact 24px matrix/heatmap/etc. get - unless it's a
+  // horizontal bar/boxplot, which still needs that gutter for category
+  // names (unaffected by minimalAxes, which only hides numeric ticks).
+  const minimalAxes = !!chart.config?.minimalAxes;
+  const padLeft = (isCompactChart || (minimalAxes && !isHorizontalBarLike)) ? 24 : isHorizontalBarLike ? (showLabels ? 90 : 24) : showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
   const padBottom = isCompactChart || isHorizontalBarLike ? 24 : showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
   const plot = { x: chart.x + padLeft, y: chart.y + padTop, width: Math.max(1, chart.width - padLeft - 24), height: Math.max(1, chart.height - padTop - padBottom) };
-  const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
+  // Sketch-style axes skip the border box entirely (the L-axis drawn below
+  // already reads as the chart's own boundary) - keep only the fill.
+  const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: minimalAxes ? { kind: 'none' } : { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
   let offset = .01;
   if (chart.title) nodes.push({ ...chartText(`chart-title-${chart.id}`, order + offset++, bounds, plot.x, chart.y + 12, plot.width, 20, chart.title, chart), fontWeight: 'bold', fontSize: Math.max(10, finite(chart.font_size, 12)) + 2 });
   // Heatmap/mekko/treemap/sankey draw their own row/column/node labels or
@@ -1044,8 +1071,16 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
   if (chart.chart_type === 'treemap') { nodes.push(...buildTreemapMarks(chart, plot, bounds, order + offset)); return nodes; }
   if (chart.chart_type === 'sankey') { nodes.push(...buildSankeyMarks(chart, plot, bounds, order + offset)); return nodes; }
   if (chart.chart_type === 'pie') { nodes.push(...buildPieMarks(chart, plot, bounds, order + offset)); return nodes; }
-  if (chart.chart_type === 'boxplot') { nodes.push(...buildBoxplotMarks(chart, plot, bounds, order + offset)); return nodes; }
-  if (chart.show_grid !== false) {
+  if (chart.chart_type === 'boxplot') { nodes.push(...buildBoxplotMarks(chart, plot, bounds, order + offset, diagnostics)); return nodes; }
+  if (minimalAxes) {
+    // Sketch-style axes: an arrow-tipped Y line + a plain X line meeting at
+    // the plot's bottom-left corner, instead of numeric-tick gridlines -
+    // reuses the same 'arrow' marker links already draw (Defs.marker in
+    // renderSceneToSvg.ts), so it matches the app's own arrow style.
+    const axisStyle: SceneStyle = { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1), lineCap: 'round' };
+    nodes.push({ type: 'path', id: `chart-axis-y-${chart.id}`, order: order + offset++, bounds, d: `M ${plot.x} ${plot.y + plot.height} L ${plot.x} ${plot.y}`, markerEnd: 'arrow', style: axisStyle });
+    nodes.push({ type: 'path', id: `chart-axis-x-${chart.id}`, order: order + offset++, bounds, d: `M ${plot.x} ${plot.y + plot.height} L ${plot.x + plot.width} ${plot.y + plot.height}`, style: axisStyle });
+  } else if (chart.show_grid !== false) {
     const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } }, gridWidth = finite(chart.grid_width, 1);
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + offset++, bounds, x: plot.x, y: y - gridWidth / 2, width: plot.width, height: gridWidth, style: gridStyle }); });
@@ -1056,7 +1091,7 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
     const pairs = explicit ? series.values as [number, number][] : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
     if (chart.chart_type === 'bar') {
       const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, (slot - 8) / Math.max(1, chart.series.length));
-      series.values.forEach((value, i) => { const yValue = Array.isArray(value) ? value[1] : value; const height = Math.max(0, mapChartValue(yValue, chart.axis_y, plot.height)); nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x: plot.x + i * slot + 4 + seriesIndex * barWidth, y: plot.y + plot.height - height, width: Math.max(1, barWidth - 2), height, rx: 2, style: { fill: { kind: 'solid', color } } }); });
+      series.values.forEach((value, i) => { const yValue = Array.isArray(value) ? value[1] : value; const height = Math.max(0, mapChartValue(yValue, chart.axis_y, plot.height)); const barId = `chart-bar-${chart.id}-${series.id}-${i}`; nodes.push({ type: 'rect', id: barId, order: order + offset++, bounds, x: plot.x + i * slot + 4 + seriesIndex * barWidth, y: plot.y + plot.height - height, width: Math.max(1, barWidth - 2), height, rx: 2, style: { fill: chartZoneFill(chart, i, color, diagnostics, barId) } }); });
     } else {
       const pixels = pairs.map(([x, y]) => ({ x: plot.x + mapChartValue(x, chart.axis_x, plot.width), y: plot.y + plot.height - mapChartValue(y, chart.axis_y, plot.height) }));
       if (chart.chart_type === 'line' && pixels.length) nodes.push({ type: 'path', id: `chart-line-${chart.id}-${series.id}`, order: order + offset++, bounds, d: `M ${pixels.map((point, i) => `${i ? 'L' : ''} ${point.x} ${point.y}`).join(' ')}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
@@ -1064,8 +1099,12 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
     }
   });
   if (showLabels) {
-    chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
-    chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
+    // Sketch-style axes have no numeric ticks (drawn as a plain L-axis
+    // above instead) - axis_x/axis_y.label text still renders normally.
+    if (!minimalAxes) {
+      chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
+      chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
+    }
     if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + offset++, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));
     if (chart.axis_y.label) nodes.push(chartText(`chart-y-label-${chart.id}`, order + offset++, bounds, chart.x + 12, plot.y + plot.height, plot.height, 18, chart.axis_y.label, chart, 'center', -90));
   }
@@ -1173,7 +1212,7 @@ export function buildRenderScene(input: RenderInput): RenderScene {
     ...input.swimlanes.flatMap((swimlane, i) => tag(buildSwimlane(swimlane, i), 'swimlane', swimlane.id)),
     ...(input.tables ?? []).flatMap((table, i) => tag(buildTable(table, i), 'table', table.id, undefined, table.title ?? undefined)),
     ...(input.paths ?? []).flatMap((path, i) => tag(buildFreeformPath(path, i), 'path', path.id, 'path', 'Path')),
-    ...(input.charts ?? []).flatMap((chart, i) => tag(buildChart(chart, i), 'chart', chart.id, chart.chart_type, chart.title ?? 'Chart')),
+    ...(input.charts ?? []).flatMap((chart, i) => tag(buildChart(chart, i, diagnostics), 'chart', chart.id, chart.chart_type, chart.title ?? 'Chart')),
     // Falls back to "fromId → toId" rather than leaving ariaLabel undefined
     // for an unlabeled link (most of them — `text:` is optional): tag()'s own
     // tabindex is gated on ariaLabel being present, so a link with no text

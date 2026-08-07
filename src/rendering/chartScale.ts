@@ -4,8 +4,11 @@
 // ported so a chart's SFL data renders identically in both.
 import type { ChartAxis, ChartZone } from '../model/charts';
 
-/** ChartZone.color is always a plain hex/css string in this package (no
- * gradient/mesh picker exists outside the main app's own editor UI). */
+/** Narrows a zone color to a plain string, discarding a gradient/mesh/
+ * pattern object - used by matrix/heatmap/treemap/sankey/mekko, none of
+ * which ever produce anything but a solid string in practice (only bar/
+ * boxplot's per-category override can be richer - see chartZoneFill in
+ * buildRenderScene.ts, which handles the full ColorValue range instead). */
 export function zoneSolidColor(color: ChartZone['color']): string | undefined {
   return typeof color === 'string' ? color : undefined;
 }

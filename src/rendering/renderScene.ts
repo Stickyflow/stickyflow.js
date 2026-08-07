@@ -6,6 +6,7 @@ import type { Shape } from '../model/shapes';
 import type { Swimlane } from '../model/swimlanes';
 import type { Table } from '../model/tables';
 import type { Side } from '../model/geometry/router';
+import type { PatternStyle } from '../model/colors';
 
 export interface Point { x: number; y: number }
 export interface Bounds { minX: number; minY: number; maxX: number; maxY: number }
@@ -14,7 +15,10 @@ export type ScenePaint =
   | { kind: 'none' }
   | { kind: 'solid'; color: string }
   | { kind: 'linear-gradient'; angle: number; stops: Array<{ offset: number; color: string }> }
-  | { kind: 'mesh-gradient'; points: Array<{ x: number; y: number; color: string }> };
+  | { kind: 'mesh-gradient'; points: Array<{ x: number; y: number; color: string }> }
+  // Sketch-style hachure/cross-hatch/dots fill (ColorValue.PatternColor) -
+  // a native SVG <pattern> def, same geometry patternFill.ts's generators use.
+  | { kind: 'pattern'; pattern: PatternStyle; color: string; spacing: number; strokeWidth: number; angle: 0 | 45 | 90 | 135 };
 
 export interface SceneStyle {
   fill?: ScenePaint;

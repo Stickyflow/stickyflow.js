@@ -1,3 +1,5 @@
+import type { GradientColor, MeshGradientColor, PatternColor } from './colors';
+
 export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'matrix' | 'heatmap' | 'hexbin' | 'mekko' | 'treemap' | 'sankey' | 'pie' | 'boxplot';
 
 export interface ChartAxis {
@@ -16,7 +18,11 @@ export interface ChartAxis {
 
 export interface ChartZone {
   label: string;
-  color?: string;
+  // A plain string is a solid hex color everywhere zones are used (matrix
+  // quadrants, heatmap/treemap bands, sankey nodes). Gradient/mesh/pattern
+  // objects only ever come from the bar/boxplot chart's per-category color
+  // override - other consumers never allow anything but a solid string.
+  color?: string | GradientColor | MeshGradientColor | PatternColor;
 }
 
 export interface ChartSeries {
@@ -68,6 +74,12 @@ export interface ChartConfig {
   // Mekko only: column height proportional to its share of the grand total
   // instead of always filling the full plot height.
   mekkoVaryHeight?: boolean;
+  // Cartesian family only (bar/line/scatter/hexbin/boxplot): swaps the
+  // numeric tick-driven grid/axis-labels for a plain sketch-style L-axis
+  // (an arrow-tipped vertical line + a plain horizontal line meeting at the
+  // plot's bottom-left corner) - no numeric ticks, no card border. Category
+  // labels and axis_x/axis_y.label text still render normally.
+  minimalAxes?: boolean;
 }
 
 export interface Chart {

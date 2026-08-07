@@ -27,7 +27,21 @@ export interface MeshGradientColor {
   points: MeshPoint[];
 }
 
-export type ColorValue = SolidColor | GradientColor | MeshGradientColor;
+export type PatternStyle = 'hachure' | 'cross-hatch' | 'dots';
+
+// Angle restricted to 0/45/90/135 - the only line directions a small
+// repeating tile can render as seamless parallel stripes on both the SVG
+// export and (main app) Konva canvas, see patternFill.ts.
+export interface PatternColor {
+  type: 'pattern';
+  pattern: PatternStyle;
+  color: string;
+  spacing: number;
+  strokeWidth: number;
+  angle: 0 | 45 | 90 | 135;
+}
+
+export type ColorValue = SolidColor | GradientColor | MeshGradientColor | PatternColor;
 
 export interface ColorPickerProps {
   value: ColorValue | string;
