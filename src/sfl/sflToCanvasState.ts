@@ -49,6 +49,10 @@ export interface SflEntityOut {
     chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'matrix' | 'heatmap' | 'hexbin' | 'mekko' | 'treemap' | 'sankey' | 'pie' | 'boxplot';
     categories?: string[];
     areaOpacity?: number;
+    showHeatmapValues?: boolean;
+    squareHeatmapCells?: boolean;
+    heatmapCellGap?: number;
+    showHexbinValues?: boolean;
     zones?: Array<{ label: string; color?: string }>;
     hexRadius?: number;
     innerRadius?: number;
@@ -488,6 +492,10 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       chartData = {
         chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'matrix' | 'heatmap' | 'hexbin' | 'mekko' | 'treemap' | 'sankey' | 'pie' | 'boxplot' | undefined) ?? 'bar',
         categories, areaOpacity: asNumber(p.get('areaOpacity')), zones,
+        showHeatmapValues: asString(p.get('showHeatmapValues')) === 'false' ? false : undefined,
+        squareHeatmapCells: asString(p.get('squareHeatmapCells')) === 'true' ? true : undefined,
+        heatmapCellGap: asNumber(p.get('heatmapCellGap')),
+        showHexbinValues: asString(p.get('showHexbinValues')) === 'true' ? true : undefined,
         hexRadius: asNumber(p.get('hexRadius')), innerRadius: asNumber(p.get('innerRadius')),
         showSpokes: showSpokesValue === 'false' ? false : undefined,
         lineTension: asNumber(p.get('lineTension')),

@@ -44,6 +44,13 @@ export interface ChartSeries {
 export interface ChartConfig {
   categories?: string[];
   areaOpacity?: number;
+  // Heatmap only: shows the numeric value inside each cell. Defaults to true.
+  showHeatmapValues?: boolean;
+  // Heatmap only: keeps cells square and optionally separates them with a gap.
+  squareHeatmapCells?: boolean;
+  heatmapCellGap?: number;
+  // Hexbin only: shows the number of observations inside each occupied bin.
+  showHexbinValues?: boolean;
   // Matrix: named/colored quadrant cells. Heatmap/Treemap: ordered low->high
   // value color bands. Sankey: doubles as the node list. Bar: per-category
   // color override index-matched to axis_x.categories.

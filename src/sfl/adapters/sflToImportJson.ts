@@ -126,6 +126,10 @@ function chartObject(e: SflEntityOut): any {
     axis_y: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
     config: {
       categories: e.chart?.categories, areaOpacity: e.chart?.areaOpacity,
+      showHeatmapValues: e.chart?.showHeatmapValues,
+      squareHeatmapCells: e.chart?.squareHeatmapCells,
+      heatmapCellGap: e.chart?.heatmapCellGap,
+      showHexbinValues: e.chart?.showHexbinValues,
       // Bar/boxplot per-category color override is the only zone consumer
       // whose color can be a gradient/mesh string (`gradient(...)`/
       // `mesh(...)`) - decode it back into an object, same as fill_color/
