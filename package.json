@@ -21,11 +21,18 @@
     "type": "git",
     "url": "git+https://github.com/D-Queck/stickyflow.js.git"
   },
-  "bugs": { "url": "https://github.com/D-Queck/stickyflow.js/issues" },
+  "bugs": {
+    "url": "https://github.com/D-Queck/stickyflow.js/issues"
+  },
   "homepage": "https://github.com/D-Queck/stickyflow.js#readme",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "sideEffects": false,
-  "files": ["dist", "CHANGELOG.md"],
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -61,6 +68,7 @@
     "prepublishOnly": "npm run typecheck && npm test && npm run verify"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "tsup": "^8.3.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
