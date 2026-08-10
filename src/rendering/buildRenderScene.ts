@@ -452,6 +452,66 @@ function chartText(id: string, order: number, bounds: Bounds, x: number, y: numb
   return { type: 'text', id, order, bounds, x, y, width, height, lines: [text], fontFamily: chart.font_family ?? DEFAULT_FONT, fontSize: Math.max(9, finite(chart.font_size, 12)), fontWeight: 'normal', color: chart.text_color ?? '#0f172a', align, verticalAlign: 'top', lineHeight: 1.2, rotation, rotationCenter: rotation ? { x, y } : undefined };
 }
 
+// SFL 1.4, §5.4.5: a series' raw error entry (symmetric number or asymmetric
+// [low, high] pair) resolved against its point's own value into an absolute
+// [low, high] range on the value axis.
+function errorBarRange(value: number, error: number | [number, number]): [number, number] {
+  return Array.isArray(error) ? [value - error[0], value + error[1]] : [value - error, value + error];
+}
+
+const ERROR_CAP_HALF = 5;
+
+// One whisker (main line + two end caps), centered on a fixed pixel position
+// `center` along the category axis (always X - this package's bar chart has
+// no horizontal-orientation flag), between two Y pixel positions.
+function errorWhiskerNode(id: string, order: number, bounds: Bounds, center: number, y1: number, y2: number, color: string): RenderNode {
+  const d = `M ${center} ${y1} L ${center} ${y2} M ${center - ERROR_CAP_HALF} ${y1} L ${center + ERROR_CAP_HALF} ${y1} M ${center - ERROR_CAP_HALF} ${y2} L ${center + ERROR_CAP_HALF} ${y2}`;
+  return { type: 'path', id, order, bounds, d, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 1 } };
+}
+
+// SFL 1.4, §5.4.1: cumulative per-category segment [pixelStart, pixelEnd]
+// (in plot-height pixel terms, 0 = axis_y.min) for one series at one
+// category - 'waterfall' runs each series independently (its own floating
+// baseline); 'true'/'percent' combine all series at a category.
+function stackedSegment(chart: Chart, mode: 'true' | 'percent' | 'waterfall', categoryIndex: number, seriesIndex: number, plotHeight: number): { value: number; pixelStart: number; pixelEnd: number } {
+  const value = (chart.series[seriesIndex].values as number[])[categoryIndex] ?? 0;
+  if (mode === 'waterfall') {
+    let running = 0;
+    for (let i = 0; i < categoryIndex; i++) running += (chart.series[seriesIndex].values as number[])[i] ?? 0;
+    return { value, pixelStart: mapChartValue(running, chart.axis_y, plotHeight), pixelEnd: mapChartValue(running + value, chart.axis_y, plotHeight) };
+  }
+  if (mode === 'percent') {
+    const total = chart.series.reduce((sum, s) => sum + Math.abs((s.values as number[])[categoryIndex] ?? 0), 0) || 1;
+    let cum = 0;
+    for (let i = 0; i < seriesIndex; i++) cum += Math.abs((chart.series[i].values as number[])[categoryIndex] ?? 0);
+    const magnitude = Math.abs(value);
+    return { value, pixelStart: (cum / total) * plotHeight, pixelEnd: ((cum + magnitude) / total) * plotHeight };
+  }
+  let cum = 0;
+  for (let i = 0; i < seriesIndex; i++) cum += (chart.series[i].values as number[])[categoryIndex] ?? 0;
+  return { value, pixelStart: mapChartValue(cum, chart.axis_y, plotHeight), pixelEnd: mapChartValue(cum + value, chart.axis_y, plotHeight) };
+}
+
+// SFL 1.4, §5.4.8: reference lines (`Rule`) - a second addressable leaf
+// alongside Series, drawn on top of the chart's marks. Always axis_y (the
+// value axis), full line across the plot - `presentation: bullet`'s short
+// target-tick variant doesn't exist in this package (no `presentation`
+// config at all yet).
+function buildChartRules(chart: Chart, plot: { x: number; y: number; width: number; height: number }, bounds: Bounds, order: number): RenderNode[] {
+  const rules = chart.rules;
+  if (!rules?.length) return [];
+  const nodes: RenderNode[] = [];
+  let offset = 0;
+  const fontSize = Math.max(9, finite(chart.font_size, 12) - 2);
+  rules.forEach(rule => {
+    const color = rule.color || chart.stroke_color || '#475569';
+    const y = plot.y + plot.height - mapChartValue(rule.at, chart.axis_y, plot.height);
+    nodes.push({ type: 'path', id: `chart-rule-${chart.id}-${rule.id}`, order: order + offset++, bounds, d: `M ${plot.x} ${y} L ${plot.x + plot.width} ${y}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: rule.stroke_width ?? 1, dash: rule.dash } });
+    if (rule.text) nodes.push(chartText(`chart-rule-label-${chart.id}-${rule.id}`, order + offset++, bounds, plot.x + 4, y - fontSize - 2, 160, fontSize + 2, rule.text, chart));
+  });
+  return nodes;
+}
+
 function buildChart(chart: Chart, index: number): RenderNode[] {
   if (chart.is_visible === false) return [];
   const order = orderOf(chart, 20_000 + index), bounds = boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2);
@@ -518,19 +578,58 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + offset++, bounds, x: plot.x, y: y - gridWidth / 2, width: plot.width, height: gridWidth, style: gridStyle }); });
   }
-  chart.series.forEach((series, seriesIndex) => {
-    const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
-    const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
-    const pairs = explicit ? series.values as [number, number][] : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
-    if (chart.chart_type === 'bar') {
-      const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, (slot - 8) / Math.max(1, chart.series.length));
-      series.values.forEach((value, i) => { const yValue = Array.isArray(value) ? value[1] : value; const height = Math.max(0, mapChartValue(yValue, chart.axis_y, plot.height)); nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x: plot.x + i * slot + 4 + seriesIndex * barWidth, y: plot.y + plot.height - height, width: Math.max(1, barWidth - 2), height, rx: 2, style: { fill: { kind: 'solid', color } } }); });
-    } else {
-      const pixels = pairs.map(([x, y]) => ({ x: plot.x + mapChartValue(x, chart.axis_x, plot.width), y: plot.y + plot.height - mapChartValue(y, chart.axis_y, plot.height) }));
-      if (chart.chart_type === 'line' && pixels.length) nodes.push({ type: 'path', id: `chart-line-${chart.id}-${series.id}`, order: order + offset++, bounds, d: `M ${pixels.map((point, i) => `${i ? 'L' : ''} ${point.x} ${point.y}`).join(' ')}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
-      pixels.forEach((point, i) => nodes.push({ type: 'ellipse', id: `chart-point-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, cx: point.x, cy: point.y, rx: chart.chart_type === 'scatter' ? 4 : 3, ry: chart.chart_type === 'scatter' ? 4 : 3, style: { fill: { kind: 'solid', color } } }));
+  // SFL 1.4, §5.4.1: bar-only. sflToCanvasState already normalizes 'none' to
+  // undefined, but the Chart type itself still allows 'none' (a hand-built
+  // RenderInput, bypassing the SFL pipeline, could set it explicitly).
+  const stackedMode = chart.config?.stacked && chart.config.stacked !== 'none' ? chart.config.stacked : undefined;
+  if (chart.chart_type === 'bar' && stackedMode) {
+    const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, slot - 8);
+    for (let i = 0; i < count; i++) {
+      chart.series.forEach((series, seriesIndex) => {
+        const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+        const seg = stackedSegment(chart, stackedMode, i, seriesIndex, plot.height);
+        const y = plot.y + plot.height - Math.max(seg.pixelStart, seg.pixelEnd);
+        const height = Math.max(1, Math.abs(seg.pixelEnd - seg.pixelStart));
+        const x = plot.x + i * slot + 4;
+        nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x, y, width: barWidth, height, rx: 2, style: { fill: { kind: 'solid', color } } });
+      });
     }
-  });
+  } else {
+    chart.series.forEach((series, seriesIndex) => {
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
+      const pairs = explicit ? series.values as [number, number][] : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
+      if (chart.chart_type === 'bar') {
+        const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, (slot - 8) / Math.max(1, chart.series.length));
+        series.values.forEach((value, i) => {
+          const yValue = Array.isArray(value) ? value[1] : value;
+          const height = Math.max(0, mapChartValue(yValue, chart.axis_y, plot.height));
+          const x = plot.x + i * slot + 4 + seriesIndex * barWidth, width = Math.max(1, barWidth - 2);
+          nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x, y: plot.y + plot.height - height, width, height, rx: 2, style: { fill: { kind: 'solid', color } } });
+          const err = series.error?.[i];
+          if (err != null) {
+            const [lo, hi] = errorBarRange(yValue, err);
+            nodes.push(errorWhiskerNode(`chart-bar-error-${chart.id}-${series.id}-${i}`, order + offset++, bounds, x + width / 2,
+              plot.y + plot.height - mapChartValue(lo, chart.axis_y, plot.height), plot.y + plot.height - mapChartValue(hi, chart.axis_y, plot.height), '#000000'));
+          }
+        });
+      } else {
+        const pixels = pairs.map(([x, y]) => ({ x: plot.x + mapChartValue(x, chart.axis_x, plot.width), y: plot.y + plot.height - mapChartValue(y, chart.axis_y, plot.height) }));
+        if (chart.chart_type === 'line' && pixels.length) nodes.push({ type: 'path', id: `chart-line-${chart.id}-${series.id}`, order: order + offset++, bounds, d: `M ${pixels.map((point, i) => `${i ? 'L' : ''} ${point.x} ${point.y}`).join(' ')}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
+        pixels.forEach((point, i) => {
+          const err = chart.chart_type === 'line' ? series.error?.[i] : undefined;
+          if (err != null) {
+            const [lo, hi] = errorBarRange(pairs[i][1], err);
+            nodes.push(errorWhiskerNode(`chart-line-error-${chart.id}-${series.id}-${i}`, order + offset++, bounds, point.x,
+              plot.y + plot.height - mapChartValue(lo, chart.axis_y, plot.height), plot.y + plot.height - mapChartValue(hi, chart.axis_y, plot.height), color));
+          }
+          nodes.push({ type: 'ellipse', id: `chart-point-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, cx: point.x, cy: point.y, rx: chart.chart_type === 'scatter' ? 4 : 3, ry: chart.chart_type === 'scatter' ? 4 : 3, style: { fill: { kind: 'solid', color } } });
+        });
+      }
+    });
+  }
+  const ruleNodes = buildChartRules(chart, plot, bounds, order + offset);
+  nodes.push(...ruleNodes); offset += ruleNodes.length;
   if (showLabels) {
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });

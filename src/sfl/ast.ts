@@ -13,11 +13,15 @@
 // table … }` bleibt als Alt-Syntax parsebar.
 export type BlockKind =
   | 'Project' | 'Model' | 'Group' | 'Container' | 'Table' | 'Path' | 'Chart' | 'Entity' | 'Link' | 'Layout' | 'Style'
-  | 'Columns' | 'Column' | 'Rows' | 'Row' | 'Axis' | 'Series';
+  | 'Columns' | 'Column' | 'Rows' | 'Row' | 'Axis' | 'Series'
+  // Referenzlinie in Chart (SFL 1.4, §5.4.8) - anders als Axis/Series
+  // adressierbar, deshalb ein zweiter Blattblock auf derselben Tiefe statt
+  // einer weiteren Verschachtelungsebene (§1.2 Reichweitenregel).
+  | 'Rule';
 
 export const BLOCK_KINDS: readonly BlockKind[] = [
   'Project', 'Model', 'Group', 'Container', 'Table', 'Path', 'Chart', 'Entity', 'Link', 'Layout', 'Style',
-  'Columns', 'Column', 'Rows', 'Row', 'Axis', 'Series',
+  'Columns', 'Column', 'Rows', 'Row', 'Axis', 'Series', 'Rule',
 ];
 
 export type Side = 'top' | 'bottom' | 'left' | 'right';

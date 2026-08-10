@@ -49,9 +49,15 @@ export interface SflEntityOut {
     chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
     categories?: string[];
     areaOpacity?: number;
-    axisX: { min: number; max: number; step: number; label?: string };
-    axisY: { min: number; max: number; step: number; label?: string };
-    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] }>;
+    // SFL 1.4, §5.4.1: bar-only, 'none'/absent both mean today's grouped
+    // behavior - normalized to undefined so downstream consumers only ever
+    // see the three values that actually change computation.
+    stacked?: 'true' | 'percent' | 'waterfall';
+    axisX: { min: number; max: number; step: number; label?: string; unit?: string };
+    axisY: { min: number; max: number; step: number; label?: string; unit?: string };
+    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][]; error?: Array<number | [number, number] | null> }>;
+    // SFL 1.4, §5.4.8
+    rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
   };
 }
 
@@ -413,7 +419,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     if (kind === 'chart') {
       const readAxis = (axisBlock: SflBlock | undefined) => {
         const axisProps = axisBlock ? directProps(axisBlock) : new Map<string, SflValue>();
-        return { min: asNumber(axisProps.get('min')) ?? 0, max: asNumber(axisProps.get('max')) ?? 10, step: asNumber(axisProps.get('step')) ?? 1, label: asString(axisProps.get('label')) };
+        return { min: asNumber(axisProps.get('min')) ?? 0, max: asNumber(axisProps.get('max')) ?? 10, step: asNumber(axisProps.get('step')) ?? 1, label: asString(axisProps.get('label')), unit: asString(axisProps.get('unit')) };
       };
       const axes = childBlocks(block).filter(child => child.kind === 'Axis');
       const series = childBlocks(block).filter(child => child.kind === 'Series').map(seriesBlock => {
@@ -426,13 +432,54 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
             if (x !== undefined && y !== undefined) (values as [number, number][]).push([x, y]);
           }
         }
-        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), opacity: asNumber(seriesProps.get('opacity')), values };
+        // SFL 1.4, §5.4.5: index-aligned with values. `none` is the per-point
+        // "no error bar here" sentinel (mirrors `stacked: none`'s
+        // vocabulary) - anything else is a number (symmetric) or a
+        // [low, high] list (asymmetric).
+        const errorValue = seriesProps.get('error');
+        const error = errorValue?.type === 'list'
+          ? errorValue.values.map((v): number | [number, number] | null => {
+            if (v.type === 'ident' && v.segments.join('.') === 'none') return null;
+            if (v.type === 'number') return v.value;
+            if (v.type === 'list' && v.values.length >= 2) {
+              const lo = asNumber(v.values[0]), hi = asNumber(v.values[1]);
+              if (lo !== undefined && hi !== undefined) return [lo, hi];
+            }
+            return null;
+          })
+          : undefined;
+        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), opacity: asNumber(seriesProps.get('opacity')), values, error };
+      });
+      // SFL 1.4, §5.4.8: Chart's second leaf kind alongside Series, at the
+      // same depth (§1.2) - read the same way, just a different block kind.
+      const rules = childBlocks(block).filter(child => child.kind === 'Rule').map(ruleBlock => {
+        const ruleProps = directProps(ruleBlock);
+        const dashValue = ruleProps.get('dash');
+        const dash = dashValue?.type === 'list' ? dashValue.values.flatMap(v => { const n = asNumber(v); return n === undefined ? [] : [n]; }) : undefined;
+        return {
+          id: ruleBlock.name,
+          at: asNumber(ruleProps.get('at')) ?? 0,
+          text: asString(ruleProps.get('text')),
+          color: asString(ruleProps.get('color')),
+          strokeWidth: asNumber(ruleProps.get('strokeWidth')),
+          dash: dash?.length ? dash : undefined,
+        };
       });
       const categoriesValue = p.get('categories');
       const categories = categoriesValue?.type === 'list'
         ? categoriesValue.values.flatMap(value => { const category = asString(value); return category === undefined ? [] : [category]; })
         : undefined;
-      chartData = { chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | undefined) ?? 'bar', categories, areaOpacity: asNumber(p.get('areaOpacity')), axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')), series };
+      // SFL 1.4, §5.4.1: 'none'/absent both mean today's grouped behavior -
+      // normalized to undefined here so downstream consumers only ever see
+      // the three values that actually change computation.
+      const stackedValue = asString(p.get('stacked'));
+      chartData = {
+        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | undefined) ?? 'bar',
+        categories, areaOpacity: asNumber(p.get('areaOpacity')),
+        stacked: stackedValue && stackedValue !== 'none' ? (stackedValue as 'true' | 'percent' | 'waterfall') : undefined,
+        axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
+        series, rules,
+      };
     }
 
     return {
