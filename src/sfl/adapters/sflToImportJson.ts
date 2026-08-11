@@ -46,6 +46,11 @@ function shapeObject(e: SflEntityOut): any {
     // SFL `opacity: 0.5` has to be threaded into that nested object or it's a
     // no-op (the flat top-level field the renderer never looks at).
     shapeStyle: p.opacity !== undefined ? { opacity: numOf(p.opacity) } : undefined,
+    // Maps §3.3: base-layer image (shapeType 'image' only). `src` is generic
+    // (not in the entity structural-keys exclusion set), so it already flows
+    // through `p` - this gives it a typed home like every other field here.
+    imageUrl: p.src,
+    imageFit: p.fit as 'cover' | 'contain' | undefined,
     parent_frame_id: e.parentFrameId,
     order: e.order,
   };
@@ -108,7 +113,7 @@ function pathObject(e: SflEntityOut): any {
   const p = e.props;
   return {
     id: e.id, type: 'path', x: e.x, y: e.y, width: e.width, height: e.height,
-    points: e.path?.points ?? [], tension: e.path?.tension ?? 0,
+    points: e.path?.points ?? [], value: e.path?.value, tension: e.path?.tension ?? 0,
     start_marker: e.path?.startMarker ?? 'none', end_marker: e.path?.endMarker ?? 'none',
     closed: e.path?.closed ?? false, stroke_color: decodeColor(p.stroke) ?? '#7c3aed',
     stroke_width: numOf(p.strokeWidth) ?? 2, dash: p.dash ? safeJson(p.dash) : [],

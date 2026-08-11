@@ -108,7 +108,19 @@ export interface SceneText extends SceneBase {
   rotation?: number; rotationCenter?: Point;
 }
 
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText;
+/** Maps §3.3: base-layer image (floor plan scan, map, photo). `href` is a
+ * plain URL, not decoded/embedded here - this renderer is pure/DOM-free
+ * (runs in Node, no image I/O), so cover/contain fitting can't be computed
+ * from the source's natural size the way the live Konva canvas does it.
+ * SVG's own `preserveAspectRatio` defers that to the browser at DISPLAY
+ * time instead, once it actually has the image loaded: 'xMidYMid slice' ==
+ * object-fit: cover, 'xMidYMid meet' == object-fit: contain. */
+export interface SceneImage extends SceneBase {
+  type: 'image'; href: string; x: number; y: number; width: number; height: number;
+  preserveAspectRatio: string; opacity?: number; rotation?: number; rotationCenter?: Point;
+}
+
+export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneImage;
 
 export interface RenderDiagnostic {
   severity: 'warning' | 'error'; code: string; message: string; entityId?: string;

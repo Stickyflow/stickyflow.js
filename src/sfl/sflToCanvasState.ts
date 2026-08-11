@@ -44,6 +44,8 @@ export interface SflEntityOut {
   path?: {
     points: Array<{ x: number; y: number }>;
     tension?: number; startMarker?: string; endMarker?: string; closed?: boolean;
+    // Maps §3.3
+    value?: number;
   };
   chart?: {
     chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
@@ -413,7 +415,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         const x = asNumber(v.values[0]), y = asNumber(v.values[1]);
         return x !== undefined && y !== undefined ? [{ x: origin.x + x, y: origin.y + y }] : [];
       }) : [];
-      pathData = { points, tension: asNumber(p.get('tension')), startMarker: asString(p.get('startMarker')), endMarker: asString(p.get('endMarker')), closed: asString(p.get('closed')) === 'true' };
+      pathData = { points, tension: asNumber(p.get('tension')), startMarker: asString(p.get('startMarker')), endMarker: asString(p.get('endMarker')), closed: asString(p.get('closed')) === 'true', value: asNumber(p.get('value')) };
     }
 
     if (kind === 'chart') {

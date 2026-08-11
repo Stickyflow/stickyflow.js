@@ -50,7 +50,10 @@ export type ShapeType =
   | 'triangle'
   | 'hexagon'
   | 'parallelogram'
-  | 'trapezoid';
+  | 'trapezoid'
+  // Maps §3.3: base-layer image (floor plan scan, map, photo). Content lives
+  // in Shape.imageUrl, not here - shapeType only selects the renderer.
+  | 'image';
 
 /** Color Stop für Gradients */
 export interface ColorStop {
@@ -145,6 +148,10 @@ export interface Shape {
   // phase's steps into one shape). Not independent canvas entities and never have their
   // own links - links always attach to this shape's own boundary either way.
   subShapes?: SubShape[] | null
+
+  // Maps §3.3: base-layer image - nur bei shapeType === 'image'.
+  imageUrl?: string | null
+  imageFit?: 'cover' | 'contain'
 
   createdAt: string
 }
@@ -324,7 +331,14 @@ export const SHAPE_DEFAULTS = {
   person: {
     ...COMMON_DEFAULTS,
     rotation: 0,
-  }
+  },
+  // Maps §3.3: base-layer image. No stroke by default - an uploaded photo/
+  // floor-plan scan doesn't want a border unless the author adds one.
+  image: {
+    ...COMMON_DEFAULTS,
+    rotation: 0,
+    imageFit: 'cover' as const,
+  },
 } as const;
 
 /** Every valid `shape:` value, as a real runtime array — `ShapeType` itself

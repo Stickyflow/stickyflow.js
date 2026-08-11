@@ -1,5 +1,5 @@
 import type { MarkerType } from '../model/links';
-import type { RenderNode, RenderScene, ScenePaint, SceneStyle, SceneText } from './renderScene';
+import type { RenderNode, RenderScene, ScenePaint, SceneStyle, SceneText, SceneImage } from './renderScene';
 import { DOM_CONTRACT_VERSION } from './renderScene';
 
 export interface SvgRenderOptions {
@@ -155,7 +155,7 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
   return '#64748b';
 }
 
-function styleAttrs(node: Exclude<RenderNode, SceneText>, defs: Defs): string {
+function styleAttrs(node: Exclude<RenderNode, SceneText | SceneImage>, defs: Defs): string {
   const style = node.style, stroke = defs.paint(style.stroke, `${node.id}-stroke`, node.bounds), fill = defs.paint(style.fill, `${node.id}-fill`, node.bounds);
   const attrs = [`fill="${xml(fill)}"`, `stroke="${xml(stroke)}"`];
   if (style.strokeWidth !== undefined) attrs.push(`stroke-width="${num(style.strokeWidth)}"`);
@@ -196,8 +196,19 @@ function textSvg(node: SceneText, defs: Defs): string {
   return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
 }
 
+// Maps §3.3: `<image>` isn't fill/stroke-able the way rect/ellipse/path are
+// (SVG ignores those attributes on it), so this doesn't go through the
+// shared styleAttrs() - a border, if any, is a separate SceneRect node
+// buildRenderScene.ts stacks on top instead (see buildShape's image branch).
+function imageSvg(node: SceneImage, defs: Defs): string {
+  const opacity = node.opacity !== undefined ? ` opacity="${num(node.opacity)}"` : '';
+  const rotationCenter = node.rotationCenter ?? { x: node.x + node.width / 2, y: node.y + node.height / 2 };
+  return `<image id="${defs.elementId(node.id)}"${contractAttrs(node)} href="${xml(node.href)}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}" preserveAspectRatio="${xml(node.preserveAspectRatio)}"${opacity}${transform(node.rotation, rotationCenter)}/>`;
+}
+
 function nodeSvg(node: RenderNode, defs: Defs): string {
   if (node.type === 'text') return textSvg(node, defs);
+  if (node.type === 'image') return imageSvg(node, defs);
   const attrs = `id="${defs.elementId(node.id)}"${contractAttrs(node)} ${styleAttrs(node, defs)}`;
   if (node.type === 'rect') return `<rect ${attrs} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${node.rx ? ` rx="${num(node.rx)}"` : ''}${transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 })}/>`;
   if (node.type === 'ellipse') return `<ellipse ${attrs} cx="${num(node.cx)}" cy="${num(node.cy)}" rx="${num(node.rx)}" ry="${num(node.ry)}"${transform(node.rotation, { x: node.cx, y: node.cy })}/>`;

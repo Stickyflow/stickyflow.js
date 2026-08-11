@@ -147,6 +147,24 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
     const r = Math.min(width, height), head = r * .3, body = r * .5, cx = x + width / 2;
     nodes.push({ ...base, id: `${base.id}-head`, type: 'ellipse', cx, cy: y + head, rx: head, ry: head });
     nodes.push({ ...base, id: `${base.id}-body`, type: 'path', d: `M ${cx - body} ${y + 2 * head + body} A ${body} ${body} 0 0 1 ${cx + body} ${y + 2 * head + body} L ${cx} ${y + 2 * head + body} Z`, rotationCenter: { x: x + width / 2, y: y + height / 2 } });
+  } else if (shape.shapeType === 'image') {
+    // Maps §3.3: base-layer image. No fallback placeholder rect when imageUrl
+    // is unset - unlike the live Konva canvas (which shows a loading/missing
+    // state to a person actively editing), this is a one-shot static render;
+    // an empty box would just be visual noise in the output.
+    if (shape.imageUrl) {
+      const rotationCenter = { x: x + width / 2, y: y + height / 2 };
+      nodes.push({
+        id: base.id, order, bounds, type: 'image', href: shape.imageUrl, x, y, width, height,
+        preserveAspectRatio: shape.imageFit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice',
+        opacity: style.opacity, rotation, rotationCenter,
+      });
+      // <image> isn't stroke-able in SVG - a plain frame rect on top instead,
+      // only when a border was actually set (mirrors ImageRenderer.tsx).
+      if (style.stroke?.kind !== 'none' && (style.strokeWidth ?? 0) > 0) {
+        nodes.push({ ...base, id: `${base.id}-border`, type: 'rect', x, y, width, height, style: { fill: { kind: 'none' }, stroke: style.stroke, strokeWidth: style.strokeWidth, dash: style.dash } });
+      }
+    }
   } else {
     const rx = shape.shapeType === 'pill' ? Math.min(width, height) / 2
       : shape.shapeType === 'rounded_rectangle' ? finite(shape.cornerRadius, 8) : 0;
