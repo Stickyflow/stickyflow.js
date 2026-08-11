@@ -48,16 +48,23 @@ export interface SflEntityOut {
     value?: number;
   };
   chart?: {
-    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
+    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field';
     categories?: string[];
     areaOpacity?: number;
     // SFL 1.4, §5.4.1: bar-only, 'none'/absent both mean today's grouped
     // behavior - normalized to undefined so downstream consumers only ever
     // see the three values that actually change computation.
     stacked?: 'true' | 'percent' | 'waterfall';
+    // Fields §3.4: `scale` is a raw "ramp(...)" string (parsed at the app
+    // edge, like fill/stroke's gradient()/mesh()) - `interpolate`/`idwPower`/
+    // `isolines` are structural, same footing as `stacked` above.
+    scale?: string;
+    interpolate?: 'idw';
+    idwPower?: number;
+    isolines?: number[];
     axisX: { min: number; max: number; step: number; label?: string; unit?: string };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string };
-    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][]; error?: Array<number | [number, number] | null> }>;
+    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][]; error?: Array<number | [number, number] | null> }>;
     // SFL 1.4, §5.4.8
     rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
   };
@@ -426,12 +433,15 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       const axes = childBlocks(block).filter(child => child.kind === 'Axis');
       const series = childBlocks(block).filter(child => child.kind === 'Series').map(seriesBlock => {
         const seriesProps = directProps(seriesBlock), value = seriesProps.get('values');
-        const values: number[] | [number, number][] = [];
+        // Component count read from the data itself, not hardcoded to 2:
+        // scatter/line use [x,y], Fields §3.4 scalar series use [x,y,value],
+        // vector series use [x,y,angle,magnitude].
+        const values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][] = [];
         if (value?.type === 'list') for (const item of value.values) {
           if (item.type === 'number') (values as number[]).push(item.value);
-          else if (item.type === 'list' && item.values.length === 2) {
-            const x = asNumber(item.values[0]), y = asNumber(item.values[1]);
-            if (x !== undefined && y !== undefined) (values as [number, number][]).push([x, y]);
+          else if (item.type === 'list' && item.values.length >= 2) {
+            const components = item.values.map(asNumber);
+            if (components.every((c): c is number => c !== undefined)) (values as number[][]).push(components);
           }
         }
         // SFL 1.4, §5.4.5: index-aligned with values. `none` is the per-point
@@ -475,10 +485,19 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       // normalized to undefined here so downstream consumers only ever see
       // the three values that actually change computation.
       const stackedValue = asString(p.get('stacked'));
+      const isolinesValue = p.get('isolines');
+      const isolines = isolinesValue?.type === 'list'
+        ? isolinesValue.values.flatMap(v => { const n = asNumber(v); return n === undefined ? [] : [n]; })
+        : undefined;
       chartData = {
-        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | undefined) ?? 'bar',
+        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | undefined) ?? 'bar',
         categories, areaOpacity: asNumber(p.get('areaOpacity')),
         stacked: stackedValue && stackedValue !== 'none' ? (stackedValue as 'true' | 'percent' | 'waterfall') : undefined,
+        // Fields §3.4.
+        scale: asString(p.get('scale')),
+        interpolate: asString(p.get('interpolate')) === 'idw' ? 'idw' : undefined,
+        idwPower: asNumber(p.get('idwPower')),
+        isolines: isolines?.length ? isolines : undefined,
         axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
         series, rules,
       };

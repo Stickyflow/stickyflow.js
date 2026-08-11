@@ -44,6 +44,23 @@ export function decodeColor(s?: string): DecodedColor | undefined {
   return s; // Hex / rgba / benannte Farbe → verbatim
 }
 
+export interface RampStop { position: number; color: string; }
+export interface DecodedRamp { type: 'ramp'; stops: RampStop[]; }
+
+/** Fields §3.4: "ramp(#000 0, #fff 1)" -> { type:'ramp', stops }. Same
+ * structured-value-form family as gradient()/mesh() above, but a dedicated
+ * function since `scale` isn't a fill/stroke color - it lives on its own
+ * Chart property. */
+export function decodeRamp(s?: string): DecodedRamp | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^ramp\(\s*(.*)\)\s*$/);
+  if (!m) return undefined;
+  const stops: RampStop[] = [];
+  const re = new RegExp(`(${COLOR})\\s+([-\\d.]+)`, 'g');
+  for (const stop of m[1].matchAll(re)) stops.push({ color: stop[1], position: Number(stop[2]) });
+  return { type: 'ramp', stops };
+}
+
 export interface ShadowStyle {
   enabled: boolean;
   color?: string; opacity?: number; blur?: number; angle?: number; distance?: number;

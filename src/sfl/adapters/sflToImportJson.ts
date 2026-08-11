@@ -10,7 +10,7 @@
 // zu Objekten dekodiert (Gradient/Mesh/Schatten).
 
 import { sflToCanvasState, type SflEntityOut, type SflLinkOut, type SflGroupOut } from '../sflToCanvasState';
-import { decodeColor, decodeShadow } from './decodeStyles';
+import { decodeColor, decodeShadow, decodeRamp } from './decodeStyles';
 
 const numOf = (s?: string): number | undefined => (s === undefined ? undefined : Number(s));
 
@@ -129,7 +129,12 @@ function chartObject(e: SflEntityOut): any {
     chart_type: e.chart?.chartType ?? 'bar',
     axis_x: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
     axis_y: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
-    config: { categories: e.chart?.categories, areaOpacity: e.chart?.areaOpacity, stacked: e.chart?.stacked },
+    config: {
+      categories: e.chart?.categories, areaOpacity: e.chart?.areaOpacity, stacked: e.chart?.stacked,
+      // Fields §3.4.
+      scale: decodeRamp(e.chart?.scale), interpolate: e.chart?.interpolate,
+      idwPower: e.chart?.idwPower, isolines: e.chart?.isolines,
+    },
     series: e.chart?.series ?? [],
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),
     fill_color: decodeColor(p.fill) ?? '#ffffff', stroke_color: decodeColor(p.stroke) ?? '#475569',

@@ -1,13 +1,23 @@
-export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial';
+export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field';
 export interface ChartAxis {
   min: number; max: number; step: number; label?: string;
   // SFL 1.4, §5.4: the axis's unit of measure ("k€", "%", "days"…) - purely
   // semantic, not how it's drawn, applies to either axis.
   unit?: string;
 }
+// Fields §3.4: continuous value -> color, stops keyed by LITERAL value
+// position (the field's own data range), not 0-100% fractions like a shape
+// gradient - see entities/charts/ui/field.ts in stickyflow-atlas for why.
+export interface ChartRamp {
+  type: 'ramp';
+  stops: Array<{ position: number; color: string }>;
+}
 export interface ChartSeries {
   id: string; label: string; color?: string; opacity?: number;
-  values: number[] | [number, number][];
+  // Fields §3.4: a 3-tuple is a scalar sample [x, y, value] (feeds the
+  // interpolated surface + isolines), a 4-tuple is a vector sample
+  // [x, y, angle, magnitude] (drawn as an arrow glyph, no interpolation).
+  values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];
   // Bar/line only (SFL 1.4, §5.4.5): error magnitude per point, index-aligned
   // with `values`. A plain number is symmetric (value ± number); a
   // [low, high] pair is asymmetric. `null` at an index means "no error bar
@@ -42,6 +52,11 @@ export interface Chart {
     // (raw or normalized to 100%). 'waterfall' = a bar's baseline floats
     // with the running total of ITS OWN prior categories.
     stacked?: 'none' | 'true' | 'percent' | 'waterfall';
+    // Fields §3.4.
+    scale?: ChartRamp;
+    interpolate?: 'idw';
+    idwPower?: number;
+    isolines?: number[];
   };
   series: ChartSeries[];
   rules?: ChartRule[];

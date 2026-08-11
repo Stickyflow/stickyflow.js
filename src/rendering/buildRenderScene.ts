@@ -7,6 +7,8 @@ import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
 import type { FreeformPath, PathPoint } from '../model/paths';
 import type { Chart, ChartAxis } from '../model/charts';
+import { colorAtRamp, computeFieldGrid, type FieldSample } from './field';
+import { computeIsolineSegments } from './isolines';
 import { tableBorderGeometry } from '../model/geometry/tables';
 import { localShapePath } from '../model/geometry/shapes';
 import { wrapText } from '../model/geometry/text';
@@ -600,7 +602,62 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
   // undefined, but the Chart type itself still allows 'none' (a hand-built
   // RenderInput, bypassing the SFL pipeline, could set it explicitly).
   const stackedMode = chart.config?.stacked && chart.config.stacked !== 'none' ? chart.config.stacked : undefined;
-  if (chart.chart_type === 'bar' && stackedMode) {
+  if (chart.chart_type === 'field') {
+    // Fields §3.4: this export renderer is vector-only (no raster/canvas
+    // access, see SceneImage's own comment above) - the color surface is a
+    // grid of solid-color rects instead of a canvas raster, sharing the
+    // same computeFieldGrid/colorAtRamp math as the live editor either way.
+    const power = chart.config?.idwPower ?? 2;
+    const scalarSamples: FieldSample[] = chart.series
+      .filter(series => (series.values[0] as number[] | undefined)?.length === 3)
+      .flatMap(series => (series.values as [number, number, number][]).map(([vx, vy, value]) => ({
+        x: mapChartValue(vx, chart.axis_x, plot.width),
+        y: plot.height - mapChartValue(vy, chart.axis_y, plot.height),
+        value,
+      })));
+    const vectorSeriesList = chart.series.filter(series => (series.values[0] as number[] | undefined)?.length === 4);
+
+    if (scalarSamples.length && plot.width > 0 && plot.height > 0) {
+      const { grid, cols, rows } = computeFieldGrid(scalarSamples, plot.width, plot.height, power);
+      const cellW = plot.width / Math.max(1, cols - 1), cellH = plot.height / Math.max(1, rows - 1);
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const cx = plot.x + plot.width * (col / (cols - 1));
+          const cy = plot.y + plot.height * (row / (rows - 1));
+          const color = colorAtRamp(chart.config?.scale, grid[row * cols + col]);
+          nodes.push({
+            type: 'rect', id: `chart-field-cell-${chart.id}-${row}-${col}`, order: order + offset++, bounds,
+            x: cx - cellW / 2, y: cy - cellH / 2, width: cellW, height: cellH,
+            style: { fill: { kind: 'solid', color } },
+          });
+        }
+      }
+      (chart.config?.isolines ?? []).forEach((threshold, ti) => {
+        const segments = computeIsolineSegments(grid, cols, rows, plot.width, plot.height, threshold);
+        if (!segments.length) return;
+        const d = segments.map(seg => `M ${plot.x + seg.x1} ${plot.y + seg.y1} L ${plot.x + seg.x2} ${plot.y + seg.y2}`).join(' ');
+        nodes.push({
+          type: 'path', id: `chart-field-isoline-${chart.id}-${ti}`, order: order + offset++, bounds, d,
+          style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: 'rgba(15, 23, 42, 0.55)' }, strokeWidth: 1 },
+        });
+      });
+    }
+
+    vectorSeriesList.forEach((series, seriesIndex) => {
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      (series.values as [number, number, number, number][]).forEach(([vx, vy, angle, magnitude], i) => {
+        const startX = plot.x + mapChartValue(vx, chart.axis_x, plot.width);
+        const startY = plot.y + plot.height - mapChartValue(vy, chart.axis_y, plot.height);
+        const endX = plot.x + mapChartValue(vx + Math.cos(angle) * magnitude, chart.axis_x, plot.width);
+        const endY = plot.y + plot.height - mapChartValue(vy + Math.sin(angle) * magnitude, chart.axis_y, plot.height);
+        nodes.push({
+          type: 'path', id: `chart-field-vector-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds,
+          d: `M ${startX} ${startY} L ${endX} ${endY}`, markerEnd: 'filled_arrow',
+          style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2 },
+        });
+      });
+    });
+  } else if (chart.chart_type === 'bar' && stackedMode) {
     const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, slot - 8);
     for (let i = 0; i < count; i++) {
       chart.series.forEach((series, seriesIndex) => {
