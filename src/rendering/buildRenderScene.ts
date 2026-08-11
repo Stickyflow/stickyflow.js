@@ -45,6 +45,9 @@ const EMPTY_BOUNDS: Bounds = { minX: 0, minY: 0, maxX: 100, maxY: 100 };
 const finite = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
+// Fields §3.4: colorbar min/max labels.
+const formatFieldValue = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, ''));
+
 const orderOf = (entity: { order_key?: string; orderKey?: string; order?: number }, fallback: number): number => {
   const key = entity.order_key ?? entity.orderKey;
   if (!key && typeof entity.order === 'number') return entity.order;
@@ -537,7 +540,10 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
   const order = orderOf(chart, 20_000 + index), bounds = boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2);
   const showLabels = chart.show_axis_labels !== false, showLegend = chart.show_legend !== false;
   const padLeft = showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
-  const padBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
+  const basePadBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
+  // Fields §3.4: colorbar legend band, stacked below the normal x-axis tick
+  // space - mirrors stickyflow-atlas's own chartLayout.ts reservation.
+  const padBottom = chart.chart_type === 'field' && showLegend && chart.config?.scale?.stops.length ? basePadBottom + 34 : basePadBottom;
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
   const plot = { x: chart.x + padLeft, y: chart.y + padTop, width: Math.max(1, chart.width - padLeft - 24), height: Math.max(1, chart.height - padTop - padBottom) };
   const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
@@ -545,8 +551,14 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
   if (chart.title) nodes.push({ ...chartText(`chart-title-${chart.id}`, order + offset++, bounds, plot.x, chart.y + 12, plot.width, 20, chart.title, chart), fontWeight: 'bold', fontSize: Math.max(10, finite(chart.font_size, 12)) + 2 });
   if (showLegend) {
     let x = plot.x + plot.width;
-    [...chart.series].reverse().forEach((series, reverseIndex) => {
-      const seriesIndex = chart.series.length - 1 - reverseIndex, width = Math.max(42, series.label.length * finite(chart.font_size, 12) * .58 + 22);
+    // Fields §3.4: a scalar series' own color is meaningless (the ramp
+    // explains the surface, not the swatch) - its colorbar covers that
+    // below instead. A vector series' color IS the arrow color though.
+    const legendSeries = chart.chart_type === 'field'
+      ? chart.series.filter(series => (series.values[0] as number[] | undefined)?.length === 4)
+      : chart.series;
+    [...legendSeries].reverse().forEach((series, reverseIndex) => {
+      const seriesIndex = legendSeries.length - 1 - reverseIndex, width = Math.max(42, series.label.length * finite(chart.font_size, 12) * .58 + 22);
       x -= width;
       nodes.push({ type: 'rect', id: `chart-legend-swatch-${chart.id}-${series.id}`, order: order + offset++, bounds, x, y: chart.y + 16, width: 10, height: 10, rx: 3, style: { fill: { kind: 'solid', color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length] } } });
       nodes.push(chartText(`chart-legend-${chart.id}-${series.id}`, order + offset++, bounds, x + 15, chart.y + 13, width - 15, 18, series.label, chart));
@@ -657,6 +669,22 @@ function buildChart(chart: Chart, index: number): RenderNode[] {
         });
       });
     });
+
+    // Colorbar legend - min/max labels use the ramp's own stop range, not
+    // the axis range (the ramp's span defines the field's meaningful value
+    // range - see field.ts).
+    if (showLegend && chart.config?.scale?.stops.length) {
+      const rampStops = [...chart.config.scale.stops].sort((a, b) => a.position - b.position);
+      const min = rampStops[0].position, max = rampStops[rampStops.length - 1].position, span = max - min;
+      const barWidth = Math.min(220, plot.width), barX = plot.x + (plot.width - barWidth) / 2, barY = plot.y + plot.height + 46, barHeight = 8;
+      nodes.push({
+        type: 'rect', id: `chart-field-colorbar-${chart.id}`, order: order + offset++, bounds,
+        x: barX, y: barY, width: barWidth, height: barHeight, rx: 2,
+        style: { fill: { kind: 'linear-gradient', angle: 0, stops: rampStops.map(s => ({ offset: span === 0 ? 0 : (s.position - min) / span * 100, color: s.color })) } },
+      });
+      nodes.push(chartText(`chart-field-colorbar-min-${chart.id}`, order + offset++, bounds, barX, barY + barHeight + 3, 80, 16, formatFieldValue(min), chart));
+      nodes.push(chartText(`chart-field-colorbar-max-${chart.id}`, order + offset++, bounds, barX + barWidth - 80, barY + barHeight + 3, 80, 16, formatFieldValue(max), chart, 'right'));
+    }
   } else if (chart.chart_type === 'bar' && stackedMode) {
     const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, slot - 8);
     for (let i = 0; i < count; i++) {

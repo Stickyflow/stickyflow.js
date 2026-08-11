@@ -92,4 +92,21 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-isoline-'))).toBe(false);
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-vector-'))).toBe(true);
   });
+
+  it('renders a colorbar legend with min/max labels from the ramp\'s own stop range, not the axis range', () => {
+    const { scene } = renderCanvas(sflToRenderInput(FIELD_SFL));
+    const bar = scene.nodes.find(node => node.id === 'chart-field-colorbar-wlan');
+    expect(bar?.type === 'rect' && bar.style.fill?.kind).toBe('linear-gradient');
+    const min = scene.nodes.find(node => node.id === 'chart-field-colorbar-min-wlan');
+    const max = scene.nodes.find(node => node.id === 'chart-field-colorbar-max-wlan');
+    expect(min?.type === 'text' && min.lines).toEqual(['0']);
+    expect(max?.type === 'text' && max.lines).toEqual(['1']);
+  });
+
+  it('omits the colorbar (but keeps the surface) when the legend is off', () => {
+    const noLegend = FIELD_SFL.replace('text: "WLAN signal"', 'text: "WLAN signal"\n    style { showLegend: false }');
+    const { scene } = renderCanvas(sflToRenderInput(noLegend));
+    expect(scene.nodes.some(node => node.id.startsWith('chart-field-colorbar-'))).toBe(false);
+    expect(scene.nodes.some(node => node.id.startsWith('chart-field-cell-'))).toBe(true);
+  });
 });
