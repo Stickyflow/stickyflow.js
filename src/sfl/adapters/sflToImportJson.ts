@@ -175,6 +175,11 @@ function linkObject(l: SflLinkOut): any {
     // import step entirely; without this, showText stayed `undefined` and a
     // Link's `text` never rendered at all. `showText: false` in SFL still hides it.
     showText: p.showText !== 'false',
+    // Diagrams §3.2 (weighted graphs - network/dependency/call graphs):
+    // absent showWeight defaults to true (badge shown whenever weight is
+    // set), matching the `stacked: none`/absent convention elsewhere.
+    weight: numOf(p.weight),
+    showWeight: p.showWeight !== 'false',
     style: {
       pathType: p.route,
       color: decodeColor(p.stroke),

@@ -712,6 +712,28 @@ function buildLink(item: RenderInput['links'][number], index: number): RenderNod
   if (hasLabel) {
     nodes.push({ type: 'text', id: `link-text-${link.id}`, order: order + .5, bounds, x: midpoint.x - labelWidth / 2, y: midpoint.y - fontSize, width: labelWidth, height: fontSize * 2, lines: wrappedLines, fontFamily: link.style?.fontFamily ?? DEFAULT_FONT, fontSize, fontWeight: 'normal', color, align: 'center', verticalAlign: 'middle', lineHeight: 1.4 });
   }
+  // Diagrams §3.2 (weighted graphs): pill badge at the midpoint, offset below
+  // the text label when one is shown - mirrors ConnectionLine.tsx's own
+  // LinkWeightBadge (same size formula, same neutral-gray fallback).
+  const showWeight = link.weight !== undefined && link.weight !== null && link.showWeight !== false;
+  if (showWeight) {
+    const weightValue = link.weight ?? 0;
+    const badgeText = weightValue.toFixed(1);
+    const badgeWidth = Math.max(30, badgeText.length * 8 + 12);
+    const badgeHeight = 16;
+    const badgeY = midpoint.y + (hasLabel ? labelHeight / 2 + 10 : 0);
+    nodes.push({
+      type: 'rect', id: `link-weight-badge-${link.id}`, order: order + .6, bounds,
+      x: midpoint.x - badgeWidth / 2, y: badgeY - badgeHeight / 2, width: badgeWidth, height: badgeHeight, rx: badgeHeight / 2,
+      style: { fill: { kind: 'solid', color }, stroke: { kind: 'none' }, opacity: .92 },
+    });
+    nodes.push({
+      type: 'text', id: `link-weight-${link.id}`, order: order + .61, bounds,
+      x: midpoint.x - badgeWidth / 2, y: badgeY - badgeHeight / 2, width: badgeWidth, height: badgeHeight,
+      lines: [badgeText], fontFamily: 'Arial, sans-serif', fontSize: 10, fontWeight: 'bold', color: '#ffffff',
+      align: 'center', verticalAlign: 'middle', lineHeight: 1,
+    });
+  }
   const endpointFontSize = finite(link.style?.fontSize, 10);
   (['start', 'end'] as const).forEach((end, labelIndex) => {
     const label = (end === 'start' ? link.style?.startLabel : link.style?.endLabel)?.trim();
