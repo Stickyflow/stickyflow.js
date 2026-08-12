@@ -3,6 +3,7 @@ import { render, DOM_CONTRACT_VERSION } from '../src/index';
 import { parseContractVersion, isContractCompatible, resolveOwner, isCameraGesture, type AttrElement } from '../src/viewer/contract';
 import { selectionReducer, clickAction } from '../src/viewer/selection';
 import { Emitter } from '../src/viewer/events';
+import { classifySceneDiff } from '../src/viewer/display';
 import { SFL_SAMPLE } from './fixtures';
 
 // The interaction tier's PURE core — no DOM. These run under environment:'node'.
@@ -73,6 +74,34 @@ describe('selection reducer', () => {
   it('maps modifiers to replace vs multi-select', () => {
     expect(clickAction('a', { shift: false, ctrl: false, meta: false })).toEqual({ type: 'select', id: 'a' });
     expect(clickAction('a', { shift: false, ctrl: true, meta: false })).toEqual({ type: 'toggle', id: 'a' });
+  });
+});
+
+describe('scene diff classification (change-highlighting)', () => {
+  // patchSceneNodes (display.ts, DOM-bound, browser-verified) feeds this pure
+  // function three owner-id sets it already tracks while patching; this is
+  // the trickiest, most bug-prone part of that patch — worth pinning down
+  // without needing a browser to exercise the DOM half at all.
+  it('an id only present after the update is added', () => {
+    const diff = classifySceneDiff(new Set(), new Set(['a']), new Set(['a']));
+    expect(diff).toEqual({ added: ['a'], removed: [], changed: [] });
+  });
+
+  it('an id whose every piece is gone is removed', () => {
+    const diff = classifySceneDiff(new Set(['a']), new Set(), new Set(['a']));
+    expect(diff).toEqual({ added: [], removed: ['a'], changed: [] });
+  });
+
+  it('an id present both before and after, with a touched piece, is changed', () => {
+    const diff = classifySceneDiff(new Set(['a']), new Set(['a']), new Set(['a']));
+    expect(diff).toEqual({ added: [], removed: [], changed: ['a'] });
+  });
+
+  it('an id present both before and after, with nothing touched, is absent from all three', () => {
+    // e.g. a's tag/attrs/content never differed — patchSceneNodes never adds
+    // it to touchedOwnerIds even though it's in both old and new sets.
+    const diff = classifySceneDiff(new Set(['a']), new Set(['a']), new Set());
+    expect(diff).toEqual({ added: [], removed: [], changed: [] });
   });
 });
 

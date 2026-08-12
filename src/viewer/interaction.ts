@@ -10,10 +10,18 @@ import { selectionReducer, clickAction } from './selection';
 import { Emitter, type OwnerRef } from './events';
 import { findOwnerNode, isPrimary } from './domQuery';
 import { shapeSelectionOverlay, linkSelectionOverlay, quickDuplicateBubbles } from './selectionOverlay';
+import { shapeChangeOverlay, linkChangeOverlay, FLASH_DUR_MS, REDUCED_MOTION_DUR_MS } from './changeOverlay';
 
 export interface InteractionHandle {
   getSelection(): OwnerRef[];
   select(ids: string[]): void;
+  /** Briefly flash a ring/halo around each given owner — see changeOverlay.ts.
+   *  Ids that don't resolve to a live node (e.g. already gone by the time this
+   *  runs) are silently skipped, not an error. `color` defaults to
+   *  changeOverlay.ts's own CHANGE_COLOR when omitted — a host passes its own
+   *  to distinguish categories of external change (e.g. a different color for
+   *  a likely bulk/tool-driven rewrite vs. an ordinary edit). */
+  flashChanged(diff: { added: string[]; changed: string[] }, color?: string): void;
   destroy(): void;
 }
 
@@ -30,6 +38,10 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
   const svg = display.svg;
   let selection = new Set<string>();
   const owners = new Map<string, OwnerRef>();
+  // Pending removal timers for change-overlay flashes, keyed by owner id —
+  // lets a second flash landing on the same id before the first one's timer
+  // fires cancel that stale timer instead of racing it (see flashChanged).
+  const changeTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   const paintSelection = () => {
     // The viewer draws its own selection indicator (see selectionOverlay.ts)
@@ -63,6 +75,40 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
     emitter.emit('selectionChange', {
       diagramId,
       selection: [...selection].map(id => owners.get(id)).filter((o): o is OwnerRef => !!o),
+    });
+  };
+
+  // Resolves role straight off the DOM contract (data-sf-role) rather than
+  // the `owners` cache above — that cache is populated lazily, only from
+  // clicks/select() calls, so an id arriving fresh from an external
+  // sceneDiff (the whole point of this feature) was very possibly never
+  // clicked and would silently miss the cache.
+  const flashChanged: InteractionHandle['flashChanged'] = (diff, color) => {
+    const ids = [...new Set([...diff.added, ...diff.changed])];
+    if (!ids.length) return;
+    const doc = svg.ownerDocument;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    ids.forEach(id => {
+      const primary = findOwnerNode(svg, id, isPrimary);
+      console.log('[sfl-debug] flashChanged id=%s primary=%o', id, primary); // TEMP — remove after diagnosing
+      if (!primary) return;
+      const pending = changeTimers.get(id);
+      if (pending) clearTimeout(pending);
+      svg.querySelectorAll(`[data-sf-change-overlay="${CSS.escape(id)}"]`).forEach(node => node.remove());
+      const role = primary.getAttribute('data-sf-role');
+      const overlay = role === 'link'
+        ? linkChangeOverlay(doc, primary as unknown as SVGPathElement, id, reducedMotion, color)
+        : shapeChangeOverlay(doc, primary, id, reducedMotion, color);
+      svg.appendChild(overlay);
+      console.log('[sfl-debug] overlay markup id=%s: %s', id, overlay.outerHTML); // TEMP — remove after diagnosing
+      console.log('[sfl-debug] overlay computed opacity t=0: %s, ring computed opacity: %s', getComputedStyle(overlay).opacity, getComputedStyle(overlay.firstChild as Element).opacity); // TEMP
+      setTimeout(() => console.log('[sfl-debug] overlay computed opacity t=+150ms: %s (still in DOM: %o)', getComputedStyle(overlay).opacity, svg.contains(overlay)), 150); // TEMP
+      const duration = reducedMotion ? REDUCED_MOTION_DUR_MS : FLASH_DUR_MS;
+      // Closes over this specific overlay element, not a re-query at fire
+      // time — a second flash on the same id landing before this timer
+      // fires already removed+replaced `overlay` above, so a re-query here
+      // would risk deleting that fresher group instead of this stale one.
+      changeTimers.set(id, setTimeout(() => { overlay.remove(); changeTimers.delete(id); }, duration));
     });
   };
 
@@ -159,12 +205,15 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
       ids.forEach(id => { const el = svg.querySelector(`[data-sf-id="${CSS.escape(id)}"]`); if (el) owners.set(id, resolveOwner(el)!); });
       setSelection(selectionReducer(selection, { type: 'set', ids }));
     },
+    flashChanged,
     destroy() {
       svg.removeEventListener('pointerdown', onPointerDown);
       svg.removeEventListener('pointermove', onPointerMove);
       svg.removeEventListener('pointerup', onPointerUp);
       svg.removeEventListener('wheel', onWheel);
       svg.removeEventListener('keydown', onKeyDown);
+      changeTimers.forEach(timer => clearTimeout(timer));
+      changeTimers.clear();
     },
   };
 }

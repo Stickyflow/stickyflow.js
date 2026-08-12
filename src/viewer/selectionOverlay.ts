@@ -50,13 +50,19 @@ export function resizeHandlePositions(
   ];
 }
 
-function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
+/** Exported so changeOverlay.ts can build its own overlay elements the same
+ *  way, instead of duplicating this one-line namespace-element helper. */
+export function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
   return doc.createElementNS(NS, tag) as SVGElementTagNameMap[K];
 }
 
-function overlayGroup(doc: Document, id: string, copyTransformFrom: SVGGraphicsElement): SVGGElement {
+/** Exported so changeOverlay.ts can reuse this too — parameterized on the
+ *  marker attribute name (`data-sf-selection-overlay` here,
+ *  `data-sf-change-overlay` there) so each caller can find/clear only its
+ *  own overlay group without touching the other's. */
+export function overlayGroup(doc: Document, attrName: string, id: string, copyTransformFrom: SVGGraphicsElement): SVGGElement {
   const g = el(doc, 'g');
-  g.setAttribute('data-sf-selection-overlay', id);
+  g.setAttribute(attrName, id);
   g.setAttribute('pointer-events', 'none');
   const transform = copyTransformFrom.getAttribute('transform');
   if (transform) g.setAttribute('transform', transform);
@@ -66,7 +72,7 @@ function overlayGroup(doc: Document, id: string, copyTransformFrom: SVGGraphicsE
 /** Ring + corner handles around a shape/frame/table/swimlane's own bbox. */
 export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
   const bbox = primary.getBBox();
-  const g = overlayGroup(doc, id, primary);
+  const g = overlayGroup(doc, 'data-sf-selection-overlay', id, primary);
 
   const ring = el(doc, 'rect');
   ring.setAttribute('x', String(bbox.x - 1));
@@ -128,7 +134,7 @@ function quickDuplicatePositions(bbox: { x: number; y: number; width: number; he
 
 export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
   const bbox = primary.getBBox();
-  const g = overlayGroup(doc, id, primary);
+  const g = overlayGroup(doc, 'data-sf-selection-overlay', id, primary);
   const positions = quickDuplicatePositions(bbox);
   for (const [bx, by, direction] of positions) {
     const dot = el(doc, 'circle');
@@ -182,7 +188,7 @@ export function updateQuickDuplicateBubbles(g: SVGGElement, bbox: { x: number; y
 
 /** Purple halo along a link's own path, plus small dots at its two endpoints. */
 export function linkSelectionOverlay(doc: Document, primary: SVGPathElement, id: string): SVGGElement {
-  const g = overlayGroup(doc, id, primary);
+  const g = overlayGroup(doc, 'data-sf-selection-overlay', id, primary);
 
   const halo = el(doc, 'path');
   halo.setAttribute('d', primary.getAttribute('d') ?? '');

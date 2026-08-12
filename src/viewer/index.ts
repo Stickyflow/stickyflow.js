@@ -31,6 +31,19 @@ export interface ViewerSource {
   /** update() only: fit the camera to the new diagram's natural bounds instead
    *  of carrying over the reader's current pan/zoom (the default — see update()). */
   resetView?: boolean;
+  /**
+   * update() only: briefly flash a ring/halo around whichever shapes this
+   * update actually added or changed (see display.ts's SceneDiff). Default
+   * false — this is a shared library, so a new visual behavior must be
+   * opted into per call rather than silently appearing for every existing
+   * consumer's `update()` call. The `sceneDiff` event fires either way,
+   * regardless of this flag, for a host that wants the raw diff without the
+   * built-in visual. Pass `{ color }` instead of `true` to override the
+   * default amber (changeOverlay.ts's CHANGE_COLOR) — e.g. a host that can
+   * tell this particular update apart from an ordinary one (a bulk rewrite,
+   * a specific known source) and wants a visually distinct flash for it.
+   */
+  highlightChanges?: boolean | { color?: string };
 }
 
 export interface Viewer {
@@ -100,7 +113,7 @@ export function createViewer(options: ViewerOptions): Viewer {
       if (!isContractCompatible(version)) {
         throw new Error(`viewer.update: incompatible DOM contract (svg=${version}). Renderer and viewer versions differ.`);
       }
-      display.updateContent(svgString);
+      const diff = display.updateContent(svgString);
       if (next.resetView) display.fit();
       // The old selection overlay was just wiped out along with the old
       // content — reusing select() (rather than a new API) both re-paints it
@@ -108,6 +121,11 @@ export function createViewer(options: ViewerOptions): Viewer {
       // don't (findOwnerNode comes back null, paintSelection skips them).
       const stillSelected = interaction?.getSelection() ?? [];
       if (stillSelected.length) interaction?.select(stillSelected.map(o => o.id));
+      emitter.emit('sceneDiff', { diagramId, ...diff });
+      if (next.highlightChanges) {
+        const color = typeof next.highlightChanges === 'object' ? next.highlightChanges.color : undefined;
+        interaction?.flashChanged({ added: diff.added, changed: diff.changed }, color);
+      }
     },
     destroy() {
       interaction?.destroy();
@@ -119,6 +137,7 @@ export function createViewer(options: ViewerOptions): Viewer {
 
 export type { OwnerRef, ViewerEventName, ViewerEventHandler, Unsubscribe } from './events';
 export type {
-  OwnerPointerEvent, SelectionChangeEvent, ViewerErrorEvent, ViewerEventMap, Modifiers,
+  OwnerPointerEvent, SelectionChangeEvent, SceneDiffEvent, ViewerErrorEvent, ViewerEventMap, Modifiers,
 } from './events';
 export type { ViewBox } from './display';
+export type { SceneDiff } from './display';

@@ -29,19 +29,19 @@ Model Checkout {
   Entity start : Box {
     kind: process
     text: "Warenkorb"
-    layout { position: 120, 80  size: 180, 70 }
+    layout { position: 120, 80; size: 180, 70 }
   }
 
   Entity check : Decision {
     kind: decision
     text: "Zahlung ok?"
-    layout { position: 140, 240  size: 160, 100 }
+    layout { position: 140, 240; size: 160, 100 }
   }
 
   Entity done : Box {
     kind: process
     text: "Bestellung"
-    layout { position: 120, 420  size: 180, 70 }
+    layout { position: 120, 420; size: 180, 70 }
   }
 
   Link a : Flow {
@@ -57,6 +57,44 @@ Model Checkout {
 }
 `;
 
+// A second variant of the same diagram — "check"'s text changed, plus a new
+// "retry" entity + link — for the "Simulate external edit" button to toggle
+// against. Exercises all three change-highlighting categories: `check`
+// changed, `retry`/`c` added (toggling forward) or removed (toggling back,
+// reported via sceneDiff but with no inline visual — see changeOverlay.ts).
+const SFL_ALT = SFL
+  .replace('text: "Zahlung ok?"', 'text: "Zahlung OK?"')
+  .replace(
+    `  Entity done : Box {`,
+    `  Entity retry : Box {
+    kind: process
+    text: "Erneut versuchen"
+    layout { position: 340, 240; size: 180, 70 }
+  }
+
+  Entity done : Box {`,
+  )
+  .replace(
+    `  Link b : Flow {
+    from: check, bottom (0.5)
+    to: done, top (0.5)
+    text: "ja"
+  }
+}`,
+    `  Link b : Flow {
+    from: check, bottom (0.5)
+    to: done, top (0.5)
+    text: "ja"
+  }
+
+  Link c : Flow {
+    from: check, right (0.5)
+    to: retry, left (0.5)
+    text: "nein"
+  }
+}`,
+  );
+
 const container = document.getElementById('diagram') as HTMLElement;
 const log = document.getElementById('log') as HTMLElement;
 const write = (line: string) => { log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 12).join('\n'); };
@@ -67,9 +105,16 @@ viewer.on('ready', () => write('ready'));
 viewer.on('entityClick', e => write(`entityClick → ${e.owner.kind} "${e.owner.label}" (${e.owner.id})`));
 viewer.on('linkClick', e => write(`linkClick → ${e.owner.id}`));
 viewer.on('selectionChange', e => write(`selection: [${e.selection.map(o => o.id).join(', ')}]`));
+viewer.on('sceneDiff', e => write(`sceneDiff → added:[${e.added}] removed:[${e.removed}] changed:[${e.changed}]`));
 
 document.getElementById('fit')!.addEventListener('click', () => viewer.fit());
 document.getElementById('clear')!.addEventListener('click', () => viewer.select([]));
+
+let showingAlt = false;
+document.getElementById('simulate')!.addEventListener('click', () => {
+  showingAlt = !showingAlt;
+  viewer.update({ source: showingAlt ? SFL_ALT : SFL, highlightChanges: true });
+});
 
 // Expose for poking around in the console.
 (window as unknown as { viewer: typeof viewer }).viewer = viewer;

@@ -285,6 +285,35 @@ properties — SFL's quoting rules depend on each property's own semantics, not
 just the JS type — so extra properties go through an optional raw `body`
 string of already-valid SFL text instead.
 
+### Change-highlighting
+
+`viewer.update({ source, highlightChanges: true })` briefly flashes an amber
+ring/halo around whichever shapes that update actually added or changed —
+opt-in, since a shared viewer instance may receive both self-caused updates
+(the host's own `apply*Change` calls above) and updates that genuinely
+originate elsewhere (a re-render after a remote edit, an LLM-authored patch),
+and only the latter usually wants the flash. A `sceneDiff` event fires on
+every `update()` regardless of the flag — `{ diagramId, added, removed,
+changed }`, owner ids — for a host that wants the raw diff (a toast, a log)
+without the built-in visual:
+
+```ts
+viewer.on('sceneDiff', ({ added, removed, changed }) => {
+  console.log(`${added.length} added, ${removed.length} removed, ${changed.length} changed`)
+})
+
+// Self-caused — no flash, the reader already just watched this happen.
+editing.on('moveChange', event => { currentSource = applyMoveChange(currentSource, event); viewer.update({ source: currentSource }) })
+
+// Arrived from elsewhere — flash the touched shapes.
+viewer.update({ source: incomingSource, highlightChanges: true })
+
+// Pass { color } instead of `true` for a host that can tell this update
+// apart from an ordinary one (e.g. it looks like a bulk/tool-driven rewrite
+// rather than a hand-typed edit) and wants a visually distinct flash.
+viewer.update({ source: incomingSource, highlightChanges: { color: '#2563eb' } })
+```
+
 Inside the viewer the split continues:
 
 ```
