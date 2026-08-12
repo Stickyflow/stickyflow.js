@@ -1,11 +1,23 @@
 // Package-owned "this just changed" indicator — real appended SVG, same
 // philosophy as selectionOverlay.ts (drawn by the package itself rather than
 // a `data-sf-*` attribute plus a host-supplied CSS rule, which only works if
-// a host happens to ship a matching stylesheet). The fade is SMIL
-// (<animate>), not CSS, for the same reason: SMIL isn't gated by any CSP
-// directive (unlike a <style>-driven transition, which would need
-// `style-src 'unsafe-inline'` or a nonce in every embedding context this
-// package ends up in, not just one specific host).
+// a host happens to ship a matching stylesheet). The fade is done via the
+// Web Animations API (Element.animate()), not CSS and not SMIL:
+//   - Not CSS: a stylesheet-driven transition would need `style-src
+//     'unsafe-inline'` or a nonce in every embedding context this package
+//     ends up in, not just one specific host.
+//   - Not SMIL (<animate>), despite that being the original choice here:
+//     verified via direct DOM inspection (computed opacity read back at t=0
+//     and t=+150ms) that a `dur="1.3s"` SMIL animation reliably hit opacity
+//     0 by ~150ms — about 8x faster than specified — inside a VS Code
+//     webview's sandboxed iframe, while the identical markup faded correctly
+//     over the full 1.3s in a plain browser tab. Root cause not fully
+//     isolated (SMIL's declarative timeline behaving oddly in that specific
+//     sandboxed-iframe embedding is the leading theory), but WAAPI sidesteps
+//     it entirely by not depending on the browser's own SMIL implementation,
+//     while keeping the same CSP-safety property SMIL was chosen for — a
+//     JS-driven `.animate()` call isn't gated by `style-src` the way a
+//     stylesheet-driven transition would be.
 //
 // Deliberately a distinct color and a wider offset than the selection ring
 // (RING_COLOR '#9b42df', +1px in selectionOverlay.ts) so a shape that is
@@ -27,20 +39,21 @@ export const FLASH_DUR_MS = 1300;
  *  preference. */
 export const REDUCED_MOTION_DUR_MS = 400;
 
-function appendFade(doc: Document, target: SVGGElement, reducedMotion: boolean): void {
+/** Starts the fade — called by interaction.ts's flashChanged only AFTER the
+ *  overlay group is actually connected to the live `svg` (not from inside
+ *  shapeChangeOverlay/linkChangeOverlay below, while `g` is still a detached
+ *  node), so there's no ambiguity about the animation timeline starting
+ *  before the element it targets is part of the rendered document. */
+export function startFade(target: SVGGElement, reducedMotion: boolean): void {
   if (reducedMotion) return; // caller's own timer removes the group instead — see interaction.ts's flashChanged
-  const anim = doc.createElementNS('http://www.w3.org/2000/svg', 'animate');
-  anim.setAttribute('attributeName', 'opacity');
-  anim.setAttribute('from', '1');
-  anim.setAttribute('to', '0');
-  anim.setAttribute('dur', `${FLASH_DUR_MS / 1000}s`);
-  anim.setAttribute('fill', 'freeze');
-  target.appendChild(anim);
+  target.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FLASH_DUR_MS, easing: 'linear', fill: 'forwards' });
 }
 
 /** Ring around a shape/frame/table/swimlane's own bbox — no corner handles
- *  (those are a selection-only resize affordance, not applicable here). */
-export function shapeChangeOverlay(doc: Document, primary: SVGGraphicsElement, id: string, reducedMotion: boolean, color: string = CHANGE_COLOR): SVGGElement {
+ *  (those are a selection-only resize affordance, not applicable here).
+ *  Caller (flashChanged) starts the fade itself, after appending — see
+ *  startFade's own doc comment for why. */
+export function shapeChangeOverlay(doc: Document, primary: SVGGraphicsElement, id: string, color: string = CHANGE_COLOR): SVGGElement {
   const bbox = primary.getBBox();
   const g = overlayGroup(doc, ATTR, id, primary);
 
@@ -54,13 +67,13 @@ export function shapeChangeOverlay(doc: Document, primary: SVGGraphicsElement, i
   ring.setAttribute('stroke-width', '3');
   g.appendChild(ring);
 
-  appendFade(doc, g, reducedMotion);
   return g;
 }
 
 /** Halo along a link's own path — no endpoint dots (also a selection-only
- *  reconnect affordance). */
-export function linkChangeOverlay(doc: Document, primary: SVGPathElement, id: string, reducedMotion: boolean, color: string = CHANGE_COLOR): SVGGElement {
+ *  reconnect affordance). Caller (flashChanged) starts the fade itself,
+ *  after appending — see startFade's own doc comment for why. */
+export function linkChangeOverlay(doc: Document, primary: SVGPathElement, id: string, color: string = CHANGE_COLOR): SVGGElement {
   const g = overlayGroup(doc, ATTR, id, primary);
 
   const halo = el(doc, 'path');
@@ -73,6 +86,5 @@ export function linkChangeOverlay(doc: Document, primary: SVGPathElement, id: st
   halo.setAttribute('opacity', '0.6');
   g.appendChild(halo);
 
-  appendFade(doc, g, reducedMotion);
   return g;
 }

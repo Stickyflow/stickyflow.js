@@ -10,7 +10,7 @@ import { selectionReducer, clickAction } from './selection';
 import { Emitter, type OwnerRef } from './events';
 import { findOwnerNode, isPrimary } from './domQuery';
 import { shapeSelectionOverlay, linkSelectionOverlay, quickDuplicateBubbles } from './selectionOverlay';
-import { shapeChangeOverlay, linkChangeOverlay, FLASH_DUR_MS, REDUCED_MOTION_DUR_MS } from './changeOverlay';
+import { shapeChangeOverlay, linkChangeOverlay, startFade, FLASH_DUR_MS, REDUCED_MOTION_DUR_MS } from './changeOverlay';
 
 export interface InteractionHandle {
   getSelection(): OwnerRef[];
@@ -97,9 +97,10 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
       svg.querySelectorAll(`[data-sf-change-overlay="${CSS.escape(id)}"]`).forEach(node => node.remove());
       const role = primary.getAttribute('data-sf-role');
       const overlay = role === 'link'
-        ? linkChangeOverlay(doc, primary as unknown as SVGPathElement, id, reducedMotion, color)
-        : shapeChangeOverlay(doc, primary, id, reducedMotion, color);
+        ? linkChangeOverlay(doc, primary as unknown as SVGPathElement, id, color)
+        : shapeChangeOverlay(doc, primary, id, color);
       svg.appendChild(overlay);
+      startFade(overlay, reducedMotion); // after appending, not inside shapeChangeOverlay/linkChangeOverlay — see startFade's doc comment
       console.log('[sfl-debug] overlay markup id=%s: %s', id, overlay.outerHTML); // TEMP — remove after diagnosing
       console.log('[sfl-debug] overlay computed opacity t=0: %s, ring computed opacity: %s', getComputedStyle(overlay).opacity, getComputedStyle(overlay.firstChild as Element).opacity); // TEMP
       setTimeout(() => console.log('[sfl-debug] overlay computed opacity t=+150ms: %s (still in DOM: %o)', getComputedStyle(overlay).opacity, svg.contains(overlay)), 150); // TEMP
