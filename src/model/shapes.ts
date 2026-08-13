@@ -51,8 +51,12 @@ export type ShapeType =
   | 'hexagon'
   | 'parallelogram'
   | 'trapezoid'
+  // Freie, benannte Form aus dem SFL-Dokument (§5.5 Symbol). Die Geometrie
+  // steht in Shape.symbol, nicht hier - `symbol` wählt nur den Renderer.
+  | 'symbol'
   // Maps §3.3: base-layer image (floor plan scan, map, photo). Content lives
-  // in Shape.imageUrl, not here - shapeType only selects the renderer.
+  // in Shape.imageUrl, not here - same "shapeType only selects the renderer"
+  // convention as 'symbol' above.
   | 'image';
 
 /** Color Stop für Gradients */
@@ -149,6 +153,9 @@ export interface Shape {
   // own links - links always attach to this shape's own boundary either way.
   subShapes?: SubShape[] | null
 
+  // Freie benannte Form - nur bei shapeType === 'symbol', siehe SymbolDef
+  symbol?: SymbolDef | null
+
   // Maps §3.3: base-layer image - nur bei shapeType === 'image'.
   imageUrl?: string | null
   imageFit?: 'cover' | 'contain'
@@ -159,6 +166,27 @@ export interface Shape {
 export interface SubShape {
   id: string
   text: string
+}
+
+/**
+ * Freie, benannte Form (SFL 1.4 §5.5 Symbol), gültig nur bei
+ * shapeType === 'symbol'. `points` sind auf 0..1 normalisiert und relativ zur
+ * Bounding-Box der Instanz - dieselbe Definition kann also in jeder Größe
+ * verwendet werden (anders als FreeformPath, dessen Punkte absolut sind).
+ * Implizit geschlossen; `tension` glättet optional zu einer Kurve.
+ *
+ * Wie Style/Layout KEINE eigene persistierte Entity: der `name` trägt die
+ * Wiederverwendung; mehrere Entities können per `shape: <Name>` auf dieselbe
+ * Symbol-Definition zeigen.
+ */
+export interface SymbolDef {
+  name: string
+  points: Array<[number, number]>
+  tension?: number
+  // Benannte Anschlüsse (§3.5 Schematics): normalisiert (0..1) wie `points`,
+  // relativ zur Bounding-Box der Instanz. Als Link-Endpunkt referenzierbar
+  // über `entity.portName` statt `side (fraction)`.
+  ports?: Array<{ name: string; at: [number, number] }>
 }
 
 export interface ShapeCreate {
@@ -329,6 +357,13 @@ export const SHAPE_DEFAULTS = {
   container_rectangle: COMMON_DEFAULTS,
   pill: COMMON_DEFAULTS,
   person: {
+    ...COMMON_DEFAULTS,
+    rotation: 0,
+  },
+  // Freie Form (§5.5): die Geometrie kommt aus Shape.symbol, hier stehen nur
+  // die gemeinsamen Darstellungs-Defaults - eine Symbol-Shape entsteht
+  // ausschließlich über SFL, nie interaktiv.
+  symbol: {
     ...COMMON_DEFAULTS,
     rotation: 0,
   },

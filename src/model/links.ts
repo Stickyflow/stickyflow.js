@@ -167,8 +167,11 @@ export interface Link {
   // straight through as `undefined` — it does not invent a 0.5 on its behalf.
   // Marking this required previously let `sflToRenderInput.ts` multiply a width
   // by `undefined` without a type error.
-  fromPoint?: { side: 'top' | 'right' | 'bottom' | 'left', offset?: number } | { x: number; y: number; isAbsolute: true }
-  toPoint?:   { side: 'top' | 'right' | 'bottom' | 'left', offset?: number } | { x: number; y: number; isAbsolute: true }
+  // Named Port (§3.5 Schematics): `entity.portName` — the port's normalized
+  // `at` lives on the target entity's Shape.symbol.ports, looked up by name
+  // at resolve time (see sflToRenderInput.ts's pointFor).
+  fromPoint?: { side: 'top' | 'right' | 'bottom' | 'left', offset?: number } | { x: number; y: number; isAbsolute: true } | { port: string; isPort: true }
+  toPoint?:   { side: 'top' | 'right' | 'bottom' | 'left', offset?: number } | { x: number; y: number; isAbsolute: true } | { port: string; isPort: true }
   
   // 🎯 NEW MIRO-STYLE: Per-segment offsets for multi-handle path adjustment
   // Array of perpendicular offsets, one per movable segment (middle segments only, not start/end)

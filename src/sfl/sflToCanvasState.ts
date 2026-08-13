@@ -27,6 +27,9 @@ export interface SflEntityOut {
   kind: string;
   text?: string;
   shapeType?: string;
+  // Freie benannte Form (§5.5) - nur gesetzt, wenn `shape:` auf einen
+  // Symbol-Block zeigt (shapeType wird dabei auf 'symbol' gesetzt).
+  symbol?: { name: string; points: Array<[number, number]>; tension?: number; ports?: Array<{ name: string; at: [number, number] }> };
   x: number; y: number; width: number; height: number;
   rotation?: number;
   order?: number;
@@ -34,8 +37,18 @@ export interface SflEntityOut {
   // präsentationale Props als Strings (verbatim aus dem SFL / gemergten Style)
   props: Record<string, string>;
   table?: {
-    columns: Array<{ id: string; label: string; width: number; type: 'text' | 'boolean' }>;
+    columns: Array<{
+      id: string; label: string; width: number; type: 'text' | 'boolean' | 'number';
+      // SFL 1.4, §3.6.
+      align?: 'left' | 'center' | 'right';
+      // Raw "ramp(...)" string, decoded to a structured ramp at the SFL
+      // adapter boundary (sflToImportJson's tableObject) - same split as
+      // Chart's own `scale` above.
+      scale?: string;
+    }>;
     rows: Array<{ id: string; cells: Record<string, string | boolean> }>;
+    // §3.6 Footer: at most one summary row, same cell shape as a Row.
+    footer?: { id: string; cells: Record<string, string | boolean> };
   };
   swimlane?: {
     orientation: 'horizontal' | 'vertical';
@@ -77,6 +90,10 @@ export interface SflLinkOut {
   text?: string;
   fromSide?: Side; fromFraction?: number;
   toSide?: Side; toFraction?: number;
+  // §3.5 Named Ports: set when the endpoint was `entity.portName` and
+  // `portName` resolved against the entity's symbol.ports (mutually
+  // exclusive with fromSide/toSide above).
+  fromPort?: string; toPort?: string;
   order?: number;
   /** Per-segment perpendicular offsets for a manually-adjusted orthogonal
    *  route — absent means "use the router's default bend". */
@@ -229,10 +246,37 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
   //    denselben flachen Single-Parent-Mechanismus.
   const styleBlocks = new Map<string, SflBlock>();
   const layoutBlocks = new Map<string, SflBlock>();
+  // Freie Formen (§5.5): eigener Namensraum, referenziert als Wert von
+  // `shape:` (nicht per `:`-Komposition wie Style/Layout).
+  const symbolDefs = new Map<string, { name: string; points: Array<[number, number]>; tension?: number; ports?: Array<{ name: string; at: [number, number] }> }>();
   let model: SflBlock | undefined;
   for (const b of doc.blocks) {
     if (b.kind === 'Style') styleBlocks.set(b.name, b);
     else if (b.kind === 'Layout') layoutBlocks.set(b.name, b);
+    else if (b.kind === 'Symbol') {
+      const symbolProps = directProps(b);
+      const pointsValue = symbolProps.get('points');
+      const points = pointsValue?.type === 'list'
+        ? pointsValue.values.flatMap(item => {
+            if (item.type !== 'list' || item.values.length < 2) return [];
+            const px = asNumber(item.values[0]);
+            const py = asNumber(item.values[1]);
+            return px === undefined || py === undefined ? [] : [[px, py] as [number, number]];
+          })
+        : [];
+      // Benannte Anschlüsse (§3.5 Schematics): Port-Kindblöcke, normalisiert
+      // wie points. Ein Port ohne gültiges `at:` (z.B. Rundtrip-Rauschen)
+      // wird verworfen statt die ganze Symbol-Definition zu verwerfen.
+      const ports = childBlocks(b)
+        .filter(child => child.kind === 'Port')
+        .flatMap(portBlock => {
+          const at = tupleVals(directProps(portBlock).get('at'));
+          const ax = typeof at?.[0] === 'number' ? at[0] : undefined;
+          const ay = typeof at?.[1] === 'number' ? at[1] : undefined;
+          return ax === undefined || ay === undefined ? [] : [{ name: portBlock.name, at: [ax, ay] as [number, number] }];
+        });
+      if (points.length >= 2) symbolDefs.set(b.name, { name: b.name, points, tension: asNumber(symbolProps.get('tension')), ports: ports.length ? ports : undefined });
+    }
     else if (b.kind === 'Model' && !model) model = b;
     else if (b.kind === 'Project') {
       for (const inner of childBlocks(b)) if (inner.kind === 'Model' && !model) model = inner;
@@ -322,7 +366,12 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     // not a `kind:` property — `Container … { kind: table }` (pre-§12.1a) is
     // still read the same way via the property fallback.
     const kind = block.kind === 'Table' ? 'table' : block.kind === 'Path' ? 'path' : block.kind === 'Chart' ? 'chart' : (asString(p.get('kind')) ?? '');
-    const shapeType = asString(p.get('shape'));
+    const shapeRef = asString(p.get('shape'));
+    // §5.5: zeigt `shape:` auf einen Symbol-Block, ist es keine eingebaute
+    // Form, sondern eine freie - Geometrie ans Element materialisieren und
+    // shapeType auf 'symbol' setzen (wählt den Symbol-Renderer aus).
+    const symbol = shapeRef ? symbolDefs.get(shapeRef) : undefined;
+    const shapeType = symbol ? 'symbol' : shapeRef;
 
     // präsentationale Props (alles außer den strukturellen Schlüsseln) als Strings
     const structural = new Set(['id', 'kind', 'text', 'shape', 'parent', 'order', 'orientation', 'lanes']);
@@ -339,28 +388,41 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     if (kind === 'table') {
       const columnsBlock = childBlocks(block).find(child => child.kind === 'Columns');
       const rowsBlock = childBlocks(block).find(child => child.kind === 'Rows');
+      // §3.6: at most one Footer block, sibling of Rows - read with the same
+      // cell logic as a Row (shared readCells() below).
+      const footerBlock = childBlocks(block).find(child => child.kind === 'Footer');
       if (columnsBlock) {
         const columns: NonNullable<SflEntityOut['table']>['columns'] = childBlocks(columnsBlock).filter(child => child.kind === 'Column').map(column => {
           const columnProps = directProps(column);
+          const cellType = asString(columnProps.get('cellType'));
+          const align = asString(columnProps.get('align'));
           return {
             id: column.name,
             label: asString(columnProps.get('text')) ?? column.name,
             width: asNumber(columnProps.get('width')) ?? 120,
-            type: asString(columnProps.get('cellType')) === 'boolean' ? 'boolean' : 'text',
+            type: cellType === 'boolean' ? 'boolean' as const : cellType === 'number' ? 'number' as const : 'text' as const,
+            align: align === 'left' || align === 'center' || align === 'right' ? align : undefined,
+            scale: asString(columnProps.get('scale')),
           };
         });
+        // Shared by Row and Footer: reads one cell per known column, keyed by
+        // column id, coercing a boolean-typed column's value to a real
+        // boolean (`number`-typed columns stay strings here - parsed to a
+        // number only at render time, same as atlas's TableComponent.tsx).
+        const readCells = (cellBlock: SflBlock): Record<string, string | boolean> => {
+          const cells: Record<string, string | boolean> = {};
+          const cellProps = directProps(cellBlock);
+          for (const column of columns) {
+            const value = asString(cellProps.get(column.id));
+            cells[column.id] = column.type === 'boolean' ? value === 'true' : (value ?? '');
+          }
+          return cells;
+        };
         const rows = rowsBlock
-          ? childBlocks(rowsBlock).filter(child => child.kind === 'Row').map(row => {
-              const cells: Record<string, string | boolean> = {};
-              const rowProps = directProps(row);
-              for (const column of columns) {
-                const value = asString(rowProps.get(column.id));
-                cells[column.id] = column.type === 'boolean' ? value === 'true' : (value ?? '');
-              }
-              return { id: row.name, cells };
-            })
+          ? childBlocks(rowsBlock).filter(child => child.kind === 'Row').map(row => ({ id: row.name, cells: readCells(row) }))
           : [];
-        tableData = { columns, rows };
+        const footer = footerBlock ? { id: footerBlock.name, cells: readCells(footerBlock) } : undefined;
+        tableData = { columns, rows, footer };
       }
 
       // SFL 1.2 compatibility: accept the old positional nested lists, but
@@ -509,6 +571,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       kind,
       text: asString(p.get('text')),
       shapeType,
+      symbol,
       x: origin.x + (pos[0] ?? 0),
       y: origin.y + (pos[1] ?? 0),
       width: size[0] ?? 0,
@@ -567,6 +630,30 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         });
       } else if (child.kind === 'Link') {
         linkBlocks.push(child);
+      } else if (child.kind === 'Net') {
+        // §3.5 Net (Muster C): PARSE-seitig deterministisch in N-1 gewöhnliche
+        // Links zerlegt (Sternschema: erstes Mitglied als Hub, alle anderen
+        // Mitglieder verbinden sich dorthin) - keine eigene Net-Repräsentation
+        // im Canvas-Modell, keine Rück-Emission (siehe ast.ts's BlockKind-
+        // Kommentar zu 'Net' für die Begründung). Läuft danach exakt durch
+        // dieselbe Endpoint-Auflösung wie ein echter Link-Block.
+        const netProps = mergedProps(child);
+        const membersValue = netProps.get('members');
+        const members = membersValue?.type === 'list'
+          ? membersValue.values.flatMap(v => v.type === 'ident' ? [v.segments] : [])
+          : [];
+        const netText = asString(netProps.get('text'));
+        if (members.length >= 2) {
+          const hub = members[0];
+          for (let i = 1; i < members.length; i++) {
+            const entries: SflBlock['entries'] = [
+              { type: 'property', property: { key: 'from', value: { type: 'endpoint', segments: hub } } },
+              { type: 'property', property: { key: 'to', value: { type: 'endpoint', segments: members[i] } } },
+            ];
+            if (netText) entries.push({ type: 'property', property: { key: 'text', value: { type: 'string', value: netText, multiline: false } } });
+            linkBlocks.push({ kind: 'Link', name: `${child.name}_${i}`, composition: [], entries });
+          }
+        }
       }
     }
     return localGroups;
@@ -587,13 +674,26 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
   };
   if (model) indexNames(childBlocks(model));
 
+  // §3.5 Named Ports: für einen ≥2-Segment-Endpoint-Pfad `entity.portName`
+  // gebraucht, um das vorletzte Segment (Entity) von dessen symbol.ports
+  // nachzuschlagen. entities ist an dieser Stelle bereits vollständig gebaut.
+  const entityById = new Map(entities.map(e => [e.id, e]));
+
   const links: SflLinkOut[] = linkBlocks.map(lb => {
     const p = mergedProps(lb);
     const fromV = p.get('from');
     const toV = p.get('to');
-    const endpoint = (v?: SflValue): { id?: string; side?: Side; fraction?: number } => {
+    const endpoint = (v?: SflValue): { id?: string; side?: Side; fraction?: number; port?: string } => {
       if (!v || v.type !== 'endpoint') return {};
       const last = v.segments[v.segments.length - 1];
+      if (v.segments.length >= 2) {
+        const entityName = v.segments[v.segments.length - 2];
+        const entityId = idByName.get(entityName);
+        const entity = entityId ? entityById.get(entityId) : undefined;
+        if (entity?.symbol?.ports?.some(port => port.name === last)) {
+          return { id: entityId, port: last };
+        }
+      }
       return { id: idByName.get(last) ?? last, side: v.side, fraction: v.fraction };
     };
     const f = endpoint(fromV);
@@ -611,6 +711,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       text: asString(p.get('text')),
       fromSide: f.side, fromFraction: f.fraction,
       toSide: t.side, toFraction: t.fraction,
+      fromPort: f.port, toPort: t.port,
       order: asNumber(p.get('order')),
       segments: listNumbers(p.get('segments')),
       props,

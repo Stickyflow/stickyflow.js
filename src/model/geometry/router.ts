@@ -196,6 +196,16 @@ export function portToPoint(b: Bounds, port: Port): {x:number;y:number} {
   return localToWorld(b, { x: localX, y: localY });
 }
 
+/** Convert a Symbol's normalized named-port `at` (0..1, relative to the
+ *  instance's bounding box - same convention as Symbol.points) to a world
+ *  point, with rotation support. Reuses the same center-relative
+ *  local-to-world transform as portToPoint - no new rotation math. */
+export function namedPortToPoint(b: Bounds, at: [number, number]): {x:number;y:number} {
+  const localX = (at[0] - 0.5) * b.width;
+  const localY = (at[1] - 0.5) * b.height;
+  return localToWorld(b, { x: localX, y: localY });
+}
+
 /** Project a world point onto an edge to get an offset in [0..1] with rotation support */
 export function projectOffsetOnSide(b: Bounds, side: Side, worldPt:{x:number;y:number}): number {
   // Transform world point to local space

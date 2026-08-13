@@ -1,8 +1,8 @@
 import type { Table, TableColumn, TableRow } from '../tables';
 import { TABLE_MIN_COLUMN_WIDTH, TABLE_MIN_WIDTH, computeRowHeight } from '../tables';
 
-export const tableSlotCount = (table: Pick<Table, 'rows' | 'show_header'>): number =>
-  Math.max(1, table.rows.length + (table.show_header ? 1 : 0));
+export const tableSlotCount = (table: Pick<Table, 'rows' | 'show_header' | 'footer'>): number =>
+  Math.max(1, table.rows.length + (table.show_header ? 1 : 0) + (table.footer ? 1 : 0));
 
 export const tableMinWidth = (columns: readonly TableColumn[]): number =>
   Math.max(TABLE_MIN_WIDTH, columns.length * TABLE_MIN_COLUMN_WIDTH);
@@ -10,12 +10,12 @@ export const tableMinWidth = (columns: readonly TableColumn[]): number =>
 export const tableRowHeight = (table: Pick<Table, 'font_size' | 'row_height'>): number =>
   Math.max(computeRowHeight(table.font_size), table.row_height ?? 0);
 
-export const tableHeight = (table: Pick<Table, 'font_size' | 'row_height' | 'rows' | 'show_header'>): number =>
+export const tableHeight = (table: Pick<Table, 'font_size' | 'row_height' | 'rows' | 'show_header' | 'footer'>): number =>
   tableRowHeight(table) * tableSlotCount(table);
 
 export const rowHeightForTableHeight = (
   height: number,
-  table: Pick<Table, 'font_size' | 'rows' | 'show_header'>,
+  table: Pick<Table, 'font_size' | 'rows' | 'show_header' | 'footer'>,
 ): number => Math.max(computeRowHeight(table.font_size), height / tableSlotCount(table));
 
 export function tableBorderGeometry(table: Pick<Table, 'border_style' | 'stroke_width' | 'width'>) {

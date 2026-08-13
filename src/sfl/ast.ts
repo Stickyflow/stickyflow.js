@@ -14,14 +14,34 @@
 export type BlockKind =
   | 'Project' | 'Model' | 'Group' | 'Container' | 'Table' | 'Path' | 'Chart' | 'Entity' | 'Link' | 'Layout' | 'Style'
   | 'Columns' | 'Column' | 'Rows' | 'Row' | 'Axis' | 'Series'
+  // Summenzeile einer Table (SFL 1.4, §3.6) - sibling zu Rows, referenziert
+  // dieselben Column-IDs wie eine Row, aber semantisch keine Dateneinzeile
+  // (kein Muster-A-Wiederholblock). Höchstens ein Footer pro Table.
+  | 'Footer'
   // Referenzlinie in Chart (SFL 1.4, §5.4.8) - anders als Axis/Series
   // adressierbar, deshalb ein zweiter Blattblock auf derselben Tiefe statt
   // einer weiteren Verschachtelungsebene (§1.2 Reichweitenregel).
-  | 'Rule';
+  | 'Rule'
+  // Mehrstelliges Netz (SFL 1.4, §3.5 "Muster C"). Nur parse-seitig relevant:
+  // sflToCanvasState zerlegt einen Net-Block deterministisch in N-1 normale
+  // Link-Blöcke (Sternschema, erstes Mitglied = Hub) und läuft danach durch
+  // dieselbe Link-Verarbeitung. Keine eigene Canvas-Repräsentation, keine
+  // Rück-Emission - derselbe Einbahnstraßen-Präzedenzfall wie die alte
+  // `Container … { kind: table }`-Syntax für `Table`.
+  | 'Net'
+  // Freie, benannte Form (SFL 1.4, §5.5 Schematics): TOP-LEVEL, referenzierbares
+  // Blatt wie Style/Layout, aber referenziert als WERT von `shape:` (nicht per
+  // `:`-Komposition) - z.B. `Entity amp1 { shape: OpAmp }`. `points`/`tension`
+  // sind eigene Properties, keine Kindblöcke.
+  | 'Symbol'
+  // Benannter Anschlusspunkt eines Symbols (§3.5), nur innerhalb eines
+  // Symbol-Blocks gültig, adressierbar per `entity.portName` als Link-Endpunkt
+  // - Dot-Pfad, kein neuer Endpoint-Syntax nötig (siehe sflToCanvasState.ts).
+  | 'Port';
 
 export const BLOCK_KINDS: readonly BlockKind[] = [
   'Project', 'Model', 'Group', 'Container', 'Table', 'Path', 'Chart', 'Entity', 'Link', 'Layout', 'Style',
-  'Columns', 'Column', 'Rows', 'Row', 'Axis', 'Series', 'Rule',
+  'Columns', 'Column', 'Rows', 'Row', 'Axis', 'Series', 'Rule', 'Net', 'Symbol', 'Port', 'Footer',
 ];
 
 export type Side = 'top' | 'bottom' | 'left' | 'right';

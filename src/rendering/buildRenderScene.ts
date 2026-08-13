@@ -95,8 +95,20 @@ function paint(value: string | GradientColorObject | MeshGradientObject | null |
   };
 }
 
+// A `shape:` value that names neither a built-in ShapeType nor a resolved
+// Symbol (typo, or a value authored for a newer SFL version this build
+// doesn't know yet) used to pass through as an arbitrary string and crash
+// here with "Cannot read properties of undefined" - falls back to rectangle
+// defaults instead, with a diagnostic so the gap is visible, not silent.
+function shapeDefaults(shape: Shape, diagnostics: RenderDiagnostic[]): typeof SHAPE_DEFAULTS[keyof typeof SHAPE_DEFAULTS] {
+  const defaults = SHAPE_DEFAULTS[shape.shapeType as keyof typeof SHAPE_DEFAULTS];
+  if (defaults) return defaults;
+  diagnostics.push({ severity: 'warning', code: 'unknown-shape-type', entityId: shape.id, message: `Unknown shapeType '${shape.shapeType}', falling back to rectangle defaults.` });
+  return SHAPE_DEFAULTS.rectangle;
+}
+
 function shapeStyle(shape: Shape, diagnostics: RenderDiagnostic[]): SceneStyle {
-  const defaults = SHAPE_DEFAULTS[shape.shapeType];
+  const defaults = shapeDefaults(shape, diagnostics);
   const strokeWidth = finite(shape.strokeWidth, defaults.strokeWidth);
   const dotted = shape.strokeStyle === 'dotted';
   const dash = shape.shapeType === 'container_rectangle'
@@ -152,6 +164,15 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
     const r = Math.min(width, height), head = r * .3, body = r * .5, cx = x + width / 2;
     nodes.push({ ...base, id: `${base.id}-head`, type: 'ellipse', cx, cy: y + head, rx: head, ry: head });
     nodes.push({ ...base, id: `${base.id}-body`, type: 'path', d: `M ${cx - body} ${y + 2 * head + body} A ${body} ${body} 0 0 1 ${cx + body} ${y + 2 * head + body} L ${cx} ${y + 2 * head + body} Z`, rotationCenter: { x: x + width / 2, y: y + height / 2 } });
+  } else if (shape.shapeType === 'symbol' && shape.symbol && shape.symbol.points.length >= 2) {
+    // §5.5 Symbol: points are normalized (0..1, relative to the instance's
+    // own bounding box), so the same definition renders at any size - scale
+    // by width/height and offset by x/y here, at render time. Implicitly
+    // closed; reuses freeformPathData's Catmull-Rom tension curve (same math
+    // FreeformPath already uses below) instead of a second curve
+    // implementation, closed: true.
+    const points = shape.symbol.points.map(([px, py]) => ({ x: x + px * width, y: y + py * height }));
+    nodes.push({ ...base, type: 'path', d: freeformPathData(points, finite(shape.symbol.tension, 0), true), rotationCenter: { x: x + width / 2, y: y + height / 2 } });
   } else if (shape.shapeType === 'image') {
     // Maps §3.3: base-layer image. No fallback placeholder rect when imageUrl
     // is unset - unlike the live Konva canvas (which shows a loading/missing
@@ -177,7 +198,9 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
   }
 
   if (shape.text) {
-    const fontSize = finite(shape.fontSize, SHAPE_DEFAULTS[shape.shapeType].fontSize);
+    // No second diagnostic here - shapeStyle() above already flagged an
+    // unknown shapeType for this same shape once.
+    const fontSize = finite(shape.fontSize, (SHAPE_DEFAULTS[shape.shapeType as keyof typeof SHAPE_DEFAULTS] ?? SHAPE_DEFAULTS.rectangle).fontSize);
     const padding = Math.max(8, strokeWidth * 2);
     nodes.push({
       type: 'text', id: `shape-text-${shape.id}`, order: order + .5, bounds,
@@ -207,6 +230,15 @@ function topRoundedRectPath(x: number, y: number, width: number, height: number,
   const r = Math.max(0, Math.min(radius, width / 2, height));
   if (r === 0) return `M ${x} ${y} H ${x + width} V ${y + height} H ${x} Z`;
   return `M ${x} ${y + r} A ${r} ${r} 0 0 1 ${x + r} ${y} H ${x + width - r} A ${r} ${r} 0 0 1 ${x + width} ${y + r} V ${y + height} H ${x} Z`;
+}
+
+// §3.6 Tables: a Footer, when present, is the table's true visual bottom
+// (not the last data row) - its own background needs the bottom corners
+// rounded instead, the mirror image of topRoundedRectPath above.
+function bottomRoundedRectPath(x: number, y: number, width: number, height: number, radius: number): string {
+  const r = Math.max(0, Math.min(radius, width / 2, height));
+  if (r === 0) return `M ${x} ${y} H ${x + width} V ${y + height} H ${x} Z`;
+  return `M ${x} ${y} H ${x + width} V ${y + height - r} A ${r} ${r} 0 0 1 ${x + width - r} ${y + height} H ${x + r} A ${r} ${r} 0 0 1 ${x} ${y + height - r} Z`;
 }
 
 // Register-tab title shared by frames and swimlanes (both are containers with
@@ -342,7 +374,12 @@ function buildTable(table: Table, index: number): RenderNode[] {
   const order = orderOf(table, 7_000 + index);
   const rowHeight = table.row_height ?? computeRowHeight(table.font_size);
   const headerHeight = table.show_header ? rowHeight : 0;
-  const height = headerHeight + table.rows.length * rowHeight;
+  // §3.6 Tables: Footer is an extra fixed row right after the last data row -
+  // one more rowHeight added to the table's own total height, same as
+  // computeTableHeight()'s footer term (model/tables.ts).
+  const footerHeight = table.footer ? rowHeight : 0;
+  const height = headerHeight + table.rows.length * rowHeight + footerHeight;
+  const footerY = table.y + headerHeight + table.rows.length * rowHeight;
   const { doubleBorderGap, gridInset } = tableBorderGeometry(table);
   const bounds = boxBounds(table.x, table.y, table.width, height, table.stroke_width + 4);
   const nodes: RenderNode[] = [{
@@ -353,6 +390,16 @@ function buildTable(table: Table, index: number): RenderNode[] {
   if (table.show_header) nodes.push({
     type: 'path', id: `table-header-fill-${table.id}`, order: order + .06, bounds,
     d: topRoundedRectPath(table.x, table.y, table.width, rowHeight, table.corner_radius),
+    style: simpleContainerStyle(table.header_fill_color ?? '#f1f5f9', 'transparent', 0, []),
+  });
+  // §3.6 Tables: Footer background, same color as the header band, bottom-
+  // rounded since it's now the table's visual bottom (the single outer body
+  // rect above already spans this height too, so no other node needs to
+  // change its own corner rounding - unlike the Konva/atlas renderer, this
+  // SVG body is one rect for the whole table, not one rect per row).
+  if (table.footer) nodes.push({
+    type: 'path', id: `table-footer-fill-${table.id}`, order: order + .06, bounds,
+    d: bottomRoundedRectPath(table.x, footerY, table.width, rowHeight, table.corner_radius),
     style: simpleContainerStyle(table.header_fill_color ?? '#f1f5f9', 'transparent', 0, []),
   });
   // Scale column widths to sum exactly to the table's own declared width —
@@ -381,16 +428,49 @@ function buildTable(table: Table, index: number): RenderNode[] {
     });
     table.rows.forEach((row, rowIndex) => {
       const value = row.cells[column.id];
+      const cellY = table.y + headerHeight + rowIndex * rowHeight;
+      // §3.6 Tables: Column.scale value-dependent cell background, drawn
+      // behind the cell text (order + .09, before the .1-tier grid lines so
+      // they still show up on top of a colored cell, and well before the
+      // .3-tier text). A non-numeric value (NaN) leaves the cell uncolored,
+      // same as atlas's TableComponent.tsx cellFill().
+      if (column.scale) {
+        const numeric = Number(value);
+        if (Number.isFinite(numeric)) nodes.push({
+          type: 'rect', id: `table-cell-bg-${table.id}-${row.id}-${column.id}`, order: order + .09, bounds,
+          x: columnX, y: cellY, width: column.width, height: rowHeight,
+          style: simpleContainerStyle(colorAtRamp(column.scale, numeric), 'transparent', 0, []),
+        });
+      }
       nodes.push({
         type: 'text', id: `table-cell-${table.id}-${row.id}-${column.id}`, order: order + .3, bounds,
-        x: columnX + 6, y: table.y + headerHeight + rowIndex * rowHeight,
+        x: columnX + 6, y: cellY,
         width: Math.max(0, column.width - 12), height: rowHeight,
         lines: [String(value ?? '')],
         fontFamily: table.font_family ?? DEFAULT_FONT, fontSize: table.font_size, fontWeight: 'normal',
-        color: table.text_color, align: 'left', verticalAlign: 'middle', lineHeight: 1.2,
+        color: table.text_color, align: column.align ?? 'left', verticalAlign: 'middle', lineHeight: 1.2,
       });
     });
+    // §3.6 Tables: Footer cell text - bold, same alignment as its column's
+    // data cells, no scale background (a summary row isn't itself a sampled
+    // value on the same ramp, matching atlas's Footer rendering).
+    if (table.footer) nodes.push({
+      type: 'text', id: `table-footer-${table.id}-${column.id}`, order: order + .3, bounds,
+      x: columnX + 6, y: footerY,
+      width: Math.max(0, column.width - 12), height: rowHeight,
+      lines: [String(table.footer.cells[column.id] ?? '')],
+      fontFamily: table.font_family ?? DEFAULT_FONT, fontSize: table.font_size, fontWeight: 'bold',
+      color: table.text_color, align: column.align ?? 'left', verticalAlign: 'middle', lineHeight: 1.2,
+    });
     columnX += column.width;
+  });
+  // §3.6 Tables: Footer's own top rule - always drawn (unlike ordinary row
+  // dividers, not gated by show_horizontal_lines), the same fixed-separator
+  // treatment as atlas's TableComponent.tsx footer rule.
+  if (table.footer) nodes.push({
+    type: 'path', id: `table-footer-rule-${table.id}`, order: order + .1, bounds,
+    d: `M ${table.x + gridInset} ${footerY} H ${table.x + table.width - gridInset}`,
+    style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: table.grid_color ?? table.stroke_color }, strokeWidth: table.grid_width ?? 1 },
   });
   for (let rowIndex = 0; rowIndex < table.rows.length; rowIndex++) {
     const y = table.y + headerHeight + rowIndex * rowHeight;

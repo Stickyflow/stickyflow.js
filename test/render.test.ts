@@ -31,6 +31,26 @@ describe('render core runs headless through the package (real app source)', () =
     expect(height).toBeGreaterThan(0);
   });
 
+  it('falls back to rectangle defaults instead of crashing on an unrecognized shapeType', () => {
+    // A `shape:` value that names neither a built-in ShapeType nor a resolved
+    // Symbol (typo, or a value from a newer SFL version this build doesn't
+    // know) used to pass through as an arbitrary string and crash inside
+    // SHAPE_DEFAULTS[shape.shapeType] lookups with "Cannot read properties of
+    // undefined" - it must render as a plain rectangle plus a diagnostic instead.
+    const input = {
+      shapes: [{
+        id: 'mystery', boardId: 'board', shapeType: 'not_a_real_shape', x: 0, y: 0, width: 120, height: 60,
+        text: 'unknown shape', layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
+      }],
+      frames: [], swimlanes: [], links: [],
+    } as unknown as RenderInput;
+
+    expect(() => renderCanvas(input)).not.toThrow();
+    const { svg, diagnostics } = renderCanvas(input);
+    expect(svg).toMatch(/<rect id="sf-shape-mystery"/);
+    expect(diagnostics?.some(d => d.code === 'unknown-shape-type' && d.entityId === 'mystery')).toBe(true);
+  });
+
   it('renders no fill/stroke (not a default color) when none is set, matching the interactive canvas', () => {
     // The Konva canvas leaves an unset fillColor/strokeColor as `undefined`,
     // painting nothing. Silently substituting SHAPE_DEFAULTS here (as this

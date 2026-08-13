@@ -24,6 +24,9 @@ function shapeObject(e: SflEntityOut): any {
     type: 'shape',
     text: e.text ?? null,
     shapeType: e.shapeType ?? 'rectangle',
+    // §5.5 Symbol - only set when shapeType is 'symbol' (shape: pointed at a
+    // Symbol block); passed straight through to Shape.symbol.
+    symbol: e.symbol,
     x: e.x, y: e.y, width: e.width, height: e.height, w: e.width, h: e.height,
     rotation: e.rotation ?? 0,
     fillColor: decodeColor(p.fill),
@@ -96,7 +99,12 @@ function tableObject(e: SflEntityOut): any {
   return {
     id: e.id, type: 'table', title: e.text ?? 'Table',
     x: e.x, y: e.y, width: e.width, height: e.height,
-    columns: e.table?.columns ?? [], rows: e.table?.rows ?? [],
+    // §3.6 Tables: `Column.scale` is the same "ramp(...)" value-form as
+    // Chart.scale (§3.4) - decoded here, at the same adapter boundary
+    // chartObject decodes Chart's own `scale` below.
+    columns: (e.table?.columns ?? []).map(column => ({ ...column, scale: decodeRamp(column.scale) })),
+    rows: e.table?.rows ?? [],
+    footer: e.table?.footer,
     show_header: p.showHeader !== 'false',
     row_height: numOf(p.rowHeight),
     header_fill_color: p.headerFill ?? '#f1f5f9', grid_color: p.gridColor ?? '#cbd5e1', grid_width: numOf(p.gridWidth) ?? 1,
@@ -208,8 +216,10 @@ function linkObject(l: SflLinkOut): any {
     // stringify (only string/ident/number) — sflToCanvasState reads it into
     // its own `l.segments` field instead of routing it through `p`.
     segmentOffsets: l.segments,
-    fromPoint: l.fromSide ? { side: l.fromSide, offset: l.fromFraction } : undefined,
-    toPoint: l.toSide ? { side: l.toSide, offset: l.toFraction } : undefined,
+    // §3.5 Named Ports take precedence over side/offset - the two are
+    // mutually exclusive on a resolved endpoint (see sflToCanvasState.ts).
+    fromPoint: l.fromPort ? { port: l.fromPort, isPort: true } : l.fromSide ? { side: l.fromSide, offset: l.fromFraction } : undefined,
+    toPoint: l.toPort ? { port: l.toPort, isPort: true } : l.toSide ? { side: l.toSide, offset: l.toFraction } : undefined,
     order: l.order,
   };
 }

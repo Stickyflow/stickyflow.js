@@ -13,7 +13,8 @@
 // `orientation` + a `lanes: [[label, size, color?], …]` list is parsed into real
 // lanes (sflToCanvasState) and emitted as a swimlane object (sflToImportJson),
 // rendered by buildSwimlane rather than collapsed into a plain frame.
-import type { Shape } from './model/shapes';
+import type { Shape, SymbolDef } from './model/shapes';
+import { namedPortToPoint } from './model/geometry/router';
 import type { Frame } from './model/frames';
 import type { Swimlane } from './model/swimlanes';
 import type { Table } from './model/tables';
@@ -30,7 +31,11 @@ interface V3Json {
   diagnostics?: RenderDiagnostic[];
 }
 
-type PositionedElement = { id: string; x: number; y: number; width: number; height: number };
+// `rotation`/`symbol` are only ever present on a Shape (frames/swimlanes/
+// tables/paths/charts don't carry them) - optional here rather than a
+// separate type, since the caller builds this array from a mix of element
+// kinds and a Named Port endpoint can only ever resolve against a Shape.
+type PositionedElement = { id: string; x: number; y: number; width: number; height: number; rotation?: number | null; symbol?: SymbolDef | null };
 
 function pointFor(link: Link, end: 'from' | 'to', elements: PositionedElement[]): Point {
   const id = end === 'from' ? link.fromId : link.toId;
@@ -38,6 +43,21 @@ function pointFor(link: Link, end: 'from' | 'to', elements: PositionedElement[])
   const explicit = end === 'from' ? link.fromPoint : link.toPoint;
   if (explicit && 'isAbsolute' in explicit) return { x: explicit.x, y: explicit.y };
   if (!element) return { x: 0, y: 0 };
+  if (explicit && 'isPort' in explicit) {
+    // §3.5 Named Ports: look up the port's normalized `at` on the target
+    // entity's SymbolDef and go through the same rotation-aware transform as
+    // the router (namedPortToPoint) - a missing symbol/port (e.g. the Symbol
+    // definition changed after the link was authored) falls back to the
+    // entity's center rather than leaving the endpoint at (0, 0).
+    const portDef = element.symbol?.ports?.find(p => p.name === explicit.port);
+    if (portDef) {
+      return namedPortToPoint(
+        { x: element.x, y: element.y, width: element.width, height: element.height, rotation: element.rotation ?? undefined },
+        portDef.at,
+      );
+    }
+    return { x: element.x + element.width / 2, y: element.y + element.height / 2 };
+  }
   if (explicit && 'side' in explicit) {
     // Spec §10: the fraction in `side (fraction)` is optional, and a renderer
     // "may assume 0.5" when it's absent — `from: entity, right` alone is valid

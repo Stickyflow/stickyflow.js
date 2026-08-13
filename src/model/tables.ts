@@ -11,11 +11,21 @@
  * but on one axis instead of two.
  */
 
+import type { ChartRamp } from './charts'
+
 export interface TableColumn {
   id: string
   label: string                  // Column header, e.g. "Field", "Type", "PK"
   width: number                   // Absolute pixel width (like Lane.size, but the horizontal axis)
-  type: 'text' | 'boolean'        // Rendering hint: text input vs. checkbox/icon toggle
+  type: 'text' | 'boolean' | 'number'   // Rendering hint: text input, checkbox/icon toggle, or numeric cell
+  // SFL 1.4, §3.6: horizontal text alignment - structural (like `width`),
+  // not a style{} property, since Column carries no layout{}/style{}.
+  align?: 'left' | 'center' | 'right'
+  // SFL 1.4, §3.6: value-dependent cell background, same "ramp(<color> <pos>,
+  // …)" value-form as Chart.scale (§3.4/Fields) - decoded to the shared
+  // {type:'ramp', stops} shape at the SFL adapter boundary (sflToImportJson),
+  // same place Chart's own `scale` is decoded (see chartObject there).
+  scale?: ChartRamp
 }
 
 export interface TableRow {
@@ -35,6 +45,12 @@ export interface Table {
 
   columns: TableColumn[]
   rows: TableRow[]
+  // SFL 1.4, §3.6: optional summary row (`Footer` block), same cell shape as
+  // a TableRow - rendered as an extra, non-virtualized row fixed right after
+  // the last data row (bold, ruled-off). At most one per table. `undefined`
+  // (never `null`) when absent - this package has no live-patch mechanism
+  // that would need the null/undefined distinction stickyflow-atlas uses.
+  footer?: TableRow
 
   // Styling
   stroke_color: string
@@ -155,10 +171,11 @@ export function computeRowHeight(fontSize: number): number {
  * that change `rows`, `font_size`, or `show_header` must recompute and patch
  * `height` alongside so `table.height` (read by resize-snap, export bounds,
  * the layer panel, etc.) never drifts from what's actually rendered. */
-export function computeTableHeight(table: { font_size: number; rows: TableRow[]; show_header: boolean; row_height?: number }): number {
+export function computeTableHeight(table: { font_size: number; rows: TableRow[]; show_header: boolean; row_height?: number; footer?: TableRow | null }): number {
   const rowHeight = table.row_height ?? computeRowHeight(table.font_size)
   const headerHeight = table.show_header ? rowHeight : 0
-  return headerHeight + table.rows.length * rowHeight
+  const footerHeight = table.footer ? rowHeight : 0
+  return headerHeight + table.rows.length * rowHeight + footerHeight
 }
 
 export function createDefaultColumns(): TableColumn[] {
