@@ -11,7 +11,8 @@ import { colorAtRamp, computeFieldGrid, type FieldSample } from './field';
 import { computeIsolineSegments } from './isolines';
 import { tableBorderGeometry } from '../model/geometry/tables';
 import { localShapePath } from '../model/geometry/shapes';
-import { wrapText } from '../model/geometry/text';
+import { wrapText, heuristicRichMeasure } from '../model/geometry/text';
+import { hasBoldMarkup, wrapRichText } from '../model/geometry/richText';
 import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash, roundedOrthogonalPathData } from '../model/geometry/connectionLine';
 import type { PathSegment } from '../model/geometry/router';
 import type {
@@ -202,15 +203,26 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
     // unknown shapeType for this same shape once.
     const fontSize = finite(shape.fontSize, (SHAPE_DEFAULTS[shape.shapeType as keyof typeof SHAPE_DEFAULTS] ?? SHAPE_DEFAULTS.rectangle).fontSize);
     const padding = Math.max(8, strokeWidth * 2);
-    nodes.push({
+    const textWidth = Math.max(0, width - padding * 2);
+    const textNode: SceneText = {
       type: 'text', id: `shape-text-${shape.id}`, order: order + .5, bounds,
-      x: x + padding, y: y + padding, width: Math.max(0, width - padding * 2), height: Math.max(0, height - padding * 2),
-      lines: wrapText(shape.text, Math.max(0, width - padding * 2), fontSize),
+      x: x + padding, y: y + padding, width: textWidth, height: Math.max(0, height - padding * 2),
+      lines: wrapText(shape.text, textWidth, fontSize),
       fontFamily: shape.fontFamily || DEFAULT_FONT, fontSize,
       fontWeight: shape.fontWeight ?? 'normal', color: shape.textColor || '#111827',
       align: shape.textAlign ?? 'center', verticalAlign: shape.textVerticalAlign ?? 'middle',
       lineHeight: finite(shape.lineHeight, 1.3), rotation, rotationCenter: { x: x + width / 2, y: y + height / 2 },
-    });
+    };
+    // §1.4 Infographics inline **bold**: Entity/shape labels only (this is
+    // buildShape, not buildLink/buildChart's own label paths) - populate the
+    // rich-run wrap alongside the plain one above only when the text actually
+    // has bold markup, so every plain-text shape's node (and hence rendered
+    // SVG) is untouched.
+    if (hasBoldMarkup(shape.text)) {
+      const { measure, spaceWidth } = heuristicRichMeasure(fontSize);
+      textNode.richLines = wrapRichText(shape.text, textWidth, measure, spaceWidth);
+    }
+    nodes.push(textNode);
   }
   return nodes;
 }

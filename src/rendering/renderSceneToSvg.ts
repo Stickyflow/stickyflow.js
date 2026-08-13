@@ -177,8 +177,34 @@ function transform(rotation?: number, center?: { x: number; y: number }): string
   return rotation && center ? ` transform="rotate(${num(rotation)} ${num(center.x)} ${num(center.y)})"` : '';
 }
 
+// §1.4 Infographics inline **bold** markup: one visual line's already-wrapped
+// {text, bold} runs (SceneText.richLines) as a sequence of same-style
+// `<tspan>`s. Consecutive same-bold words are merged into one tspan (a
+// single-space separator baked into the text content, since xml:space=
+// "preserve" on the parent <text> - see textSvg below - is what stops SVG's
+// default whitespace collapsing from eating the space between tspans)
+// instead of emitting one tspan per word, which keeps the markup compact.
+// Only the FIRST tspan of the line carries x/dy; every following tspan on
+// the same visual line continues inline automatically, same as the plain
+// (non-rich) path below relies on for its own single-tspan-per-line layout.
+function richLineTspans(words: Array<{ text: string; bold: boolean }>, x: number, dy: string, fontSize: string): string {
+  if (!words.length) return `<tspan x="${num(x)}"${dy} font-size="${fontSize}"></tspan>`;
+  const groups: Array<{ text: string; bold: boolean }> = [];
+  for (const word of words) {
+    const prev = groups[groups.length - 1];
+    if (prev && prev.bold === word.bold) prev.text += ` ${word.text}`;
+    else {
+      if (prev) prev.text += ' ';
+      groups.push({ text: word.text, bold: word.bold });
+    }
+  }
+  return groups.map((group, i) => `<tspan${i === 0 ? ` x="${num(x)}"${dy}` : ''} font-size="${fontSize}" font-weight="${group.bold ? 'bold' : 'normal'}">${xml(group.text)}</tspan>`).join('');
+}
+
 function textSvg(node: SceneText, defs: Defs): string {
-  const linePx = node.fontSize * node.lineHeight, contentHeight = node.lines.length * linePx;
+  const linePx = node.fontSize * node.lineHeight;
+  const lineCount = node.richLines ? node.richLines.length : node.lines.length;
+  const contentHeight = lineCount * linePx;
   const firstY = node.verticalAlign === 'top' ? node.y + node.fontSize
     : node.verticalAlign === 'bottom' ? node.y + node.height - contentHeight + node.fontSize
       : node.y + (node.height - contentHeight) / 2 + node.fontSize;
@@ -193,7 +219,16 @@ function textSvg(node: SceneText, defs: Defs): string {
   // preview (stickyflow/interaction's resizeDrag.ts) needs both to re-wrap a
   // shape's label at the new width using the exact same formula this
   // function does, not a guessed default.
-  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${transform(node.rotation, node.rotationCenter)}>${node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('')}</text>`;
+  // xml:space="preserve" only appears on the rich-text branch (richLines set)
+  // — the plain single-tspan-per-line path below never needed it (a lone
+  // tspan's own leading/trailing whitespace was never at risk of collapsing
+  // an internal word gap) and adding it unconditionally would change every
+  // existing plain-text render's byte output for no behavioral gain.
+  const preserve = node.richLines ? ' xml:space="preserve"' : '';
+  const body = node.richLines
+    ? node.richLines.map((words, i) => richLineTspans(words, x, i ? ` dy="${num(linePx)}px"` : '', fontSize)).join('')
+    : node.lines.map((line, i) => `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`).join('');
+  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${preserve}${transform(node.rotation, node.rotationCenter)}>${body}</text>`;
 }
 
 // Maps §3.3: `<image>` isn't fill/stroke-able the way rect/ellipse/path are

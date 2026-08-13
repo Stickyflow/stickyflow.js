@@ -93,7 +93,19 @@ function applyCompositeScale(nodes: SVGGraphicsElement[], startBounds: Bounds, l
 
 /** Re-wraps and re-centers a shape's text label at its live-resized bounds,
  *  using the exact same math renderSceneToSvg.ts's textSvg() does — so it
- *  reads identically whether it's "being resized" or "just rendered". */
+ *  reads identically whether it's "being resized" or "just rendered".
+ *
+ *  §1.4 Infographics inline **bold**: deliberately NOT bold-aware. This path
+ *  already re-joins the DOM's per-line tspans from the primary node's
+ *  collapsed, single-line aria-label (see rawText below) before re-wrapping
+ *  with the plain heuristic — a multi-line label's original line breaks are
+ *  already lost here today, independent of this feature. A transient resize
+ *  preview one line-wrap-boundary off from the final static render (replaced
+ *  the instant the host reflects the drop) is a minor, acceptable
+ *  simplification given that pre-existing gap, not a new regression — same
+ *  "live path can lag slightly behind the final-render path" precedent as
+ *  atlas's own live-patch path not handling Frame/Swimlane style edits.
+ */
 function applyLiveText(textEl: SVGTextElement, rawText: string, bounds: Bounds, strokeWidth: number): void {
   const fontSize = parseFloat(textEl.getAttribute('font-size') || '14');
   const anchor = textEl.getAttribute('text-anchor');

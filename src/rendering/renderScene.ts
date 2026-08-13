@@ -106,6 +106,19 @@ export interface SceneText extends SceneBase {
   color: string; align: 'left' | 'center' | 'right';
   verticalAlign: 'top' | 'middle' | 'bottom'; lineHeight: number;
   rotation?: number; rotationCenter?: Point;
+  /**
+   * §1.4 Infographics inline **bold** markup: set only when the source text
+   * actually contains a `**bold**` run AND the label is an Entity/shape's own
+   * text (buildShape) - Link/Chart/Table/Swimlane labels keep rendering
+   * literal asterisks unchanged, out of scope for this feature. Each element
+   * is one already-wrapped visual line, as a sequence of styled runs (mirrors
+   * stickyflow-atlas's RichWord). `lines`/`fontWeight` above stay populated
+   * too as a plain-text fallback, so anything that only knows the old shape
+   * (e.g. a live resize preview) keeps working; textSvg() branches to this
+   * richer multi-tspan path only when richLines is set, leaving the existing
+   * single-tspan-per-line path byte-for-byte unchanged otherwise.
+   */
+  richLines?: Array<Array<{ text: string; bold: boolean }>>;
 }
 
 /** Maps §3.3: base-layer image (floor plan scan, map, photo). `href` is a
