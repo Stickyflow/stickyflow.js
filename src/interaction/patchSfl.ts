@@ -526,7 +526,14 @@ export function removeEntity(sfl: string, id: string, options: RemoveEntityOptio
     other !== r && other.start <= r.start && other.end >= r.end && (other.start !== r.start || other.end !== r.end),
   ));
   outer.sort((a, b) => b.start - a.start);
-  for (const r of outer) lines.splice(r.start, r.end - r.start + 1);
+  
+  for (const r of outer) 
+  {
+    lines.splice(r.start, r.end - r.start + 1);
+  }
+    
+    
+    
   return lines.join('\n');
 }
 
@@ -571,7 +578,13 @@ export function insertLink(sfl: string, options: InsertLinkOptions): string {
     `${bodyIndent}from: ${endpoint(options.fromId, options.fromSide, options.fromFraction)}`,
     `${bodyIndent}to: ${endpoint(options.toId, options.toSide, options.toFraction)}`,
   ];
-  if (options.text !== undefined) block.push(`${bodyIndent}text: "${escapeSflString(options.text)}"`);
+  
+  if (options.text !== undefined) 
+  {
+    block.push(`${bodyIndent}text: "${escapeSflString(options.text)}"`);
+  }
+    
+    
   if (options.body) block.push(...indentBlock(options.body, bodyIndent));
   block.push(`${baseIndent}}`);
 
@@ -583,7 +596,13 @@ export function insertLink(sfl: string, options: InsertLinkOptions): string {
 export function removeLink(sfl: string, id: string): string {
   const lines = sfl.split('\n');
   const range = findOwnerBlock(lines, id);
-  if (!range) return sfl;
+  
+  if (!range) 
+  {
+    return sfl;
+  }  
+    
   lines.splice(range.start, range.end - range.start + 1);
+  
   return lines.join('\n');
 }
