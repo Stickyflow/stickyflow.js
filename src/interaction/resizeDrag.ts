@@ -13,7 +13,10 @@
 import type { Viewer, OwnerRef } from '../viewer';
 import { resolveOwner, isCameraGesture } from '../viewer/contract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel } from '../viewer/domQuery';
-import { updateQuickDuplicateBubbles, type ResizeHandle } from '../viewer/selectionOverlay';
+import { updateQuickDuplicateBubbles, resizeHandlePositions, type ResizeHandle } from '../viewer/selectionOverlay';
+import { computeSnap, nearestCandidates, resizeActivePoints, applyAxisSnap } from './snapGeometry';
+import { pxPerUnit, findSnapCandidateBounds } from '../viewer/domQuery';
+import { updateAlignmentGuides, clearAlignmentGuides, type GuideLine } from '../viewer/alignmentGuideOverlay';
 import { localShapePath } from '../model/geometry/shapes';
 import { wrapText } from '../model/geometry/text';
 import type { Bounds } from '../model/geometry/router';
@@ -31,23 +34,43 @@ const RESIZABLE_ROLES = new Set(['entity']);
 const MIN_SIZE = 10;
 const COMPOSITE_KINDS = new Set(['cylinder', 'person']);
 
-const HANDLE_ANCHOR: Record<ResizeHandle, { fixedX: 'left' | 'right'; fixedY: 'top' | 'bottom' }> = {
-  'top-left': { fixedX: 'right', fixedY: 'bottom' },
-  'top-right': { fixedX: 'left', fixedY: 'bottom' },
-  'bottom-left': { fixedX: 'right', fixedY: 'top' },
-  'bottom-right': { fixedX: 'left', fixedY: 'top' },
+const SNAP_THRESHOLD_PX = 20;
+const GUIDE_OVERHANG = 10; // world units, flat — matches the reference implementation
+const RESIZE_GUIDE_COLOR = '#4CAF50';
+
+/** Which edge of the bbox a handle moves, per axis — 'none' means that axis
+ *  stays exactly at the drag-start value (an edge-midpoint handle only
+ *  touches one axis; a corner handle touches both). */
+export const HANDLE_AXES: Record<ResizeHandle, { x: 'left' | 'right' | 'none'; y: 'top' | 'bottom' | 'none' }> = {
+  'top-left': { x: 'left', y: 'top' },
+  top: { x: 'none', y: 'top' },
+  'top-right': { x: 'right', y: 'top' },
+  right: { x: 'right', y: 'none' },
+  'bottom-right': { x: 'right', y: 'bottom' },
+  bottom: { x: 'none', y: 'bottom' },
+  'bottom-left': { x: 'left', y: 'bottom' },
+  left: { x: 'left', y: 'none' },
 };
 
-/** New bounds for dragging `handle` to `pointer`, keeping the opposite corner
- *  fixed. Works even if the pointer crosses past that corner (min/max, not a
- *  signed width/height) — the shape just flips instead of going negative. */
+/** New bounds for dragging `handle` to `pointer`, keeping the opposite edge
+ *  (or, for an edge-midpoint handle, the WHOLE untouched axis) fixed. Works
+ *  even if the pointer crosses past that edge (min/max, not a signed
+ *  width/height) — the shape just flips instead of going negative. */
 function resizedBounds(start: Bounds, handle: ResizeHandle, pointer: { x: number; y: number }): Bounds {
-  const anchor = HANDLE_ANCHOR[handle];
-  const fixedX = anchor.fixedX === 'left' ? start.x : start.x + start.width;
-  const fixedY = anchor.fixedY === 'top' ? start.y : start.y + start.height;
-  const x1 = Math.min(fixedX, pointer.x), x2 = Math.max(fixedX, pointer.x);
-  const y1 = Math.min(fixedY, pointer.y), y2 = Math.max(fixedY, pointer.y);
-  return { x: x1, y: y1, width: Math.max(MIN_SIZE, x2 - x1), height: Math.max(MIN_SIZE, y2 - y1) };
+  const axes = HANDLE_AXES[handle];
+  let x = start.x, width = start.width;
+  if (axes.x !== 'none') {
+    const fixedX = axes.x === 'left' ? start.x + start.width : start.x;
+    const x1 = Math.min(fixedX, pointer.x), x2 = Math.max(fixedX, pointer.x);
+    x = x1; width = Math.max(MIN_SIZE, x2 - x1);
+  }
+  let y = start.y, height = start.height;
+  if (axes.y !== 'none') {
+    const fixedY = axes.y === 'top' ? start.y + start.height : start.y;
+    const y1 = Math.min(fixedY, pointer.y), y2 = Math.max(fixedY, pointer.y);
+    y = y1; height = Math.max(MIN_SIZE, y2 - y1);
+  }
+  return { x, y, width, height };
 }
 
 /** Keep a rotated shape's pivot centered on its own (live-resized) bounds —
@@ -181,20 +204,13 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
       ring?.setAttribute('y', String(bounds.y - 1));
       ring?.setAttribute('width', String(bounds.width + 2));
       ring?.setAttribute('height', String(bounds.height + 2));
-      const corners: Record<ResizeHandle, [number, number]> = {
-        'top-left': [bounds.x, bounds.y],
-        'top-right': [bounds.x + bounds.width, bounds.y],
-        'bottom-left': [bounds.x, bounds.y + bounds.height],
-        'bottom-right': [bounds.x + bounds.width, bounds.y + bounds.height],
-      };
-      (Object.keys(corners) as ResizeHandle[]).forEach(name => {
-        const [cx, cy] = corners[name];
-        const handleEl = drag!.overlay!.querySelector(`[data-sf-resize-handle="${name}"]`);
-        if (!handleEl) return;
+      for (const [cx, cy, name] of resizeHandlePositions(bounds)) {
+        const handleEl = drag.overlay.querySelector(`[data-sf-resize-handle="${name}"]`);
+        if (!handleEl) continue;
         const size = Number(handleEl.getAttribute('width')) || 6;
         handleEl.setAttribute('x', String(cx - size / 2));
         handleEl.setAttribute('y', String(cy - size / 2));
-      });
+      }
     }
     if (drag.text) applyLiveText(drag.text.el, drag.text.rawText, bounds, drag.text.strokeWidth);
     if (drag.bubbles) updateQuickDuplicateBubbles(drag.bubbles, bounds);
@@ -243,10 +259,32 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
     };
   };
 
+  // Wraps resizedBounds() with an alignment-guide snap pass — used by BOTH
+  // pointermove and pointerup so the live preview and the committed result
+  // can never drift apart (the easiest bug to introduce here: snapping the
+  // preview but forgetting to apply the same snap to the emitted event).
+  // Takes the drag state explicitly (not read from the closed-over `drag`
+  // variable) because pointerup calls this AFTER already nulling `drag` out,
+  // having captured its own local copy first.
+  const snappedResize = (d: DragState, pointer: { x: number; y: number }): { bounds: Bounds; guides: GuideLine[] } => {
+    const proposed = resizedBounds(d.startBounds, d.handle, pointer);
+    const axes = HANDLE_AXES[d.handle];
+    const activeX = resizeActivePoints(axes.x);
+    const activeY = resizeActivePoints(axes.y);
+    const candidates = nearestCandidates(proposed, findSnapCandidateBounds(svg, new Set([d.owner.id])));
+    const threshold = SNAP_THRESHOLD_PX / pxPerUnit(svg);
+    const snap = computeSnap(proposed, candidates, { threshold, activeX, activeY, guideOverhang: GUIDE_OVERHANG });
+    const bounds = applyAxisSnap(proposed, axes.x, axes.y, snap, MIN_SIZE);
+    const guides = [snap.x.guide, snap.y.guide].filter((g): g is GuideLine => g !== null);
+    return { bounds, guides };
+  };
+
   const onPointerMove = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.pointerId) return;
     drag.moved = true;
-    applyBounds(resizedBounds(drag.startBounds, drag.handle, userPoint(e)));
+    const { bounds, guides } = snappedResize(drag, userPoint(e));
+    applyBounds(bounds);
+    updateAlignmentGuides(svg, guides, RESIZE_GUIDE_COLOR);
   };
 
   const onPointerUp = (e: PointerEvent) => {
@@ -254,8 +292,9 @@ export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHan
     const d = drag;
     drag = null;
     (e.target as Element)?.releasePointerCapture?.(d.pointerId);
+    clearAlignmentGuides(svg);
     if (!d.moved) return;
-    const next = resizedBounds(d.startBounds, d.handle, userPoint(e));
+    const { bounds: next } = snappedResize(d, userPoint(e));
     emitter.emit('resizeChange', {
       owner: d.owner,
       dx: next.x - d.startBounds.x, dy: next.y - d.startBounds.y,

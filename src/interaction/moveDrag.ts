@@ -6,7 +6,10 @@ import type { Viewer, OwnerRef } from '../viewer';
 import { resolveOwner, isCameraGesture } from '../viewer/contract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../viewer/domQuery';
 import type { Bounds } from '../model/geometry/router';
+import { pxPerUnit, findSnapCandidateBounds } from '../viewer/domQuery';
+import { updateAlignmentGuides, clearAlignmentGuides, type GuideLine } from '../viewer/alignmentGuideOverlay';
 import { findLiveLinks, updateLiveLinks, type LiveLink } from './linkPreview';
+import { computeSnap, nearestCandidates, MOVE_ACTIVE_POINTS } from './snapGeometry';
 import { Emitter } from './events';
 
 export interface MoveDragHandle {
@@ -15,6 +18,9 @@ export interface MoveDragHandle {
 
 const MOVABLE_ROLES = new Set(['entity']);
 const SCREEN_DRAG_THRESHOLD = 3;
+const SNAP_THRESHOLD_PX = 20;
+const GUIDE_OVERHANG = 10; // world units, flat — matches the reference implementation
+const MOVE_GUIDE_COLOR = '#8b5cf6';
 
 const offsetBounds = (b: Bounds, dx: number, dy: number): Bounds => ({ x: b.x + dx, y: b.y + dy, width: b.width, height: b.height });
 
@@ -83,6 +89,30 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
       updateLiveLinks(entity.liveLinks, offsetBounds(entity.draggedBounds, dx, dy));
     }
     for (const link of drag.internalLinks) applyGroupTransform(link.nodes, link.baseTransforms, dx, dy);
+  };
+
+  // Alignment-guide snap pass on a raw delta — used by BOTH pointermove and
+  // pointerup so the live preview and the committed moveChange can never
+  // drift apart. Takes the drag state explicitly (not read from the closed-
+  // over `drag` variable) because pointerup calls this AFTER already nulling
+  // `drag` out, having captured its own local copy first. Snaps against the
+  // drag's "lead" entity (the first one grabbed), same concept the reference
+  // implementation's multi-drag uses: with a multi-selection moving
+  // together, aligning every member individually would fight itself.
+  const snappedDelta = (d: DragState, rawDx: number, rawDy: number): { dx: number; dy: number; guides: GuideLine[] } => {
+    const lead = d.entities[0];
+    const liveLeadBounds = offsetBounds(lead.draggedBounds, rawDx, rawDy);
+    const excludeIds = new Set(d.entities.map(entity => entity.owner.id));
+    const candidates = nearestCandidates(liveLeadBounds, findSnapCandidateBounds(svg, excludeIds));
+    const threshold = SNAP_THRESHOLD_PX / pxPerUnit(svg);
+    const snap = computeSnap(liveLeadBounds, candidates, {
+      threshold, activeX: MOVE_ACTIVE_POINTS, activeY: MOVE_ACTIVE_POINTS, guideOverhang: GUIDE_OVERHANG,
+    });
+    return {
+      dx: rawDx + snap.x.delta,
+      dy: rawDy + snap.y.delta,
+      guides: [snap.x.guide, snap.y.guide].filter((g): g is GuideLine => g !== null),
+    };
   };
 
   const onPointerDown = (e: PointerEvent) => {
@@ -156,7 +186,9 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
       drag.moved = true;
     }
     const p = userPoint(e);
-    applyTransform(p.x - drag.startUser.x, p.y - drag.startUser.y);
+    const { dx, dy, guides } = snappedDelta(drag, p.x - drag.startUser.x, p.y - drag.startUser.y);
+    applyTransform(dx, dy);
+    updateAlignmentGuides(svg, guides, MOVE_GUIDE_COLOR);
   };
 
   const onPointerUp = (e: PointerEvent) => {
@@ -164,9 +196,10 @@ export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHan
     const d = drag;
     drag = null;
     (e.target as Element).releasePointerCapture?.(d.pointerId);
+    clearAlignmentGuides(svg);
     if (!d.moved) return;
     const p = userPoint(e);
-    const dx = p.x - d.startUser.x, dy = p.y - d.startUser.y;
+    const { dx, dy } = snappedDelta(d, p.x - d.startUser.x, p.y - d.startUser.y);
     // One event per moved entity, same (dx, dy) — keeps MoveChangeEvent's
     // existing single-owner shape so a host that doesn't know about
     // multi-select still works unmodified, just receiving several events

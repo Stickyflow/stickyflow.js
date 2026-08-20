@@ -29,3 +29,36 @@ export function screenRectOf(el: SVGGraphicsElement): { left: number; top: numbe
   const bottomRight = new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height).matrixTransform(ctm);
   return { left: topLeft.x, top: topLeft.y, width: bottomRight.x - topLeft.x, height: bottomRight.y - topLeft.y };
 }
+
+/** Screen-px-to-world-unit conversion factor for the current zoom level.
+ *  Mirrors display.ts's own internal (unexported) pxPerUnit() formula — zoom
+ *  here is SVG viewBox-based, not a CSS transform or a Konva `scale` prop, so
+ *  there's no separate "current zoom" getter to read; this is recomputed
+ *  from the live DOM since callers (moveDrag.ts/resizeDrag.ts) already hold
+ *  a `viewer.svg` reference. Used to convert a screen-px snap threshold into
+ *  world-space units for comparison against shape coordinates. */
+export function pxPerUnit(svg: SVGSVGElement): number {
+  const rect = svg.getBoundingClientRect();
+  const viewBoxWidth = svg.viewBox.baseVal.width;
+  return rect.width > 0 && viewBoxWidth > 0 ? rect.width / viewBoxWidth : 1;
+}
+
+/** Bounds of every other selectable entity/frame/swimlane/table's primary
+ *  node — candidates for alignment-guide snapping. Links are excluded: a
+ *  link's bbox spans its whole routed path, not a meaningful box to align an
+ *  edge against (same reasoning selectionOverlay.ts uses to give links a
+ *  halo instead of a bbox ring). */
+export function findSnapCandidateBounds(
+  svg: SVGSVGElement,
+  excludeIds: Set<string>,
+): Array<{ x: number; y: number; width: number; height: number }> {
+  const results: Array<{ x: number; y: number; width: number; height: number }> = [];
+  svg.querySelectorAll('[data-sf-primary][data-sf-id]').forEach(node => {
+    const id = node.getAttribute('data-sf-id');
+    const role = node.getAttribute('data-sf-role');
+    if (!id || role === 'link' || excludeIds.has(id)) return;
+    const bbox = (node as unknown as SVGGraphicsElement).getBBox();
+    results.push({ x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height });
+  });
+  return results;
+}

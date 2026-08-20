@@ -57,6 +57,17 @@ export function roundedOrthogonalPathData(segments: PathSegment[], radius: numbe
     const previous = corners[index - 1], corner = corners[index], next = corners[index + 1]
     const incoming = Math.hypot(corner.x - previous.x, corner.y - previous.y)
     const outgoing = Math.hypot(next.x - corner.x, next.y - corner.y)
+    if (incoming === 0 || outgoing === 0) {
+      // A degenerate (zero-length) segment on either side of this corner —
+      // no direction vector to round along, so pass straight through it
+      // rather than dividing by zero (previously produced a NaN path — hit
+      // in practice once alignment-guide snapping made two connected
+      // shapes' edges land in exact/near-exact alignment, which is exactly
+      // when this can happen). Same defensive shape router.ts's own
+      // roundOrthogonalPath already uses for its equivalent `r <= 0` case.
+      d += ` L ${corner.x} ${corner.y}`
+      continue
+    }
     const r = Math.min(radius, incoming * .4, outgoing * .4)
     const before = { x: corner.x + (previous.x - corner.x) / incoming * r, y: corner.y + (previous.y - corner.y) / incoming * r }
     const after = { x: corner.x + (next.x - corner.x) / outgoing * r, y: corner.y + (next.y - corner.y) / outgoing * r }

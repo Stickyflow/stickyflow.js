@@ -15,9 +15,40 @@ const HANDLE_SIZE = 6;
 const BUBBLE_RADIUS = 8;
 const BUBBLE_OFFSET = BUBBLE_RADIUS + 15; // 23 — matches the interactive canvas app's own spacing
 
-export type ResizeHandle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type ResizeHandle =
+  | 'top-left' | 'top' | 'top-right'
+  | 'right'
+  | 'bottom-right' | 'bottom' | 'bottom-left'
+  | 'left';
 export type LinkEndpoint = 'from' | 'to';
 export type QuickDuplicateDirection = 'top' | 'right' | 'bottom' | 'left';
+
+const HANDLE_CURSORS: Record<ResizeHandle, string> = {
+  'top-left': 'nwse-resize', top: 'ns-resize', 'top-right': 'nesw-resize',
+  right: 'ew-resize',
+  'bottom-right': 'nwse-resize', bottom: 'ns-resize', 'bottom-left': 'nesw-resize',
+  left: 'ew-resize',
+};
+
+/** The 8 handle positions for a bbox — corners plus edge midpoints — shared by
+ *  shapeSelectionOverlay() (initial paint) and resizeDrag.ts's live
+ *  in-progress reposition, so there is exactly one place that knows where a
+ *  handle sits relative to the bbox. */
+export function resizeHandlePositions(
+  bbox: { x: number; y: number; width: number; height: number },
+): Array<[number, number, ResizeHandle]> {
+  const cx = bbox.x + bbox.width / 2, cy = bbox.y + bbox.height / 2;
+  return [
+    [bbox.x, bbox.y, 'top-left'],
+    [cx, bbox.y, 'top'],
+    [bbox.x + bbox.width, bbox.y, 'top-right'],
+    [bbox.x + bbox.width, cy, 'right'],
+    [bbox.x + bbox.width, bbox.y + bbox.height, 'bottom-right'],
+    [cx, bbox.y + bbox.height, 'bottom'],
+    [bbox.x, bbox.y + bbox.height, 'bottom-left'],
+    [bbox.x, cy, 'left'],
+  ];
+}
 
 function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
   return doc.createElementNS(NS, tag) as SVGElementTagNameMap[K];
@@ -47,13 +78,7 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
   ring.setAttribute('stroke-width', '3');
   g.appendChild(ring);
 
-  const corners: Array<[number, number, ResizeHandle, string]> = [
-    [bbox.x, bbox.y, 'top-left', 'nwse-resize'],
-    [bbox.x + bbox.width, bbox.y, 'top-right', 'nesw-resize'],
-    [bbox.x, bbox.y + bbox.height, 'bottom-left', 'nesw-resize'],
-    [bbox.x + bbox.width, bbox.y + bbox.height, 'bottom-right', 'nwse-resize'],
-  ];
-  for (const [cx, cy, name, cursor] of corners) {
+  for (const [cx, cy, name] of resizeHandlePositions(bbox)) {
     const handle = el(doc, 'rect');
     handle.setAttribute('x', String(cx - HANDLE_SIZE / 2));
     handle.setAttribute('y', String(cy - HANDLE_SIZE / 2));
@@ -68,7 +93,7 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
     // attribute to tell a resize-handle grab apart from a body drag.
     handle.setAttribute('data-sf-resize-handle', name);
     handle.style.pointerEvents = 'auto';
-    handle.style.cursor = cursor;
+    handle.style.cursor = HANDLE_CURSORS[name];
     g.appendChild(handle);
   }
   return g;
