@@ -151,30 +151,46 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
   const style = shapeStyle(shape, diagnostics), order = orderOf(shape, 10_000 + index);
   const nodes: RenderNode[] = [];
   const base = { id: `shape-${shape.id}`, order, bounds, rotation, style };
-  const path = localShapePath(shape.shapeType, x, y, width, height);
+  const rotationCenter = { x: x + width / 2, y: y + height / 2 };
 
-  if (path) nodes.push({ ...base, type: 'path', d: path, rotationCenter: { x: x + width / 2, y: y + height / 2 } });
-  else if (shape.shapeType === 'circle' || shape.shapeType === 'oval') {
-    nodes.push({ ...base, type: 'ellipse', cx: x + width / 2, cy: y + height / 2, rx: width / 2, ry: height / 2 });
-  } else if (shape.shapeType === 'cylinder') {
-    const cap = height * .15;
-    nodes.push({ ...base, id: `${base.id}-body`, type: 'rect', x, y: y + cap, width, height: height - cap * 2 });
-    nodes.push({ ...base, id: `${base.id}-top`, type: 'ellipse', cx: x + width / 2, cy: y + cap, rx: width / 2, ry: cap });
-    nodes.push({ ...base, id: `${base.id}-bottom`, type: 'ellipse', cx: x + width / 2, cy: y + height - cap, rx: width / 2, ry: cap });
-  } else if (shape.shapeType === 'person') {
-    const r = Math.min(width, height), head = r * .3, body = r * .5, cx = x + width / 2;
-    nodes.push({ ...base, id: `${base.id}-head`, type: 'ellipse', cx, cy: y + head, rx: head, ry: head });
-    nodes.push({ ...base, id: `${base.id}-body`, type: 'path', d: `M ${cx - body} ${y + 2 * head + body} A ${body} ${body} 0 0 1 ${cx + body} ${y + 2 * head + body} L ${cx} ${y + 2 * head + body} Z`, rotationCenter: { x: x + width / 2, y: y + height / 2 } });
-  } else if (shape.shapeType === 'symbol' && shape.symbol && shape.symbol.points.length >= 2) {
-    // §5.5 Symbol: points are normalized (0..1, relative to the instance's
-    // own bounding box), so the same definition renders at any size - scale
-    // by width/height and offset by x/y here, at render time. Implicitly
-    // closed; reuses freeformPathData's Catmull-Rom tension curve (same math
-    // FreeformPath already uses below) instead of a second curve
-    // implementation, closed: true.
-    const points = shape.symbol.points.map(([px, py]) => ({ x: x + px * width, y: y + py * height }));
-    nodes.push({ ...base, type: 'path', d: freeformPathData(points, finite(shape.symbol.tension, 0), true), rotationCenter: { x: x + width / 2, y: y + height / 2 } });
-  } else if (shape.shapeType === 'image') {
+  // This shape's silhouette at an ARBITRARY box and style, rather than only at
+  // its own bounds — so the `strokeStyle: 'double'` path below can draw the
+  // same silhouette three times (outer ring, inset fill, inner ring) without a
+  // second copy of the per-shape-type geometry. `rotationCenter` stays the
+  // full shape's center for every pass, so an inset ring rotates with the
+  // shape instead of around its own smaller centre.
+  const pushGeometry = (gx: number, gy: number, gw: number, gh: number, gStyle: SceneStyle, suffix: string) => {
+    const g = { ...base, id: `${base.id}${suffix}`, style: gStyle };
+    const path = localShapePath(shape.shapeType, gx, gy, gw, gh);
+    if (path) nodes.push({ ...g, type: 'path', d: path, rotationCenter });
+    else if (shape.shapeType === 'circle' || shape.shapeType === 'oval') {
+      nodes.push({ ...g, type: 'ellipse', cx: gx + gw / 2, cy: gy + gh / 2, rx: gw / 2, ry: gh / 2 });
+    } else if (shape.shapeType === 'cylinder') {
+      const cap = gh * .15;
+      nodes.push({ ...g, id: `${g.id}-body`, type: 'rect', x: gx, y: gy + cap, width: gw, height: gh - cap * 2 });
+      nodes.push({ ...g, id: `${g.id}-top`, type: 'ellipse', cx: gx + gw / 2, cy: gy + cap, rx: gw / 2, ry: cap });
+      nodes.push({ ...g, id: `${g.id}-bottom`, type: 'ellipse', cx: gx + gw / 2, cy: gy + gh - cap, rx: gw / 2, ry: cap });
+    } else if (shape.shapeType === 'person') {
+      const r = Math.min(gw, gh), head = r * .3, body = r * .5, cx = gx + gw / 2;
+      nodes.push({ ...g, id: `${g.id}-head`, type: 'ellipse', cx, cy: gy + head, rx: head, ry: head });
+      nodes.push({ ...g, id: `${g.id}-body`, type: 'path', d: `M ${cx - body} ${gy + 2 * head + body} A ${body} ${body} 0 0 1 ${cx + body} ${gy + 2 * head + body} L ${cx} ${gy + 2 * head + body} Z`, rotationCenter });
+    } else if (shape.shapeType === 'symbol' && shape.symbol && shape.symbol.points.length >= 2) {
+      // §5.5 Symbol: points are normalized (0..1, relative to the instance's
+      // own bounding box), so the same definition renders at any size - scale
+      // by width/height and offset by x/y here, at render time. Implicitly
+      // closed; reuses freeformPathData's Catmull-Rom tension curve (same math
+      // FreeformPath already uses below) instead of a second curve
+      // implementation, closed: true.
+      const points = shape.symbol.points.map(([px, py]) => ({ x: gx + px * gw, y: gy + py * gh }));
+      nodes.push({ ...g, type: 'path', d: freeformPathData(points, finite(shape.symbol.tension, 0), true), rotationCenter });
+    } else {
+      const rx = shape.shapeType === 'pill' ? Math.min(gw, gh) / 2
+        : shape.shapeType === 'rounded_rectangle' ? finite(shape.cornerRadius, 8) : 0;
+      nodes.push({ ...g, type: 'rect', x: gx, y: gy, width: gw, height: gh, rx });
+    }
+  };
+
+  if (shape.shapeType === 'image') {
     // Maps §3.3: base-layer image. No fallback placeholder rect when imageUrl
     // is unset - unlike the live Konva canvas (which shows a loading/missing
     // state to a person actively editing), this is a one-shot static render;
@@ -192,10 +208,34 @@ function buildShape(shape: Shape, index: number, diagnostics: RenderDiagnostic[]
         nodes.push({ ...base, id: `${base.id}-border`, type: 'rect', x, y, width, height, style: { fill: { kind: 'none' }, stroke: style.stroke, strokeWidth: style.strokeWidth, dash: style.dash } });
       }
     }
+  } else if (shape.strokeStyle === 'double') {
+    // Two thin rings — the outer at the shape's nominal boundary, the inner
+    // inset by the full strokeWidth — with a genuinely UNFILLED gap between
+    // them: the fill starts at the inner ring rather than running edge-to-edge
+    // under the whole band. `strokeWidth` is reinterpreted here as the total
+    // outer-to-inner span rather than one line's thickness, so raising it
+    // pushes the rings apart instead of thickening a single line. Same
+    // semantics (and the same /3 ring width) as the interactive canvas app's
+    // own getDoubleStrokeGeometry, so one document renders alike in both.
+    const total = strokeWidth || 1;
+    const insetWidth = Math.max(0, width - 2 * total), insetHeight = Math.max(0, height - 2 * total);
+    // Rings never carry the fill or the shadow: a shadow on each of three
+    // stacked outlines reads as a blur, not a raised edge (the app disables it
+    // on its ring passes for the same reason), and the fill belongs to the
+    // inset pass alone.
+    const ring: SceneStyle = { ...style, fill: { kind: 'none' }, strokeWidth: Math.max(1, total / 3), dash: undefined, shadow: undefined };
+    // Outer ring first so it stays node 0 — tag() marks that one sfPrimary,
+    // and the viewer paints its selection ring and resize handles from that
+    // node's bbox, which has to be the shape's FULL box, not the inset one.
+    pushGeometry(x, y, width, height, ring, '');
+    // A shape too small to inset twice keeps just the outer ring, rather than
+    // collapsing into a zero/negative-sized inner one.
+    if (insetWidth > 0 && insetHeight > 0) {
+      pushGeometry(x + total, y + total, insetWidth, insetHeight, { ...style, stroke: { kind: 'none' }, strokeWidth: 0, dash: undefined }, '-fill');
+      pushGeometry(x + total, y + total, insetWidth, insetHeight, ring, '-inner');
+    }
   } else {
-    const rx = shape.shapeType === 'pill' ? Math.min(width, height) / 2
-      : shape.shapeType === 'rounded_rectangle' ? finite(shape.cornerRadius, 8) : 0;
-    nodes.push({ ...base, type: 'rect', x, y, width, height, rx });
+    pushGeometry(x, y, width, height, style, '');
   }
 
   if (shape.text) {
