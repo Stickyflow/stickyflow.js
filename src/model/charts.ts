@@ -1,4 +1,15 @@
 export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field';
+
+/** Every `type:` value a Chart block can carry, as a real runtime array
+ *  (`ChartType` itself only exists at compile time) — same pattern as
+ *  `SHAPE_TYPES`. The renderer checks incoming charts against this so an
+ *  unsupported type is reported rather than silently drawn as something else;
+ *  a host building a chart-type picker can iterate it for the same reason.
+ *
+ *  Deliberately narrower than stickyflow-atlas's own union: atlas additionally
+ *  draws heatmap/hexbin/sankey/treemap/pie/boxplot/matrix/mekko/grid/custom,
+ *  none of which this package implements yet. */
+export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field'];
 export interface ChartAxis {
   min: number; max: number; step: number; label?: string;
   // SFL 1.4, §5.4: the axis's unit of measure ("k€", "%", "days"…) - purely

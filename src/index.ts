@@ -8,6 +8,9 @@
 /** Render SFL text straight to an SVG string. */
 export { render, renderCanvas } from './render';
 export type { RenderResult, RenderOptions } from './render';
+/** Optional real-glyph-metrics injection for `RenderOptions.measureText` —
+ *  see that field for when to use it instead of the built-in heuristic. */
+export type { TextMetrics, MeasureTextFactory } from './model/geometry/text';
 /** Parse SFL, and canonically re-emit it (idempotent). */
 export { parse, canonicalize } from './sfl';
 
@@ -30,4 +33,8 @@ export { sflToRenderInput } from './sflToRenderInput';
 export { SHAPE_TYPES } from './model/shapes';
 export type { ShapeType } from './model/shapes';
 export type { FreeformPath, PathPoint } from './model/paths';
+/** Every valid Chart `type:` value as a runtime array — the chart counterpart
+ *  to SHAPE_TYPES above. Anything outside it renders as a plain series plot
+ *  and reports an `unsupported-chart-type` diagnostic. */
+export { CHART_TYPES } from './model/charts';
 export type { Chart, ChartAxis, ChartSeries, ChartType, ChartRamp } from './model/charts';

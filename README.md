@@ -118,6 +118,41 @@ the same SVG output. Exact glyph-level determinism would need real font
 metrics baked in (the FontRegistry decision, ADR-01) — out of scope until
 then.
 
+**Opting out: `measureText`.** A host that would rather match its own text
+layout than be reproducible can pass real metrics in and take over the wrap:
+
+```ts
+import { render } from 'stickyflow'
+
+render(sfl, {
+  // called once per text node with that node's resolved font
+  measureText: (fontFamily, fontSize) => {
+    const ctx = document.createElement('canvas').getContext('2d')!
+    ctx.font = `${fontSize}px ${fontFamily}`
+    return {
+      measure: (text, bold) => {
+        ctx.font = `${bold ? 'bold ' : ''}${fontSize}px ${fontFamily}`
+        return ctx.measureText(text).width
+      },
+      spaceWidth: ctx.measureText(' ').width,
+    }
+  },
+})
+```
+
+This is the seam for stickyflow-atlas specifically: its
+`createTextMeasurer(fontFamily, fontSize)` already returns exactly this
+`{ measure, spaceWidth }` pair, so it can be handed over with no adapter — and
+its SVG export then breaks lines where its live Konva canvas does, instead of
+where the heuristic guesses.
+
+Leaving `measureText` unset keeps the default heuristic, and with it the
+byte-identical output the golden SVGs pin. Supplying it trades that away:
+output then depends on the fonts installed wherever it ran. Both wraps are
+greedy and break only at word boundaries; they differ in the fit test (a
+per-box character budget vs. per-word measured widths), so the same string can
+break at different points under each.
+
 ## Security
 
 `render()`'s output is meant to be inserted via `innerHTML` (that's how the
