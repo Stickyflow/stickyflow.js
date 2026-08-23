@@ -142,6 +142,8 @@ function chartObject(e: SflEntityOut): any {
       // Fields §3.4.
       scale: decodeRamp(e.chart?.scale), interpolate: e.chart?.interpolate,
       idwPower: e.chart?.idwPower, isolines: e.chart?.isolines,
+      // Heatmap only.
+      zones: e.chart?.zones,
     },
     series: e.chart?.series ?? [],
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),

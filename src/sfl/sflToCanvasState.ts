@@ -61,7 +61,7 @@ export interface SflEntityOut {
     value?: number;
   };
   chart?: {
-    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field';
+    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap';
     categories?: string[];
     areaOpacity?: number;
     // SFL 1.4, §5.4.1: bar-only, 'none'/absent both mean today's grouped
@@ -75,8 +75,11 @@ export interface SflEntityOut {
     interpolate?: 'idw';
     idwPower?: number;
     isolines?: number[];
-    axisX: { min: number; max: number; step: number; label?: string; unit?: string };
-    axisY: { min: number; max: number; step: number; label?: string; unit?: string };
+    // Heatmap only: ordered low->high color bands for axisY.thresholds (one
+    // more zone than thresholds).
+    zones?: Array<{ label: string; color?: string }>;
+    axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
+    axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][]; error?: Array<number | [number, number] | null> }>;
     // SFL 1.4, §5.4.8
     rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
@@ -490,7 +493,11 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
     if (kind === 'chart') {
       const readAxis = (axisBlock: SflBlock | undefined) => {
         const axisProps = axisBlock ? directProps(axisBlock) : new Map<string, SflValue>();
-        return { min: asNumber(axisProps.get('min')) ?? 0, max: asNumber(axisProps.get('max')) ?? 10, step: asNumber(axisProps.get('step')) ?? 1, label: asString(axisProps.get('label')), unit: asString(axisProps.get('unit')) };
+        const thresholdsValue = axisProps.get('thresholds');
+        const thresholds = thresholdsValue?.type === 'list'
+          ? thresholdsValue.values.flatMap(v => { const n = asNumber(v); return n === undefined ? [] : [n]; })
+          : undefined;
+        return { min: asNumber(axisProps.get('min')) ?? 0, max: asNumber(axisProps.get('max')) ?? 10, step: asNumber(axisProps.get('step')) ?? 1, label: asString(axisProps.get('label')), unit: asString(axisProps.get('unit')), thresholds: thresholds?.length ? thresholds : undefined };
       };
       const axes = childBlocks(block).filter(child => child.kind === 'Axis');
       const series = childBlocks(block).filter(child => child.kind === 'Series').map(seriesBlock => {
@@ -551,8 +558,18 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
       const isolines = isolinesValue?.type === 'list'
         ? isolinesValue.values.flatMap(v => { const n = asNumber(v); return n === undefined ? [] : [n]; })
         : undefined;
+      // Heatmap only: `zones: [["label", "#color"], ...]`, ordered low->high.
+      const zonesValue = p.get('zones');
+      const zones = zonesValue?.type === 'list'
+        ? zonesValue.values.flatMap(v => {
+          if (v.type !== 'list' || v.values.length < 1) return [];
+          const label = asString(v.values[0]);
+          if (label === undefined) return [];
+          return [{ label, color: v.values[1] ? asString(v.values[1]) : undefined }];
+        })
+        : undefined;
       chartData = {
-        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | undefined) ?? 'bar',
+        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | undefined) ?? 'bar',
         categories, areaOpacity: asNumber(p.get('areaOpacity')),
         stacked: stackedValue && stackedValue !== 'none' ? (stackedValue as 'true' | 'percent' | 'waterfall') : undefined,
         // Fields §3.4.
@@ -560,6 +577,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         interpolate: asString(p.get('interpolate')) === 'idw' ? 'idw' : undefined,
         idwPower: asNumber(p.get('idwPower')),
         isolines: isolines?.length ? isolines : undefined,
+        zones: zones?.length ? zones : undefined,
         axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
         series, rules,
       };

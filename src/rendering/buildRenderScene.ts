@@ -6,7 +6,7 @@ import { getLinkStrokeColor } from '../model/links';
 import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
 import type { FreeformPath, PathPoint } from '../model/paths';
-import { CHART_TYPES, type Chart, type ChartAxis } from '../model/charts';
+import { CHART_TYPES, type Chart, type ChartAxis, type ChartZone } from '../model/charts';
 import { colorAtRamp, computeFieldGrid, type FieldSample } from './field';
 import { computeIsolineSegments } from './isolines';
 import { tableBorderGeometry } from '../model/geometry/tables';
@@ -613,6 +613,46 @@ function chartText(id: string, order: number, bounds: Bounds, x: number, y: numb
   return { type: 'text', id, order, bounds, x, y, width, height, lines: [text], fontFamily: chart.font_family ?? DEFAULT_FONT, fontSize: Math.max(9, finite(chart.font_size, 12)), fontWeight: 'normal', color: chart.text_color ?? '#0f172a', align, verticalAlign: 'top', lineHeight: 1.2, rotation, rotationCenter: rotation ? { x, y } : undefined };
 }
 
+// Heatmap only, for now: value <-> color-band bucketing. Ported from
+// stickyflow-atlas's entities/charts/ui/chartScale.ts (axisBands/
+// bandIndexForValue/contrastTextColor) rather than shared via an import -
+// this package has no equivalent cross-package boundary to atlas, and these
+// are small enough that duplicating them beats depending on Atlas's app code.
+const DEFAULT_ZONE_FILL = '#94a3b8';
+const DEFAULT_HEATMAP_ZONES: ChartZone[] = [
+  { label: 'Low', color: '#ddd6fe' },
+  { label: 'Medium', color: '#a78bfa' },
+  { label: 'High', color: '#6d28d9' },
+];
+
+/** Sorted band boundaries axis_y.thresholds splits the value range into,
+ *  including min/max as the outer edges - N in-range thresholds produce N+1
+ *  bands. Out-of-range thresholds are dropped rather than clamped, so a
+ *  mistaken threshold outside [min, max] can't silently collapse a band to
+ *  zero width. */
+function axisBands(axis: ChartAxis): number[] {
+  const thresholds = [...(axis.thresholds ?? [])].filter(t => t > axis.min && t < axis.max).sort((a, b) => a - b);
+  return [axis.min, ...thresholds, axis.max];
+}
+
+/** Index of the band (from axisBands) a value falls into - values outside
+ *  [min, max] clamp into the outermost band. */
+function bandIndexForValue(value: number, bands: number[]): number {
+  for (let i = 0; i < bands.length - 2; i++) if (value < bands[i + 1]) return i;
+  return Math.max(0, bands.length - 2);
+}
+
+/** Black or white, whichever reads better on top of the given hex fill - used
+ *  where a label sits directly on a data-driven color (a heatmap cell)
+ *  instead of the chart's fixed text_color. */
+function contrastTextColor(hex: string | undefined): string {
+  if (!hex || hex[0] !== '#') return '#0f172a';
+  const digits = hex.length === 4 ? hex.slice(1).split('').map(c => parseInt(c + c, 16)) : [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const [r, g, b] = digits;
+  if ([r, g, b].some(c => Number.isNaN(c))) return '#0f172a';
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#0f172a' : '#ffffff';
+}
+
 // SFL 1.4, §5.4.5: a series' raw error entry (symmetric number or asymmetric
 // [low, high] pair) resolved against its point's own value into an absolute
 // [low, high] range on the value axis.
@@ -698,7 +738,12 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
   let offset = .01;
   if (chart.title) nodes.push({ ...chartText(`chart-title-${chart.id}`, order + offset++, bounds, plot.x, chart.y + 12, plot.width, 20, chart.title, chart), fontWeight: 'bold', fontSize: Math.max(10, finite(chart.font_size, 12)) + 2 });
-  if (showLegend) {
+  // Heatmap's own zone/threshold legend (drawn inside its own branch below)
+  // replaces this one entirely : chart.series there is data rows, not
+  // color-coded legend entries, so drawing per-series swatches from
+  // CHART_COLORS would show a palette that has nothing to do with the
+  // heatmap's actual cell colors.
+  if (showLegend && chart.chart_type !== 'heatmap') {
     let x = plot.x + plot.width;
     // Fields §3.4: a scalar series' own color is meaningless (the ramp
     // explains the surface, not the swatch) - its colorbar covers that
@@ -754,7 +799,9 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
     });
     return nodes;
   }
-  if (chart.show_grid !== false) {
+  // Heatmap has no numeric axis to tick - it draws its own cell borders
+  // inside its own branch below.
+  if (chart.show_grid !== false && chart.chart_type !== 'heatmap') {
     const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } }, gridWidth = finite(chart.grid_width, 1);
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + offset++, bounds, x: plot.x, y: y - gridWidth / 2, width: plot.width, height: gridWidth, style: gridStyle }); });
@@ -834,6 +881,55 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       nodes.push(chartText(`chart-field-colorbar-min-${chart.id}`, order + offset++, bounds, barX, barY + barHeight + 3, 80, 16, formatFieldValue(min), chart));
       nodes.push(chartText(`chart-field-colorbar-max-${chart.id}`, order + offset++, bounds, barX + barWidth - 80, barY + barHeight + 3, 80, 16, formatFieldValue(max), chart, 'right'));
     }
+  } else if (chart.chart_type === 'heatmap') {
+    // Grid heatmap: config.categories are column headers, each series is one
+    // row (series.label is the row header, series.values one plain number per
+    // column). A cell's color comes from bucketing its value into one of
+    // axis_y's `thresholds` bands and looking up config.zones' ascending
+    // low->high color for that band.
+    const rows = chart.series;
+    const columns = chart.config?.categories?.length ? chart.config.categories : ((rows[0]?.values as number[] | undefined)?.map((_, i) => String(i + 1)) ?? []);
+    const bandsArr = axisBands(chart.axis_y);
+    const zones = chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES;
+    const heatmapFontSize = Math.max(9, finite(chart.font_size, 12));
+    const rowHeaderWidth = showLabels ? Math.min(96, Math.max(0, plot.width * .3)) : 0;
+    const colHeaderHeight = showLabels ? 24 : 0;
+    const legendHeight = showLegend ? 22 : 0;
+    const gridX = plot.x + rowHeaderWidth, gridY = plot.y + colHeaderHeight;
+    const gridWidth = Math.max(1, plot.width - rowHeaderWidth);
+    const gridHeight = Math.max(1, plot.height - colHeaderHeight - legendHeight);
+    const cellW = columns.length ? gridWidth / columns.length : gridWidth;
+    const cellH = rows.length ? gridHeight / rows.length : gridHeight;
+
+    rows.forEach((series, rowIndex) => {
+      const values = series.values as number[];
+      const y = gridY + rowIndex * cellH;
+      columns.forEach((_, colIndex) => {
+        const value = values[colIndex] ?? 0;
+        const color = zones[bandIndexForValue(value, bandsArr)]?.color ?? DEFAULT_ZONE_FILL;
+        const x = gridX + colIndex * cellW;
+        nodes.push({ type: 'rect', id: `chart-heatmap-cell-${chart.id}-${series.id}-${colIndex}`, order: order + offset++, bounds, x, y, width: cellW, height: cellH, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } });
+        nodes.push({ ...chartText(`chart-heatmap-value-${chart.id}-${series.id}-${colIndex}`, order + offset++, bounds, x, y + cellH / 2 - heatmapFontSize / 2, cellW, heatmapFontSize + 2, String(value), chart, 'center'), color: contrastTextColor(color) });
+      });
+    });
+    if (rowHeaderWidth > 0) rows.forEach((series, rowIndex) => {
+      nodes.push(chartText(`chart-heatmap-row-${chart.id}-${series.id}`, order + offset++, bounds, plot.x, gridY + rowIndex * cellH + cellH / 2 - heatmapFontSize / 2, rowHeaderWidth - 8, heatmapFontSize + 2, series.label, chart));
+    });
+    if (colHeaderHeight > 0) columns.forEach((label, colIndex) => {
+      nodes.push(chartText(`chart-heatmap-col-${chart.id}-${colIndex}`, order + offset++, bounds, gridX + colIndex * cellW, plot.y, cellW, heatmapFontSize + 2, label, chart, 'center'));
+    });
+    if (legendHeight > 0) {
+      const legendItemWidths = zones.map(zone => Math.max(64, (zone.label?.length ?? 0) * (heatmapFontSize - 1) * .55 + 40));
+      let legendX = gridX;
+      const legendY = gridY + gridHeight + 6;
+      zones.forEach((zone, i) => {
+        const [lo, hi] = [bandsArr[i], bandsArr[i + 1]];
+        const swatchColor = zone.color ?? DEFAULT_ZONE_FILL;
+        nodes.push({ type: 'rect', id: `chart-heatmap-legend-swatch-${chart.id}-${i}`, order: order + offset++, bounds, x: legendX, y: legendY + 2, width: 10, height: 10, rx: 2, style: { fill: { kind: 'solid', color: swatchColor } } });
+        nodes.push(chartText(`chart-heatmap-legend-${chart.id}-${i}`, order + offset++, bounds, legendX + 15, legendY, legendItemWidths[i] - 15, heatmapFontSize, zone.label ? `${zone.label} (${lo}-${hi})` : `${lo}-${hi}`, chart));
+        legendX += legendItemWidths[i];
+      });
+    }
   } else if (chart.chart_type === 'bar' && stackedMode) {
     const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, slot - 8);
     for (let i = 0; i < count; i++) {
@@ -880,9 +976,16 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       }
     });
   }
-  const ruleNodes = buildChartRules(chart, plot, bounds, order + offset);
-  nodes.push(...ruleNodes); offset += ruleNodes.length;
-  if (showLabels) {
+  // Rules plot a fixed position on axis_y - meaningless for heatmap, whose
+  // axis_y buckets a value into a threshold band rather than placing it at a
+  // pixel, so there's no coherent "position" for a rule line to sit at.
+  if (chart.chart_type !== 'heatmap') {
+    const ruleNodes = buildChartRules(chart, plot, bounds, order + offset);
+    nodes.push(...ruleNodes); offset += ruleNodes.length;
+  }
+  // Heatmap draws its own row/column headers inside its own branch above -
+  // axis_x/axis_y have no numeric ticks to label here.
+  if (showLabels && chart.chart_type !== 'heatmap') {
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
     if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + offset++, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));
