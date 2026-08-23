@@ -33,13 +33,13 @@ describe('supported chart types', () => {
   });
 
   it('exposes exactly the types the renderer actually branches on', () => {
-    expect([...CHART_TYPES].sort()).toEqual(['bar', 'field', 'heatmap', 'line', 'radar', 'radial', 'scatter']);
+    expect([...CHART_TYPES].sort()).toEqual(['bar', 'boxplot', 'field', 'heatmap', 'line', 'radar', 'radial', 'scatter']);
   });
 });
 
 describe('unsupported chart types', () => {
-  // The nine stickyflow-atlas draws and this package does not.
-  const atlasOnly = ['hexbin', 'sankey', 'treemap', 'pie', 'boxplot', 'matrix', 'mekko', 'grid', 'custom'];
+  // The eight stickyflow-atlas draws and this package does not.
+  const atlasOnly = ['hexbin', 'sankey', 'treemap', 'pie', 'matrix', 'mekko', 'grid', 'custom'];
 
   it.each(atlasOnly)('reports a warning for "%s"', type => {
     const { diagnostics } = render(chart(type));

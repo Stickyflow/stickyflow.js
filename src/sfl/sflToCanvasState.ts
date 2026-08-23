@@ -61,7 +61,7 @@ export interface SflEntityOut {
     value?: number;
   };
   chart?: {
-    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap';
+    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot';
     categories?: string[];
     areaOpacity?: number;
     // SFL 1.4, §5.4.1: bar-only, 'none'/absent both mean today's grouped
@@ -78,6 +78,9 @@ export interface SflEntityOut {
     // Heatmap only: ordered low->high color bands for axisY.thresholds (one
     // more zone than thresholds).
     zones?: Array<{ label: string; color?: string }>;
+    // Boxplot only.
+    boxWidth?: number; barCornerRadius?: number; showBoxplotPoints?: boolean;
+    barBorderColor?: string; barBorderWidth?: number;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][]; error?: Array<number | [number, number] | null> }>;
@@ -569,7 +572,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         })
         : undefined;
       chartData = {
-        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | undefined) ?? 'bar',
+        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | undefined) ?? 'bar',
         categories, areaOpacity: asNumber(p.get('areaOpacity')),
         stacked: stackedValue && stackedValue !== 'none' ? (stackedValue as 'true' | 'percent' | 'waterfall') : undefined,
         // Fields §3.4.
@@ -578,6 +581,9 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         idwPower: asNumber(p.get('idwPower')),
         isolines: isolines?.length ? isolines : undefined,
         zones: zones?.length ? zones : undefined,
+        boxWidth: asNumber(p.get('boxWidth')), barCornerRadius: asNumber(p.get('barCornerRadius')),
+        showBoxplotPoints: asString(p.get('showBoxplotPoints')) === undefined ? undefined : asString(p.get('showBoxplotPoints')) === 'true',
+        barBorderColor: asString(p.get('barBorderColor')), barBorderWidth: asNumber(p.get('barBorderWidth')),
         axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
         series, rules,
       };

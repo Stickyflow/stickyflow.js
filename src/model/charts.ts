@@ -1,4 +1,4 @@
-export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap';
+export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot';
 
 /** Every `type:` value a Chart block can carry, as a real runtime array
  *  (`ChartType` itself only exists at compile time) — same pattern as
@@ -9,7 +9,7 @@ export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field
  *  Deliberately narrower than stickyflow-atlas's own union: atlas additionally
  *  draws hexbin/sankey/treemap/pie/boxplot/matrix/mekko/grid/custom, none of
  *  which this package implements yet. */
-export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field', 'heatmap'];
+export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field', 'heatmap', 'boxplot'];
 export interface ChartAxis {
   min: number; max: number; step: number; label?: string;
   // SFL 1.4, §5.4: the axis's unit of measure ("k€", "%", "days"…) - purely
@@ -81,6 +81,9 @@ export interface Chart {
     // than thresholds) - conditional-formatting-style value coloring, not a
     // position grid.
     zones?: ChartZone[];
+    // Boxplot only.
+    boxWidth?: number; barCornerRadius?: number; showBoxplotPoints?: boolean;
+    barBorderColor?: string; barBorderWidth?: number;
     // Bar only (SFL 1.4, §5.4.1): how series at the same category relate to
     // each other. 'none'/absent = today's grouped side-by-side bars.
     // 'true'/'percent' = cumulative stack across series at one category

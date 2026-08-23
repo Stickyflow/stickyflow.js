@@ -645,6 +645,27 @@ function bandIndexForValue(value: number, bands: number[]): number {
 /** Black or white, whichever reads better on top of the given hex fill - used
  *  where a label sits directly on a data-driven color (a heatmap cell)
  *  instead of the chart's fixed text_color. */
+/** Linear-interpolation percentile ("type 7", R/numpy/ggplot2's default) -
+ *  `sorted` must already be ascending. Boxplot only. */
+function quantile(sorted: number[], p: number): number {
+  const n = sorted.length;
+  if (n === 1) return sorted[0];
+  const h = (n - 1) * p, lo = Math.floor(h), hi = Math.ceil(h);
+  return lo === hi ? sorted[lo] : sorted[lo] + (h - lo) * (sorted[hi] - sorted[lo]);
+}
+
+interface BoxplotStats { min: number; q1: number; median: number; q3: number; max: number; }
+
+/** Five-number summary of a category's raw sample values - null for an empty
+ *  series. Whiskers are the true min/max of the sample, not an IQR-based
+ *  outlier cutoff - matches what's actually shown (every raw value as its own
+ *  jittered point). */
+function computeBoxplotStats(values: number[]): BoxplotStats | null {
+  if (!values?.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  return { min: sorted[0], q1: quantile(sorted, .25), median: quantile(sorted, .5), q3: quantile(sorted, .75), max: sorted[sorted.length - 1] };
+}
+
 function contrastTextColor(hex: string | undefined): string {
   if (!hex || hex[0] !== '#') return '#0f172a';
   const digits = hex.length === 4 ? hex.slice(1).split('').map(c => parseInt(c + c, 16)) : [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
@@ -743,7 +764,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   // color-coded legend entries, so drawing per-series swatches from
   // CHART_COLORS would show a palette that has nothing to do with the
   // heatmap's actual cell colors.
-  if (showLegend && chart.chart_type !== 'heatmap') {
+  if (showLegend && chart.chart_type !== 'heatmap' && chart.chart_type !== 'boxplot') {
     let x = plot.x + plot.width;
     // Fields §3.4: a scalar series' own color is meaningless (the ramp
     // explains the surface, not the swatch) - its colorbar covers that
@@ -930,6 +951,44 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         legendX += legendItemWidths[i];
       });
     }
+  } else if (chart.chart_type === 'boxplot') {
+    // Each series IS one box: min/q1/median/q3/max via computeBoxplotStats,
+    // whiskers reach the true min/max, and (when showBoxplotPoints) every raw
+    // value is its own deterministically-jittered dot (hashed from its index,
+    // not Math.random, so re-rendering the same data doesn't reshuffle them).
+    // Vertical only - this package's bar has no horizontal flag either.
+    const boxCount = Math.max(1, chart.series.length);
+    const boxWidthFraction = Math.min(1, Math.max(.05, chart.config?.boxWidth ?? .6));
+    const boxCornerRadius = chart.config?.barCornerRadius ?? 2;
+    const showPoints = chart.config?.showBoxplotPoints ?? true;
+    const borderColor = chart.config?.barBorderColor || '#000000';
+    const borderWidth = finite(chart.config?.barBorderWidth, 1);
+    const jitter = (seed: number) => { const h = Math.sin(seed * 12.9898) * 43758.5453; return (h - Math.floor(h)) - .5; };
+    const boxLine = (id: string, x1: number, y1: number, x2: number, y2: number, width: number): RenderNode =>
+      ({ type: 'path', id, order: order + offset++, bounds, d: `M ${x1} ${y1} L ${x2} ${y2}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: width } });
+    const slotWidth = plot.width / boxCount, boxWidth = Math.max(4, slotWidth * boxWidthFraction);
+    chart.series.forEach((series, seriesIndex) => {
+      const stats = computeBoxplotStats(series.values as number[]);
+      if (!stats) return;
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      const x = plot.x + seriesIndex * slotWidth + slotWidth / 2;
+      const minY = plot.y + plot.height - mapChartValue(stats.min, chart.axis_y, plot.height);
+      const q1Y = plot.y + plot.height - mapChartValue(stats.q1, chart.axis_y, plot.height);
+      const medianY = plot.y + plot.height - mapChartValue(stats.median, chart.axis_y, plot.height);
+      const q3Y = plot.y + plot.height - mapChartValue(stats.q3, chart.axis_y, plot.height);
+      const maxY = plot.y + plot.height - mapChartValue(stats.max, chart.axis_y, plot.height);
+      const capHalf = boxWidth * .2;
+      const id = `${chart.id}-${series.id}`;
+      nodes.push(boxLine(`chart-box-whisker-lo-${id}`, x, minY, x, q1Y, 1));
+      nodes.push(boxLine(`chart-box-whisker-hi-${id}`, x, q3Y, x, maxY, 1));
+      nodes.push(boxLine(`chart-box-cap-lo-${id}`, x - capHalf, minY, x + capHalf, minY, 1));
+      nodes.push(boxLine(`chart-box-cap-hi-${id}`, x - capHalf, maxY, x + capHalf, maxY, 1));
+      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: x - boxWidth / 2, y: q3Y, width: boxWidth, height: Math.max(1, q1Y - q3Y), rx: boxCornerRadius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
+      nodes.push(boxLine(`chart-box-median-${id}`, x - boxWidth / 2, medianY, x + boxWidth / 2, medianY, 2));
+      if (showPoints) (series.values as number[]).forEach((value, pi) => {
+        nodes.push({ type: 'ellipse', id: `chart-box-point-${id}-${pi}`, order: order + offset++, bounds, cx: x + jitter(seriesIndex * 10_000 + pi) * boxWidth, cy: plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height), rx: 3, ry: 3, style: { fill: { kind: 'solid', color }, opacity: .7 } });
+      });
+    });
   } else if (chart.chart_type === 'bar' && stackedMode) {
     const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, slot - 8);
     for (let i = 0; i < count; i++) {

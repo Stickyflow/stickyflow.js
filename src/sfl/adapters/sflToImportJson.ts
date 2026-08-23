@@ -144,6 +144,9 @@ function chartObject(e: SflEntityOut): any {
       idwPower: e.chart?.idwPower, isolines: e.chart?.isolines,
       // Heatmap only.
       zones: e.chart?.zones,
+      // Boxplot only.
+      boxWidth: e.chart?.boxWidth, barCornerRadius: e.chart?.barCornerRadius,
+      showBoxplotPoints: e.chart?.showBoxplotPoints, barBorderColor: e.chart?.barBorderColor, barBorderWidth: e.chart?.barBorderWidth,
     },
     series: e.chart?.series ?? [],
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),
