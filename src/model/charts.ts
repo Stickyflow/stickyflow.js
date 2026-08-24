@@ -1,23 +1,20 @@
-export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin';
+export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin' | 'pie' | 'matrix' | 'grid' | 'custom';
 
 /** Every `type:` value a Chart block can carry, as a real runtime array
  *  (`ChartType` itself only exists at compile time) — same pattern as
  *  `SHAPE_TYPES`. The renderer checks incoming charts against this so an
  *  unsupported type is reported rather than silently drawn as something else;
- *  a host building a chart-type picker can iterate it for the same reason.
- *
- *  Deliberately narrower than stickyflow-atlas's own union: atlas additionally
- *  draws pie/matrix/grid/custom, none of which this package implements yet. */
-export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field', 'heatmap', 'boxplot', 'sankey', 'treemap', 'mekko', 'hexbin'];
+ *  a host building a chart-type picker can iterate it for the same reason. */
+export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field', 'heatmap', 'boxplot', 'sankey', 'treemap', 'mekko', 'hexbin', 'pie', 'matrix', 'grid', 'custom'];
 export interface ChartAxis {
   min: number; max: number; step: number; label?: string;
   // SFL 1.4, §5.4: the axis's unit of measure ("k€", "%", "days"…) - purely
   // semantic, not how it's drawn, applies to either axis.
   unit?: string;
-  // Heatmap only, axis_y: values within [min, max] that split the value range
-  // into color bands, paired with ChartConfig.zones (one more zone than
-  // thresholds - N thresholds make N+1 bands). Sorted ascending; ignored by
-  // every other chart family.
+  // Heatmap (axis_y only) and matrix (both axes): values within [min, max]
+  // that split the value range into color bands, paired with
+  // ChartConfig.zones (one more zone than thresholds - N thresholds make
+  // N+1 bands). Sorted ascending; ignored by every other chart family.
   thresholds?: number[];
 }
 
@@ -55,6 +52,15 @@ export interface ChartSeries {
   // instead of point data - `values[0]` is the flow's magnitude.
   source?: string;
   target?: string;
+  // Matrix only: this series' point-mark radius in pixels, overriding the
+  // chart's own default mark size.
+  size?: number;
+  // Custom only: draws this series as a closed polygon glyph at each data
+  // point instead of the usual bar/line/dot mark - `points` are offsets in
+  // local mark-space (not data units), traced in order and closed.
+  symbol?: { points: Array<[number, number]> };
+  stroke?: string;
+  stroke_width?: number;
 }
 
 // Chart's second addressable leaf alongside Series (SFL 1.4, §1.2/§5.4.8): a
@@ -102,6 +108,9 @@ export interface Chart {
     mekkoVaryHeight?: boolean;
     // Hexbin only: pixel radius of each hexagon cell.
     hexRadius?: number;
+    // Pie only: >0 turns the disc into a donut, punching a hole of this
+    // pixel radius through its center. 0/absent is a solid pie.
+    innerRadius?: number;
     // Fields §3.4.
     scale?: ChartRamp;
     interpolate?: 'idw';

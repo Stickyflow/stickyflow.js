@@ -3,10 +3,11 @@ import { CHART_TYPES, render } from '../src/index';
 
 // An unrecognised Chart `type:` used to fall through to the generic series
 // path and come out as a scatter plot — no error, no diagnostic, just a wrong
-// picture that looked deliberate. stickyflow-atlas draws four chart types this
-// package doesn't, so this is exactly the case a host hits when moving SFL
-// between the two. It still renders (a rough plot beats a blank box), but it
-// now says so.
+// picture that looked deliberate. This package now implements every chart
+// type stickyflow-atlas draws, so there's no real type left to provoke this
+// with - the tests below use a made-up one instead, purely to pin the
+// fallback/diagnostic behavior itself. It still renders (a rough plot beats
+// a blank box), but it now says so.
 
 const chart = (type: string) => `sfl 1.2
 Model M {
@@ -33,15 +34,16 @@ describe('supported chart types', () => {
   });
 
   it('exposes exactly the types the renderer actually branches on', () => {
-    expect([...CHART_TYPES].sort()).toEqual(['bar', 'boxplot', 'field', 'heatmap', 'hexbin', 'line', 'mekko', 'radar', 'radial', 'sankey', 'scatter', 'treemap']);
+    expect([...CHART_TYPES].sort()).toEqual(['bar', 'boxplot', 'custom', 'field', 'grid', 'heatmap', 'hexbin', 'line', 'matrix', 'mekko', 'pie', 'radar', 'radial', 'sankey', 'scatter', 'treemap']);
   });
 });
 
 describe('unsupported chart types', () => {
-  // The four stickyflow-atlas draws and this package does not.
-  const atlasOnly = ['pie', 'matrix', 'grid', 'custom'];
+  // No real Atlas type is left unsupported - these use made-up type names
+  // purely to exercise the unrecognised-type fallback/diagnostic itself.
+  const madeUp = ['pyramid', 'gantt'];
 
-  it.each(atlasOnly)('reports a warning for "%s"', type => {
+  it.each(madeUp)('reports a warning for "%s"', type => {
     const { diagnostics } = render(chart(type));
     const warning = diagnostics.find(d => d.code === 'unsupported-chart-type');
     expect(warning).toBeDefined();
@@ -51,13 +53,13 @@ describe('unsupported chart types', () => {
   });
 
   it('names the supported alternatives in the message', () => {
-    const { diagnostics } = render(chart('matrix'));
+    const { diagnostics } = render(chart('pyramid'));
     const warning = diagnostics.find(d => d.code === 'unsupported-chart-type')!;
     for (const supported of CHART_TYPES) expect(warning.message).toContain(supported);
   });
 
   it('still renders something rather than dropping the chart', () => {
-    const { scene } = render(chart('pie'));
+    const { scene } = render(chart('pyramid'));
     expect(scene.nodes.filter(node => node.sfRole === 'chart').length).toBeGreaterThan(0);
   });
 
@@ -65,13 +67,13 @@ describe('unsupported chart types', () => {
     const two = `sfl 1.2
 Model M {
   Chart a {
-    type: matrix
+    type: pyramid
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 1; step: 1 }
     layout { position: 0, 0; size: 100, 100 }
   }
   Chart b {
-    type: grid
+    type: gantt
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 1; step: 1 }
     layout { position: 150, 0; size: 100, 100 }

@@ -151,6 +151,8 @@ function chartObject(e: SflEntityOut): any {
       mekkoVaryHeight: e.chart?.mekkoVaryHeight,
       // Hexbin only.
       hexRadius: e.chart?.hexRadius,
+      // Pie only.
+      innerRadius: e.chart?.innerRadius,
     },
     series: e.chart?.series ?? [],
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),

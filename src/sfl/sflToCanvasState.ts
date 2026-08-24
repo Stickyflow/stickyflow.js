@@ -61,7 +61,7 @@ export interface SflEntityOut {
     value?: number;
   };
   chart?: {
-    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin';
+    chartType: 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin' | 'pie' | 'matrix' | 'grid' | 'custom';
     categories?: string[];
     areaOpacity?: number;
     // SFL 1.4, §5.4.1: bar-only, 'none'/absent both mean today's grouped
@@ -85,9 +85,11 @@ export interface SflEntityOut {
     mekkoVaryHeight?: boolean;
     // Hexbin only: pixel radius of each hexagon cell.
     hexRadius?: number;
+    // Pie only: >0 turns the disc into a donut of this pixel radius.
+    innerRadius?: number;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
-    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][]; error?: Array<number | [number, number] | null>; source?: string; target?: string }>;
+    series: Array<{ id: string; label: string; color?: string; opacity?: number; values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][]; error?: Array<number | [number, number] | null>; source?: string; target?: string; size?: number; symbol?: { points: Array<[number, number]> }; stroke?: string; strokeWidth?: number }>;
     // SFL 1.4, §5.4.8
     rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
   };
@@ -536,7 +538,23 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
             return null;
           })
           : undefined;
-        return { id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), opacity: asNumber(seriesProps.get('opacity')), values, error, source: asString(seriesProps.get('source')), target: asString(seriesProps.get('target')) };
+        // Custom only: `symbol: [[x, y], [x, y], ...]` - offsets in local
+        // mark-space, traced in order and closed into a polygon glyph.
+        const symbolValue = seriesProps.get('symbol');
+        const symbolPoints = symbolValue?.type === 'list'
+          ? symbolValue.values.flatMap((v): Array<[number, number]> => {
+            if (v.type !== 'list' || v.values.length < 2) return [];
+            const x = asNumber(v.values[0]), y = asNumber(v.values[1]);
+            return x !== undefined && y !== undefined ? [[x, y]] : [];
+          })
+          : undefined;
+        return {
+          id: seriesBlock.name, label: asString(seriesProps.get('label')) ?? seriesBlock.name, color: asString(seriesProps.get('color')), opacity: asNumber(seriesProps.get('opacity')), values, error,
+          source: asString(seriesProps.get('source')), target: asString(seriesProps.get('target')),
+          size: asNumber(seriesProps.get('size')),
+          symbol: symbolPoints?.length ? { points: symbolPoints } : undefined,
+          stroke: asString(seriesProps.get('stroke')), strokeWidth: asNumber(seriesProps.get('strokeWidth')),
+        };
       });
       // SFL 1.4, §5.4.8: Chart's second leaf kind alongside Series, at the
       // same depth (§1.2) - read the same way, just a different block kind.
@@ -576,7 +594,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         })
         : undefined;
       chartData = {
-        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin' | undefined) ?? 'bar',
+        chartType: (asString(p.get('type')) as 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin' | 'pie' | 'matrix' | 'grid' | 'custom' | undefined) ?? 'bar',
         categories, areaOpacity: asNumber(p.get('areaOpacity')),
         stacked: stackedValue && stackedValue !== 'none' ? (stackedValue as 'true' | 'percent' | 'waterfall') : undefined,
         // Fields §3.4.
@@ -590,6 +608,7 @@ export function sflToCanvasState(sflText: string): SflCanvasState {
         barBorderColor: asString(p.get('barBorderColor')), barBorderWidth: asNumber(p.get('barBorderWidth')),
         mekkoVaryHeight: asString(p.get('mekkoVaryHeight')) === undefined ? undefined : asString(p.get('mekkoVaryHeight')) === 'true',
         hexRadius: asNumber(p.get('hexRadius')),
+        innerRadius: asNumber(p.get('innerRadius')),
         axisX: readAxis(axes.find(a => a.name === 'x')), axisY: readAxis(axes.find(a => a.name === 'y' || a.name === 'value')),
         series, rules,
       };

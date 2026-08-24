@@ -768,7 +768,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   // color-coded legend entries, so drawing per-series swatches from
   // CHART_COLORS would show a palette that has nothing to do with the
   // heatmap's actual cell colors.
-  if (showLegend && chart.chart_type !== 'heatmap' && chart.chart_type !== 'boxplot' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
+  if (showLegend && chart.chart_type !== 'heatmap' && chart.chart_type !== 'boxplot' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko' && chart.chart_type !== 'matrix') {
     let x = plot.x + plot.width;
     // Fields §3.4: a scalar series' own color is meaningless (the ramp
     // explains the surface, not the swatch) - its colorbar covers that
@@ -826,7 +826,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   }
   // Heatmap has no numeric axis to tick - it draws its own cell borders
   // inside its own branch below.
-  if (chart.show_grid !== false && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
+  if (chart.show_grid !== false && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko' && chart.chart_type !== 'pie' && chart.chart_type !== 'matrix') {
     const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } }, gridWidth = finite(chart.grid_width, 1);
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + offset++, bounds, x: plot.x, y: y - gridWidth / 2, width: plot.width, height: gridWidth, style: gridStyle }); });
@@ -1168,6 +1168,86 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         });
       });
     });
+  } else if (chart.chart_type === 'pie') {
+    // Each series IS one slice, sized by values[0]'s share of the series
+    // total - no axis_x/axis_y involvement at all, unlike every other chart
+    // family. config.innerRadius > 0 punches a donut hole through the center.
+    const total = chart.series.reduce((sum, series) => sum + Math.max(0, finite((series.values as number[])[0], 0)), 0) || 1;
+    const cx = plot.x + plot.width / 2, cy = plot.y + plot.height / 2;
+    const outerRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
+    const innerRadius = Math.max(0, Math.min(chart.config?.innerRadius ?? 0, outerRadius - 1));
+    const arcPoint = (angle: number, r: number) => ({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+    let angle = -Math.PI / 2;
+    chart.series.forEach((series, seriesIndex) => {
+      const value = Math.max(0, finite((series.values as number[])[0], 0));
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      const sweep = value / total * Math.PI * 2;
+      if (sweep <= 0) return;
+      // A single 360° slice degenerates an SVG arc (identical start/end
+      // point), so a full circle is drawn as a 359.999° arc instead.
+      const endAngle = angle + Math.min(sweep, Math.PI * 2 * (359.999 / 360));
+      const largeArc = endAngle - angle > Math.PI ? 1 : 0;
+      const outerStart = arcPoint(angle, outerRadius), outerEnd = arcPoint(endAngle, outerRadius);
+      const d = innerRadius > 0
+        ? (() => {
+          const innerEnd = arcPoint(endAngle, innerRadius), innerStart = arcPoint(angle, innerRadius);
+          return `M ${outerStart.x} ${outerStart.y} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerEnd.x} ${innerEnd.y} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y} Z`;
+        })()
+        : `M ${cx} ${cy} L ${outerStart.x} ${outerStart.y} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} Z`;
+      nodes.push({ type: 'path', id: `chart-pie-slice-${chart.id}-${series.id}`, order: order + offset++, bounds, d, style: { fill: { kind: 'solid', color } } });
+      angle += sweep;
+    });
+  } else if (chart.chart_type === 'matrix') {
+    // Two-axis quadrant chart: axis_x/axis_y thresholds each band their axis
+    // into N+1 ranges (axisBands, same helper heatmap uses); config.zones
+    // colors each resulting cell, indexed row-major with y ascending
+    // (zones[yBand * xBandCount + xBand]) - purely a label/color backdrop,
+    // optional. Every series is ONE point (values[0] = [x, y]), marker size
+    // from that series' own `size`, not axis-driven like a bubble chart.
+    const xBands = axisBands(chart.axis_x), yBands = axisBands(chart.axis_y);
+    const xBandCount = xBands.length - 1, yBandCount = yBands.length - 1;
+    const zones = chart.config?.zones ?? [];
+    const xPixel = (value: number) => plot.x + mapChartValue(value, chart.axis_x, plot.width);
+    const yPixel = (value: number) => plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height);
+    if (zones.length) for (let yi = 0; yi < yBandCount; yi++) for (let xi = 0; xi < xBandCount; xi++) {
+      const zone = zones[yi * xBandCount + xi];
+      if (!zone) continue;
+      const x1 = xPixel(xBands[xi]), x2 = xPixel(xBands[xi + 1]), y1 = yPixel(yBands[yi + 1]), y2 = yPixel(yBands[yi]);
+      nodes.push({ type: 'rect', id: `chart-matrix-zone-${chart.id}-${xi}-${yi}`, order: order + offset++, bounds, x: x1, y: y1, width: Math.max(0, x2 - x1), height: Math.max(0, y2 - y1), style: { fill: { kind: 'solid', color: zone.color ?? DEFAULT_ZONE_FILL } } });
+      if (zone.label) nodes.push({ ...chartText(`chart-matrix-zone-label-${chart.id}-${xi}-${yi}`, order + offset++, bounds, x1 + 6, y1 + 4, Math.max(0, x2 - x1) - 12, 16, zone.label, chart), color: contrastTextColor(zone.color) });
+    }
+    const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } };
+    for (let xi = 1; xi < xBandCount; xi++) { const x = xPixel(xBands[xi]); nodes.push({ type: 'rect', id: `chart-matrix-divider-x-${chart.id}-${xi}`, order: order + offset++, bounds, x: x - .5, y: plot.y, width: 1, height: plot.height, style: gridStyle }); }
+    for (let yi = 1; yi < yBandCount; yi++) { const y = yPixel(yBands[yi]); nodes.push({ type: 'rect', id: `chart-matrix-divider-y-${chart.id}-${yi}`, order: order + offset++, bounds, x: plot.x, y: y - .5, width: plot.width, height: 1, style: gridStyle }); }
+    chart.series.forEach((series, seriesIndex) => {
+      const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
+      const [vx, vy] = explicit ? (series.values as [number, number][])[0] : [chart.axis_x.min, (series.values as number[])[0] ?? chart.axis_y.min];
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      const r = Math.max(1, series.size ?? 5);
+      const x = xPixel(vx), y = yPixel(vy);
+      nodes.push({ type: 'ellipse', id: `chart-matrix-point-${chart.id}-${series.id}`, order: order + offset++, bounds, cx: x, cy: y, rx: r, ry: r, style: { fill: { kind: 'solid', color } } });
+      if (showLabels && series.label) nodes.push(chartText(`chart-matrix-label-${chart.id}-${series.id}`, order + offset++, bounds, x + r + 4, y - 7, 120, 14, series.label, chart));
+    });
+  } else if (chart.chart_type === 'custom') {
+    // Every series draws its own `symbol.points` polygon (offsets in local
+    // mark-space, not data units) at each of its data points instead of the
+    // usual bar/line/dot mark. A series without a symbol falls back to a
+    // plain dot, same as the generic cartesian path below.
+    chart.series.forEach((series, seriesIndex) => {
+      const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
+      const pairs = explicit ? (series.values as number[][]).map(v => [v[0], v[1]] as [number, number]) : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      pairs.forEach(([vx, vy], i) => {
+        const x = plot.x + mapChartValue(vx, chart.axis_x, plot.width), y = plot.y + plot.height - mapChartValue(vy, chart.axis_y, plot.height);
+        const style: SceneStyle = { fill: { kind: 'solid', color }, stroke: series.stroke ? { kind: 'solid', color: series.stroke } : undefined, strokeWidth: series.stroke ? finite(series.stroke_width, 1) : undefined };
+        if (series.symbol?.points.length) {
+          const d = `${series.symbol.points.map(([dx, dy], pi) => `${pi === 0 ? 'M' : 'L'} ${x + dx} ${y + dy}`).join(' ')} Z`;
+          nodes.push({ type: 'path', id: `chart-custom-mark-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, d, style });
+        } else {
+          nodes.push({ type: 'ellipse', id: `chart-custom-mark-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, cx: x, cy: y, rx: 3, ry: 3, style });
+        }
+      });
+    });
   } else if (chart.chart_type === 'bar' && stackedMode) {
     const count = Math.max(1, ...chart.series.map(item => item.values.length)), slot = plot.width / count, barWidth = Math.max(1, slot - 8);
     for (let i = 0; i < count; i++) {
@@ -1217,13 +1297,13 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   // Rules plot a fixed position on axis_y - meaningless for heatmap, whose
   // axis_y buckets a value into a threshold band rather than placing it at a
   // pixel, so there's no coherent "position" for a rule line to sit at.
-  if (chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
+  if (chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko' && chart.chart_type !== 'pie' && chart.chart_type !== 'matrix') {
     const ruleNodes = buildChartRules(chart, plot, bounds, order + offset);
     nodes.push(...ruleNodes); offset += ruleNodes.length;
   }
   // Heatmap draws its own row/column headers inside its own branch above -
   // axis_x/axis_y have no numeric ticks to label here.
-  if (showLabels && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
+  if (showLabels && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko' && chart.chart_type !== 'pie' && chart.chart_type !== 'matrix') {
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
     if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + offset++, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));
