@@ -1,4 +1,4 @@
-export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot';
+export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin';
 
 /** Every `type:` value a Chart block can carry, as a real runtime array
  *  (`ChartType` itself only exists at compile time) — same pattern as
@@ -7,9 +7,8 @@ export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field
  *  a host building a chart-type picker can iterate it for the same reason.
  *
  *  Deliberately narrower than stickyflow-atlas's own union: atlas additionally
- *  draws hexbin/sankey/treemap/pie/boxplot/matrix/mekko/grid/custom, none of
- *  which this package implements yet. */
-export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field', 'heatmap', 'boxplot'];
+ *  draws pie/matrix/grid/custom, none of which this package implements yet. */
+export const CHART_TYPES: ChartType[] = ['bar', 'line', 'scatter', 'radar', 'radial', 'field', 'heatmap', 'boxplot', 'sankey', 'treemap', 'mekko', 'hexbin'];
 export interface ChartAxis {
   min: number; max: number; step: number; label?: string;
   // SFL 1.4, §5.4: the axis's unit of measure ("k€", "%", "days"…) - purely
@@ -22,12 +21,14 @@ export interface ChartAxis {
   thresholds?: number[];
 }
 
-// Heatmap only (for now - matrix/treemap/sankey reuse this same shape in
-// stickyflow-atlas, kept narrower here until this package draws those too):
-// a named, colored value band. A plain string color, not a gradient/mesh/
-// pattern union like atlas's ChartZone - atlas's own comment on that field
-// notes a heatmap zone never actually receives anything but a solid color in
-// practice, so there's nothing to widen this for yet.
+// Heatmap/treemap: a named, colored value band (axis_y.thresholds bucket a
+// value into one of these). Sankey reuses the same shape for a different
+// purpose - each zone IS a node (label = node id/display name, color = that
+// node's fill), not a value band. Matrix does too in stickyflow-atlas; this
+// package doesn't draw matrix yet. A plain string color, not a gradient/
+// mesh/pattern union like atlas's ChartZone - atlas's own comment on that
+// field notes a heatmap zone never actually receives anything but a solid
+// color in practice, so there's nothing to widen this for yet.
 export interface ChartZone {
   label: string;
   color?: string;
@@ -50,6 +51,10 @@ export interface ChartSeries {
   // [low, high] pair is asymmetric. `null` at an index means "no error bar
   // for this point" without breaking the index alignment.
   error?: Array<number | [number, number] | null>;
+  // Sankey only: a series IS a flow between two nodes (config.zones' labels)
+  // instead of point data - `values[0]` is the flow's magnitude.
+  source?: string;
+  target?: string;
 }
 
 // Chart's second addressable leaf alongside Series (SFL 1.4, §1.2/§5.4.8): a
@@ -90,6 +95,13 @@ export interface Chart {
     // (raw or normalized to 100%). 'waterfall' = a bar's baseline floats
     // with the running total of ITS OWN prior categories.
     stacked?: 'none' | 'true' | 'percent' | 'waterfall';
+    // Mekko only: column HEIGHT is proportional to that column's share of the
+    // grand total instead of every column filling the full plot height.
+    // Column WIDTH is always proportional to its total regardless of this
+    // flag - that's Mekko's defining trait, not optional. Defaults to false.
+    mekkoVaryHeight?: boolean;
+    // Hexbin only: pixel radius of each hexagon cell.
+    hexRadius?: number;
     // Fields §3.4.
     scale?: ChartRamp;
     interpolate?: 'idw';

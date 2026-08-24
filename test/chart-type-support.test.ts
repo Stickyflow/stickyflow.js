@@ -3,7 +3,7 @@ import { CHART_TYPES, render } from '../src/index';
 
 // An unrecognised Chart `type:` used to fall through to the generic series
 // path and come out as a scatter plot — no error, no diagnostic, just a wrong
-// picture that looked deliberate. stickyflow-atlas draws nine chart types this
+// picture that looked deliberate. stickyflow-atlas draws four chart types this
 // package doesn't, so this is exactly the case a host hits when moving SFL
 // between the two. It still renders (a rough plot beats a blank box), but it
 // now says so.
@@ -33,13 +33,13 @@ describe('supported chart types', () => {
   });
 
   it('exposes exactly the types the renderer actually branches on', () => {
-    expect([...CHART_TYPES].sort()).toEqual(['bar', 'boxplot', 'field', 'heatmap', 'line', 'radar', 'radial', 'scatter']);
+    expect([...CHART_TYPES].sort()).toEqual(['bar', 'boxplot', 'field', 'heatmap', 'hexbin', 'line', 'mekko', 'radar', 'radial', 'sankey', 'scatter', 'treemap']);
   });
 });
 
 describe('unsupported chart types', () => {
-  // The eight stickyflow-atlas draws and this package does not.
-  const atlasOnly = ['hexbin', 'sankey', 'treemap', 'pie', 'matrix', 'mekko', 'grid', 'custom'];
+  // The four stickyflow-atlas draws and this package does not.
+  const atlasOnly = ['pie', 'matrix', 'grid', 'custom'];
 
   it.each(atlasOnly)('reports a warning for "%s"', type => {
     const { diagnostics } = render(chart(type));
@@ -51,13 +51,13 @@ describe('unsupported chart types', () => {
   });
 
   it('names the supported alternatives in the message', () => {
-    const { diagnostics } = render(chart('sankey'));
+    const { diagnostics } = render(chart('matrix'));
     const warning = diagnostics.find(d => d.code === 'unsupported-chart-type')!;
     for (const supported of CHART_TYPES) expect(warning.message).toContain(supported);
   });
 
   it('still renders something rather than dropping the chart', () => {
-    const { scene } = render(chart('sankey'));
+    const { scene } = render(chart('pie'));
     expect(scene.nodes.filter(node => node.sfRole === 'chart').length).toBeGreaterThan(0);
   });
 
@@ -65,13 +65,13 @@ describe('unsupported chart types', () => {
     const two = `sfl 1.2
 Model M {
   Chart a {
-    type: sankey
+    type: matrix
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 1; step: 1 }
     layout { position: 0, 0; size: 100, 100 }
   }
   Chart b {
-    type: treemap
+    type: grid
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 1; step: 1 }
     layout { position: 150, 0; size: 100, 100 }

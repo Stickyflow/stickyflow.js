@@ -7,6 +7,9 @@ import type { Swimlane } from '../model/swimlanes';
 import { computeRowHeight, type Table } from '../model/tables';
 import type { FreeformPath, PathPoint } from '../model/paths';
 import { CHART_TYPES, type Chart, type ChartAxis, type ChartZone } from '../model/charts';
+import { layoutSankey } from '../model/geometry/sankey';
+import { squarifyTreemap } from '../model/geometry/treemap';
+import { computeHexBins } from '../model/geometry/hexbin';
 import { colorAtRamp, computeFieldGrid, type FieldSample } from './field';
 import { computeIsolineSegments } from './isolines';
 import { tableBorderGeometry } from '../model/geometry/tables';
@@ -624,6 +627,7 @@ const DEFAULT_HEATMAP_ZONES: ChartZone[] = [
   { label: 'Medium', color: '#a78bfa' },
   { label: 'High', color: '#6d28d9' },
 ];
+const DEFAULT_HEX_RADIUS = 14;
 
 /** Sorted band boundaries axis_y.thresholds splits the value range into,
  *  including min/max as the outer edges - N in-range thresholds produce N+1
@@ -764,7 +768,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   // color-coded legend entries, so drawing per-series swatches from
   // CHART_COLORS would show a palette that has nothing to do with the
   // heatmap's actual cell colors.
-  if (showLegend && chart.chart_type !== 'heatmap' && chart.chart_type !== 'boxplot') {
+  if (showLegend && chart.chart_type !== 'heatmap' && chart.chart_type !== 'boxplot' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
     let x = plot.x + plot.width;
     // Fields §3.4: a scalar series' own color is meaningless (the ramp
     // explains the surface, not the swatch) - its colorbar covers that
@@ -822,7 +826,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   }
   // Heatmap has no numeric axis to tick - it draws its own cell borders
   // inside its own branch below.
-  if (chart.show_grid !== false && chart.chart_type !== 'heatmap') {
+  if (chart.show_grid !== false && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
     const gridStyle: SceneStyle = { fill: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' } }, gridWidth = finite(chart.grid_width, 1);
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + offset++, bounds, x: x - gridWidth / 2, y: plot.y, width: gridWidth, height: plot.height, style: gridStyle }); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + offset++, bounds, x: plot.x, y: y - gridWidth / 2, width: plot.width, height: gridWidth, style: gridStyle }); });
@@ -951,6 +955,147 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         legendX += legendItemWidths[i];
       });
     }
+  } else if (chart.chart_type === 'sankey') {
+    // config.zones IS the node list here (label = node id/display name, color
+    // = that node's fill) - not a value-color legend like heatmap. Each
+    // series is a flow between two nodes (series.source/target reference
+    // zone labels), values[0] its magnitude.
+    const sankeyFontSize = Math.max(9, finite(chart.font_size, 12));
+    const labelGutter = showLabels ? 92 : 0;
+    const nodeInputs = (chart.config?.zones ?? []).map(zone => ({ id: zone.label, label: zone.label, color: zone.color }));
+    const linkInputs = chart.series
+      .filter(series => series.source && series.target)
+      .map(series => ({ source: series.source!, target: series.target!, value: (series.values as number[])[0] ?? 0, color: series.color }));
+    const availableWidth = Math.max(1, plot.width - labelGutter * 2);
+    const originX = labelGutter;
+    const { nodes: sankeyNodes, links } = layoutSankey(nodeInputs, linkInputs, availableWidth, plot.height);
+    const numColumns = Math.max(1, ...sankeyNodes.map(n => n.column + 1));
+    const colorOf = (id: string) => sankeyNodes.find(n => n.id === id)?.color || DEFAULT_ZONE_FILL;
+    const baseX = plot.x + originX, baseY = plot.y;
+
+    links.forEach((link, linkIndex) => {
+      const x0 = baseX + link.x0, x1 = baseX + link.x1;
+      const y0Top = baseY + link.sourceY0, y0Bottom = baseY + link.sourceY1;
+      const y1Top = baseY + link.targetY0, y1Bottom = baseY + link.targetY1;
+      const midX = (x0 + x1) / 2;
+      const d = `M ${x0} ${y0Top} C ${midX} ${y0Top} ${midX} ${y1Top} ${x1} ${y1Top} L ${x1} ${y1Bottom} C ${midX} ${y1Bottom} ${midX} ${y0Bottom} ${x0} ${y0Bottom} Z`;
+      const color = link.color || colorOf(link.target);
+      nodes.push({ type: 'path', id: `chart-sankey-link-${chart.id}-${linkIndex}`, order: order + offset++, bounds, d, style: { fill: { kind: 'solid', color }, opacity: link.color ? .85 : .45 } });
+    });
+    sankeyNodes.forEach(node => {
+      const isLastColumn = node.column === numColumns - 1;
+      const x = baseX + node.x, y = baseY + node.y;
+      nodes.push({ type: 'rect', id: `chart-sankey-node-${chart.id}-${node.id}`, order: order + offset++, bounds, x, y, width: node.width, height: node.height, style: { fill: { kind: 'solid', color: node.color || DEFAULT_ZONE_FILL } } });
+      if (showLabels) {
+        const labelX = isLastColumn ? x - labelGutter + 8 : x + node.width + 6;
+        nodes.push({
+          ...chartText(`chart-sankey-label-${chart.id}-${node.id}`, order + offset++, bounds, labelX, y, labelGutter - 12, Math.max(1, node.height), node.label, chart, isLastColumn ? 'right' : 'left'),
+          fontSize: sankeyFontSize - 2, verticalAlign: 'middle',
+        });
+      }
+    });
+  } else if (chart.chart_type === 'mekko') {
+    // Marimekko: columns are config.categories, each series is one ROW
+    // stacked (100%-style) inside every column. Column WIDTH is always
+    // proportional to that column's total across all rows - Mekko's
+    // defining trait. Column HEIGHT is uniform unless mekkoVaryHeight, in
+    // which case it's proportional to the column's share of the largest
+    // column's total too.
+    const mekkoRows = chart.series;
+    const mekkoColumns = chart.config?.categories?.length ? chart.config.categories : ((mekkoRows[0]?.values as number[] | undefined)?.map((_, i) => String(i + 1)) ?? []);
+    const mekkoFontSize = Math.max(9, finite(chart.font_size, 12));
+    const mekkoSmallFontSize = Math.max(8, mekkoFontSize - 1);
+    const varyHeight = chart.config?.mekkoVaryHeight ?? false;
+    const COLUMN_GAP = 4;
+    const PERCENT_TICKS = [0, 25, 50, 75, 100];
+    const leftGutter = showLabels ? 30 : 0, topGutter = showLabels ? 18 : 0, bottomGutter = showLabels ? 32 : 0;
+    const mekkoGridX = plot.x + leftGutter, mekkoGridY = plot.y + topGutter;
+    const mekkoGridWidth = Math.max(1, plot.width - leftGutter);
+    const mekkoGridHeight = Math.max(1, plot.height - topGutter - bottomGutter);
+    const columnTotals = mekkoColumns.map((_, colIndex) => mekkoRows.reduce((sum, series) => sum + ((series.values as number[])[colIndex] ?? 0), 0));
+    const grandTotal = columnTotals.reduce((sum, total) => sum + total, 0);
+    const maxColumnTotal = Math.max(1, ...columnTotals);
+    const gapWidth = COLUMN_GAP * Math.max(0, mekkoColumns.length - 1);
+    const availableWidth = Math.max(1, mekkoGridWidth - gapWidth);
+    const columnWidths = columnTotals.map(total => grandTotal > 0 ? (total / grandTotal) * availableWidth : availableWidth / mekkoColumns.length);
+    const columnX = columnWidths.reduce<number[]>((acc, width, i) => { acc.push(i === 0 ? mekkoGridX : acc[i - 1] + columnWidths[i - 1] + COLUMN_GAP); return acc; }, []);
+    const columnHeights = columnTotals.map(total => varyHeight ? mekkoGridHeight * (total / maxColumnTotal) : mekkoGridHeight);
+    const columnY = columnHeights.map(height => mekkoGridY + (mekkoGridHeight - height));
+
+    if (chart.show_grid !== false) PERCENT_TICKS.forEach(p => {
+      const y = mekkoGridY + mekkoGridHeight * (1 - p / 100);
+      nodes.push({ type: 'path', id: `chart-mekko-grid-${chart.id}-${p}`, order: order + offset++, bounds, d: `M ${mekkoGridX} ${y} L ${mekkoGridX + mekkoGridWidth} ${y}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' }, strokeWidth: finite(chart.grid_width, 1) } });
+    });
+    if (showLabels) PERCENT_TICKS.forEach(p => {
+      const y = mekkoGridY + mekkoGridHeight * (1 - p / 100);
+      nodes.push({ ...chartText(`chart-mekko-pct-${chart.id}-${p}`, order + offset++, bounds, plot.x, y - mekkoSmallFontSize / 2, leftGutter - 6, mekkoSmallFontSize + 2, `${p}%`, chart, 'right'), fontSize: mekkoSmallFontSize });
+    });
+    mekkoColumns.forEach((label, colIndex) => {
+      const x = columnX[colIndex], width = columnWidths[colIndex], total = columnTotals[colIndex];
+      let cumulative = 0;
+      mekkoRows.forEach((series, rowIndex) => {
+        const value = (series.values as number[])[colIndex] ?? 0;
+        const share = total > 0 ? value / total : 0;
+        const height = share * columnHeights[colIndex];
+        const y = columnY[colIndex] + cumulative;
+        cumulative += height;
+        const color = series.color ?? CHART_COLORS[rowIndex % CHART_COLORS.length];
+        nodes.push({ type: 'rect', id: `chart-mekko-seg-${chart.id}-${colIndex}-${series.id}`, order: order + offset++, bounds, x, y, width, height, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
+        if (showLegend && height >= 16 && width >= 34) {
+          nodes.push({
+            ...chartText(`chart-mekko-seg-label-${chart.id}-${colIndex}-${series.id}`, order + offset++, bounds, x + 4, y + 3, Math.max(1, width - 8), Math.max(1, height - 6), `${series.label} ${value}`, chart),
+            lines: wrapText(`${series.label}\n${value}`, Math.max(1, width - 8), mekkoSmallFontSize), fontSize: mekkoSmallFontSize, color: contrastTextColor(color),
+          });
+        }
+      });
+      if (showLabels) {
+        nodes.push({ ...chartText(`chart-mekko-total-${chart.id}-${colIndex}`, order + offset++, bounds, x, plot.y, width, mekkoSmallFontSize + 2, String(total), chart, 'center'), fontSize: mekkoSmallFontSize });
+        nodes.push({
+          ...chartText(`chart-mekko-col-label-${chart.id}-${colIndex}`, order + offset++, bounds, x, mekkoGridY + mekkoGridHeight + 4, width, mekkoSmallFontSize * 2 + 4, label, chart, 'center'),
+          lines: wrapText(label, width, mekkoSmallFontSize), fontSize: mekkoSmallFontSize,
+        });
+      }
+    });
+  } else if (chart.chart_type === 'treemap') {
+    // Each series IS one leaf tile, sized proportionally to values[0] via the
+    // squarified algorithm, colored either by its own series.color or (like
+    // heatmap) bucketed by value into axis_y.thresholds/config.zones. Flat
+    // only for now - stickyflow-atlas's grouped/nested variant (series.group)
+    // isn't ported yet.
+    const leaves = chart.series;
+    const bandsArr = axisBands(chart.axis_y);
+    const zones = chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES;
+    const treemapFontSize = Math.max(9, finite(chart.font_size, 12));
+    const smallFontSize = Math.max(8, treemapFontSize - 1);
+    const leafValue = (leaf: typeof leaves[number]) => (leaf.values as number[])[0] ?? 0;
+    const leafColor = (leaf: typeof leaves[number]) => leaf.color ?? zones[bandIndexForValue(leafValue(leaf), bandsArr)]?.color ?? DEFAULT_ZONE_FILL;
+    const legendHeight = showLegend ? 28 : 0;
+    const gridWidth = Math.max(1, plot.width), gridHeight = Math.max(1, plot.height - legendHeight);
+    const leafItems = leaves.map(leaf => ({ leaf, value: leafValue(leaf) }));
+
+    for (const tile of squarifyTreemap(leafItems, 0, 0, gridWidth, gridHeight)) {
+      const { leaf, value } = tile.item;
+      const x = plot.x + tile.x, y = plot.y + tile.y;
+      const color = leafColor(leaf);
+      nodes.push({ type: 'rect', id: `chart-treemap-tile-${chart.id}-${leaf.id}`, order: order + offset++, bounds, x, y, width: tile.width, height: tile.height, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
+      if (showLabels && tile.width >= 34 && tile.height >= 18) {
+        nodes.push({
+          ...chartText(`chart-treemap-label-${chart.id}-${leaf.id}`, order + offset++, bounds, x + 4, y + 3, Math.max(1, tile.width - 8), Math.max(1, tile.height - 6), `${leaf.label} ${value}`, chart),
+          lines: wrapText(`${leaf.label}\n${value}`, Math.max(1, tile.width - 8), smallFontSize), fontSize: smallFontSize, color: contrastTextColor(color),
+        });
+      }
+    }
+    if (legendHeight > 0) {
+      const legendItemWidths = zones.map(zone => Math.max(64, (zone.label?.length ?? 0) * (treemapFontSize - 1) * .55 + 40));
+      let legendX = plot.x;
+      const legendY = plot.y + gridHeight + 6;
+      zones.forEach((zone, i) => {
+        const [lo, hi] = [bandsArr[i], bandsArr[i + 1]];
+        nodes.push({ type: 'rect', id: `chart-treemap-legend-swatch-${chart.id}-${i}`, order: order + offset++, bounds, x: legendX, y: legendY + 2, width: 10, height: 10, rx: 2, style: { fill: { kind: 'solid', color: zone.color ?? DEFAULT_ZONE_FILL } } });
+        nodes.push(chartText(`chart-treemap-legend-${chart.id}-${i}`, order + offset++, bounds, legendX + 15, legendY, legendItemWidths[i] - 15, treemapFontSize, zone.label ? `${zone.label} (${lo}-${hi})` : `${lo}-${hi}`, chart));
+        legendX += legendItemWidths[i];
+      });
+    }
   } else if (chart.chart_type === 'boxplot') {
     // Each series IS one box: min/q1/median/q3/max via computeBoxplotStats,
     // whiskers reach the true min/max, and (when showBoxplotPoints) every raw
@@ -987,6 +1132,40 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       nodes.push(boxLine(`chart-box-median-${id}`, x - boxWidth / 2, medianY, x + boxWidth / 2, medianY, 2));
       if (showPoints) (series.values as number[]).forEach((value, pi) => {
         nodes.push({ type: 'ellipse', id: `chart-box-point-${id}-${pi}`, order: order + offset++, bounds, cx: x + jitter(seriesIndex * 10_000 + pi) * boxWidth, cy: plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height), rx: 3, ry: 3, style: { fill: { kind: 'solid', color }, opacity: .7 } });
+      });
+    });
+  } else if (chart.chart_type === 'hexbin') {
+    // Density heatmap over a point cloud: each series' [x, y] samples are
+    // mapped to plot pixels, bucketed into a flat-top hex grid (computeHexBins),
+    // then drawn as filled hexagons whose opacity scales with that cell's
+    // share of the series' densest cell. Uses the normal numeric x/y axes -
+    // unlike heatmap/sankey/treemap/mekko it is NOT excluded from the generic
+    // cartesian grid/tick-label blocks above.
+    const hexRadius = Math.max(1, chart.config?.hexRadius ?? DEFAULT_HEX_RADIUS);
+    const hexPath = (cx: number, cy: number, r: number) => {
+      const pts: string[] = [];
+      for (let i = 0; i < 6; i++) {
+        const angle = (-60 + 60 * i) * Math.PI / 180;
+        pts.push(`${i === 0 ? 'M' : 'L'} ${cx + r * Math.cos(angle)} ${cy + r * Math.sin(angle)}`);
+      }
+      return `${pts.join(' ')} Z`;
+    };
+    chart.series.forEach((series, seriesIndex) => {
+      const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
+      const pairs = explicit ? series.values as [number, number][] : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
+      const pixelPoints = pairs.map(([vx, vy]) => ({
+        x: plot.x + mapChartValue(vx, chart.axis_x, plot.width),
+        y: plot.y + plot.height - mapChartValue(vy, chart.axis_y, plot.height),
+      }));
+      const bins = computeHexBins(pixelPoints, hexRadius);
+      const maxCount = Math.max(1, ...bins.map(bin => bin.count));
+      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      bins.forEach((bin, i) => {
+        nodes.push({
+          type: 'path', id: `chart-hexbin-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds,
+          d: hexPath(bin.cx, bin.cy, hexRadius),
+          style: { fill: { kind: 'solid', color }, opacity: Math.max(.15, bin.count / maxCount) },
+        });
       });
     });
   } else if (chart.chart_type === 'bar' && stackedMode) {
@@ -1038,13 +1217,13 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   // Rules plot a fixed position on axis_y - meaningless for heatmap, whose
   // axis_y buckets a value into a threshold band rather than placing it at a
   // pixel, so there's no coherent "position" for a rule line to sit at.
-  if (chart.chart_type !== 'heatmap') {
+  if (chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
     const ruleNodes = buildChartRules(chart, plot, bounds, order + offset);
     nodes.push(...ruleNodes); offset += ruleNodes.length;
   }
   // Heatmap draws its own row/column headers inside its own branch above -
   // axis_x/axis_y have no numeric ticks to label here.
-  if (showLabels && chart.chart_type !== 'heatmap') {
+  if (showLabels && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko') {
     chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
     if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + offset++, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));

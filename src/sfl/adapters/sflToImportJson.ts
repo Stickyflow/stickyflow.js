@@ -147,6 +147,10 @@ function chartObject(e: SflEntityOut): any {
       // Boxplot only.
       boxWidth: e.chart?.boxWidth, barCornerRadius: e.chart?.barCornerRadius,
       showBoxplotPoints: e.chart?.showBoxplotPoints, barBorderColor: e.chart?.barBorderColor, barBorderWidth: e.chart?.barBorderWidth,
+      // Mekko only.
+      mekkoVaryHeight: e.chart?.mekkoVaryHeight,
+      // Hexbin only.
+      hexRadius: e.chart?.hexRadius,
     },
     series: e.chart?.series ?? [],
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),
