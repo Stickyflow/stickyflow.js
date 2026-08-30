@@ -75,7 +75,32 @@ function pointFor(link: Link, end: 'from' | 'to', elements: PositionedElement[])
       case 'left': return { x: element.x, y: element.y + element.height * offset };
     }
   }
-  return { x: element.x + element.width / 2, y: element.y + element.height / 2 };
+  // No explicit endpoint. The centre of the element is the wrong answer here:
+  // links are painted after entities, so a centre-to-centre segment is drawn
+  // visibly THROUGH both shapes rather than between them. getPathPoints already
+  // decides a side in exactly this case ("Fallback: Calculate best side based
+  // on relative position"), but it only uses that side to shape the curve or
+  // the elbow : the endpoints it is handed are these, so the two halves
+  // disagreed. Same heuristic here, applied to the coordinates, so they agree.
+  //
+  // Both angles are taken between element CENTRES, which is what the side
+  // choice is really about; using the resulting edge points to re-derive it
+  // would be circular.
+  const other = elements.find(item => item.id === (end === 'from' ? link.toId : link.fromId));
+  if (!other) return { x: element.x + element.width / 2, y: element.y + element.height / 2 };
+  return edgePointToward(element, other);
+}
+
+/** Midpoint of the edge of `element` facing `other`, picked by the same
+ *  quadrant heuristic getPathPoints uses for a sideless endpoint. */
+function edgePointToward(element: PositionedElement, other: PositionedElement): Point {
+  const dx = (other.x + other.width / 2) - (element.x + element.width / 2);
+  const dy = (other.y + other.height / 2) - (element.y + element.height / 2);
+  const angle = Math.atan2(dy, dx);
+  if (angle >= -Math.PI / 4 && angle < Math.PI / 4) return { x: element.x + element.width, y: element.y + element.height / 2 };
+  if (angle >= Math.PI / 4 && angle < 3 * Math.PI / 4) return { x: element.x + element.width / 2, y: element.y + element.height };
+  if (angle >= -3 * Math.PI / 4 && angle < -Math.PI / 4) return { x: element.x + element.width / 2, y: element.y };
+  return { x: element.x, y: element.y + element.height / 2 };
 }
 
 /** Parse SFL text and build the pure RenderInput consumed by buildRenderScene. */

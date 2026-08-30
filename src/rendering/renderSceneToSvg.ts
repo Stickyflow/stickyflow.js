@@ -38,6 +38,9 @@ function contractAttrs(node: RenderNode): string {
   if (node.sfId) parts.push(`data-sf-id="${xml(node.sfId)}"`);
   if (node.sfKind) parts.push(`data-sf-kind="${xml(node.sfKind)}"`);
   if (node.sfPrimary) parts.push('data-sf-primary="true"');
+  if (node.sfSeries) parts.push(`data-sf-series="${xml(node.sfSeries)}"`);
+  if (node.sfValueIndex !== undefined) parts.push(`data-sf-value-index="${node.sfValueIndex}"`);
+  if (node.sfValueScale) parts.push(`data-sf-value-scale="${node.sfValueScale}"`);
   if (node.sfFromId) parts.push(`data-sf-from="${xml(node.sfFromId)}"`);
   if (node.sfToId) parts.push(`data-sf-to="${xml(node.sfToId)}"`);
   if (node.sfRoute) parts.push(`data-sf-route="${node.sfRoute}"`);

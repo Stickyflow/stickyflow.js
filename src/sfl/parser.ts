@@ -106,6 +106,15 @@ class Parser {
     while (!this.at('rbrace')) {
       if (this.at('eof')) throw new SflParseError('unterminated block (missing "}")', this.peek().line, this.peek().col);
       entries.push(this.parseEntry());
+      // A property entry already ate its own terminator (consumeTerminator),
+      // but a nested block/layout/style entry ends at its "}" with nothing
+      // consumed after it — so a ";" separator was previously a parse error
+      // there while being perfectly legal between two properties. Same
+      // separator, same nesting level, two different answers; this makes the
+      // block case agree with the property case. Matters for one-line SFL
+      // (`Entity a { layout { … }; style { … } }`), which is the only style
+      // that needs an explicit separator at all.
+      if (this.at('semi')) this.next();
       this.skipNewlines();
     }
     this.expect('rbrace', "'}'");

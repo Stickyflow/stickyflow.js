@@ -142,8 +142,22 @@ function chartObject(e: SflEntityOut): any {
       // Fields §3.4.
       scale: decodeRamp(e.chart?.scale), interpolate: e.chart?.interpolate,
       idwPower: e.chart?.idwPower, isolines: e.chart?.isolines,
+      // Heatmap only.
+      zones: e.chart?.zones,
+      // Boxplot only.
+      boxWidth: e.chart?.boxWidth, barCornerRadius: e.chart?.barCornerRadius,
+      showBoxplotPoints: e.chart?.showBoxplotPoints, barBorderColor: e.chart?.barBorderColor, barBorderWidth: e.chart?.barBorderWidth,
+      // Mekko only.
+      mekkoVaryHeight: e.chart?.mekkoVaryHeight,
+      // Hexbin only.
+      hexRadius: e.chart?.hexRadius,
+      // Pie only.
+      innerRadius: e.chart?.innerRadius,
     },
-    series: e.chart?.series ?? [],
+    // decodeColor so a series can be a gradient too, the same as a shape's
+    // fillColor above - paint() in buildRenderScene.ts renders the decoded
+    // object; a plain hex/rgba/name still passes through verbatim.
+    series: (e.chart?.series ?? []).map(s => ({ ...s, color: decodeColor(s.color) })),
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),
     fill_color: decodeColor(p.fill) ?? '#ffffff', stroke_color: decodeColor(p.stroke) ?? '#475569',
     stroke_width: numOf(p.strokeWidth) ?? 1, corner_radius: numOf(p.cornerRadius) ?? 12,

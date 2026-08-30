@@ -50,6 +50,26 @@ export interface SceneBase {
    */
   sfPrimary?: boolean;
   /**
+   * Which datum a chart mark draws, surfaced as data-sf-series /
+   * data-sf-value-index. Every node of a chart shares the chart's own sfId,
+   * so without these a DOM-only interaction layer can address the chart but
+   * not the individual bar/point inside it — the identity is otherwise only
+   * in the element id string (`chart-bar-<chart>-<series>-<i>`), and parsing
+   * that back out is exactly the fragility this contract exists to avoid.
+   */
+  sfSeries?: string;
+  sfValueIndex?: number;
+  /**
+   * How to turn a y pixel inside this chart back into an axis_y value, as
+   * `plotY,plotHeight,min,max` — surfaced on the chart's primary node as
+   * data-sf-value-scale. Set only on the cartesian types, where that mapping
+   * is linear and single-valued (a heatmap buckets y into threshold bands, a
+   * pie has no y at all). Same reason data-sf-from/data-sf-to exist: an
+   * interaction layer only ever sees the rendered DOM, and the axis geometry
+   * is otherwise nowhere in it.
+   */
+  sfValueScale?: string;
+  /**
    * A link's connected entity ids, surfaced as data-sf-from/data-sf-to. Without
    * this, a DOM-only interaction layer (e.g. a drag handler) has no way to find
    * which links are attached to a shape being moved — the rendered SVG never

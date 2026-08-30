@@ -1,4 +1,17 @@
-# stickyflow
+<p align="center">
+  <img src="assets/thistle-code.png" alt="Thistle rendered from colored ASCII characters" width="735">
+</p>
+
+```____    __                __               ____    ___                                             
+/\  _`\ /\ \__  __        /\ \             /\  _`\ /\_ \                            __              
+\ \,\L\_\ \ ,_\/\_\    ___\ \ \/'\   __  __\ \ \L\_\//\ \     ___   __  __  __     /\_\    ____     
+ \/_\__ \\ \ \/\/\ \  /'___\ \ , <  /\ \/\ \\ \  _\/ \ \ \   / __`\/\ \/\ \/\ \    \/\ \  /',__\    
+   /\ \L\ \ \ \_\ \ \/\ \__/\ \ \\`\\ \ \_\ \\ \ \/   \_\ \_/\ \L\ \ \ \_/ \_/ \ __ \ \ \/\__, `\__ 
+   \ `\____\ \__\\ \_\ \____\\ \_\ \_\/`____ \\ \_\   /\____\ \____/\ \___x___/'/\_\_\ \ \/\____/\_\
+    \/_____/\/__/ \/_/\/____/ \/_/\/_/`/___/> \\/_/   \/____/\/___/  \/__//__/  \/_/\ \_\ \/___/\/_/
+                                         /\___/                                    \ \____/         
+                                         \/__/                                      \/___/          
+```
 
 Framework-independent SFL parser, render-scene, SVG runtime and interactive
 viewer. Parses the SFL diagram language and renders it — statically for docs
@@ -117,6 +130,41 @@ look subtly different even though its wrapping and bounding box are provably
 the same SVG output. Exact glyph-level determinism would need real font
 metrics baked in (the FontRegistry decision, ADR-01) — out of scope until
 then.
+
+**Opting out: `measureText`.** A host that would rather match its own text
+layout than be reproducible can pass real metrics in and take over the wrap:
+
+```ts
+import { render } from 'stickyflow'
+
+render(sfl, {
+  // called once per text node with that node's resolved font
+  measureText: (fontFamily, fontSize) => {
+    const ctx = document.createElement('canvas').getContext('2d')!
+    ctx.font = `${fontSize}px ${fontFamily}`
+    return {
+      measure: (text, bold) => {
+        ctx.font = `${bold ? 'bold ' : ''}${fontSize}px ${fontFamily}`
+        return ctx.measureText(text).width
+      },
+      spaceWidth: ctx.measureText(' ').width,
+    }
+  },
+})
+```
+
+This is the seam for stickyflow-atlas specifically: its
+`createTextMeasurer(fontFamily, fontSize)` already returns exactly this
+`{ measure, spaceWidth }` pair, so it can be handed over with no adapter — and
+its SVG export then breaks lines where its live Konva canvas does, instead of
+where the heuristic guesses.
+
+Leaving `measureText` unset keeps the default heuristic, and with it the
+byte-identical output the golden SVGs pin. Supplying it trades that away:
+output then depends on the fonts installed wherever it ran. Both wraps are
+greedy and break only at word boundaries; they differ in the fit test (a
+per-box character budget vs. per-word measured widths), so the same string can
+break at different points under each.
 
 ## Security
 

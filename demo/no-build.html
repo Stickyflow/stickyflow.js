@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>stickyflow.js — &lt;stickyflow-diagram&gt; without a build step</title>
+
+  <!--
+    The point of this page: no bundler, no import map, no module system, no
+    framework, and no authored JavaScript in the first example. It exists
+    because demo/web-component.html tests the OTHER path (Vite loading
+    web-component.ts), so the "one script tag is enough" claim the docs make
+    was never actually exercised anywhere.
+
+    Serve the repo root and open /demo/no-build.html.
+  -->
+  <script src="../dist/stickyflow-diagram.global.js"></script>
+
+  <style>
+    body { margin: 0; padding: 24px; font-family: system-ui, sans-serif; color: #0f172a; }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    h2 { font-size: 14px; margin: 24px 0 4px; }
+    p  { font-size: 13px; color: #475569; margin: 0 0 10px; max-width: 60ch; }
+    /* The element is an empty block with no intrinsic size, exactly like a
+       div : it has to be given a height. */
+    stickyflow-diagram { display: block; height: 320px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+    #report { margin-top: 24px; padding: 12px; border-radius: 8px; background: #0f172a; color: #e2e8f0; font: 12px/1.6 ui-monospace, monospace; white-space: pre; }
+  </style>
+</head>
+<body>
+  <h1>&lt;stickyflow-diagram&gt; with no build step</h1>
+  <p>One &lt;script src&gt; above registered the tag. Everything below is plain HTML.</p>
+
+  <h2>1. Source as an attribute (zero authored JavaScript)</h2>
+  <p>Single-quoted attribute, because SFL itself uses double quotes.</p>
+  <stickyflow-diagram id="a" padding="16" source='sfl 1.2
+
+Model m {
+  Entity start {
+    kind: start
+    text: "Start"
+    layout { position: 0, 0; size: 180, 60 }
+    style { shape: pill; fill: "#eef2ff"; stroke: "#6366f1" }
+  }
+  Entity finish {
+    kind: end
+    text: "Finish"
+    layout { position: 0, 200; size: 180, 60 }
+    style { shape: pill; fill: "#eef2ff"; stroke: "#6366f1" }
+  }
+  Link l1 { from: start; to: finish }
+}'></stickyflow-diagram>
+
+  <h2>2. Source as a property, interactive</h2>
+  <p>The normal case: SFL fetched or held in a variable, assigned as a property.</p>
+  <stickyflow-diagram id="b" interactive padding="16"></stickyflow-diagram>
+
+  <div id="report">running…</div>
+
+  <script>
+    // Not part of the demo's claim : just a readout so the page can be checked
+    // automatically instead of by eye.
+    (function () {
+      var lines = [];
+      var ok = true;
+      function check(label, pass, detail) {
+        ok = ok && pass;
+        lines.push((pass ? 'PASS  ' : 'FAIL  ') + label + (detail ? '  (' + detail + ')' : ''));
+      }
+
+      check('window.Stickyflow exists', typeof window.Stickyflow === 'object' && window.Stickyflow !== null);
+      check('tag is registered', !!customElements.get('stickyflow-diagram'));
+
+      var a = document.getElementById('a');
+      var b = document.getElementById('b');
+
+      check('element upgraded to its class', a instanceof customElements.get('stickyflow-diagram'));
+      check('attribute source rendered an svg', !!(a.shadowRoot && a.shadowRoot.querySelector('svg')));
+      check('rendered into a shadow root', !!a.shadowRoot, a.shadowRoot ? a.shadowRoot.mode : 'none');
+
+      // Property path, plus the sf-render event the docs promise.
+      var fired = 0;
+      b.addEventListener('sf-render', function () { fired++; });
+      b.source = a.getAttribute('source');
+
+      // Give the element a tick to re-render, then finish the report.
+      setTimeout(function () {
+        check('property source rendered an svg', !!(b.shadowRoot && b.shadowRoot.querySelector('svg')));
+        check('sf-render fired', fired > 0, fired + ' time(s)');
+        check('interactive built a viewer', b.viewer !== null && b.viewer !== undefined);
+        check('static element has no viewer', a.viewer === null);
+
+        // Bad SFL must show an error in place, not throw.
+        var c = document.createElement('stickyflow-diagram');
+        document.body.appendChild(c);
+        var threw = false;
+        try { c.source = 'this is not sfl at all'; } catch (e) { threw = true; }
+        check('bad SFL does not throw', !threw);
+        check('bad SFL shows an inline error', !!(c.shadowRoot && c.shadowRoot.querySelector('.sf-error')));
+        c.remove();
+
+        lines.unshift(ok ? '== ALL CHECKS PASSED ==' : '== SOME CHECKS FAILED ==');
+        document.getElementById('report').textContent = lines.join('\n');
+        document.documentElement.setAttribute('data-report', ok ? 'pass' : 'fail');
+      }, 50);
+    })();
+  </script>
+</body>
+</html>

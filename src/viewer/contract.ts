@@ -37,7 +37,13 @@ export function isContractCompatible(version: number | null): boolean {
   return version === DOM_CONTRACT_VERSION;
 }
 
-const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane', 'table']);
+// Every SceneRole the renderer can emit (see renderScene.ts) — anything left
+// out here resolves to null, which silently makes that whole family
+// unclickable, unselectable and undraggable. `chart` and `path` were both
+// missing: a chart's own nodes carry data-sf-role="chart", so every gesture
+// over one, including the value drag in interaction/chartValueDrag.ts,
+// bailed out before it started.
+const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane', 'table', 'chart', 'path']);
 
 /**
  * Resolve the owner of a clicked/hovered node by walking up to the nearest
