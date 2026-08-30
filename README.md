@@ -1,16 +1,24 @@
 <p align="center">
-  <img src="assets/thistle-code.png" alt="Thistle rendered from colored ASCII characters" width="735">
+  <img src="assets/ai-provider-dark-rounded.png" alt="Stickyflow AI provider integration" width="900">
 </p>
 
-```____    __                __               ____    ___                                             
-/\  _`\ /\ \__  __        /\ \             /\  _`\ /\_ \                            __              
-\ \,\L\_\ \ ,_\/\_\    ___\ \ \/'\   __  __\ \ \L\_\//\ \     ___   __  __  __     /\_\    ____     
- \/_\__ \\ \ \/\/\ \  /'___\ \ , <  /\ \/\ \\ \  _\/ \ \ \   / __`\/\ \/\ \/\ \    \/\ \  /',__\    
-   /\ \L\ \ \ \_\ \ \/\ \__/\ \ \\`\\ \ \_\ \\ \ \/   \_\ \_/\ \L\ \ \ \_/ \_/ \ __ \ \ \/\__, `\__ 
-   \ `\____\ \__\\ \_\ \____\\ \_\ \_\/`____ \\ \_\   /\____\ \____/\ \___x___/'/\_\_\ \ \/\____/\_\
-    \/_____/\/__/ \/_/\/____/ \/_/\/_/`/___/> \\/_/   \/____/\/___/  \/__//__/  \/_/\ \_\ \/___/\/_/
-                                         /\___/                                    \ \____/         
-                                         \/__/                                      \/___/          
+```
+      ,gg,                                             ,gggggggggggggg                                   
+     i8""8i    I8                   ,dPYb,            dP""""""88"""""",dPYb,                             
+     `8,,8'    I8                   IP'`Yb            Yb,_    88      IP'`Yb                             
+      `88'  88888888 gg             I8  8I             `""    88      I8  8I                             
+      dP"8,    I8    ""             I8  8bgg,              ggg88gggg  I8  8'                             
+     dP' `8a   I8    gg     ,gggg,  I8 dP" "8  gg     gg      88   8  I8 dP    ,ggggg,   gg    gg    gg  
+    dP'   `Yb  I8    88    dP"  "Yb I8d8bggP"  I8     8I      88      I8dP    dP"  "Y8gggI8    I8    88bg
+_ ,dP'     I8 ,I8,   88   i8'       I8P' "Yb,  I8,   ,8Igg,   88      I8P    i8'    ,8I  I8    I8    8I  
+"888,,____,dP,d88b,_,88,_,d8,_    _,d8    `Yb,,d8b, ,d8I "Yb,,8P     ,d8b,_ ,d8,   ,d8' ,d8,  ,d8,  ,8I  
+a8P"Y88888P" 8P""Y88P""Y8P""Y8888PP88P      Y8P""Y88P"888  "Y8P'     8P'"Y88P"Y8888P"   P""Y88P""Y88P"   
+                                                    ,d8I'                                                
+                                                  ,dP'8I                                                 
+                                                 ,8"  8I                                                 
+                                                 I8   8I                                                 
+                                                 `8, ,8I                                                 
+                                                  `Y8P"                                                  
 ```
 
 Framework-independent SFL parser, render-scene, SVG runtime and interactive
