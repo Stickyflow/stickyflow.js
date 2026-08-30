@@ -1,4 +1,17 @@
-# stickyflow
+<p align="center">
+  <img src="assets/thistle-code.png" alt="Thistle rendered from colored ASCII characters" width="735">
+</p>
+
+```____    __                __               ____    ___                                             
+/\  _`\ /\ \__  __        /\ \             /\  _`\ /\_ \                            __              
+\ \,\L\_\ \ ,_\/\_\    ___\ \ \/'\   __  __\ \ \L\_\//\ \     ___   __  __  __     /\_\    ____     
+ \/_\__ \\ \ \/\/\ \  /'___\ \ , <  /\ \/\ \\ \  _\/ \ \ \   / __`\/\ \/\ \/\ \    \/\ \  /',__\    
+   /\ \L\ \ \ \_\ \ \/\ \__/\ \ \\`\\ \ \_\ \\ \ \/   \_\ \_/\ \L\ \ \ \_/ \_/ \ __ \ \ \/\__, `\__ 
+   \ `\____\ \__\\ \_\ \____\\ \_\ \_\/`____ \\ \_\   /\____\ \____/\ \___x___/'/\_\_\ \ \/\____/\_\
+    \/_____/\/__/ \/_/\/____/ \/_/\/_/`/___/> \\/_/   \/____/\/___/  \/__//__/  \/_/\ \_\ \/___/\/_/
+                                         /\___/                                    \ \____/         
+                                         \/__/                                      \/___/          
+```
 
 Framework-independent SFL parser, render-scene, SVG runtime and interactive
 viewer. Parses the SFL diagram language and renders it — statically for docs
