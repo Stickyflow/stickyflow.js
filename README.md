@@ -2,7 +2,6 @@
   <img src="assets/ai-provider-dark-rounded.png" alt="Stickyflow AI provider integration" width="900">
 </p>
 
-```
       ,gg,                                             ,gggggggggggggg                                   
      i8""8i    I8                   ,dPYb,            dP""""""88"""""",dPYb,                             
      `8,,8'    I8                   IP'`Yb            Yb,_    88      IP'`Yb                             
@@ -19,11 +18,11 @@ a8P"Y88888P" 8P""Y88P""Y8P""Y8888PP88P      Y8P""Y88P"888  "Y8P'     8P'"Y88P"Y8
                                                  I8   8I                                                 
                                                  `8, ,8I                                                 
                                                   `Y8P"                                                  
-```
 
-Framework-independent SFL parser, render-scene, SVG runtime and interactive
-viewer. Parses the SFL diagram language and renders it — statically for docs
-(like Mermaid, but with precise positioning and far more styling), or
+------------------------------------------ StickyFlow.js----------------------------------------------------------
+
+Framework-independent SFL parser, render-scene, SVG runtime and interactive viewer. Parses the SFL diagram 
+language and renders it — statically for docs (like Mermaid, but with precise positioning and far more styling), or
 interactively for embedding in web projects and chatbots.
 
 Part of the `stickyflow.js` effort (see `docs/SFL/STICKYFLOW_JS_IMPLEMENTATION_PLAN.md`
