@@ -1304,7 +1304,20 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   // Heatmap draws its own row/column headers inside its own branch above -
   // axis_x/axis_y have no numeric ticks to label here.
   if (showLabels && chart.chart_type !== 'heatmap' && chart.chart_type !== 'sankey' && chart.chart_type !== 'treemap' && chart.chart_type !== 'mekko' && chart.chart_type !== 'pie' && chart.chart_type !== 'matrix') {
-    chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
+    if (chart.chart_type === 'bar') {
+      // bar draws one slot per Series entry (see the bar branches above),
+      // entirely independent of axis_x's min/max/step - ticking axis_x
+      // instead would land ticks at interval boundaries, not bar centers.
+      // One label per bar, centered on that bar's actual slot.
+      const barCount = Math.max(1, ...chart.series.map(series => series.values.length)), barSlot = plot.width / barCount;
+      const barLabels = chart.config?.categories?.length ? chart.config.categories : Array.from({ length: barCount }, (_, i) => String(i + 1));
+      for (let i = 0; i < barCount; i++) {
+        const x = plot.x + (i + 0.5) * barSlot;
+        nodes.push(chartText(`chart-x-tick-${chart.id}-${i}`, order + offset++, bounds, x - barSlot / 2, plot.y + plot.height + 4, barSlot, 18, barLabels[i] ?? String(i + 1), chart, 'center'));
+      }
+    } else {
+      chartTicks(chart.axis_x).forEach(tick => { const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width); nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + offset++, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center')); });
+    }
     chartTicks(chart.axis_y).forEach(tick => { const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height); nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + offset++, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right')); });
     if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + offset++, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));
     if (chart.axis_y.label) nodes.push(chartText(`chart-y-label-${chart.id}`, order + offset++, bounds, chart.x + 12, plot.y + plot.height, plot.height, 18, chart.axis_y.label, chart, 'center', -90));
