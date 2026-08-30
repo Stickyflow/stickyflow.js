@@ -154,7 +154,10 @@ function chartObject(e: SflEntityOut): any {
       // Pie only.
       innerRadius: e.chart?.innerRadius,
     },
-    series: e.chart?.series ?? [],
+    // decodeColor so a series can be a gradient too, the same as a shape's
+    // fillColor above - paint() in buildRenderScene.ts renders the decoded
+    // object; a plain hex/rgba/name still passes through verbatim.
+    series: (e.chart?.series ?? []).map(s => ({ ...s, color: decodeColor(s.color) })),
     rules: (e.chart?.rules ?? []).map(r => ({ id: r.id, at: r.at, text: r.text, color: r.color, stroke_width: r.strokeWidth, dash: r.dash })),
     fill_color: decodeColor(p.fill) ?? '#ffffff', stroke_color: decodeColor(p.stroke) ?? '#475569',
     stroke_width: numOf(p.strokeWidth) ?? 1, corner_radius: numOf(p.cornerRadius) ?? 12,

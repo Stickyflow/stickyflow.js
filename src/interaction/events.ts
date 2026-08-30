@@ -120,6 +120,21 @@ export interface LinkToEvent {
   fraction: number;
 }
 
+/**
+ * Fired after dragging a bar's top edge (or a line/scatter point) vertically
+ * is released. `series`/`index` address the single datum that moved — the
+ * chart's own `Series <series> { values: [...] }`, element `index` — and
+ * `value` is the new value in the chart's own axis units, already clamped to
+ * `Axis y`'s min/max. Same controlled-component contract as MoveChangeEvent:
+ * the drag is a live preview until the host reflects it via `viewer.update()`.
+ */
+export interface ChartValueChangeEvent {
+  owner: OwnerRef;
+  series: string;
+  index: number;
+  value: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -128,6 +143,7 @@ export interface InteractionEventMap {
   quickDuplicate: QuickDuplicateEvent;
   linkTo: LinkToEvent;
   delete: DeleteEvent;
+  chartValueChange: ChartValueChangeEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

@@ -80,6 +80,24 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     expect(svg).not.toContain('sf-chart-bar-error-chart-b-1');
   });
 
+  it("colors a bar's error whisker with the chart's own text color, not a fixed black", () => {
+    // Was hardcoded '#000000' - invisible against a dark-mode chart. NOT the
+    // series color either: a symmetric range's lower half sits inside the
+    // bar's own fill, where the series color would vanish against itself.
+    const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
+    const { svg } = render(sfl);
+    const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)![0];
+    expect(whisker).toContain('stroke="#0f172a"');
+    expect(whisker).not.toContain('stroke="#000000"');
+    expect(whisker).not.toContain('stroke="#0ea5e9"');
+  });
+
+  it("colors a Rule's label to match its own line, not the chart's generic text color", () => {
+    const { svg } = render(STACKED_SFL);
+    const label = svg.match(/<text id="sf-chart-rule-label-chart-target"[^>]*>/)![0];
+    expect(label).toContain('fill="#ef4444"');
+  });
+
   it('normalizes "none" and an absent stacked to ungrouped/grouped bars (no stacked rects)', () => {
     const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
     const state = sflToCanvasState(sfl);

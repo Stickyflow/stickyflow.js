@@ -99,6 +99,20 @@ function paint(value: string | GradientColorObject | MeshGradientObject | null |
   };
 }
 
+// A flat string stand-in for a Series.color that may now be a gradient, for
+// the few spots that can't paint one: contrastTextColor() needs one real
+// color to compute against, and layoutSankey()'s graph layout only ever
+// carries color as opaque string data (same reason ChartZone.color itself
+// stays string-only - see its own comment in model/charts.ts). The
+// gradient's first stop stands in either way, so a series that's a gradient
+// everywhere else still reads as its own color there, not a fallback grey.
+function representativeColor(value: string | GradientColorObject | MeshGradientObject | undefined, fallback: string): string {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (value.type === 'gradient') return value.stops[0]?.color ?? fallback;
+  return value.points[0]?.color ?? fallback;
+}
+
 // A `shape:` value that names neither a built-in ShapeType nor a resolved
 // Symbol (typo, or a value authored for a newer SFL version this build
 // doesn't know yet) used to pass through as an arbitrary string and crash
@@ -690,9 +704,12 @@ const ERROR_CAP_HALF = 5;
 // One whisker (main line + two end caps), centered on a fixed pixel position
 // `center` along the category axis (always X - this package's bar chart has
 // no horizontal-orientation flag), between two Y pixel positions.
-function errorWhiskerNode(id: string, order: number, bounds: Bounds, center: number, y1: number, y2: number, color: string): RenderNode {
+// Carries the same series/index as the mark it annotates: a whisker is drawn
+// over its own bar's top edge, so without it the one spot a reader would
+// grab to change that value is covered by something that isn't the value.
+function errorWhiskerNode(id: string, order: number, bounds: Bounds, center: number, y1: number, y2: number, color: string, series?: string, valueIndex?: number): RenderNode {
   const d = `M ${center} ${y1} L ${center} ${y2} M ${center - ERROR_CAP_HALF} ${y1} L ${center + ERROR_CAP_HALF} ${y1} M ${center - ERROR_CAP_HALF} ${y2} L ${center + ERROR_CAP_HALF} ${y2}`;
-  return { type: 'path', id, order, bounds, d, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 1 } };
+  return { type: 'path', id, order, bounds, d, sfSeries: series, sfValueIndex: valueIndex, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 1 } };
 }
 
 // SFL 1.4, §5.4.1: cumulative per-category segment [pixelStart, pixelEnd]
@@ -723,6 +740,12 @@ function stackedSegment(chart: Chart, mode: 'true' | 'percent' | 'waterfall', ca
 // value axis), full line across the plot - `presentation: bullet`'s short
 // target-tick variant doesn't exist in this package (no `presentation`
 // config at all yet).
+// Types whose axis_y maps linearly to a y pixel, so a mark's height IS its
+// value — the ones a value-drag gesture can meaningfully address. Excludes
+// heatmap (buckets into threshold bands), pie/treemap/mekko/sankey/matrix
+// (no y axis of their own at all).
+const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'grid', 'field']);
+
 function buildChartRules(chart: Chart, plot: { x: number; y: number; width: number; height: number }, bounds: Bounds, order: number): RenderNode[] {
   const rules = chart.rules;
   if (!rules?.length) return [];
@@ -733,7 +756,7 @@ function buildChartRules(chart: Chart, plot: { x: number; y: number; width: numb
     const color = rule.color || chart.stroke_color || '#475569';
     const y = plot.y + plot.height - mapChartValue(rule.at, chart.axis_y, plot.height);
     nodes.push({ type: 'path', id: `chart-rule-${chart.id}-${rule.id}`, order: order + offset++, bounds, d: `M ${plot.x} ${y} L ${plot.x + plot.width} ${y}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: rule.stroke_width ?? 1, dash: rule.dash } });
-    if (rule.text) nodes.push(chartText(`chart-rule-label-${chart.id}-${rule.id}`, order + offset++, bounds, plot.x + 4, y - fontSize - 2, 160, fontSize + 2, rule.text, chart));
+    if (rule.text) nodes.push({ ...chartText(`chart-rule-label-${chart.id}-${rule.id}`, order + offset++, bounds, plot.x + 4, y - fontSize - 2, 160, fontSize + 2, rule.text, chart), color });
   });
   return nodes;
 }
@@ -761,6 +784,9 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
   const plot = { x: chart.x + padLeft, y: chart.y + padTop, width: Math.max(1, chart.width - padLeft - 24), height: Math.max(1, chart.height - padTop - padBottom) };
   const nodes: RenderNode[] = [{ type: 'rect', id: `chart-${chart.id}`, order, bounds, x: chart.x, y: chart.y, width: chart.width, height: chart.height, rx: chart.corner_radius ?? 12, style: { fill: { kind: 'solid', color: chart.fill_color ?? '#ffffff' }, stroke: { kind: 'solid', color: chart.stroke_color ?? '#475569' }, strokeWidth: finite(chart.stroke_width, 1) } }];
+  if (CARTESIAN_VALUE_TYPES.has(chart.chart_type)) {
+    nodes[0].sfValueScale = `${plot.y},${plot.height},${chart.axis_y.min},${chart.axis_y.max}`;
+  }
   let offset = .01;
   if (chart.title) nodes.push({ ...chartText(`chart-title-${chart.id}`, order + offset++, bounds, plot.x, chart.y + 12, plot.width, 20, chart.title, chart), fontWeight: 'bold', fontSize: Math.max(10, finite(chart.font_size, 12)) + 2 });
   // Heatmap's own zone/threshold legend (drawn inside its own branch below)
@@ -779,7 +805,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
     [...legendSeries].reverse().forEach((series, reverseIndex) => {
       const seriesIndex = legendSeries.length - 1 - reverseIndex, width = Math.max(42, series.label.length * finite(chart.font_size, 12) * .58 + 22);
       x -= width;
-      nodes.push({ type: 'rect', id: `chart-legend-swatch-${chart.id}-${series.id}`, order: order + offset++, bounds, x, y: chart.y + 16, width: 10, height: 10, rx: 3, style: { fill: { kind: 'solid', color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length] } } });
+      nodes.push({ type: 'rect', id: `chart-legend-swatch-${chart.id}-${series.id}`, order: order + offset++, bounds, x, y: chart.y + 16, width: 10, height: 10, rx: 3, style: { fill: paint(series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length], diagnostics, chart.id) } });
       nodes.push(chartText(`chart-legend-${chart.id}-${series.id}`, order + offset++, bounds, x + 15, chart.y + 13, width - 15, 18, series.label, chart));
     });
   }
@@ -818,9 +844,9 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length], values = series.values as number[];
       const seriesPoints = categories.map((_, categoryIndex) => point(radial(values[categoryIndex] ?? chart.axis_y.min), categoryIndex));
       const seriesPath = circular ? freeformPathData(seriesPoints, .5, true) : `M ${seriesPoints.map((seriesPoint, pointIndex) => `${pointIndex ? 'L ' : ''}${seriesPoint.x} ${seriesPoint.y}`).join(' ')} Z`;
-      nodes.push({ type: 'path', id: `chart-radar-fill-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: { kind: 'solid', color }, stroke: { kind: 'none' }, opacity: Math.max(0, Math.min(1, series.opacity ?? areaOpacity)) } });
-      nodes.push({ type: 'path', id: `chart-radar-series-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
-      seriesPoints.forEach((seriesPoint, pointIndex) => nodes.push({ type: 'ellipse', id: `chart-radar-point-${chart.id}-${series.id}-${pointIndex}`, order: order + offset++, bounds, cx: seriesPoint.x, cy: seriesPoint.y, rx: 3, ry: 3, style: { fill: { kind: 'solid', color } } }));
+      nodes.push({ type: 'path', id: `chart-radar-fill-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: paint(color, diagnostics, chart.id), stroke: { kind: 'none' }, opacity: Math.max(0, Math.min(1, series.opacity ?? areaOpacity)) } });
+      nodes.push({ type: 'path', id: `chart-radar-series-${chart.id}-${series.id}`, order: order + offset++, bounds, d: seriesPath, style: { fill: { kind: 'none' }, stroke: paint(color, diagnostics, chart.id), strokeWidth: 2, lineJoin: 'round' } });
+      seriesPoints.forEach((seriesPoint, pointIndex) => nodes.push({ type: 'ellipse', id: `chart-radar-point-${chart.id}-${series.id}-${pointIndex}`, order: order + offset++, bounds, cx: seriesPoint.x, cy: seriesPoint.y, rx: 3, ry: 3, style: { fill: paint(color, diagnostics, chart.id) } }));
     });
     return nodes;
   }
@@ -886,7 +912,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         nodes.push({
           type: 'path', id: `chart-field-vector-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds,
           d: `M ${startX} ${startY} L ${endX} ${endY}`, markerEnd: 'filled_arrow',
-          style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2 },
+          style: { fill: { kind: 'none' }, stroke: paint(color, diagnostics, chart.id), strokeWidth: 2 },
         });
       });
     });
@@ -963,9 +989,14 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
     const sankeyFontSize = Math.max(9, finite(chart.font_size, 12));
     const labelGutter = showLabels ? 92 : 0;
     const nodeInputs = (chart.config?.zones ?? []).map(zone => ({ id: zone.label, label: zone.label, color: zone.color }));
+    // layoutSankey's graph layout only ever carries color as opaque string
+    // data (same reason ChartZone.color - node color - is string-only too) :
+    // a gradient series still tints its flow with a representative solid
+    // (its first stop), rather than the layout module needing to understand
+    // ScenePaint at all.
     const linkInputs = chart.series
       .filter(series => series.source && series.target)
-      .map(series => ({ source: series.source!, target: series.target!, value: (series.values as number[])[0] ?? 0, color: series.color }));
+      .map(series => ({ source: series.source!, target: series.target!, value: (series.values as number[])[0] ?? 0, color: series.color ? representativeColor(series.color, DEFAULT_ZONE_FILL) : undefined }));
     const availableWidth = Math.max(1, plot.width - labelGutter * 2);
     const originX = labelGutter;
     const { nodes: sankeyNodes, links } = layoutSankey(nodeInputs, linkInputs, availableWidth, plot.height);
@@ -1040,11 +1071,11 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         const y = columnY[colIndex] + cumulative;
         cumulative += height;
         const color = series.color ?? CHART_COLORS[rowIndex % CHART_COLORS.length];
-        nodes.push({ type: 'rect', id: `chart-mekko-seg-${chart.id}-${colIndex}-${series.id}`, order: order + offset++, bounds, x, y, width, height, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
+        nodes.push({ type: 'rect', id: `chart-mekko-seg-${chart.id}-${colIndex}-${series.id}`, order: order + offset++, bounds, x, y, width, height, style: { fill: paint(color, diagnostics, chart.id), stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
         if (showLegend && height >= 16 && width >= 34) {
           nodes.push({
             ...chartText(`chart-mekko-seg-label-${chart.id}-${colIndex}-${series.id}`, order + offset++, bounds, x + 4, y + 3, Math.max(1, width - 8), Math.max(1, height - 6), `${series.label} ${value}`, chart),
-            lines: wrapText(`${series.label}\n${value}`, Math.max(1, width - 8), mekkoSmallFontSize), fontSize: mekkoSmallFontSize, color: contrastTextColor(color),
+            lines: wrapText(`${series.label}\n${value}`, Math.max(1, width - 8), mekkoSmallFontSize), fontSize: mekkoSmallFontSize, color: contrastTextColor(representativeColor(color, '#ffffff')),
           });
         }
       });
@@ -1077,11 +1108,11 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       const { leaf, value } = tile.item;
       const x = plot.x + tile.x, y = plot.y + tile.y;
       const color = leafColor(leaf);
-      nodes.push({ type: 'rect', id: `chart-treemap-tile-${chart.id}-${leaf.id}`, order: order + offset++, bounds, x, y, width: tile.width, height: tile.height, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
+      nodes.push({ type: 'rect', id: `chart-treemap-tile-${chart.id}-${leaf.id}`, order: order + offset++, bounds, x, y, width: tile.width, height: tile.height, style: { fill: paint(color, diagnostics, chart.id), stroke: { kind: 'solid', color: '#ffffff' }, strokeWidth: 1 } });
       if (showLabels && tile.width >= 34 && tile.height >= 18) {
         nodes.push({
           ...chartText(`chart-treemap-label-${chart.id}-${leaf.id}`, order + offset++, bounds, x + 4, y + 3, Math.max(1, tile.width - 8), Math.max(1, tile.height - 6), `${leaf.label} ${value}`, chart),
-          lines: wrapText(`${leaf.label}\n${value}`, Math.max(1, tile.width - 8), smallFontSize), fontSize: smallFontSize, color: contrastTextColor(color),
+          lines: wrapText(`${leaf.label}\n${value}`, Math.max(1, tile.width - 8), smallFontSize), fontSize: smallFontSize, color: contrastTextColor(representativeColor(color, '#ffffff')),
         });
       }
     }
@@ -1128,10 +1159,10 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       nodes.push(boxLine(`chart-box-whisker-hi-${id}`, x, q3Y, x, maxY, 1));
       nodes.push(boxLine(`chart-box-cap-lo-${id}`, x - capHalf, minY, x + capHalf, minY, 1));
       nodes.push(boxLine(`chart-box-cap-hi-${id}`, x - capHalf, maxY, x + capHalf, maxY, 1));
-      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: x - boxWidth / 2, y: q3Y, width: boxWidth, height: Math.max(1, q1Y - q3Y), rx: boxCornerRadius, style: { fill: { kind: 'solid', color }, stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
+      nodes.push({ type: 'rect', id: `chart-box-${id}`, order: order + offset++, bounds, x: x - boxWidth / 2, y: q3Y, width: boxWidth, height: Math.max(1, q1Y - q3Y), rx: boxCornerRadius, style: { fill: paint(color, diagnostics, chart.id), stroke: { kind: 'solid', color: borderColor }, strokeWidth: borderWidth } });
       nodes.push(boxLine(`chart-box-median-${id}`, x - boxWidth / 2, medianY, x + boxWidth / 2, medianY, 2));
       if (showPoints) (series.values as number[]).forEach((value, pi) => {
-        nodes.push({ type: 'ellipse', id: `chart-box-point-${id}-${pi}`, order: order + offset++, bounds, cx: x + jitter(seriesIndex * 10_000 + pi) * boxWidth, cy: plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height), rx: 3, ry: 3, style: { fill: { kind: 'solid', color }, opacity: .7 } });
+        nodes.push({ type: 'ellipse', id: `chart-box-point-${id}-${pi}`, order: order + offset++, bounds, cx: x + jitter(seriesIndex * 10_000 + pi) * boxWidth, cy: plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height), rx: 3, ry: 3, style: { fill: paint(color, diagnostics, chart.id), opacity: .7 } });
       });
     });
   } else if (chart.chart_type === 'hexbin') {
@@ -1164,7 +1195,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         nodes.push({
           type: 'path', id: `chart-hexbin-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds,
           d: hexPath(bin.cx, bin.cy, hexRadius),
-          style: { fill: { kind: 'solid', color }, opacity: Math.max(.15, bin.count / maxCount) },
+          style: { fill: paint(color, diagnostics, chart.id), opacity: Math.max(.15, bin.count / maxCount) },
         });
       });
     });
@@ -1194,7 +1225,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
           return `M ${outerStart.x} ${outerStart.y} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerEnd.x} ${innerEnd.y} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y} Z`;
         })()
         : `M ${cx} ${cy} L ${outerStart.x} ${outerStart.y} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} Z`;
-      nodes.push({ type: 'path', id: `chart-pie-slice-${chart.id}-${series.id}`, order: order + offset++, bounds, d, style: { fill: { kind: 'solid', color } } });
+      nodes.push({ type: 'path', id: `chart-pie-slice-${chart.id}-${series.id}`, order: order + offset++, bounds, d, style: { fill: paint(color, diagnostics, chart.id) } });
       angle += sweep;
     });
   } else if (chart.chart_type === 'matrix') {
@@ -1225,7 +1256,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       const r = Math.max(1, series.size ?? 5);
       const x = xPixel(vx), y = yPixel(vy);
-      nodes.push({ type: 'ellipse', id: `chart-matrix-point-${chart.id}-${series.id}`, order: order + offset++, bounds, cx: x, cy: y, rx: r, ry: r, style: { fill: { kind: 'solid', color } } });
+      nodes.push({ type: 'ellipse', id: `chart-matrix-point-${chart.id}-${series.id}`, order: order + offset++, bounds, cx: x, cy: y, rx: r, ry: r, style: { fill: paint(color, diagnostics, chart.id) } });
       if (showLabels && series.label) nodes.push(chartText(`chart-matrix-label-${chart.id}-${series.id}`, order + offset++, bounds, x + r + 4, y - 7, 120, 14, series.label, chart));
     });
   } else if (chart.chart_type === 'custom') {
@@ -1239,7 +1270,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
       const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       pairs.forEach(([vx, vy], i) => {
         const x = plot.x + mapChartValue(vx, chart.axis_x, plot.width), y = plot.y + plot.height - mapChartValue(vy, chart.axis_y, plot.height);
-        const style: SceneStyle = { fill: { kind: 'solid', color }, stroke: series.stroke ? { kind: 'solid', color: series.stroke } : undefined, strokeWidth: series.stroke ? finite(series.stroke_width, 1) : undefined };
+        const style: SceneStyle = { fill: paint(color, diagnostics, chart.id), stroke: series.stroke ? { kind: 'solid', color: series.stroke } : undefined, strokeWidth: series.stroke ? finite(series.stroke_width, 1) : undefined };
         if (series.symbol?.points.length) {
           const d = `${series.symbol.points.map(([dx, dy], pi) => `${pi === 0 ? 'M' : 'L'} ${x + dx} ${y + dy}`).join(' ')} Z`;
           nodes.push({ type: 'path', id: `chart-custom-mark-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, d, style });
@@ -1257,7 +1288,7 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
         const y = plot.y + plot.height - Math.max(seg.pixelStart, seg.pixelEnd);
         const height = Math.max(1, Math.abs(seg.pixelEnd - seg.pixelStart));
         const x = plot.x + i * slot + 4;
-        nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x, y, width: barWidth, height, rx: 2, style: { fill: { kind: 'solid', color } } });
+        nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x, y, width: barWidth, height, rx: 2, sfSeries: series.id, sfValueIndex: i, style: { fill: paint(color, diagnostics, chart.id) } });
       });
     }
   } else {
@@ -1271,25 +1302,30 @@ function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]
           const yValue = Array.isArray(value) ? value[1] : value;
           const height = Math.max(0, mapChartValue(yValue, chart.axis_y, plot.height));
           const x = plot.x + i * slot + 4 + seriesIndex * barWidth, width = Math.max(1, barWidth - 2);
-          nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x, y: plot.y + plot.height - height, width, height, rx: 2, style: { fill: { kind: 'solid', color } } });
+          nodes.push({ type: 'rect', id: `chart-bar-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, x, y: plot.y + plot.height - height, width, height, rx: 2, sfSeries: series.id, sfValueIndex: i, style: { fill: paint(color, diagnostics, chart.id) } });
           const err = series.error?.[i];
           if (err != null) {
             const [lo, hi] = errorBarRange(yValue, err);
+            // Not `color` (the bar's own fill): a symmetric error range's
+            // lower half sits INSIDE the bar itself (between its top and
+            // axis value), so the series color would vanish against its own
+            // fill there - only the upper half, against the plot background,
+            // would ever show. The chart's own ink reads against both.
             nodes.push(errorWhiskerNode(`chart-bar-error-${chart.id}-${series.id}-${i}`, order + offset++, bounds, x + width / 2,
-              plot.y + plot.height - mapChartValue(lo, chart.axis_y, plot.height), plot.y + plot.height - mapChartValue(hi, chart.axis_y, plot.height), '#000000'));
+              plot.y + plot.height - mapChartValue(lo, chart.axis_y, plot.height), plot.y + plot.height - mapChartValue(hi, chart.axis_y, plot.height), chart.text_color ?? '#0f172a', series.id, i));
           }
         });
       } else {
         const pixels = pairs.map(([x, y]) => ({ x: plot.x + mapChartValue(x, chart.axis_x, plot.width), y: plot.y + plot.height - mapChartValue(y, chart.axis_y, plot.height) }));
-        if (chart.chart_type === 'line' && pixels.length) nodes.push({ type: 'path', id: `chart-line-${chart.id}-${series.id}`, order: order + offset++, bounds, d: `M ${pixels.map((point, i) => `${i ? 'L' : ''} ${point.x} ${point.y}`).join(' ')}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2, lineJoin: 'round' } });
+        if (chart.chart_type === 'line' && pixels.length) nodes.push({ type: 'path', id: `chart-line-${chart.id}-${series.id}`, order: order + offset++, bounds, d: `M ${pixels.map((point, i) => `${i ? 'L' : ''} ${point.x} ${point.y}`).join(' ')}`, style: { fill: { kind: 'none' }, stroke: paint(color, diagnostics, chart.id), strokeWidth: 2, lineJoin: 'round' } });
         pixels.forEach((point, i) => {
           const err = chart.chart_type === 'line' ? series.error?.[i] : undefined;
           if (err != null) {
             const [lo, hi] = errorBarRange(pairs[i][1], err);
             nodes.push(errorWhiskerNode(`chart-line-error-${chart.id}-${series.id}-${i}`, order + offset++, bounds, point.x,
-              plot.y + plot.height - mapChartValue(lo, chart.axis_y, plot.height), plot.y + plot.height - mapChartValue(hi, chart.axis_y, plot.height), color));
+              plot.y + plot.height - mapChartValue(lo, chart.axis_y, plot.height), plot.y + plot.height - mapChartValue(hi, chart.axis_y, plot.height), representativeColor(color, '#0f172a'), series.id, i));
           }
-          nodes.push({ type: 'ellipse', id: `chart-point-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, cx: point.x, cy: point.y, rx: chart.chart_type === 'scatter' ? 4 : 3, ry: chart.chart_type === 'scatter' ? 4 : 3, style: { fill: { kind: 'solid', color } } });
+          nodes.push({ type: 'ellipse', id: `chart-point-${chart.id}-${series.id}-${i}`, order: order + offset++, bounds, cx: point.x, cy: point.y, rx: chart.chart_type === 'scatter' ? 4 : 3, ry: chart.chart_type === 'scatter' ? 4 : 3, sfSeries: series.id, sfValueIndex: i, style: { fill: paint(color, diagnostics, chart.id) } });
         });
       }
     });

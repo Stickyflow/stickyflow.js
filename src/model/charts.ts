@@ -1,3 +1,5 @@
+import type { GradientColorObject, MeshGradientObject } from './shapes';
+
 export type ChartType = 'bar' | 'line' | 'scatter' | 'radar' | 'radial' | 'field' | 'heatmap' | 'boxplot' | 'sankey' | 'treemap' | 'mekko' | 'hexbin' | 'pie' | 'matrix' | 'grid' | 'custom';
 
 /** Every `type:` value a Chart block can carry, as a real runtime array
@@ -38,7 +40,14 @@ export interface ChartRamp {
   stops: Array<{ position: number; color: string }>;
 }
 export interface ChartSeries {
-  id: string; label: string; color?: string; opacity?: number;
+  id: string; label: string;
+  // A gradient (or mesh, though a single-hue-family mark rarely wants one)
+  // draws exactly like a shape's fillColor does - same GradientColorObject
+  // shape, same paint() in buildRenderScene.ts. Bar/line/point/legend-swatch
+  // marks read this directly; zone-bucketed marks (heatmap cells, treemap/
+  // mekko/matrix zone fills, sankey nodes/links) are colored from
+  // ChartZone.color instead and don't go through this field.
+  color?: string | GradientColorObject | MeshGradientObject; opacity?: number;
   // Fields §3.4: a 3-tuple is a scalar sample [x, y, value] (feeds the
   // interpolated surface + isolines), a 4-tuple is a vector sample
   // [x, y, angle, magnitude] (drawn as an arrow glyph, no interpolation).
