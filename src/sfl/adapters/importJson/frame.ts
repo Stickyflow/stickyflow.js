@@ -1,14 +1,18 @@
-import type { SflEntityOut } from '../../sflToCanvasState'
-import { numOf, safeJson } from './values'
+import type { SflEntityOut } from '../../sflToCanvasState';
+import { numOf, safeJson } from './values';
 
 export function frameObject(e: SflEntityOut): any {
   const p = e.props;
-  // Frames require concrete paint and title defaults.
   return {
     id: e.id,
     type: 'frame',
     title: e.text ?? null,
-    x: e.x, y: e.y, width: e.width, height: e.height, w: e.width, h: e.height,
+    x: e.x,
+    y: e.y,
+    width: e.width,
+    height: e.height,
+    w: e.width,
+    h: e.height,
     fill_color: p.fill ?? 'rgba(155, 66, 223, 0.05)',
     stroke_color: p.stroke ?? '#9b42df',
     stroke_width: numOf(p.strokeWidth) ?? 2,

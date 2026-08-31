@@ -1,6 +1,6 @@
-import type { RenderNode, SceneImage, SceneStyle, SceneText } from '../renderScene'
-import { SvgDefinitionRegistry } from './definitions'
-import { num, xml } from './format'
+import type { RenderNode, SceneImage, SceneStyle, SceneText } from '../renderScene';
+import type { SvgDefinitionRegistry } from './definitions';
+import { num, xml } from './format';
 
 function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
   const paint = style.stroke;
@@ -8,9 +8,10 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
     return paint.color;
   }
   if (paint?.kind === 'linear-gradient' && paint.stops.length) {
-    const pick = edge === 'start'
-      ? paint.stops.reduce((a, b) => (a.offset <= b.offset ? a : b))
-      : paint.stops.reduce((a, b) => (a.offset >= b.offset ? a : b));
+    const pick =
+      edge === 'start'
+        ? paint.stops.reduce((a, b) => (a.offset <= b.offset ? a : b))
+        : paint.stops.reduce((a, b) => (a.offset >= b.offset ? a : b));
     return pick.color;
   }
   if (paint?.kind === 'mesh-gradient' && paint.points.length) {
@@ -20,7 +21,9 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
 }
 
 export function styleAttrs(node: Exclude<RenderNode, SceneText | SceneImage>, defs: SvgDefinitionRegistry): string {
-  const style = node.style, stroke = defs.paint(style.stroke, `${node.id}-stroke`, node.bounds), fill = defs.paint(style.fill, `${node.id}-fill`, node.bounds);
+  const style = node.style,
+    stroke = defs.paint(style.stroke, `${node.id}-stroke`, node.bounds),
+    fill = defs.paint(style.fill, `${node.id}-fill`, node.bounds);
   const attrs = [`fill="${xml(fill)}"`, `stroke="${xml(stroke)}"`];
   if (style.strokeWidth !== undefined) {
     attrs.push(`stroke-width="${num(style.strokeWidth)}"`);

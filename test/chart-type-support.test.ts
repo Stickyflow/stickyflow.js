@@ -34,7 +34,24 @@ describe('supported chart types', () => {
   });
 
   it('exposes exactly the types the renderer actually branches on', () => {
-    expect([...CHART_TYPES].sort()).toEqual(['bar', 'boxplot', 'custom', 'field', 'grid', 'heatmap', 'hexbin', 'line', 'matrix', 'mekko', 'pie', 'radar', 'radial', 'sankey', 'scatter', 'treemap']);
+    expect([...CHART_TYPES].sort()).toEqual([
+      'bar',
+      'boxplot',
+      'custom',
+      'field',
+      'grid',
+      'heatmap',
+      'hexbin',
+      'line',
+      'matrix',
+      'mekko',
+      'pie',
+      'radar',
+      'radial',
+      'sankey',
+      'scatter',
+      'treemap',
+    ]);
   });
 });
 
@@ -79,8 +96,8 @@ Model M {
     layout { position: 150, 0; size: 100, 100 }
   }
 }`;
-    const ids = render(two).diagnostics
-      .filter(d => d.code === 'unsupported-chart-type')
+    const ids = render(two)
+      .diagnostics.filter(d => d.code === 'unsupported-chart-type')
       .map(d => d.entityId);
     expect(ids).toEqual(['a', 'b']);
   });

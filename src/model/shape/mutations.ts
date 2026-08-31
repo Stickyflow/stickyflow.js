@@ -1,4 +1,4 @@
-import type { Shape } from './types'
+import type { Shape } from './types';
 
 type MutableShapeFields =
   | 'name'
@@ -25,22 +25,17 @@ type MutableShapeFields =
   | 'hasShadow'
   | 'shadowStyle'
   | 'shapeStyle'
-  | 'subShapes'
+  | 'subShapes';
 
-type ShapeChanges = Partial<Pick<Shape, MutableShapeFields>>
+type ShapeChanges = Partial<Pick<Shape, MutableShapeFields>>;
 
-export type ShapeUpdate = ShapeChanges
+export type ShapeUpdate = ShapeChanges;
 
-export type ShapeCreate =
-  & Pick<Shape, 'x' | 'y' | 'width' | 'height'>
-  & ShapeChanges
-  & Partial<Pick<
-    Shape,
-    'parent_frame_id'
-    | 'parent_swimlane_id'
-    | 'lane_id'
-    | 'layer_group'
-    | 'order_key'
-    | 'is_visible'
-    | 'is_locked'
-  >>
+export type ShapeCreate = Pick<Shape, 'x' | 'y' | 'width' | 'height'> &
+  ShapeChanges &
+  Partial<
+    Pick<
+      Shape,
+      'parent_frame_id' | 'parent_swimlane_id' | 'lane_id' | 'layer_group' | 'order_key' | 'is_visible' | 'is_locked'
+    >
+  >;

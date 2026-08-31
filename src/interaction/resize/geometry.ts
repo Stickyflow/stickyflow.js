@@ -1,7 +1,7 @@
-import type { Bounds } from '../../model/geometry/router'
-import type { ResizeHandle } from '../../viewer/selectionOverlay'
+import type { Bounds } from '../../model/geometry/router';
+import type { ResizeHandle } from '../../viewer/selectionOverlay';
 
-export const MIN_SIZE = 10
+export const MIN_SIZE = 10;
 
 export const HANDLE_AXES: Record<ResizeHandle, { x: 'left' | 'right' | 'none'; y: 'top' | 'bottom' | 'none' }> = {
   'top-left': { x: 'left', y: 'top' },
@@ -14,23 +14,25 @@ export const HANDLE_AXES: Record<ResizeHandle, { x: 'left' | 'right' | 'none'; y
   left: { x: 'left', y: 'none' },
 };
 
-/** New bounds for dragging `handle` to `pointer`, keeping the opposite edge
- *  (or, for an edge-midpoint handle, the WHOLE untouched axis) fixed. Works
- *  even if the pointer crosses past that edge (min/max, not a signed
- *  width/height) — the shape just flips instead of going negative. */
 export function resizedBounds(start: Bounds, handle: ResizeHandle, pointer: { x: number; y: number }): Bounds {
   const axes = HANDLE_AXES[handle];
-  let x = start.x, width = start.width;
+  let x = start.x,
+    width = start.width;
   if (axes.x !== 'none') {
     const fixedX = axes.x === 'left' ? start.x + start.width : start.x;
-    const x1 = Math.min(fixedX, pointer.x), x2 = Math.max(fixedX, pointer.x);
-    x = x1; width = Math.max(MIN_SIZE, x2 - x1);
+    const x1 = Math.min(fixedX, pointer.x),
+      x2 = Math.max(fixedX, pointer.x);
+    x = x1;
+    width = Math.max(MIN_SIZE, x2 - x1);
   }
-  let y = start.y, height = start.height;
+  let y = start.y,
+    height = start.height;
   if (axes.y !== 'none') {
     const fixedY = axes.y === 'top' ? start.y + start.height : start.y;
-    const y1 = Math.min(fixedY, pointer.y), y2 = Math.max(fixedY, pointer.y);
-    y = y1; height = Math.max(MIN_SIZE, y2 - y1);
+    const y1 = Math.min(fixedY, pointer.y),
+      y2 = Math.max(fixedY, pointer.y);
+    y = y1;
+    height = Math.max(MIN_SIZE, y2 - y1);
   }
   return { x, y, width, height };
 }

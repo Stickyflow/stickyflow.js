@@ -1,7 +1,7 @@
 import type { SflBlock, SflValue, Side } from '../ast';
 import type { EntityReaderContext } from './entityReader';
-import type { SflEntityOut, SflLinkOut } from './types';
 import { asNumber, asString, childBlocks, directProps, listNumbers } from './readers';
+import type { SflEntityOut, SflLinkOut } from './types';
 
 export function readLinks(
   model: SflBlock | undefined,
@@ -22,7 +22,7 @@ export function readLinks(
 
   const entityById = new Map(entities.map(entity => [entity.id, entity]));
   const endpoint = (value?: SflValue): { id?: string; side?: Side; fraction?: number; port?: string } => {
-    if (!value || value.type !== 'endpoint') return {};
+    if (value?.type !== 'endpoint') return {};
     const last = value.segments[value.segments.length - 1];
     if (value.segments.length >= 2) {
       const entityName = value.segments[value.segments.length - 2];
@@ -61,4 +61,3 @@ export function readLinks(
     };
   });
 }
-

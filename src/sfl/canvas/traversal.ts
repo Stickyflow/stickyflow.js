@@ -1,8 +1,8 @@
 import type { SflBlock } from '../ast';
 import { buildEntity } from './entityReader';
+import { asNumber, asString, childBlocks, directProps, tupleVals } from './readers';
 import type { CanvasResolution } from './resolution';
 import type { SflEntityOut, SflGroupOut } from './types';
-import { asNumber, asString, childBlocks, directProps, tupleVals } from './readers';
 
 export interface CanvasTree {
   entities: SflEntityOut[];
@@ -34,9 +34,10 @@ function createFlowPositioner(block: SflBlock, resolution: CanvasResolution) {
 function expandNet(block: SflBlock, resolution: CanvasResolution): SflBlock[] {
   const props = resolution.entityReaderContext.mergedProps(block);
   const membersValue = props.get('members');
-  const members = membersValue?.type === 'list'
-    ? membersValue.values.flatMap(value => value.type === 'ident' ? [value.segments] : [])
-    : [];
+  const members =
+    membersValue?.type === 'list'
+      ? membersValue.values.flatMap(value => (value.type === 'ident' ? [value.segments] : []))
+      : [];
   if (members.length < 2) return [];
 
   const text = asString(props.get('text'));
@@ -45,7 +46,11 @@ function expandNet(block: SflBlock, resolution: CanvasResolution): SflBlock[] {
       { type: 'property', property: { key: 'from', value: { type: 'endpoint', segments: members[0] } } },
       { type: 'property', property: { key: 'to', value: { type: 'endpoint', segments: member } } },
     ];
-    if (text) entries.push({ type: 'property', property: { key: 'text', value: { type: 'string', value: text, multiline: false } } });
+    if (text)
+      entries.push({
+        type: 'property',
+        property: { key: 'text', value: { type: 'string', value: text, multiline: false } },
+      });
     return { kind: 'Link', name: `${block.name}_${index + 1}`, composition: [], entries };
   });
 }
@@ -92,4 +97,3 @@ export function readCanvasTree(model: SflBlock | undefined, resolution: CanvasRe
   const groups = model ? visit(model, { x: 0, y: 0 }) : [];
   return { entities, groups, linkBlocks };
 }
-

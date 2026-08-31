@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { render } from '../src/render';
 
 // `Link l { from: a; to: b }` with no `, side` is valid SFL, and it is the
@@ -49,10 +49,15 @@ describe('links with no explicit side', () => {
   });
 
   it('never starts or ends inside either shape', () => {
-    const inside = (x: number, y: number, ex: number, ey: number) =>
-      x > ex && x < ex + 180 && y > ey && y < ey + 60;
+    const inside = (x: number, y: number, ex: number, ey: number) => x > ex && x < ex + 180 && y > ey && y < ey + 60;
 
-    for (const [bx, by] of [[0, 200], [0, -200], [400, 0], [-400, 0], [400, 300]] as const) {
+    for (const [bx, by] of [
+      [0, 200],
+      [0, -200],
+      [400, 0],
+      [-400, 0],
+      [400, 300],
+    ] as const) {
       const { start, end } = endpoints(linkPath(board(bx, by)));
       expect(inside(start[0], start[1], 0, 0), `start inside a for b(${bx},${by})`).toBe(false);
       expect(inside(end[0], end[1], bx, by), `end inside b for b(${bx},${by})`).toBe(false);

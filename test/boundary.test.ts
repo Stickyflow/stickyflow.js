@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve, relative } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 // Enforces the static ⟷ interaction separation the package is built around:
 // the static core (everything under src/ except src/viewer/) must not depend on
@@ -24,7 +24,9 @@ const staticFiles = tsFiles(srcDir).filter(f => !browserTiers.some(dir => f.star
 
 describe('static / interaction separation', () => {
   it('static core never imports from a browser tier (one-way dependency)', () => {
-    const offenders = staticFiles.filter(f => /from ['"][^'"]*\/(viewer|web-component|interaction)(\/|['"])/.test(readFileSync(f, 'utf8')));
+    const offenders = staticFiles.filter(f =>
+      /from ['"][^'"]*\/(viewer|web-component|interaction)(\/|['"])/.test(readFileSync(f, 'utf8')),
+    );
     expect(offenders.map(f => relative(srcDir, f))).toEqual([]);
   });
 

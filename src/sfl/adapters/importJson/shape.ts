@@ -1,6 +1,6 @@
-import type { SflEntityOut } from '../../sflToCanvasState'
-import { decodeColor, decodeShadow } from '../decodeStyles'
-import { numOf, safeJson } from './values'
+import type { SflEntityOut } from '../../sflToCanvasState';
+import { decodeColor, decodeShadow } from '../decodeStyles';
+import { numOf, safeJson } from './values';
 
 export function shapeObject(e: SflEntityOut): any {
   const p = e.props;
@@ -10,7 +10,12 @@ export function shapeObject(e: SflEntityOut): any {
     text: e.text ?? null,
     shapeType: e.shapeType ?? 'rectangle',
     symbol: e.symbol,
-    x: e.x, y: e.y, width: e.width, height: e.height, w: e.width, h: e.height,
+    x: e.x,
+    y: e.y,
+    width: e.width,
+    height: e.height,
+    w: e.width,
+    h: e.height,
     rotation: e.rotation ?? 0,
     fillColor: decodeColor(p.fill),
     strokeColor: decodeColor(p.stroke),

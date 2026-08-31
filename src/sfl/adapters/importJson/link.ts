@@ -1,13 +1,16 @@
-import type { SflLinkOut } from '../../sflToCanvasState'
-import { decodeColor } from '../decodeStyles'
-import { numOf } from './values'
+import type { SflLinkOut } from '../../sflToCanvasState';
+import { decodeColor } from '../decodeStyles';
+import { numOf } from './values';
 
 export function linkObject(l: SflLinkOut): any {
   const p = l.props;
   return {
     id: l.id,
     type: 'link',
-    from: l.fromId, to: l.toId, fromId: l.fromId, toId: l.toId,
+    from: l.fromId,
+    to: l.toId,
+    fromId: l.fromId,
+    toId: l.toId,
     text: l.text ?? '',
     showText: p.showText !== 'false',
     weight: numOf(p.weight),
@@ -26,9 +29,16 @@ export function linkObject(l: SflLinkOut): any {
     startMarker: p.markerStart,
     endMarker: p.markerEnd,
     segmentOffsets: l.segments,
-    // Named ports take precedence over side/fraction anchors.
-    fromPoint: l.fromPort ? { port: l.fromPort, isPort: true } : l.fromSide ? { side: l.fromSide, offset: l.fromFraction } : undefined,
-    toPoint: l.toPort ? { port: l.toPort, isPort: true } : l.toSide ? { side: l.toSide, offset: l.toFraction } : undefined,
+    fromPoint: l.fromPort
+      ? { port: l.fromPort, isPort: true }
+      : l.fromSide
+        ? { side: l.fromSide, offset: l.fromFraction }
+        : undefined,
+    toPoint: l.toPort
+      ? { port: l.toPort, isPort: true }
+      : l.toSide
+        ? { side: l.toSide, offset: l.toFraction }
+        : undefined,
     order: l.order,
   };
 }

@@ -5,4 +5,3 @@ import type { ChartRenderContext } from './types';
 export function renderLine(context: ChartRenderContext): RenderNode[] {
   return renderCartesian(context);
 }
-

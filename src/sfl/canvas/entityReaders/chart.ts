@@ -1,6 +1,6 @@
 import type { SflBlock, SflValue } from '../../ast';
-import type { SflEntityOut } from '../types';
 import { asNumber, asString, childBlocks, directProps } from '../readers';
+import type { SflEntityOut } from '../types';
 
 type Properties = Map<string, SflValue>;
 type ChartData = NonNullable<SflEntityOut['chart']>;
@@ -86,17 +86,19 @@ function readSeries(block: SflBlock): Series {
 }
 
 function readRules(block: SflBlock): ChartData['rules'] {
-  return childBlocks(block).filter(child => child.kind === 'Rule').map(rule => {
-    const props = directProps(rule);
-    return {
-      id: rule.name,
-      at: asNumber(props.get('at')) ?? 0,
-      text: asString(props.get('text')),
-      color: asString(props.get('color')),
-      strokeWidth: asNumber(props.get('strokeWidth')),
-      dash: numberList(props.get('dash')),
-    };
-  });
+  return childBlocks(block)
+    .filter(child => child.kind === 'Rule')
+    .map(rule => {
+      const props = directProps(rule);
+      return {
+        id: rule.name,
+        at: asNumber(props.get('at')) ?? 0,
+        text: asString(props.get('text')),
+        color: asString(props.get('color')),
+        strokeWidth: asNumber(props.get('strokeWidth')),
+        dash: numberList(props.get('dash')),
+      };
+    });
 }
 
 function stringList(value?: SflValue): string[] | undefined {
@@ -124,7 +126,7 @@ export function readChart(block: SflBlock, props: Properties): SflEntityOut['cha
     chartType: (asString(props.get('type')) as ChartData['chartType'] | undefined) ?? 'bar',
     categories: stringList(props.get('categories')),
     areaOpacity: asNumber(props.get('areaOpacity')),
-    stacked: stacked && stacked !== 'none' ? stacked as ChartData['stacked'] : undefined,
+    stacked: stacked && stacked !== 'none' ? (stacked as ChartData['stacked']) : undefined,
     scale: asString(props.get('scale')),
     interpolate: asString(props.get('interpolate')) === 'idw' ? 'idw' : undefined,
     idwPower: asNumber(props.get('idwPower')),
@@ -140,7 +142,9 @@ export function readChart(block: SflBlock, props: Properties): SflEntityOut['cha
     innerRadius: asNumber(props.get('innerRadius')),
     axisX: readAxis(axes.find(axis => axis.name === 'x')),
     axisY: readAxis(axes.find(axis => axis.name === 'y' || axis.name === 'value')),
-    series: childBlocks(block).filter(child => child.kind === 'Series').map(readSeries),
+    series: childBlocks(block)
+      .filter(child => child.kind === 'Series')
+      .map(readSeries),
     rules: readRules(block),
   };
 }

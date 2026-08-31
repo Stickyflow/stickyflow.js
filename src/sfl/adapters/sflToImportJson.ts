@@ -1,1 +1,1 @@
-export { sflToImportJson } from './importJson/assembly'
+export { sflToImportJson } from './importJson/assembly';

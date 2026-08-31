@@ -1,7 +1,7 @@
-import { sflToCanvasState } from '../../sfl'
-import type { Side } from '../../model/geometry/router'
-import { VALID_IDENT, findFirstBlockOfKind, findOwnerBlock, nameExists } from './scanner'
-import { escapeSflString, indentBlock, indentOf, round2 } from './format'
+import type { Side } from '../../model/geometry/router';
+import { sflToCanvasState } from '../../sfl';
+import { escapeSflString, indentBlock, indentOf, round2 } from './format';
+import { findFirstBlockOfKind, findOwnerBlock, nameExists, VALID_IDENT } from './scanner';
 
 export interface InsertLinkOptions {
   id: string;
@@ -12,16 +12,9 @@ export interface InsertLinkOptions {
   toSide?: Side;
   toFraction?: number;
   text?: string;
-  /** Extra lines injected verbatim (style properties, markers, …) — same
-   *  reasoning as InsertEntityOptions.body. */
   body?: string;
 }
 
-/** Appends a new Link block at the top (Model) level — SFL resolves `from:`/
- *  `to:` by bare name regardless of nesting (spec §10), so this doesn't need
- *  to match the main app's convention of nesting a link inside a shared
- *  Frame when both endpoints live in one. A no-op if `id` is invalid or
- *  already taken, or if `fromId`/`toId` don't name an existing entity. */
 export function insertLink(sfl: string, options: InsertLinkOptions): string {
   if (!VALID_IDENT.test(options.id)) return sfl;
   const lines = sfl.split('\n');
@@ -56,7 +49,6 @@ export function insertLink(sfl: string, options: InsertLinkOptions): string {
   return lines.join('\n');
 }
 
-/** Removes a Link's whole block. A no-op if `id` isn't found. */
 export function removeLink(sfl: string, id: string): string {
   const lines = sfl.split('\n');
   const range = findOwnerBlock(lines, id);

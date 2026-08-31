@@ -36,8 +36,9 @@ describe('Grid chart', () => {
 
   it('draws no marks at all since it has no series', () => {
     const { scene } = render(GRID_SFL);
-    const markIds = scene.nodes.filter(node =>
-      node.id.startsWith('chart-bar-') || node.id.startsWith('chart-line-') || node.id.startsWith('chart-point-')
+    const markIds = scene.nodes.filter(
+      node =>
+        node.id.startsWith('chart-bar-') || node.id.startsWith('chart-line-') || node.id.startsWith('chart-point-'),
     );
     expect(markIds).toEqual([]);
   });

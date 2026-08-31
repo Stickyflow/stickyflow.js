@@ -1,87 +1,83 @@
-import { isSide, type SflValue, type Side } from '../ast'
-import { TokenCursor } from './cursor'
-import { SflParseError } from './error'
+import { isSide, type SflValue, type Side } from '../ast';
+import type { TokenCursor } from './cursor';
+import { SflParseError } from './error';
 
 export function parsePathSegments(cursor: TokenCursor): string[] {
-  const segments = [cursor.expect('ident', 'path identifier').value]
+  const segments = [cursor.expect('ident', 'path identifier').value];
   while (cursor.at('dot')) {
-    cursor.next()
-    segments.push(cursor.expect('ident', 'identifier after "."').value)
+    cursor.next();
+    segments.push(cursor.expect('ident', 'identifier after "."').value);
   }
-  return segments
+  return segments;
 }
 
 export function parseEndpoint(cursor: TokenCursor): SflValue {
-  const segments = parsePathSegments(cursor)
-  let side: Side | undefined
-  let fraction: number | undefined
+  const segments = parsePathSegments(cursor);
+  let side: Side | undefined;
+  let fraction: number | undefined;
 
   if (cursor.at('comma')) {
-    cursor.next()
-    const sideToken = cursor.expect('ident', 'side after ","')
+    cursor.next();
+    const sideToken = cursor.expect('ident', 'side after ","');
     if (!isSide(sideToken.value)) {
       throw new SflParseError(
         `expected a side (top/right/bottom/left), got '${sideToken.value}'`,
         sideToken.line,
         sideToken.col,
-      )
+      );
     }
-    side = sideToken.value
+    side = sideToken.value;
     if (cursor.at('lparen')) {
-      cursor.next()
-      fraction = cursor.expect('number', 'fraction inside "("').numberValue
-      cursor.expect('rparen', "')'")
+      cursor.next();
+      fraction = cursor.expect('number', 'fraction inside "("').numberValue;
+      cursor.expect('rparen', "')'");
     }
   }
-  return { type: 'endpoint', segments, side, fraction }
+  return { type: 'endpoint', segments, side, fraction };
 }
 
 function parseList(cursor: TokenCursor): SflValue {
-  cursor.expect('lbracket', "'['")
-  const values: SflValue[] = []
-  cursor.skipNewlines()
+  cursor.expect('lbracket', "'['");
+  const values: SflValue[] = [];
+  cursor.skipNewlines();
   if (!cursor.at('rbracket')) {
-    values.push(parseValue(cursor, false))
-    cursor.skipNewlines()
+    values.push(parseValue(cursor, false));
+    cursor.skipNewlines();
     while (cursor.at('comma')) {
-      cursor.next()
-      cursor.skipNewlines()
-      if (cursor.at('rbracket')) break
-      values.push(parseValue(cursor, false))
-      cursor.skipNewlines()
+      cursor.next();
+      cursor.skipNewlines();
+      if (cursor.at('rbracket')) break;
+      values.push(parseValue(cursor, false));
+      cursor.skipNewlines();
     }
   }
-  cursor.expect('rbracket', "']'")
-  return { type: 'list', values }
+  cursor.expect('rbracket', "']'");
+  return { type: 'list', values };
 }
 
 export function parseValue(cursor: TokenCursor, allowTuple = true): SflValue {
-  const token = cursor.peek()
+  const token = cursor.peek();
   switch (token.type) {
     case 'string':
-      cursor.next()
-      return { type: 'string', value: token.value, multiline: !!token.multiline }
+      cursor.next();
+      return { type: 'string', value: token.value, multiline: !!token.multiline };
     case 'lbracket':
-      return parseList(cursor)
+      return parseList(cursor);
     case 'number': {
-      cursor.next()
+      cursor.next();
       if (!allowTuple || !cursor.at('comma')) {
-        return { type: 'number', value: token.numberValue! }
+        return { type: 'number', value: token.numberValue! };
       }
-      const values = [token.numberValue!]
+      const values = [token.numberValue!];
       while (cursor.at('comma')) {
-        cursor.next()
-        values.push(cursor.expect('number', 'number in tuple').numberValue!)
+        cursor.next();
+        values.push(cursor.expect('number', 'number in tuple').numberValue!);
       }
-      return { type: 'tuple', values }
+      return { type: 'tuple', values };
     }
     case 'ident':
-      return { type: 'ident', segments: parsePathSegments(cursor) }
+      return { type: 'ident', segments: parsePathSegments(cursor) };
     default:
-      throw new SflParseError(
-        `expected a value, got '${token.value || token.type}'`,
-        token.line,
-        token.col,
-      )
+      throw new SflParseError(`expected a value, got '${token.value || token.type}'`, token.line, token.col);
   }
 }

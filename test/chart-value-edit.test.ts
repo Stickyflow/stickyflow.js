@@ -77,10 +77,12 @@ describe('applyChartValueChange', () => {
   });
 
   it('handles the first and last element', () => {
-    expect(seriesLine(applyChartValueChange(BAR_SFL, { owner, series: 'online', index: 0, value: 5 }), 'online'))
-      .toContain('[5, 62, 58, 65]');
-    expect(seriesLine(applyChartValueChange(BAR_SFL, { owner, series: 'online', index: 3, value: 7 }), 'online'))
-      .toContain('[60, 62, 58, 7]');
+    expect(
+      seriesLine(applyChartValueChange(BAR_SFL, { owner, series: 'online', index: 0, value: 5 }), 'online'),
+    ).toContain('[5, 62, 58, 65]');
+    expect(
+      seriesLine(applyChartValueChange(BAR_SFL, { owner, series: 'online', index: 3, value: 7 }), 'online'),
+    ).toContain('[60, 62, 58, 7]');
   });
 
   it('rounds to one decimal, the same as every other patcher', () => {
@@ -89,9 +91,10 @@ describe('applyChartValueChange', () => {
   });
 
   it('keeps x and takes the new y on an [x, y] pair', () => {
-    const scatter = BAR_SFL
-      .replace('type: bar', 'type: scatter')
-      .replace('values: [60, 62, 58, 65]', 'values: [[10, 20], [40, 55]]');
+    const scatter = BAR_SFL.replace('type: bar', 'type: scatter').replace(
+      'values: [60, 62, 58, 65]',
+      'values: [[10, 20], [40, 55]]',
+    );
     const out = applyChartValueChange(scatter, { owner, series: 'online', index: 1, value: 88 });
     expect(seriesLine(out, 'online')).toContain('[[10, 20], [40, 88]]');
   });
@@ -102,7 +105,9 @@ describe('applyChartValueChange', () => {
   });
 
   it('is a no-op for an unknown chart, series, or index', () => {
-    expect(applyChartValueChange(BAR_SFL, { owner: { ...owner, id: 'nope' }, series: 'online', index: 0, value: 1 })).toBe(BAR_SFL);
+    expect(
+      applyChartValueChange(BAR_SFL, { owner: { ...owner, id: 'nope' }, series: 'online', index: 0, value: 1 }),
+    ).toBe(BAR_SFL);
     expect(applyChartValueChange(BAR_SFL, { owner, series: 'nope', index: 0, value: 1 })).toBe(BAR_SFL);
     expect(applyChartValueChange(BAR_SFL, { owner, series: 'online', index: 9, value: 1 })).toBe(BAR_SFL);
   });

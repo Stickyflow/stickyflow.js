@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { hasBoldMarkup, parseRichLine, parseRichText, wrapRichLine, wrapRichText } from '../src/model/geometry/richText';
+import {
+  hasBoldMarkup,
+  parseRichLine,
+  parseRichText,
+  wrapRichLine,
+  wrapRichText,
+} from '../src/model/geometry/richText';
 
 // Ported 1:1 from stickyflow-atlas's frontend/src/entities/shapes/ui/text/richText.test.ts
 // (the reference implementation this file mirrors) - same test cases, same
@@ -59,7 +65,11 @@ describe('wrapRichLine', () => {
   it('keeps short runs on one line', () => {
     const runs = [{ text: 'a b c', bold: false }];
     expect(wrapRichLine(runs, 1000, fixedMeasure, fixedSpaceWidth)).toEqual([
-      [{ text: 'a', bold: false }, { text: 'b', bold: false }, { text: 'c', bold: false }],
+      [
+        { text: 'a', bold: false },
+        { text: 'b', bold: false },
+        { text: 'c', bold: false },
+      ],
     ]);
   });
 
@@ -67,7 +77,10 @@ describe('wrapRichLine', () => {
     // "aa"(20) + space(10) + "bb"(20) = 50 <= 50; + space(10) + "cc"(20) = 80 > 50 -> wraps
     const runs = [{ text: 'aa bb cc', bold: false }];
     expect(wrapRichLine(runs, 50, fixedMeasure, fixedSpaceWidth)).toEqual([
-      [{ text: 'aa', bold: false }, { text: 'bb', bold: false }],
+      [
+        { text: 'aa', bold: false },
+        { text: 'bb', bold: false },
+      ],
       [{ text: 'cc', bold: false }],
     ]);
   });
@@ -76,10 +89,16 @@ describe('wrapRichLine', () => {
     // plain "bb" = 20, bold "bb" = 24 - a maxWidth that fits the plain
     // width but not the bold one must still wrap the bold word off.
     const plainRuns = [{ text: 'aa bb', bold: false }];
-    const boldRuns = [{ text: 'aa ', bold: false }, { text: 'bb', bold: true }];
+    const boldRuns = [
+      { text: 'aa ', bold: false },
+      { text: 'bb', bold: true },
+    ];
     // aa(20) + space(10) + bb(20 plain / 24 bold) = 50 plain (fits 50), 54 bold (doesn't fit 50)
     expect(wrapRichLine(plainRuns, 50, fixedMeasure, fixedSpaceWidth)).toEqual([
-      [{ text: 'aa', bold: false }, { text: 'bb', bold: false }],
+      [
+        { text: 'aa', bold: false },
+        { text: 'bb', bold: false },
+      ],
     ]);
     expect(wrapRichLine(boldRuns, 50, fixedMeasure, fixedSpaceWidth)).toEqual([
       [{ text: 'aa', bold: false }],
@@ -99,7 +118,10 @@ describe('wrapRichText', () => {
   it('wraps each explicit \\n line independently', () => {
     const result = wrapRichText('aa bb cc\ndd', 50, fixedMeasure, fixedSpaceWidth);
     expect(result).toEqual([
-      [{ text: 'aa', bold: false }, { text: 'bb', bold: false }],
+      [
+        { text: 'aa', bold: false },
+        { text: 'bb', bold: false },
+      ],
       [{ text: 'cc', bold: false }],
       [{ text: 'dd', bold: false }],
     ]);

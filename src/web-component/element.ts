@@ -1,10 +1,6 @@
-// <stickyflow-diagram> custom element (plan §6.7). Top of the dependency chain:
-// it composes the STATIC tier (render) and, only when `interactive`, the
-// INTERACTION tier (viewer). Shadow DOM isolates styles from the host page.
-// (DOM code — verify in a browser via demo/web-component.html.)
 import { render } from '../render';
 import { createViewer, type Viewer } from '../viewer';
-import { readConfig, OBSERVED_ATTRS, type DiagramConfig } from './config';
+import { type DiagramConfig, OBSERVED_ATTRS, readConfig } from './config';
 
 const SHADOW_STYLE = `
   :host { display: block; position: relative; }
@@ -16,7 +12,9 @@ const SHADOW_STYLE = `
 `;
 
 export class StickyflowDiagram extends HTMLElement {
-  static get observedAttributes(): string[] { return [...OBSERVED_ATTRS]; }
+  static get observedAttributes(): string[] {
+    return [...OBSERVED_ATTRS];
+  }
 
   private root: ShadowRoot;
   private view: Viewer | null = null;
@@ -27,16 +25,27 @@ export class StickyflowDiagram extends HTMLElement {
     this.root = this.attachShadow({ mode: 'open' });
   }
 
-  connectedCallback(): void { this.rerender(); }
-  disconnectedCallback(): void { this.teardown(); }
-  attributeChangedCallback(): void { if (this.isConnected) this.rerender(); }
+  connectedCallback(): void {
+    this.rerender();
+  }
+  disconnectedCallback(): void {
+    this.teardown();
+  }
+  attributeChangedCallback(): void {
+    if (this.isConnected) this.rerender();
+  }
 
-  /** Property form for large SFL that shouldn't live in an HTML attribute. */
-  set source(value: string | null) { this.sourceProp = value; if (this.isConnected) this.rerender(); }
-  get source(): string | null { return this.sourceProp ?? this.getAttribute('source'); }
+  set source(value: string | null) {
+    this.sourceProp = value;
+    if (this.isConnected) this.rerender();
+  }
+  get source(): string | null {
+    return this.sourceProp ?? this.getAttribute('source');
+  }
 
-  /** The live viewer when interactive, else null. Lets a host bind events. */
-  get viewer(): Viewer | null { return this.view; }
+  get viewer(): Viewer | null {
+    return this.view;
+  }
 
   private config(): DiagramConfig {
     const cfg = readConfig(name => this.getAttribute(name));
@@ -63,8 +72,11 @@ export class StickyflowDiagram extends HTMLElement {
     try {
       if (cfg.interactive) {
         this.view = createViewer({
-          container, source: cfg.source, interactive: true,
-          diagramId: cfg.diagramId, renderOptions: { padding: cfg.padding },
+          container,
+          source: cfg.source,
+          interactive: true,
+          diagramId: cfg.diagramId,
+          renderOptions: { padding: cfg.padding },
         });
       } else {
         container.innerHTML = render(cfg.source, { padding: cfg.padding }).svg;

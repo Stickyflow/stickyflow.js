@@ -1,16 +1,16 @@
-import type { SflEntityOut } from '../../sflToCanvasState'
-import { numOf, safeJson } from './values'
+import type { SflEntityOut } from '../../sflToCanvasState';
+import { numOf, safeJson } from './values';
 
 export function swimlaneObject(e: SflEntityOut): any {
   const p = e.props;
-  // buildSwimlane reads snake_case container fields plus the swimlane-specific
-  // orientation/lanes. Sensible fallbacks (mirroring SWIMLANE_DEFAULTS) keep a
-  // bare `kind: swimlane` block renderable even when the SFL omits styling.
   return {
     id: e.id,
     type: 'swimlane',
     title: e.text ?? null,
-    x: e.x, y: e.y, width: e.width, height: e.height,
+    x: e.x,
+    y: e.y,
+    width: e.width,
+    height: e.height,
     orientation: e.swimlane?.orientation ?? 'horizontal',
     lanes: e.swimlane?.lanes ?? [],
     fill_color: p.fill ?? 'transparent',

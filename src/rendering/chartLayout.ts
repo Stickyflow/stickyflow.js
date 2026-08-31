@@ -1,9 +1,18 @@
 import type { Chart } from '../model/charts';
-import type { Bounds, RenderDiagnostic, RenderNode, SceneStyle } from './renderScene';
+import { CHART_COLORS, chartText, chartTicks, mapChartValue } from './chartPrimitives';
 import { boxBounds, finite, paint } from './renderPrimitives';
-import { chartText, chartTicks, CHART_COLORS, mapChartValue } from './chartPrimitives';
+import type { Bounds, RenderDiagnostic, RenderNode, SceneStyle } from './renderScene';
 
-export const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'grid', 'field']);
+export const CARTESIAN_VALUE_TYPES = new Set([
+  'bar',
+  'line',
+  'scatter',
+  'boxplot',
+  'hexbin',
+  'custom',
+  'grid',
+  'field',
+]);
 const CHARTS_WITHOUT_CARTESIAN_DECORATIONS = new Set(['heatmap', 'sankey', 'treemap', 'mekko', 'pie', 'matrix']);
 
 export function hasCartesianDecorations(chart: Chart): boolean {
@@ -23,20 +32,12 @@ export function chartLayout(chart: Chart): ChartLayout {
   const showLegend = chart.show_legend !== false;
   const padLeft = showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
   const basePadBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
-  const hasColorBar = chart.chart_type === 'field'
-    && showLegend
-    && Boolean(chart.config?.scale?.stops.length);
+  const hasColorBar = chart.chart_type === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const padBottom = basePadBottom + (hasColorBar ? 34 : 0);
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
 
   return {
-    bounds: boxBounds(
-      chart.x,
-      chart.y,
-      chart.width,
-      chart.height,
-      finite(chart.stroke_width, 1) + 2,
-    ),
+    bounds: boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2),
     plot: {
       x: chart.x + padLeft,
       y: chart.y + padTop,
@@ -49,7 +50,12 @@ export function chartLayout(chart: Chart): ChartLayout {
   };
 }
 
-export function buildChartRules(chart: Chart, plot: { x: number; y: number; width: number; height: number }, bounds: Bounds, order: number): RenderNode[] {
+export function buildChartRules(
+  chart: Chart,
+  plot: { x: number; y: number; width: number; height: number },
+  bounds: Bounds,
+  order: number,
+): RenderNode[] {
   const rules = chart.rules;
   if (!rules?.length) return [];
   const nodes: RenderNode[] = [];
@@ -58,8 +64,34 @@ export function buildChartRules(chart: Chart, plot: { x: number; y: number; widt
   rules.forEach(rule => {
     const color = rule.color || chart.stroke_color || '#475569';
     const y = plot.y + plot.height - mapChartValue(rule.at, chart.axis_y, plot.height);
-    nodes.push({ type: 'path', id: `chart-rule-${chart.id}-${rule.id}`, order: order + offset++, bounds, d: `M ${plot.x} ${y} L ${plot.x + plot.width} ${y}`, style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: rule.stroke_width ?? 1, dash: rule.dash } });
-    if (rule.text) nodes.push({ ...chartText(`chart-rule-label-${chart.id}-${rule.id}`, order + offset++, bounds, plot.x + 4, y - fontSize - 2, 160, fontSize + 2, rule.text, chart), color });
+    nodes.push({
+      type: 'path',
+      id: `chart-rule-${chart.id}-${rule.id}`,
+      order: order + offset++,
+      bounds,
+      d: `M ${plot.x} ${y} L ${plot.x + plot.width} ${y}`,
+      style: {
+        fill: { kind: 'none' },
+        stroke: { kind: 'solid', color },
+        strokeWidth: rule.stroke_width ?? 1,
+        dash: rule.dash,
+      },
+    });
+    if (rule.text)
+      nodes.push({
+        ...chartText(
+          `chart-rule-label-${chart.id}-${rule.id}`,
+          order + offset++,
+          bounds,
+          plot.x + 4,
+          y - fontSize - 2,
+          160,
+          fontSize + 2,
+          rule.text,
+          chart,
+        ),
+        color,
+      });
   });
   return nodes;
 }
@@ -74,15 +106,16 @@ export function buildLegend(
   if (chart.show_legend === false) return [];
   if (['heatmap', 'boxplot', 'sankey', 'treemap', 'mekko', 'matrix'].includes(chart.chart_type)) return [];
 
-  const series = chart.chart_type === 'field'
-    ? chart.series.filter(item => (item.values[0] as number[] | undefined)?.length === 4)
-    : chart.series;
+  const series =
+    chart.chart_type === 'field'
+      ? chart.series.filter(item => (item.values[0] as number[] | undefined)?.length === 4)
+      : chart.series;
   const nodes: RenderNode[] = [];
   let x = plot.x + plot.width;
 
   [...series].reverse().forEach((item, reverseIndex) => {
     const seriesIndex = series.length - 1 - reverseIndex;
-    const width = Math.max(42, item.label.length * finite(chart.font_size, 12) * .58 + 22);
+    const width = Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22);
     x -= width;
     nodes.push({
       type: 'rect',
@@ -96,17 +129,19 @@ export function buildLegend(
       rx: 3,
       style: { fill: paint(item.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length], diagnostics, chart.id) },
     });
-    nodes.push(chartText(
-      `chart-legend-${chart.id}-${item.id}`,
-      order + nodes.length,
-      bounds,
-      x + 15,
-      chart.y + 13,
-      width - 15,
-      18,
-      item.label,
-      chart,
-    ));
+    nodes.push(
+      chartText(
+        `chart-legend-${chart.id}-${item.id}`,
+        order + nodes.length,
+        bounds,
+        x + 15,
+        chart.y + 13,
+        width - 15,
+        18,
+        item.label,
+        chart,
+      ),
+    );
   });
 
   return nodes;
@@ -120,11 +155,31 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
   const nodes: RenderNode[] = [];
   chartTicks(chart.axis_x).forEach(tick => {
     const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width);
-    nodes.push({ type: 'rect', id: `chart-grid-x-${chart.id}-${tick}`, order: order + nodes.length, bounds, x: x - width / 2, y: plot.y, width, height: plot.height, style });
+    nodes.push({
+      type: 'rect',
+      id: `chart-grid-x-${chart.id}-${tick}`,
+      order: order + nodes.length,
+      bounds,
+      x: x - width / 2,
+      y: plot.y,
+      width,
+      height: plot.height,
+      style,
+    });
   });
   chartTicks(chart.axis_y).forEach(tick => {
     const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height);
-    nodes.push({ type: 'rect', id: `chart-grid-y-${chart.id}-${tick}`, order: order + nodes.length, bounds, x: plot.x, y: y - width / 2, width: plot.width, height: width, style });
+    nodes.push({
+      type: 'rect',
+      id: `chart-grid-y-${chart.id}-${tick}`,
+      order: order + nodes.length,
+      bounds,
+      x: plot.x,
+      y: y - width / 2,
+      width: plot.width,
+      height: width,
+      style,
+    });
   });
   return nodes;
 }
@@ -141,22 +196,88 @@ export function buildChartAxes(chart: Chart, layout: ChartLayout, order: number)
       ? chart.config.categories
       : Array.from({ length: count }, (_, index) => String(index + 1));
     for (let index = 0; index < count; index++) {
-      const x = plot.x + (index + .5) * slot;
-      nodes.push(chartText(`chart-x-tick-${chart.id}-${index}`, order + nodes.length, bounds, x - slot / 2, plot.y + plot.height + 4, slot, 18, labels[index] ?? String(index + 1), chart, 'center'));
+      const x = plot.x + (index + 0.5) * slot;
+      nodes.push(
+        chartText(
+          `chart-x-tick-${chart.id}-${index}`,
+          order + nodes.length,
+          bounds,
+          x - slot / 2,
+          plot.y + plot.height + 4,
+          slot,
+          18,
+          labels[index] ?? String(index + 1),
+          chart,
+          'center',
+        ),
+      );
     }
   } else {
     chartTicks(chart.axis_x).forEach(tick => {
       const x = plot.x + mapChartValue(tick, chart.axis_x, plot.width);
-      nodes.push(chartText(`chart-x-tick-${chart.id}-${tick}`, order + nodes.length, bounds, x - 20, plot.y + plot.height + 4, 40, 18, String(tick), chart, 'center'));
+      nodes.push(
+        chartText(
+          `chart-x-tick-${chart.id}-${tick}`,
+          order + nodes.length,
+          bounds,
+          x - 20,
+          plot.y + plot.height + 4,
+          40,
+          18,
+          String(tick),
+          chart,
+          'center',
+        ),
+      );
     });
   }
   chartTicks(chart.axis_y).forEach(tick => {
     const y = plot.y + plot.height - mapChartValue(tick, chart.axis_y, plot.height);
-    nodes.push(chartText(`chart-y-tick-${chart.id}-${tick}`, order + nodes.length, bounds, chart.x, y - 6, padLeft - 8, 18, String(tick), chart, 'right'));
+    nodes.push(
+      chartText(
+        `chart-y-tick-${chart.id}-${tick}`,
+        order + nodes.length,
+        bounds,
+        chart.x,
+        y - 6,
+        padLeft - 8,
+        18,
+        String(tick),
+        chart,
+        'right',
+      ),
+    );
   });
-  if (chart.axis_x.label) nodes.push(chartText(`chart-x-label-${chart.id}`, order + nodes.length, bounds, plot.x, chart.y + chart.height - 18, plot.width, 18, chart.axis_x.label, chart, 'center'));
-  if (chart.axis_y.label) nodes.push(chartText(`chart-y-label-${chart.id}`, order + nodes.length, bounds, chart.x + 12, plot.y + plot.height, plot.height, 18, chart.axis_y.label, chart, 'center', -90));
+  if (chart.axis_x.label)
+    nodes.push(
+      chartText(
+        `chart-x-label-${chart.id}`,
+        order + nodes.length,
+        bounds,
+        plot.x,
+        chart.y + chart.height - 18,
+        plot.width,
+        18,
+        chart.axis_x.label,
+        chart,
+        'center',
+      ),
+    );
+  if (chart.axis_y.label)
+    nodes.push(
+      chartText(
+        `chart-y-label-${chart.id}`,
+        order + nodes.length,
+        bounds,
+        chart.x + 12,
+        plot.y + plot.height,
+        plot.height,
+        18,
+        chart.axis_y.label,
+        chart,
+        'center',
+        -90,
+      ),
+    );
   return nodes;
 }
-
-

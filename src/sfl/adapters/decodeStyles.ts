@@ -1,23 +1,26 @@
-// src/features/sfl-language/sfl/adapters/decodeStyles.ts
-//
-// Kehrseite der Encoder in buildSflInput: SFL-Style-STRINGS zurück in die
-// App-Modell-Objekte. Damit wird der Round-Trip auch für Gradienten, Mesh und
-// Schatten verlustfrei (nicht nur strukturell).
-//   • "gradient(45, #ff0000 0%, #0000ff 100%)" → { type:'gradient', angle, stops }
-//   • "mesh(#ae3939 20,20, #4ECDC4 80,30)"     → { type:'mesh', points }
-//   • "shadow(color:.., opacity:.., …)"        → { enabled:true, color, … }
-//   • alles andere (Hex/rgba/Name)             → unverändert als String
-
-// Erkennt eine einzelne Farbe (Hex, rgb/rgba mit inneren Kommas, oder Name).
 const COLOR = String.raw`rgba?\([^)]*\)|#[0-9a-fA-F]+|[a-zA-Z][\w-]*`;
 
-export interface GradientStop { position: number; color: string; }
-export interface GradientFill { type: 'gradient'; angle: number; stops: GradientStop[]; }
-export interface MeshPoint { id: string; x: number; y: number; color: string; }
-export interface MeshFill { type: 'mesh'; points: MeshPoint[]; }
+export interface GradientStop {
+  position: number;
+  color: string;
+}
+export interface GradientFill {
+  type: 'gradient';
+  angle: number;
+  stops: GradientStop[];
+}
+export interface MeshPoint {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+}
+export interface MeshFill {
+  type: 'mesh';
+  points: MeshPoint[];
+}
 export type DecodedColor = string | GradientFill | MeshFill;
 
-/** SFL-Farbstring → App-Farbe (String bleibt String; Gradient/Mesh → Objekt). */
 export function decodeColor(s?: string): DecodedColor | undefined {
   if (s === undefined || s === null || s === '') return undefined;
 
@@ -41,16 +44,18 @@ export function decodeColor(s?: string): DecodedColor | undefined {
     return { type: 'mesh', points };
   }
 
-  return s; // Hex / rgba / benannte Farbe → verbatim
+  return s;
 }
 
-export interface RampStop { position: number; color: string; }
-export interface DecodedRamp { type: 'ramp'; stops: RampStop[]; }
+export interface RampStop {
+  position: number;
+  color: string;
+}
+export interface DecodedRamp {
+  type: 'ramp';
+  stops: RampStop[];
+}
 
-/** Fields §3.4: "ramp(#000 0, #fff 1)" -> { type:'ramp', stops }. Same
- * structured-value-form family as gradient()/mesh() above, but a dedicated
- * function since `scale` isn't a fill/stroke color - it lives on its own
- * Chart property. */
 export function decodeRamp(s?: string): DecodedRamp | undefined {
   if (!s) return undefined;
   const m = s.match(/^ramp\(\s*(.*)\)\s*$/);
@@ -63,10 +68,13 @@ export function decodeRamp(s?: string): DecodedRamp | undefined {
 
 export interface ShadowStyle {
   enabled: boolean;
-  color?: string; opacity?: number; blur?: number; angle?: number; distance?: number;
+  color?: string;
+  opacity?: number;
+  blur?: number;
+  angle?: number;
+  distance?: number;
 }
 
-/** SFL-Schattenstring → shadowStyle-Objekt. "on" = nur aktiviert. */
 export function decodeShadow(s?: string): ShadowStyle | undefined {
   if (!s) return undefined;
   if (s === 'on') return { enabled: true };

@@ -1,17 +1,20 @@
 import type { SflValue } from '../../ast';
-import type { SflEntityOut } from '../types';
 import { asNumber, asString } from '../readers';
+import type { SflEntityOut } from '../types';
 
 type Properties = Map<string, SflValue>;
 
 export function readPath(p: Properties, origin: { x: number; y: number }): SflEntityOut['path'] {
   const pointsValue = p.get('points');
-  const points = pointsValue?.type === 'list' ? pointsValue.values.flatMap(value => {
-    if (value.type !== 'list' || value.values.length < 2) return [];
-    const x = asNumber(value.values[0]);
-    const y = asNumber(value.values[1]);
-    return x !== undefined && y !== undefined ? [{ x: origin.x + x, y: origin.y + y }] : [];
-  }) : [];
+  const points =
+    pointsValue?.type === 'list'
+      ? pointsValue.values.flatMap(value => {
+          if (value.type !== 'list' || value.values.length < 2) return [];
+          const x = asNumber(value.values[0]);
+          const y = asNumber(value.values[1]);
+          return x !== undefined && y !== undefined ? [{ x: origin.x + x, y: origin.y + y }] : [];
+        })
+      : [];
 
   return {
     points,
@@ -22,4 +25,3 @@ export function readPath(p: Properties, origin: { x: number; y: number }): SflEn
     value: asNumber(p.get('value')),
   };
 }
-

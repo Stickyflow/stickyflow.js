@@ -1,14 +1,17 @@
 import type { MarkerType } from './links';
 
-export interface PathPoint { x: number; y: number }
+export interface PathPoint {
+  x: number;
+  y: number;
+}
 
 export interface FreeformPath {
   id: string;
-  x: number; y: number; width: number; height: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   points: PathPoint[];
-  // Maps §3.3: choropleth region value (semantic, independent of fill_color)
-  // - a closed Path doubling as a region needs to be addressable with a data
-  //   value, not just a colored shape. No automatic value-to-color scale.
   value?: number;
   stroke_color?: string;
   stroke_width?: number;

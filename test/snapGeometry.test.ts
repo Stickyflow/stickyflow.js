@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  computeSnap, nearestCandidates, resizeActivePoints, applyAxisSnap, MOVE_ACTIVE_POINTS, type SnapConfig,
+  applyAxisSnap,
+  computeSnap,
+  MOVE_ACTIVE_POINTS,
+  nearestCandidates,
+  resizeActivePoints,
+  type SnapConfig,
 } from '../src/interaction/snapGeometry';
 import type { Bounds } from '../src/model/geometry/router';
 
@@ -56,11 +61,7 @@ describe('computeSnap — move (all points active on both axes)', () => {
     // mins at 90 and 106 (wide bounds so their own center/max are far away),
     // dragged min at 100 -> distances 10 and 6, 106 wins.
     const isolated: SnapConfig = { threshold: 20, activeX: ['min'], activeY: [], guideOverhang: 10 };
-    const result = computeSnap(
-      bounds(100, 0, 10, 10),
-      [bounds(90, 0, 1000, 10), bounds(106, 0, 1000, 10)],
-      isolated,
-    );
+    const result = computeSnap(bounds(100, 0, 10, 10), [bounds(90, 0, 1000, 10), bounds(106, 0, 1000, 10)], isolated);
     expect(result.x.delta).toBe(6);
     expect(result.x.guide?.position).toBe(106);
   });
@@ -103,11 +104,12 @@ describe('computeSnap — resize (single axis/point active)', () => {
 
   it('an untouched axis (none) yields no active points and never snaps', () => {
     expect(resizeActivePoints('none')).toEqual([]);
-    const result = computeSnap(
-      bounds(0, 0, 108, 50),
-      [bounds(105, 0, 50, 50)],
-      { threshold: 20, activeX: [], activeY: [], guideOverhang: 10 },
-    );
+    const result = computeSnap(bounds(0, 0, 108, 50), [bounds(105, 0, 50, 50)], {
+      threshold: 20,
+      activeX: [],
+      activeY: [],
+      guideOverhang: 10,
+    });
     expect(result.x.delta).toBe(0);
     expect(result.x.guide).toBeNull();
   });

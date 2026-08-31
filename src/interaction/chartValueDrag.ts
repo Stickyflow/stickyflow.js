@@ -1,17 +1,7 @@
-// Drag a bar's top edge (or a line/scatter point) vertically to change the
-// single value it draws. Unlike moveDrag/resizeDrag this never touches
-// geometry the host owns — a chart mark's position IS its datum, so the
-// gesture edits `Series { values: [...] }` instead of `layout {}`.
-//
-// Addressing comes entirely from the DOM contract: the mark carries
-// data-sf-series/data-sf-value-index, and the chart's primary node carries
-// data-sf-value-scale (see renderScene.ts) for the pixel -> value mapping.
-// Nothing here re-derives axis geometry from tick text or element ids.
-// (DOM code — browser-verified, like moveDrag.ts.)
-import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner, isCameraGesture } from '../viewer/contract';
+import type { OwnerRef, Viewer } from '../viewer';
+import { isCameraGesture, resolveOwner } from '../viewer/contract';
 import { findOwnerNode, isPrimary } from '../viewer/domQuery';
-import { Emitter } from './events';
+import type { Emitter } from './events';
 
 export interface ChartValueDragHandle {
   destroy(): void;
@@ -30,8 +20,6 @@ interface DragState {
   index: number;
   scale: ValueScale;
   el: SVGGraphicsElement;
-  /** Baseline y of the mark, kept fixed while its top edge follows the
-   *  pointer — a bar grows from the axis, it doesn't move. */
   baseY: number;
   isBar: boolean;
   pointerId: number;
@@ -53,8 +41,6 @@ const valueAt = (y: number, s: ValueScale): number =>
 const pixelFor = (value: number, s: ValueScale): number =>
   s.plotY + s.plotHeight - ((value - s.min) / (s.max - s.min)) * s.plotHeight;
 
-/** Bind drag-to-change-value on a chart's own marks. Emits `chartValueChange`
- *  on release; the live preview reverts unless the host reflects it. */
 export function bindChartValueDrag(viewer: Viewer, emitter: Emitter): ChartValueDragHandle {
   const svg = viewer.svg;
   let drag: DragState | null = null;
@@ -81,28 +67,36 @@ export function bindChartValueDrag(viewer: Viewer, emitter: Emitter): ChartValue
     const mark = (e.target as Element | null)?.closest?.('[data-sf-value-index]') as SVGGraphicsElement | null;
     if (!mark) return;
     const owner = resolveOwner(mark);
-    if (!owner || owner.role !== 'chart') return;
+    if (owner?.role !== 'chart') return;
     const series = mark.getAttribute('data-sf-series');
     const index = Number(mark.getAttribute('data-sf-value-index'));
     if (!series || !Number.isInteger(index)) return;
     const scale = parseScale(findOwnerNode(svg, owner.id, isPrimary));
     if (!scale) return;
-    // A datum can be drawn by more than one node — a bar plus the error
-    // whisker over its top edge, which is exactly where a reader grabs. Both
-    // carry the same series/index; the geometry one is what gets previewed.
-    const geometry = [...svg.querySelectorAll<SVGGraphicsElement>(
-      `[data-sf-id="${CSS.escape(owner.id)}"][data-sf-series="${CSS.escape(series)}"][data-sf-value-index="${index}"]`,
-    )].find(el => el.tagName.toLowerCase() === 'rect' || el.tagName.toLowerCase() === 'ellipse');
+    const geometry = [
+      ...svg.querySelectorAll<SVGGraphicsElement>(
+        `[data-sf-id="${CSS.escape(owner.id)}"][data-sf-series="${CSS.escape(series)}"][data-sf-value-index="${index}"]`,
+      ),
+    ].find(el => el.tagName.toLowerCase() === 'rect' || el.tagName.toLowerCase() === 'ellipse');
     if (!geometry) return;
     const isBar = geometry.tagName.toLowerCase() === 'rect';
-    // A stacked segment's own baseline is wherever the segment below it
-    // ended, not the axis — read it off the mark rather than assuming.
     const baseY = isBar
       ? Number(geometry.getAttribute('y')) + Number(geometry.getAttribute('height'))
       : scale.plotY + scale.plotHeight;
     if (!Number.isFinite(baseY)) return;
     mark.setPointerCapture?.(e.pointerId);
-    drag = { owner, series, index, scale, el: geometry, baseY, isBar, pointerId: e.pointerId, moved: false, lastValue: 0 };
+    drag = {
+      owner,
+      series,
+      index,
+      scale,
+      el: geometry,
+      baseY,
+      isBar,
+      pointerId: e.pointerId,
+      moved: false,
+      lastValue: 0,
+    };
     e.stopPropagation();
   };
 
@@ -119,7 +113,12 @@ export function bindChartValueDrag(viewer: Viewer, emitter: Emitter): ChartValue
     drag = null;
     (e.target as Element)?.releasePointerCapture?.(d.pointerId);
     if (!d.moved) return;
-    emitter.emit('chartValueChange', { owner: d.owner, series: d.series, index: d.index, value: valueAt(userY(e), d.scale) });
+    emitter.emit('chartValueChange', {
+      owner: d.owner,
+      series: d.series,
+      index: d.index,
+      value: valueAt(userY(e), d.scale),
+    });
   };
 
   svg.addEventListener('pointerdown', onPointerDown);

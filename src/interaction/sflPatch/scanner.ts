@@ -1,3 +1,3 @@
-export * from './scan/lexical'
-export * from './scan/blocks'
-export * from './scan/properties'
+export * from './scan/blocks';
+export * from './scan/lexical';
+export * from './scan/properties';

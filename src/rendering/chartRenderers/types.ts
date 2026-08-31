@@ -12,4 +12,3 @@ export interface ChartRenderContext {
   showLegend: boolean;
   nextOrder: () => number;
 }
-

@@ -59,7 +59,9 @@ Model Checkout {
 
 const container = document.getElementById('diagram') as HTMLElement;
 const log = document.getElementById('log') as HTMLElement;
-const write = (line: string) => { log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 12).join('\n'); };
+const write = (line: string) => {
+  log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 12).join('\n');
+};
 
 const viewer = createViewer({ container, source: SFL, interactive: true, diagramId: 'checkout' });
 

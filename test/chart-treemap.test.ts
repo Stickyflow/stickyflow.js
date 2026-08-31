@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { render, sflToCanvasState } from '../src/index';
 import type { RenderNode } from '../src/index';
+import { render, sflToCanvasState } from '../src/index';
 
 const solidFill = (node: RenderNode): string | undefined =>
-  ('style' in node && node.style?.fill?.kind === 'solid') ? node.style.fill.color : undefined;
+  'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
 const TREEMAP_SFL = `sfl 1.2
 
@@ -46,7 +46,7 @@ describe('Treemap chart', () => {
     const { scene } = render(TREEMAP_SFL);
     const videos = scene.nodes.find(node => node.id === 'chart-treemap-tile-usage-videos');
     const docs = scene.nodes.find(node => node.id === 'chart-treemap-tile-usage-docs');
-    const area = (n: typeof videos) => n?.type === 'rect' ? n.width * n.height : 0;
+    const area = (n: typeof videos) => (n?.type === 'rect' ? n.width * n.height : 0);
     expect(area(videos)).toBeGreaterThan(area(docs));
   });
 

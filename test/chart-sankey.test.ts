@@ -63,7 +63,10 @@ describe('Sankey chart', () => {
   });
 
   it('drops a self-loop or a link to an undeclared node without throwing', () => {
-    const bad = SANKEY_SFL.replace('Series c { source: "Signups"; target: "Churned"; values: [30] }', 'Series c { source: "Signups"; target: "Signups"; values: [30] }\n    Series d { source: "Ghost"; target: "Active"; values: [10] }');
+    const bad = SANKEY_SFL.replace(
+      'Series c { source: "Signups"; target: "Churned"; values: [30] }',
+      'Series c { source: "Signups"; target: "Signups"; values: [30] }\n    Series d { source: "Ghost"; target: "Active"; values: [10] }',
+    );
     const { diagnostics } = render(bad);
     expect(diagnostics).toEqual([]);
   });

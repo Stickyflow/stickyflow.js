@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
-  applyTextChange, applyMoveChange, applyResizeChange, applyLinkReconnectChange,
-  insertEntity, removeEntity, insertLink, removeLink,
+  applyLinkReconnectChange,
+  applyMoveChange,
+  applyResizeChange,
+  applyTextChange,
+  insertEntity,
+  insertLink,
+  removeEntity,
+  removeLink,
 } from '../src/interaction/patchSfl';
-import { sflToCanvasState, parse } from '../src/sfl';
+import { parse, sflToCanvasState } from '../src/sfl';
 import type { OwnerRef } from '../src/viewer';
 
 const owner = (id: string, role: OwnerRef['role'] = 'entity'): OwnerRef => ({ role, id });
@@ -114,7 +120,7 @@ describe('applyMoveChange', () => {
     expect(again.match(/position:/g)?.length).toBe(1);
   });
 
-  it('updates position in place when the layout block shares its OWN physical line with the entity\'s opening brace too', () => {
+  it("updates position in place when the layout block shares its OWN physical line with the entity's opening brace too", () => {
     // Same regression as applyResizeChange's matching test, hit via a plain
     // drag instead of a resize handle: `Entity a : Style { text: "A"; layout
     // { position: 80, 80; size: 200, 80 } }` all on one line - what an LLM
@@ -164,7 +170,7 @@ describe('applyResizeChange', () => {
     expect(next.match(/size:/g)?.length).toBe(1);
   });
 
-  it('sets position and size in place when the layout block shares its OWN physical line with the entity\'s opening brace too', () => {
+  it("sets position and size in place when the layout block shares its OWN physical line with the entity's opening brace too", () => {
     // Regression: `Entity a { text: "A"; layout { position: 0, 0; size: 100,
     // 50 } }` all on one line - routine LLM output optimizing for fewer
     // tokens, and valid SFL either way. findChildBlock's header search is
@@ -195,7 +201,13 @@ describe('applyLinkReconnectChange', () => {
   const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l {\n    from: a, right (0.5)\n    to: b, left (0.5)\n    text: "creates"\n  }\n}\n`;
 
   it('reconnects the `to` end to a different entity, side, and fraction', () => {
-    const event = { owner: owner('l', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.25 };
+    const event = {
+      owner: owner('l', 'link'),
+      end: 'to' as const,
+      target: owner('c'),
+      side: 'top' as const,
+      fraction: 0.25,
+    };
     const next = applyLinkReconnectChange(sfl, event);
     expect(next).toContain('to: c, top (0.25)');
     expect(next).toContain('from: a, right (0.5)'); // untouched
@@ -203,20 +215,38 @@ describe('applyLinkReconnectChange', () => {
   });
 
   it('reconnects the `from` end to a different spot on the SAME entity', () => {
-    const event = { owner: owner('l', 'link'), end: 'from' as const, target: owner('a'), side: 'bottom' as const, fraction: 0.8 };
+    const event = {
+      owner: owner('l', 'link'),
+      end: 'from' as const,
+      target: owner('a'),
+      side: 'bottom' as const,
+      fraction: 0.8,
+    };
     const next = applyLinkReconnectChange(sfl, event);
     expect(next).toContain('from: a, bottom (0.8)');
     expect(next).toContain('to: b, left (0.5)'); // untouched
   });
 
   it('rounds the fraction to two decimal places', () => {
-    const event = { owner: owner('l', 'link'), end: 'to' as const, target: owner('c'), side: 'left' as const, fraction: 0.123456 };
+    const event = {
+      owner: owner('l', 'link'),
+      end: 'to' as const,
+      target: owner('c'),
+      side: 'left' as const,
+      fraction: 0.123456,
+    };
     const next = applyLinkReconnectChange(sfl, event);
     expect(next).toContain('to: c, left (0.12)');
   });
 
   it('is a no-op for an unknown owner id', () => {
-    const event = { owner: owner('missing', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.5 };
+    const event = {
+      owner: owner('missing', 'link'),
+      end: 'to' as const,
+      target: owner('c'),
+      side: 'top' as const,
+      fraction: 0.5,
+    };
     expect(applyLinkReconnectChange(sfl, event)).toBe(sfl);
   });
 
@@ -230,7 +260,13 @@ describe('applyLinkReconnectChange', () => {
     // exactly the "two endpoints, contradiction" shape a reader (human or an
     // LLM asked to comment on the document) would flag on sight.
     const compact = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l { from: a, right (0.5); to: b, left (0.5) }\n}\n`;
-    const event = { owner: owner('l', 'link'), end: 'to' as const, target: owner('c'), side: 'top' as const, fraction: 0.25 };
+    const event = {
+      owner: owner('l', 'link'),
+      end: 'to' as const,
+      target: owner('c'),
+      side: 'top' as const,
+      fraction: 0.25,
+    };
     const next = applyLinkReconnectChange(compact, event);
     expect(next).toContain('Link l { from: a, right (0.5); to: c, top (0.25) }');
     expect(next.match(/\bto:/g)?.length).toBe(1);
@@ -286,7 +322,15 @@ describe('insertEntity', () => {
   });
 
   it('nests inside parentId with a frame-relative position, given absolute x/y', () => {
-    const next = insertEntity(sfl, { id: 'child', kind: 'shape', x: 210, y: 210, width: 50, height: 50, parentId: 'f' });
+    const next = insertEntity(sfl, {
+      id: 'child',
+      kind: 'shape',
+      x: 210,
+      y: 210,
+      width: 50,
+      height: 50,
+      parentId: 'f',
+    });
     expect(next).toMatch(/Container f \{[\s\S]*Entity child \{[\s\S]*position: 10, 10[\s\S]*\}[\s\S]*\}/);
     const child = sflToCanvasState(next).entities.find(e => e.id === 'child');
     expect(child?.parentFrameId).toBe('f'); // resolved back to the same absolute position
@@ -295,7 +339,12 @@ describe('insertEntity', () => {
 
   it('injects `body` verbatim, indented, as extra lines in the new block', () => {
     const next = insertEntity(sfl, {
-      id: 'styled', kind: 'shape', x: 0, y: 0, width: 10, height: 10,
+      id: 'styled',
+      kind: 'shape',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
       body: 'style {\n  shape: pill\n  fill: "#fff"\n}',
     });
     expect(next).toContain('shape: pill');
@@ -305,7 +354,9 @@ describe('insertEntity', () => {
   it('is a no-op when the id already exists, is invalid, or the parentId is unknown', () => {
     expect(insertEntity(sfl, { id: 'a', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
     expect(insertEntity(sfl, { id: 'has space', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
-    expect(insertEntity(sfl, { id: 'new', kind: 'shape', x: 0, y: 0, width: 1, height: 1, parentId: 'missing' })).toBe(sfl);
+    expect(insertEntity(sfl, { id: 'new', kind: 'shape', x: 0, y: 0, width: 1, height: 1, parentId: 'missing' })).toBe(
+      sfl,
+    );
   });
 });
 
@@ -351,7 +402,16 @@ describe('insertLink', () => {
   const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n}\n`;
 
   it('appends a new Link with sides and fractions', () => {
-    const next = insertLink(sfl, { id: 'l1', fromId: 'a', toId: 'b', fromSide: 'right', fromFraction: 0.5, toSide: 'left', toFraction: 0.25, text: 'go' });
+    const next = insertLink(sfl, {
+      id: 'l1',
+      fromId: 'a',
+      toId: 'b',
+      fromSide: 'right',
+      fromFraction: 0.5,
+      toSide: 'left',
+      toFraction: 0.25,
+      text: 'go',
+    });
     expect(() => parse(next)).not.toThrow();
     const link = sflToCanvasState(next).links.find(l => l.id === 'l1');
     expect(link?.fromId).toBe('a');

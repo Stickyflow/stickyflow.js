@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, renderCanvas, DOM_CONTRACT_VERSION } from '../src/index';
+import { DOM_CONTRACT_VERSION, render, renderCanvas } from '../src/index';
 import { fixtures, SFL_SAMPLE } from './fixtures';
 
 // The interactive DOM contract (§9, ADR-03) is what a viewer binds to. It is
@@ -23,12 +23,29 @@ describe('interactive DOM contract', () => {
     // A cylinder emits body + two ellipse caps; all must share the owner id so a
     // click on any part resolves to the entity via closest('[data-sf-id]').
     const { svg } = renderCanvas({
-      shapes: [{
-        id: 'tank', boardId: 'b', shapeType: 'cylinder', x: 0, y: 0, width: 100, height: 120,
-        text: 'Tank', fillColor: '#fff', strokeColor: '#000', strokeWidth: 2,
-        layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-      }],
-      frames: [], swimlanes: [], links: [],
+      shapes: [
+        {
+          id: 'tank',
+          boardId: 'b',
+          shapeType: 'cylinder',
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 120,
+          text: 'Tank',
+          fillColor: '#fff',
+          strokeColor: '#000',
+          strokeWidth: 2,
+          layer_group: 'default',
+          order_key: 'a',
+          is_visible: true,
+          is_locked: false,
+          createdAt: '',
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as Parameters<typeof renderCanvas>[0]);
     const ids = svg.match(/data-sf-id="tank"/g) ?? [];
     expect(ids.length).toBeGreaterThanOrEqual(3);
@@ -89,12 +106,29 @@ describe('interactive DOM contract', () => {
 
   it('escapes owner ids and labels in data attributes', () => {
     const { svg } = renderCanvas({
-      shapes: [{
-        id: 'a"b', boardId: 'b', shapeType: 'rectangle', x: 0, y: 0, width: 80, height: 40,
-        text: '<x>', fillColor: '#fff', strokeColor: '#000', strokeWidth: 1,
-        layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-      }],
-      frames: [], swimlanes: [], links: [],
+      shapes: [
+        {
+          id: 'a"b',
+          boardId: 'b',
+          shapeType: 'rectangle',
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 40,
+          text: '<x>',
+          fillColor: '#fff',
+          strokeColor: '#000',
+          strokeWidth: 1,
+          layer_group: 'default',
+          order_key: 'a',
+          is_visible: true,
+          is_locked: false,
+          createdAt: '',
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as Parameters<typeof renderCanvas>[0]);
     expect(svg).not.toContain('data-sf-id="a"b"');
     expect(svg).toContain('&quot;');
@@ -110,12 +144,29 @@ describe('interactive DOM contract', () => {
     // raw, unescaped constructs specifically, not the substrings in general.
     const payload = '"><script>alert(1)</script><image href="javascript:alert(2)" onerror="alert(3)"/>';
     const { svg } = renderCanvas({
-      shapes: [{
-        id: 'a', boardId: 'b', shapeType: 'rectangle', x: 0, y: 0, width: 80, height: 40,
-        text: payload, fillColor: '#fff', strokeColor: '#000', strokeWidth: 1,
-        layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-      }],
-      frames: [], swimlanes: [], links: [],
+      shapes: [
+        {
+          id: 'a',
+          boardId: 'b',
+          shapeType: 'rectangle',
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 40,
+          text: payload,
+          fillColor: '#fff',
+          strokeColor: '#000',
+          strokeWidth: 1,
+          layer_group: 'default',
+          order_key: 'a',
+          is_visible: true,
+          is_locked: false,
+          createdAt: '',
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as Parameters<typeof renderCanvas>[0]);
     expect(svg).not.toContain('<script>');
     expect(svg).not.toContain('<image ');

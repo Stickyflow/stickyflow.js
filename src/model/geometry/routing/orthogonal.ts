@@ -1,6 +1,6 @@
-import type { OrthoPath, PathSegment, Side } from './types'
-import { SIDE_N } from './internal'
-import { roundOrthogonalPath } from './rounding'
+import { SIDE_N } from './internal';
+import { roundOrthogonalPath } from './rounding';
+import type { OrthoPath, PathSegment, Side } from './types';
 
 type Point = { x: number; y: number };
 
@@ -30,7 +30,7 @@ function stepOutDistances(
   let fromDistance = 40;
   let toDistance = 40;
   const axis = horizontalFirst ? 0 : 1;
-  const delta = (horizontalFirst ? to.x - from.x : to.y - from.y);
+  const delta = horizontalFirst ? to.x - from.x : to.y - from.y;
 
   if (fromNormal[axis] !== 0 && fromNormal[axis] === -toNormal[axis]) {
     const gap = delta * fromNormal[axis];
@@ -152,11 +152,8 @@ function describeSegments(
     const end = { x: points[offset + 2], y: points[offset + 3] };
     const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
     const isInner = segmentIndex > 0 && segmentIndex < totalSegments - 1;
-    const isMovableEdge = segmentIndex === 1
-      ? canMoveFirstInner
-      : segmentIndex === totalSegments - 2
-        ? canMoveLastInner
-        : true;
+    const isMovableEdge =
+      segmentIndex === 1 ? canMoveFirstInner : segmentIndex === totalSegments - 2 ? canMoveLastInner : true;
     const hasLength = Math.hypot(end.x - start.x, end.y - start.y) >= 1;
 
     return {
@@ -170,12 +167,13 @@ function describeSegments(
   });
 }
 
-/** Build an orthogonal path and the segment metadata used by drag handles. */
 export function routeOrthogonal(
-  from:{x:number;y:number}, to:{x:number;y:number},
-  fromSide: Side, toSide: Side,
-  segmentOffsets?: number[], //  Array of perpendicular offsets, one per movable segment
-  entityEdges?: { fromEdge?: Side; toEdge?: Side } //  Entity edges for forced orientation
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  fromSide: Side,
+  toSide: Side,
+  segmentOffsets?: number[],
+  entityEdges?: { fromEdge?: Side; toEdge?: Side },
 ): OrthoPath {
   [from, to] = snapAlignedEndpoints(from, to, fromSide, toSide);
 
@@ -193,15 +191,9 @@ export function routeOrthogonal(
   const movable = movableInnerSegments(horizontalFirst, fromSide, toSide);
   const pts = offsetOrthogonalPoints(from, to, a1, b1, bend, horizontalFirst, segmentOffsets, movable);
   const [canMoveFirstInner, canMoveLastInner] = movable;
-  const segments = describeSegments(
-    pts,
-    originalSegmentMidpoints,
-    canMoveFirstInner,
-    canMoveLastInner,
-  );
-  
+  const segments = describeSegments(pts, originalSegmentMidpoints, canMoveFirstInner, canMoveLastInner);
+
   const roundedPoints = roundOrthogonalPath(pts, 10);
-  
+
   return { points: roundedPoints, segments };
 }
-

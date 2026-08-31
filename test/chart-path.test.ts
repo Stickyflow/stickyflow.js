@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 import type { RenderInput } from '../src/index';
+import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
 const CHART_SFL = `sfl 1.2
 
@@ -43,7 +43,12 @@ describe('Chart and Path parity', () => {
     const chart = state.entities[0];
     expect(chart.entityType).toBe('chart');
     expect(chart.chart?.chartType).toBe('scatter');
-    expect(chart.chart?.series[0].values).toEqual([[0, 24], [1.3, 89], [2.7, 154], [3, 297]]);
+    expect(chart.chart?.series[0].values).toEqual([
+      [0, 24],
+      [1.3, 89],
+      [2.7, 154],
+      [3, 297],
+    ]);
 
     const input = sflToRenderInput(CHART_SFL);
     expect(input.charts?.[0].title).toBe('Dotted Chart');
@@ -58,10 +63,28 @@ describe('Chart and Path parity', () => {
 
   it('renders explicit line x coordinates and remains compatible with legacy flat values', () => {
     const base = {
-      id: 'line', x: 0, y: 0, width: 500, height: 300, title: 'Line', chart_type: 'line' as const,
-      axis_x: { min: 0, max: 4, step: 1 }, axis_y: { min: 0, max: 500, step: 100 },
-      fill_color: '#fff', stroke_color: '#000', text_color: '#111', series: [
-        { id: 'explicit', label: 'Explicit', values: [[0, 24], [1.3, 89], [2.7, 154]] as [number, number][] },
+      id: 'line',
+      x: 0,
+      y: 0,
+      width: 500,
+      height: 300,
+      title: 'Line',
+      chart_type: 'line' as const,
+      axis_x: { min: 0, max: 4, step: 1 },
+      axis_y: { min: 0, max: 500, step: 100 },
+      fill_color: '#fff',
+      stroke_color: '#000',
+      text_color: '#111',
+      series: [
+        {
+          id: 'explicit',
+          label: 'Explicit',
+          values: [
+            [0, 24],
+            [1.3, 89],
+            [2.7, 154],
+          ] as [number, number][],
+        },
         { id: 'legacy', label: 'Legacy', values: [24, 89, 154] },
       ],
     };

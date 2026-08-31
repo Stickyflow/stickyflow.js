@@ -1,6 +1,6 @@
 import type { SflBlock, SflValue } from '../../ast';
+import { asNumber, asString, childBlocks, directProps } from '../readers';
 import type { SflEntityOut } from '../types';
-import { asNumber, asString, childBlocks, directProps, numStr } from '../readers';
 
 type Properties = Map<string, SflValue>;
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
@@ -9,34 +9,42 @@ type Columns = TableData['columns'];
 
 function readCells(block: SflBlock, columns: Columns): Record<string, string | boolean> {
   const props = directProps(block);
-  return Object.fromEntries(columns.map(column => {
-    const value = asString(props.get(column.id));
-    return [column.id, column.type === 'boolean' ? value === 'true' : value ?? ''];
-  }));
+  return Object.fromEntries(
+    columns.map(column => {
+      const value = asString(props.get(column.id));
+      return [column.id, column.type === 'boolean' ? value === 'true' : (value ?? '')];
+    }),
+  );
 }
 
 function readBlockTable(block: SflBlock): TableData | undefined {
   const columnsBlock = childBlocks(block).find(child => child.kind === 'Columns');
   if (!columnsBlock) return undefined;
 
-  const columns: Columns = childBlocks(columnsBlock).filter(child => child.kind === 'Column').map(column => {
-    const props = directProps(column);
-    const type = asString(props.get('cellType'));
-    const align = asString(props.get('align'));
-    return {
-      id: column.name,
-      label: asString(props.get('text')) ?? column.name,
-      width: asNumber(props.get('width')) ?? 120,
-      type: type === 'boolean' ? 'boolean' : type === 'number' ? 'number' : 'text',
-      align: align === 'left' || align === 'center' || align === 'right' ? align : undefined,
-      scale: asString(props.get('scale')),
-    };
-  });
+  const columns: Columns = childBlocks(columnsBlock)
+    .filter(child => child.kind === 'Column')
+    .map(column => {
+      const props = directProps(column);
+      const type = asString(props.get('cellType'));
+      const align = asString(props.get('align'));
+      return {
+        id: column.name,
+        label: asString(props.get('text')) ?? column.name,
+        width: asNumber(props.get('width')) ?? 120,
+        type: type === 'boolean' ? 'boolean' : type === 'number' ? 'number' : 'text',
+        align: align === 'left' || align === 'center' || align === 'right' ? align : undefined,
+        scale: asString(props.get('scale')),
+      };
+    });
   const rowsBlock = childBlocks(block).find(child => child.kind === 'Rows');
   const footerBlock = childBlocks(block).find(child => child.kind === 'Footer');
   return {
     columns,
-    rows: rowsBlock ? childBlocks(rowsBlock).filter(child => child.kind === 'Row').map(row => ({ id: row.name, cells: readCells(row, columns) })) : [],
+    rows: rowsBlock
+      ? childBlocks(rowsBlock)
+          .filter(child => child.kind === 'Row')
+          .map(row => ({ id: row.name, cells: readCells(row, columns) }))
+      : [],
     footer: footerBlock ? { id: footerBlock.name, cells: readCells(footerBlock, columns) } : undefined,
   };
 }
@@ -51,23 +59,32 @@ function readLegacyTable(props: Properties): TableData | undefined {
     const type = asString(value.values[2]);
     return label === undefined || width === undefined
       ? []
-      : [{ id: `col-${index + 1}`, label, width, type: type === 'boolean' ? 'boolean' as const : 'text' as const }];
+      : [{ id: `col-${index + 1}`, label, width, type: type === 'boolean' ? ('boolean' as const) : ('text' as const) }];
   });
   const rowsValue = props.get('rows');
-  const rows = rowsValue?.type === 'list' ? rowsValue.values.flatMap((value, rowIndex) => {
-    if (value.type !== 'list') return [];
-    const cells = Object.fromEntries(columns.map((column, index) => {
-      const text = asString(value.values[index]);
-      return [column.id, column.type === 'boolean' ? text === 'true' : text ?? ''];
-    }));
-    return [{ id: `row-${rowIndex + 1}`, cells }];
-  }) : [];
+  const rows =
+    rowsValue?.type === 'list'
+      ? rowsValue.values.flatMap((value, rowIndex) => {
+          if (value.type !== 'list') return [];
+          const cells = Object.fromEntries(
+            columns.map((column, index) => {
+              const text = asString(value.values[index]);
+              return [column.id, column.type === 'boolean' ? text === 'true' : (text ?? '')];
+            }),
+          );
+          return [{ id: `row-${rowIndex + 1}`, cells }];
+        })
+      : [];
   return { columns, rows };
 }
 
-export function readTable(block: SflBlock, props: Properties, layoutProp: LayoutProp, presentation: Record<string, string>): SflEntityOut['table'] {
+export function readTable(
+  block: SflBlock,
+  props: Properties,
+  layoutProp: LayoutProp,
+  presentation: Record<string, string>,
+): SflEntityOut['table'] {
   const rowHeight = asNumber(layoutProp(block, 'rowHeight'));
-  if (rowHeight !== undefined) presentation.rowHeight = numStr(rowHeight);
+  if (rowHeight !== undefined) presentation.rowHeight = String(rowHeight);
   return readBlockTable(block) ?? readLegacyTable(props);
 }
-

@@ -23,7 +23,9 @@ describe('";" after a nested block', () => {
   });
 
   it('separates two sibling blocks on one line', () => {
-    const source = wrap('  Entity a { layout { position: 0, 0; size: 10, 10 } }; Entity b { layout { position: 20, 0; size: 10, 10 } }');
+    const source = wrap(
+      '  Entity a { layout { position: 0, 0; size: 10, 10 } }; Entity b { layout { position: 20, 0; size: 10, 10 } }',
+    );
     const { scene } = render(source);
     expect(scene.nodes.filter(node => node.sfRole === 'entity').map(node => node.sfId)).toEqual(['a', 'b']);
   });
@@ -35,7 +37,9 @@ describe('";" after a nested block', () => {
 
   it('produces the same scene whether entries are separated by ";" or newline', () => {
     const oneLine = wrap('  Entity a { text: "hi"; layout { position: 0, 0; size: 60, 30 }; style { fill: "#fff" } }');
-    const multiLine = wrap('  Entity a {\n    text: "hi"\n    layout { position: 0, 0; size: 60, 30 }\n    style { fill: "#fff" }\n  }');
+    const multiLine = wrap(
+      '  Entity a {\n    text: "hi"\n    layout { position: 0, 0; size: 60, 30 }\n    style { fill: "#fff" }\n  }',
+    );
     expect(render(oneLine).svg).toBe(render(multiLine).svg);
   });
 

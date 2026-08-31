@@ -1,43 +1,41 @@
-// Package-owned selection indicator — the viewer draws this itself as real
-// SVG, instead of a `data-sf-selected` attribute plus a host-supplied CSS rule
-// (the previous mechanism: it only worked if a host happened to ship a
-// matching stylesheet, and recolored the shape's own stroke rather than
-// showing a separate indicator). Geometry mirrors the real app's actual
-// selection UI (ShapeSelectionIndicator.tsx): a ring offset 1px outside the
-// shape's bbox plus four corner handle squares — never a change to the
-// shape's own paint. Links get a purple halo along their own path plus small
-// endpoint dots instead of a bbox ring, since a link's bbox spans its whole
-// route, not a meaningful "selected" box.
 const NS = 'http://www.w3.org/2000/svg';
 const RING_COLOR = '#9b42df';
 const HANDLE_STROKE = '#992dff';
 const HANDLE_SIZE = 6;
 const BUBBLE_RADIUS = 8;
-const BUBBLE_OFFSET = BUBBLE_RADIUS + 15; // 23 — matches the interactive canvas app's own spacing
+const BUBBLE_OFFSET = BUBBLE_RADIUS + 15;
 
 export type ResizeHandle =
-  | 'top-left' | 'top' | 'top-right'
+  | 'top-left'
+  | 'top'
+  | 'top-right'
   | 'right'
-  | 'bottom-right' | 'bottom' | 'bottom-left'
+  | 'bottom-right'
+  | 'bottom'
+  | 'bottom-left'
   | 'left';
 export type LinkEndpoint = 'from' | 'to';
 export type QuickDuplicateDirection = 'top' | 'right' | 'bottom' | 'left';
 
 const HANDLE_CURSORS: Record<ResizeHandle, string> = {
-  'top-left': 'nwse-resize', top: 'ns-resize', 'top-right': 'nesw-resize',
+  'top-left': 'nwse-resize',
+  top: 'ns-resize',
+  'top-right': 'nesw-resize',
   right: 'ew-resize',
-  'bottom-right': 'nwse-resize', bottom: 'ns-resize', 'bottom-left': 'nesw-resize',
+  'bottom-right': 'nwse-resize',
+  bottom: 'ns-resize',
+  'bottom-left': 'nesw-resize',
   left: 'ew-resize',
 };
 
-/** The 8 handle positions for a bbox — corners plus edge midpoints — shared by
- *  shapeSelectionOverlay() (initial paint) and resizeDrag.ts's live
- *  in-progress reposition, so there is exactly one place that knows where a
- *  handle sits relative to the bbox. */
-export function resizeHandlePositions(
-  bbox: { x: number; y: number; width: number; height: number },
-): Array<[number, number, ResizeHandle]> {
-  const cx = bbox.x + bbox.width / 2, cy = bbox.y + bbox.height / 2;
+export function resizeHandlePositions(bbox: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): Array<[number, number, ResizeHandle]> {
+  const cx = bbox.x + bbox.width / 2,
+    cy = bbox.y + bbox.height / 2;
   return [
     [bbox.x, bbox.y, 'top-left'],
     [cx, bbox.y, 'top'],
@@ -63,7 +61,6 @@ function overlayGroup(doc: Document, id: string, copyTransformFrom: SVGGraphicsE
   return g;
 }
 
-/** Ring + corner handles around a shape/frame/table/swimlane's own bbox. */
 export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
   const bbox = primary.getBBox();
   const g = overlayGroup(doc, id, primary);
@@ -87,10 +84,6 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
     handle.setAttribute('fill', 'white');
     handle.setAttribute('stroke', HANDLE_STROKE);
     handle.setAttribute('stroke-width', '1');
-    // The overlay group turns pointer-events off (so the ring never steals
-    // clicks meant for the shape underneath) — handles opt back in, and
-    // `stickyflow/interaction`'s resizeDrag.ts looks for exactly this
-    // attribute to tell a resize-handle grab apart from a body drag.
     handle.setAttribute('data-sf-resize-handle', name);
     handle.style.pointerEvents = 'auto';
     handle.style.cursor = HANDLE_CURSORS[name];
@@ -99,25 +92,14 @@ export function shapeSelectionOverlay(doc: Document, primary: SVGGraphicsElement
   return g;
 }
 
-/**
- * Four small "quick duplicate" dots centered on each side of a SINGLY
- * selected entity's bbox, offset outside it. A bare click creates a copy of
- * the entity in that direction, auto-connected with a link; dragging one onto
- * a DIFFERENT existing entity instead draws a live link preview and connects
- * to that entity on drop, snapping to the nearest point on its perimeter (see
- * `stickyflow/interaction`'s quickDuplicate.ts — both gestures share this one
- * bubble, told apart the same movement-threshold way every other drag in this
- * package is). Matches the interactive canvas app's own spacing (8px radius,
- * 23px offset); deliberately simpler in one respect — no separate
- * hover-highlight state, since no other overlay element in this package
- * changes appearance on hover either (resize handles/link endpoints only
- * change the cursor) and the live link preview itself is feedback enough.
- */
-/** Bubble centers for a given bbox — shared with resizeDrag.ts's live
- *  reposition (see updateQuickDuplicateBubbles) so both places compute the
- *  exact same four points from a set of bounds. */
-function quickDuplicatePositions(bbox: { x: number; y: number; width: number; height: number }): Array<[number, number, QuickDuplicateDirection]> {
-  const cx = bbox.x + bbox.width / 2, cy = bbox.y + bbox.height / 2;
+function quickDuplicatePositions(bbox: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): Array<[number, number, QuickDuplicateDirection]> {
+  const cx = bbox.x + bbox.width / 2,
+    cy = bbox.y + bbox.height / 2;
   return [
     [cx, bbox.y - BUBBLE_OFFSET, 'top'],
     [bbox.x + bbox.width + BUBBLE_OFFSET, cy, 'right'],
@@ -138,8 +120,6 @@ export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement
     dot.setAttribute('fill', '#e8e8e8');
     dot.setAttribute('stroke', '#ccc');
     dot.setAttribute('stroke-width', '1.5');
-    // Same opt-back-into-pointer-events pattern as resize handles/link
-    // endpoints above — quickDuplicate.ts looks for this attribute.
     dot.setAttribute('data-sf-quick-duplicate', direction);
     dot.style.pointerEvents = 'auto';
     dot.style.cursor = 'pointer';
@@ -156,15 +136,10 @@ export function quickDuplicateBubbles(doc: Document, primary: SVGGraphicsElement
   return g;
 }
 
-/** Live-reposition an existing quickDuplicateBubbles() group at a new bbox —
- *  used by resizeDrag.ts so the bubbles track a shape's live-resized bounds
- *  instead of only jumping to the new spot once the drag ends and the whole
- *  selection overlay is repainted from scratch. Zips positions to circles by
- *  index rather than by direction: insertion order in quickDuplicateBubbles()
- *  above is always top/right/bottom/left, so it's stable, and a circle's own
- *  very next sibling is always its plus icon (the two are appended as a pair
- *  above) — no need to re-derive the pairing by attribute matching. */
-export function updateQuickDuplicateBubbles(g: SVGGElement, bbox: { x: number; y: number; width: number; height: number }): void {
+export function updateQuickDuplicateBubbles(
+  g: SVGGElement,
+  bbox: { x: number; y: number; width: number; height: number },
+): void {
   const positions = quickDuplicatePositions(bbox);
   const dots = g.querySelectorAll('circle[data-sf-quick-duplicate]');
   positions.forEach(([bx, by], i) => {
@@ -180,7 +155,6 @@ export function updateQuickDuplicateBubbles(g: SVGGElement, bbox: { x: number; y
   });
 }
 
-/** Purple halo along a link's own path, plus small dots at its two endpoints. */
 export function linkSelectionOverlay(doc: Document, primary: SVGPathElement, id: string): SVGGElement {
   const g = overlayGroup(doc, id, primary);
 
@@ -195,7 +169,10 @@ export function linkSelectionOverlay(doc: Document, primary: SVGPathElement, id:
   g.appendChild(halo);
 
   const length = primary.getTotalLength();
-  const ends: Array<[number, LinkEndpoint]> = [[0, 'from'], [length, 'to']];
+  const ends: Array<[number, LinkEndpoint]> = [
+    [0, 'from'],
+    [length, 'to'],
+  ];
   for (const [atLength, end] of ends) {
     const point = primary.getPointAtLength(atLength);
     const dot = el(doc, 'circle');
@@ -205,9 +182,6 @@ export function linkSelectionOverlay(doc: Document, primary: SVGPathElement, id:
     dot.setAttribute('fill', RING_COLOR);
     dot.setAttribute('stroke', 'white');
     dot.setAttribute('stroke-width', '1.5');
-    // Same opt-back-into-pointer-events pattern as the resize handles above —
-    // `stickyflow/interaction`'s linkEndpointDrag.ts looks for this attribute
-    // to tell an endpoint-reconnect grab apart from selecting the link itself.
     dot.setAttribute('data-sf-link-endpoint', end);
     dot.style.pointerEvents = 'auto';
     dot.style.cursor = 'crosshair';

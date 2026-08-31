@@ -1,4 +1,4 @@
-import { render, DOM_CONTRACT_VERSION } from '../dist/index.js';
+import { DOM_CONTRACT_VERSION, render } from '../dist/index.js';
 
 const SFL = `sfl 1.2
 

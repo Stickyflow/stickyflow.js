@@ -1,9 +1,9 @@
-import type { RenderNode, SceneImage } from '../renderScene'
-import { contractAttrs } from './contract'
-import { SvgDefinitionRegistry } from './definitions'
-import { num, xml } from './format'
-import { styleAttrs, transform } from './attributes'
-import { textSvg } from './text'
+import type { RenderNode, SceneImage } from '../renderScene';
+import { styleAttrs, transform } from './attributes';
+import { contractAttrs } from './contract';
+import type { SvgDefinitionRegistry } from './definitions';
+import { num, xml } from './format';
+import { textSvg } from './text';
 
 export function imageSvg(node: SceneImage, defs: SvgDefinitionRegistry): string {
   const opacity = node.opacity !== undefined ? ` opacity="${num(node.opacity)}"` : '';

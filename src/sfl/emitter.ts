@@ -1,6 +1,6 @@
-import type { SflDocument } from './ast'
-import { emitDocument } from './emitting/document'
+import type { SflDocument } from './ast';
+import { emitDocument } from './emitting/document';
 
 export function emit(document: SflDocument): string {
-  return emitDocument(document)
+  return emitDocument(document);
 }

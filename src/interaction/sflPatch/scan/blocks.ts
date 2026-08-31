@@ -1,15 +1,12 @@
-import { braceDelta, stripStringsAndComments } from './lexical'
-
-
+import { braceDelta, stripStringsAndComments } from './lexical';
 
 const OWNER_HEADER = /^\s*(Entity|Container|Table|Chart|Path|Link)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 export const VALID_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-
-
-export interface LineRange { start: number; end: number }
-
-
+export interface LineRange {
+  start: number;
+  end: number;
+}
 
 export function blockEndLine(lines: string[], startLine: number): number {
   let depth = 0;
@@ -60,8 +57,3 @@ export function nameExists(lines: string[], id: string): boolean {
     return !!m && m[2] === id;
   });
 }
-
-/** Prefixes every non-blank line of a caller-supplied raw-SFL fragment with
- *  `indent`, preserving whatever relative indentation the fragment already
- *  has internally (e.g. a `style { ... }` sub-block's own properties). */
-

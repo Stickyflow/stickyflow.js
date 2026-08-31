@@ -1,8 +1,8 @@
-import { isDigit, isIdentPart, isLetter } from './characters'
-import { SourceCursor, type SourcePosition } from './cursor'
-import { SflLexError } from './error'
-import { readString } from './strings'
-import type { Token, TokenType } from './types'
+import { isDigit, isIdentPart, isLetter } from './characters';
+import { SourceCursor, type SourcePosition } from './cursor';
+import { SflLexError } from './error';
+import { readString } from './strings';
+import type { Token, TokenType } from './types';
 
 const PUNCTUATION: Partial<Record<string, TokenType>> = {
   '{': 'lbrace',
@@ -15,81 +15,81 @@ const PUNCTUATION: Partial<Record<string, TokenType>> = {
   ',': 'comma',
   ';': 'semi',
   '&': 'amp',
-}
+};
 
 function token(type: TokenType, value: string, start: SourcePosition, extra: Partial<Token> = {}): Token {
-  return { type, value, line: start.line, col: start.col, ...extra }
+  return { type, value, line: start.line, col: start.col, ...extra };
 }
 
 function readNumber(cursor: SourceCursor): Token {
-  const start = cursor.position()
-  let value = ''
-  if (cursor.peek() === '-') value += cursor.advance()
-  while (!cursor.done && isDigit(cursor.peek()!)) value += cursor.advance()
+  const start = cursor.position();
+  let value = '';
+  if (cursor.peek() === '-') value += cursor.advance();
+  while (!cursor.done && isDigit(cursor.peek()!)) value += cursor.advance();
   if (cursor.peek() === '.' && isDigit(cursor.peek(1)!)) {
-    value += cursor.advance()
-    while (!cursor.done && isDigit(cursor.peek()!)) value += cursor.advance()
+    value += cursor.advance();
+    while (!cursor.done && isDigit(cursor.peek()!)) value += cursor.advance();
   }
-  return token('number', value, start, { numberValue: Number(value) })
+  return token('number', value, start, { numberValue: Number(value) });
 }
 
 function readIdentifier(cursor: SourceCursor): Token {
-  const start = cursor.position()
-  let value = ''
-  while (!cursor.done && isIdentPart(cursor.peek()!)) value += cursor.advance()
-  return token('ident', value, start)
+  const start = cursor.position();
+  let value = '';
+  while (!cursor.done && isIdentPart(cursor.peek()!)) value += cursor.advance();
+  return token('ident', value, start);
 }
 
 export function tokenizeSource(input: string): Token[] {
-  const cursor = new SourceCursor(input)
-  const tokens: Token[] = []
+  const cursor = new SourceCursor(input);
+  const tokens: Token[] = [];
 
   while (!cursor.done) {
-    const character = cursor.peek()!
-    const start = cursor.position()
+    const character = cursor.peek()!;
+    const start = cursor.position();
 
     if (character === '\r' || character === '\n') {
-      cursor.advance()
-      if (character === '\r' && cursor.peek() === '\n') cursor.advance()
-      tokens.push(token('newline', '\n', start))
-      continue
+      cursor.advance();
+      if (character === '\r' && cursor.peek() === '\n') cursor.advance();
+      tokens.push(token('newline', '\n', start));
+      continue;
     }
     if (character === ' ' || character === '\t') {
-      cursor.advance()
-      continue
+      cursor.advance();
+      continue;
     }
     if (character === '/' && cursor.peek(1) === '/') {
-      while (!cursor.done && cursor.peek() !== '\n' && cursor.peek() !== '\r') cursor.advance()
-      continue
+      while (!cursor.done && cursor.peek() !== '\n' && cursor.peek() !== '\r') cursor.advance();
+      continue;
     }
 
-    const punctuation = PUNCTUATION[character]
+    const punctuation = PUNCTUATION[character];
     if (punctuation) {
-      cursor.advance()
-      tokens.push(token(punctuation, character, start))
-      continue
+      cursor.advance();
+      tokens.push(token(punctuation, character, start));
+      continue;
     }
     if (character === '"') {
-      const string = readString(cursor, start)
-      tokens.push(token('string', string.value, start, { multiline: string.multiline }))
-      continue
+      const string = readString(cursor, start);
+      tokens.push(token('string', string.value, start, { multiline: string.multiline }));
+      continue;
     }
     if (isDigit(character) || (character === '-' && isDigit(cursor.peek(1)!))) {
-      tokens.push(readNumber(cursor))
-      continue
+      tokens.push(readNumber(cursor));
+      continue;
     }
     if (character === '.') {
-      cursor.advance()
-      tokens.push(token('dot', '.', start))
-      continue
+      cursor.advance();
+      tokens.push(token('dot', '.', start));
+      continue;
     }
     if (isLetter(character)) {
-      tokens.push(readIdentifier(cursor))
-      continue
+      tokens.push(readIdentifier(cursor));
+      continue;
     }
-    throw new SflLexError(`unexpected character '${character}'`, start.line, start.col)
+    throw new SflLexError(`unexpected character '${character}'`, start.line, start.col);
   }
 
-  tokens.push(token('eof', '', cursor.position()))
-  return tokens
+  tokens.push(token('eof', '', cursor.position()));
+  return tokens;
 }

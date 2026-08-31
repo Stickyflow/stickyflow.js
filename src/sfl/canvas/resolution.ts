@@ -1,7 +1,16 @@
 import type { SflBlock, SflDocument, SflValue } from '../ast';
 import type { EntityReaderContext } from './entityReader';
+import {
+  asNumber,
+  childBlocks,
+  classifyRefs,
+  collectUnresolvedRefs,
+  directProps,
+  localLayoutProps,
+  styleSubBlockProps,
+  tupleVals,
+} from './readers';
 import type { SflDiagnostic, SflEntityOut } from './types';
-import { asNumber, childBlocks, classifyRefs, collectUnresolvedRefs, directProps, localLayoutProps, styleSubBlockProps, tupleVals } from './readers';
 
 type Definitions = Map<string, SflBlock>;
 type ResolvedDefinitions = Map<string, Map<string, SflValue>>;
@@ -15,20 +24,25 @@ export interface CanvasResolution {
 function readSymbol(block: SflBlock): NonNullable<SflEntityOut['symbol']> | undefined {
   const props = directProps(block);
   const value = props.get('points');
-  const points = value?.type === 'list' ? value.values.flatMap(item => {
-    if (item.type !== 'list' || item.values.length < 2) return [];
-    const x = asNumber(item.values[0]);
-    const y = asNumber(item.values[1]);
-    return x === undefined || y === undefined ? [] : [[x, y] as [number, number]];
-  }) : [];
+  const points =
+    value?.type === 'list'
+      ? value.values.flatMap(item => {
+          if (item.type !== 'list' || item.values.length < 2) return [];
+          const x = asNumber(item.values[0]);
+          const y = asNumber(item.values[1]);
+          return x === undefined || y === undefined ? [] : [[x, y] as [number, number]];
+        })
+      : [];
   if (points.length < 2) return undefined;
 
-  const ports = childBlocks(block).filter(child => child.kind === 'Port').flatMap(port => {
-    const at = tupleVals(directProps(port).get('at'));
-    return typeof at?.[0] === 'number' && typeof at[1] === 'number'
-      ? [{ name: port.name, at: [at[0], at[1]] as [number, number] }]
-      : [];
-  });
+  const ports = childBlocks(block)
+    .filter(child => child.kind === 'Port')
+    .flatMap(port => {
+      const at = tupleVals(directProps(port).get('at'));
+      return typeof at?.[0] === 'number' && typeof at[1] === 'number'
+        ? [{ name: port.name, at: [at[0], at[1]] as [number, number] }]
+        : [];
+    });
   return { name: block.name, points, tension: asNumber(props.get('tension')), ports: ports.length ? ports : undefined };
 }
 

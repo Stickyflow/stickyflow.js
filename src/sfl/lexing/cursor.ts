@@ -1,39 +1,39 @@
 export interface SourcePosition {
-  line: number
-  col: number
+  line: number;
+  col: number;
 }
 
 export class SourceCursor {
-  private offset = 0
-  line = 1
-  col = 1
+  private offset = 0;
+  line = 1;
+  col = 1;
 
   constructor(readonly input: string) {}
 
   get done(): boolean {
-    return this.offset >= this.input.length
+    return this.offset >= this.input.length;
   }
 
   peek(ahead = 0): string | undefined {
-    return this.input[this.offset + ahead]
+    return this.input[this.offset + ahead];
   }
 
   startsWith(value: string): boolean {
-    return this.input.startsWith(value, this.offset)
+    return this.input.startsWith(value, this.offset);
   }
 
   position(): SourcePosition {
-    return { line: this.line, col: this.col }
+    return { line: this.line, col: this.col };
   }
 
   advance(): string {
-    const character = this.input[this.offset++]
+    const character = this.input[this.offset++];
     if (character === '\n') {
-      this.line++
-      this.col = 1
+      this.line++;
+      this.col = 1;
     } else {
-      this.col++
+      this.col++;
     }
-    return character
+    return character;
   }
 }

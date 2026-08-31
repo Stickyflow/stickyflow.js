@@ -14,13 +14,13 @@ export type TokenType =
   | 'dot'
   | 'amp'
   | 'newline'
-  | 'eof'
+  | 'eof';
 
 export interface Token {
-  type: TokenType
-  value: string
-  numberValue?: number
-  multiline?: boolean
-  line: number
-  col: number
+  type: TokenType;
+  value: string;
+  numberValue?: number;
+  multiline?: boolean;
+  line: number;
+  col: number;
 }
