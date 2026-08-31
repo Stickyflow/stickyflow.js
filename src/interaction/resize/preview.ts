@@ -3,10 +3,9 @@ import { localShapePath } from '../../model/geometry/shapes';
 import { wrapText } from '../../model/geometry/text';
 import type { ShapeType } from '../../model/shapes';
 import { resizeHandlePositions, updateQuickDuplicateBubbles } from '../../viewer/selectionOverlay';
+import { SVG_NAMESPACE } from '../../viewer/svgNamespace';
 import { updateLiveLinks } from '../linkPreview';
 import type { ResizeDragState } from './state';
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function reCenterRotation(el: SVGGraphicsElement, bounds: Bounds): void {
   const transform = el.getAttribute('transform');
@@ -74,7 +73,7 @@ export function applyLiveText(textEl: SVGTextElement, rawText: string, bounds: B
   textEl.setAttribute('y', String(firstY));
   while (textEl.firstChild) textEl.removeChild(textEl.firstChild);
   lines.forEach((line, i) => {
-    const tspan = document.createElementNS(SVG_NS, 'tspan');
+    const tspan = document.createElementNS(SVG_NAMESPACE, 'tspan');
     tspan.setAttribute('x', String(x));
     if (i) tspan.setAttribute('dy', `${linePx}px`);
     tspan.textContent = line;

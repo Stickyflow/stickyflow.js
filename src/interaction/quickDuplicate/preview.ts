@@ -1,15 +1,15 @@
 import { getPathPoints } from '../../model/geometry/connectionLine';
 import type { Side } from '../../model/geometry/router';
 import type { Link, PathType } from '../../model/links';
+import { SVG_NAMESPACE } from '../../viewer/svgNamespace';
 import { previewPathData } from '../linkPreview';
 import type { QuickDuplicateDragState } from './state';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
 const PREVIEW_STROKE = '#9b42df';
 const NEW_LINK_PATH_TYPE: PathType = 'orthogonal';
 
 export function createDuplicatePreviewPath(): SVGPathElement {
-  const path = document.createElementNS(SVG_NS, 'path');
+  const path = document.createElementNS(SVG_NAMESPACE, 'path');
   path.setAttribute('fill', 'none');
   path.setAttribute('stroke', PREVIEW_STROKE);
   path.setAttribute('stroke-width', '2');

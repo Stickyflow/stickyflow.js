@@ -1,4 +1,6 @@
-const NS = 'http://www.w3.org/2000/svg';
+import { SVG_NAMESPACE } from './svgNamespace';
+
+const NS = SVG_NAMESPACE;
 const RING_COLOR = '#9b42df';
 const HANDLE_STROKE = '#992dff';
 const HANDLE_SIZE = 6;

@@ -1,4 +1,6 @@
-const NS = 'http://www.w3.org/2000/svg';
+import { SVG_NAMESPACE } from './svgNamespace';
+
+const NS = SVG_NAMESPACE;
 const DASH = '8 4';
 
 export interface GuideLine {
