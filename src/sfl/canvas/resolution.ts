@@ -3,110 +3,101 @@ import type { EntityReaderContext } from './entityReader';
 import type { SflDiagnostic, SflEntityOut } from './types';
 import { asNumber, childBlocks, classifyRefs, collectUnresolvedRefs, directProps, localLayoutProps, styleSubBlockProps, tupleVals } from './readers';
 
+type Definitions = Map<string, SflBlock>;
+type ResolvedDefinitions = Map<string, Map<string, SflValue>>;
+
 export interface CanvasResolution {
   model?: SflBlock;
   diagnostics: SflDiagnostic[];
   entityReaderContext: EntityReaderContext;
 }
 
-export function createCanvasResolution(doc: SflDocument): CanvasResolution {
-  const styleBlocks = new Map<string, SflBlock>();
-  const layoutBlocks = new Map<string, SflBlock>();
-  // Freie Formen (§5.5): eigener Namensraum, referenziert als Wert von
-  // `shape:` (nicht per `:`-Komposition wie Style/Layout).
-  const symbolDefs = new Map<string, { name: string; points: Array<[number, number]>; tension?: number; ports?: Array<{ name: string; at: [number, number] }> }>();
+function readSymbol(block: SflBlock): NonNullable<SflEntityOut['symbol']> | undefined {
+  const props = directProps(block);
+  const value = props.get('points');
+  const points = value?.type === 'list' ? value.values.flatMap(item => {
+    if (item.type !== 'list' || item.values.length < 2) return [];
+    const x = asNumber(item.values[0]);
+    const y = asNumber(item.values[1]);
+    return x === undefined || y === undefined ? [] : [[x, y] as [number, number]];
+  }) : [];
+  if (points.length < 2) return undefined;
+
+  const ports = childBlocks(block).filter(child => child.kind === 'Port').flatMap(port => {
+    const at = tupleVals(directProps(port).get('at'));
+    return typeof at?.[0] === 'number' && typeof at[1] === 'number'
+      ? [{ name: port.name, at: [at[0], at[1]] as [number, number] }]
+      : [];
+  });
+  return { name: block.name, points, tension: asNumber(props.get('tension')), ports: ports.length ? ports : undefined };
+}
+
+function collectDefinitions(doc: SflDocument) {
+  const styles: Definitions = new Map();
+  const layouts: Definitions = new Map();
+  const symbols: EntityReaderContext['symbolDefs'] = new Map();
   let model: SflBlock | undefined;
-  for (const b of doc.blocks) {
-    if (b.kind === 'Style') styleBlocks.set(b.name, b);
-    else if (b.kind === 'Layout') layoutBlocks.set(b.name, b);
-    else if (b.kind === 'Symbol') {
-      const symbolProps = directProps(b);
-      const pointsValue = symbolProps.get('points');
-      const points = pointsValue?.type === 'list'
-        ? pointsValue.values.flatMap(item => {
-            if (item.type !== 'list' || item.values.length < 2) return [];
-            const px = asNumber(item.values[0]);
-            const py = asNumber(item.values[1]);
-            return px === undefined || py === undefined ? [] : [[px, py] as [number, number]];
-          })
-        : [];
-      // Benannte Anschlüsse (§3.5 Schematics): Port-Kindblöcke, normalisiert
-      // wie points. Ein Port ohne gültiges `at:` (z.B. Rundtrip-Rauschen)
-      // wird verworfen statt die ganze Symbol-Definition zu verwerfen.
-      const ports = childBlocks(b)
-        .filter(child => child.kind === 'Port')
-        .flatMap(portBlock => {
-          const at = tupleVals(directProps(portBlock).get('at'));
-          const ax = typeof at?.[0] === 'number' ? at[0] : undefined;
-          const ay = typeof at?.[1] === 'number' ? at[1] : undefined;
-          return ax === undefined || ay === undefined ? [] : [{ name: portBlock.name, at: [ax, ay] as [number, number] }];
-        });
-      if (points.length >= 2) symbolDefs.set(b.name, { name: b.name, points, tension: asNumber(symbolProps.get('tension')), ports: ports.length ? ports : undefined });
-    }
-    else if (b.kind === 'Model' && !model) model = b;
-    else if (b.kind === 'Project') {
-      for (const inner of childBlocks(b)) if (inner.kind === 'Model' && !model) model = inner;
+
+  for (const block of doc.blocks) {
+    if (block.kind === 'Style') styles.set(block.name, block);
+    else if (block.kind === 'Layout') layouts.set(block.name, block);
+    else if (block.kind === 'Symbol') {
+      const symbol = readSymbol(block);
+      if (symbol) symbols.set(block.name, symbol);
+    } else if (block.kind === 'Model' && !model) model = block;
+    else if (block.kind === 'Project' && !model) {
+      model = childBlocks(block).find(child => child.kind === 'Model');
     }
   }
-  const diagnostics = collectUnresolvedRefs(doc, styleBlocks, layoutBlocks);
-  
-  const resolvedStyles = new Map<string, Map<string, SflValue>>();
-  const resolveStyle = (name: string, seen: Set<string> = new Set()): Map<string, SflValue> => {
-    const cached = resolvedStyles.get(name);
+  return { styles, layouts, symbols, model };
+}
+
+function resolveDefinitions(
+  definitions: Definitions,
+  referencedName: (block: SflBlock) => string | undefined,
+): ResolvedDefinitions {
+  const resolved: ResolvedDefinitions = new Map();
+  const resolve = (name: string, seen = new Set<string>()): Map<string, SflValue> => {
+    const cached = resolved.get(name);
     if (cached) return cached;
-    const blk = styleBlocks.get(name);
-    if (!blk || seen.has(name)) return new Map();
-    const merged = new Map<string, SflValue>();
-    const { styleRef } = classifyRefs(blk.composition, styleBlocks, layoutBlocks);
-    if (styleRef) for (const [k, v] of resolveStyle(styleRef, new Set([...seen, name]))) merged.set(k, v);
-    for (const [k, v] of directProps(blk)) merged.set(k, v);
-    resolvedStyles.set(name, merged);
-    return merged;
-  };
-  for (const name of styleBlocks.keys()) resolveStyle(name);
-  
-  const resolvedLayouts = new Map<string, Map<string, SflValue>>();
-  const resolveLayout = (name: string, seen: Set<string> = new Set()): Map<string, SflValue> => {
-    const cached = resolvedLayouts.get(name);
-    if (cached) return cached;
-    const blk = layoutBlocks.get(name);
-    if (!blk || seen.has(name)) return new Map();
-    const merged = new Map<string, SflValue>();
-    const { layoutRef } = classifyRefs(blk.composition, styleBlocks, layoutBlocks);
-    if (layoutRef) for (const [k, v] of resolveLayout(layoutRef, new Set([...seen, name]))) merged.set(k, v);
-    for (const [k, v] of directProps(blk)) merged.set(k, v);
-    resolvedLayouts.set(name, merged);
-    return merged;
-  };
-  for (const name of layoutBlocks.keys()) resolveLayout(name);
-  
-  // Merge-Reihenfolge (§9.1): referenzierter Style → direkte Top-Level-Props
-  // → lokaler style {} Override zuletzt (gewinnt).
-  const mergedProps = (block: SflBlock): Map<string, SflValue> => {
-    const merged = new Map<string, SflValue>();
-    const { styleRef } = classifyRefs(block.composition, styleBlocks, layoutBlocks);
-    if (styleRef && resolvedStyles.has(styleRef)) {
-      for (const [k, v] of resolvedStyles.get(styleRef)!) merged.set(k, v);
+    const block = definitions.get(name);
+    if (!block || seen.has(name)) return new Map();
+
+    const values = new Map<string, SflValue>();
+    const parent = referencedName(block);
+    if (parent) {
+      for (const [key, value] of resolve(parent, new Set([...seen, name]))) values.set(key, value);
     }
-    for (const [k, v] of directProps(block)) merged.set(k, v);
-    for (const [k, v] of styleSubBlockProps(block)) merged.set(k, v);
+    for (const [key, value] of directProps(block)) values.set(key, value);
+    resolved.set(name, values);
+    return values;
+  };
+  for (const name of definitions.keys()) resolve(name);
+  return resolved;
+}
+
+export function createCanvasResolution(doc: SflDocument): CanvasResolution {
+  const { styles, layouts, symbols, model } = collectDefinitions(doc);
+  const refs = (block: SflBlock) => classifyRefs(block.composition, styles, layouts);
+  const resolvedStyles = resolveDefinitions(styles, block => refs(block).styleRef);
+  const resolvedLayouts = resolveDefinitions(layouts, block => refs(block).layoutRef);
+
+  const mergedProps = (block: SflBlock): Map<string, SflValue> => {
+    const merged = new Map(resolvedStyles.get(refs(block).styleRef ?? '') ?? []);
+    for (const [key, value] of directProps(block)) merged.set(key, value);
+    for (const [key, value] of styleSubBlockProps(block)) merged.set(key, value);
     return merged;
   };
-  
-  // Merge-Reihenfolge für Geometrie: referenzierter Layout-Block → lokaler
-  // layout {} Override zuletzt (gewinnt) — spiegelt die Style-Präzedenz.
   const layoutProp = (block: SflBlock, key: string): SflValue | undefined => {
     const local = localLayoutProps(block);
     if (local.has(key)) return local.get(key);
-    const { layoutRef } = classifyRefs(block.composition, styleBlocks, layoutBlocks);
-    return layoutRef ? resolvedLayouts.get(layoutRef)?.get(key) : undefined;
+    const reference = refs(block).layoutRef;
+    return reference ? resolvedLayouts.get(reference)?.get(key) : undefined;
   };
-  
 
   return {
     model,
-    diagnostics,
-    entityReaderContext: { mergedProps, layoutProp, symbolDefs },
+    diagnostics: collectUnresolvedRefs(doc, styles, layouts),
+    entityReaderContext: { mergedProps, layoutProp, symbolDefs: symbols },
   };
 }
-

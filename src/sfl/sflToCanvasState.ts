@@ -6,8 +6,8 @@ import { readCanvasTree } from './canvas/traversal';
 import { readLinks } from './canvas/linkReader';
 
 export function sflToCanvasState(source: string): SflCanvasState {
-  const document = parse(source);
-  const resolution = createCanvasResolution(document);
+  const doc = parse(source);
+  const resolution = createCanvasResolution(doc);
   const { entities, groups, linkBlocks } = readCanvasTree(resolution.model, resolution);
   const links = readLinks(resolution.model, linkBlocks, entities, resolution.entityReaderContext);
 

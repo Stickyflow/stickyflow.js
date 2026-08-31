@@ -10,108 +10,86 @@ export interface CanvasTree {
   linkBlocks: SflBlock[];
 }
 
+function directMemberIds(block: SflBlock): string[] {
+  const entityKinds = new Set(['Entity', 'Container', 'Table', 'Path', 'Chart']);
+  return childBlocks(block)
+    .filter(child => entityKinds.has(child.kind))
+    .map(child => asString(directProps(child).get('id')) ?? child.name);
+}
+
+function createFlowPositioner(block: SflBlock, resolution: CanvasResolution) {
+  const { layoutProp } = resolution.entityReaderContext;
+  const axis = asString(layoutProp(block, 'flow'));
+  const gap = asNumber(layoutProp(block, 'gap')) ?? 0;
+  let cursor = 0;
+
+  return (size: number[]): number[] | undefined => {
+    if (axis !== 'horizontal' && axis !== 'vertical') return undefined;
+    const position = axis === 'horizontal' ? [cursor, 0] : [0, cursor];
+    cursor += (axis === 'horizontal' ? size[0] : size[1]) + gap;
+    return position;
+  };
+}
+
+function expandNet(block: SflBlock, resolution: CanvasResolution): SflBlock[] {
+  const props = resolution.entityReaderContext.mergedProps(block);
+  const membersValue = props.get('members');
+  const members = membersValue?.type === 'list'
+    ? membersValue.values.flatMap(value => value.type === 'ident' ? [value.segments] : [])
+    : [];
+  if (members.length < 2) return [];
+
+  const text = asString(props.get('text'));
+  return members.slice(1).map((member, index) => {
+    const entries: SflBlock['entries'] = [
+      { type: 'property', property: { key: 'from', value: { type: 'endpoint', segments: members[0] } } },
+      { type: 'property', property: { key: 'to', value: { type: 'endpoint', segments: member } } },
+    ];
+    if (text) entries.push({ type: 'property', property: { key: 'text', value: { type: 'string', value: text, multiline: false } } });
+    return { kind: 'Link', name: `${block.name}_${index + 1}`, composition: [], entries };
+  });
+}
+
 export function readCanvasTree(model: SflBlock | undefined, resolution: CanvasResolution): CanvasTree {
-  const { entityReaderContext } = resolution;
-  const { mergedProps, layoutProp } = entityReaderContext;
   const entities: SflEntityOut[] = [];
   const linkBlocks: SflBlock[] = [];
-  const groups: SflGroupOut[] = [];
-  
-  // Direkte Entity-/Container-Mitglieder eines Group- oder gruppenartigen
-  // Container-Blocks (Subgroups sammeln ihre eigenen Mitglieder selbst).
-  const directMemberIds = (block: SflBlock): string[] =>
-    childBlocks(block)
-      .filter(b => b.kind === 'Entity' || b.kind === 'Container' || b.kind === 'Table' || b.kind === 'Path' || b.kind === 'Chart')
-      .map(b => asString(directProps(b).get('id')) ?? b.name);
-  
-  // rekursiver Walk: Container (Frame/Swimlane/…, immer mit eigener Position/
-  // Größe, §12.1) → eigene visuelle Entity, absteigen mit Entity-Ursprung +
-  // frame_id. Group (rein semantisch bzgl. Geometrie, §11: nie eigenes
-  // layout{}/Layout-Ref, darf aber Style tragen) → KEINE eigene Entity,
-  // transparent für Koordinaten (Kinder bekommen denselben `origin`
-  // durchgereicht), nur Name+Style+Mitgliedschaft werden gesammelt.
-  const walk = (block: SflBlock, origin: { x: number; y: number }, frameId: string | undefined): SflGroupOut[] => {
-    // SFL 1.4 `flow`/`gap` (§12.1, Container-only): auto-positions this
-    // block's own DIRECT Container/positioned-leaf children along one axis,
-    // a running cursor generalizing what buildSwimlane's lane-offset loop
-    // already does for lane bands specifically. Absent/unrecognized `flow`
-    // (Model/Group never set it — Groups are geometry-transparent by spec,
-    // §11 — and a plain Container without it) means nextFlowPos always
-    // returns undefined, i.e. today's fully unchanged explicit-position
-    // behavior. A child's own `layout.position` is ignored when this
-    // resolves to a real position; `layout.size` stays required/explicit.
-    const flowAxis = asString(layoutProp(block, 'flow'));
-    const flowGap = asNumber(layoutProp(block, 'gap')) ?? 0;
-    let flowCursor = 0;
-    const nextFlowPos = (childSize: number[]): number[] | undefined => {
-      if (flowAxis !== 'horizontal' && flowAxis !== 'vertical') return undefined;
-      const pos = flowAxis === 'horizontal' ? [flowCursor, 0] : [0, flowCursor];
-      flowCursor += (flowAxis === 'horizontal' ? childSize[0] : childSize[1]) + flowGap;
-      return pos;
-    };
-  
-    const localGroups: SflGroupOut[] = [];
+  const { entityReaderContext } = resolution;
+  const { mergedProps, layoutProp } = entityReaderContext;
+
+  const visit = (block: SflBlock, origin: { x: number; y: number }, frameId?: string): SflGroupOut[] => {
+    const groups: SflGroupOut[] = [];
+    const nextFlowPosition = createFlowPositioner(block, resolution);
+
     for (const child of childBlocks(block)) {
       if (child.kind === 'Container') {
-        const childSize = tupleVals(layoutProp(child, 'size')) ?? [0, 0];
-        const ent = buildEntity(child, origin, entityReaderContext, frameId, nextFlowPos(childSize));
-        entities.push(ent);
-        // Kinder relativ zur absoluten Container-Position; im Container gefundene
-        // Groups wandern (flach) in die Ergebnisliste, mit parentFrameId = Container.
-        localGroups.push(...walk(child, { x: ent.x, y: ent.y }, ent.id));
-      } else if (child.kind === 'Entity' || child.kind === 'Table' || child.kind === 'Path' || child.kind === 'Chart') {
-        // Table (§12.1a) is a positioned board member like Entity — never a
-        // Container: it never holds further Entities/Groups/Links, so unlike
-        // the Container branch above, it doesn't recurse into walk(). Its own
-        // Columns/Rows are read separately inside buildEntity.
-        const childSize = tupleVals(layoutProp(child, 'size')) ?? [0, 0];
-        entities.push(buildEntity(child, origin, entityReaderContext, frameId, nextFlowPos(childSize)));
+        const size = tupleVals(layoutProp(child, 'size')) ?? [0, 0];
+        const entity = buildEntity(child, origin, entityReaderContext, frameId, nextFlowPosition(size));
+        entities.push(entity);
+        groups.push(...visit(child, { x: entity.x, y: entity.y }, entity.id));
+      } else if (['Entity', 'Table', 'Path', 'Chart'].includes(child.kind)) {
+        const size = tupleVals(layoutProp(child, 'size')) ?? [0, 0];
+        entities.push(buildEntity(child, origin, entityReaderContext, frameId, nextFlowPosition(size)));
       } else if (child.kind === 'Group') {
-        const p = mergedProps(child); // Style-Referenz + lokales style{} erlaubt (§11)
-        const subGroups = walk(child, origin, frameId); // transparent: kein eigener Ursprung
-        localGroups.push({
-          id: asString(p.get('id')) ?? child.name,
-          name: asString(p.get('text')) ?? child.name,
-          color: asString(p.get('color')),
-          icon: asString(p.get('icon')),
+        const props = mergedProps(child);
+        groups.push({
+          id: asString(props.get('id')) ?? child.name,
+          name: asString(props.get('text')) ?? child.name,
+          color: asString(props.get('color')),
+          icon: asString(props.get('icon')),
           entityIds: directMemberIds(child),
-          subGroups,
-          parentFrameId: frameId ?? asString(p.get('parent')),
+          subGroups: visit(child, origin, frameId),
+          parentFrameId: frameId ?? asString(props.get('parent')),
         });
       } else if (child.kind === 'Link') {
         linkBlocks.push(child);
       } else if (child.kind === 'Net') {
-        // §3.5 Net (Muster C): PARSE-seitig deterministisch in N-1 gewöhnliche
-        // Links zerlegt (Sternschema: erstes Mitglied als Hub, alle anderen
-        // Mitglieder verbinden sich dorthin) - keine eigene Net-Repräsentation
-        // im Canvas-Modell, keine Rück-Emission (siehe ast.ts's BlockKind-
-        // Kommentar zu 'Net' für die Begründung). Läuft danach exakt durch
-        // dieselbe Endpoint-Auflösung wie ein echter Link-Block.
-        const netProps = mergedProps(child);
-        const membersValue = netProps.get('members');
-        const members = membersValue?.type === 'list'
-          ? membersValue.values.flatMap(v => v.type === 'ident' ? [v.segments] : [])
-          : [];
-        const netText = asString(netProps.get('text'));
-        if (members.length >= 2) {
-          const hub = members[0];
-          for (let i = 1; i < members.length; i++) {
-            const entries: SflBlock['entries'] = [
-              { type: 'property', property: { key: 'from', value: { type: 'endpoint', segments: hub } } },
-              { type: 'property', property: { key: 'to', value: { type: 'endpoint', segments: members[i] } } },
-            ];
-            if (netText) entries.push({ type: 'property', property: { key: 'text', value: { type: 'string', value: netText, multiline: false } } });
-            linkBlocks.push({ kind: 'Link', name: `${child.name}_${i}`, composition: [], entries });
-          }
-        }
+        linkBlocks.push(...expandNet(child, resolution));
       }
     }
-    return localGroups;
+    return groups;
   };
-  
-  if (model) groups.push(...walk(model, { x: 0, y: 0 }, undefined));
-  
-  
+
+  const groups = model ? visit(model, { x: 0, y: 0 }) : [];
   return { entities, groups, linkBlocks };
 }
 
