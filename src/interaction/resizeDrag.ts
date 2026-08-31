@@ -1,318 +1,75 @@
-// Drag a corner handle (see selectionOverlay.ts) to resize a shape, with the
-// same live link-following as moveDrag.ts. Single-node shapes (rect/ellipse/
-// the localShapePath outlines — diamond, hexagon, …) get true live geometry,
-// identical to what the static renderer would draw at that size. Composite
-// shapes (cylinder, person — more than one node) get a scale-transform
-// approximation instead: reproducing each of their sub-node formulas live
-// wasn't worth it for a preview that's replaced by the real render the
-// instant the host reflects the drop. The text label re-wraps live too (see
-// applyLiveText, using the same wrapText the static renderer does) via the
-// primary node's own aria-label as the source text — the DOM only ever has
-// the already-wrapped tspans, which would double-wrap on re-join.
-// (DOM code — browser-verified, like moveDrag.ts.)
-import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner, isCameraGesture } from '../viewer/contract';
-import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel } from '../viewer/domQuery';
-import { updateQuickDuplicateBubbles, resizeHandlePositions, type ResizeHandle } from '../viewer/selectionOverlay';
-import { computeSnap, nearestCandidates, resizeActivePoints, applyAxisSnap } from './snapGeometry';
-import { pxPerUnit, findSnapCandidateBounds } from '../viewer/domQuery';
-import { updateAlignmentGuides, clearAlignmentGuides, type GuideLine } from '../viewer/alignmentGuideOverlay';
-import { localShapePath } from '../model/geometry/shapes';
-import { wrapText } from '../model/geometry/text';
-import type { Bounds } from '../model/geometry/router';
-import type { ShapeType } from '../model/shapes';
-import { findLiveLinks, updateLiveLinks, type LiveLink } from './linkPreview';
-import { Emitter } from './events';
+import type { Viewer } from '../viewer'
+import { isCameraGesture } from '../viewer/contract'
+import { clearAlignmentGuides, updateAlignmentGuides } from '../viewer/alignmentGuideOverlay'
+import { Emitter } from './events'
+import { applyResizePreview } from './resize/preview'
+import { snapResize } from './resize/snapping'
+import { createResizeDragState, type ResizeDragState } from './resize/state'
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+export { HANDLE_AXES } from './resize/geometry'
 
 export interface ResizeDragHandle {
-  destroy(): void;
+  destroy(): void
 }
 
-const RESIZABLE_ROLES = new Set(['entity']);
-const MIN_SIZE = 10;
-const COMPOSITE_KINDS = new Set(['cylinder', 'person']);
+const RESIZE_GUIDE_COLOR = '#4CAF50'
 
-const SNAP_THRESHOLD_PX = 20;
-const GUIDE_OVERHANG = 10; // world units, flat — matches the reference implementation
-const RESIZE_GUIDE_COLOR = '#4CAF50';
-
-/** Which edge of the bbox a handle moves, per axis — 'none' means that axis
- *  stays exactly at the drag-start value (an edge-midpoint handle only
- *  touches one axis; a corner handle touches both). */
-export const HANDLE_AXES: Record<ResizeHandle, { x: 'left' | 'right' | 'none'; y: 'top' | 'bottom' | 'none' }> = {
-  'top-left': { x: 'left', y: 'top' },
-  top: { x: 'none', y: 'top' },
-  'top-right': { x: 'right', y: 'top' },
-  right: { x: 'right', y: 'none' },
-  'bottom-right': { x: 'right', y: 'bottom' },
-  bottom: { x: 'none', y: 'bottom' },
-  'bottom-left': { x: 'left', y: 'bottom' },
-  left: { x: 'left', y: 'none' },
-};
-
-/** New bounds for dragging `handle` to `pointer`, keeping the opposite edge
- *  (or, for an edge-midpoint handle, the WHOLE untouched axis) fixed. Works
- *  even if the pointer crosses past that edge (min/max, not a signed
- *  width/height) — the shape just flips instead of going negative. */
-function resizedBounds(start: Bounds, handle: ResizeHandle, pointer: { x: number; y: number }): Bounds {
-  const axes = HANDLE_AXES[handle];
-  let x = start.x, width = start.width;
-  if (axes.x !== 'none') {
-    const fixedX = axes.x === 'left' ? start.x + start.width : start.x;
-    const x1 = Math.min(fixedX, pointer.x), x2 = Math.max(fixedX, pointer.x);
-    x = x1; width = Math.max(MIN_SIZE, x2 - x1);
-  }
-  let y = start.y, height = start.height;
-  if (axes.y !== 'none') {
-    const fixedY = axes.y === 'top' ? start.y + start.height : start.y;
-    const y1 = Math.min(fixedY, pointer.y), y2 = Math.max(fixedY, pointer.y);
-    y = y1; height = Math.max(MIN_SIZE, y2 - y1);
-  }
-  return { x, y, width, height };
-}
-
-/** Keep a rotated shape's pivot centered on its own (live-resized) bounds —
- *  otherwise it visibly swings off-center as it resizes. Only handles a bare
- *  `rotate(deg cx cy)`, which is exactly what renderSceneToSvg.ts ever emits
- *  for a shape (never combined with another transform on the same node). */
-function reCenterRotation(el: SVGGraphicsElement, bounds: Bounds): void {
-  const transform = el.getAttribute('transform');
-  const match = transform && /rotate\(([-\d.]+)/.exec(transform);
-  if (!match) return;
-  const cx = bounds.x + bounds.width / 2, cy = bounds.y + bounds.height / 2;
-  el.setAttribute('transform', `rotate(${match[1]} ${cx} ${cy})`);
-}
-
-function applySingleNodeBounds(primary: SVGGraphicsElement, kind: string | null, bounds: Bounds): void {
-  const tag = primary.tagName.toLowerCase();
-  if (tag === 'rect') {
-    primary.setAttribute('x', String(bounds.x));
-    primary.setAttribute('y', String(bounds.y));
-    primary.setAttribute('width', String(bounds.width));
-    primary.setAttribute('height', String(bounds.height));
-    // A pill's rx is always half the shorter side (that's what makes it a
-    // pill) — recomputed live. A rounded_rectangle's corner radius is a fixed
-    // pixel value the DOM doesn't expose; left as-is rather than guessed.
-    if (kind === 'pill') primary.setAttribute('rx', String(Math.min(bounds.width, bounds.height) / 2));
-  } else if (tag === 'ellipse') {
-    primary.setAttribute('cx', String(bounds.x + bounds.width / 2));
-    primary.setAttribute('cy', String(bounds.y + bounds.height / 2));
-    primary.setAttribute('rx', String(bounds.width / 2));
-    primary.setAttribute('ry', String(bounds.height / 2));
-  } else if (tag === 'path' && kind) {
-    const d = localShapePath(kind as ShapeType, bounds.x, bounds.y, bounds.width, bounds.height);
-    if (d) primary.setAttribute('d', d);
-  }
-  reCenterRotation(primary, bounds);
-}
-
-function applyCompositeScale(nodes: SVGGraphicsElement[], startBounds: Bounds, liveBounds: Bounds): void {
-  const sx = liveBounds.width / startBounds.width, sy = liveBounds.height / startBounds.height;
-  const transform = `translate(${liveBounds.x} ${liveBounds.y}) scale(${sx} ${sy}) translate(${-startBounds.x} ${-startBounds.y})`;
-  nodes.forEach(node => node.setAttribute('transform', transform));
-}
-
-/** Re-wraps and re-centers a shape's text label at its live-resized bounds,
- *  using the exact same math renderSceneToSvg.ts's textSvg() does — so it
- *  reads identically whether it's "being resized" or "just rendered".
- *
- *  §1.4 Infographics inline **bold**: deliberately NOT bold-aware. This path
- *  already re-joins the DOM's per-line tspans from the primary node's
- *  collapsed, single-line aria-label (see rawText below) before re-wrapping
- *  with the plain heuristic — a multi-line label's original line breaks are
- *  already lost here today, independent of this feature. A transient resize
- *  preview one line-wrap-boundary off from the final static render (replaced
- *  the instant the host reflects the drop) is a minor, acceptable
- *  simplification given that pre-existing gap, not a new regression — same
- *  "live path can lag slightly behind the final-render path" precedent as
- *  atlas's own live-patch path not handling Frame/Swimlane style edits.
- */
-function applyLiveText(textEl: SVGTextElement, rawText: string, bounds: Bounds, strokeWidth: number): void {
-  const fontSize = parseFloat(textEl.getAttribute('font-size') || '14');
-  const anchor = textEl.getAttribute('text-anchor');
-  const align: 'left' | 'center' | 'right' = anchor === 'start' ? 'left' : anchor === 'end' ? 'right' : 'center';
-  const verticalAlign = (textEl.getAttribute('data-sf-valign') as 'top' | 'middle' | 'bottom' | null) ?? 'middle';
-  const lineHeight = Number(textEl.getAttribute('data-sf-line-height')) || 1.3;
-
-  const padding = Math.max(8, strokeWidth * 2);
-  const width = Math.max(0, bounds.width - padding * 2);
-  const height = Math.max(0, bounds.height - padding * 2);
-  const boxX = bounds.x + padding, boxY = bounds.y + padding;
-  const lines = wrapText(rawText, width, fontSize);
-
-  const linePx = fontSize * lineHeight, contentHeight = lines.length * linePx;
-  const firstY = verticalAlign === 'top' ? boxY + fontSize
-    : verticalAlign === 'bottom' ? boxY + height - contentHeight + fontSize
-      : boxY + (height - contentHeight) / 2 + fontSize;
-  const x = align === 'left' ? boxX : align === 'right' ? boxX + width : boxX + width / 2;
-
-  textEl.setAttribute('x', String(x));
-  textEl.setAttribute('y', String(firstY));
-  while (textEl.firstChild) textEl.removeChild(textEl.firstChild);
-  lines.forEach((line, i) => {
-    const tspan = document.createElementNS(SVG_NS, 'tspan');
-    tspan.setAttribute('x', String(x));
-    if (i) tspan.setAttribute('dy', `${linePx}px`);
-    tspan.textContent = line;
-    textEl.appendChild(tspan);
-  });
-  reCenterRotation(textEl, bounds);
-}
-
-interface DragState {
-  owner: OwnerRef;
-  handle: ResizeHandle;
-  kind: string | null;
-  isComposite: boolean;
-  geometryNodes: SVGGraphicsElement[];
-  overlay: SVGGElement | null;
-  // The quick-duplicate bubbles live in their OWN sibling group sharing the
-  // same data-sf-selection-overlay id (see selectionOverlay.ts) — not inside
-  // `overlay` itself, which only ever holds the ring/handles — so tracking a
-  // live resize needs this looked up and repositioned separately.
-  bubbles: SVGGElement | null;
-  startBounds: Bounds;
-  liveLinks: LiveLink[];
-  pointerId: number;
-  moved: boolean;
-  /** Only set when the entity has a text label — see applyLiveText. */
-  text: { el: SVGTextElement; rawText: string; strokeWidth: number } | null;
+function pointerPosition(svg: SVGSVGElement, event: PointerEvent): { x: number; y: number } {
+  const transform = svg.getScreenCTM()
+  if (!transform) return { x: 0, y: 0 }
+  const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(transform.inverse())
+  return { x: point.x, y: point.y }
 }
 
 export function bindShapeResize(viewer: Viewer, emitter: Emitter): ResizeDragHandle {
-  const svg = viewer.svg;
-  let drag: DragState | null = null;
+  const svg = viewer.svg
+  let drag: ResizeDragState | null = null
 
-  const userPoint = (e: PointerEvent) => {
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 };
-    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
-    return { x: p.x, y: p.y };
-  };
+  const onPointerDown = (event: PointerEvent) => {
+    if (event.button !== 0 || drag || isCameraGesture(event)) return
+    drag = createResizeDragState(svg, event)
+  }
 
-  const applyBounds = (bounds: Bounds) => {
-    if (!drag) return;
-    if (drag.isComposite) applyCompositeScale(drag.geometryNodes, drag.startBounds, bounds);
-    else drag.geometryNodes.forEach(node => applySingleNodeBounds(node, drag!.kind, bounds));
-    if (drag.overlay) {
-      // Re-paint just the ring/handles at the live bounds — same shape as
-      // shapeSelectionOverlay's own <rect>, offset 1px outside.
-      const ring = drag.overlay.querySelector('rect:not([data-sf-resize-handle])');
-      ring?.setAttribute('x', String(bounds.x - 1));
-      ring?.setAttribute('y', String(bounds.y - 1));
-      ring?.setAttribute('width', String(bounds.width + 2));
-      ring?.setAttribute('height', String(bounds.height + 2));
-      for (const [cx, cy, name] of resizeHandlePositions(bounds)) {
-        const handleEl = drag.overlay.querySelector(`[data-sf-resize-handle="${name}"]`);
-        if (!handleEl) continue;
-        const size = Number(handleEl.getAttribute('width')) || 6;
-        handleEl.setAttribute('x', String(cx - size / 2));
-        handleEl.setAttribute('y', String(cy - size / 2));
-      }
-    }
-    if (drag.text) applyLiveText(drag.text.el, drag.text.rawText, bounds, drag.text.strokeWidth);
-    if (drag.bubbles) updateQuickDuplicateBubbles(drag.bubbles, bounds);
-    updateLiveLinks(drag.liveLinks, bounds);
-  };
+  const onPointerMove = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.pointerId) return
+    drag.moved = true
+    const { bounds, guides } = snapResize(svg, drag, pointerPosition(svg, event))
+    applyResizePreview(drag, bounds)
+    updateAlignmentGuides(svg, guides, RESIZE_GUIDE_COLOR)
+  }
 
-  const onPointerDown = (e: PointerEvent) => {
-    if (e.button !== 0 || drag) return;
-    // Ctrl/Cmd means the reader is panning the camera (viewer/contract.ts's
-    // isCameraGesture) — yield rather than turning that into a mutation.
-    if (isCameraGesture(e)) return;
-    const handleEl = (e.target as Element | null)?.closest?.('[data-sf-resize-handle]') as SVGGraphicsElement | null;
-    if (!handleEl) return;
-    const handle = handleEl.getAttribute('data-sf-resize-handle') as ResizeHandle;
-    const overlay = handleEl.closest('[data-sf-selection-overlay]') as SVGGElement | null;
-    const ownerId = overlay?.getAttribute('data-sf-selection-overlay');
-    if (!ownerId) return;
-    const bubbles = [...svg.querySelectorAll<SVGGElement>(`[data-sf-selection-overlay="${CSS.escape(ownerId)}"]`)]
-      .find(g => g !== overlay && g.querySelector('circle[data-sf-quick-duplicate]')) ?? null;
-    const primary = findOwnerNode(svg, ownerId, isPrimary);
-    if (!primary) return;
-    const owner = resolveOwner(primary);
-    if (!owner || !RESIZABLE_ROLES.has(owner.role)) return;
-    const kind = primary.getAttribute('data-sf-kind');
-    const isComposite = !!kind && COMPOSITE_KINDS.has(kind);
-    const allNodes = findAllOwnerNodes(svg, ownerId);
-    const geometryNodes = allNodes.filter(n => !isTextLabel(n));
-    if (!geometryNodes.length) return;
-    const textEl = allNodes.find(isTextLabel) as SVGTextElement | undefined;
-    // aria-label is the shape's raw, unwrapped text (collapsed to one line —
-    // see contractAttrs' doc comment) — the DOM only otherwise has the
-    // already-wrapped tspans, which can't be re-wrapped at a new width
-    // without first un-wrapping them.
-    const rawText = primary.getAttribute('aria-label');
-    const text = textEl && rawText
-      ? { el: textEl, rawText, strokeWidth: Number(primary.getAttribute('stroke-width')) || 2 }
-      : null;
-    handleEl.setPointerCapture?.(e.pointerId);
-    const startBounds = primary.getBBox();
-    drag = {
-      owner, handle, kind, isComposite, geometryNodes, overlay, bubbles, text,
-      startBounds,
-      liveLinks: findLiveLinks(svg, ownerId, startBounds),
-      pointerId: e.pointerId,
-      moved: false,
-    };
-  };
+  const onPointerUp = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.pointerId) return
+    const completed = drag
+    drag = null
+    ;(event.target as Element)?.releasePointerCapture?.(completed.pointerId)
+    clearAlignmentGuides(svg)
+    if (!completed.moved) return
 
-  // Wraps resizedBounds() with an alignment-guide snap pass — used by BOTH
-  // pointermove and pointerup so the live preview and the committed result
-  // can never drift apart (the easiest bug to introduce here: snapping the
-  // preview but forgetting to apply the same snap to the emitted event).
-  // Takes the drag state explicitly (not read from the closed-over `drag`
-  // variable) because pointerup calls this AFTER already nulling `drag` out,
-  // having captured its own local copy first.
-  const snappedResize = (d: DragState, pointer: { x: number; y: number }): { bounds: Bounds; guides: GuideLine[] } => {
-    const proposed = resizedBounds(d.startBounds, d.handle, pointer);
-    const axes = HANDLE_AXES[d.handle];
-    const activeX = resizeActivePoints(axes.x);
-    const activeY = resizeActivePoints(axes.y);
-    const candidates = nearestCandidates(proposed, findSnapCandidateBounds(svg, new Set([d.owner.id])));
-    const threshold = SNAP_THRESHOLD_PX / pxPerUnit(svg);
-    const snap = computeSnap(proposed, candidates, { threshold, activeX, activeY, guideOverhang: GUIDE_OVERHANG });
-    const bounds = applyAxisSnap(proposed, axes.x, axes.y, snap, MIN_SIZE);
-    const guides = [snap.x.guide, snap.y.guide].filter((g): g is GuideLine => g !== null);
-    return { bounds, guides };
-  };
-
-  const onPointerMove = (e: PointerEvent) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    drag.moved = true;
-    const { bounds, guides } = snappedResize(drag, userPoint(e));
-    applyBounds(bounds);
-    updateAlignmentGuides(svg, guides, RESIZE_GUIDE_COLOR);
-  };
-
-  const onPointerUp = (e: PointerEvent) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    const d = drag;
-    drag = null;
-    (e.target as Element)?.releasePointerCapture?.(d.pointerId);
-    clearAlignmentGuides(svg);
-    if (!d.moved) return;
-    const { bounds: next } = snappedResize(d, userPoint(e));
+    const { bounds } = snapResize(svg, completed, pointerPosition(svg, event))
     emitter.emit('resizeChange', {
-      owner: d.owner,
-      dx: next.x - d.startBounds.x, dy: next.y - d.startBounds.y,
-      dWidth: next.width - d.startBounds.width, dHeight: next.height - d.startBounds.height,
-      x: next.x, y: next.y, width: next.width, height: next.height,
-    });
-  };
+      owner: completed.owner,
+      dx: bounds.x - completed.startBounds.x,
+      dy: bounds.y - completed.startBounds.y,
+      dWidth: bounds.width - completed.startBounds.width,
+      dHeight: bounds.height - completed.startBounds.height,
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+    })
+  }
 
-  svg.addEventListener('pointerdown', onPointerDown);
-  svg.addEventListener('pointermove', onPointerMove);
-  svg.addEventListener('pointerup', onPointerUp);
+  svg.addEventListener('pointerdown', onPointerDown)
+  svg.addEventListener('pointermove', onPointerMove)
+  svg.addEventListener('pointerup', onPointerUp)
 
   return {
     destroy() {
-      drag = null;
-      svg.removeEventListener('pointerdown', onPointerDown);
-      svg.removeEventListener('pointermove', onPointerMove);
-      svg.removeEventListener('pointerup', onPointerUp);
+      drag = null
+      svg.removeEventListener('pointerdown', onPointerDown)
+      svg.removeEventListener('pointermove', onPointerMove)
+      svg.removeEventListener('pointerup', onPointerUp)
     },
-  };
+  }
 }
