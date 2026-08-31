@@ -311,241 +311,203 @@ export function routeCubic(
   return { p0:[from.x, from.y], p1, p2, p3:[to.x, to.y] };
 }
 
-/** 
- * 🎯 NEW MIRO-STYLE: Orthogonal path with movable segment midpoints
- * Returns path points AND segment data for multi-handle manipulation
- */
+type Point = { x: number; y: number };
+
+function snapAlignedEndpoints(from: Point, to: Point, fromSide: Side, toSide: Side): [Point, Point] {
+  const threshold = 6;
+  const verticalPair = ['top', 'bottom'].includes(fromSide) && ['top', 'bottom'].includes(toSide);
+  const horizontalPair = ['left', 'right'].includes(fromSide) && ['left', 'right'].includes(toSide);
+
+  if (verticalPair && Math.abs(to.x - from.x) < threshold) return [from, { ...to, x: from.x }];
+  if (horizontalPair && Math.abs(to.y - from.y) < threshold) return [from, { ...to, y: from.y }];
+  return [from, to];
+}
+
+function chooseInitialOrientation(from: Point, to: Point, entityEdges?: { fromEdge?: Side; toEdge?: Side }): boolean {
+  if (entityEdges?.toEdge) return entityEdges.toEdge === 'left' || entityEdges.toEdge === 'right';
+  if (entityEdges?.fromEdge) return entityEdges.fromEdge === 'left' || entityEdges.fromEdge === 'right';
+  return Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
+}
+
+function stepOutDistances(
+  from: Point,
+  to: Point,
+  fromNormal: [number, number],
+  toNormal: [number, number],
+  horizontalFirst: boolean,
+): [number, number] {
+  let fromDistance = 40;
+  let toDistance = 40;
+  const axis = horizontalFirst ? 0 : 1;
+  const delta = (horizontalFirst ? to.x - from.x : to.y - from.y);
+
+  if (fromNormal[axis] !== 0 && fromNormal[axis] === -toNormal[axis]) {
+    const gap = delta * fromNormal[axis];
+    if (gap > 0 && gap < fromDistance + toDistance) {
+      fromDistance = gap / 2;
+      toDistance = gap / 2;
+    }
+  } else if (fromNormal[axis] === 0) {
+    const gap = delta * -toNormal[axis];
+    if (gap > 0 && gap < toDistance) toDistance = gap;
+  }
+
+  return [fromDistance, toDistance];
+}
+
+function chooseBend(
+  fromStub: [number, number],
+  toStub: [number, number],
+  to: Point,
+  fromSide: Side,
+  toSide: Side,
+  fromNormal: [number, number],
+  toNormal: [number, number],
+  horizontalFirst: boolean,
+): [number, number] {
+  let x = (fromStub[0] + toStub[0]) / 2;
+  let y = (fromStub[1] + toStub[1]) / 2;
+  const fromHorizontal = fromSide === 'left' || fromSide === 'right';
+  const toHorizontal = toSide === 'left' || toSide === 'right';
+
+  if (fromHorizontal !== toHorizontal) {
+    if (horizontalFirst) {
+      x = (fromStub[0] - to.x) * toNormal[0] >= 0 ? fromStub[0] : toStub[0];
+    } else {
+      y = (fromStub[1] - to.y) * toNormal[1] >= 0 ? fromStub[1] : toStub[1];
+    }
+  } else if (fromSide === toSide) {
+    if (horizontalFirst) {
+      x = fromNormal[0] < 0 ? Math.min(fromStub[0], toStub[0]) : Math.max(fromStub[0], toStub[0]);
+    } else {
+      y = fromNormal[1] < 0 ? Math.min(fromStub[1], toStub[1]) : Math.max(fromStub[1], toStub[1]);
+    }
+  }
+
+  return [x, y];
+}
+
+function segmentMidpoints(points: number[]): Point[] {
+  const midpoints: Point[] = [];
+  for (let index = 0; index < points.length - 2; index += 2) {
+    midpoints.push({
+      x: (points[index] + points[index + 2]) / 2,
+      y: (points[index + 1] + points[index + 3]) / 2,
+    });
+  }
+  return midpoints;
+}
+
+function baseOrthogonalPoints(
+  from: Point,
+  to: Point,
+  fromStub: [number, number],
+  toStub: [number, number],
+  bend: [number, number],
+  horizontalFirst: boolean,
+): number[] {
+  const points = [from.x, from.y, fromStub[0], fromStub[1]];
+  if (horizontalFirst) {
+    points.push(bend[0], fromStub[1], bend[0], toStub[1]);
+  } else {
+    points.push(fromStub[0], bend[1], toStub[0], bend[1]);
+  }
+  points.push(toStub[0], toStub[1], to.x, to.y);
+  return points;
+}
+
+function movableInnerSegments(horizontalFirst: boolean, fromSide: Side, toSide: Side): [boolean, boolean] {
+  const fixedSides = horizontalFirst ? ['left', 'right'] : ['top', 'bottom'];
+  return [!fixedSides.includes(fromSide), !fixedSides.includes(toSide)];
+}
+
+function offsetOrthogonalPoints(
+  from: Point,
+  to: Point,
+  fromStub: [number, number],
+  toStub: [number, number],
+  bend: [number, number],
+  horizontalFirst: boolean,
+  segmentOffsets: number[] | undefined,
+  movable: [boolean, boolean],
+): number[] {
+  const first = movable[0] ? segmentOffsets?.[1] || 0 : 0;
+  const middle = segmentOffsets?.[2] || 0;
+  const last = movable[1] ? segmentOffsets?.[3] || 0 : 0;
+
+  if (horizontalFirst) {
+    const fromY = fromStub[1] + first;
+    const bendX = bend[0] + middle;
+    const toY = toStub[1] + last;
+    return [from.x, from.y, fromStub[0], fromY, bendX, fromY, bendX, toY, toStub[0], toY, to.x, to.y];
+  }
+
+  const fromX = fromStub[0] + first;
+  const bendY = bend[1] + middle;
+  const toX = toStub[0] + last;
+  return [from.x, from.y, fromX, fromStub[1], fromX, bendY, toX, bendY, toX, toStub[1], to.x, to.y];
+}
+
+function describeSegments(
+  points: number[],
+  originalMidpoints: Point[],
+  canMoveFirstInner: boolean,
+  canMoveLastInner: boolean,
+): PathSegment[] {
+  const totalSegments = (points.length - 2) / 2;
+  return originalMidpoints.map((originalMidpoint, segmentIndex) => {
+    const offset = segmentIndex * 2;
+    const start = { x: points[offset], y: points[offset + 1] };
+    const end = { x: points[offset + 2], y: points[offset + 3] };
+    const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const isInner = segmentIndex > 0 && segmentIndex < totalSegments - 1;
+    const isMovableEdge = segmentIndex === 1
+      ? canMoveFirstInner
+      : segmentIndex === totalSegments - 2
+        ? canMoveLastInner
+        : true;
+    const hasLength = Math.hypot(end.x - start.x, end.y - start.y) >= 1;
+
+    return {
+      start,
+      end,
+      midpoint,
+      originalMidpoint,
+      isHorizontal: Math.abs(end.x - start.x) > Math.abs(end.y - start.y),
+      canMove: isInner && isMovableEdge && hasLength,
+    };
+  });
+}
+
+/** Build an orthogonal path and the segment metadata used by drag handles. */
 export function routeOrthogonal(
   from:{x:number;y:number}, to:{x:number;y:number},
   fromSide: Side, toSide: Side,
   segmentOffsets?: number[], // 🎯 Array of perpendicular offsets, one per movable segment
   entityEdges?: { fromEdge?: Side; toEdge?: Side } // 🎯 Entity edges for forced orientation
 ): OrthoPath {
-  // Snap near-aligned endpoints on directly-opposed sides (top/bottom or
-  // left/right on both ends) to exactly aligned. Two ports that are only a
-  // couple pixels off-axis (e.g. imported bounding boxes that are visually
-  // aligned but not pixel-identical) would otherwise route through a tiny
-  // extra dogleg in the middle segment — a visible "kink" in what should be
-  // a straight connector.
-  const ALIGNMENT_SNAP = 6;
-  const verticalPair = (fromSide === 'top' || fromSide === 'bottom') && (toSide === 'top' || toSide === 'bottom');
-  const horizontalPair = (fromSide === 'left' || fromSide === 'right') && (toSide === 'left' || toSide === 'right');
-  if (verticalPair && Math.abs(to.x - from.x) < ALIGNMENT_SNAP) {
-    to = { ...to, x: from.x };
-  } else if (horizontalPair && Math.abs(to.y - from.y) < ALIGNMENT_SNAP) {
-    to = { ...to, y: from.y };
-  }
+  [from, to] = snapAlignedEndpoints(from, to, fromSide, toSide);
 
   const n0 = SIDE_N[fromSide];
   const n3 = SIDE_N[toSide];
-  const K = 40; // default step away from node before turning (tunable)
+  const horizontalFirst = chooseInitialOrientation(from, to, entityEdges);
 
-  // prefer "one bend" if possible - BUT respect entity edges if provided
-  let horizontalFirst = Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
-
-  // Override based on entity edges (forced orientation for approach segments)
-  if (entityEdges?.toEdge) {
-    // If approaching left/right edge → path must END HORIZONTALLY (approaching from side)
-    // If approaching top/bottom edge → path must END VERTICALLY (approaching from top/bottom)
-    const mustEndHorizontally = entityEdges.toEdge === 'left' || entityEdges.toEdge === 'right';
-    horizontalFirst = mustEndHorizontally;
-  } else if (entityEdges?.fromEdge) {
-    // If leaving from left/right edge → path must START HORIZONTALLY (leaving from side)
-    // If leaving from top/bottom edge → path must START VERTICALLY (leaving from top/bottom)
-    const mustStartHorizontally = entityEdges.fromEdge === 'left' || entityEdges.fromEdge === 'right';
-    horizontalFirst = mustStartHorizontally;
-  }
-
-  // 🎯 Adaptive step-out distances: the points a1/b1 are normally pushed out
-  // by a fixed K=40px before the bend. When `from`/`to` are close together
-  // (gap < 2*K) on the axis the bend travels along, a1/b1 can "cross" past
-  // each other, making the bend column/row land on the wrong side and
-  // producing a self-crossing zigzag ("Knick") instead of a clean bend.
-  // Shrink k0/k3 so a1/b1 never cross - only for sides that face each other
-  // along that axis; "same side" combinations need a real loop and aren't
-  // fixable by shrinking the step-out (left as-is, rarer in practice).
-  let k0 = K, k3 = K;
-  if (horizontalFirst) {
-    if (n0[0] !== 0) {
-      if (n0[0] === -n3[0]) {
-        const gap = (to.x - from.x) * n0[0];
-        if (gap > 0 && gap < k0 + k3) k0 = k3 = gap / 2;
-      }
-    } else {
-      const gap = (to.x - from.x) * -n3[0];
-      if (gap > 0 && gap < k3) k3 = gap;
-    }
-  } else {
-    if (n0[1] !== 0) {
-      if (n0[1] === -n3[1]) {
-        const gap = (to.y - from.y) * n0[1];
-        if (gap > 0 && gap < k0 + k3) k0 = k3 = gap / 2;
-      }
-    } else {
-      const gap = (to.y - from.y) * -n3[1];
-      if (gap > 0 && gap < k3) k3 = gap;
-    }
-  }
-
-  const a1 = [from.x + n0[0]*k0, from.y + n0[1]*k0];
-  const b1 = [to.x   + n3[0]*k3, to.y   + n3[1]*k3];
-
-  // Connect a1 -> b1 with Manhattan L or Z
-  let midX = (a1[0] + b1[0]) / 2;
-  let midY = (a1[1] + b1[1]) / 2;
-
-  // 🎯 Perpendicular exits (e.g. leaving right, arriving bottom) only ever
-  // need a single bend - a clean "L" from a1 straight to b1's column/row.
-  // The midpoint-average above is only necessary for *parallel* exits
-  // (e.g. left-to-right) where a real Z/S detour is unavoidable. Using it
-  // unconditionally here added a second, usually tiny, redundant bend right
-  // after the step-out even when an L would do - visually a stray "Knick"
-  // right next to the start.
-  //
-  // The collapse can snap to EITHER a1's or b1's coordinate on the bend
-  // axis - both give a single-bend L, but only one of them is guaranteed not
-  // to run back through the entity we're entering. b1 already has clearance
-  // from "to" along its own normal (n3); a1 is only guaranteed clear of
-  // "from", not of "to". If a1's coordinate sits on the wrong side of "to"
-  // relative to n3 (e.g. entering "top" but a1 is already level with or
-  // below "to"), the straight run between a1 and b1 would have to cross back
-  // through "to" itself to reach the entry side - that's the "180°"
-  // round-trip case. Pick whichever endpoint's coordinate is on the correct
-  // (already-clear) side of "to".
-  const fromIsHorizontalSide = fromSide === 'left' || fromSide === 'right';
-  const toIsHorizontalSide = toSide === 'left' || toSide === 'right';
-  if (fromIsHorizontalSide !== toIsHorizontalSide) {
-    if (horizontalFirst) {
-      const a1IsClearOfTo = (a1[0] - to.x) * n3[0] >= 0;
-      midX = a1IsClearOfTo ? a1[0] : b1[0];
-    } else {
-      const a1IsClearOfTo = (a1[1] - to.y) * n3[1] >= 0;
-      midY = a1IsClearOfTo ? a1[1] : b1[1];
-    }
-  } else if (fromSide === toSide) {
-    // Same-side loop-backs (e.g. a "send back for rework" link that leaves
-    // and re-enters via "top" on both ends): n0 and n3 point the same way, so
-    // the exit stub (from -> a1) always travels further out in that
-    // direction. If the midpoint-average then sits back *between* from and
-    // to - which it does whenever one entity is much farther out along that
-    // axis than the other - the path has to reverse straight back past its
-    // own starting point to reach it, producing the same "180°" backtrack as
-    // the perpendicular case above. Going all the way out to whichever of
-    // a1/b1 is furthest in the shared exit direction keeps the path
-    // continuing outward instead of doubling back.
-    if (horizontalFirst) {
-      midX = n0[0] < 0 ? Math.min(a1[0], b1[0]) : Math.max(a1[0], b1[0]);
-    } else {
-      midY = n0[1] < 0 ? Math.min(a1[1], b1[1]) : Math.max(a1[1], b1[1]);
-    }
-  }
-
-  // 🎯 STEP 1: Calculate ORIGINAL path (without offsets) to get original segment midpoints
-  const originalPts: number[] = [from.x, from.y, a1[0], a1[1]];
-  if (horizontalFirst) {
-    originalPts.push(midX, a1[1], midX, b1[1]);
-  } else {
-    originalPts.push(a1[0], midY, b1[0], midY);
-  }
-  originalPts.push(b1[0], b1[1], to.x, to.y);
-
-  // Extract original segment midpoints (before any offset)
-  const originalSegmentMidpoints: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < originalPts.length - 2; i += 2) {
-    const start = { x: originalPts[i], y: originalPts[i + 1] };
-    const end = { x: originalPts[i + 2], y: originalPts[i + 3] };
-    originalSegmentMidpoints.push({
-      x: (start.x + end.x) / 2,
-      y: (start.y + end.y) / 2
-    });
-  }
-  
-  const rawOffset1 = segmentOffsets?.[1] || 0; // First inner segment
-  const offset2 = segmentOffsets?.[2] || 0; // Middle segment
-  const rawOffset3 = segmentOffsets?.[3] || 0; // Last inner segment
-
-  // Keep the first/last edge-adjacent segments orthogonal to entity edges.
-  // When the adjacent fixed segment has the same orientation as the inner segment,
-  // applying a perpendicular shift would create a diagonal start/end segment.
-  const canMoveFirstInner = horizontalFirst
-    ? !(fromSide === 'left' || fromSide === 'right')
-    : !(fromSide === 'top' || fromSide === 'bottom');
-  const canMoveLastInner = horizontalFirst
-    ? !(toSide === 'left' || toSide === 'right')
-    : !(toSide === 'top' || toSide === 'bottom');
-
-  const offset1 = canMoveFirstInner ? rawOffset1 : 0;
-  const offset3 = canMoveLastInner ? rawOffset3 : 0;
-  
-  const pts:number[] = [from.x, from.y];
-  
-  if (horizontalFirst) {
-    const adjustedA1Y = a1[1] + offset1; // Segment 1: horizontal line moves up/down
-    const adjustedMidX = midX + offset2; // Segment 2: vertical line moves left/right  
-    const adjustedB1Y = b1[1] + offset3; // Segment 3: horizontal line moves up/down
-    
-    pts.push(
-      a1[0], adjustedA1Y,           // End of segment 0 / Start of segment 1
-      adjustedMidX, adjustedA1Y,    // End of segment 1 / Start of segment 2
-      adjustedMidX, adjustedB1Y,    // End of segment 2 / Start of segment 3
-      b1[0], adjustedB1Y            // End of segment 3 / Start of segment 4
-    );
-  } else {
-    const adjustedA1X = a1[0] + offset1; // Segment 1: vertical line moves left/right
-    const adjustedMidY = midY + offset2; // Segment 2: horizontal line moves up/down
-    const adjustedB1X = b1[0] + offset3; // Segment 3: vertical line moves left/right
-    
-    pts.push(
-      adjustedA1X, a1[1],           // End of segment 0 / Start of segment 1  
-      adjustedA1X, adjustedMidY,    // End of segment 1 / Start of segment 2
-      adjustedB1X, adjustedMidY,    // End of segment 2 / Start of segment 3
-      adjustedB1X, b1[1]            // End of segment 3 / Start of segment 4
-    );
-  }
-  pts.push(to.x, to.y);
-
-  // 🎯 STEP 3: Build segments array with BOTH current AND original midpoints
-  // Segments are based on the STRAIGHT geometry (for handle positioning)
-  const segments: PathSegment[] = [];
-  
-  for (let i = 0; i < pts.length - 2; i += 2) {
-    const start = { x: pts[i], y: pts[i + 1] };
-    const end = { x: pts[i + 2], y: pts[i + 3] };
-    const midpoint = {
-      x: (start.x + end.x) / 2,
-      y: (start.y + end.y) / 2
-    };
-    
-    // Get original midpoint from pre-calculated array
-    const segmentIndex = i / 2;
-    const originalMidpoint = originalSegmentMidpoints[segmentIndex];
-    
-    // Determine if segment is horizontal or vertical
-    const isHorizontal = Math.abs(end.x - start.x) > Math.abs(end.y - start.y);
-    
-    // First and last segments are fixed to entity edges (can't move).
-    // Inner segments are movable, except when edge-adjacent movement would break orthogonality.
-    const totalSegments = (pts.length - 2) / 2;
-    let canMove = false;
-    if (segmentIndex > 0 && segmentIndex < totalSegments - 1) {
-      if (segmentIndex === 1) {
-        canMove = canMoveFirstInner;
-      } else if (segmentIndex === totalSegments - 2) {
-        canMove = canMoveLastInner;
-      } else {
-        canMove = true;
-      }
-    }
-
-    // 🎯 Degenerate (near-zero-length) segments can't be meaningfully
-    // dragged - e.g. when the adaptive step-out above collapses this
-    // segment to ~0 because `from`/`to` are close together. Hide its handle.
-    if (canMove && Math.hypot(end.x - start.x, end.y - start.y) < 1) {
-      canMove = false;
-    }
-
-    segments.push({ start, end, midpoint, originalMidpoint, isHorizontal, canMove });
-  }
+  const [k0, k3] = stepOutDistances(from, to, n0, n3, horizontalFirst);
+  const a1: [number, number] = [from.x + n0[0] * k0, from.y + n0[1] * k0];
+  const b1: [number, number] = [to.x + n3[0] * k3, to.y + n3[1] * k3];
+  const [midX, midY] = chooseBend(a1, b1, to, fromSide, toSide, n0, n3, horizontalFirst);
+  const bend: [number, number] = [midX, midY];
+  const originalPoints = baseOrthogonalPoints(from, to, a1, b1, bend, horizontalFirst);
+  const originalSegmentMidpoints = segmentMidpoints(originalPoints);
+  const movable = movableInnerSegments(horizontalFirst, fromSide, toSide);
+  const pts = offsetOrthogonalPoints(from, to, a1, b1, bend, horizontalFirst, segmentOffsets, movable);
+  const [canMoveFirstInner, canMoveLastInner] = movable;
+  const segments = describeSegments(
+    pts,
+    originalSegmentMidpoints,
+    canMoveFirstInner,
+    canMoveLastInner,
+  );
   
   // 🎯 STEP 4: Apply corner rounding to visible path (segments remain unchanged for handles)
   const cornerRadius = 10; // Radius in pixels (8-12px recommended for Miro/Figma look)
@@ -554,7 +516,7 @@ export function routeOrthogonal(
   return { points: roundedPoints, segments };
 }
 
-/** Recommend a sticky port (side+offset) for endpoint A looking at B. 
+/** Recommend a sticky port (side+offset) for endpoint A looking at B.
  *  Uses FIXED EDGE CENTERS to prevent sliding during entity movement. */
 export function recommendPort(a: Bounds, b: Bounds, sticky?: Port): Port {
   const side = chooseSide(a, b, sticky?.side);
