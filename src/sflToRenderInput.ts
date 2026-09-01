@@ -1,12 +1,11 @@
 import type { RenderInput } from './rendering/renderInput';
-import { sflToImportJson } from './sfl';
-import { collectRenderEntities } from './sflToRenderInput/entities';
+import { sflToCanvasState } from './sfl';
+import { collectEntities } from './sfl/adapters/entities/collect';
 import { resolveExportLinks } from './sflToRenderInput/links';
-import type { ImportRenderJson } from './sflToRenderInput/types';
 
 export function sflToRenderInput(sfl: string): RenderInput {
-  const json: ImportRenderJson = sflToImportJson(sfl);
-  const entities = collectRenderEntities(json);
+  const state = sflToCanvasState(sfl);
+  const entities = collectEntities(state);
   return {
     shapes: entities.shapes,
     frames: entities.frames,
@@ -15,6 +14,6 @@ export function sflToRenderInput(sfl: string): RenderInput {
     paths: entities.paths,
     charts: entities.charts,
     links: resolveExportLinks(entities),
-    diagnostics: json.diagnostics ?? [],
+    diagnostics: state.diagnostics,
   };
 }

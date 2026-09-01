@@ -1,10 +1,10 @@
 export interface ShadowStyle {
   enabled: boolean;
-  color: string;
-  opacity: number;
-  blur: number;
-  angle: number;
-  distance: number;
+  color?: string;
+  opacity?: number;
+  blur?: number;
+  angle?: number;
+  distance?: number;
 }
 
 export const DEFAULT_SHADOW_STYLE: ShadowStyle = {

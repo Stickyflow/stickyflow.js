@@ -1,6 +1,6 @@
 import type { SflEntityOut } from '../../sflToCanvasState';
 import { decodeColor, decodeRamp } from '../decodeStyles';
-import { numOf } from './values';
+import { numOf, solidColor } from './values';
 
 export function chartObject(e: SflEntityOut) {
   const p = e.props;
@@ -42,8 +42,8 @@ export function chartObject(e: SflEntityOut) {
       stroke_width: r.strokeWidth,
       dash: r.dash,
     })),
-    fill_color: decodeColor(p.fill) ?? '#ffffff',
-    stroke_color: decodeColor(p.stroke) ?? '#475569',
+    fill_color: solidColor(p.fill) ?? '#ffffff',
+    stroke_color: solidColor(p.stroke) ?? '#475569',
     stroke_width: numOf(p.strokeWidth) ?? 1,
     corner_radius: numOf(p.cornerRadius) ?? 12,
     grid_color: p.gridColor ?? '#e2e8f0',

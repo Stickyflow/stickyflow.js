@@ -21,7 +21,7 @@ export type ShapeType =
 
 export interface Shape {
   id: string;
-  boardId: string;
+  boardId?: string;
   name?: string;
   shapeType: ShapeType;
   x: number;
@@ -51,10 +51,10 @@ export interface Shape {
 
   shapeStyle?: ShapeStyle;
 
-  layer_group: string;
-  order_key: string;
-  is_visible: boolean;
-  is_locked: boolean;
+  layer_group?: string;
+  order_key?: string;
+  is_visible?: boolean;
+  is_locked?: boolean;
 
   parent_frame_id?: string | null;
 
@@ -68,7 +68,7 @@ export interface Shape {
   imageUrl?: string | null;
   imageFit?: 'cover' | 'contain';
 
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface SubShape {

@@ -7,7 +7,7 @@ export interface Lane {
 
 export interface Swimlane {
   id: string;
-  board_id: string;
+  board_id?: string;
   name?: string;
   x: number;
   y: number;
@@ -20,7 +20,7 @@ export interface Swimlane {
 
   stroke_color: string;
   stroke_width: number;
-  dash: number[];
+  dash?: number[];
   corner_radius: number;
   fill_color: string;
 
@@ -30,14 +30,14 @@ export interface Swimlane {
   font_family?: string;
   show_lane_labels: boolean;
 
-  layer_group: string;
-  order_key: string;
-  is_visible: boolean;
-  is_locked: boolean;
+  layer_group?: string;
+  order_key?: string;
+  is_visible?: boolean;
+  is_locked?: boolean;
 
   entity_group_id?: string | null;
 
-  created_at: string;
+  created_at?: string;
   updated_at?: string | null;
 }
 

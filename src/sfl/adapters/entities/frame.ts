@@ -1,5 +1,5 @@
 import type { SflEntityOut } from '../../sflToCanvasState';
-import { numOf, safeJson } from './values';
+import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
 export function frameObject(e: SflEntityOut) {
   const p = e.props;
@@ -19,9 +19,9 @@ export function frameObject(e: SflEntityOut) {
     corner_radius: numOf(p.cornerRadius) ?? 12,
     text_color: p.textColor ?? '#9b42df',
     font_size: numOf(p.fontSize) ?? 14,
-    font_weight: p.fontWeight ?? 'bold',
+    font_weight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
     font_family: p.fontFamily,
-    dash: p.dash ? safeJson(p.dash) : undefined,
+    dash: dashArray(p.dash),
     show_label: p.showLabel !== 'false',
     order: e.order,
   };

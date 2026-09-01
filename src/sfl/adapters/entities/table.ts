@@ -1,6 +1,6 @@
 import type { SflEntityOut } from '../../sflToCanvasState';
 import { decodeRamp } from '../decodeStyles';
-import { numOf, safeJson } from './values';
+import { BORDER_STYLES, dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
 export function tableObject(e: SflEntityOut) {
   const p = e.props;
@@ -20,8 +20,8 @@ export function tableObject(e: SflEntityOut) {
     header_fill_color: p.headerFill ?? '#f1f5f9',
     grid_color: p.gridColor ?? '#cbd5e1',
     grid_width: numOf(p.gridWidth) ?? 1,
-    border_style: p.borderStyle ?? 'single',
-    header_rule_style: p.headerRuleStyle ?? 'single',
+    border_style: oneOf(p.borderStyle, BORDER_STYLES, 'single'),
+    header_rule_style: oneOf(p.headerRuleStyle, BORDER_STYLES, 'single'),
     font_family: p.fontFamily ?? 'Inter',
     show_horizontal_lines: p.showHorizontalLines !== 'false',
     show_vertical_lines: p.showVerticalLines !== 'false',
@@ -31,8 +31,8 @@ export function tableObject(e: SflEntityOut) {
     corner_radius: numOf(p.cornerRadius) ?? 12,
     text_color: p.textColor ?? '#0f172a',
     font_size: numOf(p.fontSize) ?? 14,
-    font_weight: p.fontWeight ?? 'bold',
-    dash: p.dash ? safeJson(p.dash) : undefined,
+    font_weight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
+    dash: dashArray(p.dash),
     order: e.order,
   };
 }

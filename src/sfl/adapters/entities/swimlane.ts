@@ -1,5 +1,5 @@
 import type { SflEntityOut } from '../../sflToCanvasState';
-import { numOf, safeJson } from './values';
+import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
 export function swimlaneObject(e: SflEntityOut) {
   const p = e.props;
@@ -17,10 +17,10 @@ export function swimlaneObject(e: SflEntityOut) {
     stroke_color: p.stroke ?? '#6b7280',
     stroke_width: numOf(p.strokeWidth) ?? 2,
     corner_radius: numOf(p.cornerRadius) ?? 12,
-    dash: p.dash ? safeJson(p.dash) : undefined,
+    dash: dashArray(p.dash),
     text_color: p.textColor ?? '#6b7280',
     font_size: numOf(p.fontSize) ?? 22,
-    font_weight: p.fontWeight ?? 'bold',
+    font_weight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
     font_family: p.fontFamily,
     show_lane_labels: p.showLaneLabels !== 'false',
     order: e.order,

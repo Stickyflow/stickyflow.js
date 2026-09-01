@@ -1,3 +1,5 @@
+import type { ShadowStyle } from '../../model/shadows';
+
 const COLOR = String.raw`rgba?\([^)]*\)|#[0-9a-fA-F]+|[a-zA-Z][\w-]*`;
 
 export interface GradientStop {
@@ -64,15 +66,6 @@ export function decodeRamp(s?: string): DecodedRamp | undefined {
   const re = new RegExp(`(${COLOR})\\s+([-\\d.]+)`, 'g');
   for (const stop of m[1].matchAll(re)) stops.push({ color: stop[1], position: Number(stop[2]) });
   return { type: 'ramp', stops };
-}
-
-export interface ShadowStyle {
-  enabled: boolean;
-  color?: string;
-  opacity?: number;
-  blur?: number;
-  angle?: number;
-  distance?: number;
 }
 
 export function decodeShadow(s?: string): ShadowStyle | undefined {

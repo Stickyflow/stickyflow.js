@@ -51,7 +51,7 @@ export function shapeStyle(shape: Shape, diagnostics: RenderDiagnostic[]): Scene
     opacity: finite(shape.shapeStyle?.opacity, 1),
     shadow: shadow?.enabled
       ? {
-          color: shadow.color,
+          color: shadow.color ?? '#000000',
           opacity: finite(shadow.opacity, 0.25),
           blur: finite(shadow.blur, 10),
           dx: Math.cos(angle) * finite(shadow.distance, 5),

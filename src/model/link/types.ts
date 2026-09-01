@@ -60,8 +60,8 @@ export type LinkEndpoint =
 export interface Link {
   id: string;
   name?: string;
-  fromId: string;
-  toId: string;
+  fromId?: string;
+  toId?: string;
   weight?: number;
   showWeight?: boolean;
   text?: string;
@@ -75,13 +75,13 @@ export interface Link {
   endMarker?: MarkerType;
   start_marker?: MarkerType;
   end_marker?: MarkerType;
-  layer_group: string;
+  layer_group?: string;
   layerGroup?: string;
-  order_key: string;
+  order_key?: string;
   orderKey?: string;
-  is_visible: boolean;
+  is_visible?: boolean;
   isVisible?: boolean;
-  is_locked: boolean;
+  is_locked?: boolean;
   isLocked?: boolean;
   parent_frame_id?: string;
   parentFrameId?: string;

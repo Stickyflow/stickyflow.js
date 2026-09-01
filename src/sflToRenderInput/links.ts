@@ -1,8 +1,9 @@
 import type { ResolvedExportLink } from '../rendering/renderInput';
+import type { CollectedEntities } from '../sfl/adapters/entities/collect';
 import { resolveLinkEndpoint } from './endpoint';
-import type { PositionedElement, RenderEntities } from './types';
+import type { PositionedElement } from './types';
 
-function positionedElements(entities: RenderEntities): PositionedElement[] {
+function positionedElements(entities: CollectedEntities): PositionedElement[] {
   return [
     ...entities.shapes,
     ...entities.frames,
@@ -10,10 +11,10 @@ function positionedElements(entities: RenderEntities): PositionedElement[] {
     ...entities.tables,
     ...entities.paths,
     ...entities.charts,
-  ] as unknown as PositionedElement[];
+  ];
 }
 
-export function resolveExportLinks(entities: RenderEntities): ResolvedExportLink[] {
+export function resolveExportLinks(entities: CollectedEntities): ResolvedExportLink[] {
   const elements = positionedElements(entities);
   return entities.links.map(link => ({
     link,
