@@ -1,5 +1,5 @@
 import type { Chart } from '../../model/charts';
-import type { Bounds, RenderDiagnostic } from '../renderScene';
+import type { Bounds, RenderDiagnostic } from '../scene';
 
 export type StackedMode = 'true' | 'percent' | 'waterfall';
 

@@ -1,6 +1,5 @@
+import { findOwnerNode, isPrimary, isTextLabel, resolveOwner } from '../../domContract';
 import type { OwnerRef, Viewer } from '../../viewer';
-import { resolveOwner } from '../../viewer/contract';
-import { findOwnerNode, isPrimary, isTextLabel } from '../../viewer/domQuery';
 import type { Emitter } from '../events';
 import { resolveTextEditRect } from './geometry';
 import { bindTextareaAutoGrow, createTextEditor } from './textarea';

@@ -1,4 +1,4 @@
-import { isCameraGesture, resolveOwner } from '../contract';
+import { isCameraGesture, resolveOwner } from '../../domContract';
 import type { DisplayHandle } from '../display';
 import type { Emitter } from '../events';
 import { emitOwnerHover, selectPointerTarget } from './pointerSelection';

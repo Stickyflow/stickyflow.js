@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../model/charts';
 import { CHART_COLORS, errorBarRange, errorWhiskerNode, mapChartValue } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 
 export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {

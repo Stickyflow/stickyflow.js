@@ -1,5 +1,5 @@
-import type { GuideLine } from '../../viewer/alignmentGuideOverlay';
-import { findSnapCandidateBounds, pxPerUnit } from '../../viewer/domQuery';
+import type { GuideLine } from '../../domContract';
+import { findSnapCandidateBounds, pxPerUnit } from '../../domContract';
 import { computeSnap, MOVE_ACTIVE_POINTS, nearestCandidates } from '../snapGeometry';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';

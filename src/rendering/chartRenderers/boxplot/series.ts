@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../model/charts';
 import { CHART_COLORS, computeBoxplotStats } from '../../chartPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import { createBoxplotGeometry } from './geometry';
 import { renderSamplePoints } from './points';

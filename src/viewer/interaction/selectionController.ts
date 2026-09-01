@@ -1,4 +1,4 @@
-import { resolveOwner } from '../contract';
+import { resolveOwner } from '../../domContract';
 import type { Emitter, OwnerRef } from '../events';
 import { type SelectionAction, selectionReducer } from '../selection';
 import { paintSelectionOverlays } from './overlayPainter';

@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../model/charts';
 import { CHART_COLORS } from '../../chartPrimitives';
 import { finite, paint } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import { createPieSlicePath } from './path';
 import type { PieGeometry } from './types';

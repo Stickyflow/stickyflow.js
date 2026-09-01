@@ -1,6 +1,6 @@
 import type { ChartRamp } from '../../../model/charts';
 import { chartText, formatFieldValue } from '../../chartPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 
 export function renderFieldLegend(context: ChartRenderContext): RenderNode[] {

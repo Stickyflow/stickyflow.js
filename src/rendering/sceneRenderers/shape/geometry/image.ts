@@ -1,4 +1,4 @@
-import type { RenderNode, SceneStyle } from '../../../renderScene';
+import type { RenderNode, SceneStyle } from '../../../scene';
 import type { ShapeRenderContext } from '../types';
 import { shapeNodeBase } from './base';
 

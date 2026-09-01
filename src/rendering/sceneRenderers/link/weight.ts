@@ -1,4 +1,4 @@
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { LinkRenderContext } from './types';
 
 export function renderWeightBadge(context: LinkRenderContext): RenderNode[] {

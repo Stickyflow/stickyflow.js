@@ -1,4 +1,4 @@
-import type { RenderNode, SceneStyle } from '../../renderScene';
+import type { RenderNode, SceneStyle } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { MatrixGeometry } from './types';
 

@@ -18,7 +18,15 @@ const PUNCTUATION: Partial<Record<string, TokenType>> = {
 };
 
 function token(type: TokenType, value: string, start: SourcePosition, extra: Partial<Token> = {}): Token {
-  return { type, value, line: start.line, col: start.col, ...extra };
+  return {
+    type,
+    value,
+    line: start.line,
+    col: start.col,
+    endLine: start.line,
+    endCol: start.col,
+    ...extra,
+  };
 }
 
 function readNumber(cursor: SourceCursor): Token {
@@ -51,6 +59,11 @@ function readIdentifier(cursor: SourceCursor): Token {
 export function tokenizeSource(input: string): Token[] {
   const cursor = new SourceCursor(input);
   const tokens: Token[] = [];
+  const push = (created: Token): void => {
+    created.endLine = cursor.line;
+    created.endCol = cursor.col;
+    tokens.push(created);
+  };
 
   while (!cursor.done) {
     const character = cursor.peek();
@@ -64,7 +77,7 @@ export function tokenizeSource(input: string): Token[] {
       if (character === '\r' && cursor.peek() === '\n') {
         cursor.advance();
       }
-      tokens.push(token('newline', '\n', start));
+      push(token('newline', '\n', start));
       continue;
     }
     if (character === ' ' || character === '\t') {
@@ -81,30 +94,30 @@ export function tokenizeSource(input: string): Token[] {
     const punctuation = PUNCTUATION[character];
     if (punctuation) {
       cursor.advance();
-      tokens.push(token(punctuation, character, start));
+      push(token(punctuation, character, start));
       continue;
     }
     if (character === '"') {
       const string = readString(cursor, start);
-      tokens.push(token('string', string.value, start, { multiline: string.multiline }));
+      push(token('string', string.value, start, { multiline: string.multiline }));
       continue;
     }
     if (isDigit(character) || (character === '-' && isDigit(cursor.peek(1)))) {
-      tokens.push(readNumber(cursor));
+      push(readNumber(cursor));
       continue;
     }
     if (character === '.') {
       cursor.advance();
-      tokens.push(token('dot', '.', start));
+      push(token('dot', '.', start));
       continue;
     }
     if (isLetter(character)) {
-      tokens.push(readIdentifier(cursor));
+      push(readIdentifier(cursor));
       continue;
     }
     throw new SflLexError(`unexpected character '${character}'`, start.line, start.col);
   }
 
-  tokens.push(token('eof', '', cursor.position()));
+  push(token('eof', '', cursor.position()));
   return tokens;
 }

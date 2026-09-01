@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../model/charts';
 import { errorBarRange, errorWhiskerNode, mapChartValue, representativeColor } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { CartesianPoint } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
 

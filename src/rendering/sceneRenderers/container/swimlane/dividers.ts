@@ -1,4 +1,4 @@
-import type { RenderNode } from '../../../renderScene';
+import type { RenderNode } from '../../../scene';
 import type { SwimlaneRenderContext } from './types';
 
 function dividerPath(context: SwimlaneRenderContext, offset: number): string {

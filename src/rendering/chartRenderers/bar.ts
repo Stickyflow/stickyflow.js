@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderGroupedBars } from './bar/grouped';
 import { renderStackedBars } from './bar/stacked';
 import type { ChartRenderContext, StackedMode } from './types';

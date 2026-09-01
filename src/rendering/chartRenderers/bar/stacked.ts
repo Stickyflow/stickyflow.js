@@ -1,6 +1,6 @@
 import { CHART_COLORS, stackedSegment } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext, StackedMode } from '../types';
 
 export function renderStackedBars(context: ChartRenderContext, mode: StackedMode): RenderNode[] {

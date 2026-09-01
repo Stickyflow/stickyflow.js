@@ -5,7 +5,7 @@ import type { FreeformPath } from '../model/paths';
 import type { Shape, SymbolDef } from '../model/shapes';
 import type { Swimlane } from '../model/swimlanes';
 import type { Table } from '../model/tables';
-import type { RenderDiagnostic } from '../rendering/renderScene';
+import type { RenderDiagnostic } from '../rendering/scene';
 
 interface ImportEntityBuckets {
   shapes?: unknown[];

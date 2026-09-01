@@ -1,4 +1,4 @@
-import type { GuideLine } from '../../viewer/alignmentGuideOverlay';
+import type { GuideLine } from '../../domContract';
 
 export type EdgePoint = 'min' | 'center' | 'max';
 

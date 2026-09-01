@@ -1,5 +1,5 @@
-import type { RenderScene } from '../renderScene';
-import { DOM_CONTRACT_VERSION } from '../renderScene';
+import { DOM_CONTRACT_VERSION } from '../domContractVersion';
+import type { RenderScene } from '../scene';
 import { SvgDefinitionRegistry } from './definitions';
 import { num } from './format';
 import { nodeSvg } from './nodes';

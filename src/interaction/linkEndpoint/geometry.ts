@@ -1,8 +1,8 @@
-import { type Bounds, portToPoint, projectOffsetOnSide, type Side } from '../../model/geometry/router';
+import { portToPoint, projectOffsetOnSide, type Rect, type Side } from '../../model/geometry/router';
 
 const SIDES: readonly Side[] = ['top', 'right', 'bottom', 'left'];
 
-export function nearestPort(bounds: Bounds, point: { x: number; y: number }): { side: Side; offset: number } {
+export function nearestPort(bounds: Rect, point: { x: number; y: number }): { side: Side; offset: number } {
   let nearest = { side: 'right' as Side, offset: 0.5 };
   let nearestDistance = Infinity;
 

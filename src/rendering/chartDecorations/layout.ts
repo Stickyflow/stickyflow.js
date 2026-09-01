@@ -1,6 +1,6 @@
 import type { Chart } from '../../model/charts';
 import { boxBounds, finite } from '../renderPrimitives';
-import type { Bounds } from '../renderScene';
+import type { Bounds } from '../scene';
 
 export const CARTESIAN_VALUE_TYPES = new Set([
   'bar',

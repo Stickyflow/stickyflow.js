@@ -1,5 +1,5 @@
-import type { Bounds } from '../../model/geometry/router';
-import type { GuideLine } from '../../viewer/alignmentGuideOverlay';
+import type { GuideLine } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 import type { AxisSnap, EdgePoint, SnapConfig, SnapResult } from './types';
 
 interface SnapMatch {
@@ -14,7 +14,7 @@ function edgePoints(minimum: number, size: number): Record<EdgePoint, number> {
   return { min: minimum, center: minimum + size / 2, max: minimum + size };
 }
 
-function findHorizontalSnap(bounds: Bounds, candidates: Bounds[], config: SnapConfig): AxisSnap {
+function findHorizontalSnap(bounds: Rect, candidates: Rect[], config: SnapConfig): AxisSnap {
   const sourcePoints = edgePoints(bounds.x, bounds.width);
   let bestMatch: SnapMatch | null = null;
 
@@ -42,7 +42,7 @@ function findHorizontalSnap(bounds: Bounds, candidates: Bounds[], config: SnapCo
   return { delta: bestMatch?.delta ?? 0, guide: bestMatch?.guide ?? null };
 }
 
-function findVerticalSnap(bounds: Bounds, candidates: Bounds[], config: SnapConfig): AxisSnap {
+function findVerticalSnap(bounds: Rect, candidates: Rect[], config: SnapConfig): AxisSnap {
   const sourcePoints = edgePoints(bounds.y, bounds.height);
   let bestMatch: SnapMatch | null = null;
 
@@ -70,7 +70,7 @@ function findVerticalSnap(bounds: Bounds, candidates: Bounds[], config: SnapConf
   return { delta: bestMatch?.delta ?? 0, guide: bestMatch?.guide ?? null };
 }
 
-export function computeSnap(bounds: Bounds, candidates: Bounds[], config: SnapConfig): SnapResult {
+export function computeSnap(bounds: Rect, candidates: Rect[], config: SnapConfig): SnapResult {
   return {
     x: findHorizontalSnap(bounds, candidates, config),
     y: findVerticalSnap(bounds, candidates, config),

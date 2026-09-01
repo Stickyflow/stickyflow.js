@@ -1,6 +1,6 @@
 import { chartText } from '../../chartPrimitives';
 import { finite } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';
 

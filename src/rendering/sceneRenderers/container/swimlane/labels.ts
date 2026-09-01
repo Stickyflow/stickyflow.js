@@ -1,5 +1,5 @@
 import { DEFAULT_FONT, rotatedBounds } from '../../../renderPrimitives';
-import type { RenderNode, SceneText } from '../../../renderScene';
+import type { RenderNode, SceneText } from '../../../scene';
 import type { PositionedLane, SwimlaneRenderContext } from './types';
 
 function labelBase(context: SwimlaneRenderContext, lane: PositionedLane, index: number) {

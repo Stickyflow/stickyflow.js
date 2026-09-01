@@ -1,6 +1,6 @@
 import type { Frame } from '../../../model/frames';
 import { boxBounds, orderOf } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import { simpleContainerStyle } from './style';
 import { renderTitleTab } from './titleTab';
 

@@ -1,6 +1,6 @@
-import type { Bounds, Side } from '../../model/geometry/router';
+import { findOwnerNode, isPrimary } from '../../domContract';
+import type { Rect, Side } from '../../model/geometry/router';
 import type { PathType } from '../../model/links';
-import { findOwnerNode, isPrimary } from '../../viewer/domQuery';
 import { routePreviewLink } from './geometry';
 import type { LiveLink } from './types';
 
@@ -8,7 +8,7 @@ function discoverLiveLink(
   svg: SVGSVGElement,
   path: SVGPathElement,
   entityId: string,
-  draggedBounds: Bounds,
+  draggedBounds: Rect,
 ): LiveLink | null {
   const draggedIsFrom = path.getAttribute('data-sf-from') === entityId;
   const otherId = draggedIsFrom ? path.getAttribute('data-sf-to') : path.getAttribute('data-sf-from');
@@ -49,7 +49,7 @@ function discoverLiveLink(
   };
 }
 
-export function findLiveLinks(svg: SVGSVGElement, entityId: string, draggedBounds: Bounds): LiveLink[] {
+export function findLiveLinks(svg: SVGSVGElement, entityId: string, draggedBounds: Rect): LiveLink[] {
   const escapedId = CSS.escape(entityId);
   const candidates = svg.querySelectorAll<SVGPathElement>(
     `path[data-sf-from="${escapedId}"], path[data-sf-to="${escapedId}"]`,

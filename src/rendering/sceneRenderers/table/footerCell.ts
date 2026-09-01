@@ -1,5 +1,5 @@
 import { DEFAULT_FONT } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 export function renderFooterCell(context: TableRenderContext, column: PositionedTableColumn): RenderNode[] {

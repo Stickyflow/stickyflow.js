@@ -13,5 +13,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["src/**/*", "test/**/*", "demo/**/*", "vitest.config.ts"]
+  "include": ["src/**/*", "test/**/*", "test-dom/**/*", "demo/**/*", "vitest.config.ts", "vitest.dom.config.ts"]
 }

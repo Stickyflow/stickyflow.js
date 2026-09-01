@@ -1,5 +1,5 @@
+import { screenRectOf } from '../../domContract';
 import type { OwnerRef } from '../../viewer';
-import { screenRectOf } from '../../viewer/domQuery';
 
 export interface TextEditRect {
   left: number;

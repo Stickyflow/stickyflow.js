@@ -23,4 +23,6 @@ export interface Token {
   multiline?: boolean;
   line: number;
   col: number;
+  endLine: number;
+  endCol: number;
 }

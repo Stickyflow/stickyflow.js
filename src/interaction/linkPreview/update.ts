@@ -1,5 +1,5 @@
 import { labelGapDash } from '../../model/geometry/connectionLine';
-import type { Bounds } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/router';
 import { previewPathData, routePreviewLink } from './geometry';
 import type { LiveLink } from './types';
 
@@ -24,7 +24,7 @@ function updateLabelGap(link: LiveLink, points: number[]): void {
   }
 }
 
-function updateLiveLink(link: LiveLink, draggedBounds: Bounds): void {
+function updateLiveLink(link: LiveLink, draggedBounds: Rect): void {
   const fromBounds = link.draggedIsFrom ? draggedBounds : link.otherBounds;
   const toBounds = link.draggedIsFrom ? link.otherBounds : draggedBounds;
   const { points, segments, midpoint } = routePreviewLink(
@@ -39,7 +39,7 @@ function updateLiveLink(link: LiveLink, draggedBounds: Bounds): void {
   updateLabelGap(link, points);
 }
 
-export function updateLiveLinks(liveLinks: LiveLink[], draggedBounds: Bounds): void {
+export function updateLiveLinks(liveLinks: LiveLink[], draggedBounds: Rect): void {
   for (const link of liveLinks) {
     updateLiveLink(link, draggedBounds);
   }

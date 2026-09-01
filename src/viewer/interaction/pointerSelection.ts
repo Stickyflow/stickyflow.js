@@ -1,5 +1,4 @@
-import { resolveOwner } from '../contract';
-import { findOwnerNode, isPrimary } from '../domQuery';
+import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
 import type { Emitter } from '../events';
 import { clickAction } from '../selection';
 import { modifiersOf } from './modifiers';

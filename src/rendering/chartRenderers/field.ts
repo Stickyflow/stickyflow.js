@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { classifyFieldData } from './field/data';
 import { renderFieldLegend } from './field/legend';
 import { renderScalarField } from './field/scalar';

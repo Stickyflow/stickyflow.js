@@ -1,7 +1,7 @@
 import type { Chart } from '../../model/charts';
 import { chartText, mapChartValue } from '../chartPrimitives';
 import { finite } from '../renderPrimitives';
-import type { Bounds, RenderNode } from '../renderScene';
+import type { Bounds, RenderNode } from '../scene';
 
 export function buildChartRules(
   chart: Chart,

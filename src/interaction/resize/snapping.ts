@@ -1,6 +1,6 @@
-import type { Bounds } from '../../model/geometry/router';
-import type { GuideLine } from '../../viewer/alignmentGuideOverlay';
-import { findSnapCandidateBounds, pxPerUnit } from '../../viewer/domQuery';
+import type { GuideLine } from '../../domContract';
+import { findSnapCandidateBounds, pxPerUnit } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 import { applyAxisSnap, computeSnap, nearestCandidates, resizeActivePoints } from '../snapGeometry';
 import { HANDLE_AXES, MIN_SIZE, resizedBounds } from './geometry';
 import type { ResizeDragState } from './state';
@@ -12,7 +12,7 @@ export function snapResize(
   svg: SVGSVGElement,
   drag: ResizeDragState,
   pointer: { x: number; y: number },
-): { bounds: Bounds; guides: GuideLine[] } {
+): { bounds: Rect; guides: GuideLine[] } {
   const proposed = resizedBounds(drag.startBounds, drag.handle, pointer);
   const axes = HANDLE_AXES[drag.handle];
   const candidates = nearestCandidates(proposed, findSnapCandidateBounds(svg, new Set([drag.owner.id])));

@@ -1,6 +1,6 @@
 import { boundsCenter, worldToLocal } from './coordinateSpace';
 import { SIDE_N } from './internal';
-import type { Bounds, Port, Side } from './types';
+import type { Port, Rect, Side } from './types';
 
 const SIDES: Side[] = ['left', 'right', 'top', 'bottom'];
 const SIDE_CHANGE_HYSTERESIS = 40;
@@ -17,7 +17,7 @@ function sideScore(side: Side, vector: { x: number; y: number }): number {
   return dotProduct + 0.5 * axisBias;
 }
 
-function localDirection(from: Bounds, to: Bounds): { x: number; y: number } {
+function localDirection(from: Rect, to: Rect): { x: number; y: number } {
   const fromCenter = boundsCenter(from);
   const toCenter = boundsCenter(to);
   const localTarget = worldToLocal(from, toCenter);
@@ -34,7 +34,7 @@ function highestScoringSide(vector: { x: number; y: number }): Side {
   }, 'right');
 }
 
-export function chooseSide(from: Bounds, to: Bounds, stickySide?: Side): Side {
+export function chooseSide(from: Rect, to: Rect, stickySide?: Side): Side {
   const direction = localDirection(from, to);
   const bestSide = highestScoringSide(direction);
   if (!stickySide) {
@@ -45,7 +45,7 @@ export function chooseSide(from: Bounds, to: Bounds, stickySide?: Side): Side {
   return improvement > SIDE_CHANGE_HYSTERESIS ? bestSide : stickySide;
 }
 
-export function recommendPort(from: Bounds, to: Bounds, stickyPort?: Port): Port {
+export function recommendPort(from: Rect, to: Rect, stickyPort?: Port): Port {
   const side = chooseSide(from, to, stickyPort?.side);
   const offset = stickyPort?.side === side ? stickyPort.offset * 0.9 + 0.5 * 0.1 : 0.5;
   return { side, offset };

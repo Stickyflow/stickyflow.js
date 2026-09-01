@@ -1,4 +1,4 @@
-import { braceDelta, stripStringsAndComments } from './lexical';
+import { braceDelta, maskLines } from './sourceMask';
 
 const OWNER_HEADER = /^\s*(Entity|Container|Table|Chart|Path|Link)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 export const VALID_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -8,52 +8,66 @@ export interface LineRange {
   end: number;
 }
 
-export function blockEndLine(lines: string[], startLine: number): number {
+function blockEndIn(masked: string[], startLine: number): number {
   let depth = 0;
-  for (let j = startLine; j < lines.length; j++) {
-    for (const ch of stripStringsAndComments(lines[j])) {
-      if (ch === '{') depth++;
-      else if (ch === '}') {
+  for (let i = startLine; i < masked.length; i++) {
+    for (const character of masked[i]) {
+      if (character === '{') {
+        depth++;
+      } else if (character === '}') {
         depth--;
-        if (depth === 0) return j;
+        if (depth === 0) return i;
       }
     }
   }
-  return lines.length - 1;
+  return masked.length - 1;
+}
+
+export function blockEndLine(lines: string[], startLine: number): number {
+  const masked = maskLines(lines);
+  return masked === null ? lines.length - 1 : blockEndIn(masked, startLine);
 }
 
 export function findOwnerBlock(lines: string[], id: string): LineRange | null {
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(OWNER_HEADER);
-    if (!m || m[2] !== id) continue;
-    return { start: i, end: blockEndLine(lines, i) };
+  const masked = maskLines(lines);
+  if (masked === null) return null;
+  for (let i = 0; i < masked.length; i++) {
+    const header = masked[i].match(OWNER_HEADER);
+    if (!header || header[2] !== id) continue;
+    return { start: i, end: blockEndIn(masked, i) };
   }
   return null;
 }
 
 export function findChildBlock(lines: string[], range: LineRange, headerRe: RegExp): LineRange | null {
+  const masked = maskLines(lines);
+  if (masked === null) return null;
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
-    if (depth === 1 && i > range.start && headerRe.test(lines[i])) {
-      return { start: i, end: blockEndLine(lines, i) };
+    if (depth === 1 && i > range.start && headerRe.test(masked[i])) {
+      return { start: i, end: blockEndIn(masked, i) };
     }
-    depth += braceDelta(lines[i]);
+    depth += braceDelta(masked[i]);
   }
   return null;
 }
 
 export function findFirstBlockOfKind(lines: string[], kind: string): LineRange | null {
-  const re = new RegExp(`^\\s*${kind}\\s+([A-Za-z_][A-Za-z0-9_]*)\\b`);
-  for (let i = 0; i < lines.length; i++) {
-    if (!re.test(lines[i])) continue;
-    return { start: i, end: blockEndLine(lines, i) };
+  const masked = maskLines(lines);
+  if (masked === null) return null;
+  const header = new RegExp(`^\\s*${kind}\\s+([A-Za-z_][A-Za-z0-9_]*)\\b`);
+  for (let i = 0; i < masked.length; i++) {
+    if (!header.test(masked[i])) continue;
+    return { start: i, end: blockEndIn(masked, i) };
   }
   return null;
 }
 
 export function nameExists(lines: string[], id: string): boolean {
-  return lines.some(line => {
-    const m = line.match(OWNER_HEADER);
-    return !!m && m[2] === id;
+  const masked = maskLines(lines);
+  if (masked === null) return false;
+  return masked.some(line => {
+    const header = line.match(OWNER_HEADER);
+    return header !== null && header[2] === id;
   });
 }

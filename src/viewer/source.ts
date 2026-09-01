@@ -1,5 +1,5 @@
+import { isContractCompatible, parseContractVersion } from '../domContract';
 import { type RenderOptions, render } from '../render';
-import { isContractCompatible, parseContractVersion } from './contract';
 import type { ViewerSource } from './types';
 
 export function renderViewerSource(next: ViewerSource, defaultRenderOptions?: RenderOptions): string {

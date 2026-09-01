@@ -26,14 +26,12 @@ jobs:
 
       - run: npm ci
 
-      # Lint + Format in einem Lauf; --error-on-warnings bewusst NICHT gesetzt,
-      # solange noNonNullAssertion/noExplicitAny als Warnung geführt werden.
       - run: npm run lint
 
       - run: npm run typecheck
 
       - run: npm test
 
-      # Baut die vier Entries und prüft, dass das gebaute ESM headless unter
-      # Node rendert (kein jsdom) — die Headless-Garantie des static tier.
+      - run: npm run test:dom
+
       - run: npm run verify

@@ -1,4 +1,4 @@
-import type { Bounds, Side } from '../../model/geometry/router';
+import type { Rect, Side } from '../../model/geometry/router';
 import type { PathType } from '../../model/links';
 
 export interface LiveLink {
@@ -6,7 +6,7 @@ export interface LiveLink {
   pathType: PathType;
   fromSide: Side | null;
   toSide: Side | null;
-  otherBounds: Bounds;
+  otherBounds: Rect;
   draggedIsFrom: boolean;
   strokeWidth: number;
   labelText: SVGTextElement | null;

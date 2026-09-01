@@ -1,6 +1,6 @@
 import { CHART_COLORS, mapChartValue } from '../chartPrimitives';
 import { finite, paint } from '../renderPrimitives';
-import type { RenderNode, SceneStyle } from '../renderScene';
+import type { RenderNode, SceneStyle } from '../scene';
 import type { ChartRenderContext } from './types';
 
 export function renderCustom(context: ChartRenderContext): RenderNode[] {

@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderMekkoGrid } from './mekko/grid';
 import { renderMekkoColumnLabels } from './mekko/labels';
 import { createMekkoLayout } from './mekko/layout';

@@ -1,6 +1,6 @@
 import { namedPortToPoint } from '../model/geometry/router';
 import type { Link } from '../model/links';
-import type { Point } from '../rendering/renderScene';
+import type { Point } from '../rendering/scene';
 import { edgePointToward, elementCenter } from './edgePoint';
 import type { PositionedElement } from './types';
 

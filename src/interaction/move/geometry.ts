@@ -1,6 +1,6 @@
-import type { Bounds } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/router';
 
-export function offsetBounds(bounds: Bounds, dx: number, dy: number): Bounds {
+export function offsetBounds(bounds: Rect, dx: number, dy: number): Rect {
   return {
     x: bounds.x + dx,
     y: bounds.y + dy,

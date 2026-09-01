@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderLineSeries } from './line/series';
 import type { ChartRenderContext } from './types';
 

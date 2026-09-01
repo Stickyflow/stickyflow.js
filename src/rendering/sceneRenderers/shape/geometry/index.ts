@@ -1,5 +1,5 @@
 import type { ShapeType } from '../../../../model/shapes';
-import type { RenderNode } from '../../../renderScene';
+import type { RenderNode } from '../../../scene';
 import type { ShapeGeometryRenderer, ShapeRenderContext } from '../types';
 import { renderCylinder, renderPerson } from './compound';
 import { renderImage } from './image';

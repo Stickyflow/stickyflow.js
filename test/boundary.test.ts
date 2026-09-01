@@ -3,14 +3,17 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// Enforces the static ⟷ interaction separation the package is built around:
-// the static core (everything under src/ except src/viewer/) must not depend on
-// the interaction tier, and must stay DOM-free so it keeps rendering headless.
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = resolve(here, '../src');
-// Browser tiers: they may use the DOM and depend on the static core. The static
-// core is everything else and must stay headless and self-contained.
-const browserTiers = [resolve(srcDir, 'viewer'), resolve(srcDir, 'web-component'), resolve(srcDir, 'interaction')];
+
+const TIERS = ['domContract', 'viewer', 'interaction', 'web-component'] as const;
+const TIER_RANK: Record<string, number> = {
+  core: 0,
+  domContract: 1,
+  viewer: 2,
+  interaction: 3,
+  'web-component': 4,
+};
 
 function tsFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -20,26 +23,60 @@ function tsFiles(dir: string): string[] {
   });
 }
 
-const staticFiles = tsFiles(srcDir).filter(f => !browserTiers.some(dir => f.startsWith(dir)));
+function posixRelative(file: string): string {
+  return relative(srcDir, file).split('\\').join('/');
+}
 
-describe('static / interaction separation', () => {
-  it('static core never imports from a browser tier (one-way dependency)', () => {
-    const offenders = staticFiles.filter(f =>
-      /from ['"][^'"]*\/(viewer|web-component|interaction)(\/|['"])/.test(readFileSync(f, 'utf8')),
-    );
-    expect(offenders.map(f => relative(srcDir, f))).toEqual([]);
+function tierOfPath(relativePath: string): string {
+  return TIERS.find(tier => relativePath === tier || relativePath.startsWith(`${tier}/`)) ?? 'core';
+}
+
+function relativeImports(source: string): string[] {
+  return [...source.matchAll(/from\s+'(\.[^']*)'/g)].map(match => match[1]);
+}
+
+const allFiles = tsFiles(srcDir);
+const staticFiles = allFiles.filter(f => tierOfPath(posixRelative(f)) === 'core');
+
+describe('tier layering', () => {
+  it('no module imports from a higher tier', () => {
+    const offenders: string[] = [];
+    for (const file of allFiles) {
+      const from = posixRelative(file);
+      const ownRank = TIER_RANK[tierOfPath(from)];
+      for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
+        const target = posixRelative(resolve(dirname(file), specifier));
+        const targetRank = TIER_RANK[tierOfPath(target)];
+        if (targetRank > ownRank) offenders.push(`${from} -> ${target}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('interaction reaches the viewer only through its public entry', () => {
+    const offenders: string[] = [];
+    for (const file of allFiles.filter(f => tierOfPath(posixRelative(f)) === 'interaction')) {
+      for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
+        const target = posixRelative(resolve(dirname(file), specifier));
+        if (target !== 'viewer' && target.startsWith('viewer/')) {
+          offenders.push(`${posixRelative(file)} -> ${target}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it('static core uses no DOM globals (stays headless)', () => {
-    // Match real API use (document.foo, new DOMParser) — not the 'document'
-    // shape-type string that legitimately appears in the render code.
     const domRe = /\b(document|window|navigator|localStorage)\s*\.|new\s+DOMParser|\bCSS\s*\.\s*escape/;
     const offenders = staticFiles.filter(f => domRe.test(readFileSync(f, 'utf8')));
-    expect(offenders.map(f => relative(srcDir, f))).toEqual([]);
+    expect(offenders.map(f => posixRelative(f))).toEqual([]);
   });
 
   it('the static entry (index.ts) re-exports nothing from a browser tier', () => {
-    const index = readFileSync(join(srcDir, 'index.ts'), 'utf8');
-    expect(index).not.toMatch(/from ['"][^'"]*(viewer|web-component|interaction)/);
+    const entry = join(srcDir, 'index.ts');
+    const offenders = relativeImports(readFileSync(entry, 'utf8'))
+      .map(specifier => posixRelative(resolve(dirname(entry), specifier)))
+      .filter(target => tierOfPath(target) !== 'core');
+    expect(offenders).toEqual([]);
   });
 });

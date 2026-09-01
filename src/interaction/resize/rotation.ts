@@ -1,6 +1,6 @@
-import type { Bounds } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/router';
 
-export function recenterRotation(element: SVGGraphicsElement, bounds: Bounds): void {
+export function recenterRotation(element: SVGGraphicsElement, bounds: Rect): void {
   const transform = element.getAttribute('transform');
   const rotation = transform && /rotate\(([-\d.]+)/.exec(transform);
   if (!rotation) {

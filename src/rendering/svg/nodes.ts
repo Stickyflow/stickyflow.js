@@ -1,4 +1,4 @@
-import type { RenderNode, SceneImage } from '../renderScene';
+import type { RenderNode, SceneImage } from '../scene';
 import { styleAttrs, transform } from './attributes';
 import { contractAttrs } from './contract';
 import type { SvgDefinitionRegistry } from './definitions';

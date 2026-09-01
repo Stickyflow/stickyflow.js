@@ -1,6 +1,6 @@
-import type { Bounds } from '../../model/geometry/router';
+import { SVG_NAMESPACE } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 import { wrapText } from '../../model/geometry/text';
-import { SVG_NAMESPACE } from '../../viewer/svgNamespace';
 import { recenterRotation } from './rotation';
 
 function replaceTextLines(textElement: SVGTextElement, lines: string[], x: number, lineHeight: number): void {
@@ -18,7 +18,7 @@ function replaceTextLines(textElement: SVGTextElement, lines: string[], x: numbe
   });
 }
 
-export function applyLiveText(textElement: SVGTextElement, rawText: string, bounds: Bounds, strokeWidth: number): void {
+export function applyLiveText(textElement: SVGTextElement, rawText: string, bounds: Rect, strokeWidth: number): void {
   const fontSize = parseFloat(textElement.getAttribute('font-size') || '14');
   const anchor = textElement.getAttribute('text-anchor');
   const align: 'left' | 'center' | 'right' = anchor === 'start' ? 'left' : anchor === 'end' ? 'right' : 'center';

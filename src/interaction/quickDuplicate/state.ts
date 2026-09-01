@@ -1,12 +1,11 @@
-import { type Bounds, portToPoint, type Side } from '../../model/geometry/router';
+import type { QuickDuplicateDirection } from '../../domContract';
+import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
+import { portToPoint, type Rect, type Side } from '../../model/geometry/router';
 import type { OwnerRef } from '../../viewer';
-import { resolveOwner } from '../../viewer/contract';
-import { findOwnerNode, isPrimary } from '../../viewer/domQuery';
-import type { QuickDuplicateDirection } from '../../viewer/selectionOverlay';
 
 export interface DuplicateCandidate {
   owner: OwnerRef;
-  bounds: Bounds;
+  bounds: Rect;
 }
 
 export interface QuickDuplicateDragState {

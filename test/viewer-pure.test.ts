@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { DOM_CONTRACT_VERSION, render } from '../src/index';
 import {
   type AttrElement,
   isCameraGesture,
   isContractCompatible,
   parseContractVersion,
   resolveOwner,
-} from '../src/viewer/contract';
+} from '../src/domContract';
+import { DOM_CONTRACT_VERSION, render } from '../src/index';
 import { Emitter } from '../src/viewer/events';
 import { clickAction, selectionReducer } from '../src/viewer/selection';
 import { SFL_SAMPLE } from './fixtures';

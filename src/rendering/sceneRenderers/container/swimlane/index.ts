@@ -1,5 +1,5 @@
 import type { Swimlane } from '../../../../model/swimlanes';
-import type { RenderNode } from '../../../renderScene';
+import type { RenderNode } from '../../../scene';
 import { simpleContainerStyle } from '../style';
 import { renderLaneDividers } from './dividers';
 import { renderLaneLabels } from './labels';

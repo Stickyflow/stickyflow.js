@@ -1,4 +1,4 @@
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import { renderBodyCells } from './bodyCells';
 import { renderFooterCell } from './footerCell';
 import { renderHeaderCell } from './headerCell';

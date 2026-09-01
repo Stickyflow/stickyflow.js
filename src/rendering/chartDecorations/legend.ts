@@ -1,7 +1,7 @@
 import type { Chart } from '../../model/charts';
 import { CHART_COLORS, chartText } from '../chartPrimitives';
 import { finite, paint } from '../renderPrimitives';
-import type { Bounds, RenderDiagnostic, RenderNode } from '../renderScene';
+import type { Bounds, RenderDiagnostic, RenderNode } from '../scene';
 import type { ChartLayout } from './layout';
 
 export function buildLegend(

@@ -1,5 +1,5 @@
 import type { Lane, Swimlane } from '../../../../model/swimlanes';
-import type { Bounds } from '../../../renderScene';
+import type { Bounds } from '../../../scene';
 
 export interface PositionedLane extends Lane {
   offset: number;

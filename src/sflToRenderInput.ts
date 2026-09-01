@@ -1,4 +1,4 @@
-import type { RenderInput } from './rendering/renderScene';
+import type { RenderInput } from './rendering/renderInput';
 import { sflToImportJson } from './sfl';
 import { collectRenderEntities } from './sflToRenderInput/entities';
 import { resolveExportLinks } from './sflToRenderInput/links';

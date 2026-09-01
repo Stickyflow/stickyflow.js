@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderHeatmapCells } from './heatmap/cells';
 import { renderHeatmapHeaders } from './heatmap/headers';
 import { createHeatmapLayout } from './heatmap/layout';

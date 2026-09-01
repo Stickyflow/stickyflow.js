@@ -1,4 +1,4 @@
-import type { RenderNode, SceneRole } from './renderScene';
+import type { RenderNode, SceneRole } from './scene';
 
 export function tag(
   nodes: RenderNode[],

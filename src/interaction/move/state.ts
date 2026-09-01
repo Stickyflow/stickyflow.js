@@ -1,7 +1,6 @@
-import type { Bounds } from '../../model/geometry/router';
+import { findAllOwnerNodes, findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 import type { OwnerRef, Viewer } from '../../viewer';
-import { resolveOwner } from '../../viewer/contract';
-import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../../viewer/domQuery';
 import { findLiveLinks, type LiveLink } from '../linkPreview';
 
 interface TransformedNodes {
@@ -13,7 +12,7 @@ export interface DraggedEntity extends TransformedNodes {
   owner: OwnerRef;
   overlays: SVGGElement[];
   overlayBaseTransforms: (string | null)[];
-  draggedBounds: Bounds;
+  draggedBounds: Rect;
   liveLinks: LiveLink[];
 }
 

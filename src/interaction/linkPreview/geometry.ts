@@ -1,12 +1,12 @@
 import { getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../../model/geometry/connectionLine';
-import { type Bounds, type PathSegment, portToPoint, type Side } from '../../model/geometry/router';
+import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/router';
 import type { Link, PathType } from '../../model/links';
 
-export function centerOf(bounds: Bounds): { x: number; y: number } {
+export function centerOf(bounds: Rect): { x: number; y: number } {
   return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
 }
 
-export function anchorPoint(bounds: Bounds, side: Side | null): { x: number; y: number } {
+export function anchorPoint(bounds: Rect, side: Side | null): { x: number; y: number } {
   if (side) {
     return portToPoint(bounds, { side, offset: 0.5 });
   }
@@ -54,8 +54,8 @@ function previewLink(fromSide: Side | null, toSide: Side | null): Link {
 }
 
 export function routePreviewLink(
-  fromBounds: Bounds,
-  toBounds: Bounds,
+  fromBounds: Rect,
+  toBounds: Rect,
   fromSide: Side | null,
   toSide: Side | null,
   pathType: PathType,

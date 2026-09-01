@@ -1,4 +1,4 @@
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import { simpleContainerStyle } from '../containers';
 import type { TableRenderContext } from './types';
 

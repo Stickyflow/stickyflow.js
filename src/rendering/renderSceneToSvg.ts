@@ -1,4 +1,4 @@
-import type { RenderScene } from './renderScene';
+import type { RenderScene } from './scene';
 import { renderSvgDocument } from './svg/document';
 import type { SvgRenderOptions, SvgRenderResult } from './svg/types';
 

@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../model/charts';
 import { mapChartValue } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { BoxplotGeometry, BoxplotLayout } from './types';
 

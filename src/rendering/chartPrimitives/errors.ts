@@ -1,4 +1,4 @@
-import type { Bounds, RenderNode } from '../renderScene';
+import type { Bounds, RenderNode } from '../scene';
 
 const ERROR_CAP_HALF = 5;
 

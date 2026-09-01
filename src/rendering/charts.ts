@@ -11,7 +11,7 @@ import {
 import { chartText } from './chartPrimitives';
 import { type ChartRenderContext, renderChartMarks, renderRadar } from './chartRenderers';
 import { finite, orderOf } from './renderPrimitives';
-import type { RenderDiagnostic, RenderNode } from './renderScene';
+import type { RenderDiagnostic, RenderNode } from './scene';
 
 export function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]): RenderNode[] {
   if (chart.is_visible === false) return [];

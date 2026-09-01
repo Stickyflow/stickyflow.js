@@ -1,5 +1,5 @@
+import { isCameraGesture } from '../domContract';
 import type { Viewer } from '../viewer';
-import { isCameraGesture } from '../viewer/contract';
 import type { Emitter } from './events';
 import { updateEndpointPreview } from './linkEndpoint/preview';
 import { createLinkEndpointDragState, type LinkEndpointDragState } from './linkEndpoint/state';

@@ -1,4 +1,4 @@
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import { type TableRenderContext, tableGridStyle } from './types';
 
 function horizontalRule(context: TableRenderContext, id: string, y: number): RenderNode {

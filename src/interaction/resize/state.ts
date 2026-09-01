@@ -1,8 +1,7 @@
-import type { Bounds } from '../../model/geometry/router';
+import type { ResizeHandle } from '../../domContract';
+import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel, resolveOwner } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 import type { OwnerRef } from '../../viewer';
-import { resolveOwner } from '../../viewer/contract';
-import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel } from '../../viewer/domQuery';
-import type { ResizeHandle } from '../../viewer/selectionOverlay';
 import { findLiveLinks, type LiveLink } from '../linkPreview';
 
 const COMPOSITE_KINDS = new Set(['cylinder', 'person']);
@@ -15,7 +14,7 @@ export interface ResizeDragState {
   geometryNodes: SVGGraphicsElement[];
   overlay: SVGGElement | null;
   bubbles: SVGGElement | null;
-  startBounds: Bounds;
+  startBounds: Rect;
   liveLinks: LiveLink[];
   pointerId: number;
   moved: boolean;

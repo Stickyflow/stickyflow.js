@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { createBoxplotLayout } from './boxplot/layout';
 import { renderBoxplotSeries } from './boxplot/series';
 import type { ChartRenderContext } from './types';

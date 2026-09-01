@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderMatrixDividers } from './matrix/dividers';
 import { createMatrixGeometry } from './matrix/geometry';
 import { renderMatrixPoints } from './matrix/points';

@@ -1,6 +1,6 @@
 import type { ChartZone } from '../../../model/charts';
 import { chartText, contrastTextColor, DEFAULT_ZONE_FILL } from '../../chartPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import { matrixZoneBounds } from './geometry';
 import type { MatrixGeometry, MatrixZoneBounds } from './types';

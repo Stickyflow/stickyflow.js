@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { createRadarGeometry } from './radar/geometry';
 import { renderRadarGrid } from './radar/grid';
 import { renderRadarLabels } from './radar/labels';

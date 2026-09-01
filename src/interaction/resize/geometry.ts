@@ -1,5 +1,5 @@
-import type { Bounds } from '../../model/geometry/router';
-import type { ResizeHandle } from '../../viewer/selectionOverlay';
+import type { ResizeHandle } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 
 export const MIN_SIZE = 10;
 
@@ -14,7 +14,7 @@ export const HANDLE_AXES: Record<ResizeHandle, { x: 'left' | 'right' | 'none'; y
   left: { x: 'left', y: 'none' },
 };
 
-export function resizedBounds(start: Bounds, handle: ResizeHandle, pointer: { x: number; y: number }): Bounds {
+export function resizedBounds(start: Rect, handle: ResizeHandle, pointer: { x: number; y: number }): Rect {
   const axes = HANDLE_AXES[handle];
   let x = start.x,
     width = start.width;

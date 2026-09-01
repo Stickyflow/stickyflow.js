@@ -1,5 +1,6 @@
-import { DOM_CONTRACT_VERSION, type SceneRole } from '../rendering/renderScene';
-import type { OwnerRef } from './events';
+import { DOM_CONTRACT_VERSION } from '../rendering/domContractVersion';
+import type { SceneRole } from '../rendering/scene';
+import type { OwnerRef } from './types';
 
 export interface AttrElement {
   getAttribute(name: string): string | null;

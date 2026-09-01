@@ -6,16 +6,16 @@ export type { ShapeType } from './model/shapes';
 export { SHAPE_TYPES } from './model/shapes';
 export type { RenderOptions, RenderResult } from './render';
 export { render, renderCanvas } from './render';
+export { DOM_CONTRACT_VERSION } from './rendering/domContractVersion';
+export type { RenderInput } from './rendering/renderInput';
 export type {
   Bounds,
   Point,
   RenderDiagnostic,
-  RenderInput,
   RenderNode,
   RenderScene,
   SceneRole,
-} from './rendering/renderScene';
-export { DOM_CONTRACT_VERSION } from './rendering/renderScene';
+} from './rendering/scene';
 export type { SflCanvasState, SflEntityOut, SflGroupOut, SflImportJson, SflLinkOut } from './sfl';
 export { canonicalize, parse, sflToCanvasState, sflToImportJson } from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';

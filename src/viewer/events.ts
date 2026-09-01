@@ -1,21 +1,9 @@
+import type { Modifiers, OwnerRef } from '../domContract';
 import { Emitter as GenericEmitter, type Unsubscribe } from '../eventing/emitter';
-import type { SceneRole } from '../rendering/renderScene';
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
-export interface OwnerRef {
-  role: SceneRole;
-  id: string;
-  kind?: string;
-  label?: string;
-}
-
-export interface Modifiers {
-  shift: boolean;
-  ctrl: boolean;
-  meta: boolean;
-  alt: boolean;
-}
+export type { Modifiers, OwnerRef };
 
 export interface OwnerPointerEvent {
   diagramId: string;

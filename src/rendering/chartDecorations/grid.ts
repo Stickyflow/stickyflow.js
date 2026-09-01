@@ -1,7 +1,7 @@
 import type { Chart } from '../../model/charts';
 import { chartTicks, mapChartValue } from '../chartPrimitives';
 import { finite } from '../renderPrimitives';
-import type { Bounds, RenderNode, SceneStyle } from '../renderScene';
+import type { Bounds, RenderNode, SceneStyle } from '../scene';
 import { type ChartLayout, hasCartesianDecorations } from './layout';
 
 export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: Bounds, order: number): RenderNode[] {

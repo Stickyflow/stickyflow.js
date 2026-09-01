@@ -1,11 +1,5 @@
-import type { Chart } from '../model/charts';
-import type { Frame } from '../model/frames';
 import type { Side } from '../model/geometry/router';
-import type { Link, MarkerType, PathType } from '../model/links';
-import type { FreeformPath } from '../model/paths';
-import type { Shape } from '../model/shapes';
-import type { Swimlane } from '../model/swimlanes';
-import type { Table } from '../model/tables';
+import type { MarkerType, PathType } from '../model/links';
 
 export interface Point {
   x: number;
@@ -133,30 +127,4 @@ export interface RenderScene {
   nodes: RenderNode[];
   bounds: Bounds;
   diagnostics: RenderDiagnostic[];
-}
-
-export const DOM_CONTRACT_VERSION = 1;
-
-export interface ResolvedExportLink {
-  link: Link;
-  from: Point;
-  to: Point;
-}
-
-export interface RenderInput {
-  shapes: Shape[];
-  frames: Frame[];
-  swimlanes: Swimlane[];
-  tables?: Table[];
-  paths?: FreeformPath[];
-  charts?: Chart[];
-  links: ResolvedExportLink[];
-  diagnostics?: RenderDiagnostic[];
-}
-
-export interface ResolvedLinkGeometry {
-  id: string;
-  pathType: PathType;
-  points: number[];
-  label?: Point;
 }

@@ -1,5 +1,5 @@
+import { isCameraGesture } from '../domContract';
 import type { Viewer } from '../viewer';
-import { isCameraGesture } from '../viewer/contract';
 import type { Emitter } from './events';
 import { createDuplicatePreviewPath, updateDuplicatePreview } from './quickDuplicate/preview';
 import { createQuickDuplicateDragState, type QuickDuplicateDragState } from './quickDuplicate/state';

@@ -1,6 +1,6 @@
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 
-export interface Bounds {
+export interface Rect {
   x: number;
   y: number;
   width: number;

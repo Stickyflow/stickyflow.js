@@ -1,7 +1,7 @@
+import { SVG_NAMESPACE } from '../../domContract';
 import { getPathPoints } from '../../model/geometry/connectionLine';
 import type { Side } from '../../model/geometry/router';
 import type { Link, PathType } from '../../model/links';
-import { SVG_NAMESPACE } from '../../viewer/svgNamespace';
 import { previewPathData } from '../linkPreview';
 import type { QuickDuplicateDragState } from './state';
 

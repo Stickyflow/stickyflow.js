@@ -1,4 +1,4 @@
-import type { Point } from '../rendering/renderScene';
+import type { Point } from '../rendering/scene';
 import type { PositionedElement } from './types';
 
 export function elementCenter(element: PositionedElement): Point {

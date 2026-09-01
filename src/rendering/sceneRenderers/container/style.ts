@@ -1,4 +1,4 @@
-import type { SceneStyle } from '../../renderScene';
+import type { SceneStyle } from '../../scene';
 
 export function simpleContainerStyle(fill: string, stroke: string, strokeWidth: number, dash?: number[]): SceneStyle {
   return {

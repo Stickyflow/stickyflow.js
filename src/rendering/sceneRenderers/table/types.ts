@@ -1,5 +1,5 @@
 import type { Table, TableColumn } from '../../../model/tables';
-import type { Bounds, SceneStyle } from '../../renderScene';
+import type { Bounds, SceneStyle } from '../../scene';
 
 export interface PositionedTableColumn extends TableColumn {
   x: number;

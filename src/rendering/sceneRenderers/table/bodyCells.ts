@@ -1,6 +1,6 @@
 import { colorAtRamp } from '../../field';
 import { DEFAULT_FONT } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import { simpleContainerStyle } from '../containers';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 

@@ -1,6 +1,6 @@
 import type { Chart } from '../../model/charts';
 import { chartText, chartTicks, mapChartValue } from '../chartPrimitives';
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { type ChartLayout, hasCartesianDecorations } from './layout';
 
 function buildBarTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {

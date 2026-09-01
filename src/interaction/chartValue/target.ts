@@ -1,5 +1,4 @@
-import { isCameraGesture, resolveOwner } from '../../viewer/contract';
-import { findOwnerNode, isPrimary } from '../../viewer/domQuery';
+import { findOwnerNode, isCameraGesture, isPrimary, resolveOwner } from '../../domContract';
 import { parseValueScale } from './scale';
 import type { ChartValueDragState } from './types';
 

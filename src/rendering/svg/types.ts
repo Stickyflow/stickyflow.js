@@ -1,4 +1,4 @@
-import type { RenderScene } from '../renderScene';
+import type { RenderScene } from '../scene';
 
 export interface SvgRenderOptions {
   padding?: number;

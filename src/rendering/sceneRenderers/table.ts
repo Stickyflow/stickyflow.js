@@ -1,5 +1,5 @@
 import type { Table } from '../../model/tables';
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderTableBorders } from './table/borders';
 import { renderTableColumns } from './table/columns';
 import { renderTableFills } from './table/fills';

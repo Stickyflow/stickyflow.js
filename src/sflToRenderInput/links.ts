@@ -1,4 +1,4 @@
-import type { ResolvedExportLink } from '../rendering/renderScene';
+import type { ResolvedExportLink } from '../rendering/renderInput';
 import { resolveLinkEndpoint } from './endpoint';
 import type { PositionedElement, RenderEntities } from './types';
 

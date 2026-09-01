@@ -1,5 +1,6 @@
 import type { MeasureTextFactory } from '../../model/geometry/text';
-import type { RenderInput, RenderNode } from '../renderScene';
+import type { RenderInput } from '../renderInput';
+import type { RenderNode } from '../scene';
 import { renderEndpointLabels } from './link/endpointLabels';
 import { renderMainLabel } from './link/label';
 import { createLinkRenderContext } from './link/layout';

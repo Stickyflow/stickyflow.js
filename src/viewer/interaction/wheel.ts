@@ -1,4 +1,4 @@
-import { isCameraGesture } from '../contract';
+import { isCameraGesture } from '../../domContract';
 import type { DisplayHandle } from '../display';
 
 export function bindWheelZoom(display: DisplayHandle): () => void {

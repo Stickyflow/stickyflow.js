@@ -1,7 +1,7 @@
 import { computeHexBins } from '../../model/geometry/hexbin';
 import { CHART_COLORS, DEFAULT_HEX_RADIUS, mapChartValue } from '../chartPrimitives';
 import { paint } from '../renderPrimitives';
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import type { ChartRenderContext } from './types';
 
 export function renderHexbin(context: ChartRenderContext): RenderNode[] {

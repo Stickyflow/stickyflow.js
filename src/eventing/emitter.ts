@@ -13,9 +13,18 @@ export class Emitter<EventMap extends object> {
   }
 
   emit<T extends keyof EventMap>(name: T, event: EventMap[T]): void {
-    this.handlers.get(name)?.forEach(handler => {
-      (handler as (event: EventMap[T]) => void)(event);
-    });
+    const registered = this.handlers.get(name);
+    if (registered === undefined) return;
+
+    for (const handler of [...registered]) {
+      try {
+        (handler as (event: EventMap[T]) => void)(event);
+      } catch (error) {
+        queueMicrotask(() => {
+          throw error;
+        });
+      }
+    }
   }
 
   clear(): void {

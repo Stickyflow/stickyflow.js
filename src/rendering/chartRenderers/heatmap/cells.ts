@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../model/charts';
 import { bandIndexForValue, chartText, contrastTextColor, DEFAULT_ZONE_FILL } from '../../chartPrimitives';
 import { finite } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapLayout } from './types';
 

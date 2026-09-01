@@ -1,7 +1,7 @@
 import type { FieldSample } from '../../field';
 import { colorAtRamp, computeFieldGrid } from '../../field';
 import { computeIsolineSegments } from '../../isolines';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { ScalarFieldGrid } from './types';
 

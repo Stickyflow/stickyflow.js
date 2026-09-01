@@ -1,6 +1,6 @@
 import { wrapText } from '../../../model/geometry/text';
 import { chartText } from '../../chartPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';
 

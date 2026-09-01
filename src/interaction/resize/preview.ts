@@ -1,12 +1,12 @@
-import type { Bounds } from '../../model/geometry/router';
-import { updateQuickDuplicateBubbles } from '../../viewer/selectionOverlay';
+import { updateQuickDuplicateBubbles } from '../../domContract';
+import type { Rect } from '../../model/geometry/router';
 import { updateLiveLinks } from '../linkPreview';
 import { applyCompositeScale, applySingleNodeBounds } from './geometryPreview';
 import { updateSelectionOverlay } from './overlayPreview';
 import type { ResizeDragState } from './state';
 import { applyLiveText } from './textPreview';
 
-function applyGeometryPreview(drag: ResizeDragState, bounds: Bounds): void {
+function applyGeometryPreview(drag: ResizeDragState, bounds: Rect): void {
   if (drag.isComposite) {
     applyCompositeScale(drag.geometryNodes, drag.startBounds, bounds);
     return;
@@ -17,7 +17,7 @@ function applyGeometryPreview(drag: ResizeDragState, bounds: Bounds): void {
   }
 }
 
-export function applyResizePreview(drag: ResizeDragState, bounds: Bounds): void {
+export function applyResizePreview(drag: ResizeDragState, bounds: Rect): void {
   applyGeometryPreview(drag, bounds);
   if (drag.overlay) {
     updateSelectionOverlay(drag.overlay, bounds);

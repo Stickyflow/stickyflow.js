@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../model/charts';
 import { CHART_COLORS } from '../../chartPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import { pixelPoints, seriesValuePairs } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
 import { renderLineMarks } from './marks';

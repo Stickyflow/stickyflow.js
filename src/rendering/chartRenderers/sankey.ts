@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { renderSankeyLinks } from './sankey/links';
 import { renderSankeyNodes } from './sankey/nodes';
 import { createSankeyRenderData } from './sankey/prepare';

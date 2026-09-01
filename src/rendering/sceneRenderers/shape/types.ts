@@ -1,5 +1,5 @@
 import type { Shape } from '../../../model/shapes';
-import type { Bounds, Point, RenderNode, SceneStyle } from '../../renderScene';
+import type { Bounds, Point, RenderNode, SceneStyle } from '../../scene';
 
 export interface ShapeRenderContext {
   shape: Shape;

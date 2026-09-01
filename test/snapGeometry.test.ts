@@ -7,9 +7,9 @@ import {
   resizeActivePoints,
   type SnapConfig,
 } from '../src/interaction/snapGeometry';
-import type { Bounds } from '../src/model/geometry/router';
+import type { Rect } from '../src/model/geometry/router';
 
-const bounds = (x: number, y: number, width: number, height: number): Bounds => ({ x, y, width, height });
+const bounds = (x: number, y: number, width: number, height: number): Rect => ({ x, y, width, height });
 
 describe('computeSnap — move (all points active on both axes)', () => {
   const config = { threshold: 20, activeX: MOVE_ACTIVE_POINTS, activeY: MOVE_ACTIVE_POINTS, guideOverhang: 10 };

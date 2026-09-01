@@ -1,6 +1,6 @@
 import type { SankeyLayoutNode } from '../../../model/geometry/sankey';
 import { chartText, DEFAULT_ZONE_FILL } from '../../chartPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { SankeyRenderData } from './types';
 

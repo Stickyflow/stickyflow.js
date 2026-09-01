@@ -1,4 +1,4 @@
-import type { Bounds } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/router';
 import type { EdgePoint, SnapResult } from './types';
 
 export function resizeActivePoints(axisMove: 'left' | 'right' | 'top' | 'bottom' | 'none'): EdgePoint[] {
@@ -9,12 +9,12 @@ export function resizeActivePoints(axisMove: 'left' | 'right' | 'top' | 'bottom'
 }
 
 export function applyAxisSnap(
-  bounds: Bounds,
+  bounds: Rect,
   moveX: 'left' | 'right' | 'none',
   moveY: 'top' | 'bottom' | 'none',
   snap: SnapResult,
   minSize: number,
-): Bounds {
+): Rect {
   let { x, y, width, height } = bounds;
   if (moveX === 'left' && snap.x.delta) {
     x += snap.x.delta;

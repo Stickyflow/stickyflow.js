@@ -3,7 +3,7 @@ import { wrapText } from '../../../model/geometry/text';
 import { squarifyTreemap } from '../../../model/geometry/treemap';
 import { chartText, contrastTextColor, representativeColor } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
-import type { RenderNode } from '../../renderScene';
+import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import { treemapLeafColor, treemapLeafValue } from './layout';
 import type { TreemapLayout } from './types';

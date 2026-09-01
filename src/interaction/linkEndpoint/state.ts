@@ -1,13 +1,12 @@
-import { type Bounds, chooseSide, type Side } from '../../model/geometry/router';
+import type { LinkEndpoint } from '../../domContract';
+import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
+import { chooseSide, type Rect, type Side } from '../../model/geometry/router';
 import type { PathType } from '../../model/links';
 import type { OwnerRef } from '../../viewer';
-import { resolveOwner } from '../../viewer/contract';
-import { findOwnerNode, isPrimary } from '../../viewer/domQuery';
-import type { LinkEndpoint } from '../../viewer/selectionOverlay';
 
 export interface EndpointCandidate {
   owner: OwnerRef;
-  bounds: Bounds;
+  bounds: Rect;
 }
 
 export interface LinkEndpointDragState {

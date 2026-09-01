@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { xml } from './format';
 
 export function contractAttrs(node: RenderNode): string {

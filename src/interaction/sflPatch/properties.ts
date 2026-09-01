@@ -5,15 +5,15 @@ import {
   findDirectProperty,
   insertDirectProperty,
   type LineRange,
-  maskStringsAndComments,
+  maskLines,
+  replacePropertyValue,
 } from './scanner';
 
 export function setOrInsertText(lines: string[], range: LineRange, text: string): void {
   const value = `"${escapeSflString(text)}"`;
   const existing = findDirectProperty(lines, range, 'text');
   if (existing !== null) {
-    const line = lines[existing.line];
-    lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
+    replacePropertyValue(lines, existing, value);
     return;
   }
   const indent = `${indentOf(lines[range.start])}    `;
@@ -26,13 +26,12 @@ export function setOrInsertLayoutTuples(
   props: ReadonlyArray<readonly [key: string, a: number, b: number]>,
 ): void {
   let layout = findChildBlock(lines, range, /^\s*layout\s*\{/);
-  if (!layout && range.start === range.end && /\blayout\s*\{/.test(maskStringsAndComments(lines[range.start]))) {
+  const maskedStart = maskLines(lines)?.[range.start] ?? '';
+  if (!layout && range.start === range.end && /\blayout\s*\{/.test(maskedStart)) {
     for (const [key, a, b] of props) {
       const existing = findDirectProperty(lines, range, key, 2);
       if (!existing) continue;
-      const value = `${round1(a)}, ${round1(b)}`;
-      const line = lines[existing.line];
-      lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
+      replacePropertyValue(lines, existing, `${round1(a)}, ${round1(b)}`);
     }
     return;
   }
@@ -55,8 +54,7 @@ export function setOrInsertLayoutTuples(
     const value = `${round1(a)}, ${round1(b)}`;
     const existing = findDirectProperty(lines, layout, key);
     if (existing !== null) {
-      const line = lines[existing.line];
-      lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
+      replacePropertyValue(lines, existing, value);
       continue;
     }
     const indent = `${indentOf(lines[layout.start])}    `;
@@ -77,8 +75,7 @@ export function setEndpoint(
   const value = `${targetName}, ${side} (${round2(fraction)})`;
   const existing = findDirectProperty(lines, range, key);
   if (existing !== null) {
-    const line = lines[existing.line];
-    lines[existing.line] = `${line.slice(0, existing.start)}${value}${line.slice(existing.end)}`;
+    replacePropertyValue(lines, existing, value);
     return;
   }
   const indent = `${indentOf(lines[range.start])}    `;

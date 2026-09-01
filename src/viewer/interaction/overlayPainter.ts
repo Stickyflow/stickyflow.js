@@ -1,6 +1,11 @@
-import { findOwnerNode, isPrimary } from '../domQuery';
+import {
+  findOwnerNode,
+  isPrimary,
+  linkSelectionOverlay,
+  quickDuplicateBubbles,
+  shapeSelectionOverlay,
+} from '../../domContract';
 import type { OwnerRef } from '../events';
-import { linkSelectionOverlay, quickDuplicateBubbles, shapeSelectionOverlay } from '../selectionOverlay';
 
 export function paintSelectionOverlays(
   svg: SVGSVGElement,

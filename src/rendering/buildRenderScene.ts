@@ -1,7 +1,8 @@
 import type { MeasureTextFactory } from '../model/geometry/text';
 import { buildChart } from './charts';
+import type { RenderInput } from './renderInput';
 import { EMPTY_BOUNDS, tag } from './renderPrimitives';
-import type { Bounds, RenderDiagnostic, RenderInput, RenderNode, RenderScene } from './renderScene';
+import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './scene';
 import { buildFrame, buildSwimlane } from './sceneRenderers/containers';
 import { buildLink } from './sceneRenderers/link';
 import { buildFreeformPath } from './sceneRenderers/path';

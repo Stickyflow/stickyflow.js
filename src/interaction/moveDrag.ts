@@ -1,6 +1,5 @@
+import { clearAlignmentGuides, isCameraGesture, updateAlignmentGuides } from '../domContract';
 import type { Viewer } from '../viewer';
-import { clearAlignmentGuides, updateAlignmentGuides } from '../viewer/alignmentGuideOverlay';
-import { isCameraGesture } from '../viewer/contract';
 import type { Emitter } from './events';
 import { applyMovePreview } from './move/preview';
 import { snapMove } from './move/snapping';

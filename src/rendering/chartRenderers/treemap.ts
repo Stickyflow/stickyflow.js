@@ -1,4 +1,4 @@
-import type { RenderNode } from '../renderScene';
+import type { RenderNode } from '../scene';
 import { createTreemapLayout } from './treemap/layout';
 import { renderTreemapLegend } from './treemap/legend';
 import { renderTreemapTiles } from './treemap/tiles';
