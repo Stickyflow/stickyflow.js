@@ -1,0 +1,19 @@
+import type { Link, MarkerType } from '../../../model/links';
+
+export function markerForEnd(link: Link, end: 'start' | 'end'): MarkerType {
+  const explicit = end === 'start' ? (link.startMarker ?? link.start_marker) : (link.endMarker ?? link.end_marker);
+  if (explicit) {
+    return explicit;
+  }
+  const direction = link.style?.arrowDirection ?? 'forward';
+  if (direction === 'bidirectional') {
+    return 'arrow';
+  }
+  if (end === 'start' && direction === 'backward') {
+    return 'arrow';
+  }
+  if (end === 'end' && direction === 'forward') {
+    return 'arrow';
+  }
+  return 'none';
+}
