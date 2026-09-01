@@ -1,5 +1,5 @@
-import { tableBorderGeometry } from '../../../model/geometry/tables';
-import { computeRowHeight, type Table, type TableColumn } from '../../../model/tables';
+import { computeRowHeight, tableBorderGeometry } from '../../../model/geometry/tables';
+import type { Table, TableColumn } from '../../../model/tables';
 import { boxBounds, orderOf } from '../../renderPrimitives';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 

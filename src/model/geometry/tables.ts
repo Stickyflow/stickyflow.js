@@ -1,5 +1,20 @@
-import type { Table, TableColumn, TableRow } from '../tables';
-import { computeRowHeight, TABLE_MIN_COLUMN_WIDTH, TABLE_MIN_WIDTH } from '../tables';
+import type { Table, TableColumn, TableRow } from '../table/types';
+
+export const TABLE_MIN_COLUMN_WIDTH = 40;
+export const TABLE_MIN_WIDTH = 200;
+
+export function computeRowHeight(fontSize: number): number {
+  return Math.max(24, fontSize * 1.8);
+}
+
+export function computeTableHeight(
+  table: Pick<Table, 'font_size' | 'rows' | 'show_header' | 'row_height' | 'footer'>,
+): number {
+  const rowHeight = table.row_height ?? computeRowHeight(table.font_size);
+  const headerHeight = table.show_header ? rowHeight : 0;
+  const footerHeight = table.footer ? rowHeight : 0;
+  return headerHeight + table.rows.length * rowHeight + footerHeight;
+}
 
 export const tableSlotCount = (table: Pick<Table, 'rows' | 'show_header' | 'footer'>): number =>
   Math.max(1, table.rows.length + (table.show_header ? 1 : 0) + (table.footer ? 1 : 0));
