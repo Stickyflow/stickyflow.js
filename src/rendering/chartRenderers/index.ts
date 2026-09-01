@@ -1,6 +1,5 @@
 import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
-import { renderCartesian } from './cartesian';
 import { renderCustom } from './custom';
 import { renderField } from './field';
 import { renderGrid } from './grid';
@@ -50,6 +49,6 @@ export function renderChartMarks(context: ChartRenderContext, stackedMode?: Stac
     case 'bar':
       return renderBar(context, stackedMode);
     default:
-      return renderCartesian(context);
+      return [];
   }
 }
