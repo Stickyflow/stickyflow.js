@@ -1,13 +1,7 @@
 import type { Side } from '../../model/geometry/router';
+import { insertDirectProperty, replacePropertyValue } from './edits/propertyValues';
 import { escapeSflString, indentOf, round1, round2 } from './format';
-import {
-  findChildBlock,
-  findDirectProperty,
-  insertDirectProperty,
-  type LineRange,
-  maskLines,
-  replacePropertyValue,
-} from './scanner';
+import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';
 
 export function setOrInsertText(lines: string[], range: LineRange, text: string): void {
   const value = `"${escapeSflString(text)}"`;

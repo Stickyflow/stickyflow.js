@@ -17,19 +17,25 @@ function findValueEnd(source: MaskedSource, from: Cursor, lastRow: number, targe
   let depth = targetDepth;
   for (let row = from.row; row <= lastRow; row++) {
     const line = source.lines[row];
-    if (line === undefined) break;
+    if (line === undefined) {
+      break;
+    }
     for (let col = row === from.row ? from.col : 0; col < line.length; col++) {
       const character = line[col];
       if (character === '{') {
         depth++;
       } else if (character === '}') {
-        if (depth <= targetDepth) return { row, col };
+        if (depth <= targetDepth) {
+          return { row, col };
+        }
         depth--;
       } else if (character === ';' && depth === targetDepth) {
         return { row, col };
       }
     }
-    if (!source.continuesString[row]) return { row, col: line.length };
+    if (!source.continuesString[row]) {
+      return { row, col: line.length };
+    }
   }
   return { row: lastRow, col: source.lines[lastRow]?.length ?? 0 };
 }
@@ -39,8 +45,12 @@ function trimBack(masked: string[], from: Cursor, end: Cursor): Cursor {
   let col = end.col;
   for (;;) {
     const line = masked[row] ?? '';
-    while (col > 0 && /\s/.test(line[col - 1])) col--;
-    if (col > 0 || row <= from.row) return { row, col };
+    while (col > 0 && /\s/.test(line[col - 1])) {
+      col--;
+    }
+    if (col > 0 || row <= from.row) {
+      return { row, col };
+    }
     row--;
     col = masked[row]?.length ?? 0;
   }
@@ -53,20 +63,27 @@ export function findDirectProperty(
   targetDepth = 1,
 ): PropertySpan | null {
   const source = maskSource(lines);
-  if (source === null) return null;
+  if (source === null) {
+    return null;
+  }
 
   const keyRe = new RegExp(`\\b${key}\\b\\s*:\\s*`, 'g');
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
     const line = source.lines[i];
-    if (line === undefined) break;
+    if (line === undefined) {
+      break;
+    }
 
     const depthAt: number[] = new Array(line.length);
     let running = depth;
     for (let c = 0; c < line.length; c++) {
       depthAt[c] = running;
-      if (line[c] === '{') running++;
-      else if (line[c] === '}') running--;
+      if (line[c] === '{') {
+        running++;
+      } else if (line[c] === '}') {
+        running--;
+      }
     }
 
     keyRe.lastIndex = 0;
@@ -83,30 +100,4 @@ export function findDirectProperty(
     depth = running;
   }
   return null;
-}
-
-export function replacePropertyValue(lines: string[], span: PropertySpan, value: string): void {
-  const before = lines[span.line].slice(0, span.start);
-  const after = lines[span.endLine].slice(span.end);
-  lines.splice(span.line, span.endLine - span.line + 1, `${before}${value}${after}`);
-}
-
-export function insertDirectProperty(
-  lines: string[],
-  range: LineRange,
-  indent: string,
-  key: string,
-  value: string,
-): void {
-  if (range.start === range.end) {
-    const line = lines[range.start];
-    const closeAt = line.lastIndexOf('}');
-    if (closeAt !== -1) {
-      const before = line.slice(0, closeAt).replace(/\s+$/, '');
-      const separator = /\{$/.test(before) ? ' ' : '; ';
-      lines[range.start] = `${before}${separator}${key}: ${value} }${line.slice(closeAt + 1)}`;
-      return;
-    }
-  }
-  lines.splice(range.start + 1, 0, `${indent}${key}: ${value}`);
 }
