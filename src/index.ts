@@ -16,6 +16,6 @@ export type {
   SceneRole,
 } from './rendering/renderScene';
 export { DOM_CONTRACT_VERSION } from './rendering/renderScene';
-export type { SflCanvasState, SflEntityOut, SflGroupOut, SflLinkOut } from './sfl';
+export type { SflCanvasState, SflEntityOut, SflGroupOut, SflImportJson, SflLinkOut } from './sfl';
 export { canonicalize, parse, sflToCanvasState, sflToImportJson } from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';

@@ -1,82 +1,39 @@
-import { type SflGroupOut, sflToCanvasState } from '../../sflToCanvasState';
+import { sflToCanvasState } from '../../sflToCanvasState';
 import { chartObject } from './chart';
 import { frameObject } from './frame';
+import { createBucketResolver, emptyBuckets, flattenGroups, indexGroupMembership } from './groups';
 import { linkObject } from './link';
 import { pathObject } from './path';
 import { shapeObject } from './shape';
 import { swimlaneObject } from './swimlane';
 import { tableObject } from './table';
+import type { ImportChart, ImportFrame, ImportPath, ImportSwimlane, ImportTable, SflImportJson } from './types';
 
-interface Buckets {
-  notes: unknown[];
-  shapes: unknown[];
-  links: unknown[];
-}
-
-const emptyBuckets = (): Buckets => ({ notes: [], shapes: [], links: [] });
-
-function indexGroupMembership(groups: SflGroupOut[], membership = new Map<string, string>()): Map<string, string> {
-  for (const group of groups) {
-    group.entityIds.forEach(id => {
-      membership.set(id, group.id);
-    });
-    indexGroupMembership(group.subGroups, membership);
-  }
-  return membership;
-}
-
-function createBucketResolver(membership: Map<string, string>, canvas: Buckets) {
-  const groupBuckets = new Map<string, Buckets>();
-  const bucketFor = (id: string): Buckets => {
-    const groupId = membership.get(id);
-    if (!groupId) return canvas;
-    const bucket = groupBuckets.get(groupId) ?? emptyBuckets();
-    groupBuckets.set(groupId, bucket);
-    return bucket;
-  };
-  return { groupBuckets, bucketFor };
-}
-
-function flattenGroups(groups: SflGroupOut[], buckets: Map<string, Buckets>): unknown[] {
-  const flattened: unknown[] = [];
-  const visit = (group: SflGroupOut, parentGroupId?: string) => {
-    flattened.push({
-      id: group.id,
-      name: group.name,
-      color: group.color,
-      icon: group.icon,
-      parent_group_id: parentGroupId,
-      parent_frame_id: group.parentFrameId,
-      entities: buckets.get(group.id) ?? emptyBuckets(),
-    });
-    group.subGroups.forEach(child => {
-      visit(child, group.id);
-    });
-  };
-  groups.forEach(group => {
-    visit(group);
-  });
-  return flattened;
-}
-
-export function sflToImportJson(sfl: string): any {
+export function sflToImportJson(sfl: string): SflImportJson {
   const state = sflToCanvasState(sfl);
   const canvas = emptyBuckets();
   const { groupBuckets, bucketFor } = createBucketResolver(indexGroupMembership(state.groups), canvas);
-  const frames: unknown[] = [];
-  const swimlanes: unknown[] = [];
-  const tables: unknown[] = [];
-  const paths: unknown[] = [];
-  const charts: unknown[] = [];
+  const frames: ImportFrame[] = [];
+  const swimlanes: ImportSwimlane[] = [];
+  const tables: ImportTable[] = [];
+  const paths: ImportPath[] = [];
+  const charts: ImportChart[] = [];
 
   const entities = [...state.entities].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   for (const entity of entities) {
-    if (entity.entityType === 'frame') frames.push(frameObject(entity));
-    else if (entity.entityType === 'swimlane') swimlanes.push(swimlaneObject(entity));
-    else if (entity.entityType === 'table') tables.push(tableObject(entity));
-    else if (entity.entityType === 'path') paths.push(pathObject(entity));
-    else if (entity.entityType === 'chart') charts.push(chartObject(entity));
-    else bucketFor(entity.id).shapes.push(shapeObject(entity));
+    if (entity.entityType === 'frame') {
+      frames.push(frameObject(entity));
+    } else if (entity.entityType === 'swimlane') {
+      swimlanes.push(swimlaneObject(entity));
+    } else if (entity.entityType === 'table') {
+      tables.push(tableObject(entity));
+    } else if (entity.entityType === 'path') {
+      paths.push(pathObject(entity));
+    } else if (entity.entityType === 'chart') {
+      charts.push(chartObject(entity));
+    } else {
+      bucketFor(entity.id).shapes.push(shapeObject(entity));
+    }
   }
 
   const links = [...state.links].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));

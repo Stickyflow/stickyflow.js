@@ -1,41 +1,66 @@
 import type { SflBlock, SflDocument, SflValue } from '../ast';
 import type { SflDiagnostic } from './types';
 
-export const asString = (v?: SflValue): string | undefined => {
-  if (!v) return undefined;
-  if (v.type === 'string') return v.value;
-  if (v.type === 'ident') return v.segments.join('.');
-  if (v.type === 'number') return String(v.value);
+export const asString = (value?: SflValue): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  if (value.type === 'string') {
+    return value.value;
+  }
+  if (value.type === 'ident') {
+    return value.segments.join('.');
+  }
+  if (value.type === 'number') {
+    return String(value.value);
+  }
   return undefined;
 };
 
-export const asNumber = (v?: SflValue): number | undefined => (v && v.type === 'number' ? v.value : undefined);
+export const asNumber = (value?: SflValue): number | undefined => (value?.type === 'number' ? value.value : undefined);
 
-export const tupleVals = (v?: SflValue): number[] | undefined => (v && v.type === 'tuple' ? v.values : undefined);
+export const tupleVals = (value?: SflValue): number[] | undefined =>
+  value?.type === 'tuple' ? value.values : undefined;
 
-export const listNumbers = (v?: SflValue): number[] | undefined =>
-  v && v.type === 'list' ? v.values.flatMap(item => (item.type === 'number' ? [item.value] : [])) : undefined;
+export const listNumbers = (value?: SflValue): number[] | undefined =>
+  value?.type === 'list' ? value.values.flatMap(item => (item.type === 'number' ? [item.value] : [])) : undefined;
 
 export function directProps(block: SflBlock): Map<string, SflValue> {
   const out = new Map<string, SflValue>();
-  for (const e of block.entries) if (e.type === 'property') out.set(e.property.key, e.property.value);
+  for (const entry of block.entries) {
+    if (entry.type === 'property') {
+      out.set(entry.property.key, entry.property.value);
+    }
+  }
   return out;
 }
 
 export function styleSubBlockProps(block: SflBlock): Map<string, SflValue> {
   const out = new Map<string, SflValue>();
-  for (const e of block.entries) if (e.type === 'style') for (const p of e.style.properties) out.set(p.key, p.value);
+  for (const entry of block.entries) {
+    if (entry.type === 'style') {
+      for (const property of entry.style.properties) {
+        out.set(property.key, property.value);
+      }
+    }
+  }
   return out;
 }
 
 export function localLayoutProps(block: SflBlock): Map<string, SflValue> {
   const out = new Map<string, SflValue>();
-  for (const e of block.entries) if (e.type === 'layout') for (const p of e.layout.properties) out.set(p.key, p.value);
+  for (const entry of block.entries) {
+    if (entry.type === 'layout') {
+      for (const property of entry.layout.properties) {
+        out.set(property.key, property.value);
+      }
+    }
+  }
   return out;
 }
 
 export const childBlocks = (block: SflBlock): SflBlock[] =>
-  block.entries.filter(e => e.type === 'block').map(e => (e as any).block as SflBlock);
+  block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
 
 export function classifyRefs(
   composition: string[],
@@ -45,8 +70,11 @@ export function classifyRefs(
   let styleRef: string | undefined;
   let layoutRef: string | undefined;
   for (const ref of composition) {
-    if (styleBlocks.has(ref)) styleRef = ref;
-    else if (layoutBlocks.has(ref)) layoutRef = ref;
+    if (styleBlocks.has(ref)) {
+      styleRef = ref;
+    } else if (layoutBlocks.has(ref)) {
+      layoutRef = ref;
+    }
   }
   return { styleRef, layoutRef };
 }
@@ -57,7 +85,7 @@ export function collectUnresolvedRefs(
   layoutBlocks: Map<string, SflBlock>,
 ): SflDiagnostic[] {
   const diagnostics: SflDiagnostic[] = [];
-  const visit = (block: SflBlock) => {
+  const visit = (block: SflBlock): void => {
     for (const ref of block.composition) {
       if (!styleBlocks.has(ref) && !layoutBlocks.has(ref)) {
         diagnostics.push({
@@ -68,8 +96,12 @@ export function collectUnresolvedRefs(
         });
       }
     }
-    for (const child of childBlocks(block)) visit(child);
+    for (const child of childBlocks(block)) {
+      visit(child);
+    }
   };
-  for (const block of doc.blocks) visit(block);
+  for (const block of doc.blocks) {
+    visit(block);
+  }
   return diagnostics;
 }

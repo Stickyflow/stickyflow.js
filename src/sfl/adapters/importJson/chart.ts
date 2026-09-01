@@ -2,7 +2,7 @@ import type { SflEntityOut } from '../../sflToCanvasState';
 import { decodeColor, decodeRamp } from '../decodeStyles';
 import { numOf } from './values';
 
-export function chartObject(e: SflEntityOut): any {
+export function chartObject(e: SflEntityOut) {
   const p = e.props;
   return {
     id: e.id,

@@ -2,7 +2,7 @@ import type { SflEntityOut } from '../../sflToCanvasState';
 import { decodeColor, decodeShadow } from '../decodeStyles';
 import { numOf, safeJson } from './values';
 
-export function shapeObject(e: SflEntityOut): any {
+export function shapeObject(e: SflEntityOut) {
   const p = e.props;
   return {
     id: e.id,

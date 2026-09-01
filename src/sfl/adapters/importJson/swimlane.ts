@@ -1,7 +1,7 @@
 import type { SflEntityOut } from '../../sflToCanvasState';
 import { numOf, safeJson } from './values';
 
-export function swimlaneObject(e: SflEntityOut): any {
+export function swimlaneObject(e: SflEntityOut) {
   const p = e.props;
   return {
     id: e.id,

@@ -2,7 +2,7 @@ import type { SflLinkOut } from '../../sflToCanvasState';
 import { decodeColor } from '../decodeStyles';
 import { numOf } from './values';
 
-export function linkObject(l: SflLinkOut): any {
+export function linkObject(l: SflLinkOut) {
   const p = l.props;
   return {
     id: l.id,

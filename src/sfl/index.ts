@@ -2,7 +2,7 @@ import { emit } from './emitter';
 import { parse } from './parser';
 
 export { decodeColor, decodeShadow } from './adapters/decodeStyles';
-export { sflToImportJson } from './adapters/sflToImportJson';
+export { type SflImportJson, sflToImportJson } from './adapters/sflToImportJson';
 export * from './ast';
 export { emit } from './emitter';
 export { SflLexError, type Token, type TokenType, tokenize } from './lexer';

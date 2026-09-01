@@ -2,7 +2,7 @@ import type { SflEntityOut } from '../../sflToCanvasState';
 import { decodeColor } from '../decodeStyles';
 import { numOf, safeJson } from './values';
 
-export function pathObject(e: SflEntityOut): any {
+export function pathObject(e: SflEntityOut) {
   const p = e.props;
   return {
     id: e.id,

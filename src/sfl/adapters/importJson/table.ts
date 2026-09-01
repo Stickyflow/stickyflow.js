@@ -2,7 +2,7 @@ import type { SflEntityOut } from '../../sflToCanvasState';
 import { decodeRamp } from '../decodeStyles';
 import { numOf, safeJson } from './values';
 
-export function tableObject(e: SflEntityOut): any {
+export function tableObject(e: SflEntityOut) {
   const p = e.props;
   return {
     id: e.id,

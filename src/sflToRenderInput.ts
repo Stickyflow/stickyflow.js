@@ -5,7 +5,7 @@ import { resolveExportLinks } from './sflToRenderInput/links';
 import type { ImportRenderJson } from './sflToRenderInput/types';
 
 export function sflToRenderInput(sfl: string): RenderInput {
-  const json = sflToImportJson(sfl) as ImportRenderJson;
+  const json: ImportRenderJson = sflToImportJson(sfl);
   const entities = collectRenderEntities(json);
   return {
     shapes: entities.shapes,
