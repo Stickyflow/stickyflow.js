@@ -1,5 +1,5 @@
 import type { SflValue } from '../../../ast';
-import { asNumber, asString } from '../../readers';
+import { asNumber, asString } from '../../valueAccess';
 
 export function numberList(value?: SflValue): number[] | undefined {
   if (value?.type !== 'list') {

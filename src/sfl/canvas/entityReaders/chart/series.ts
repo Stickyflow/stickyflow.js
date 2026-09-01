@@ -1,10 +1,11 @@
 import type { SflBlock } from '../../../ast';
-import { asNumber, asString, directProps } from '../../readers';
+import { directProperties } from '../../blockEntries';
+import { asNumber, asString } from '../../valueAccess';
 import { readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
 import type { ChartSeries } from './types';
 
 export function readSeries(block: SflBlock): ChartSeries {
-  const properties = directProps(block);
+  const properties = directProperties(block);
   return {
     id: block.name,
     label: asString(properties.get('label')) ?? block.name,

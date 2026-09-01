@@ -1,7 +1,8 @@
 import type { SflBlock, SflValue, Side } from '../ast';
+import { childBlocks, directProperties } from './blockEntries';
 import type { EntityReaderContext } from './entityReader';
-import { asNumber, asString, childBlocks, directProps, listNumbers } from './readers';
 import type { SflEntityOut, SflLinkOut } from './types';
+import { asNumber, asString, listNumbers } from './valueAccess';
 
 export function readLinks(
   model: SflBlock | undefined,
@@ -13,7 +14,7 @@ export function readLinks(
   const indexNames = (blocks: SflBlock[]): void => {
     for (const block of blocks) {
       if (['Entity', 'Container', 'Table', 'Path', 'Chart'].includes(block.kind)) {
-        idByName.set(block.name, asString(directProps(block).get('id')) ?? block.name);
+        idByName.set(block.name, asString(directProperties(block).get('id')) ?? block.name);
       }
       indexNames(childBlocks(block));
     }

@@ -3,8 +3,8 @@ import { readChart } from './entityReaders/chart';
 import { readPath } from './entityReaders/path';
 import { readSwimlane } from './entityReaders/swimlane';
 import { readTable } from './entityReaders/table';
-import { asNumber, asString, tupleVals } from './readers';
 import type { SflEntityOut } from './types';
+import { asNumber, asString, tupleValues } from './valueAccess';
 
 export interface EntityReaderContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
@@ -30,8 +30,8 @@ export function buildEntity(
 ): SflEntityOut {
   const { mergedProps, layoutProp, symbolDefs } = context;
   const p = mergedProps(block);
-  const pos = positionOverride ?? tupleVals(layoutProp(block, 'position')) ?? [0, 0];
-  const size = tupleVals(layoutProp(block, 'size')) ?? [0, 0];
+  const pos = positionOverride ?? tupleValues(layoutProp(block, 'position')) ?? [0, 0];
+  const size = tupleValues(layoutProp(block, 'size')) ?? [0, 0];
   const kind =
     block.kind === 'Table'
       ? 'table'

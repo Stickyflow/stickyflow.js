@@ -1,11 +1,12 @@
 import type { SflBlock } from '../ast';
-import { asNumber, childBlocks, directProps, tupleVals } from './readers';
+import { childBlocks, directProperties } from './blockEntries';
 import type { SflEntityOut } from './types';
+import { asNumber, tupleValues } from './valueAccess';
 
 type SymbolDefinition = NonNullable<SflEntityOut['symbol']>;
 
 function readSymbolPoints(block: SflBlock): Array<[number, number]> {
-  const value = directProps(block).get('points');
+  const value = directProperties(block).get('points');
   if (value?.type !== 'list') {
     return [];
   }
@@ -25,7 +26,7 @@ function readSymbolPorts(block: SflBlock): SymbolDefinition['ports'] {
   const ports = childBlocks(block)
     .filter(child => child.kind === 'Port')
     .flatMap(port => {
-      const position = tupleVals(directProps(port).get('at'));
+      const position = tupleValues(directProperties(port).get('at'));
       if (typeof position?.[0] !== 'number' || typeof position[1] !== 'number') {
         return [];
       }
@@ -44,7 +45,7 @@ export function readSymbolDefinition(block: SflBlock): SymbolDefinition | undefi
   return {
     name: block.name,
     points,
-    tension: asNumber(directProps(block).get('tension')),
+    tension: asNumber(directProperties(block).get('tension')),
     ports: readSymbolPorts(block),
   };
 }

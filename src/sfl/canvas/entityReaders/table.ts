@@ -1,6 +1,7 @@
 import type { SflBlock, SflValue } from '../../ast';
-import { asNumber, asString, childBlocks, directProps } from '../readers';
+import { childBlocks, directProperties } from '../blockEntries';
 import type { SflEntityOut } from '../types';
+import { asNumber, asString } from '../valueAccess';
 
 type Properties = Map<string, SflValue>;
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
@@ -8,7 +9,7 @@ type TableData = NonNullable<SflEntityOut['table']>;
 type Columns = TableData['columns'];
 
 function readCells(block: SflBlock, columns: Columns): Record<string, string | boolean> {
-  const props = directProps(block);
+  const props = directProperties(block);
   return Object.fromEntries(
     columns.map(column => {
       const value = asString(props.get(column.id));
@@ -24,7 +25,7 @@ function readBlockTable(block: SflBlock): TableData | undefined {
   const columns: Columns = childBlocks(columnsBlock)
     .filter(child => child.kind === 'Column')
     .map(column => {
-      const props = directProps(column);
+      const props = directProperties(column);
       const type = asString(props.get('cellType'));
       const align = asString(props.get('align'));
       return {

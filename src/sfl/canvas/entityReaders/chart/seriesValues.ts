@@ -1,5 +1,5 @@
 import type { SflValue } from '../../../ast';
-import { asNumber } from '../../readers';
+import { asNumber } from '../../valueAccess';
 import type { ChartSeries } from './types';
 
 function asComponents(value: SflValue): number[] | undefined {

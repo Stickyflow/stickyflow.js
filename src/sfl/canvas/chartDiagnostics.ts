@@ -1,14 +1,15 @@
 import { CHART_TYPES, isChartType } from '../../model/charts';
 import type { SflBlock, SflDocument } from '../ast';
-import { asString, childBlocks, directProps } from './readers';
+import { childBlocks, directProperties } from './blockEntries';
 import type { SflDiagnostic } from './types';
+import { asString } from './valueAccess';
 
 export function collectUnsupportedChartTypes(doc: SflDocument): SflDiagnostic[] {
   const diagnostics: SflDiagnostic[] = [];
 
   const visit = (block: SflBlock): void => {
     if (block.kind === 'Chart') {
-      const declared = asString(directProps(block).get('type'));
+      const declared = asString(directProperties(block).get('type'));
       if (declared !== undefined && !isChartType(declared)) {
         diagnostics.push({
           severity: 'warning',

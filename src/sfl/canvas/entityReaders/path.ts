@@ -1,6 +1,6 @@
 import type { SflValue } from '../../ast';
-import { asNumber, asString } from '../readers';
 import type { SflEntityOut } from '../types';
+import { asNumber, asString } from '../valueAccess';
 
 type Properties = Map<string, SflValue>;
 

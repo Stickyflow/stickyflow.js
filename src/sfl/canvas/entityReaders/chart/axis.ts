@@ -1,10 +1,11 @@
 import type { SflBlock, SflValue } from '../../../ast';
-import { asNumber, asString, directProps } from '../../readers';
+import { directProperties } from '../../blockEntries';
+import { asNumber, asString } from '../../valueAccess';
 import type { ChartData } from './types';
 import { numberList } from './values';
 
 export function readAxis(block?: SflBlock): ChartData['axisX'] {
-  const properties = block ? directProps(block) : new Map<string, SflValue>();
+  const properties = block ? directProperties(block) : new Map<string, SflValue>();
   return {
     min: asNumber(properties.get('min')) ?? 0,
     max: asNumber(properties.get('max')) ?? 10,

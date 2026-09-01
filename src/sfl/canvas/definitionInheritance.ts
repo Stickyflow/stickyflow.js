@@ -1,6 +1,6 @@
 import type { SflBlock, SflValue } from '../ast';
+import { directProperties } from './blockEntries';
 import type { BlockDefinitions } from './definitions';
-import { directProps } from './readers';
 
 export type ResolvedDefinitions = Map<string, Map<string, SflValue>>;
 
@@ -28,7 +28,7 @@ export function resolveDefinitionInheritance(
         values.set(key, value);
       }
     }
-    for (const [key, value] of directProps(block)) {
+    for (const [key, value] of directProperties(block)) {
       values.set(key, value);
     }
     resolved.set(name, values);

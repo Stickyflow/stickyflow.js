@@ -1,6 +1,7 @@
 import { isChartType } from '../../../../model/charts';
 import type { SflBlock } from '../../../ast';
-import { asNumber, asString, childBlocks } from '../../readers';
+import { childBlocks } from '../../blockEntries';
+import { asNumber, asString } from '../../valueAccess';
 import { readAxis } from './axis';
 import { readChartRules } from './rules';
 import { readSeries } from './series';

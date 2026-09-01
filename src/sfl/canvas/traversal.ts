@@ -1,8 +1,9 @@
 import type { SflBlock } from '../ast';
+import { childBlocks, directProperties } from './blockEntries';
 import { buildEntity } from './entityReader';
-import { asNumber, asString, childBlocks, directProps, tupleVals } from './readers';
 import type { CanvasResolution } from './resolution';
 import type { SflEntityOut, SflGroupOut } from './types';
+import { asNumber, asString, tupleValues } from './valueAccess';
 
 export interface CanvasTree {
   entities: SflEntityOut[];
@@ -14,7 +15,7 @@ function directMemberIds(block: SflBlock): string[] {
   const entityKinds = new Set(['Entity', 'Container', 'Table', 'Path', 'Chart']);
   return childBlocks(block)
     .filter(child => entityKinds.has(child.kind))
-    .map(child => asString(directProps(child).get('id')) ?? child.name);
+    .map(child => asString(directProperties(child).get('id')) ?? child.name);
 }
 
 function createFlowPositioner(block: SflBlock, resolution: CanvasResolution) {
@@ -67,12 +68,12 @@ export function readCanvasTree(model: SflBlock | undefined, resolution: CanvasRe
 
     for (const child of childBlocks(block)) {
       if (child.kind === 'Container') {
-        const size = tupleVals(layoutProp(child, 'size')) ?? [0, 0];
+        const size = tupleValues(layoutProp(child, 'size')) ?? [0, 0];
         const entity = buildEntity(child, origin, entityReaderContext, frameId, nextFlowPosition(size));
         entities.push(entity);
         groups.push(...visit(child, { x: entity.x, y: entity.y }, entity.id));
       } else if (['Entity', 'Table', 'Path', 'Chart'].includes(child.kind)) {
-        const size = tupleVals(layoutProp(child, 'size')) ?? [0, 0];
+        const size = tupleValues(layoutProp(child, 'size')) ?? [0, 0];
         entities.push(buildEntity(child, origin, entityReaderContext, frameId, nextFlowPosition(size)));
       } else if (child.kind === 'Group') {
         const props = mergedProps(child);

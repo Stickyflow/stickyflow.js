@@ -1,6 +1,6 @@
 import type { SflBlock, SflDocument } from '../ast';
+import { childBlocks } from './blockEntries';
 import type { EntityReaderContext } from './entityReader';
-import { childBlocks } from './readers';
 import { readSymbolDefinition } from './symbols';
 
 export type BlockDefinitions = Map<string, SflBlock>;
