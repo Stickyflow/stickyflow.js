@@ -1,5 +1,6 @@
-import type { FieldSample } from '../../field';
-import { colorAtRamp, computeFieldGrid } from '../../field';
+import { colorAtRamp } from '../../field/colorRamp';
+import { computeFieldGrid } from '../../field/grid';
+import type { FieldSample } from '../../field/types';
 import { computeIsolineSegments } from '../../isolines';
 import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';

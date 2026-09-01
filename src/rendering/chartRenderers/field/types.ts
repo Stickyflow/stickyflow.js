@@ -1,5 +1,5 @@
 import type { ChartSeries } from '../../../model/charts';
-import type { FieldSample } from '../../field';
+import type { FieldSample } from '../../field/types';
 
 export interface FieldData {
   scalarSamples: FieldSample[];

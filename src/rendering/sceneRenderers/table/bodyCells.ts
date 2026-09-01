@@ -1,4 +1,4 @@
-import { colorAtRamp } from '../../field';
+import { colorAtRamp } from '../../field/colorRamp';
 import { DEFAULT_FONT } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
 import { simpleContainerStyle } from '../containers';
