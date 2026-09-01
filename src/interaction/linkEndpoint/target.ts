@@ -1,6 +1,7 @@
 import { portToPoint } from '../../model/geometry/router';
+import type { EndpointCandidate } from './candidates';
 import { nearestPort, sideFromDirection } from './geometry';
-import type { EndpointCandidate, LinkEndpointDragState } from './state';
+import type { LinkEndpointDragState } from './state';
 
 function contains(candidate: EndpointCandidate, point: { x: number; y: number }): boolean {
   const { bounds } = candidate;
