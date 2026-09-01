@@ -34,8 +34,7 @@ function createScatterPoint(
     cy: point.y,
     rx: 4,
     ry: 4,
-    sfSeries: series.id,
-    sfValueIndex: pointIndex,
+    detail: { of: 'chartValue', series: series.id, valueIndex: pointIndex },
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }

@@ -37,11 +37,14 @@ export function renderLinkPath(context: LinkRenderContext): ScenePath {
     style: context.style,
     markerStart: markerForEnd(link, 'start'),
     markerEnd: markerForEnd(link, 'end'),
-    sfFromId: link.fromId,
-    sfToId: link.toId,
-    sfRoute: context.pathType,
-    sfFromSide: link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : undefined,
-    sfToSide: link.toPoint && 'side' in link.toPoint ? link.toPoint.side : undefined,
-    sfLabelGap: context.hasLabelGap,
+    detail: {
+      of: 'link',
+      fromId: link.fromId,
+      toId: link.toId,
+      route: context.pathType,
+      fromSide: link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : undefined,
+      toSide: link.toPoint && 'side' in link.toPoint ? link.toPoint.side : undefined,
+      labelGap: context.hasLabelGap,
+    },
   };
 }

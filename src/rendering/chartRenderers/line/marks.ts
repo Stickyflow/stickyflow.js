@@ -67,8 +67,7 @@ function createLinePoint(
     cy: point.y,
     rx: 3,
     ry: 3,
-    sfSeries: series.id,
-    sfValueIndex: pointIndex,
+    detail: { of: 'chartValue', series: series.id, valueIndex: pointIndex },
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }

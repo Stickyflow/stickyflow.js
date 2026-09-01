@@ -1,22 +1,38 @@
-import type { RenderNode } from '../scene';
+import type { RenderNode, SceneDetail, SceneIdentity } from '../scene';
 import { xml } from './format';
 
+function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
+  return [
+    `data-sf-role="${identity.role}"`,
+    `data-sf-id="${xml(identity.id)}"`,
+    identity.kind ? `data-sf-kind="${xml(identity.kind)}"` : undefined,
+    identity.primary ? 'data-sf-primary="true"' : undefined,
+  ];
+}
+
+function detailAttrs(detail: SceneDetail): Array<string | undefined> {
+  if (detail.of === 'chartValue') {
+    return [`data-sf-series="${xml(detail.series)}"`, `data-sf-value-index="${detail.valueIndex}"`];
+  }
+  if (detail.of === 'chartScale') {
+    return [`data-sf-value-scale="${detail.valueScale}"`];
+  }
+  return [
+    detail.fromId ? `data-sf-from="${xml(detail.fromId)}"` : undefined,
+    detail.toId ? `data-sf-to="${xml(detail.toId)}"` : undefined,
+    detail.route ? `data-sf-route="${detail.route}"` : undefined,
+    detail.fromSide ? `data-sf-from-side="${detail.fromSide}"` : undefined,
+    detail.toSide ? `data-sf-to-side="${detail.toSide}"` : undefined,
+    detail.labelGap ? 'data-sf-label-gap="true"' : undefined,
+  ];
+}
+
 export function contractAttrs(node: RenderNode): string {
+  const label = node.identity?.label;
   const attributes = [
-    node.sfRole ? `data-sf-role="${node.sfRole}"` : undefined,
-    node.sfId ? `data-sf-id="${xml(node.sfId)}"` : undefined,
-    node.sfKind ? `data-sf-kind="${xml(node.sfKind)}"` : undefined,
-    node.sfPrimary ? 'data-sf-primary="true"' : undefined,
-    node.sfSeries ? `data-sf-series="${xml(node.sfSeries)}"` : undefined,
-    node.sfValueIndex !== undefined ? `data-sf-value-index="${node.sfValueIndex}"` : undefined,
-    node.sfValueScale ? `data-sf-value-scale="${node.sfValueScale}"` : undefined,
-    node.sfFromId ? `data-sf-from="${xml(node.sfFromId)}"` : undefined,
-    node.sfToId ? `data-sf-to="${xml(node.sfToId)}"` : undefined,
-    node.sfRoute ? `data-sf-route="${node.sfRoute}"` : undefined,
-    node.sfFromSide ? `data-sf-from-side="${node.sfFromSide}"` : undefined,
-    node.sfToSide ? `data-sf-to-side="${node.sfToSide}"` : undefined,
-    node.sfLabelGap ? 'data-sf-label-gap="true"' : undefined,
-    node.ariaLabel ? `tabindex="0" aria-label="${xml(node.ariaLabel.replace(/\s+/g, ' ').trim())}"` : undefined,
+    ...(node.identity ? identityAttrs(node.identity) : []),
+    ...(node.detail ? detailAttrs(node.detail) : []),
+    label ? `tabindex="0" aria-label="${xml(label.replace(/\s+/g, ' ').trim())}"` : undefined,
   ].filter((attribute): attribute is string => attribute !== undefined);
 
   return attributes.length ? ` ${attributes.join(' ')}` : '';

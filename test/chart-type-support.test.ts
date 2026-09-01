@@ -69,7 +69,7 @@ describe('unsupported chart types', () => {
 
   it('still renders something rather than dropping the chart', () => {
     const { scene } = render(chart('pyramid'));
-    expect(scene.nodes.filter(node => node.sfRole === 'chart').length).toBeGreaterThan(0);
+    expect(scene.nodes.filter(node => node.identity?.role === 'chart').length).toBeGreaterThan(0);
   });
 
   it('reports one warning per offending chart, not one per board', () => {

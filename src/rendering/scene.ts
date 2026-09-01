@@ -31,24 +31,33 @@ export interface SceneStyle {
 
 export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
 
+export interface SceneIdentity {
+  role: SceneRole;
+  id: string;
+  kind?: string;
+  primary?: boolean;
+  label?: string;
+}
+
+export type SceneDetail =
+  | {
+      of: 'link';
+      fromId?: string;
+      toId?: string;
+      route?: PathType;
+      fromSide?: Side;
+      toSide?: Side;
+      labelGap?: boolean;
+    }
+  | { of: 'chartValue'; series: string; valueIndex: number }
+  | { of: 'chartScale'; valueScale: string };
+
 export interface SceneBase {
   id: string;
   order: number;
   bounds: Bounds;
-  sfRole?: SceneRole;
-  sfId?: string;
-  sfKind?: string;
-  ariaLabel?: string;
-  sfPrimary?: boolean;
-  sfSeries?: string;
-  sfValueIndex?: number;
-  sfValueScale?: string;
-  sfFromId?: string;
-  sfToId?: string;
-  sfRoute?: PathType;
-  sfFromSide?: Side;
-  sfToSide?: Side;
-  sfLabelGap?: boolean;
+  identity?: SceneIdentity;
+  detail?: SceneDetail;
 }
 
 export interface SceneRect extends SceneBase {

@@ -14,8 +14,8 @@ export function errorWhiskerNode(
   y1: number,
   y2: number,
   color: string,
-  series?: string,
-  valueIndex?: number,
+  series: string,
+  valueIndex: number,
 ): RenderNode {
   const path = `M ${center} ${y1} L ${center} ${y2} M ${center - ERROR_CAP_HALF} ${y1} L ${center + ERROR_CAP_HALF} ${y1} M ${center - ERROR_CAP_HALF} ${y2} L ${center + ERROR_CAP_HALF} ${y2}`;
   return {
@@ -24,8 +24,7 @@ export function errorWhiskerNode(
     order,
     bounds,
     d: path,
-    sfSeries: series,
-    sfValueIndex: valueIndex,
+    detail: { of: 'chartValue', series, valueIndex },
     style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 1 },
   };
 }

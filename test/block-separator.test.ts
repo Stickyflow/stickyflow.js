@@ -27,7 +27,10 @@ describe('";" after a nested block', () => {
       '  Entity a { layout { position: 0, 0; size: 10, 10 } }; Entity b { layout { position: 20, 0; size: 10, 10 } }',
     );
     const { scene } = render(source);
-    expect(scene.nodes.filter(node => node.sfRole === 'entity').map(node => node.sfId)).toEqual(['a', 'b']);
+    expect(scene.nodes.filter(node => node.identity?.role === 'entity').map(node => node.identity?.id)).toEqual([
+      'a',
+      'b',
+    ]);
   });
 
   it('still accepts the newline-separated form it always did', () => {

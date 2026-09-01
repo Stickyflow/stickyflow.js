@@ -48,8 +48,7 @@ function createGroupedBar(
     width,
     height,
     rx: 2,
-    sfSeries: series.id,
-    sfValueIndex: valueIndex,
+    detail: { of: 'chartValue', series: series.id, valueIndex },
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }

@@ -24,8 +24,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         width: barWidth,
         height: Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart)),
         rx: 2,
-        sfSeries: series.id,
-        sfValueIndex: valueIndex,
+        detail: { of: 'chartValue', series: series.id, valueIndex },
         style: { fill: paint(color, diagnostics, chart.id) },
       });
     });

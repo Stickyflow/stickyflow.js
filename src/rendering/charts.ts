@@ -45,7 +45,10 @@ export function buildChart(chart: Chart, index: number, diagnostics: RenderDiagn
     },
   ];
   if (CARTESIAN_VALUE_TYPES.has(chart.chart_type)) {
-    nodes[0].sfValueScale = `${plot.y},${plot.height},${chart.axis_y.min},${chart.axis_y.max}`;
+    nodes[0].detail = {
+      of: 'chartScale',
+      valueScale: `${plot.y},${plot.height},${chart.axis_y.min},${chart.axis_y.max}`,
+    };
   }
   let offset = 0.01;
   if (chart.title)

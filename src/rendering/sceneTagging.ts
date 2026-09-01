@@ -1,24 +1,14 @@
 import type { RenderNode, SceneRole } from './scene';
 
-export function tag(
-  nodes: RenderNode[],
-  sfRole: SceneRole,
-  sfId: string,
-  sfKind?: string,
-  ariaLabel?: string,
-): RenderNode[] {
+export function tag(nodes: RenderNode[], role: SceneRole, id: string, kind?: string, label?: string): RenderNode[] {
   nodes.forEach((node, index) => {
-    node.sfRole = sfRole;
-    node.sfId = sfId;
-    if (sfKind) {
-      node.sfKind = sfKind;
-    }
-    if (index === 0) {
-      node.sfPrimary = true;
-      if (ariaLabel) {
-        node.ariaLabel = ariaLabel;
-      }
-    }
+    node.identity = {
+      role,
+      id,
+      ...(kind ? { kind } : {}),
+      ...(index === 0 ? { primary: true } : {}),
+      ...(index === 0 && label ? { label } : {}),
+    };
   });
   return nodes;
 }
