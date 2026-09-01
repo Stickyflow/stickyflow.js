@@ -26,7 +26,17 @@ export class TokenCursor {
     return this.next();
   }
 
+  expectNumber(description: string): number {
+    const token = this.expect('number', description);
+    if (token.numberValue === undefined) {
+      throw new SflParseError(`expected ${description} to contain a numeric value`, token.line, token.col);
+    }
+    return token.numberValue;
+  }
+
   skipNewlines(): void {
-    while (this.at('newline')) this.next();
+    while (this.at('newline')) {
+      this.next();
+    }
   }
 }

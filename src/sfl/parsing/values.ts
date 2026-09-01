@@ -29,7 +29,7 @@ export function parseEndpoint(cursor: TokenCursor): SflValue {
     side = sideToken.value;
     if (cursor.at('lparen')) {
       cursor.next();
-      fraction = cursor.expect('number', 'fraction inside "("').numberValue;
+      fraction = cursor.expectNumber('fraction inside "("');
       cursor.expect('rparen', "')'");
     }
   }
@@ -46,7 +46,9 @@ function parseList(cursor: TokenCursor): SflValue {
     while (cursor.at('comma')) {
       cursor.next();
       cursor.skipNewlines();
-      if (cursor.at('rbracket')) break;
+      if (cursor.at('rbracket')) {
+        break;
+      }
       values.push(parseValue(cursor, false));
       cursor.skipNewlines();
     }
@@ -64,14 +66,14 @@ export function parseValue(cursor: TokenCursor, allowTuple = true): SflValue {
     case 'lbracket':
       return parseList(cursor);
     case 'number': {
-      cursor.next();
+      const firstValue = cursor.expectNumber('number');
       if (!allowTuple || !cursor.at('comma')) {
-        return { type: 'number', value: token.numberValue! };
+        return { type: 'number', value: firstValue };
       }
-      const values = [token.numberValue!];
+      const values = [firstValue];
       while (cursor.at('comma')) {
         cursor.next();
-        values.push(cursor.expect('number', 'number in tuple').numberValue!);
+        values.push(cursor.expectNumber('number in tuple'));
       }
       return { type: 'tuple', values };
     }
