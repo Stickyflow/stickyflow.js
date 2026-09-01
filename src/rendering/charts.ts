@@ -9,7 +9,7 @@ import {
   hasCartesianDecorations,
 } from './chartLayout';
 import { chartText } from './chartPrimitives';
-import { type ChartRenderContext, renderChartMarks, renderRadar } from './chartRenderers';
+import { type ChartRenderContext, isPolarChart, renderChartMarks } from './chartRenderers';
 import { finite, orderOf } from './renderPrimitives';
 import type { RenderDiagnostic, RenderNode } from './scene';
 
@@ -77,17 +77,17 @@ export function buildChart(chart: Chart, index: number, diagnostics: RenderDiagn
     diagnostics,
     showLabels,
     showLegend,
+    stackedMode: chart.config?.stacked && chart.config.stacked !== 'none' ? chart.config.stacked : undefined,
     nextOrder: () => order + offset++,
   };
-  if (chart.chart_type === 'radar' || chart.chart_type === 'radial') {
-    nodes.push(...renderRadar(context));
+  if (isPolarChart(chart.chart_type)) {
+    nodes.push(...renderChartMarks(context));
     return nodes;
   }
   const gridNodes = buildChartGrid(chart, plot, bounds, order + offset);
   nodes.push(...gridNodes);
   offset += gridNodes.length;
-  const stackedMode = chart.config?.stacked && chart.config.stacked !== 'none' ? chart.config.stacked : undefined;
-  nodes.push(...renderChartMarks(context, stackedMode));
+  nodes.push(...renderChartMarks(context));
   if (hasCartesianDecorations(chart)) {
     const ruleNodes = buildChartRules(chart, plot, bounds, order + offset);
     nodes.push(...ruleNodes);

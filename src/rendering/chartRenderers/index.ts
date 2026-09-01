@@ -1,3 +1,5 @@
+import type { ChartType } from '../../model/charts';
+import type { RenderNode } from '../scene';
 import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
 import { renderCustom } from './custom';
@@ -13,42 +15,36 @@ import { renderRadar } from './radar';
 import { renderSankey } from './sankey';
 import { renderScatter } from './scatter';
 import { renderTreemap } from './treemap';
-import type { ChartRenderContext, StackedMode } from './types';
+import type { ChartRenderContext, ChartRenderer } from './types';
 
-export type { ChartRenderContext } from './types';
-export { renderRadar };
+export type { ChartRenderContext, ChartRenderer } from './types';
 
-export function renderChartMarks(context: ChartRenderContext, stackedMode?: StackedMode) {
-  switch (context.chart.chart_type) {
-    case 'field':
-      return renderField(context);
-    case 'heatmap':
-      return renderHeatmap(context);
-    case 'sankey':
-      return renderSankey(context);
-    case 'mekko':
-      return renderMekko(context);
-    case 'treemap':
-      return renderTreemap(context);
-    case 'boxplot':
-      return renderBoxplot(context);
-    case 'hexbin':
-      return renderHexbin(context);
-    case 'grid':
-      return renderGrid(context);
-    case 'line':
-      return renderLine(context);
-    case 'scatter':
-      return renderScatter(context);
-    case 'pie':
-      return renderPie(context);
-    case 'matrix':
-      return renderMatrix(context);
-    case 'custom':
-      return renderCustom(context);
-    case 'bar':
-      return renderBar(context, stackedMode);
-    default:
-      return [];
-  }
+const RENDERERS: Record<ChartType, ChartRenderer> = {
+  bar: renderBar,
+  boxplot: renderBoxplot,
+  custom: renderCustom,
+  field: renderField,
+  grid: renderGrid,
+  heatmap: renderHeatmap,
+  hexbin: renderHexbin,
+  line: renderLine,
+  matrix: renderMatrix,
+  mekko: renderMekko,
+  pie: renderPie,
+  radar: renderRadar,
+  radial: renderRadar,
+  sankey: renderSankey,
+  scatter: renderScatter,
+  treemap: renderTreemap,
+};
+
+const POLAR_TYPES: ReadonlySet<ChartType> = new Set<ChartType>(['radar', 'radial']);
+
+export function isPolarChart(chartType: ChartType): boolean {
+  return POLAR_TYPES.has(chartType);
+}
+
+export function renderChartMarks(context: ChartRenderContext): RenderNode[] {
+  const renderer: ChartRenderer | undefined = RENDERERS[context.chart.chart_type];
+  return renderer ? renderer(context) : [];
 }
