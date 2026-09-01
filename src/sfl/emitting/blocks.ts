@@ -1,43 +1,21 @@
-import type { BlockKind, SflBlock, SflLayout, SflProperty, SflStyle } from '../ast';
-import { emitComposition } from './index';
+import type { BlockKind, SflBlock } from '../ast';
+import { collectBlockEntries } from './blockEntries';
+import { emitComposition } from './composition';
 import { compareLayoutProps, compareProps, compareStyleProps } from './order';
+import { emitPropertyBlock } from './propertyBlock';
 import { emitProperty } from './values';
 
 const INDENT = '  ';
 const COMPACT_MAX_PROPS = 3;
 
-interface BlockEntries {
-  properties: SflProperty[];
-  blocks: SflBlock[];
-  layout?: SflLayout;
-  style?: SflStyle;
-}
-
-function collectEntries(block: SflBlock): BlockEntries {
-  const result: BlockEntries = { properties: [], blocks: [] };
-  for (const entry of block.entries) {
-    if (entry.type === 'property') result.properties.push(entry.property);
-    else if (entry.type === 'block') result.blocks.push(entry.block);
-    else if (entry.type === 'layout') result.layout = entry.layout;
-    else result.style = entry.style;
-  }
-  return result;
-}
-
 function propertyComparator(kind: BlockKind) {
-  if (kind === 'Layout') return compareLayoutProps;
-  if (kind === 'Style') return compareStyleProps;
+  if (kind === 'Layout') {
+    return compareLayoutProps;
+  }
+  if (kind === 'Style') {
+    return compareStyleProps;
+  }
   return compareProps;
-}
-
-function emitPropertyBlock(name: 'layout' | 'style', properties: SflProperty[], depth: number): string {
-  const pad = INDENT.repeat(depth);
-  const innerPad = INDENT.repeat(depth + 1);
-  const compare = name === 'layout' ? compareLayoutProps : compareStyleProps;
-  const lines = [...properties]
-    .sort((a, b) => compare(a.key, b.key))
-    .map(property => `${innerPad}${emitProperty(property)}`);
-  return lines.length ? `${pad}${name} {\n${lines.join('\n')}\n${pad}}` : `${pad}${name} {\n${pad}}`;
 }
 
 export function joinSiblingBlocks(blocks: SflBlock[], depth: number, kinds: Map<string, BlockKind>): string {
@@ -62,7 +40,7 @@ export function joinSiblingBlocks(blocks: SflBlock[], depth: number, kinds: Map<
 export function emitBlock(block: SflBlock, depth: number, kinds: Map<string, BlockKind>): string {
   const pad = INDENT.repeat(depth);
   const header = `${block.kind} ${block.name}${emitComposition(block.composition, kinds)} {`;
-  const entries = collectEntries(block);
+  const entries = collectBlockEntries(block);
   const properties = [...entries.properties].sort((a, b) => propertyComparator(block.kind)(a.key, b.key));
   const compact =
     (block.kind === 'Layout' || block.kind === 'Style') &&

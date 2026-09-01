@@ -1,6 +1,6 @@
 import type { SflDocument } from '../ast';
 import { joinSiblingBlocks } from './blocks';
-import { buildKindIndex } from './index';
+import { buildKindIndex } from './kindIndex';
 
 export function emitDocument(doc: SflDocument): string {
   const body = joinSiblingBlocks(doc.blocks, 0, buildKindIndex(doc));
