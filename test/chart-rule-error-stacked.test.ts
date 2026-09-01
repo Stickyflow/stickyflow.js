@@ -86,7 +86,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     // bar's own fill, where the series color would vanish against itself.
     const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
     const { svg } = render(sfl);
-    const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)![0];
+    const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)?.[0];
     expect(whisker).toContain('stroke="#0f172a"');
     expect(whisker).not.toContain('stroke="#000000"');
     expect(whisker).not.toContain('stroke="#0ea5e9"');
@@ -94,7 +94,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
 
   it("colors a Rule's label to match its own line, not the chart's generic text color", () => {
     const { svg } = render(STACKED_SFL);
-    const label = svg.match(/<text id="sf-chart-rule-label-chart-target"[^>]*>/)![0];
+    const label = svg.match(/<text id="sf-chart-rule-label-chart-target"[^>]*>/)?.[0];
     expect(label).toContain('fill="#ef4444"');
   });
 
@@ -127,7 +127,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
       .filter(node => node.id.startsWith('chart-bar-wf-s1-'))
       .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     expect(bars).toHaveLength(3);
-    const heights = bars.map(bar => (bar.type === 'rect' ? bar.height : 0)!);
+    const heights = bars.map(bar => (bar.type === 'rect' ? bar.height : 0));
     // Segment heights scale with |value| (10, -5, 20) regardless of the
     // exact plot padding - a 2:1:4 ratio either way.
     expect(heights[0] / heights[1]).toBeCloseTo(2, 1);
@@ -168,7 +168,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     // 25% and 75% of the plot's own height, back-to-back, span it exactly.
     const height1 = bar1?.type === 'rect' ? bar1.height : 0;
     const height2 = bar2?.type === 'rect' ? bar2.height : 0;
-    expect(height2! / height1!).toBeCloseTo(3, 1);
+    expect(height2 / height1).toBeCloseTo(3, 1);
   });
 
   it('renders a line chart error whisker at a point with an asymmetric [low, high] error', () => {

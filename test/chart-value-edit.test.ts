@@ -2,10 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
 import { applyChartValueChange, applyMoveChange } from '../src/interaction';
 
-// Round-trip editing of a chart's own data: the DOM contract that addresses a
-// single mark (data-sf-series / data-sf-value-index / data-sf-value-scale)
-// and the patcher that writes the dragged value back into `Series { values }`.
-
 const BAR_SFL = `sfl 1.4
 
 Model M {
@@ -22,7 +18,13 @@ Model M {
 `;
 
 const owner = { role: 'chart' as const, id: 'c', kind: 'bar' };
-const seriesLine = (sfl: string, id: string) => sfl.split('\n').find(l => l.includes(`Series ${id}`))!;
+function seriesLine(sfl: string, id: string): string {
+  const line = sfl.split('\n').find(candidate => candidate.includes(`Series ${id}`));
+  if (!line) {
+    throw new Error(`Series ${id} is missing from the test SFL.`);
+  }
+  return line;
+}
 
 describe('chart mark addressing (DOM contract)', () => {
   it('tags every bar with its series and value index', () => {
@@ -38,27 +40,28 @@ describe('chart mark addressing (DOM contract)', () => {
   });
 
   it('tags an error whisker with the datum it annotates', () => {
-    // The whisker is drawn over its own bar's top edge — the one spot a
-    // reader grabs to change that value — so it has to address the same datum
-    // rather than swallow the gesture.
     const withError = BAR_SFL.replace('values: [40, 38, 42, 35]', 'values: [40, 38, 42, 35]; error: [3, 4, 2, 5]');
     const { svg } = render(withError);
-    const whisker = svg.match(/<path id="sf-chart-bar-error-c-retail-1"[^>]*>/)![0];
+    const whisker = svg.match(/<path id="sf-chart-bar-error-c-retail-1"[^>]*>/)?.[0];
     expect(whisker).toContain('data-sf-series="retail"');
     expect(whisker).toContain('data-sf-value-index="1"');
   });
 
   it('carries the axis_y pixel mapping on the chart primary node', () => {
     const { svg } = render(BAR_SFL);
-    const scale = svg.match(/data-sf-value-scale="([^"]+)"/);
-    expect(scale).not.toBeNull();
-    const [plotY, plotHeight, min, max] = scale![1].split(',').map(Number);
+    const scale = svg.match(/data-sf-value-scale="([^"]+)"/)?.[1];
+    if (!scale) {
+      throw new Error('Chart value scale is missing from the rendered SVG.');
+    }
+    const [plotY, plotHeight, min, max] = scale.split(',').map(Number);
     expect(min).toBe(0);
     expect(max).toBe(100);
     expect(plotHeight).toBeGreaterThan(0);
-    // A bar's own top edge must land where that mapping says its value is.
-    const bar = svg.match(/<rect id="sf-chart-bar-c-online-0"[^>]*y="([\d.]+)"/);
-    const value = min + ((plotY + plotHeight - Number(bar![1])) / plotHeight) * (max - min);
+    const barY = svg.match(/<rect id="sf-chart-bar-c-online-0"[^>]*y="([\d.]+)"/)?.[1];
+    if (!barY) {
+      throw new Error('Online bar position is missing from the rendered SVG.');
+    }
+    const value = min + ((plotY + plotHeight - Number(barY)) / plotHeight) * (max - min);
     expect(value).toBeCloseTo(60, 5);
   });
 
@@ -114,8 +117,6 @@ describe('applyChartValueChange', () => {
 });
 
 describe('Chart as a patchable owner', () => {
-  // Chart was missing from patchSfl's OWNER_HEADER, so every apply*Change
-  // silently no-op'd on one — the same gap Table had.
   it('moves a chart through applyMoveChange', () => {
     const out = applyMoveChange(BAR_SFL, { owner, dx: 40, dy: 20 });
     expect(out).not.toBe(BAR_SFL);

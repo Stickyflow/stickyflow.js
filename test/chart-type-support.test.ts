@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHART_TYPES, render } from '../src/index';
 
-// An unrecognised Chart `type:` used to fall through to the generic series
-// path and come out as a scatter plot — no error, no diagnostic, just a wrong
-// picture that looked deliberate. This package now implements every chart
-// type stickyflow-atlas draws, so there's no real type left to provoke this
-// with - the tests below use a made-up one instead, purely to pin the
-// fallback/diagnostic behavior itself. It still renders (a rough plot beats
-// a blank box), but it now says so.
-
 const chart = (type: string) => `sfl 1.2
 Model M {
   Chart c {
@@ -56,23 +48,23 @@ describe('supported chart types', () => {
 });
 
 describe('unsupported chart types', () => {
-  // No real Atlas type is left unsupported - these use made-up type names
-  // purely to exercise the unrecognised-type fallback/diagnostic itself.
   const madeUp = ['pyramid', 'gantt'];
 
   it.each(madeUp)('reports a warning for "%s"', type => {
     const { diagnostics } = render(chart(type));
     const warning = diagnostics.find(d => d.code === 'unsupported-chart-type');
     expect(warning).toBeDefined();
-    expect(warning!.severity).toBe('warning');
-    expect(warning!.entityId).toBe('c');
-    expect(warning!.message).toContain(type);
+    expect(warning?.severity).toBe('warning');
+    expect(warning?.entityId).toBe('c');
+    expect(warning?.message).toContain(type);
   });
 
   it('names the supported alternatives in the message', () => {
     const { diagnostics } = render(chart('pyramid'));
-    const warning = diagnostics.find(d => d.code === 'unsupported-chart-type')!;
-    for (const supported of CHART_TYPES) expect(warning.message).toContain(supported);
+    const warning = diagnostics.find(d => d.code === 'unsupported-chart-type');
+    for (const supported of CHART_TYPES) {
+      expect(warning?.message).toContain(supported);
+    }
   });
 
   it('still renders something rather than dropping the chart', () => {

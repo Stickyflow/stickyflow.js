@@ -1,17 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src/render';
 
-// `Link l { from: a; to: b }` with no `, side` is valid SFL, and it is the
-// shortest form : the one a person writes by hand, the one a language model
-// produces, and the one `insertLink()` emits when the caller passes no
-// fromSide/toSide. It used to resolve both endpoints to the elements' CENTRES,
-// and since links are painted after entities the segment was drawn visibly
-// through both shapes rather than between them. No diagnostic was raised, and
-// no test covered the geometry, so nothing caught it.
-//
-// getPathPoints already picks a side by quadrant in this exact case; the
-// endpoints now use the same heuristic, so the two agree.
-
 const board = (bx: number, by: number) => `sfl 1.2
 
 Model m {
@@ -21,17 +10,21 @@ Model m {
 }
 `;
 
-/** The link's path data, as emitted. */
 function linkPath(sfl: string): string {
   const { svg } = render(sfl, { idPrefix: 'v' });
   const match = svg.match(/<path[^>]*data-sf-role="link"[^>]*d="([^"]+)"/);
   return match ? match[1] : '';
 }
 
-/** First and last coordinate pair of a path, whatever the commands between. */
 function endpoints(d: string): { start: [number, number]; end: [number, number] } {
-  const nums = d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
-  return { start: [nums[0], nums[1]], end: [nums[nums.length - 2], nums[nums.length - 1]] };
+  const coordinates = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number);
+  if (!coordinates || coordinates.length < 4) {
+    throw new Error(`Path has no complete endpoints: ${d}`);
+  }
+  return {
+    start: [coordinates[0], coordinates[1]],
+    end: [coordinates[coordinates.length - 2], coordinates[coordinates.length - 1]],
+  };
 }
 
 describe('links with no explicit side', () => {

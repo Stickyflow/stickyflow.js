@@ -48,11 +48,9 @@ describe('Named Ports (§3.5, entity.portName)', () => {
 
   it('resolves the port to a world point via the bounding box (unrotated)', () => {
     const input = sflToRenderInput(SFL);
-    const resolved = input.links.find(l => l.link.id === 'rueckkopplung')!;
-    // amp1 at (0,0) 100x60, port "out" at (1, 0.5) -> right-edge midpoint.
-    expect(resolved.from).toEqual({ x: 100, y: 30 });
-    // amp2 at (300,0) 100x60, port "in_minus" at (0, 0.75).
-    expect(resolved.to).toEqual({ x: 300, y: 45 });
+    const resolved = input.links.find(link => link.link.id === 'rueckkopplung');
+    expect(resolved?.from).toEqual({ x: 100, y: 30 });
+    expect(resolved?.to).toEqual({ x: 300, y: 45 });
   });
 
   it('does not misdetect a plain (non-port) 2-segment endpoint as a Named Port', () => {

@@ -278,8 +278,10 @@ describe('render core runs headless through the package (real app source)', () =
 
     expect(svg).toContain('data-sf-label-gap="true"');
     const dasharray = svg.match(/id="sf-link-labeled"[^>]*stroke-dasharray="([^"]+)"/)?.[1];
-    expect(dasharray).toBeDefined();
-    const [dashBefore, gapLength] = dasharray!.split(' ').map(Number);
+    if (!dasharray) {
+      throw new Error('Label gap dash pattern is missing from the rendered link.');
+    }
+    const [dashBefore, gapLength] = dasharray.split(' ').map(Number);
     expect(dashBefore).toBeGreaterThan(0);
     expect(gapLength).toBeGreaterThan(0);
     // getTotalLength()-dependent consumers need the `d` itself untouched —
