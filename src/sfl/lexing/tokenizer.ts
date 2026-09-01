@@ -24,11 +24,17 @@ function token(type: TokenType, value: string, start: SourcePosition, extra: Par
 function readNumber(cursor: SourceCursor): Token {
   const start = cursor.position();
   let value = '';
-  if (cursor.peek() === '-') value += cursor.advance();
-  while (!cursor.done && isDigit(cursor.peek()!)) value += cursor.advance();
-  if (cursor.peek() === '.' && isDigit(cursor.peek(1)!)) {
+  if (cursor.peek() === '-') {
     value += cursor.advance();
-    while (!cursor.done && isDigit(cursor.peek()!)) value += cursor.advance();
+  }
+  while (isDigit(cursor.peek())) {
+    value += cursor.advance();
+  }
+  if (cursor.peek() === '.' && isDigit(cursor.peek(1))) {
+    value += cursor.advance();
+    while (isDigit(cursor.peek())) {
+      value += cursor.advance();
+    }
   }
   return token('number', value, start, { numberValue: Number(value) });
 }
@@ -36,7 +42,9 @@ function readNumber(cursor: SourceCursor): Token {
 function readIdentifier(cursor: SourceCursor): Token {
   const start = cursor.position();
   let value = '';
-  while (!cursor.done && isIdentPart(cursor.peek()!)) value += cursor.advance();
+  while (isIdentPart(cursor.peek())) {
+    value += cursor.advance();
+  }
   return token('ident', value, start);
 }
 
@@ -45,12 +53,17 @@ export function tokenizeSource(input: string): Token[] {
   const tokens: Token[] = [];
 
   while (!cursor.done) {
-    const character = cursor.peek()!;
+    const character = cursor.peek();
+    if (character === undefined) {
+      break;
+    }
     const start = cursor.position();
 
     if (character === '\r' || character === '\n') {
       cursor.advance();
-      if (character === '\r' && cursor.peek() === '\n') cursor.advance();
+      if (character === '\r' && cursor.peek() === '\n') {
+        cursor.advance();
+      }
       tokens.push(token('newline', '\n', start));
       continue;
     }
@@ -59,7 +72,9 @@ export function tokenizeSource(input: string): Token[] {
       continue;
     }
     if (character === '/' && cursor.peek(1) === '/') {
-      while (!cursor.done && cursor.peek() !== '\n' && cursor.peek() !== '\r') cursor.advance();
+      while (!cursor.done && cursor.peek() !== '\n' && cursor.peek() !== '\r') {
+        cursor.advance();
+      }
       continue;
     }
 
@@ -74,7 +89,7 @@ export function tokenizeSource(input: string): Token[] {
       tokens.push(token('string', string.value, start, { multiline: string.multiline }));
       continue;
     }
-    if (isDigit(character) || (character === '-' && isDigit(cursor.peek(1)!))) {
+    if (isDigit(character) || (character === '-' && isDigit(cursor.peek(1)))) {
       tokens.push(readNumber(cursor));
       continue;
     }
