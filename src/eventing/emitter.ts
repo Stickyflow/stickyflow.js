@@ -4,13 +4,12 @@ export class Emitter<EventMap extends object> {
   private handlers = new Map<keyof EventMap, Set<(event: never) => void>>();
 
   on<T extends keyof EventMap>(name: T, handler: (event: EventMap[T]) => void): Unsubscribe {
-    let set = this.handlers.get(name);
-    if (!set) {
-      set = new Set();
-      this.handlers.set(name, set);
-    }
-    set.add(handler as (event: never) => void);
-    return () => set!.delete(handler as (event: never) => void);
+    const eventHandlers = this.handlers.get(name) ?? new Set<(event: never) => void>();
+    this.handlers.set(name, eventHandlers);
+
+    const storedHandler = handler as (event: never) => void;
+    eventHandlers.add(storedHandler);
+    return () => eventHandlers.delete(storedHandler);
   }
 
   emit<T extends keyof EventMap>(name: T, event: EventMap[T]): void {

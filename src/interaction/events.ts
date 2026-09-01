@@ -1,5 +1,5 @@
+import { Emitter as GenericEmitter } from '../eventing/emitter';
 import type { Side } from '../model/geometry/router';
-import { Emitter as GenericEmitter } from '../shared/emitter';
 import type { OwnerRef } from '../viewer';
 
 export interface TextChangeEvent {
@@ -70,4 +70,4 @@ export interface InteractionEventMap {
 
 export type InteractionEventName = keyof InteractionEventMap;
 export class Emitter extends GenericEmitter<InteractionEventMap> {}
-export type { Unsubscribe } from '../shared/emitter';
+export type { Unsubscribe } from '../eventing/emitter';

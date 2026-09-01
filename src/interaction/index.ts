@@ -1,4 +1,4 @@
-import type { Unsubscribe } from '../shared/emitter';
+import type { Unsubscribe } from '../eventing/emitter';
 import type { Viewer } from '../viewer';
 import { bindChartValueDrag, type ChartValueDragHandle } from './chartValueDrag';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
@@ -39,7 +39,7 @@ export function bindEditing(viewer: Viewer): Interaction {
   };
 }
 
-export type { Unsubscribe } from '../shared/emitter';
+export type { Unsubscribe } from '../eventing/emitter';
 export type {
   ChartValueChangeEvent,
   DeleteEvent,

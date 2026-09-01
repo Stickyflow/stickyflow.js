@@ -1,5 +1,5 @@
+import { Emitter as GenericEmitter, type Unsubscribe } from '../eventing/emitter';
 import type { SceneRole } from '../rendering/renderScene';
-import { Emitter as GenericEmitter, type Unsubscribe } from '../shared/emitter';
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
