@@ -36,6 +36,11 @@ export const CHART_TYPES: ChartType[] = [
   'grid',
   'custom',
 ];
+
+export function isChartType(value: string | undefined): value is ChartType {
+  return value !== undefined && (CHART_TYPES as string[]).includes(value);
+}
+
 export interface ChartAxis {
   min: number;
   max: number;

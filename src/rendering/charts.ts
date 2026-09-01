@@ -1,4 +1,4 @@
-import { CHART_TYPES, type Chart } from '../model/charts';
+import type { Chart } from '../model/charts';
 import {
   buildChartAxes,
   buildChartGrid,
@@ -15,14 +15,6 @@ import type { RenderDiagnostic, RenderNode } from './scene';
 
 export function buildChart(chart: Chart, index: number, diagnostics: RenderDiagnostic[]): RenderNode[] {
   if (chart.is_visible === false) return [];
-  if (!CHART_TYPES.includes(chart.chart_type)) {
-    diagnostics.push({
-      severity: 'warning',
-      code: 'unsupported-chart-type',
-      entityId: chart.id,
-      message: `Unsupported chart type '${chart.chart_type}' — drawn as a plain series plot. Supported: ${CHART_TYPES.join(', ')}.`,
-    });
-  }
   const order = orderOf(chart, 20_000 + index);
   const layout = chartLayout(chart);
   const { bounds, plot, showLabels, showLegend } = layout;

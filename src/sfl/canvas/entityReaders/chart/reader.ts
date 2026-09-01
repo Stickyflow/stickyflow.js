@@ -1,3 +1,4 @@
+import { isChartType } from '../../../../model/charts';
 import type { SflBlock } from '../../../ast';
 import { asNumber, asString, childBlocks } from '../../readers';
 import { readAxis } from './axis';
@@ -7,15 +8,25 @@ import type { ChartData, ChartProperties } from './types';
 import { numberList, readBoolean, stringList } from './values';
 import { readChartZones } from './zones';
 
+const STACKED_MODES: ReadonlyArray<NonNullable<ChartData['stacked']>> = ['true', 'percent', 'waterfall'];
+
+function asChartType(value: string | undefined): ChartData['chartType'] {
+  return isChartType(value) ? value : 'bar';
+}
+
+function asStackedMode(value: string | undefined): ChartData['stacked'] {
+  return STACKED_MODES.find(mode => mode === value);
+}
+
 export function readChart(block: SflBlock, properties: ChartProperties): ChartData {
   const children = childBlocks(block);
   const axes = children.filter(child => child.kind === 'Axis');
   const stacked = asString(properties.get('stacked'));
   return {
-    chartType: (asString(properties.get('type')) as ChartData['chartType'] | undefined) ?? 'bar',
+    chartType: asChartType(asString(properties.get('type'))),
     categories: stringList(properties.get('categories')),
     areaOpacity: asNumber(properties.get('areaOpacity')),
-    stacked: stacked && stacked !== 'none' ? (stacked as ChartData['stacked']) : undefined,
+    stacked: asStackedMode(stacked),
     scale: asString(properties.get('scale')),
     interpolate: asString(properties.get('interpolate')) === 'idw' ? 'idw' : undefined,
     idwPower: asNumber(properties.get('idwPower')),

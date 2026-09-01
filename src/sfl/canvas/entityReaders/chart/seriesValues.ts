@@ -2,22 +2,42 @@ import type { SflValue } from '../../../ast';
 import { asNumber } from '../../readers';
 import type { ChartSeries } from './types';
 
-export function readSeriesValues(value?: SflValue): ChartSeries['values'] {
-  const values: number[] | number[][] = [];
-  if (value?.type !== 'list') {
-    return values as ChartSeries['values'];
+function asComponents(value: SflValue): number[] | undefined {
+  if (value.type !== 'list' || value.values.length < 2) {
+    return undefined;
   }
+  const components = value.values.map(asNumber);
+  return components.every((part): part is number => part !== undefined) ? components : undefined;
+}
+
+export function readSeriesValues(value?: SflValue): ChartSeries['values'] {
+  if (value?.type !== 'list') {
+    return [];
+  }
+
+  const scalars: number[] = [];
+  const tuples: number[][] = [];
+  let shape: 'scalar' | 'tuple' | undefined;
+
   for (const item of value.values) {
     if (item.type === 'number') {
-      (values as number[]).push(item.value);
-    } else if (item.type === 'list') {
-      const components = item.values.map(asNumber);
-      if (components.length >= 2 && components.every((part): part is number => part !== undefined)) {
-        (values as number[][]).push(components);
+      shape ??= 'scalar';
+      if (shape === 'scalar') {
+        scalars.push(item.value);
       }
+      continue;
+    }
+    const components = asComponents(item);
+    if (components === undefined) {
+      continue;
+    }
+    shape ??= 'tuple';
+    if (shape === 'tuple') {
+      tuples.push(components);
     }
   }
-  return values as ChartSeries['values'];
+
+  return shape === 'tuple' ? (tuples as ChartSeries['values']) : scalars;
 }
 
 export function readSeriesErrors(value?: SflValue): ChartSeries['error'] {
