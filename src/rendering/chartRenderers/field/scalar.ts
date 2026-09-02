@@ -73,7 +73,16 @@ function createIsoline(
   thresholdIndex: number,
 ): RenderNode | null {
   const { chart, plot, bounds, nextOrder } = context;
-  const segments = computeIsolineSegments(grid.values, grid.columns, grid.rows, plot.width, plot.height, threshold);
+  const segments = computeIsolineSegments(
+    {
+      values: grid.values,
+      columns: grid.columns,
+      rows: grid.rows,
+      width: plot.width,
+      height: plot.height,
+    },
+    threshold,
+  );
   if (!segments.length) {
     return null;
   }
