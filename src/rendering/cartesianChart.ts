@@ -11,7 +11,12 @@ export function buildCartesianChart(foundation: ChartFoundation): RenderNode[] {
 
   nodes.push(...renderChartMarks(context));
 
-  const ruleNodes = buildChartRules(chart, layout.plot, layout.bounds, renderOrder.current());
+  const ruleNodes = buildChartRules({
+    chart,
+    plot: layout.plot,
+    bounds: layout.bounds,
+    order: renderOrder.current(),
+  });
   nodes.push(...ruleNodes);
   renderOrder.advance(ruleNodes.length);
 
