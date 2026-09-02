@@ -13,47 +13,14 @@ interface Cursor {
   col: number;
 }
 
-function findValueEnd(source: MaskedSource, from: Cursor, lastRow: number, targetDepth: number): Cursor {
-  let depth = targetDepth;
-  for (let row = from.row; row <= lastRow; row++) {
-    const line = source.lines[row];
-    if (line === undefined) {
-      break;
-    }
-    for (let col = row === from.row ? from.col : 0; col < line.length; col++) {
-      const character = line[col];
-      if (character === '{') {
-        depth++;
-      } else if (character === '}') {
-        if (depth <= targetDepth) {
-          return { row, col };
-        }
-        depth--;
-      } else if (character === ';' && depth === targetDepth) {
-        return { row, col };
-      }
-    }
-    if (!source.continuesString[row]) {
-      return { row, col: line.length };
-    }
-  }
-  return { row: lastRow, col: source.lines[lastRow]?.length ?? 0 };
+interface LineDepthScan {
+  depthAt: number[];
+  endDepth: number;
 }
 
-function trimBack(masked: string[], from: Cursor, end: Cursor): Cursor {
-  let row = end.row;
-  let col = end.col;
-  for (;;) {
-    const line = masked[row] ?? '';
-    while (col > 0 && /\s/.test(line[col - 1])) {
-      col--;
-    }
-    if (col > 0 || row <= from.row) {
-      return { row, col };
-    }
-    row--;
-    col = masked[row]?.length ?? 0;
-  }
+interface ValueLineScan {
+  depth: number;
+  endColumn?: number;
 }
 
 export function findDirectProperty(
@@ -67,37 +34,109 @@ export function findDirectProperty(
     return null;
   }
 
-  const keyRe = new RegExp(`\\b${key}\\b\\s*:\\s*`, 'g');
+  const keyPattern = new RegExp(`\\b${key}\\b\\s*:\\s*`, 'g');
   let depth = 0;
-  for (let i = range.start; i <= range.end; i++) {
-    const line = source.lines[i];
+  for (let row = range.start; row <= range.end; row++) {
+    const line = source.lines[row];
     if (line === undefined) {
       break;
     }
-
-    const depthAt: number[] = new Array(line.length);
-    let running = depth;
-    for (let c = 0; c < line.length; c++) {
-      depthAt[c] = running;
-      if (line[c] === '{') {
-        running++;
-      } else if (line[c] === '}') {
-        running--;
-      }
+    const depthScan = scanLineDepths(line, depth);
+    const valueStart = findPropertyValueStart(line, keyPattern, depthScan.depthAt, targetDepth);
+    if (valueStart !== null) {
+      return createPropertySpan(source, { row, col: valueStart }, range.end, targetDepth);
     }
-
-    keyRe.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    // biome-ignore lint/suspicious/noAssignInExpressions: canonical RegExp.exec loop
-    while ((match = keyRe.exec(line))) {
-      if (depthAt[match.index] === targetDepth) {
-        const from: Cursor = { row: i, col: match.index + match[0].length };
-        const end = trimBack(source.lines, from, findValueEnd(source, from, range.end, targetDepth));
-        return { line: i, start: from.col, endLine: end.row, end: end.col };
-      }
-      keyRe.lastIndex = match.index + 1;
-    }
-    depth = running;
+    depth = depthScan.endDepth;
   }
   return null;
+}
+
+function scanLineDepths(line: string, startDepth: number): LineDepthScan {
+  const depthAt = new Array<number>(line.length);
+  let depth = startDepth;
+  for (let column = 0; column < line.length; column++) {
+    depthAt[column] = depth;
+    if (line[column] === '{') {
+      depth++;
+    } else if (line[column] === '}') {
+      depth--;
+    }
+  }
+  return { depthAt, endDepth: depth };
+}
+
+function findPropertyValueStart(
+  line: string,
+  keyPattern: RegExp,
+  depthAt: number[],
+  targetDepth: number,
+): number | null {
+  keyPattern.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  // biome-ignore lint/suspicious/noAssignInExpressions: canonical RegExp.exec loop
+  while ((match = keyPattern.exec(line))) {
+    if (depthAt[match.index] === targetDepth) {
+      return match.index + match[0].length;
+    }
+    keyPattern.lastIndex = match.index + 1;
+  }
+  return null;
+}
+
+function createPropertySpan(source: MaskedSource, from: Cursor, lastRow: number, targetDepth: number): PropertySpan {
+  const end = trimBack(source.lines, from, findValueEnd(source, from, lastRow, targetDepth));
+  return { line: from.row, start: from.col, endLine: end.row, end: end.col };
+}
+
+function findValueEnd(source: MaskedSource, from: Cursor, lastRow: number, targetDepth: number): Cursor {
+  let depth = targetDepth;
+  for (let row = from.row; row <= lastRow; row++) {
+    const line = source.lines[row];
+    if (line === undefined) {
+      break;
+    }
+    const lineScan = scanValueLine(line, row === from.row ? from.col : 0, depth, targetDepth);
+    if (lineScan.endColumn !== undefined) {
+      return { row, col: lineScan.endColumn };
+    }
+    if (!source.continuesString[row]) {
+      return { row, col: line.length };
+    }
+    depth = lineScan.depth;
+  }
+  return { row: lastRow, col: source.lines[lastRow]?.length ?? 0 };
+}
+
+function scanValueLine(line: string, startColumn: number, startDepth: number, targetDepth: number): ValueLineScan {
+  let depth = startDepth;
+  for (let column = startColumn; column < line.length; column++) {
+    const character = line[column];
+    if (character === '{') {
+      depth++;
+    } else if (character === '}') {
+      if (depth <= targetDepth) {
+        return { depth, endColumn: column };
+      }
+      depth--;
+    } else if (character === ';' && depth === targetDepth) {
+      return { depth, endColumn: column };
+    }
+  }
+  return { depth };
+}
+
+function trimBack(masked: string[], from: Cursor, end: Cursor): Cursor {
+  let row = end.row;
+  let column = end.col;
+  for (;;) {
+    const line = masked[row] ?? '';
+    while (column > 0 && /\s/.test(line[column - 1])) {
+      column--;
+    }
+    if (column > 0 || row <= from.row) {
+      return { row, col: column };
+    }
+    row--;
+    column = masked[row]?.length ?? 0;
+  }
 }
