@@ -10,3 +10,8 @@ export interface PieGeometry {
   innerRadius: number;
   total: number;
 }
+
+export interface PieSliceAngles {
+  start: number;
+  end: number;
+}

@@ -1,25 +1,43 @@
 import { pieArcPoint } from './geometry';
-import type { PieGeometry } from './types';
+import type { PieGeometry, PiePoint, PieSliceAngles } from './types';
 
-export function createPieSlicePath(geometry: PieGeometry, startAngle: number, endAngle: number): string {
-  const outerStart = pieArcPoint(geometry, startAngle, geometry.outerRadius);
-  const outerEnd = pieArcPoint(geometry, endAngle, geometry.outerRadius);
-  const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
-  if (geometry.innerRadius > 0) {
-    return createDonutSlicePath(geometry, startAngle, endAngle, largeArc, outerStart, outerEnd);
-  }
-  return `M ${geometry.centerX} ${geometry.centerY} L ${outerStart.x} ${outerStart.y} A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} Z`;
+interface PieSliceArc {
+  outerStart: PiePoint;
+  outerEnd: PiePoint;
+  innerEnd: PiePoint;
+  innerStart: PiePoint;
+  largeArc: number;
 }
 
-function createDonutSlicePath(
-  geometry: PieGeometry,
-  startAngle: number,
-  endAngle: number,
-  largeArc: number,
-  outerStart: { x: number; y: number },
-  outerEnd: { x: number; y: number },
-): string {
-  const innerEnd = pieArcPoint(geometry, endAngle, geometry.innerRadius);
-  const innerStart = pieArcPoint(geometry, startAngle, geometry.innerRadius);
-  return `M ${outerStart.x} ${outerStart.y} A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerEnd.x} ${innerEnd.y} A ${geometry.innerRadius} ${geometry.innerRadius} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y} Z`;
+export function createPieSlicePath(geometry: PieGeometry, angles: PieSliceAngles): string {
+  const arc = createPieSliceArc(geometry, angles);
+  if (geometry.innerRadius > 0) {
+    return createDonutSlicePath(geometry, arc);
+  }
+  return [
+    `M ${geometry.centerX} ${geometry.centerY}`,
+    `L ${arc.outerStart.x} ${arc.outerStart.y}`,
+    `A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${arc.largeArc} 1 ${arc.outerEnd.x} ${arc.outerEnd.y}`,
+    'Z',
+  ].join(' ');
+}
+
+function createPieSliceArc(geometry: PieGeometry, angles: PieSliceAngles): PieSliceArc {
+  return {
+    outerStart: pieArcPoint(geometry, angles.start, geometry.outerRadius),
+    outerEnd: pieArcPoint(geometry, angles.end, geometry.outerRadius),
+    innerEnd: pieArcPoint(geometry, angles.end, geometry.innerRadius),
+    innerStart: pieArcPoint(geometry, angles.start, geometry.innerRadius),
+    largeArc: angles.end - angles.start > Math.PI ? 1 : 0,
+  };
+}
+
+function createDonutSlicePath(geometry: PieGeometry, arc: PieSliceArc): string {
+  return [
+    `M ${arc.outerStart.x} ${arc.outerStart.y}`,
+    `A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${arc.largeArc} 1 ${arc.outerEnd.x} ${arc.outerEnd.y}`,
+    `L ${arc.innerEnd.x} ${arc.innerEnd.y}`,
+    `A ${geometry.innerRadius} ${geometry.innerRadius} 0 ${arc.largeArc} 0 ${arc.innerStart.x} ${arc.innerStart.y}`,
+    'Z',
+  ].join(' ');
 }

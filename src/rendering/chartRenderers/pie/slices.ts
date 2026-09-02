@@ -4,42 +4,49 @@ import { finite, paint } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import { createPieSlicePath } from './path';
-import type { PieGeometry } from './types';
+import type { PieGeometry, PieSliceAngles } from './types';
 
 const START_ANGLE = -Math.PI / 2;
 const MAXIMUM_SWEEP = Math.PI * 2 * (359.999 / 360);
 
+interface PieSliceMark {
+  seriesId: string;
+  color: NonNullable<ChartSeries['color']>;
+  angles: PieSliceAngles;
+}
+
 export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
-  const nodes: RenderNode[] = [];
+  return createPieSliceMarks(context.chart.series, geometry.total).map(mark =>
+    createSliceNode(context, geometry, mark),
+  );
+}
+
+function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSliceMark[] {
+  const marks: PieSliceMark[] = [];
   let angle = START_ANGLE;
-  context.chart.series.forEach((series, seriesIndex) => {
+  seriesList.forEach((series, seriesIndex) => {
     const value = Math.max(0, finite((series.values as number[])[0], 0));
-    const sweep = (value / geometry.total) * Math.PI * 2;
+    const sweep = (value / total) * Math.PI * 2;
     if (sweep > 0) {
-      nodes.push(createSliceNode(context, geometry, series, seriesIndex, angle, sweep));
+      marks.push({
+        seriesId: series.id,
+        color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
+        angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
+      });
       angle += sweep;
     }
   });
-  return nodes;
+  return marks;
 }
 
-function createSliceNode(
-  context: ChartRenderContext,
-  geometry: PieGeometry,
-  series: ChartSeries,
-  seriesIndex: number,
-  startAngle: number,
-  sweep: number,
-): RenderNode {
+function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mark: PieSliceMark): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
-  const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
-  const endAngle = startAngle + Math.min(sweep, MAXIMUM_SWEEP);
   return {
     type: 'path',
-    id: `chart-pie-slice-${chart.id}-${series.id}`,
+    id: `chart-pie-slice-${chart.id}-${mark.seriesId}`,
     order: nextOrder(),
     bounds,
-    d: createPieSlicePath(geometry, startAngle, endAngle),
-    style: { fill: paint(color, diagnostics, chart.id) },
+    d: createPieSlicePath(geometry, mark.angles),
+    style: { fill: paint(mark.color, diagnostics, chart.id) },
   };
 }
