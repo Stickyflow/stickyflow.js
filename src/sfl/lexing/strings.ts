@@ -25,16 +25,12 @@ function dedent(text: string): string {
 }
 
 function readLongString(cursor: SourceCursor, start: SourcePosition): string {
-  cursor.advance();
-  cursor.advance();
-  cursor.advance();
+  consumeLongStringDelimiter(cursor);
   let body = '';
 
   while (!cursor.done) {
     if (cursor.startsWith('"""')) {
-      cursor.advance();
-      cursor.advance();
-      cursor.advance();
+      consumeLongStringDelimiter(cursor);
       break;
     }
     body += cursor.advance();
@@ -44,6 +40,12 @@ function readLongString(cursor: SourceCursor, start: SourcePosition): string {
   }
 
   return dedent(body.replace(/^\r?\n/, '').replace(/\r?\n[ \t]*$/, ''));
+}
+
+function consumeLongStringDelimiter(cursor: SourceCursor): void {
+  cursor.advance();
+  cursor.advance();
+  cursor.advance();
 }
 
 function readShortString(cursor: SourceCursor, start: SourcePosition): string {
@@ -57,25 +59,25 @@ function readShortString(cursor: SourceCursor, start: SourcePosition): string {
     if (character === '\n' || character === '\r') {
       throw new SflLexError('newline in short string (use """ for multiline)', start.line, start.col);
     }
-    if (character !== '\\') {
-      value += character;
-      continue;
-    }
-
-    const escaped = cursor.advance();
-    if (escaped === '"') {
-      value += '"';
-    } else if (escaped === '\\') {
-      value += '\\';
-    } else if (escaped === 'n') {
-      value += '\n';
-    } else if (escaped === 't') {
-      value += '\t';
-    } else {
-      throw new SflLexError(`invalid escape '\\${escaped}'`, start.line, start.col);
-    }
+    value += character === '\\' ? readEscapedCharacter(cursor, start) : character;
   }
   throw new SflLexError('unterminated string', start.line, start.col);
+}
+
+function readEscapedCharacter(cursor: SourceCursor, start: SourcePosition): string {
+  const escaped = cursor.advance();
+  switch (escaped) {
+    case '"':
+      return '"';
+    case '\\':
+      return '\\';
+    case 'n':
+      return '\n';
+    case 't':
+      return '\t';
+    default:
+      throw new SflLexError(`invalid escape '\\${escaped}'`, start.line, start.col);
+  }
 }
 
 export function readString(cursor: SourceCursor, start: SourcePosition): { value: string; multiline: boolean } {
