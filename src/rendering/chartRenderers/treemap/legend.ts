@@ -4,57 +4,84 @@ import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { TreemapLayout } from './types';
 
+interface TreemapLegendItem {
+  zone: ChartZone;
+  zoneIndex: number;
+  lowerBound: number;
+  upperBound: number;
+  x: number;
+  y: number;
+  width: number;
+  labelHeight: number;
+}
+
+interface TreemapLegendOrigin {
+  x: number;
+  y: number;
+}
+
 export function renderTreemapLegend(context: ChartRenderContext, layout: TreemapLayout): RenderNode[] {
   if (layout.legendHeight <= 0) {
     return [];
   }
 
-  const itemWidths = layout.zones.map(zone => legendItemWidth(zone, layout.fontSize));
-  const nodes: RenderNode[] = [];
-  let x = context.plot.x;
-  layout.zones.forEach((zone, zoneIndex) => {
-    nodes.push(...createLegendItem(context, layout, zone, zoneIndex, x, itemWidths[zoneIndex]));
-    x += itemWidths[zoneIndex];
-  });
-  return nodes;
+  const origin = { x: context.plot.x, y: context.plot.y + layout.gridHeight + 6 };
+  return createTreemapLegendItems(layout, origin).flatMap(item => renderTreemapLegendItem(context, item));
 }
 
 function legendItemWidth(zone: ChartZone, fontSize: number): number {
   return Math.max(64, (zone.label?.length ?? 0) * (fontSize - 1) * 0.55 + 40);
 }
 
-function createLegendItem(
-  context: ChartRenderContext,
-  layout: TreemapLayout,
-  zone: ChartZone,
-  zoneIndex: number,
-  x: number,
-  width: number,
-): RenderNode[] {
-  const { chart, plot, bounds, nextOrder } = context;
-  const lowerBound = layout.bands[zoneIndex];
-  const upperBound = layout.bands[zoneIndex + 1];
-  const y = plot.y + layout.gridHeight + 6;
-  return [
-    {
-      type: 'rect',
-      id: `chart-treemap-legend-swatch-${chart.id}-${zoneIndex}`,
-      order: nextOrder(),
-      bounds,
+function createTreemapLegendItems(layout: TreemapLayout, origin: TreemapLegendOrigin): TreemapLegendItem[] {
+  const items: TreemapLegendItem[] = [];
+  let x = origin.x;
+  layout.zones.forEach((zone, zoneIndex) => {
+    const width = legendItemWidth(zone, layout.fontSize);
+    items.push({
+      zone,
+      zoneIndex,
+      lowerBound: layout.bands[zoneIndex],
+      upperBound: layout.bands[zoneIndex + 1],
       x,
-      y: y + 2,
-      width: 10,
-      height: 10,
-      rx: 2,
-      style: { fill: { kind: 'solid', color: zone.color ?? DEFAULT_ZONE_FILL } },
-    },
-    chartText({
-      id: `chart-treemap-legend-${chart.id}-${zoneIndex}`,
-      order: nextOrder(),
-      bounds,
-      frame: { x: x + 15, y, width: width - 15, height: layout.fontSize },
-      text: zone.label ? `${zone.label} (${lowerBound}-${upperBound})` : `${lowerBound}-${upperBound}`,
-      chart,
-    }),
-  ];
+      y: origin.y,
+      width,
+      labelHeight: layout.fontSize,
+    });
+    x += width;
+  });
+  return items;
+}
+
+function renderTreemapLegendItem(context: ChartRenderContext, item: TreemapLegendItem): RenderNode[] {
+  return [createLegendSwatch(context, item), createLegendLabel(context, item)];
+}
+
+function createLegendSwatch(context: ChartRenderContext, item: TreemapLegendItem): RenderNode {
+  const { chart, bounds, nextOrder } = context;
+  return {
+    type: 'rect',
+    id: `chart-treemap-legend-swatch-${chart.id}-${item.zoneIndex}`,
+    order: nextOrder(),
+    bounds,
+    x: item.x,
+    y: item.y + 2,
+    width: 10,
+    height: 10,
+    rx: 2,
+    style: { fill: { kind: 'solid', color: item.zone.color ?? DEFAULT_ZONE_FILL } },
+  };
+}
+
+function createLegendLabel(context: ChartRenderContext, item: TreemapLegendItem): RenderNode {
+  const { chart, bounds, nextOrder } = context;
+  const range = `${item.lowerBound}-${item.upperBound}`;
+  return chartText({
+    id: `chart-treemap-legend-${chart.id}-${item.zoneIndex}`,
+    order: nextOrder(),
+    bounds,
+    frame: { x: item.x + 15, y: item.y, width: item.width - 15, height: item.labelHeight },
+    text: item.zone.label ? `${item.zone.label} (${range})` : range,
+    chart,
+  });
 }
