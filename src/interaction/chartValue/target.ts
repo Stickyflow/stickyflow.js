@@ -1,12 +1,16 @@
 import { findOwnerNode, isCameraGesture, isPrimary, resolveOwner } from '../../domContract';
 import { parseValueScale } from './scale';
-import type { ChartValueDragState } from './types';
+import type { ChartValueDragState, ValueScale } from './types';
 
-function chartGeometry(svg: SVGSVGElement, ownerId: string, series: string, index: number): SVGGraphicsElement | null {
+type ChartValueTarget = Pick<ChartValueDragState, 'owner' | 'series' | 'index'>;
+
+type ChartValueGeometry = Pick<ChartValueDragState, 'element' | 'baseY' | 'isBar'>;
+
+function chartGeometry(svg: SVGSVGElement, target: ChartValueTarget): SVGGraphicsElement | null {
   const selector =
-    `[data-sf-id="${CSS.escape(ownerId)}"]` +
-    `[data-sf-series="${CSS.escape(series)}"]` +
-    `[data-sf-value-index="${index}"]`;
+    `[data-sf-id="${CSS.escape(target.owner.id)}"]` +
+    `[data-sf-series="${CSS.escape(target.series)}"]` +
+    `[data-sf-value-index="${target.index}"]`;
   return (
     [...svg.querySelectorAll<SVGGraphicsElement>(selector)].find(element => {
       const tag = element.tagName.toLowerCase();
@@ -16,13 +20,52 @@ function chartGeometry(svg: SVGSVGElement, ownerId: string, series: string, inde
 }
 
 export function resolveChartValueDrag(svg: SVGSVGElement, event: PointerEvent): ChartValueDragState | null {
-  if (event.button !== 0 || isCameraGesture(event)) {
+  if (!isChartValuePointer(event)) {
     return null;
   }
-  const mark = (event.target as Element | null)?.closest?.('[data-sf-value-index]') as SVGGraphicsElement | null;
+  const mark = findChartValueMark(event);
   if (!mark) {
     return null;
   }
+  const target = readChartValueTarget(mark);
+  if (!target) {
+    return null;
+  }
+  const scale = parseValueScale(findOwnerNode(svg, target.owner.id, isPrimary));
+  const geometry = scale ? resolveChartValueGeometry(svg, target, scale) : null;
+  if (!scale || !geometry) {
+    return null;
+  }
+  mark.setPointerCapture?.(event.pointerId);
+  return createChartValueDragState(target, scale, geometry, event.pointerId);
+}
+
+function createChartValueDragState(
+  target: ChartValueTarget,
+  scale: ValueScale,
+  geometry: ChartValueGeometry,
+  pointerId: number,
+): ChartValueDragState {
+  return {
+    owner: target.owner,
+    series: target.series,
+    index: target.index,
+    scale,
+    ...geometry,
+    pointerId,
+    moved: false,
+  };
+}
+
+function isChartValuePointer(event: PointerEvent): boolean {
+  return event.button === 0 && !isCameraGesture(event);
+}
+
+function findChartValueMark(event: PointerEvent): SVGGraphicsElement | null {
+  return (event.target as Element | null)?.closest?.('[data-sf-value-index]') as SVGGraphicsElement | null;
+}
+
+function readChartValueTarget(mark: SVGGraphicsElement): ChartValueTarget | null {
   const owner = resolveOwner(mark);
   if (owner?.role !== 'chart') {
     return null;
@@ -32,11 +75,15 @@ export function resolveChartValueDrag(svg: SVGSVGElement, event: PointerEvent): 
   if (!series || !Number.isInteger(index)) {
     return null;
   }
-  const scale = parseValueScale(findOwnerNode(svg, owner.id, isPrimary));
-  if (!scale) {
-    return null;
-  }
-  const element = chartGeometry(svg, owner.id, series, index);
+  return { owner, series, index };
+}
+
+function resolveChartValueGeometry(
+  svg: SVGSVGElement,
+  target: ChartValueTarget,
+  scale: ValueScale,
+): ChartValueGeometry | null {
+  const element = chartGeometry(svg, target);
   if (!element) {
     return null;
   }
@@ -47,6 +94,5 @@ export function resolveChartValueDrag(svg: SVGSVGElement, event: PointerEvent): 
   if (!Number.isFinite(baseY)) {
     return null;
   }
-  mark.setPointerCapture?.(event.pointerId);
-  return { owner, series, index, scale, element, baseY, isBar, pointerId: event.pointerId, moved: false };
+  return { element, baseY, isBar };
 }
