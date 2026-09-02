@@ -11,11 +11,12 @@ export function createViewer(options: ViewerOptions): Viewer {
   return viewer;
 }
 
-export type { ViewBox } from './display';
+export type { SceneDiff, ViewBox } from './display';
 export type {
   Modifiers,
   OwnerPointerEvent,
   OwnerRef,
+  SceneDiffEvent,
   SelectionChangeEvent,
   Unsubscribe,
   ViewerErrorEvent,

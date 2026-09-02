@@ -3,7 +3,8 @@ import { parseSvg, readViewBox } from './display/svgDocument';
 import type { DisplayHandle, ViewBox } from './display/types';
 import { ViewportController } from './display/viewport';
 
-export type { DisplayHandle, ViewBox } from './display/types';
+export { classifySceneDiff } from './display/classifySceneDiff';
+export type { DisplayHandle, SceneDiff, ViewBox } from './display/types';
 
 export function mountDisplay(container: HTMLElement, svgString: string): DisplayHandle {
   const svg = parseSvg(svgString);
@@ -22,8 +23,9 @@ export function mountDisplay(container: HTMLElement, svgString: string): Display
     panBy: (dxPixels, dyPixels) => viewport.panBy(dxPixels, dyPixels),
     updateContent(nextSvgString) {
       const next = parseSvg(nextSvgString);
-      patchDisplayContent(svg, next);
+      const diff = patchDisplayContent(svg, next);
       viewport.setNatural(readViewBox(next));
+      return diff;
     },
     destroy() {
       svg.remove();
