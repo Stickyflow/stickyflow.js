@@ -50,7 +50,9 @@ describe('render core runs headless through the package (real app source)', () =
 
     const { svg, width, height } = renderCanvas(input);
 
-    for (let i = 0; i < types.length; i++) expect(svg).toContain(`sf-shape-${i}`);
+    for (let i = 0; i < types.length; i++) {
+      expect(svg).toContain(`sf-shape-${i}`);
+    }
     expect(svg).toContain('&lt;rectangle&gt;');
     expect(svg).not.toContain('[object Object]');
     expect(svg).toMatch(/<(rect|ellipse|path) /);

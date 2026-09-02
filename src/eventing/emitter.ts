@@ -14,7 +14,9 @@ export class Emitter<EventMap extends object> {
 
   emit<T extends keyof EventMap>(name: T, event: EventMap[T]): void {
     const registered = this.handlers.get(name);
-    if (registered === undefined) return;
+    if (registered === undefined) {
+      return;
+    }
 
     for (const handler of [...registered]) {
       try {

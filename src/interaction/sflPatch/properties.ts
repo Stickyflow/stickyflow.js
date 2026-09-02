@@ -24,7 +24,9 @@ export function setOrInsertLayoutTuples(
   if (!layout && range.start === range.end && /\blayout\s*\{/.test(maskedStart)) {
     for (const [key, a, b] of props) {
       const existing = findDirectProperty(lines, range, key, 2);
-      if (!existing) continue;
+      if (!existing) {
+        continue;
+      }
       replacePropertyValue(lines, existing, `${round1(a)}, ${round1(b)}`);
     }
     return;

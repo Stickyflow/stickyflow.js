@@ -5,7 +5,9 @@ export interface HexBin {
 }
 
 export function computeHexBins(points: Array<{ x: number; y: number }>, radius: number): HexBin[] {
-  if (radius <= 0 || points.length === 0) return [];
+  if (radius <= 0 || points.length === 0) {
+    return [];
+  }
   const dx = radius * 1.5,
     dy = radius * Math.sqrt(3);
   const bins = new Map<string, HexBin>();
@@ -16,8 +18,11 @@ export function computeHexBins(points: Array<{ x: number; y: number }>, radius: 
     const row = Math.round((y - rowOffset) / dy);
     const key = `${col}:${row}`;
     const existing = bins.get(key);
-    if (existing) existing.count++;
-    else bins.set(key, { cx: col * dx, cy: row * dy + rowOffset, count: 1 });
+    if (existing) {
+      existing.count++;
+    } else {
+      bins.set(key, { cx: col * dx, cy: row * dy + rowOffset, count: 1 });
+    }
   }
 
   return [...bins.values()];

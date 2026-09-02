@@ -1,5 +1,7 @@
 export function roundOrthogonalPath(pts: number[], radius: number): number[] {
-  if (pts.length < 6) return pts;
+  if (pts.length < 6) {
+    return pts;
+  }
 
   const out: number[] = [];
   const n = pts.length / 2 - 1;
@@ -60,8 +62,12 @@ export function roundOrthogonalPath(pts: number[], radius: number): number[] {
     let endAngle = a2;
 
     let diff = endAngle - startAngle;
-    if (diff > Math.PI) diff -= 2 * Math.PI;
-    if (diff < -Math.PI) diff += 2 * Math.PI;
+    if (diff > Math.PI) {
+      diff -= 2 * Math.PI;
+    }
+    if (diff < -Math.PI) {
+      diff += 2 * Math.PI;
+    }
     endAngle = startAngle + diff;
 
     out.push(p1x, p1y);

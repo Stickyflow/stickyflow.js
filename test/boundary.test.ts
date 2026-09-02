@@ -18,7 +18,9 @@ const TIER_RANK: Record<string, number> = {
 function tsFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) return tsFiles(full);
+    if (entry.isDirectory()) {
+      return tsFiles(full);
+    }
     return entry.name.endsWith('.ts') ? [full] : [];
   });
 }
@@ -47,7 +49,9 @@ describe('tier layering', () => {
       for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
         const target = posixRelative(resolve(dirname(file), specifier));
         const targetRank = TIER_RANK[tierOfPath(target)];
-        if (targetRank > ownRank) offenders.push(`${from} -> ${target}`);
+        if (targetRank > ownRank) {
+          offenders.push(`${from} -> ${target}`);
+        }
       }
     }
     expect(offenders).toEqual([]);

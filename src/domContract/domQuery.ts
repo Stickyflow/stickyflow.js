@@ -4,7 +4,11 @@ export function findOwnerNode(
   predicate: (el: Element) => boolean,
 ): SVGGraphicsElement | null {
   const nodes = svg.querySelectorAll(`[data-sf-id="${CSS.escape(id)}"]`);
-  for (const el of nodes) if (predicate(el)) return el as unknown as SVGGraphicsElement;
+  for (const el of nodes) {
+    if (predicate(el)) {
+      return el as unknown as SVGGraphicsElement;
+    }
+  }
   return null;
 }
 
@@ -19,7 +23,9 @@ export const isTextLabel = (el: Element): boolean =>
 export function screenRectOf(el: SVGGraphicsElement): { left: number; top: number; width: number; height: number } {
   const bbox = el.getBBox();
   const ctm = el.getScreenCTM();
-  if (!ctm) return { left: 0, top: 0, width: 0, height: 0 };
+  if (!ctm) {
+    return { left: 0, top: 0, width: 0, height: 0 };
+  }
   const topLeft = new DOMPoint(bbox.x, bbox.y).matrixTransform(ctm);
   const bottomRight = new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height).matrixTransform(ctm);
   return { left: topLeft.x, top: topLeft.y, width: bottomRight.x - topLeft.x, height: bottomRight.y - topLeft.y };
@@ -39,7 +45,9 @@ export function findSnapCandidateBounds(
   svg.querySelectorAll('[data-sf-primary][data-sf-id]').forEach(node => {
     const id = node.getAttribute('data-sf-id');
     const role = node.getAttribute('data-sf-role');
-    if (!id || role === 'link' || excludeIds.has(id)) return;
+    if (!id || role === 'link' || excludeIds.has(id)) {
+      return;
+    }
     const bbox = (node as unknown as SVGGraphicsElement).getBBox();
     results.push({ x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height });
   });

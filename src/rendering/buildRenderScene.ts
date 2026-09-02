@@ -10,7 +10,9 @@ import { buildShape } from './sceneRenderers/shape';
 import { buildTable } from './sceneRenderers/table';
 
 function sceneBounds(nodes: RenderNode[]): Bounds {
-  if (!nodes.length) return EMPTY_BOUNDS;
+  if (!nodes.length) {
+    return EMPTY_BOUNDS;
+  }
   return {
     minX: Math.min(...nodes.map(n => n.bounds.minX)),
     minY: Math.min(...nodes.map(n => n.bounds.minY)),

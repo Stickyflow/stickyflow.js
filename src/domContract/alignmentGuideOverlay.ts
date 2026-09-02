@@ -18,7 +18,9 @@ export function updateAlignmentGuides(svg: SVGSVGElement, guides: GuideLine[], c
   svg.querySelectorAll('[data-sf-alignment-guides]').forEach(g => {
     g.remove();
   });
-  if (!guides.length) return;
+  if (!guides.length) {
+    return;
+  }
   const doc = svg.ownerDocument;
   const g = el(doc, 'g');
   g.setAttribute('data-sf-alignment-guides', '');

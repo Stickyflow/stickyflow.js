@@ -16,11 +16,17 @@ export function parseRichLine(line: string): TextRun[] {
   let match: RegExpExecArray | null;
   // biome-ignore lint/suspicious/noAssignInExpressions: canonical RegExp.exec loop
   while ((match = BOLD_PATTERN.exec(line))) {
-    if (match.index > lastIndex) runs.push({ text: line.slice(lastIndex, match.index), bold: false });
-    if (match[1]) runs.push({ text: match[1], bold: true });
+    if (match.index > lastIndex) {
+      runs.push({ text: line.slice(lastIndex, match.index), bold: false });
+    }
+    if (match[1]) {
+      runs.push({ text: match[1], bold: true });
+    }
     lastIndex = BOLD_PATTERN.lastIndex;
   }
-  if (lastIndex < line.length) runs.push({ text: line.slice(lastIndex), bold: false });
+  if (lastIndex < line.length) {
+    runs.push({ text: line.slice(lastIndex), bold: false });
+  }
   return runs.length ? runs : [{ text: line, bold: false }];
 }
 
@@ -37,7 +43,9 @@ function runsToWords(runs: TextRun[]): RichWord[] {
   const words: RichWord[] = [];
   for (const run of runs) {
     for (const word of run.text.split(/\s+/)) {
-      if (word) words.push({ text: word, bold: run.bold });
+      if (word) {
+        words.push({ text: word, bold: run.bold });
+      }
     }
   }
   return words;
@@ -50,7 +58,9 @@ export function wrapRichLine(
   spaceWidth: number,
 ): RichWord[][] {
   const words = runsToWords(runs);
-  if (!words.length) return [[]];
+  if (!words.length) {
+    return [[]];
+  }
   const lines: RichWord[][] = [];
   let current: RichWord[] = [];
   let currentWidth = 0;

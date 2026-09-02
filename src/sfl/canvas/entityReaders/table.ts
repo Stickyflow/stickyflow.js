@@ -20,7 +20,9 @@ function readCells(block: SflBlock, columns: Columns): Record<string, string | b
 
 function readBlockTable(block: SflBlock): TableData | undefined {
   const columnsBlock = childBlocks(block).find(child => child.kind === 'Columns');
-  if (!columnsBlock) return undefined;
+  if (!columnsBlock) {
+    return undefined;
+  }
 
   const columns: Columns = childBlocks(columnsBlock)
     .filter(child => child.kind === 'Column')
@@ -52,9 +54,13 @@ function readBlockTable(block: SflBlock): TableData | undefined {
 
 function readLegacyTable(props: Properties): TableData | undefined {
   const columnsValue = props.get('columns');
-  if (columnsValue?.type !== 'list') return undefined;
+  if (columnsValue?.type !== 'list') {
+    return undefined;
+  }
   const columns: Columns = columnsValue.values.flatMap((value, index) => {
-    if (value.type !== 'list') return [];
+    if (value.type !== 'list') {
+      return [];
+    }
     const label = asString(value.values[0]);
     const width = asNumber(value.values[1]);
     const type = asString(value.values[2]);
@@ -66,7 +72,9 @@ function readLegacyTable(props: Properties): TableData | undefined {
   const rows =
     rowsValue?.type === 'list'
       ? rowsValue.values.flatMap((value, rowIndex) => {
-          if (value.type !== 'list') return [];
+          if (value.type !== 'list') {
+            return [];
+          }
           const cells = Object.fromEntries(
             columns.map((column, index) => {
               const text = asString(value.values[index]);
@@ -86,6 +94,8 @@ export function readTable(
   presentation: Record<string, string>,
 ): SflEntityOut['table'] {
   const rowHeight = asNumber(layoutProp(block, 'rowHeight'));
-  if (rowHeight !== undefined) presentation.rowHeight = String(rowHeight);
+  if (rowHeight !== undefined) {
+    presentation.rowHeight = String(rowHeight);
+  }
   return readBlockTable(block) ?? readLegacyTable(props);
 }

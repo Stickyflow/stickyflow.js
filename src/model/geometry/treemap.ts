@@ -8,7 +8,9 @@ export interface TreemapRect<T> {
 
 function worst(rowValues: number[], length: number): number {
   const sum = rowValues.reduce((s, v) => s + v, 0);
-  if (sum <= 0 || length <= 0) return Infinity;
+  if (sum <= 0 || length <= 0) {
+    return Infinity;
+  }
   const max = Math.max(...rowValues),
     min = Math.min(...rowValues);
   return Math.max((length * length * max) / (sum * sum), (sum * sum) / (length * length * min));
@@ -22,9 +24,13 @@ export function squarifyTreemap<T extends { value: number }>(
   height: number,
 ): TreemapRect<T>[] {
   const positive = items.filter(item => item.value > 0);
-  if (!positive.length || width <= 0 || height <= 0) return [];
+  if (!positive.length || width <= 0 || height <= 0) {
+    return [];
+  }
   const total = positive.reduce((s, item) => s + item.value, 0);
-  if (total <= 0) return [];
+  if (total <= 0) {
+    return [];
+  }
   const scale = (width * height) / total;
   const sorted = [...positive].sort((a, b) => b.value - a.value);
 
@@ -46,7 +52,9 @@ export function squarifyTreemap<T extends { value: number }>(
         row.push(remaining[i]);
         rowValues = candidateValues;
         i++;
-      } else break;
+      } else {
+        break;
+      }
     }
     remaining = remaining.slice(row.length);
     const rowSum = rowValues.reduce((s, v) => s + v, 0);

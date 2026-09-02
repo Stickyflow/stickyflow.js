@@ -16,7 +16,9 @@ function blockEndIn(masked: string[], startLine: number): number {
         depth++;
       } else if (character === '}') {
         depth--;
-        if (depth === 0) return i;
+        if (depth === 0) {
+          return i;
+        }
       }
     }
   }
@@ -30,10 +32,14 @@ export function blockEndLine(lines: string[], startLine: number): number {
 
 export function findOwnerBlock(lines: string[], id: string): LineRange | null {
   const masked = maskLines(lines);
-  if (masked === null) return null;
+  if (masked === null) {
+    return null;
+  }
   for (let i = 0; i < masked.length; i++) {
     const header = masked[i].match(OWNER_HEADER);
-    if (!header || header[2] !== id) continue;
+    if (!header || header[2] !== id) {
+      continue;
+    }
     return { start: i, end: blockEndIn(masked, i) };
   }
   return null;
@@ -41,7 +47,9 @@ export function findOwnerBlock(lines: string[], id: string): LineRange | null {
 
 export function findChildBlock(lines: string[], range: LineRange, headerRe: RegExp): LineRange | null {
   const masked = maskLines(lines);
-  if (masked === null) return null;
+  if (masked === null) {
+    return null;
+  }
   let depth = 0;
   for (let i = range.start; i <= range.end; i++) {
     if (depth === 1 && i > range.start && headerRe.test(masked[i])) {
@@ -54,10 +62,14 @@ export function findChildBlock(lines: string[], range: LineRange, headerRe: RegE
 
 export function findFirstBlockOfKind(lines: string[], kind: string): LineRange | null {
   const masked = maskLines(lines);
-  if (masked === null) return null;
+  if (masked === null) {
+    return null;
+  }
   const header = new RegExp(`^\\s*${kind}\\s+([A-Za-z_][A-Za-z0-9_]*)\\b`);
   for (let i = 0; i < masked.length; i++) {
-    if (!header.test(masked[i])) continue;
+    if (!header.test(masked[i])) {
+      continue;
+    }
     return { start: i, end: blockEndIn(masked, i) };
   }
   return null;
@@ -65,7 +77,9 @@ export function findFirstBlockOfKind(lines: string[], kind: string): LineRange |
 
 export function nameExists(lines: string[], id: string): boolean {
   const masked = maskLines(lines);
-  if (masked === null) return false;
+  if (masked === null) {
+    return false;
+  }
   return masked.some(line => {
     const header = line.match(OWNER_HEADER);
     return header !== null && header[2] === id;

@@ -10,7 +10,9 @@ export interface MaskedSource {
 
 function overwrite(masked: string[], row: number, from: number, to: number, text: string): void {
   const line = masked[row];
-  if (line === undefined) return;
+  if (line === undefined) {
+    return;
+  }
   masked[row] = line.slice(0, from) + text + line.slice(to);
 }
 
@@ -23,7 +25,9 @@ function applyToken(target: MaskedSource, lines: string[], token: Token): void {
 
   if (startRow === endRow) {
     const source = lines[startRow];
-    if (source === undefined) return;
+    if (source === undefined) {
+      return;
+    }
     const text = isString ? STRING_FILLER.repeat(Math.max(0, endCol - startCol)) : source.slice(startCol, endCol);
     overwrite(target.lines, startRow, startCol, endCol, text);
     return;
@@ -53,7 +57,9 @@ export function maskSource(lines: string[]): MaskedSource | null {
     continuesString: lines.map(() => false),
   };
   for (const token of tokens) {
-    if (token.type === 'newline' || token.type === 'eof') continue;
+    if (token.type === 'newline' || token.type === 'eof') {
+      continue;
+    }
     applyToken(target, lines, token);
   }
   return target;
@@ -66,8 +72,11 @@ export function maskLines(lines: string[]): string[] | null {
 export function braceDelta(masked: string): number {
   let delta = 0;
   for (const character of masked) {
-    if (character === '{') delta++;
-    else if (character === '}') delta--;
+    if (character === '{') {
+      delta++;
+    } else if (character === '}') {
+      delta--;
+    }
   }
   return delta;
 }

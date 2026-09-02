@@ -37,6 +37,7 @@
       },
       "style": {
         "useConst": "error",
+        "useBlockStatements": "error",
         "noNonNullAssertion": "warn",
         "useNodejsImportProtocol": "error"
       },

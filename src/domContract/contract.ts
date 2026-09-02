@@ -24,10 +24,14 @@ const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane
 
 export function resolveOwner(target: AttrElement | null): OwnerRef | null {
   const el = target?.closest('[data-sf-id]');
-  if (!el) return null;
+  if (!el) {
+    return null;
+  }
   const id = el.getAttribute('data-sf-id');
   const role = el.getAttribute('data-sf-role');
-  if (!id || !role || !ROLES.has(role)) return null;
+  if (!id || !role || !ROLES.has(role)) {
+    return null;
+  }
   return {
     role: role as SceneRole,
     id,

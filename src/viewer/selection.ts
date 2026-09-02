@@ -17,8 +17,11 @@ export function selectionReducer(current: ReadonlySet<string>, action: Selection
       return new Set([...current, action.id]);
     case 'toggle': {
       const next = new Set(current);
-      if (next.has(action.id)) next.delete(action.id);
-      else next.add(action.id);
+      if (next.has(action.id)) {
+        next.delete(action.id);
+      } else {
+        next.add(action.id);
+      }
       return next;
     }
   }

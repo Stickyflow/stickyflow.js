@@ -42,7 +42,9 @@ export function computeIsolineSegments(
         (above(col + 1, row) ? 4 : 0) |
         (above(col + 1, row + 1) ? 2 : 0) |
         (above(col, row + 1) ? 1 : 0);
-      if (caseIndex === 0 || caseIndex === 15) continue;
+      if (caseIndex === 0 || caseIndex === 15) {
+        continue;
+      }
 
       const top = () => lerpEdge(tl.x, tl.y, tl.v, tr.x, tr.y, tr.v, threshold);
       const right = () => lerpEdge(tr.x, tr.y, tr.v, br.x, br.y, br.v, threshold);

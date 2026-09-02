@@ -1,7 +1,9 @@
 import type { SflProperty, SflValue } from '../ast';
 
 export function formatNumber(value: number): string {
-  if (Object.is(value, -0)) return '0';
+  if (Object.is(value, -0)) {
+    return '0';
+  }
   return String(value);
 }
 
@@ -31,7 +33,9 @@ export function emitValue(value: SflValue): string {
       let output = value.segments.join('.');
       if (value.side) {
         output += `, ${value.side}`;
-        if (value.fraction !== undefined) output += ` (${formatNumber(value.fraction)})`;
+        if (value.fraction !== undefined) {
+          output += ` (${formatNumber(value.fraction)})`;
+        }
       }
       return output;
     }

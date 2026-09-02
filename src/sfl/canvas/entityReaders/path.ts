@@ -9,7 +9,9 @@ export function readPath(p: Properties, origin: { x: number; y: number }): SflEn
   const points =
     pointsValue?.type === 'list'
       ? pointsValue.values.flatMap(value => {
-          if (value.type !== 'list' || value.values.length < 2) return [];
+          if (value.type !== 'list' || value.values.length < 2) {
+            return [];
+          }
           const x = asNumber(value.values[0]);
           const y = asNumber(value.values[1]);
           return x !== undefined && y !== undefined ? [{ x: origin.x + x, y: origin.y + y }] : [];

@@ -23,9 +23,11 @@ export function wrapText(text: string, width: number, fontSize: number, metrics?
     }
     let line = '';
     for (const word of words) {
-      if (!line) line = word;
-      else if (fits(line, word)) line += ` ${word}`;
-      else {
+      if (!line) {
+        line = word;
+      } else if (fits(line, word)) {
+        line += ` ${word}`;
+      } else {
         result.push(line);
         line = word;
       }

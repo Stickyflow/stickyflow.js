@@ -3,7 +3,9 @@ import { finite, freeformPathData, orderOf } from '../renderPrimitives';
 import type { RenderNode } from '../scene';
 
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
-  if (path.is_visible === false || path.points.length < 2) return [];
+  if (path.is_visible === false || path.points.length < 2) {
+    return [];
+  }
   const strokeWidth = finite(path.stroke_width, 2);
   const extra = strokeWidth + 12;
   const bounds = {
