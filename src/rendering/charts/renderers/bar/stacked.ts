@@ -1,5 +1,5 @@
-import { paint } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { paint } from '../../../scene';
 import { CHART_COLORS, stackedSegment } from '../../primitives';
 import type { ChartRenderContext, StackedMode } from '../types';
 

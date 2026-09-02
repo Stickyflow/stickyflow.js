@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../../model/charts';
-import { freeformPathData, paint } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { freeformPathData, paint } from '../../../scene';
 import { CHART_COLORS } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { RadarGeometry, RadarPoint } from './types';

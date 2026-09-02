@@ -1,6 +1,6 @@
 import type { Chart, ChartSeries } from '../../../model/charts';
-import { finite, paint } from '../../renderPrimitives';
 import type { RenderNode, SceneStyle } from '../../scene';
+import { finite, paint } from '../../scene';
 import { CHART_COLORS, mapChartValue } from '../primitives';
 import type { ChartRenderContext } from './types';
 

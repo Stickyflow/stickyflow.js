@@ -1,6 +1,6 @@
 import type { Chart } from '../../model/charts';
-import { finite } from '../renderPrimitives';
 import type { Bounds, SceneRect } from '../scene';
+import { finite } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
 
 export function buildChartFrame(

@@ -1,5 +1,5 @@
-import { DEFAULT_FONT, finite } from '../../renderPrimitives';
 import type { Point, RenderNode } from '../../scene';
+import { DEFAULT_FONT, finite } from '../../scene';
 import type { LinkRenderContext } from './types';
 
 function endpointLabelPosition(points: number[], end: 'start' | 'end'): Point {

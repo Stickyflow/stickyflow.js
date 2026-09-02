@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
-import { paint } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { paint } from '../../../scene';
 import { CHART_COLORS, chartText, contrastTextColor, representativeColor } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';

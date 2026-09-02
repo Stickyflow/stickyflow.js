@@ -1,5 +1,5 @@
 import type { ChartSeries } from '../../../../model/charts';
-import { finite } from '../../../renderPrimitives';
+import { finite } from '../../../scene';
 import { axisBands, bandIndexForValue, DEFAULT_HEATMAP_ZONES, DEFAULT_ZONE_FILL } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { TreemapLayout } from './types';

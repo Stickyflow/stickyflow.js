@@ -1,4 +1,4 @@
-import { finite } from '../../../renderPrimitives';
+import { finite } from '../../../scene';
 import type { ChartRenderContext } from '../types';
 import type { RadarGeometry, RadarPoint } from './types';
 

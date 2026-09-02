@@ -1,5 +1,5 @@
-import { DEFAULT_FONT } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
+import { DEFAULT_FONT } from '../../scene';
 import type { LinkRenderContext } from './types';
 
 export function renderMainLabel(context: LinkRenderContext): RenderNode[] {

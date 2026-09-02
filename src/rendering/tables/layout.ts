@@ -1,6 +1,6 @@
 import { computeRowHeight, tableBorderGeometry } from '../../model/geometry/tables';
 import type { Table, TableColumn } from '../../model/tables';
-import { boxBounds, orderOf } from '../renderPrimitives';
+import { boxBounds, orderOf } from '../scene';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 function normalizeColumns(table: Table): TableColumn[] {

@@ -1,4 +1,4 @@
-import { finite } from '../../../renderPrimitives';
+import { finite } from '../../../scene';
 import { axisBands, DEFAULT_HEATMAP_ZONES } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapGrid, HeatmapLayout, HeatmapReservedSpace } from './types';

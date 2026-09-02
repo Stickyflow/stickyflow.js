@@ -1,7 +1,7 @@
 import type { Shape } from '../../../model/shapes';
 import { SHAPE_DEFAULTS } from '../../../model/shapes';
-import { finite, paint } from '../../renderPrimitives';
 import type { RenderDiagnostic, SceneStyle } from '../../scene';
+import { finite, paint } from '../../scene';
 
 export function shapeDefaults(
   shape: Shape,

@@ -1,5 +1,5 @@
-import { finite } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { finite } from '../../../scene';
 import { chartTicks } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { RadarGeometry } from './types';

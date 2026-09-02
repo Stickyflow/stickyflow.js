@@ -2,8 +2,8 @@ import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../.
 import { type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
 import { getLinkStrokeColor } from '../../../model/links';
 import type { RenderInput } from '../../../renderInput/types';
-import { DEFAULT_FONT, finite, orderOf } from '../../renderPrimitives';
 import type { SceneStyle } from '../../scene';
+import { DEFAULT_FONT, finite, orderOf } from '../../scene';
 import type { LinkLabelLayout, LinkRenderContext } from './types';
 
 function linkBounds(points: number[], padding: number) {

@@ -1,6 +1,6 @@
 import type { Chart } from '../../model/charts';
-import { orderOf } from '../renderPrimitives';
 import type { RenderDiagnostic, RenderNode } from '../scene';
+import { orderOf } from '../scene';
 import { buildChartFrame } from './chartFrame';
 import { buildOrderedChartLegend } from './chartLegend';
 import { createChartRenderContext } from './chartRenderContext';

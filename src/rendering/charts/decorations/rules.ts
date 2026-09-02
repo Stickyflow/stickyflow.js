@@ -1,6 +1,6 @@
 import type { Chart, ChartRule } from '../../../model/charts';
-import { finite } from '../../renderPrimitives';
 import type { Bounds, RenderNode } from '../../scene';
+import { finite } from '../../scene';
 import { chartText, mapChartValue } from '../primitives';
 import type { ChartLayout } from './layout';
 

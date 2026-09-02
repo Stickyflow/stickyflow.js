@@ -1,6 +1,6 @@
 import type { FreeformPath } from '../../model/paths';
-import { finite, freeformPathData, orderOf } from '../renderPrimitives';
 import type { RenderNode } from '../scene';
+import { finite, freeformPathData, orderOf } from '../scene';
 
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
   if (path.is_visible === false || path.points.length < 2) {

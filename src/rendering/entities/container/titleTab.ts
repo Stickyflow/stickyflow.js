@@ -1,5 +1,5 @@
-import { boxBounds, DEFAULT_FONT } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
+import { boxBounds, DEFAULT_FONT } from '../../scene';
 
 export interface TitleTabInput {
   tabId: string;

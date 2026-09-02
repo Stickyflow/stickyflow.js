@@ -1,5 +1,5 @@
 import type { Lane, Swimlane } from '../../../../model/swimlanes';
-import { boxBounds, orderOf } from '../../../renderPrimitives';
+import { boxBounds, orderOf } from '../../../scene';
 import type { PositionedLane, SwimlaneRenderContext } from './types';
 
 function normalizeLanes(swimlane: Swimlane): Lane[] {

@@ -1,5 +1,5 @@
-import { paint } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { paint } from '../../../scene';
 import { mapChartValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { BoxplotLayout, BoxplotSeriesMark } from './types';

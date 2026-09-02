@@ -1,7 +1,7 @@
 import { colorAtRamp } from '../charts/field/colorRamp';
 import { simpleContainerStyle } from '../entities/containers';
-import { DEFAULT_FONT } from '../renderPrimitives';
 import type { RenderNode } from '../scene';
+import { DEFAULT_FONT } from '../scene';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 function renderCellBackground(

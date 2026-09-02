@@ -63,7 +63,7 @@ function sflLayer(path: string): CoreLayer | null {
 }
 
 function renderingLayer(path: string): CoreLayer | null {
-  if (path.startsWith('rendering/svg/') || path === 'rendering/renderSceneToSvg.ts') {
+  if (path.startsWith('rendering/svg/')) {
     return 'svg';
   }
   if (path.startsWith('rendering/')) {

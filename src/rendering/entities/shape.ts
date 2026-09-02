@@ -1,7 +1,7 @@
 import type { MeasureTextFactory } from '../../model/geometry/text';
 import type { Shape } from '../../model/shapes';
-import { finite, orderOf, rotatedBounds } from '../renderPrimitives';
 import type { RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
+import { finite, orderOf, rotatedBounds } from '../scene';
 import { renderShapeGeometry } from './shape/geometry';
 import { shapeStyle } from './shape/style';
 import { renderShapeText } from './shape/text';

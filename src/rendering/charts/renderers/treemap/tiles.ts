@@ -1,8 +1,8 @@
 import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
 import { squarifyTreemap } from '../../../../model/geometry/treemap';
-import { paint } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { paint } from '../../../scene';
 import { chartText, contrastTextColor, representativeColor } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import { treemapLeafColor, treemapLeafValue } from './layout';

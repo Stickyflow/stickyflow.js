@@ -1,6 +1,6 @@
 import type { Chart } from '../../../model/charts';
-import { DEFAULT_FONT, finite } from '../../renderPrimitives';
 import type { Bounds, SceneText } from '../../scene';
+import { DEFAULT_FONT, finite } from '../../scene';
 
 export interface ChartTextOptions {
   id: string;

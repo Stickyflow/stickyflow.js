@@ -1,7 +1,7 @@
 import { hasBoldMarkup, wrapRichText } from '../../../model/geometry/richText';
 import { heuristicRichMeasure, type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
-import { DEFAULT_FONT, finite } from '../../renderPrimitives';
 import type { SceneText } from '../../scene';
+import { DEFAULT_FONT, finite } from '../../scene';
 import { shapeDefaults } from './style';
 import type { ShapeRenderContext } from './types';
 

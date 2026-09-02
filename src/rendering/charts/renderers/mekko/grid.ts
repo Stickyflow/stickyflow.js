@@ -1,5 +1,5 @@
-import { finite } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { finite } from '../../../scene';
 import { chartText } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';

@@ -1,6 +1,6 @@
 import type { Chart } from '../../model/charts';
-import { finite } from '../renderPrimitives';
 import type { Bounds, RenderNode } from '../scene';
+import { finite } from '../scene';
 import type { ChartRenderOrder } from './chartRenderOrder';
 import { chartText } from './primitives';
 

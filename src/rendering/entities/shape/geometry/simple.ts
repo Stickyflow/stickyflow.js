@@ -1,6 +1,6 @@
 import { localShapePath } from '../../../../model/geometry/shapes';
-import { finite, freeformPathData } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { finite, freeformPathData } from '../../../scene';
 import type { ShapeRenderContext } from '../types';
 import { shapeNodeBase } from './base';
 

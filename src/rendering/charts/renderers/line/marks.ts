@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../../model/charts';
-import { paint } from '../../../renderPrimitives';
 import type { RenderNode } from '../../../scene';
+import { paint } from '../../../scene';
 import { createVerticalErrorWhiskerNode, errorBarRange, mapChartValue, representativeColor } from '../../primitives';
 import type { CartesianPoint } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
