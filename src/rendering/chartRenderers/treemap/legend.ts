@@ -48,16 +48,13 @@ function createLegendItem(
       rx: 2,
       style: { fill: { kind: 'solid', color: zone.color ?? DEFAULT_ZONE_FILL } },
     },
-    chartText(
-      `chart-treemap-legend-${chart.id}-${zoneIndex}`,
-      nextOrder(),
+    chartText({
+      id: `chart-treemap-legend-${chart.id}-${zoneIndex}`,
+      order: nextOrder(),
       bounds,
-      x + 15,
-      y,
-      width - 15,
-      layout.fontSize,
-      zone.label ? `${zone.label} (${lowerBound}-${upperBound})` : `${lowerBound}-${upperBound}`,
+      frame: { x: x + 15, y, width: width - 15, height: layout.fontSize },
+      text: zone.label ? `${zone.label} (${lowerBound}-${upperBound})` : `${lowerBound}-${upperBound}`,
       chart,
-    ),
+    }),
   ];
 }

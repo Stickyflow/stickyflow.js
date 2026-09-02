@@ -78,28 +78,22 @@ function createLegendLabels(
   const { chart, bounds, nextOrder } = context;
   const y = geometry.y + geometry.height + 3;
   return [
-    chartText(
-      `chart-field-colorbar-min-${chart.id}`,
-      nextOrder(),
+    chartText({
+      id: `chart-field-colorbar-min-${chart.id}`,
+      order: nextOrder(),
       bounds,
-      geometry.x,
-      y,
-      80,
-      16,
-      formatFieldValue(minimum),
+      frame: { x: geometry.x, y, width: 80, height: 16 },
+      text: formatFieldValue(minimum),
       chart,
-    ),
-    chartText(
-      `chart-field-colorbar-max-${chart.id}`,
-      nextOrder(),
+    }),
+    chartText({
+      id: `chart-field-colorbar-max-${chart.id}`,
+      order: nextOrder(),
       bounds,
-      geometry.x + geometry.width - 80,
-      y,
-      80,
-      16,
-      formatFieldValue(maximum),
+      frame: { x: geometry.x + geometry.width - 80, y, width: 80, height: 16 },
+      text: formatFieldValue(maximum),
       chart,
-      'right',
-    ),
+      align: 'right',
+    }),
   ];
 }

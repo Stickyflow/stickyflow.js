@@ -72,15 +72,12 @@ function createPointNode(
 
 function createPointLabel(context: ChartRenderContext, series: ChartSeries, point: MatrixPoint): RenderNode {
   const { chart, bounds, nextOrder } = context;
-  return chartText(
-    `chart-matrix-label-${chart.id}-${series.id}`,
-    nextOrder(),
+  return chartText({
+    id: `chart-matrix-label-${chart.id}-${series.id}`,
+    order: nextOrder(),
     bounds,
-    point.x + point.radius + 4,
-    point.y - 7,
-    120,
-    14,
-    series.label,
+    frame: { x: point.x + point.radius + 4, y: point.y - 7, width: 120, height: 14 },
+    text: series.label,
     chart,
-  );
+  });
 }

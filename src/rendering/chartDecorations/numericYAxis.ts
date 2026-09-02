@@ -6,17 +6,14 @@ import type { ChartLayout } from './layout';
 export function buildNumericYAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
   return chartTicks(chart.axis_y).map((tick, index) => {
     const y = layout.plot.y + layout.plot.height - mapChartValue(tick, chart.axis_y, layout.plot.height);
-    return chartText(
-      `chart-y-tick-${chart.id}-${tick}`,
-      order + index,
-      layout.bounds,
-      chart.x,
-      y - 6,
-      layout.padLeft - 8,
-      18,
-      String(tick),
+    return chartText({
+      id: `chart-y-tick-${chart.id}-${tick}`,
+      order: order + index,
+      bounds: layout.bounds,
+      frame: { x: chart.x, y: y - 6, width: layout.padLeft - 8, height: 18 },
+      text: String(tick),
       chart,
-      'right',
-    );
+      align: 'right',
+    });
   });
 }

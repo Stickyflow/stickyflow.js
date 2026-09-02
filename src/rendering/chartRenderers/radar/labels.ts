@@ -23,18 +23,15 @@ function createCategoryLabel(
   const labelPoint = geometry.pointAt(geometry.radius + 10, categoryIndex);
   const horizontalOffset = labelPoint.x - geometry.centerX;
   const width = Math.max(64, Math.min(120, plot.width / 3));
-  return chartText(
-    `chart-radar-label-${chart.id}-${categoryIndex}`,
-    nextOrder(),
+  return chartText({
+    id: `chart-radar-label-${chart.id}-${categoryIndex}`,
+    order: nextOrder(),
     bounds,
-    labelX(labelPoint.x, horizontalOffset, width),
-    labelPoint.y - 6,
-    width,
-    30,
-    category,
+    frame: { x: labelX(labelPoint.x, horizontalOffset, width), y: labelPoint.y - 6, width, height: 30 },
+    text: category,
     chart,
-    labelAlignment(horizontalOffset),
-  );
+    align: labelAlignment(horizontalOffset),
+  });
 }
 
 function labelX(pointX: number, horizontalOffset: number, width: number): number {

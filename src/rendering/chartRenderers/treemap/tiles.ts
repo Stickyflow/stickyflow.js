@@ -68,17 +68,19 @@ function createTileLabel(
   const { leaf, value } = tile.item;
   const width = Math.max(1, tile.width - 8);
   return {
-    ...chartText(
-      `chart-treemap-label-${chart.id}-${leaf.id}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-treemap-label-${chart.id}-${leaf.id}`,
+      order: nextOrder(),
       bounds,
-      plot.x + tile.x + 4,
-      plot.y + tile.y + 3,
-      width,
-      Math.max(1, tile.height - 6),
-      `${leaf.label} ${value}`,
+      frame: {
+        x: plot.x + tile.x + 4,
+        y: plot.y + tile.y + 3,
+        width,
+        height: Math.max(1, tile.height - 6),
+      },
+      text: `${leaf.label} ${value}`,
       chart,
-    ),
+    }),
     lines: wrapText(`${leaf.label}\n${value}`, width, layout.smallFontSize),
     fontSize: layout.smallFontSize,
     color: contrastTextColor(representativeColor(color, '#ffffff')),

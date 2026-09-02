@@ -34,17 +34,14 @@ export function buildChartRules(
     });
     if (rule.text) {
       nodes.push({
-        ...chartText(
-          `chart-rule-label-${chart.id}-${rule.id}`,
-          order + offset++,
+        ...chartText({
+          id: `chart-rule-label-${chart.id}-${rule.id}`,
+          order: order + offset++,
           bounds,
-          plot.x + 4,
-          y - fontSize - 2,
-          160,
-          fontSize + 2,
-          rule.text,
+          frame: { x: plot.x + 4, y: y - fontSize - 2, width: 160, height: fontSize + 2 },
+          text: rule.text,
           chart,
-        ),
+        }),
         color,
       });
     }

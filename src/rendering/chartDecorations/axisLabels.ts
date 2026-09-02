@@ -7,37 +7,36 @@ function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
   if (!chart.axis_x.label) {
     return null;
   }
-  return chartText(
-    `chart-x-label-${chart.id}`,
+  return chartText({
+    id: `chart-x-label-${chart.id}`,
     order,
-    layout.bounds,
-    layout.plot.x,
-    chart.y + chart.height - 18,
-    layout.plot.width,
-    18,
-    chart.axis_x.label,
+    bounds: layout.bounds,
+    frame: { x: layout.plot.x, y: chart.y + chart.height - 18, width: layout.plot.width, height: 18 },
+    text: chart.axis_x.label,
     chart,
-    'center',
-  );
+    align: 'center',
+  });
 }
 
 function buildYAxisLabel(chart: Chart, layout: ChartLayout, order: number): RenderNode | null {
   if (!chart.axis_y.label) {
     return null;
   }
-  return chartText(
-    `chart-y-label-${chart.id}`,
+  return chartText({
+    id: `chart-y-label-${chart.id}`,
     order,
-    layout.bounds,
-    chart.x + 12,
-    layout.plot.y + layout.plot.height,
-    layout.plot.height,
-    18,
-    chart.axis_y.label,
+    bounds: layout.bounds,
+    frame: {
+      x: chart.x + 12,
+      y: layout.plot.y + layout.plot.height,
+      width: layout.plot.height,
+      height: 18,
+    },
+    text: chart.axis_y.label,
     chart,
-    'center',
-    -90,
-  );
+    align: 'center',
+    rotation: -90,
+  });
 }
 
 export function buildAxisLabels(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {

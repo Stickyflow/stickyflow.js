@@ -77,18 +77,20 @@ function createValueLabel(
 ): RenderNode {
   const { chart, bounds, nextOrder } = context;
   return {
-    ...chartText(
-      `chart-heatmap-value-${chart.id}-${seriesId}-${columnIndex}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-heatmap-value-${chart.id}-${seriesId}-${columnIndex}`,
+      order: nextOrder(),
       bounds,
-      x,
-      y + layout.grid.cellHeight / 2 - layout.fontSize / 2,
-      layout.grid.cellWidth,
-      layout.fontSize + 2,
-      String(value),
+      frame: {
+        x,
+        y: y + layout.grid.cellHeight / 2 - layout.fontSize / 2,
+        width: layout.grid.cellWidth,
+        height: layout.fontSize + 2,
+      },
+      text: String(value),
       chart,
-      'center',
-    ),
+      align: 'center',
+    }),
     color: contrastTextColor(color),
   };
 }

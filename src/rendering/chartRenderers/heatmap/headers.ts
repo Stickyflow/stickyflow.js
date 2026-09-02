@@ -22,17 +22,19 @@ function createRowHeader(
   rowIndex: number,
 ): RenderNode {
   const { chart, plot, bounds, nextOrder } = context;
-  return chartText(
-    `chart-heatmap-row-${chart.id}-${series.id}`,
-    nextOrder(),
+  return chartText({
+    id: `chart-heatmap-row-${chart.id}-${series.id}`,
+    order: nextOrder(),
     bounds,
-    plot.x,
-    layout.grid.y + rowIndex * layout.grid.cellHeight + layout.grid.cellHeight / 2 - layout.fontSize / 2,
-    layout.rowHeaderWidth - 8,
-    layout.fontSize + 2,
-    series.label,
+    frame: {
+      x: plot.x,
+      y: layout.grid.y + rowIndex * layout.grid.cellHeight + layout.grid.cellHeight / 2 - layout.fontSize / 2,
+      width: layout.rowHeaderWidth - 8,
+      height: layout.fontSize + 2,
+    },
+    text: series.label,
     chart,
-  );
+  });
 }
 
 function renderColumnHeaders(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
@@ -49,16 +51,18 @@ function createColumnHeader(
   columnIndex: number,
 ): RenderNode {
   const { chart, plot, bounds, nextOrder } = context;
-  return chartText(
-    `chart-heatmap-col-${chart.id}-${columnIndex}`,
-    nextOrder(),
+  return chartText({
+    id: `chart-heatmap-col-${chart.id}-${columnIndex}`,
+    order: nextOrder(),
     bounds,
-    layout.grid.x + columnIndex * layout.grid.cellWidth,
-    plot.y,
-    layout.grid.cellWidth,
-    layout.fontSize + 2,
-    label,
+    frame: {
+      x: layout.grid.x + columnIndex * layout.grid.cellWidth,
+      y: plot.y,
+      width: layout.grid.cellWidth,
+      height: layout.fontSize + 2,
+    },
+    text: label,
     chart,
-    'center',
-  );
+    align: 'center',
+  });
 }

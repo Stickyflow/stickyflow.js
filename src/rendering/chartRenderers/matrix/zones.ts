@@ -65,17 +65,14 @@ function createZoneLabel(
 ): RenderNode {
   const { chart, bounds, nextOrder } = context;
   return {
-    ...chartText(
-      `chart-matrix-zone-label-${chart.id}-${xBandIndex}-${yBandIndex}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-matrix-zone-label-${chart.id}-${xBandIndex}-${yBandIndex}`,
+      order: nextOrder(),
       bounds,
-      zoneBounds.x + 6,
-      zoneBounds.y + 4,
-      zoneBounds.width - 12,
-      16,
-      zone.label ?? '',
+      frame: { x: zoneBounds.x + 6, y: zoneBounds.y + 4, width: zoneBounds.width - 12, height: 16 },
+      text: zone.label ?? '',
       chart,
-    ),
+    }),
     color: contrastTextColor(zone.color),
   };
 }

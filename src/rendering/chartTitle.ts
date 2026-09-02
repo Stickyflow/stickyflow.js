@@ -16,17 +16,14 @@ export function buildChartTitle(
 
   return [
     {
-      ...chartText(
-        `chart-title-${chart.id}`,
-        renderOrder.next(),
+      ...chartText({
+        id: `chart-title-${chart.id}`,
+        order: renderOrder.next(),
         bounds,
-        plot.x,
-        chart.y + 12,
-        plot.width,
-        20,
-        chart.title,
+        frame: { x: plot.x, y: chart.y + 12, width: plot.width, height: 20 },
+        text: chart.title,
         chart,
-      ),
+      }),
       fontWeight: 'bold',
       fontSize: Math.max(10, finite(chart.font_size, 12)) + 2,
     },

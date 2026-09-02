@@ -42,17 +42,14 @@ export function buildLegend(
       style: { fill: paint(item.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length], diagnostics, chart.id) },
     });
     nodes.push(
-      chartText(
-        `chart-legend-${chart.id}-${item.id}`,
-        order + nodes.length,
+      chartText({
+        id: `chart-legend-${chart.id}-${item.id}`,
+        order: order + nodes.length,
         bounds,
-        x + 15,
-        chart.y + 13,
-        width - 15,
-        18,
-        item.label,
+        frame: { x: x + 15, y: chart.y + 13, width: width - 15, height: 18 },
+        text: item.label,
         chart,
-      ),
+      }),
     );
   });
 

@@ -20,18 +20,20 @@ export function renderMekkoColumnLabels(
 function createTotalLabel(context: ChartRenderContext, layout: MekkoLayout, columnIndex: number): RenderNode {
   const { chart, plot, bounds, nextOrder } = context;
   return {
-    ...chartText(
-      `chart-mekko-total-${chart.id}-${columnIndex}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-mekko-total-${chart.id}-${columnIndex}`,
+      order: nextOrder(),
       bounds,
-      layout.columnX[columnIndex],
-      plot.y,
-      layout.columnWidths[columnIndex],
-      layout.smallFontSize + 2,
-      String(layout.columnTotals[columnIndex]),
+      frame: {
+        x: layout.columnX[columnIndex],
+        y: plot.y,
+        width: layout.columnWidths[columnIndex],
+        height: layout.smallFontSize + 2,
+      },
+      text: String(layout.columnTotals[columnIndex]),
       chart,
-      'center',
-    ),
+      align: 'center',
+    }),
     fontSize: layout.smallFontSize,
   };
 }
@@ -45,18 +47,20 @@ function createColumnLabel(
   const { chart, bounds, nextOrder } = context;
   const width = layout.columnWidths[columnIndex];
   return {
-    ...chartText(
-      `chart-mekko-col-label-${chart.id}-${columnIndex}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-mekko-col-label-${chart.id}-${columnIndex}`,
+      order: nextOrder(),
       bounds,
-      layout.columnX[columnIndex],
-      layout.grid.y + layout.grid.height + 4,
-      width,
-      layout.smallFontSize * 2 + 4,
-      label,
+      frame: {
+        x: layout.columnX[columnIndex],
+        y: layout.grid.y + layout.grid.height + 4,
+        width,
+        height: layout.smallFontSize * 2 + 4,
+      },
+      text: label,
       chart,
-      'center',
-    ),
+      align: 'center',
+    }),
     lines: wrapText(label, width, layout.smallFontSize),
     fontSize: layout.smallFontSize,
   };

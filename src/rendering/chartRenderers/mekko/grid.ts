@@ -39,18 +39,20 @@ function renderGridLines(context: ChartRenderContext, layout: MekkoLayout): Rend
 function renderPercentageLabels(context: ChartRenderContext, layout: MekkoLayout): RenderNode[] {
   const { chart, plot, bounds, nextOrder } = context;
   return PERCENT_TICKS.map(percent => ({
-    ...chartText(
-      `chart-mekko-pct-${chart.id}-${percent}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-mekko-pct-${chart.id}-${percent}`,
+      order: nextOrder(),
       bounds,
-      plot.x,
-      percentageY(layout, percent) - layout.smallFontSize / 2,
-      layout.labelGutterWidth - 6,
-      layout.smallFontSize + 2,
-      `${percent}%`,
+      frame: {
+        x: plot.x,
+        y: percentageY(layout, percent) - layout.smallFontSize / 2,
+        width: layout.labelGutterWidth - 6,
+        height: layout.smallFontSize + 2,
+      },
+      text: `${percent}%`,
       chart,
-      'right',
-    ),
+      align: 'right',
+    }),
     fontSize: layout.smallFontSize,
   }));
 }

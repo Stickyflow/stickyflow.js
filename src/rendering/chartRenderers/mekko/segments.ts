@@ -72,17 +72,14 @@ function createSegmentLabel(
   const x = layout.columnX[columnIndex];
   const width = layout.columnWidths[columnIndex];
   return {
-    ...chartText(
-      `chart-mekko-seg-label-${chart.id}-${columnIndex}-${seriesId}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-mekko-seg-label-${chart.id}-${columnIndex}-${seriesId}`,
+      order: nextOrder(),
       bounds,
-      x + 4,
-      y + 3,
-      Math.max(1, width - 8),
-      Math.max(1, height - 6),
-      `${seriesLabel} ${value}`,
+      frame: { x: x + 4, y: y + 3, width: Math.max(1, width - 8), height: Math.max(1, height - 6) },
+      text: `${seriesLabel} ${value}`,
       chart,
-    ),
+    }),
     lines: wrapText(`${seriesLabel}\n${value}`, Math.max(1, width - 8), layout.smallFontSize),
     fontSize: layout.smallFontSize,
     color: contrastTextColor(representativeColor(color, '#ffffff')),

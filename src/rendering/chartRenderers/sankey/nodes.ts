@@ -37,18 +37,15 @@ function createNodeLabel(context: ChartRenderContext, data: SankeyRenderData, no
   const y = data.baseY + node.y;
   const labelX = isLastColumn ? x - data.labelGutter + 8 : x + node.width + 6;
   return {
-    ...chartText(
-      `chart-sankey-label-${chart.id}-${node.id}`,
-      nextOrder(),
+    ...chartText({
+      id: `chart-sankey-label-${chart.id}-${node.id}`,
+      order: nextOrder(),
       bounds,
-      labelX,
-      y,
-      data.labelGutter - 12,
-      Math.max(1, node.height),
-      node.label,
+      frame: { x: labelX, y, width: data.labelGutter - 12, height: Math.max(1, node.height) },
+      text: node.label,
       chart,
-      isLastColumn ? 'right' : 'left',
-    ),
+      align: isLastColumn ? 'right' : 'left',
+    }),
     fontSize: data.fontSize - 2,
     verticalAlign: 'middle',
   };

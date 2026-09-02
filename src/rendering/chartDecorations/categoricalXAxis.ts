@@ -17,17 +17,19 @@ export function buildCategoricalXAxisTicks(chart: Chart, layout: ChartLayout, or
 
   return Array.from({ length: count }, (_value, index) => {
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
-    return chartText(
-      `chart-x-tick-${chart.id}-${index}`,
-      order + index,
-      layout.bounds,
-      centerX - slotWidth / 2,
-      layout.plot.y + layout.plot.height + 4,
-      slotWidth,
-      18,
-      labels[index] ?? String(index + 1),
+    return chartText({
+      id: `chart-x-tick-${chart.id}-${index}`,
+      order: order + index,
+      bounds: layout.bounds,
+      frame: {
+        x: centerX - slotWidth / 2,
+        y: layout.plot.y + layout.plot.height + 4,
+        width: slotWidth,
+        height: 18,
+      },
+      text: labels[index] ?? String(index + 1),
       chart,
-      'center',
-    );
+      align: 'center',
+    });
   });
 }
