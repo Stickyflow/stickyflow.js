@@ -17,44 +17,40 @@ import { describeSegments } from './orthogonal/segments';
 import { roundOrthogonalPath } from './rounding';
 import type { OrthoPath, Side } from './types';
 
-export function routeOrthogonal(
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-  fromSide: Side,
-  toSide: Side,
-  segmentOffsets?: number[],
-  entityEdges?: { fromEdge?: Side; toEdge?: Side },
-): OrthoPath {
-  const routeDraft = createOrthogonalRouteDraft(from, to, fromSide, toSide, entityEdges);
+export interface OrthogonalRouteRequest {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  fromSide: Side;
+  toSide: Side;
+  segmentOffsets?: number[];
+  entityEdges?: { fromEdge?: Side; toEdge?: Side };
+}
+
+export function routeOrthogonal(request: OrthogonalRouteRequest): OrthoPath {
+  const routeDraft = createOrthogonalRouteDraft(request);
   const bend = chooseBend(routeDraft);
 
   const originalPoints = baseOrthogonalPoints(routeDraft, bend);
   const originalSegmentMidpoints = segmentMidpoints(originalPoints);
-  const movableSegments = movableInnerSegments(routeDraft.horizontalFirst, fromSide, toSide);
-  const points = offsetOrthogonalPoints(routeDraft, bend, segmentOffsets, movableSegments);
+  const movableSegments = movableInnerSegments(routeDraft.horizontalFirst, request.fromSide, request.toSide);
+  const points = offsetOrthogonalPoints(routeDraft, bend, request.segmentOffsets, movableSegments);
   const segments = describeSegments(points, originalSegmentMidpoints, movableSegments[0], movableSegments[1]);
 
   return { points: roundOrthogonalPath(points, 10), segments };
 }
 
-function createOrthogonalRouteDraft(
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-  fromSide: Side,
-  toSide: Side,
-  entityEdges?: { fromEdge?: Side; toEdge?: Side },
-): OrthogonalRouteDraft {
-  const [alignedFrom, alignedTo] = snapAlignedEndpoints(from, to, fromSide, toSide);
-  const fromNormal = SIDE_N[fromSide];
-  const toNormal = SIDE_N[toSide];
-  const horizontalFirst = chooseInitialOrientation(alignedFrom, alignedTo, entityEdges);
+function createOrthogonalRouteDraft(request: OrthogonalRouteRequest): OrthogonalRouteDraft {
+  const [alignedFrom, alignedTo] = snapAlignedEndpoints(request.from, request.to, request.fromSide, request.toSide);
+  const fromNormal = SIDE_N[request.fromSide];
+  const toNormal = SIDE_N[request.toSide];
+  const horizontalFirst = chooseInitialOrientation(alignedFrom, alignedTo, request.entityEdges);
   const [fromDistance, toDistance] = stepOutDistances(alignedFrom, alignedTo, fromNormal, toNormal, horizontalFirst);
 
   return {
     from: alignedFrom,
     to: alignedTo,
-    fromConnection: createRouteConnection(alignedFrom, fromSide, fromNormal, fromDistance),
-    toConnection: createRouteConnection(alignedTo, toSide, toNormal, toDistance),
+    fromConnection: createRouteConnection(alignedFrom, request.fromSide, fromNormal, fromDistance),
+    toConnection: createRouteConnection(alignedTo, request.toSide, toNormal, toDistance),
     horizontalFirst,
   };
 }

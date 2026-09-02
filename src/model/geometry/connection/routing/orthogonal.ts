@@ -18,9 +18,10 @@ export function orthogonalPath(
   }
 
   const entityEdges = { fromEdge: fromSide, toEdge: toSide };
-  const route = routeOrthogonal(from, to, fromSide, toSide, link.segmentOffsets, entityEdges);
+  const request = { from, to, fromSide, toSide, segmentOffsets: link.segmentOffsets, entityEdges };
+  const route = routeOrthogonal(request);
   if (isAxisAligned(route.segments)) {
     return route;
   }
-  return routeOrthogonal(from, to, fromSide, toSide, undefined, entityEdges);
+  return routeOrthogonal({ ...request, segmentOffsets: undefined });
 }
