@@ -1,89 +1,136 @@
-export function roundOrthogonalPath(pts: number[], radius: number): number[] {
-  if (pts.length < 6) {
-    return pts;
+interface PathPoint {
+  x: number;
+  y: number;
+}
+
+interface RoundedCorner {
+  entry: PathPoint;
+  exit: PathPoint;
+  center: PathPoint;
+  radius: number;
+  startAngle: number;
+  angleSweep: number;
+}
+
+interface OrthogonalTurn {
+  corner: PathPoint;
+  incoming: PathPoint;
+  outgoing: PathPoint;
+}
+
+const CORNER_SAMPLE_COUNT = 8;
+
+export function roundOrthogonalPath(coordinates: number[], radius: number): number[] {
+  if (coordinates.length < 6) {
+    return coordinates;
   }
 
-  const out: number[] = [];
-  const n = pts.length / 2 - 1;
+  const points = coordinatePoints(coordinates);
+  const roundedPoints = [points[0]];
+  for (let index = 1; index < points.length - 1; index++) {
+    const corner = createRoundedCorner(points[index - 1], points[index], points[index + 1], radius);
+    roundedPoints.push(...(corner ? sampleRoundedCorner(corner) : [points[index]]));
+  }
+  roundedPoints.push(points[points.length - 1]);
+  return pointCoordinates(roundedPoints);
+}
 
-  out.push(pts[0], pts[1]);
-
-  const SAMPLES = 8;
-
-  for (let i = 1; i < n; i++) {
-    const xPrev = pts[(i - 1) * 2];
-    const yPrev = pts[(i - 1) * 2 + 1];
-    const x = pts[i * 2];
-    const y = pts[i * 2 + 1];
-    const xNext = pts[(i + 1) * 2];
-    const yNext = pts[(i + 1) * 2 + 1];
-
-    const dx1 = x - xPrev;
-    const dy1 = y - yPrev;
-    const dx2 = xNext - x;
-    const dy2 = yNext - y;
-
-    const isAxis1 = dx1 === 0 || dy1 === 0;
-    const isAxis2 = dx2 === 0 || dy2 === 0;
-    const isStraight = (dx1 === 0 && dx2 === 0) || (dy1 === 0 && dy2 === 0);
-
-    if (!isAxis1 || !isAxis2 || isStraight) {
-      out.push(x, y);
-      continue;
-    }
-
-    const len1 = Math.abs(dx1) + Math.abs(dy1);
-    const len2 = Math.abs(dx2) + Math.abs(dy2);
-
-    const r = Math.min(radius, len1 * 0.4, len2 * 0.4);
-    if (r <= 0) {
-      out.push(x, y);
-      continue;
-    }
-
-    const v1x = dx1 !== 0 ? Math.sign(dx1) : 0;
-    const v1y = dy1 !== 0 ? Math.sign(dy1) : 0;
-    const v2x = dx2 !== 0 ? Math.sign(dx2) : 0;
-    const v2y = dy2 !== 0 ? Math.sign(dy2) : 0;
-
-    const p1x = x - v1x * r;
-    const p1y = y - v1y * r;
-
-    const p2x = x + v2x * r;
-    const p2y = y + v2y * r;
-
-    const cx = x - v1x * r + v2x * r;
-    const cy = y - v1y * r + v2y * r;
-
-    const a1 = Math.atan2(p1y - cy, p1x - cx);
-    const a2 = Math.atan2(p2y - cy, p2x - cx);
-
-    const startAngle = a1;
-    let endAngle = a2;
-
-    let diff = endAngle - startAngle;
-    if (diff > Math.PI) {
-      diff -= 2 * Math.PI;
-    }
-    if (diff < -Math.PI) {
-      diff += 2 * Math.PI;
-    }
-    endAngle = startAngle + diff;
-
-    out.push(p1x, p1y);
-
-    for (let j = 1; j < SAMPLES - 1; j++) {
-      const t = j / (SAMPLES - 1);
-      const ang = startAngle + diff * t;
-      const qx = cx + Math.cos(ang) * r;
-      const qy = cy + Math.sin(ang) * r;
-      out.push(qx, qy);
-    }
-
-    out.push(p2x, p2y);
+function createRoundedCorner(
+  previous: PathPoint,
+  corner: PathPoint,
+  next: PathPoint,
+  maximumRadius: number,
+): RoundedCorner | null {
+  const turn = orthogonalTurn(previous, corner, next);
+  if (!turn) {
+    return null;
   }
 
-  out.push(pts[pts.length - 2], pts[pts.length - 1]);
+  const radius = Math.min(maximumRadius, axisLength(turn.incoming) * 0.4, axisLength(turn.outgoing) * 0.4);
+  if (radius <= 0) {
+    return null;
+  }
+  return roundedCornerGeometry(turn, radius);
+}
 
-  return out;
+function orthogonalTurn(previous: PathPoint, corner: PathPoint, next: PathPoint): OrthogonalTurn | null {
+  const incoming = { x: corner.x - previous.x, y: corner.y - previous.y };
+  const outgoing = { x: next.x - corner.x, y: next.y - corner.y };
+  return isOrthogonalTurn(incoming, outgoing) ? { corner, incoming, outgoing } : null;
+}
+
+function roundedCornerGeometry(turn: OrthogonalTurn, radius: number): RoundedCorner {
+  const incomingDirection = axisDirection(turn.incoming);
+  const outgoingDirection = axisDirection(turn.outgoing);
+  const entry = offsetPoint(turn.corner, incomingDirection, -radius);
+  const exit = offsetPoint(turn.corner, outgoingDirection, radius);
+  const center = offsetPoint(entry, outgoingDirection, radius);
+  const startAngle = Math.atan2(entry.y - center.y, entry.x - center.x);
+  const endAngle = Math.atan2(exit.y - center.y, exit.x - center.x);
+  return {
+    entry,
+    exit,
+    center,
+    radius,
+    startAngle,
+    angleSweep: normalizedAngleSweep(endAngle - startAngle),
+  };
+}
+
+function offsetPoint(point: PathPoint, direction: PathPoint, distance: number): PathPoint {
+  return { x: point.x + direction.x * distance, y: point.y + direction.y * distance };
+}
+
+function isOrthogonalTurn(incoming: PathPoint, outgoing: PathPoint): boolean {
+  const incomingIsAxisAligned = incoming.x === 0 || incoming.y === 0;
+  const outgoingIsAxisAligned = outgoing.x === 0 || outgoing.y === 0;
+  const isStraight = (incoming.x === 0 && outgoing.x === 0) || (incoming.y === 0 && outgoing.y === 0);
+  return incomingIsAxisAligned && outgoingIsAxisAligned && !isStraight;
+}
+
+function axisLength(vector: PathPoint): number {
+  return Math.abs(vector.x) + Math.abs(vector.y);
+}
+
+function axisDirection(vector: PathPoint): PathPoint {
+  return {
+    x: vector.x !== 0 ? Math.sign(vector.x) : 0,
+    y: vector.y !== 0 ? Math.sign(vector.y) : 0,
+  };
+}
+
+function normalizedAngleSweep(angle: number): number {
+  if (angle > Math.PI) {
+    return angle - 2 * Math.PI;
+  }
+  if (angle < -Math.PI) {
+    return angle + 2 * Math.PI;
+  }
+  return angle;
+}
+
+function sampleRoundedCorner(corner: RoundedCorner): PathPoint[] {
+  const points = [corner.entry];
+  for (let sampleIndex = 1; sampleIndex < CORNER_SAMPLE_COUNT - 1; sampleIndex++) {
+    const progress = sampleIndex / (CORNER_SAMPLE_COUNT - 1);
+    const angle = corner.startAngle + corner.angleSweep * progress;
+    points.push({
+      x: corner.center.x + Math.cos(angle) * corner.radius,
+      y: corner.center.y + Math.sin(angle) * corner.radius,
+    });
+  }
+  points.push(corner.exit);
+  return points;
+}
+
+function coordinatePoints(coordinates: number[]): PathPoint[] {
+  const points: PathPoint[] = [];
+  for (let index = 0; index < coordinates.length; index += 2) {
+    points.push({ x: coordinates[index], y: coordinates[index + 1] });
+  }
+  return points;
+}
+
+function pointCoordinates(points: PathPoint[]): number[] {
+  return points.flatMap(point => [point.x, point.y]);
 }
