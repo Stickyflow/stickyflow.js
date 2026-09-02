@@ -23,3 +23,13 @@ export interface BoxplotStats {
   q3: number;
   max: number;
 }
+
+export interface BoxplotSeriesMark {
+  id: string;
+  series: ChartSeries;
+  seriesIndex: number;
+  color: NonNullable<ChartSeries['color']>;
+  geometry: BoxplotGeometry;
+}
+
+import type { ChartSeries } from '../../../model/charts';

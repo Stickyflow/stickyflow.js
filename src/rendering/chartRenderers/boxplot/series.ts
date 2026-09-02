@@ -5,7 +5,7 @@ import type { ChartRenderContext } from '../types';
 import { createBoxplotGeometry } from './geometry';
 import { renderSamplePoints } from './points';
 import { renderBoxAndWhiskers } from './shapes';
-import type { BoxplotLayout } from './types';
+import type { BoxplotLayout, BoxplotSeriesMark } from './types';
 
 export function renderBoxplotSeries(
   context: ChartRenderContext,
@@ -20,10 +20,16 @@ export function renderBoxplotSeries(
 
   const geometry = createBoxplotGeometry(context, layout, seriesIndex, stats);
   const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
-  const id = `${context.chart.id}-${series.id}`;
-  const nodes = renderBoxAndWhiskers(context, layout, geometry, id, color);
+  const mark: BoxplotSeriesMark = {
+    id: `${context.chart.id}-${series.id}`,
+    series,
+    seriesIndex,
+    color,
+    geometry,
+  };
+  const nodes = renderBoxAndWhiskers(context, layout, mark);
   if (layout.showPoints) {
-    nodes.push(...renderSamplePoints(context, layout, geometry, series, seriesIndex, id, color));
+    nodes.push(...renderSamplePoints(context, layout, mark));
   }
   return nodes;
 }

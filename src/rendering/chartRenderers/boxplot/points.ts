@@ -1,30 +1,25 @@
-import type { ChartSeries } from '../../../model/charts';
 import { mapChartValue } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
-import type { BoxplotGeometry, BoxplotLayout } from './types';
+import type { BoxplotLayout, BoxplotSeriesMark } from './types';
 
 export function renderSamplePoints(
   context: ChartRenderContext,
   layout: BoxplotLayout,
-  geometry: BoxplotGeometry,
-  series: ChartSeries,
-  seriesIndex: number,
-  id: string,
-  color: Parameters<typeof paint>[0],
+  mark: BoxplotSeriesMark,
 ): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
-  return (series.values as number[]).map((value, pointIndex) => ({
+  return (mark.series.values as number[]).map((value, pointIndex) => ({
     type: 'ellipse',
-    id: `chart-box-point-${id}-${pointIndex}`,
+    id: `chart-box-point-${mark.id}-${pointIndex}`,
     order: nextOrder(),
     bounds,
-    cx: geometry.centerX + jitter(seriesIndex * 10_000 + pointIndex) * layout.boxWidth,
+    cx: mark.geometry.centerX + jitter(mark.seriesIndex * 10_000 + pointIndex) * layout.boxWidth,
     cy: plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height),
     rx: 3,
     ry: 3,
-    style: { fill: paint(color, diagnostics, chart.id), opacity: 0.7 },
+    style: { fill: paint(mark.color, diagnostics, chart.id), opacity: 0.7 },
   }));
 }
 
