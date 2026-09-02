@@ -1,7 +1,6 @@
-export interface Point {
-  x: number;
-  y: number;
-}
+import type { Point } from '../../types';
+
+export type { Point } from '../../types';
 
 export const lerpPoint = (a: Point, b: Point, t: number): Point => ({
   x: a.x + (b.x - a.x) * t,

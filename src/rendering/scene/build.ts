@@ -1,13 +1,13 @@
-import type { MeasureTextFactory } from '../model/geometry/text';
-import type { RenderInput } from '../renderInput/types';
-import { buildChart } from './charts';
-import { buildFrame, buildSwimlane } from './entities/containers';
-import { buildLink } from './entities/link';
-import { buildFreeformPath } from './entities/path';
-import { buildShape } from './entities/shape';
-import { EMPTY_BOUNDS, tag } from './renderPrimitives';
-import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './scene';
-import { buildTable } from './tables';
+import type { MeasureTextFactory } from '../../model/geometry/text';
+import type { RenderInput } from '../../renderInput/types';
+import { buildChart } from '../charts';
+import { buildFrame, buildSwimlane } from '../entities/containers';
+import { buildLink } from '../entities/link';
+import { buildFreeformPath } from '../entities/path';
+import { buildShape } from '../entities/shape';
+import { EMPTY_BOUNDS, tag } from '../renderPrimitives';
+import { buildTable } from '../tables';
+import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
 
 function sceneBounds(nodes: RenderNode[]): Bounds {
   if (!nodes.length) {

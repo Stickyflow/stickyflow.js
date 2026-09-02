@@ -1,16 +1,10 @@
-import type { Side } from '../model/geometry/router';
-import type { MarkerType, PathType } from '../model/links';
+import type { RenderDiagnostic } from '../../model/diagnostics';
+import type { Side } from '../../model/geometry/router';
+import type { Bounds, Point } from '../../model/geometry/types';
+import type { MarkerType, PathType } from '../../model/links';
 
-export interface Point {
-  x: number;
-  y: number;
-}
-export interface Bounds {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
+export type { RenderDiagnostic } from '../../model/diagnostics';
+export type { Bounds, Point } from '../../model/geometry/types';
 
 export type ScenePaint =
   | { kind: 'none' }
@@ -124,13 +118,6 @@ export interface SceneImage extends SceneBase {
 }
 
 export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneImage;
-
-export interface RenderDiagnostic {
-  severity: 'warning' | 'error';
-  code: string;
-  message: string;
-  entityId?: string;
-}
 
 export interface RenderScene {
   nodes: RenderNode[];

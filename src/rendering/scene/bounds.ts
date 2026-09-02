@@ -1,4 +1,4 @@
-import type { Bounds, Point } from './scene';
+import type { Bounds, Point } from './types';
 
 export const EMPTY_BOUNDS: Bounds = { minX: 0, minY: 0, maxX: 100, maxY: 100 };
 

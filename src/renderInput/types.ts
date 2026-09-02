@@ -1,11 +1,12 @@
 import type { Chart } from '../model/charts';
+import type { RenderDiagnostic } from '../model/diagnostics';
 import type { Frame } from '../model/frames';
+import type { Point } from '../model/geometry/types';
 import type { Link, PathType } from '../model/links';
 import type { FreeformPath } from '../model/paths';
 import type { Shape } from '../model/shapes';
 import type { Swimlane } from '../model/swimlanes';
 import type { Table } from '../model/tables';
-import type { Point, RenderDiagnostic } from '../rendering/scene';
 export interface ResolvedExportLink {
   link: Link;
   from: Point;

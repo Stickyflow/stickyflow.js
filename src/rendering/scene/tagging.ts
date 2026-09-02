@@ -1,4 +1,4 @@
-import type { RenderNode, SceneRole } from './scene';
+import type { RenderNode, SceneRole } from './types';
 
 export function tag(nodes: RenderNode[], role: SceneRole, id: string, kind?: string, label?: string): RenderNode[] {
   nodes.forEach((node, index) => {

@@ -1,5 +1,5 @@
-import type { GradientColorObject, MeshGradientObject } from '../model/shapes';
-import type { RenderDiagnostic, ScenePaint } from './scene';
+import type { GradientColorObject, MeshGradientObject } from '../../model/shapes';
+import type { RenderDiagnostic, ScenePaint } from './types';
 
 export function paint(
   value: string | GradientColorObject | MeshGradientObject | null | undefined,
