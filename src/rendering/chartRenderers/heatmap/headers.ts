@@ -9,7 +9,7 @@ export function renderHeatmapHeaders(context: ChartRenderContext, layout: Heatma
 }
 
 function renderRowHeaders(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
-  if (layout.rowHeaderWidth <= 0) {
+  if (layout.reservedSpace.rowHeaders <= 0) {
     return [];
   }
   return layout.rows.map((series, rowIndex) => createRowHeader(context, layout, series, rowIndex));
@@ -29,7 +29,7 @@ function createRowHeader(
     frame: {
       x: plot.x,
       y: layout.grid.y + rowIndex * layout.grid.cellHeight + layout.grid.cellHeight / 2 - layout.fontSize / 2,
-      width: layout.rowHeaderWidth - 8,
+      width: layout.reservedSpace.rowHeaders - 8,
       height: layout.fontSize + 2,
     },
     text: series.label,
@@ -38,7 +38,7 @@ function createRowHeader(
 }
 
 function renderColumnHeaders(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
-  if (layout.columnHeaderHeight <= 0) {
+  if (layout.reservedSpace.columnHeaders <= 0) {
     return [];
   }
   return layout.columns.map((label, columnIndex) => createColumnHeader(context, layout, label, columnIndex));

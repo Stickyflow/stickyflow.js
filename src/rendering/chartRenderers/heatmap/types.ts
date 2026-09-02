@@ -9,14 +9,18 @@ export interface HeatmapGrid {
   cellHeight: number;
 }
 
+export interface HeatmapReservedSpace {
+  rowHeaders: number;
+  columnHeaders: number;
+  legend: number;
+}
+
 export interface HeatmapLayout {
   rows: ChartSeries[];
   columns: string[];
   bands: number[];
   zones: ChartZone[];
   fontSize: number;
-  rowHeaderWidth: number;
-  columnHeaderHeight: number;
-  legendHeight: number;
+  reservedSpace: HeatmapReservedSpace;
   grid: HeatmapGrid;
 }

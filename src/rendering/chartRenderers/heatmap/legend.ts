@@ -16,7 +16,7 @@ interface HeatmapLegendItem {
 }
 
 export function renderHeatmapLegend(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
-  if (layout.legendHeight <= 0) {
+  if (layout.reservedSpace.legend <= 0) {
     return [];
   }
 
