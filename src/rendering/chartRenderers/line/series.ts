@@ -3,7 +3,7 @@ import { CHART_COLORS } from '../../chartPrimitives';
 import type { RenderNode } from '../../scene';
 import { pixelPoints, seriesValuePairs } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
-import { renderLineMarks } from './marks';
+import { createLinePointMarks, renderLineMarks } from './marks';
 import { createLinePath } from './path';
 
 export function renderLineSeries(context: ChartRenderContext, series: ChartSeries, seriesIndex: number): RenderNode[] {
@@ -14,6 +14,7 @@ export function renderLineSeries(context: ChartRenderContext, series: ChartSerie
   if (points.length) {
     nodes.push(createLinePath(context, series, points, color));
   }
-  nodes.push(...renderLineMarks(context, series, pairs, points, color));
+  const marks = createLinePointMarks(series, pairs, points, color);
+  nodes.push(...renderLineMarks(context, marks));
   return nodes;
 }
