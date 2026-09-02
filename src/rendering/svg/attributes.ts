@@ -21,10 +21,16 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
 }
 
 export function styleAttrs(node: Exclude<RenderNode, SceneText | SceneImage>, defs: SvgDefinitionRegistry): string {
-  const style = node.style,
-    stroke = defs.paint(style.stroke, `${node.id}-stroke`, node.bounds),
-    fill = defs.paint(style.fill, `${node.id}-fill`, node.bounds);
+  const stroke = defs.paint(node.style.stroke, `${node.id}-stroke`, node.bounds);
+  const fill = defs.paint(node.style.fill, `${node.id}-fill`, node.bounds);
   const attrs = [`fill="${xml(fill)}"`, `stroke="${xml(stroke)}"`];
+  addStrokeAttrs(attrs, node.style);
+  addVisualEffectAttrs(attrs, node, defs);
+  addPathMarkerAttrs(attrs, node, defs);
+  return attrs.join(' ');
+}
+
+function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   if (style.strokeWidth !== undefined) {
     attrs.push(`stroke-width="${num(style.strokeWidth)}"`);
   }
@@ -40,21 +46,35 @@ export function styleAttrs(node: Exclude<RenderNode, SceneText | SceneImage>, de
   if (style.opacity !== undefined) {
     attrs.push(`opacity="${num(style.opacity)}"`);
   }
-  const filter = defs.filter(style, node.id);
+}
+
+function addVisualEffectAttrs(
+  attrs: string[],
+  node: Exclude<RenderNode, SceneText | SceneImage>,
+  defs: SvgDefinitionRegistry,
+): void {
+  const filter = defs.filter(node.style, node.id);
   if (filter) {
     attrs.push(`filter="url(#${filter})"`);
   }
-  if (node.type === 'path') {
-    const start = defs.marker(node.markerStart, strokeColorAt(style, 'start'), style.strokeWidth ?? 1);
-    const end = defs.marker(node.markerEnd, strokeColorAt(style, 'end'), style.strokeWidth ?? 1);
-    if (start) {
-      attrs.push(`marker-start="url(#${start})"`);
-    }
-    if (end) {
-      attrs.push(`marker-end="url(#${end})"`);
-    }
+}
+
+function addPathMarkerAttrs(
+  attrs: string[],
+  node: Exclude<RenderNode, SceneText | SceneImage>,
+  defs: SvgDefinitionRegistry,
+): void {
+  if (node.type !== 'path') {
+    return;
   }
-  return attrs.join(' ');
+  const start = defs.marker(node.markerStart, strokeColorAt(node.style, 'start'), node.style.strokeWidth ?? 1);
+  const end = defs.marker(node.markerEnd, strokeColorAt(node.style, 'end'), node.style.strokeWidth ?? 1);
+  if (start) {
+    attrs.push(`marker-start="url(#${start})"`);
+  }
+  if (end) {
+    attrs.push(`marker-end="url(#${end})"`);
+  }
 }
 
 export function transform(rotation?: number, center?: { x: number; y: number }): string {

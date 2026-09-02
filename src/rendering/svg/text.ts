@@ -4,6 +4,13 @@ import { contractAttrs } from './contract';
 import type { SvgDefinitionRegistry } from './definitions';
 import { num, xml } from './format';
 
+type TextPosition = {
+  x: number;
+  firstY: number;
+  linePx: number;
+  anchor: 'start' | 'middle' | 'end';
+};
+
 function richLineTspans(
   words: Array<{ text: string; bold: boolean }>,
   x: number,
@@ -34,26 +41,45 @@ function richLineTspans(
 }
 
 export function textSvg(node: SceneText, defs: SvgDefinitionRegistry): string {
+  const position = textPosition(node);
+  const fontSize = `${num(node.fontSize)}px`;
+  const content = textContent(node, position, fontSize);
+  const preserve = node.richLines ? ' xml:space="preserve"' : '';
+  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(position.x)}" y="${num(position.firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${position.anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${preserve}${transform(node.rotation, node.rotationCenter)}>${content}</text>`;
+}
+
+function textPosition(node: SceneText): TextPosition {
   const linePx = node.fontSize * node.lineHeight;
   const lineCount = node.richLines ? node.richLines.length : node.lines.length;
   const contentHeight = lineCount * linePx;
-  const firstY =
-    node.verticalAlign === 'top'
-      ? node.y + node.fontSize
-      : node.verticalAlign === 'bottom'
-        ? node.y + node.height - contentHeight + node.fontSize
-        : node.y + (node.height - contentHeight) / 2 + node.fontSize;
   const x = node.align === 'left' ? node.x : node.align === 'right' ? node.x + node.width : node.x + node.width / 2;
   const anchor = node.align === 'left' ? 'start' : node.align === 'right' ? 'end' : 'middle';
-  const fontSize = `${num(node.fontSize)}px`;
-  const preserve = node.richLines ? ' xml:space="preserve"' : '';
-  const body = node.richLines
-    ? node.richLines.map((words, i) => richLineTspans(words, x, i ? ` dy="${num(linePx)}px"` : '', fontSize)).join('')
-    : node.lines
-        .map(
-          (line, i) =>
-            `<tspan x="${num(x)}" font-size="${fontSize}"${i ? ` dy="${num(linePx)}px"` : ''}>${xml(line)}</tspan>`,
-        )
-        .join('');
-  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(x)}" y="${num(firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}" fill="${xml(node.color)}" text-anchor="${anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${preserve}${transform(node.rotation, node.rotationCenter)}>${body}</text>`;
+  return { x, firstY: firstTextBaseline(node, contentHeight), linePx, anchor };
+}
+
+function firstTextBaseline(node: SceneText, contentHeight: number): number {
+  if (node.verticalAlign === 'top') {
+    return node.y + node.fontSize;
+  }
+  if (node.verticalAlign === 'bottom') {
+    return node.y + node.height - contentHeight + node.fontSize;
+  }
+  return node.y + (node.height - contentHeight) / 2 + node.fontSize;
+}
+
+function textContent(node: SceneText, position: TextPosition, fontSize: string): string {
+  if (node.richLines) {
+    return node.richLines
+      .map((words, index) => richLineTspans(words, position.x, lineOffset(index, position.linePx), fontSize))
+      .join('');
+  }
+  return node.lines.map((line, index) => lineTspan(line, index, position, fontSize)).join('');
+}
+
+function lineTspan(line: string, index: number, position: TextPosition, fontSize: string): string {
+  return `<tspan x="${num(position.x)}" font-size="${fontSize}"${lineOffset(index, position.linePx)}>${xml(line)}</tspan>`;
+}
+
+function lineOffset(index: number, linePx: number): string {
+  return index ? ` dy="${num(linePx)}px"` : '';
 }
