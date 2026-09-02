@@ -1,5 +1,5 @@
 import type { ChartSeries } from '../../../model/charts';
-import { CHART_COLORS, errorBarRange, errorWhiskerNode, mapChartValue } from '../../chartPrimitives';
+import { CHART_COLORS, createVerticalErrorWhiskerNode, errorBarRange, mapChartValue } from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
@@ -67,15 +67,16 @@ function createBarError(
   }
   const { chart, plot, bounds, nextOrder } = context;
   const [lower, upper] = errorBarRange(value, error);
-  return errorWhiskerNode(
-    `chart-bar-error-${chart.id}-${series.id}-${valueIndex}`,
-    nextOrder(),
+  return createVerticalErrorWhiskerNode({
+    id: `chart-bar-error-${chart.id}-${series.id}-${valueIndex}`,
+    order: nextOrder(),
     bounds,
-    x + width / 2,
-    plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
-    plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
-    chart.text_color ?? '#0f172a',
-    series.id,
-    valueIndex,
-  );
+    geometry: {
+      centerX: x + width / 2,
+      startY: plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
+      endY: plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
+    },
+    color: chart.text_color ?? '#0f172a',
+    valueReference: { seriesId: series.id, valueIndex },
+  });
 }

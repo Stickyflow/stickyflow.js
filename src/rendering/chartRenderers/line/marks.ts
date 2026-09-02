@@ -1,5 +1,10 @@
 import type { ChartSeries } from '../../../model/charts';
-import { errorBarRange, errorWhiskerNode, mapChartValue, representativeColor } from '../../chartPrimitives';
+import {
+  createVerticalErrorWhiskerNode,
+  errorBarRange,
+  mapChartValue,
+  representativeColor,
+} from '../../chartPrimitives';
 import { paint } from '../../renderPrimitives';
 import type { RenderNode } from '../../scene';
 import type { CartesianPoint } from '../cartesianPoints';
@@ -37,17 +42,18 @@ function createLineError(
   }
   const { chart, plot, bounds, nextOrder } = context;
   const [lower, upper] = errorBarRange(pairs[pointIndex][1], error);
-  return errorWhiskerNode(
-    `chart-line-error-${chart.id}-${series.id}-${pointIndex}`,
-    nextOrder(),
+  return createVerticalErrorWhiskerNode({
+    id: `chart-line-error-${chart.id}-${series.id}-${pointIndex}`,
+    order: nextOrder(),
     bounds,
-    point.x,
-    plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
-    plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
-    representativeColor(color, '#0f172a'),
-    series.id,
-    pointIndex,
-  );
+    geometry: {
+      centerX: point.x,
+      startY: plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
+      endY: plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
+    },
+    color: representativeColor(color, '#0f172a'),
+    valueReference: { seriesId: series.id, valueIndex: pointIndex },
+  });
 }
 
 function createLinePoint(
