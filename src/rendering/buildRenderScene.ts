@@ -5,9 +5,9 @@ import { buildFrame, buildSwimlane } from './entities/containers';
 import { buildLink } from './entities/link';
 import { buildFreeformPath } from './entities/path';
 import { buildShape } from './entities/shape';
-import { buildTable } from './entities/table';
 import { EMPTY_BOUNDS, tag } from './renderPrimitives';
 import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './scene';
+import { buildTable } from './tables';
 
 function sceneBounds(nodes: RenderNode[]): Bounds {
   if (!nodes.length) {
