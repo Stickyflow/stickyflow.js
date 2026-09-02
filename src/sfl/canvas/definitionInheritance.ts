@@ -3,40 +3,53 @@ import { directProperties } from './blockEntries';
 import type { BlockDefinitions } from './definitions';
 
 export type ResolvedDefinitions = Map<string, Map<string, SflValue>>;
+type ParentDefinitionName = (block: SflBlock) => string | undefined;
 
 export function resolveDefinitionInheritance(
   definitions: BlockDefinitions,
-  parentName: (block: SflBlock) => string | undefined,
+  parentName: ParentDefinitionName,
 ): ResolvedDefinitions {
-  const resolved: ResolvedDefinitions = new Map();
+  return new DefinitionInheritanceResolver(definitions, parentName).resolveAll();
+}
 
-  const resolve = (name: string, seen = new Set<string>()): Map<string, SflValue> => {
-    const cached = resolved.get(name);
+class DefinitionInheritanceResolver {
+  readonly #definitions: BlockDefinitions;
+  readonly #parentName: ParentDefinitionName;
+  readonly #resolved: ResolvedDefinitions = new Map();
+
+  constructor(definitions: BlockDefinitions, parentName: ParentDefinitionName) {
+    this.#definitions = definitions;
+    this.#parentName = parentName;
+  }
+
+  resolveAll(): ResolvedDefinitions {
+    for (const name of this.#definitions.keys()) {
+      this.#resolveDefinition(name, new Set());
+    }
+    return this.#resolved;
+  }
+
+  #resolveDefinition(name: string, ancestry: Set<string>): Map<string, SflValue> {
+    const cached = this.#resolved.get(name);
     if (cached) {
       return cached;
     }
 
-    const block = definitions.get(name);
-    if (!block || seen.has(name)) {
+    const block = this.#definitions.get(name);
+    if (!block || ancestry.has(name)) {
       return new Map();
     }
 
-    const values = new Map<string, SflValue>();
-    const parent = parentName(block);
-    if (parent) {
-      for (const [key, value] of resolve(parent, new Set([...seen, name]))) {
-        values.set(key, value);
-      }
-    }
+    const values = this.#inheritedProperties(block, new Set([...ancestry, name]));
     for (const [key, value] of directProperties(block)) {
       values.set(key, value);
     }
-    resolved.set(name, values);
+    this.#resolved.set(name, values);
     return values;
-  };
-
-  for (const name of definitions.keys()) {
-    resolve(name);
   }
-  return resolved;
+
+  #inheritedProperties(block: SflBlock, ancestry: Set<string>): Map<string, SflValue> {
+    const parent = this.#parentName(block);
+    return parent ? new Map(this.#resolveDefinition(parent, ancestry)) : new Map();
+  }
 }
