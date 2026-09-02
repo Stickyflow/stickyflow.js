@@ -18,7 +18,7 @@ interface TreemapTile {
 
 export function renderTreemapTiles(context: ChartRenderContext, layout: TreemapLayout): RenderNode[] {
   const items = layout.leaves.map(leaf => ({ leaf, value: treemapLeafValue(leaf) }));
-  const tiles = squarifyTreemap(items, 0, 0, layout.gridWidth, layout.gridHeight);
+  const tiles = squarifyTreemap(items, { x: 0, y: 0, width: layout.gridWidth, height: layout.gridHeight });
   const nodes: RenderNode[] = [];
   tiles.forEach(tile => {
     nodes.push(...renderTile(context, layout, tile));
