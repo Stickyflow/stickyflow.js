@@ -2,7 +2,7 @@ import type { PathType } from '../../../links';
 import { splitCurvedPath } from './curvedGap';
 import { bezierArcLength, type Point, polylineLength } from './pathMetrics';
 import { splitPolylinePath } from './polylineGap';
-import type { LabelGapDash, LabelGapSplit } from './types';
+import type { LabelGapClearance, LabelGapDash, LabelGapSplit } from './types';
 
 const LABEL_GAP_PADDING = 3;
 const MIN_VISIBLE_STUB = 10;
@@ -29,12 +29,15 @@ export function splitPathAroundLabel(
   gapWidth: number,
   gapHeight: number,
 ): LabelGapSplit | null {
-  const gapHalfWidth = (gapWidth + LABEL_GAP_PADDING) / 2;
-  const gapHalfHeight = (gapHeight + LABEL_GAP_PADDING) / 2;
+  const clearance: LabelGapClearance = {
+    halfWidth: (gapWidth + LABEL_GAP_PADDING) / 2,
+    halfHeight: (gapHeight + LABEL_GAP_PADDING) / 2,
+    minimumVisibleStub: MIN_VISIBLE_STUB,
+  };
   if (pathType === 'curved') {
-    return splitCurvedPath(points, gapHalfWidth, gapHalfHeight, MIN_VISIBLE_STUB);
+    return splitCurvedPath(points, clearance);
   }
-  return splitPolylinePath(points, gapHalfWidth, gapHalfHeight, MIN_VISIBLE_STUB);
+  return splitPolylinePath(points, clearance);
 }
 
 export function labelGapDash(
