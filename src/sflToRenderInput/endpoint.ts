@@ -5,6 +5,13 @@ import { edgePointToward, elementCenter } from './edgePoint';
 import type { PositionedElement } from './types';
 
 type LinkEndpoint = NonNullable<Link['fromPoint']>;
+type LinkEnd = 'from' | 'to';
+
+interface SelectedLinkEndpoint {
+  elementId: string | undefined;
+  oppositeElementId: string | undefined;
+  explicit: LinkEndpoint | undefined;
+}
 
 function sidePoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, { side: unknown }>): Point {
   const offset = endpoint.offset ?? 0.5;
@@ -37,26 +44,47 @@ function namedPortPoint(element: PositionedElement, endpoint: Extract<LinkEndpoi
   );
 }
 
-export function resolveLinkEndpoint(link: Link, end: 'from' | 'to', elements: PositionedElement[]): Point {
-  const id = end === 'from' ? link.fromId : link.toId;
-  const explicit = end === 'from' ? link.fromPoint : link.toPoint;
-  if (explicit && 'isAbsolute' in explicit) {
-    return { x: explicit.x, y: explicit.y };
+export function resolveLinkEndpoint(link: Link, end: LinkEnd, elements: PositionedElement[]): Point {
+  const selected = selectLinkEndpoint(link, end);
+  const absolutePoint = explicitAbsolutePoint(selected.explicit);
+  if (absolutePoint) {
+    return absolutePoint;
   }
-  const element = elements.find(candidate => candidate.id === id);
+  const element = findPositionedElement(elements, selected.elementId);
   if (!element) {
     return { x: 0, y: 0 };
   }
-  if (explicit && 'isPort' in explicit) {
-    return namedPortPoint(element, explicit);
+  const anchoredPoint = explicitAnchorPoint(element, selected.explicit);
+  if (anchoredPoint) {
+    return anchoredPoint;
   }
-  if (explicit && 'side' in explicit) {
-    return sidePoint(element, explicit);
+  return automaticEndpointPoint(element, findPositionedElement(elements, selected.oppositeElementId));
+}
+
+function selectLinkEndpoint(link: Link, end: LinkEnd): SelectedLinkEndpoint {
+  return end === 'from'
+    ? { elementId: link.fromId, oppositeElementId: link.toId, explicit: link.fromPoint }
+    : { elementId: link.toId, oppositeElementId: link.fromId, explicit: link.toPoint };
+}
+
+function explicitAbsolutePoint(endpoint: LinkEndpoint | undefined): Point | null {
+  return endpoint && 'isAbsolute' in endpoint ? { x: endpoint.x, y: endpoint.y } : null;
+}
+
+function explicitAnchorPoint(element: PositionedElement, endpoint: LinkEndpoint | undefined): Point | null {
+  if (endpoint && 'isPort' in endpoint) {
+    return namedPortPoint(element, endpoint);
   }
-  const otherId = end === 'from' ? link.toId : link.fromId;
-  const other = elements.find(candidate => candidate.id === otherId);
-  if (!other) {
-    return elementCenter(element);
+  if (endpoint && 'side' in endpoint) {
+    return sidePoint(element, endpoint);
   }
-  return edgePointToward(element, other);
+  return null;
+}
+
+function automaticEndpointPoint(element: PositionedElement, opposite: PositionedElement | undefined): Point {
+  return opposite ? edgePointToward(element, opposite) : elementCenter(element);
+}
+
+function findPositionedElement(elements: PositionedElement[], id: string | undefined): PositionedElement | undefined {
+  return elements.find(candidate => candidate.id === id);
 }
