@@ -5,6 +5,19 @@ import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapLayout } from './types';
 
+interface HeatmapCell {
+  seriesId: string;
+  columnIndex: number;
+  value: number;
+  color: string;
+  frame: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
 export function renderHeatmapCells(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
   const nodes: RenderNode[] = [];
   layout.rows.forEach((series, rowIndex) => {
@@ -19,78 +32,74 @@ function renderRowCells(
   series: ChartSeries,
   rowIndex: number,
 ): RenderNode[] {
-  const nodes: RenderNode[] = [];
-  const values = series.values as number[];
-  const y = layout.grid.y + rowIndex * layout.grid.cellHeight;
-
-  layout.columns.forEach((_, columnIndex) => {
-    const value = values[columnIndex] ?? 0;
-    const color = colorForValue(value, layout);
-    const x = layout.grid.x + columnIndex * layout.grid.cellWidth;
-    nodes.push(createCellNode(context, layout, series.id, columnIndex, x, y, color));
-    nodes.push(createValueLabel(context, layout, series.id, columnIndex, x, y, value, color));
+  return layout.columns.flatMap((_, columnIndex) => {
+    const cell = createHeatmapCell(layout, series, rowIndex, columnIndex);
+    return renderHeatmapCell(context, layout, cell);
   });
+}
 
-  return nodes;
+function createHeatmapCell(
+  layout: HeatmapLayout,
+  series: ChartSeries,
+  rowIndex: number,
+  columnIndex: number,
+): HeatmapCell {
+  const value = (series.values as number[])[columnIndex] ?? 0;
+  return {
+    seriesId: series.id,
+    columnIndex,
+    value,
+    color: colorForValue(value, layout),
+    frame: {
+      x: layout.grid.x + columnIndex * layout.grid.cellWidth,
+      y: layout.grid.y + rowIndex * layout.grid.cellHeight,
+      width: layout.grid.cellWidth,
+      height: layout.grid.cellHeight,
+    },
+  };
 }
 
 function colorForValue(value: number, layout: HeatmapLayout): string {
   return layout.zones[bandIndexForValue(value, layout.bands)]?.color ?? DEFAULT_ZONE_FILL;
 }
 
-function createCellNode(
-  context: ChartRenderContext,
-  layout: HeatmapLayout,
-  seriesId: string,
-  columnIndex: number,
-  x: number,
-  y: number,
-  color: string,
-): RenderNode {
+function renderHeatmapCell(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode[] {
+  return [createCellBackground(context, cell), createCellValueLabel(context, layout, cell)];
+}
+
+function createCellBackground(context: ChartRenderContext, cell: HeatmapCell): RenderNode {
   const { chart, bounds, nextOrder } = context;
   return {
     type: 'rect',
-    id: `chart-heatmap-cell-${chart.id}-${seriesId}-${columnIndex}`,
+    id: `chart-heatmap-cell-${chart.id}-${cell.seriesId}-${cell.columnIndex}`,
     order: nextOrder(),
     bounds,
-    x,
-    y,
-    width: layout.grid.cellWidth,
-    height: layout.grid.cellHeight,
+    ...cell.frame,
     style: {
-      fill: { kind: 'solid', color },
+      fill: { kind: 'solid', color: cell.color },
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: finite(chart.grid_width, 1),
     },
   };
 }
 
-function createValueLabel(
-  context: ChartRenderContext,
-  layout: HeatmapLayout,
-  seriesId: string,
-  columnIndex: number,
-  x: number,
-  y: number,
-  value: number,
-  color: string,
-): RenderNode {
+function createCellValueLabel(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode {
   const { chart, bounds, nextOrder } = context;
   return {
     ...chartText({
-      id: `chart-heatmap-value-${chart.id}-${seriesId}-${columnIndex}`,
+      id: `chart-heatmap-value-${chart.id}-${cell.seriesId}-${cell.columnIndex}`,
       order: nextOrder(),
       bounds,
       frame: {
-        x,
-        y: y + layout.grid.cellHeight / 2 - layout.fontSize / 2,
-        width: layout.grid.cellWidth,
+        x: cell.frame.x,
+        y: cell.frame.y + cell.frame.height / 2 - layout.fontSize / 2,
+        width: cell.frame.width,
         height: layout.fontSize + 2,
       },
-      text: String(value),
+      text: String(cell.value),
       chart,
       align: 'center',
     }),
-    color: contrastTextColor(color),
+    color: contrastTextColor(cell.color),
   };
 }
