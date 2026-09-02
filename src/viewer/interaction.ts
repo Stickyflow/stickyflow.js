@@ -90,7 +90,6 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     ids.forEach(id => {
       const primary = findOwnerNode(svg, id, isPrimary);
-      console.log('[sfl-debug] flashChanged id=%s primary=%o', id, primary); // TEMP — remove after diagnosing
       if (!primary) return;
       const pending = changeTimers.get(id);
       if (pending) clearTimeout(pending);
@@ -101,9 +100,6 @@ export function bindInteraction(display: DisplayHandle, emitter: Emitter, diagra
         : shapeChangeOverlay(doc, primary, id, color);
       svg.appendChild(overlay);
       startFade(overlay, reducedMotion); // after appending, not inside shapeChangeOverlay/linkChangeOverlay — see startFade's doc comment
-      console.log('[sfl-debug] overlay markup id=%s: %s', id, overlay.outerHTML); // TEMP — remove after diagnosing
-      console.log('[sfl-debug] overlay computed opacity t=0: %s, ring computed opacity: %s', getComputedStyle(overlay).opacity, getComputedStyle(overlay.firstChild as Element).opacity); // TEMP
-      setTimeout(() => console.log('[sfl-debug] overlay computed opacity t=+150ms: %s (still in DOM: %o)', getComputedStyle(overlay).opacity, svg.contains(overlay)), 150); // TEMP
       const duration = reducedMotion ? REDUCED_MOTION_DUR_MS : FLASH_DUR_MS;
       // Closes over this specific overlay element, not a re-query at fire
       // time — a second flash on the same id landing before this timer
