@@ -5,6 +5,20 @@ export interface RoutePoint {
   y: number;
 }
 
+export interface RouteConnection {
+  side: Side;
+  normal: [number, number];
+  stub: [number, number];
+}
+
+export interface OrthogonalRouteDraft {
+  from: RoutePoint;
+  to: RoutePoint;
+  fromConnection: RouteConnection;
+  toConnection: RouteConnection;
+  horizontalFirst: boolean;
+}
+
 export function snapAlignedEndpoints(
   from: RoutePoint,
   to: RoutePoint,
@@ -66,34 +80,32 @@ export function stepOutDistances(
   return [fromDistance, toDistance];
 }
 
-export function chooseBend(
-  fromStub: [number, number],
-  toStub: [number, number],
-  to: RoutePoint,
-  fromSide: Side,
-  toSide: Side,
-  fromNormal: [number, number],
-  toNormal: [number, number],
-  horizontalFirst: boolean,
-): [number, number] {
+export function chooseBend(route: OrthogonalRouteDraft): [number, number] {
+  const { fromConnection, toConnection, to, horizontalFirst } = route;
+  const fromStub = fromConnection.stub;
+  const toStub = toConnection.stub;
   let x = (fromStub[0] + toStub[0]) / 2;
   let y = (fromStub[1] + toStub[1]) / 2;
-  const fromHorizontal = fromSide === 'left' || fromSide === 'right';
-  const toHorizontal = toSide === 'left' || toSide === 'right';
+  const fromHorizontal = isHorizontalSide(fromConnection.side);
+  const toHorizontal = isHorizontalSide(toConnection.side);
 
   if (fromHorizontal !== toHorizontal) {
     if (horizontalFirst) {
-      x = (fromStub[0] - to.x) * toNormal[0] >= 0 ? fromStub[0] : toStub[0];
+      x = (fromStub[0] - to.x) * toConnection.normal[0] >= 0 ? fromStub[0] : toStub[0];
     } else {
-      y = (fromStub[1] - to.y) * toNormal[1] >= 0 ? fromStub[1] : toStub[1];
+      y = (fromStub[1] - to.y) * toConnection.normal[1] >= 0 ? fromStub[1] : toStub[1];
     }
-  } else if (fromSide === toSide) {
+  } else if (fromConnection.side === toConnection.side) {
     if (horizontalFirst) {
-      x = fromNormal[0] < 0 ? Math.min(fromStub[0], toStub[0]) : Math.max(fromStub[0], toStub[0]);
+      x = fromConnection.normal[0] < 0 ? Math.min(fromStub[0], toStub[0]) : Math.max(fromStub[0], toStub[0]);
     } else {
-      y = fromNormal[1] < 0 ? Math.min(fromStub[1], toStub[1]) : Math.max(fromStub[1], toStub[1]);
+      y = fromConnection.normal[1] < 0 ? Math.min(fromStub[1], toStub[1]) : Math.max(fromStub[1], toStub[1]);
     }
   }
 
   return [x, y];
+}
+
+function isHorizontalSide(side: Side): boolean {
+  return side === 'left' || side === 'right';
 }

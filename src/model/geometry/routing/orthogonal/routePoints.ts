@@ -1,5 +1,5 @@
 import type { Side } from '../types';
-import type { RoutePoint } from './routePlan';
+import type { OrthogonalRouteDraft, RoutePoint } from './routePlan';
 
 export function segmentMidpoints(points: number[]): RoutePoint[] {
   const midpoints: RoutePoint[] = [];
@@ -12,14 +12,10 @@ export function segmentMidpoints(points: number[]): RoutePoint[] {
   return midpoints;
 }
 
-export function baseOrthogonalPoints(
-  from: RoutePoint,
-  to: RoutePoint,
-  fromStub: [number, number],
-  toStub: [number, number],
-  bend: [number, number],
-  horizontalFirst: boolean,
-): number[] {
+export function baseOrthogonalPoints(route: OrthogonalRouteDraft, bend: [number, number]): number[] {
+  const { from, to, fromConnection, toConnection, horizontalFirst } = route;
+  const fromStub = fromConnection.stub;
+  const toStub = toConnection.stub;
   const points = [from.x, from.y, fromStub[0], fromStub[1]];
   if (horizontalFirst) {
     points.push(bend[0], fromStub[1], bend[0], toStub[1]);
@@ -36,15 +32,14 @@ export function movableInnerSegments(horizontalFirst: boolean, fromSide: Side, t
 }
 
 export function offsetOrthogonalPoints(
-  from: RoutePoint,
-  to: RoutePoint,
-  fromStub: [number, number],
-  toStub: [number, number],
+  route: OrthogonalRouteDraft,
   bend: [number, number],
-  horizontalFirst: boolean,
   segmentOffsets: number[] | undefined,
   movable: [boolean, boolean],
 ): number[] {
+  const { from, to, fromConnection, toConnection, horizontalFirst } = route;
+  const fromStub = fromConnection.stub;
+  const toStub = toConnection.stub;
   const first = movable[0] ? segmentOffsets?.[1] || 0 : 0;
   const middle = segmentOffsets?.[2] || 0;
   const last = movable[1] ? segmentOffsets?.[3] || 0 : 0;
