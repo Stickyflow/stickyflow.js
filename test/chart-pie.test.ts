@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { render, sflToCanvasState } from '../src/index';
 import type { RenderNode } from '../src/index';
+import { render, sflToCanvasState } from '../src/index';
 
 const solidFill = (node: RenderNode): string | undefined =>
-  ('style' in node && node.style?.fill?.kind === 'solid') ? node.style.fill.color : undefined;
+  'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
 const PIE_SFL = `sfl 1.2
 

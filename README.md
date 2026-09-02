@@ -365,3 +365,24 @@ plain CDN `<script>` — no bundler, `<stickyflow-diagram>` just works:
 ```bash
 npm test          # vitest, environment: 'node' — a green run is the headless proof
 ```
+
+## Lint, format, CI
+
+Biome is the single lint + format tool (`biome.json`); `.gitattributes` pins the
+working tree to LF so the same file is checked on Windows and on the CI runner.
+
+```bash
+npm run lint      # biome check — formatting + lint rules, no writes
+npm run lint:fix  # apply the safe fixes
+npm run format    # formatting only
+npm run ci        # lint + typecheck + test + verify — exactly what CI runs
+```
+
+`tsconfig.json` runs with `noUnusedLocals`/`noUnusedParameters`, so a dead import
+left behind by a file split fails the typecheck instead of accumulating.
+
+Two rules stay at warning level on purpose and do not fail the build:
+`noNonNullAssertion` (the lexer, parser and sankey layout lean on `!` in places
+where the surrounding invariant is local and obvious) and `noExplicitAny` (the
+`sfl/adapters/importJson` boundary is untyped JSON by design).
+`.github/workflows/ci.yml` runs `npm run ci` on Node 18, 20 and 22.

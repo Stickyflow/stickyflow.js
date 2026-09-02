@@ -1,222 +1,25 @@
-// Drag-to-move a shape, with a live preview of its attached links (see
-// linkPreview.ts) — reusing the real router, not an approximation, so an
-// orthogonal link still looks orthogonal and a curved one still curves while
-// dragging. (DOM code — browser-verified, like textEdit.ts.)
-import type { Viewer, OwnerRef } from '../viewer';
-import { resolveOwner, isCameraGesture } from '../viewer/contract';
-import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../viewer/domQuery';
-import type { Bounds } from '../model/geometry/router';
-import { pxPerUnit, findSnapCandidateBounds } from '../viewer/domQuery';
-import { updateAlignmentGuides, clearAlignmentGuides, type GuideLine } from '../viewer/alignmentGuideOverlay';
-import { findLiveLinks, updateLiveLinks, type LiveLink } from './linkPreview';
-import { computeSnap, nearestCandidates, MOVE_ACTIVE_POINTS } from './snapGeometry';
-import { Emitter } from './events';
+import type { Viewer } from '../viewer';
+import type { Emitter } from './events';
+import { MoveSession } from './move/session';
 
 export interface MoveDragHandle {
   destroy(): void;
 }
 
-const MOVABLE_ROLES = new Set(['entity']);
-const SCREEN_DRAG_THRESHOLD = 3;
-const SNAP_THRESHOLD_PX = 20;
-const GUIDE_OVERHANG = 10; // world units, flat — matches the reference implementation
-const MOVE_GUIDE_COLOR = '#8b5cf6';
-
-const offsetBounds = (b: Bounds, dx: number, dy: number): Bounds => ({ x: b.x + dx, y: b.y + dy, width: b.width, height: b.height });
-
-const applyGroupTransform = (nodes: SVGGraphicsElement[], baseTransforms: (string | null)[], dx: number, dy: number) => {
-  nodes.forEach((node, i) => {
-    const base = baseTransforms[i];
-    node.setAttribute('transform', base ? `translate(${dx} ${dy}) ${base}` : `translate(${dx} ${dy})`);
-  });
-};
-
-/** One dragged entity: its own nodes/overlay plus the links it drags live
- *  (an internal link — see below — is excluded here even if attached, since
- *  it's translated as its own unit instead of re-routed). */
-interface DraggedEntity {
-  owner: OwnerRef;
-  nodes: SVGGraphicsElement[];
-  baseTransforms: (string | null)[];
-  // PLURAL: paintSelection() can append more than one group sharing the same
-  // data-sf-selection-overlay id — the ring/handles AND, for a single
-  // selected entity, the quick-duplicate bubbles (selectionOverlay.ts's
-  // quickDuplicateBubbles) both carry it. A prior version here used
-  // querySelector (singular) and only ever found the first one, which is why
-  // the bubbles used to sit still until the drag ended and paintSelection()
-  // repainted everything at the final position.
-  overlays: SVGGElement[];
-  overlayBaseTransforms: (string | null)[];
-  draggedBounds: Bounds;
-  liveLinks: LiveLink[];
-}
-
-/** A link whose BOTH ends are inside the dragged group: since every group
- *  member moves by the identical (dx, dy), the link's shape relative to its
- *  two endpoints never changes — cheaper and more correct to translate it
- *  rigidly (like an entity) than to re-route it against a "moving" other end
- *  the router has no notion of. */
-interface DraggedInternalLink {
-  nodes: SVGGraphicsElement[];
-  baseTransforms: (string | null)[];
-}
-
-interface DragState {
-  entities: DraggedEntity[];
-  internalLinks: DraggedInternalLink[];
-  pointerId: number;
-  startScreen: { x: number; y: number };
-  startUser: { x: number; y: number };
-  moved: boolean;
-}
-
 export function bindShapeMovement(viewer: Viewer, emitter: Emitter): MoveDragHandle {
   const svg = viewer.svg;
-  let drag: DragState | null = null;
+  const session = new MoveSession(viewer, emitter);
 
-  const userPoint = (e: PointerEvent) => {
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 };
-    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
-    return { x: p.x, y: p.y };
-  };
-
-  const applyTransform = (dx: number, dy: number) => {
-    if (!drag) return;
-    for (const entity of drag.entities) {
-      applyGroupTransform(entity.nodes, entity.baseTransforms, dx, dy);
-      applyGroupTransform(entity.overlays, entity.overlayBaseTransforms, dx, dy);
-      updateLiveLinks(entity.liveLinks, offsetBounds(entity.draggedBounds, dx, dy));
-    }
-    for (const link of drag.internalLinks) applyGroupTransform(link.nodes, link.baseTransforms, dx, dy);
-  };
-
-  // Alignment-guide snap pass on a raw delta — used by BOTH pointermove and
-  // pointerup so the live preview and the committed moveChange can never
-  // drift apart. Takes the drag state explicitly (not read from the closed-
-  // over `drag` variable) because pointerup calls this AFTER already nulling
-  // `drag` out, having captured its own local copy first. Snaps against the
-  // drag's "lead" entity (the first one grabbed), same concept the reference
-  // implementation's multi-drag uses: with a multi-selection moving
-  // together, aligning every member individually would fight itself.
-  const snappedDelta = (d: DragState, rawDx: number, rawDy: number): { dx: number; dy: number; guides: GuideLine[] } => {
-    const lead = d.entities[0];
-    const liveLeadBounds = offsetBounds(lead.draggedBounds, rawDx, rawDy);
-    const excludeIds = new Set(d.entities.map(entity => entity.owner.id));
-    const candidates = nearestCandidates(liveLeadBounds, findSnapCandidateBounds(svg, excludeIds));
-    const threshold = SNAP_THRESHOLD_PX / pxPerUnit(svg);
-    const snap = computeSnap(liveLeadBounds, candidates, {
-      threshold, activeX: MOVE_ACTIVE_POINTS, activeY: MOVE_ACTIVE_POINTS, guideOverhang: GUIDE_OVERHANG,
-    });
-    return {
-      dx: rawDx + snap.x.delta,
-      dy: rawDy + snap.y.delta,
-      guides: [snap.x.guide, snap.y.guide].filter((g): g is GuideLine => g !== null),
-    };
-  };
-
-  const onPointerDown = (e: PointerEvent) => {
-    if (e.button !== 0 || drag) return;
-    // Ctrl/Cmd means the reader is panning the camera (viewer/contract.ts's
-    // isCameraGesture) — yield rather than turning that into a mutation.
-    if (isCameraGesture(e)) return;
-    const owner = resolveOwner(e.target as Element | null);
-    if (!owner || !MOVABLE_ROLES.has(owner.role)) return;
-
-    // Dragging a shape that's part of a multi-selection moves the whole
-    // selection together, preserving relative positions — dragging an
-    // unselected shape (even while others are selected) only moves that one,
-    // leaving the rest of the selection untouched.
-    const selection = viewer.getSelection();
-    const group = selection.some(o => o.id === owner.id)
-      ? selection.filter(o => MOVABLE_ROLES.has(o.role))
-      : [owner];
-    const groupIds = new Set(group.map(o => o.id));
-
-    const entities: DraggedEntity[] = [];
-    for (const o of group) {
-      const nodes = findAllOwnerNodes(svg, o.id);
-      const primary = findOwnerNode(svg, o.id, isPrimary);
-      if (!nodes.length || !primary) continue;
-      const overlays = [...svg.querySelectorAll<SVGGElement>(`[data-sf-selection-overlay="${CSS.escape(o.id)}"]`)];
-      const draggedBounds = primary.getBBox();
-      // Links attached to more than one group member are handled separately
-      // (see internalLinks below) — excluding them here stops the same
-      // <path> from being both rigidly translated AND re-routed.
-      const liveLinks = findLiveLinks(svg, o.id, draggedBounds).filter(link => {
-        const otherId = link.path.getAttribute(link.draggedIsFrom ? 'data-sf-to' : 'data-sf-from');
-        return !otherId || !groupIds.has(otherId);
-      });
-      entities.push({
-        owner: o, nodes, baseTransforms: nodes.map(n => n.getAttribute('transform')),
-        overlays, overlayBaseTransforms: overlays.map(g => g.getAttribute('transform')),
-        draggedBounds, liveLinks,
-      });
-    }
-    if (!entities.length) return;
-
-    const internalLinks: DraggedInternalLink[] = [];
-    if (groupIds.size > 1) {
-      svg.querySelectorAll<SVGPathElement>('path[data-sf-from][data-sf-to]').forEach(path => {
-        const from = path.getAttribute('data-sf-from');
-        const to = path.getAttribute('data-sf-to');
-        const linkId = path.getAttribute('data-sf-id');
-        if (!from || !to || !linkId || !groupIds.has(from) || !groupIds.has(to)) return;
-        const nodes = findAllOwnerNodes(svg, linkId);
-        if (nodes.length) internalLinks.push({ nodes, baseTransforms: nodes.map(n => n.getAttribute('transform')) });
-      });
-    }
-
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    drag = {
-      entities,
-      internalLinks,
-      pointerId: e.pointerId,
-      startScreen: { x: e.clientX, y: e.clientY },
-      startUser: userPoint(e),
-      moved: false,
-    };
-  };
-
-  const onPointerMove = (e: PointerEvent) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    if (!drag.moved) {
-      const screenDist = Math.hypot(e.clientX - drag.startScreen.x, e.clientY - drag.startScreen.y);
-      if (screenDist < SCREEN_DRAG_THRESHOLD) return;
-      drag.moved = true;
-    }
-    const p = userPoint(e);
-    const { dx, dy, guides } = snappedDelta(drag, p.x - drag.startUser.x, p.y - drag.startUser.y);
-    applyTransform(dx, dy);
-    updateAlignmentGuides(svg, guides, MOVE_GUIDE_COLOR);
-  };
-
-  const onPointerUp = (e: PointerEvent) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    const d = drag;
-    drag = null;
-    (e.target as Element).releasePointerCapture?.(d.pointerId);
-    clearAlignmentGuides(svg);
-    if (!d.moved) return;
-    const p = userPoint(e);
-    const { dx, dy } = snappedDelta(d, p.x - d.startUser.x, p.y - d.startUser.y);
-    // One event per moved entity, same (dx, dy) — keeps MoveChangeEvent's
-    // existing single-owner shape so a host that doesn't know about
-    // multi-select still works unmodified, just receiving several events
-    // instead of one.
-    d.entities.forEach(entity => emitter.emit('moveChange', { owner: entity.owner, dx, dy }));
-  };
-
-  svg.addEventListener('pointerdown', onPointerDown);
-  svg.addEventListener('pointermove', onPointerMove);
-  svg.addEventListener('pointerup', onPointerUp);
+  svg.addEventListener('pointerdown', session.pointerDown);
+  svg.addEventListener('pointermove', session.pointerMove);
+  svg.addEventListener('pointerup', session.pointerUp);
 
   return {
     destroy() {
-      drag = null;
-      svg.removeEventListener('pointerdown', onPointerDown);
-      svg.removeEventListener('pointermove', onPointerMove);
-      svg.removeEventListener('pointerup', onPointerUp);
+      session.cancel();
+      svg.removeEventListener('pointerdown', session.pointerDown);
+      svg.removeEventListener('pointermove', session.pointerMove);
+      svg.removeEventListener('pointerup', session.pointerUp);
     },
   };
 }

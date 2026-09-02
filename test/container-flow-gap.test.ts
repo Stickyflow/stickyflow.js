@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sflToCanvasState, sflToRenderInput, renderCanvas } from '../src/index';
+import { renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
 // Container `flow`/`gap` (SFL 1.4, §12.1): auto-positions a Container's
 // DIRECT children (Container or positioned-leaf kinds) along one axis — the
@@ -88,12 +88,13 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
     expect(b).toMatchObject({ x: 10, y: 20 + 50 + 10, width: 100, height: 30 });
   });
 
-  it('a child\'s own layout.position is ignored (overridden) when the parent has flow set', () => {
+  it("a child's own layout.position is ignored (overridden) when the parent has flow set", () => {
     // Same as HORIZONTAL_SFL's children but each also declares an explicit
     // (wrong, if honored) position — flow must win regardless.
-    const sfl = HORIZONTAL_SFL
-      .replace('layout { size: 140, 90 }\n    }\n    Entity scrap', 'layout { position: 999, 999; size: 140, 90 }\n    }\n    Entity scrap')
-      .replace('layout { size: 140, 90 }\n    }\n  }\n}', 'layout { position: -50, -50; size: 140, 90 }\n    }\n  }\n}');
+    const sfl = HORIZONTAL_SFL.replace(
+      'layout { size: 140, 90 }\n    }\n    Entity scrap',
+      'layout { position: 999, 999; size: 140, 90 }\n    }\n    Entity scrap',
+    ).replace('layout { size: 140, 90 }\n    }\n  }\n}', 'layout { position: -50, -50; size: 140, 90 }\n    }\n  }\n}');
     const state = sflToCanvasState(sfl);
     const output = state.entities.find(e => e.id === 'output');
     const scrap = state.entities.find(e => e.id === 'scrap');

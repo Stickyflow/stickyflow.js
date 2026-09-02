@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
 
-// Series.color now decodes exactly like a shape's fillColor (SFL grammar
-// already supports gradient()/mesh() there) - was previously passed through
-// as a raw string and hardcoded into a 'solid' ScenePaint everywhere a chart
-// mark reads a color, so a gradient() literal rendered as an invalid SVG
-// fill attribute and silently fell back to black.
-
 const chart = (type: string, color: string, extra = '') => `sfl 1.4
 
 Model M {
@@ -27,7 +21,7 @@ describe('Series.color as a gradient', () => {
     const { svg, diagnostics } = render(chart('bar', GRADIENT));
     expect(diagnostics).toEqual([]);
     expect(svg).toContain('<linearGradient');
-    const bar = svg.match(/<rect id="sf-chart-bar-c-a-0"[^>]*>/)![0];
+    const bar = svg.match(/<rect id="sf-chart-bar-c-a-0"[^>]*>/)?.[0];
     expect(bar).toMatch(/fill="url\(#[^)]+\)"/);
     expect(bar).not.toContain('fill="gradient(');
   });
@@ -37,25 +31,24 @@ describe('Series.color as a gradient', () => {
     expect(diagnostics).toEqual([]);
     expect(svg).toContain('<rect id="sf-chart-bar-c-a-0"');
     expect(svg).not.toContain('<linearGradient');
-    expect(svg.match(/<rect id="sf-chart-bar-c-a-0"[^>]*>/)![0]).toContain('fill="#7c3aed"');
+    const bar = svg.match(/<rect id="sf-chart-bar-c-a-0"[^>]*>/)?.[0];
+    expect(bar).toContain('fill="#7c3aed"');
   });
 
   it('paints a line stroke as a gradient too', () => {
     const { svg } = render(chart('line', GRADIENT));
-    const line = svg.match(/<path id="sf-chart-line-c-a"[^>]*>/)![0];
+    const line = svg.match(/<path id="sf-chart-line-c-a"[^>]*>/)?.[0];
     expect(line).toMatch(/stroke="url\(#[^)]+\)"/);
   });
 
   it('paints a pie slice as a gradient', () => {
     const { svg } = render(chart('pie', GRADIENT));
-    const slice = svg.match(/<path id="sf-chart-pie-slice-c-a"[^>]*>/)![0];
+    const slice = svg.match(/<path id="sf-chart-pie-slice-c-a"[^>]*>/)?.[0];
     expect(slice).toMatch(/fill="url\(#[^)]+\)"/);
   });
 
   it("falls back to the gradient's first stop for contexts that can only paint a flat color", () => {
-    // treemap/mekko tile labels compute contrast against the tile's own
-    // fill via contrastTextColor(), which needs one real color to measure -
-    // a representative stop, not a crash or an always-dark fallback.
+    // Contrast calculation requires a representative solid color.
     const sfl = `sfl 1.4
 
 Model M {
@@ -75,8 +68,7 @@ Model M {
   });
 
   it('renders a sankey flow with a flat representative color, not a broken gradient literal', () => {
-    // layoutSankey's graph layout only ever carries color as opaque string
-    // data - same reason ChartZone.color (node color) stays string-only.
+    // Sankey layout carries a single solid color per flow.
     const sfl = `sfl 1.4
 
 Model M {
@@ -92,7 +84,7 @@ Model M {
 `;
     const { svg, diagnostics } = render(sfl);
     expect(diagnostics).toEqual([]);
-    const link = svg.match(/<path id="sf-chart-sankey-link-c-0"[^>]*>/)![0];
+    const link = svg.match(/<path id="sf-chart-sankey-link-c-0"[^>]*>/)?.[0];
     expect(link).toContain('fill="#7c3aed"');
     expect(link).not.toContain('fill="gradient(');
   });

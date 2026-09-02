@@ -1,21 +1,20 @@
-// SFL core — extracted (plan M1). Pure: no React, no DOM, no app aliases.
-// Minimal surface used by the render pipeline; the app's editor/hooks/highlight
-// helpers stay in the app and are not part of this package.
-import { parse } from './parser';
 import { emit } from './emitter';
+import { parse } from './parser';
 
-export { parse, SflParseError } from './parser';
-export { emit } from './emitter';
-export { tokenize, SflLexError, type Token, type TokenType } from './lexer';
-export * from './ast';
-export {
-  sflToCanvasState,
-  type SflCanvasState, type SflEntityOut, type SflLinkOut, type SflGroupOut,
-} from './sflToCanvasState';
-export { sflToImportJson } from './adapters/sflToImportJson';
 export { decodeColor, decodeShadow } from './adapters/decodeStyles';
+export { type SflImportJson, sflToImportJson } from './adapters/sflToImportJson';
+export * from './ast';
+export { emit } from './emitter';
+export { SflLexError, type Token, type TokenType, tokenize } from './lexer';
+export { parse, SflParseError } from './parser';
+export {
+  type SflCanvasState,
+  type SflEntityOut,
+  type SflGroupOut,
+  type SflLinkOut,
+  sflToCanvasState,
+} from './sflToCanvasState';
 
-/** Parse then canonically re-emit. Idempotent by design. */
 export function canonicalize(sflText: string): string {
   return emit(parse(sflText));
 }

@@ -38,7 +38,9 @@ describe('Net (§3.5, star decomposition)', () => {
   it('applies the Net text to every synthetic link', () => {
     const state = sflToCanvasState(SFL);
     const netLinks = state.links.filter(l => l.id.startsWith('vcc_'));
-    for (const link of netLinks) expect(link.text).toBe('+5V');
+    for (const link of netLinks) {
+      expect(link.text).toBe('+5V');
+    }
   });
 
   it('produces no links for a Net with fewer than 2 members', () => {

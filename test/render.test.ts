@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, renderCanvas, sflToCanvasState } from '../src/index';
 import type { RenderInput } from '../src/index';
+import { render, renderCanvas, sflToCanvasState } from '../src/index';
 
 // This whole suite runs under environment: 'node' (see vitest.config.ts). If any
 // part of the render core reached for the DOM, Konva or React, it would fail to
@@ -9,21 +9,50 @@ import type { RenderInput } from '../src/index';
 describe('render core runs headless through the package (real app source)', () => {
   it('renders every supported shape type as vector content and escapes text', () => {
     const types = [
-      'rectangle', 'rounded_rectangle', 'diamond', 'circle', 'oval', 'container_rectangle',
-      'cylinder', 'document', 'pill', 'person', 'triangle', 'hexagon', 'parallelogram', 'trapezoid',
+      'rectangle',
+      'rounded_rectangle',
+      'diamond',
+      'circle',
+      'oval',
+      'container_rectangle',
+      'cylinder',
+      'document',
+      'pill',
+      'person',
+      'triangle',
+      'hexagon',
+      'parallelogram',
+      'trapezoid',
     ];
     const input = {
       shapes: types.map((shapeType, index) => ({
-        id: String(index), boardId: 'board', shapeType, x: index * 150, y: 20, width: 120, height: 80,
-        text: `<${shapeType}>`, fillColor: '#fff', strokeColor: '#123456', strokeWidth: 2,
-        layer_group: 'default', order_key: `a${index}`, is_visible: true, is_locked: false, createdAt: '',
+        id: String(index),
+        boardId: 'board',
+        shapeType,
+        x: index * 150,
+        y: 20,
+        width: 120,
+        height: 80,
+        text: `<${shapeType}>`,
+        fillColor: '#fff',
+        strokeColor: '#123456',
+        strokeWidth: 2,
+        layer_group: 'default',
+        order_key: `a${index}`,
+        is_visible: true,
+        is_locked: false,
+        createdAt: '',
       })),
-      frames: [], swimlanes: [], links: [],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as RenderInput;
 
     const { svg, width, height } = renderCanvas(input);
 
-    for (let i = 0; i < types.length; i++) expect(svg).toContain(`sf-shape-${i}`);
+    for (let i = 0; i < types.length; i++) {
+      expect(svg).toContain(`sf-shape-${i}`);
+    }
     expect(svg).toContain('&lt;rectangle&gt;');
     expect(svg).not.toContain('[object Object]');
     expect(svg).toMatch(/<(rect|ellipse|path) /);
@@ -38,11 +67,26 @@ describe('render core runs headless through the package (real app source)', () =
     // SHAPE_DEFAULTS[shape.shapeType] lookups with "Cannot read properties of
     // undefined" - it must render as a plain rectangle plus a diagnostic instead.
     const input = {
-      shapes: [{
-        id: 'mystery', boardId: 'board', shapeType: 'not_a_real_shape', x: 0, y: 0, width: 120, height: 60,
-        text: 'unknown shape', layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-      }],
-      frames: [], swimlanes: [], links: [],
+      shapes: [
+        {
+          id: 'mystery',
+          boardId: 'board',
+          shapeType: 'not_a_real_shape',
+          x: 0,
+          y: 0,
+          width: 120,
+          height: 60,
+          text: 'unknown shape',
+          layer_group: 'default',
+          order_key: 'a',
+          is_visible: true,
+          is_locked: false,
+          createdAt: '',
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as RenderInput;
 
     expect(() => renderCanvas(input)).not.toThrow();
@@ -58,11 +102,26 @@ describe('render core runs headless through the package (real app source)', () =
     // while the app showed it transparent — e.g. white text became invisible
     // against a fill the entity's own style never actually specified.
     const input = {
-      shapes: [{
-        id: 'unfilled', boardId: 'board', shapeType: 'pill', x: 0, y: 0, width: 120, height: 60,
-        text: 'no fill set', layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-      }],
-      frames: [], swimlanes: [], links: [],
+      shapes: [
+        {
+          id: 'unfilled',
+          boardId: 'board',
+          shapeType: 'pill',
+          x: 0,
+          y: 0,
+          width: 120,
+          height: 60,
+          text: 'no fill set',
+          layer_group: 'default',
+          order_key: 'a',
+          is_visible: true,
+          is_locked: false,
+          createdAt: '',
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as RenderInput;
 
     const { svg } = renderCanvas(input);
@@ -76,16 +135,31 @@ describe('render core runs headless through the package (real app source)', () =
     // one representative color per end. This used to always fall back to a
     // hardcoded gray whenever the stroke wasn't a plain solid color.
     const link = {
-      id: 'grad-link', fromId: 'a', toId: 'b',
-      startMarker: 'circle', endMarker: 'arrow',
+      id: 'grad-link',
+      fromId: 'a',
+      toId: 'b',
+      startMarker: 'circle',
+      endMarker: 'arrow',
       style: {
         pathType: 'straight',
-        color: { type: 'gradient' as const, angle: 90, stops: [{ position: 0, color: '#61b4c1' }, { position: 100, color: '#030303' }] },
+        color: {
+          type: 'gradient' as const,
+          angle: 90,
+          stops: [
+            { position: 0, color: '#61b4c1' },
+            { position: 100, color: '#030303' },
+          ],
+        },
       },
-      layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false,
+      layer_group: 'default',
+      order_key: 'a',
+      is_visible: true,
+      is_locked: false,
     };
     const input = {
-      shapes: [], frames: [], swimlanes: [],
+      shapes: [],
+      frames: [],
+      swimlanes: [],
       links: [{ link, from: { x: 0, y: 0 }, to: { x: 200, y: 0 } }],
     } as unknown as RenderInput;
 
@@ -97,20 +171,47 @@ describe('render core runs headless through the package (real app source)', () =
   });
 
   it('exports linear and mesh gradients as vector SVG definitions', () => {
-    const gradient = { type: 'gradient' as const, angle: 45, stops: [{ position: 0, color: '#fff' }, { position: 100, color: '#000' }] };
+    const gradient = {
+      type: 'gradient' as const,
+      angle: 45,
+      stops: [
+        { position: 0, color: '#fff' },
+        { position: 100, color: '#000' },
+      ],
+    };
     const base = (id: string, shapeType: string, x: number) => ({
-      id, boardId: 'board', shapeType, x, y: 20, width: 120, height: 80,
-      strokeColor: '#123456', strokeWidth: 2, layer_group: 'default', order_key: `a${x}`,
-      is_visible: true, is_locked: false, createdAt: '',
+      id,
+      boardId: 'board',
+      shapeType,
+      x,
+      y: 20,
+      width: 120,
+      height: 80,
+      strokeColor: '#123456',
+      strokeWidth: 2,
+      layer_group: 'default',
+      order_key: `a${x}`,
+      is_visible: true,
+      is_locked: false,
+      createdAt: '',
     });
     const input = {
       shapes: [
         { ...base('gradient', 'rectangle', 0), fillColor: gradient, strokeColor: gradient },
-        { ...base('mesh', 'circle', 200), fillColor: { type: 'mesh' as const, points: [
-          { id: 'p1', x: 20, y: 30, color: '#e0c3fc' }, { id: 'p2', x: 80, y: 85, color: '#a7e8e0' },
-        ] } },
+        {
+          ...base('mesh', 'circle', 200),
+          fillColor: {
+            type: 'mesh' as const,
+            points: [
+              { id: 'p1', x: 20, y: 30, color: '#e0c3fc' },
+              { id: 'p2', x: 80, y: 85, color: '#a7e8e0' },
+            ],
+          },
+        },
       ],
-      frames: [], swimlanes: [], links: [],
+      frames: [],
+      swimlanes: [],
+      links: [],
     } as unknown as RenderInput;
 
     const { svg, diagnostics } = renderCanvas(input);
@@ -124,12 +225,21 @@ describe('render core runs headless through the package (real app source)', () =
 
   it('renders link markers and endpoint labels', () => {
     const link = {
-      id: 'relation', fromId: 'from', toId: 'to', startMarker: 'triangle', endMarker: 'zero_many',
+      id: 'relation',
+      fromId: 'from',
+      toId: 'to',
+      startMarker: 'triangle',
+      endMarker: 'zero_many',
       style: { pathType: 'straight', color: '#334155', startLabel: '1', endLabel: '0..*' },
-      layer_group: 'content', order_key: 'a', is_visible: true, is_locked: false,
+      layer_group: 'content',
+      order_key: 'a',
+      is_visible: true,
+      is_locked: false,
     };
     const input = {
-      shapes: [], frames: [], swimlanes: [],
+      shapes: [],
+      frames: [],
+      swimlanes: [],
       links: [{ link, from: { x: 20, y: 20 }, to: { x: 220, y: 20 } }],
     } as unknown as RenderInput;
 
@@ -140,7 +250,7 @@ describe('render core runs headless through the package (real app source)', () =
     expect(svg).toContain('>0..*</tspan>');
   });
 
-  it('cuts a real gap in a link\'s stroke where its text label sits, instead of drawing the label on top of an unbroken line', () => {
+  it("cuts a real gap in a link's stroke where its text label sits, instead of drawing the label on top of an unbroken line", () => {
     // Matches the interactive canvas app's own ConnectionLine (which literally
     // splits into two Konva Lines around the label) — here as a single path's
     // stroke-dasharray instead, since other code (selectionOverlay.ts,
@@ -148,12 +258,21 @@ describe('render core runs headless through the package (real app source)', () =
     // path assuming it spans the link end-to-end, which splitting into two
     // real <path> elements would break.
     const link = {
-      id: 'labeled', fromId: 'from', toId: 'to', text: 'HTTP Request', showText: true,
+      id: 'labeled',
+      fromId: 'from',
+      toId: 'to',
+      text: 'HTTP Request',
+      showText: true,
       style: { pathType: 'straight', color: '#334155' },
-      layer_group: 'content', order_key: 'a', is_visible: true, is_locked: false,
+      layer_group: 'content',
+      order_key: 'a',
+      is_visible: true,
+      is_locked: false,
     };
     const input = {
-      shapes: [], frames: [], swimlanes: [],
+      shapes: [],
+      frames: [],
+      swimlanes: [],
       links: [{ link, from: { x: 0, y: 0 }, to: { x: 400, y: 0 } }],
     } as unknown as RenderInput;
 
@@ -161,8 +280,10 @@ describe('render core runs headless through the package (real app source)', () =
 
     expect(svg).toContain('data-sf-label-gap="true"');
     const dasharray = svg.match(/id="sf-link-labeled"[^>]*stroke-dasharray="([^"]+)"/)?.[1];
-    expect(dasharray).toBeDefined();
-    const [dashBefore, gapLength] = dasharray!.split(' ').map(Number);
+    if (!dasharray) {
+      throw new Error('Label gap dash pattern is missing from the rendered link.');
+    }
+    const [dashBefore, gapLength] = dasharray.split(' ').map(Number);
     expect(dashBefore).toBeGreaterThan(0);
     expect(gapLength).toBeGreaterThan(0);
     // getTotalLength()-dependent consumers need the `d` itself untouched —
@@ -170,18 +291,27 @@ describe('render core runs headless through the package (real app source)', () =
     expect(svg).toContain('d="M 0 0 L 400 0"');
   });
 
-  it('leaves a dashed link\'s own stroke pattern alone when it has a text label, rather than overwriting it with a label gap', () => {
+  it("leaves a dashed link's own stroke pattern alone when it has a text label, rather than overwriting it with a label gap", () => {
     // A single stroke-dasharray can't encode both a line-style dash pattern and
     // a label gap at once — narrow, documented tradeoff (see buildLink): a
     // dashed/dotted link with a label keeps the pre-existing "line runs
     // through the label" look instead of silently dropping its dash style.
     const link = {
-      id: 'dashedLabeled', fromId: 'from', toId: 'to', text: 'retry', showText: true,
+      id: 'dashedLabeled',
+      fromId: 'from',
+      toId: 'to',
+      text: 'retry',
+      showText: true,
       style: { pathType: 'straight', color: '#334155', strokeStyle: 'dashed' },
-      layer_group: 'content', order_key: 'a', is_visible: true, is_locked: false,
+      layer_group: 'content',
+      order_key: 'a',
+      is_visible: true,
+      is_locked: false,
     };
     const input = {
-      shapes: [], frames: [], swimlanes: [],
+      shapes: [],
+      frames: [],
+      swimlanes: [],
       links: [{ link, from: { x: 0, y: 0 }, to: { x: 400, y: 0 } }],
     } as unknown as RenderInput;
 
@@ -343,14 +473,16 @@ Model m {
 `;
     const state = sflToCanvasState(stylesInsideModel);
     expect(state.entities[0].shapeType).toBeUndefined();
-    expect(state.diagnostics).toEqual(expect.arrayContaining([
-      expect.objectContaining({ severity: 'warning', code: 'unresolved-style-or-layout', entityId: 'living' }),
-    ]));
+    expect(state.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ severity: 'warning', code: 'unresolved-style-or-layout', entityId: 'living' }),
+      ]),
+    );
 
     const { diagnostics, svg } = render(stylesInsideModel);
-    expect(diagnostics).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: 'unresolved-style-or-layout', entityId: 'living' }),
-    ]));
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'unresolved-style-or-layout', entityId: 'living' })]),
+    );
     // The actual visible symptom: no fill/stroke ever reaches the SVG.
     expect(svg).toMatch(/data-sf-id="living"[^>]*fill="none"/);
   });
@@ -381,7 +513,7 @@ Model m {
     expect(svg).toMatch(/data-sf-id="living"[^>]*fill="#e0f2fe"/);
   });
 
-  it('bends an orthogonal link per its `segments:` offsets instead of always using the router\'s default route', () => {
+  it("bends an orthogonal link per its `segments:` offsets instead of always using the router's default route", () => {
     // `segments:` parses as a `list` SflValue — asString() (used for every
     // other Link property) only stringifies string/ident/number, so this
     // used to be silently dropped between sflToCanvasState and the render
@@ -466,7 +598,8 @@ Model M {
     // Each diagram's own gradient id must be scoped by its own prefix —
     // otherwise both would emit the exact same id and collide when concatenated
     // into one document.
-    const gradientIdIn = (svg: string, prefix: string) => svg.match(new RegExp(`<linearGradient id="(${prefix}[^"]+)"`))?.[1];
+    const gradientIdIn = (svg: string, prefix: string) =>
+      svg.match(new RegExp(`<linearGradient id="(${prefix}[^"]+)"`))?.[1];
     const idA = gradientIdIn(a.svg, 'sf-diagram-a-');
     const idB = gradientIdIn(b.svg, 'sf-diagram-b-');
     expect(idA).toBeTruthy();
@@ -586,7 +719,7 @@ Model M {
     expect(vertical).toContain('>Customer</tspan>');
   });
 
-  it('scales lane sizes to fit when they do not sum to the swimlane\'s own declared height', () => {
+  it("scales lane sizes to fit when they do not sum to the swimlane's own declared height", () => {
     // The real canvas app guarantees lanes always sum to the swimlane's own
     // dimension on every resize (laneScaling.ts's scaleLanesToSize) — nothing
     // enforced that for SFL-declared lanes. Lanes summing to 260 in a
@@ -694,7 +827,7 @@ Model M {
     expect(svg).toContain('>id</tspan>');
   });
 
-  it('scales column widths to fit when they do not sum to the table\'s own declared width', () => {
+  it("scales column widths to fit when they do not sum to the table's own declared width", () => {
     // Same fix, same reasoning as the swimlane lane-scaling test: the real
     // app guarantees columns always sum to the table's own width on every
     // resize (columnScaling.ts's scaleColumnsToWidth) — nothing enforced
@@ -735,7 +868,7 @@ Model M {
     expect(Number(divider?.[1])).toBeCloseTo(100, 0);
   });
 
-  it('rounds only the header fill\'s top corners, not the bottom ones that sit against the row grid', () => {
+  it("rounds only the header fill's top corners, not the bottom ones that sit against the row grid", () => {
     // A plain <rect rx="…"> rounds all four corners uniformly. The header
     // fill is much shorter than the table (just one row tall), so rounding
     // its bottom corners too made them peek out past the header/row divider

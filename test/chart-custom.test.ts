@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { render, sflToCanvasState } from '../src/index';
 import type { RenderNode } from '../src/index';
+import { render, sflToCanvasState } from '../src/index';
 
 const solidFill = (node: RenderNode): string | undefined =>
-  ('style' in node && node.style?.fill?.kind === 'solid') ? node.style.fill.color : undefined;
+  'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
 const CUSTOM_SFL = `sfl 1.2
 
@@ -40,7 +40,11 @@ describe('Custom chart', () => {
     const state = sflToCanvasState(CUSTOM_SFL);
     const chart = state.entities[0];
     expect(chart.chart?.chartType).toBe('custom');
-    expect(chart.chart?.series[0].symbol?.points).toEqual([[-4, -4], [4, -4], [0, 4]]);
+    expect(chart.chart?.series[0].symbol?.points).toEqual([
+      [-4, -4],
+      [4, -4],
+      [0, 4],
+    ]);
     expect(chart.chart?.series[0].stroke).toBe('#1e1b4b');
     expect(chart.chart?.series[0].strokeWidth).toBe(2);
   });

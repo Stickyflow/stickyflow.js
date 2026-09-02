@@ -1,0 +1,5 @@
+# Repo speichert LF; Arbeitskopie ebenfalls, damit Biome unter Windows und in CI
+# dieselbe Datei sieht (core.autocrlf wird hiervon ueberstimmt).
+* text=auto eol=lf
+*.png binary
+*.svg text eol=lf

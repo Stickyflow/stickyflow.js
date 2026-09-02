@@ -1,7 +1,5 @@
 # Changelog
 
-- Added circular `radial` charts and configurable polar `areaOpacity`.
-
 All notable changes to this package are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -18,6 +16,38 @@ Two things count as breaking here that are easy to overlook:
   mismatch makes `createViewer()` refuse to mount.
 
 ## [Unreleased]
+
+### Fixed
+
+- SFL patching no longer corrupts documents containing `"""` multiline strings.
+  The patcher used its own line-local regex scanner, so a `{` or `//` inside a
+  multiline string desynchronised brace depth for the rest of the document —
+  editing such an entity could produce unparseable SFL. Block and property
+  positions now come from the real lexer, so there is a single SFL grammar.
+- Property values that span multiple lines are replaced as a whole instead of
+  only their first line.
+- A throwing host event handler no longer prevents the remaining handlers from
+  running; the error is rethrown asynchronously instead of being swallowed.
+
+### Changed
+
+- **Breaking (internal module layout).** `rendering/renderScene` is split into
+  `rendering/scene` (scene vocabulary), `rendering/renderInput` (pipeline input)
+  and `rendering/domContractVersion`. The public entry re-exports the same
+  names, so only deep imports into `dist/rendering/renderScene` are affected.
+- **Breaking (`Token`).** Lexer tokens now carry required `endLine`/`endCol`.
+- DOM-contract access (`resolveOwner`, `findOwnerNode`, overlays, SVG namespace)
+  moved out of `viewer/` into its own `domContract` tier, consumed by both the
+  viewer and the interaction tier. `stickyflow/interaction` now uses only the
+  public `stickyflow/viewer` API.
+- Added circular `radial` charts and configurable polar `areaOpacity`.
+
+### Added
+
+- Tier layering, viewer encapsulation and the headless guarantee are enforced by
+  `test/boundary.test.ts` instead of convention.
+- A second, jsdom-based test project (`npm run test:dom`) for the DOM-bound
+  interaction tier. The node-only run stays untouched as the headless proof.
 
 - Add full SFL parsing and headless SVG rendering for freeform `Path` and `Chart` entities.
 - Preserve explicit `[x, y]` series data for line and scatter charts while retaining legacy flat line-series support.

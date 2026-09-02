@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { render, sflToCanvasState } from '../src/index';
 import type { RenderNode } from '../src/index';
+import { render, sflToCanvasState } from '../src/index';
 
 const solidFill = (node: RenderNode): string | undefined =>
-  ('style' in node && node.style?.fill?.kind === 'solid') ? node.style.fill.color : undefined;
+  'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
 const BOXPLOT_SFL = `sfl 1.2
 
@@ -32,7 +32,10 @@ describe('Boxplot chart', () => {
     const chart = state.entities[0];
     expect(chart.chart?.chartType).toBe('boxplot');
     expect(chart.chart?.showBoxplotPoints).toBe(false);
-    expect(chart.chart?.series.map(s => s.values)).toEqual([[55, 60, 65, 70, 90], [30, 40, 50]]);
+    expect(chart.chart?.series.map(s => s.values)).toEqual([
+      [55, 60, 65, 70, 90],
+      [30, 40, 50],
+    ]);
   });
 
   it('renders one box per series without a diagnostic', () => {

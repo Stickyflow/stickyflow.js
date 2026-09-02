@@ -22,7 +22,11 @@ describe('Symbol (§5.5, free-form shape)', () => {
     const state = sflToCanvasState(SFL);
     const tri = state.entities.find(e => e.id === 'tri');
     expect(tri?.shapeType).toBe('symbol');
-    expect(tri?.symbol?.points).toEqual([[0.5, 0], [1, 1], [0, 1]]);
+    expect(tri?.symbol?.points).toEqual([
+      [0.5, 0],
+      [1, 1],
+      [0, 1],
+    ]);
   });
 
   it('renders the symbol as a closed polygon scaled to the instance bounding box', () => {

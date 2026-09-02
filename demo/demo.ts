@@ -3,6 +3,14 @@
 // (The static tier needs no browser — see the node tests.)
 import { createViewer } from '../src/viewer';
 
+function requireDemoElement(id: string): HTMLElement {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Demo element #${id} is missing.`);
+  }
+  return element;
+}
+
 const SFL = `sfl 1.2
 
 Style Box {
@@ -57,9 +65,11 @@ Model Checkout {
 }
 `;
 
-const container = document.getElementById('diagram') as HTMLElement;
-const log = document.getElementById('log') as HTMLElement;
-const write = (line: string) => { log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 12).join('\n'); };
+const container = requireDemoElement('diagram');
+const log = requireDemoElement('log');
+const write = (line: string): void => {
+  log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 12).join('\n');
+};
 
 const viewer = createViewer({ container, source: SFL, interactive: true, diagramId: 'checkout' });
 
@@ -68,8 +78,8 @@ viewer.on('entityClick', e => write(`entityClick → ${e.owner.kind} "${e.owner.
 viewer.on('linkClick', e => write(`linkClick → ${e.owner.id}`));
 viewer.on('selectionChange', e => write(`selection: [${e.selection.map(o => o.id).join(', ')}]`));
 
-document.getElementById('fit')!.addEventListener('click', () => viewer.fit());
-document.getElementById('clear')!.addEventListener('click', () => viewer.select([]));
+requireDemoElement('fit').addEventListener('click', () => viewer.fit());
+requireDemoElement('clear').addEventListener('click', () => viewer.select([]));
 
 // Expose for poking around in the console.
 (window as unknown as { viewer: typeof viewer }).viewer = viewer;

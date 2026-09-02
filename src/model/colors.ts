@@ -1,6 +1,5 @@
-
 export interface ColorStop {
-  position: number; // 0-100 (percentage)
+  position: number;
   color: string;
 }
 
@@ -11,14 +10,14 @@ export interface SolidColor {
 
 export interface GradientColor {
   type: 'gradient';
-  angle: number; // 0-360 degrees
+  angle: number;
   stops: ColorStop[];
 }
 
 export interface MeshPoint {
   id: string;
-  x: number; // 0-100 (% position within shape bbox)
-  y: number; // 0-100
+  x: number;
+  y: number;
   color: string;
 }
 

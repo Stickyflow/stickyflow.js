@@ -59,7 +59,10 @@ describe('Table cellType: number, Column.align, Column.scale, Footer (SFL 1.4, Â
     const scoreCol = table?.columns.find(c => c.id === 'score');
     expect(scoreCol?.scale).toEqual({
       type: 'ramp',
-      stops: [{ color: '#dcfce7', position: 0 }, { color: '#fee2e2', position: 100 }],
+      stops: [
+        { color: '#dcfce7', position: 0 },
+        { color: '#fee2e2', position: 100 },
+      ],
     });
     expect(table?.columns.find(c => c.id === 'name')?.scale).toBeUndefined();
     expect(table?.footer).toEqual({ id: 'summe', cells: { name: 'Gesamt', score: '58' } });
@@ -107,7 +110,9 @@ describe('Table cellType: number, Column.align, Column.scale, Footer (SFL 1.4, Â
     const { scene: withoutFooterScene } = renderCanvas(sflToRenderInput(withoutFooter));
     const bodyWith = withFooterScene.nodes.find(n => n.id === 'table-risiken');
     const bodyWithout = withoutFooterScene.nodes.find(n => n.id === 'table-risiken');
-    expect(bodyWith?.type === 'rect' && bodyWithout?.type === 'rect' && bodyWith.height - bodyWithout.height).toBeGreaterThan(0);
+    expect(
+      bodyWith?.type === 'rect' && bodyWithout?.type === 'rect' && bodyWith.height - bodyWithout.height,
+    ).toBeGreaterThan(0);
 
     const { svg } = render(TABLE_SFL);
     expect(svg).toContain('sf-table-footer-fill-risiken');

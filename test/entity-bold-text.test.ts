@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { renderCanvas } from '../src/index';
 import type { RenderInput } from '../src/index';
+import { renderCanvas } from '../src/index';
 import type { Shape } from '../src/model/shapes';
 
 // §1.4 Infographics: inline `**bold**` runs inside an Entity/shape's own
@@ -8,12 +8,26 @@ import type { Shape } from '../src/model/shapes';
 // textSvg rich-tspan branch). Entity labels only - Link/Chart/Table text
 // keeps rendering literal asterisks unchanged, proven below too.
 
-const baseShape = (text: string, extra: Partial<Shape> = {}): Shape => ({
-  id: 'e', boardId: 'board', shapeType: 'rectangle', x: 0, y: 0, width: 220, height: 80,
-  text, fillColor: '#eef2ff', strokeColor: '#123456', strokeWidth: 2,
-  layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-  ...extra,
-} as Shape);
+const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
+  ({
+    id: 'e',
+    boardId: 'board',
+    shapeType: 'rectangle',
+    x: 0,
+    y: 0,
+    width: 220,
+    height: 80,
+    text,
+    fillColor: '#eef2ff',
+    strokeColor: '#123456',
+    strokeWidth: 2,
+    layer_group: 'default',
+    order_key: 'a',
+    is_visible: true,
+    is_locked: false,
+    createdAt: '',
+    ...extra,
+  }) as Shape;
 
 function renderShape(text: string, extra: Partial<Shape> = {}) {
   const input = { shapes: [baseShape(text, extra)], frames: [], swimlanes: [], links: [] } as unknown as RenderInput;
@@ -72,11 +86,26 @@ describe('Entity label inline **bold** rendering', () => {
         baseShape('a', { id: 'a', x: 0 } as Partial<Shape>),
         baseShape('b', { id: 'b', x: 300 } as Partial<Shape>),
       ],
-      frames: [], swimlanes: [],
-      links: [{
-        link: { id: 'l', fromId: 'a', toId: 'b', showText: true, text: '**bold** label', style: { pathType: 'straight', color: '#334155' }, layer_group: 'content', order_key: 'a', is_visible: true, is_locked: false },
-        from: { x: 220, y: 40 }, to: { x: 300, y: 40 },
-      }],
+      frames: [],
+      swimlanes: [],
+      links: [
+        {
+          link: {
+            id: 'l',
+            fromId: 'a',
+            toId: 'b',
+            showText: true,
+            text: '**bold** label',
+            style: { pathType: 'straight', color: '#334155' },
+            layer_group: 'content',
+            order_key: 'a',
+            is_visible: true,
+            is_locked: false,
+          },
+          from: { x: 220, y: 40 },
+          to: { x: 300, y: 40 },
+        },
+      ],
     } as unknown as RenderInput;
     const { svg } = renderCanvas(input);
     expect(svg).toContain('**bold** label');

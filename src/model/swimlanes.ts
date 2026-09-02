@@ -1,108 +1,98 @@
-/**
- * Swimlane entity - Container holding N named lanes, for BPMN-style process diagrams.
- * One Swimlane = one container with an ordered list of lanes (e.g. "HR" / "IT" / "Manager").
- */
-
 export interface Lane {
-  id: string
-  label: string
-  size: number              // Absolute pixel size along the perpendicular axis
-  color?: string | null
+  id: string;
+  label: string;
+  size: number;
+  color?: string | null;
 }
 
 export interface Swimlane {
-  id: string
-  board_id: string
-  name?: string  // lesbarer, board-eindeutiger Slug (SFL-Identität)
-  x: number
-  y: number
-  width: number
-  height: number
-  title?: string | null
+  id: string;
+  board_id?: string;
+  name?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  title?: string | null;
 
-  orientation: 'horizontal' | 'vertical'
-  lanes: Lane[]
+  orientation: 'horizontal' | 'vertical';
+  lanes: Lane[];
 
-  // Styling
-  stroke_color: string
-  stroke_width: number
-  dash: number[]  // Dashed line pattern [dashLength, gapLength]
-  corner_radius: number
-  fill_color: string
+  stroke_color: string;
+  stroke_width: number;
+  dash?: number[];
+  corner_radius: number;
+  fill_color: string;
 
-  // Title/lane label styling
-  text_color: string
-  font_size: number
-  font_weight: 'normal' | 'bold'
-  font_family?: string
-  show_lane_labels: boolean  // Toggles per-lane header labels, independent of each lane's own `label`
+  text_color: string;
+  font_size: number;
+  font_weight: 'normal' | 'bold';
+  font_family?: string;
+  show_lane_labels: boolean;
 
-  // Layer Management
-  layer_group: string
-  order_key: string
-  is_visible: boolean
-  is_locked: boolean
+  layer_group?: string;
+  order_key?: string;
+  is_visible?: boolean;
+  is_locked?: boolean;
 
-  // Entity Group Assignment
-  entity_group_id?: string | null
+  entity_group_id?: string | null;
 
-  // Timestamps
-  created_at: string
-  updated_at?: string | null
+  created_at?: string;
+  updated_at?: string | null;
 }
 
 export interface SwimlaneCreate {
-  id?: string
-  x: number
-  y: number
-  width?: number
-  height?: number
-  title?: string | null
-  orientation?: 'horizontal' | 'vertical'
-  lanes?: Lane[]
-  stroke_color?: string
-  stroke_width?: number
-  dash?: number[]
-  corner_radius?: number
-  fill_color?: string
-  text_color?: string
-  font_size?: number
-  font_weight?: 'normal' | 'bold'
-  font_family?: string
-  show_lane_labels?: boolean
-  layer_group?: string
-  order_key?: string
-  entity_group_id?: string | null
+  id?: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  title?: string | null;
+  orientation?: 'horizontal' | 'vertical';
+  lanes?: Lane[];
+  stroke_color?: string;
+  stroke_width?: number;
+  dash?: number[];
+  corner_radius?: number;
+  fill_color?: string;
+  text_color?: string;
+  font_size?: number;
+  font_weight?: 'normal' | 'bold';
+  font_family?: string;
+  show_lane_labels?: boolean;
+  layer_group?: string;
+  order_key?: string;
+  entity_group_id?: string | null;
 }
 
 export interface SwimlaneUpdate {
-  name?: string  // lesbarer, board-eindeutiger Slug (SFL-Identität)
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  title?: string | null
-  orientation?: 'horizontal' | 'vertical'
-  lanes?: Lane[]
-  stroke_color?: string
-  stroke_width?: number
-  dash?: number[]
-  corner_radius?: number
-  fill_color?: string
-  text_color?: string
-  font_size?: number
-  font_weight?: 'normal' | 'bold'
-  font_family?: string
-  show_lane_labels?: boolean
-  layer_group?: string
-  order_key?: string
-  is_visible?: boolean
-  is_locked?: boolean
-  entity_group_id?: string | null
+  name?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  title?: string | null;
+  orientation?: 'horizontal' | 'vertical';
+  lanes?: Lane[];
+  stroke_color?: string;
+  stroke_width?: number;
+  dash?: number[];
+  corner_radius?: number;
+  fill_color?: string;
+  text_color?: string;
+  font_size?: number;
+  font_weight?: 'normal' | 'bold';
+  font_family?: string;
+  show_lane_labels?: boolean;
+  layer_group?: string;
+  order_key?: string;
+  is_visible?: boolean;
+  is_locked?: boolean;
+  entity_group_id?: string | null;
 }
 
-export const DEFAULT_LANE_SIZE = 150
-export const SWIMLANE_CORNER_RADIUS = 12
+export const DEFAULT_LANE_SIZE = 150;
+export const SWIMLANE_CORNER_RADIUS = 12;
 
 export function createDefaultLanes(count: number = 2): Lane[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -110,18 +100,15 @@ export function createDefaultLanes(count: number = 2): Lane[] {
     label: `Lane ${i + 1}`,
     size: DEFAULT_LANE_SIZE,
     color: null,
-  }))
+  }));
 }
 
-// Default values for new swimlanes
 export const SWIMLANE_DEFAULTS = {
   width: 600,
   height: 300,
   title: 'Swimlane',
   orientation: 'horizontal' as const,
   lanes: createDefaultLanes(2),
-  // Medium gray instead of the brand purple used for frames - stays legible
-  // against both light and dark canvas backgrounds.
   stroke_color: '#6b7280',
   stroke_width: 2,
   dash: [] as number[],
@@ -133,5 +120,5 @@ export const SWIMLANE_DEFAULTS = {
   font_family: "'Inter', sans-serif",
   show_lane_labels: true,
   layer_group: 'background',
-  order_key: 'e'
-}
+  order_key: 'e',
+};

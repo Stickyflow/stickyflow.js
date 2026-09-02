@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
-import type { RenderInput } from '../src/index';
 
 // Fields §3.4 - mirrors stickyflow-atlas's field chart_type (continuous
 // scale, IDW interpolation, isolines, vector-field arrows) on this package's
@@ -49,7 +48,11 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     expect(chart?.interpolate).toBe('idw');
     expect(chart?.idwPower).toBe(2);
     expect(chart?.isolines).toEqual([0.5]);
-    expect(chart?.series.find(s => s.id === 'messung')?.values).toEqual([[0, 0, 0], [10, 10, 1], [0, 10, 0.5]]);
+    expect(chart?.series.find(s => s.id === 'messung')?.values).toEqual([
+      [0, 0, 0],
+      [10, 10, 1],
+      [0, 10, 0.5],
+    ]);
     expect(chart?.series.find(s => s.id === 'wind')?.values).toEqual([[5, 5, 0, 2]]);
   });
 
@@ -57,7 +60,11 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     const input = sflToRenderInput(FIELD_SFL);
     expect(input.charts?.[0].config?.scale).toEqual({
       type: 'ramp',
-      stops: [{ color: '#0b1d51', position: 0 }, { color: '#22d3ee', position: 0.5 }, { color: '#f5d90a', position: 1 }],
+      stops: [
+        { color: '#0b1d51', position: 0 },
+        { color: '#22d3ee', position: 0.5 },
+        { color: '#f5d90a', position: 1 },
+      ],
     });
     expect(input.charts?.[0].config?.interpolate).toBe('idw');
     expect(input.charts?.[0].config?.idwPower).toBe(2);
@@ -84,16 +91,14 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
   });
 
   it('emits no surface cells or isolines when only a vector series is present', () => {
-    const vectorOnly = FIELD_SFL.replace(
-      /Series messung \{[\s\S]*?\}\n    /, '',
-    );
+    const vectorOnly = FIELD_SFL.replace(/Series messung \{[\s\S]*?\}\n {4}/, '');
     const { scene } = renderCanvas(sflToRenderInput(vectorOnly));
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-cell-'))).toBe(false);
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-isoline-'))).toBe(false);
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-vector-'))).toBe(true);
   });
 
-  it('renders a colorbar legend with min/max labels from the ramp\'s own stop range, not the axis range', () => {
+  it("renders a colorbar legend with min/max labels from the ramp's own stop range, not the axis range", () => {
     const { scene } = renderCanvas(sflToRenderInput(FIELD_SFL));
     const bar = scene.nodes.find(node => node.id === 'chart-field-colorbar-wlan');
     expect(bar?.type === 'rect' && bar.style.fill?.kind).toBe('linear-gradient');

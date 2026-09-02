@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { render, sflToCanvasState } from '../src/index';
 import type { RenderNode } from '../src/index';
+import { render, sflToCanvasState } from '../src/index';
 
-const rect = (node: RenderNode | undefined) => node?.type === 'rect' ? node : undefined;
+const rect = (node: RenderNode | undefined) => (node?.type === 'rect' ? node : undefined);
 
 const MEKKO_SFL = `sfl 1.2
 
@@ -29,7 +29,10 @@ describe('Mekko chart', () => {
   it('carries chartType and per-column values through sflToCanvasState', () => {
     const state = sflToCanvasState(MEKKO_SFL);
     expect(state.entities[0].chart?.chartType).toBe('mekko');
-    expect(state.entities[0].chart?.series.map(s => s.values)).toEqual([[60, 20], [40, 80]]);
+    expect(state.entities[0].chart?.series.map(s => s.values)).toEqual([
+      [60, 20],
+      [40, 80],
+    ]);
   });
 
   it('renders one segment per row per column without a diagnostic', () => {
@@ -54,7 +57,15 @@ describe('Mekko chart', () => {
     const { scene } = render(MEKKO_SFL);
     const eastHw = rect(scene.nodes.find(n => n.id === 'chart-mekko-seg-revenue-0-hardware'));
     const eastSw = rect(scene.nodes.find(n => n.id === 'chart-mekko-seg-revenue-0-software'));
-    expect(eastHw && eastSw && Math.abs(eastHw.height + eastSw.height - (eastHw.y < eastSw.y ? eastSw.y + eastSw.height - eastHw.y : eastHw.y + eastHw.height - eastSw.y))).toBeLessThan(0.01);
+    expect(
+      eastHw &&
+        eastSw &&
+        Math.abs(
+          eastHw.height +
+            eastSw.height -
+            (eastHw.y < eastSw.y ? eastSw.y + eastSw.height - eastHw.y : eastHw.y + eastHw.height - eastSw.y),
+        ),
+    ).toBeLessThan(0.01);
   });
 
   it('uses uniform column height when mekkoVaryHeight is unset', () => {

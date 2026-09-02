@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { render, sflToCanvasState } from '../src/index';
 import type { RenderNode } from '../src/index';
+import { render, sflToCanvasState } from '../src/index';
 
 const solidFill = (node: RenderNode): string | undefined =>
-  ('style' in node && node.style?.fill?.kind === 'solid') ? node.style.fill.color : undefined;
+  'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
 const HEXBIN_SFL = `sfl 1.2
 
@@ -31,7 +31,12 @@ describe('Hexbin chart', () => {
     const chart = state.entities[0];
     expect(chart.chart?.chartType).toBe('hexbin');
     expect(chart.chart?.hexRadius).toBe(10);
-    expect(chart.chart?.series[0].values).toEqual([[10, 10], [11, 11], [12, 9], [90, 90]]);
+    expect(chart.chart?.series[0].values).toEqual([
+      [10, 10],
+      [11, 11],
+      [12, 9],
+      [90, 90],
+    ]);
   });
 
   it('renders hex cells per series without a diagnostic', () => {
@@ -52,7 +57,9 @@ describe('Hexbin chart', () => {
   it('uses the series color for every hex cell', () => {
     const { scene } = render(HEXBIN_SFL);
     const hexNodes = scene.nodes.filter(node => node.id.startsWith('chart-hexbin-density-a-'));
-    hexNodes.forEach(node => expect(solidFill(node)).toBe('#4e3180'));
+    hexNodes.forEach(node => {
+      expect(solidFill(node)).toBe('#4e3180');
+    });
   });
 
   it('gives the denser bin full opacity and a sparser bin lower opacity', () => {

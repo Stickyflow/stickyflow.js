@@ -5,11 +5,13 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["src/**/*", "test/**/*", "demo/**/*", "vitest.config.ts"]
+  "include": ["src/**/*", "test/**/*", "test-dom/**/*", "demo/**/*", "vitest.config.ts", "vitest.dom.config.ts"]
 }

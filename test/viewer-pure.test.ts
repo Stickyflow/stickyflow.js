@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { render, DOM_CONTRACT_VERSION } from '../src/index';
-import { parseContractVersion, isContractCompatible, resolveOwner, isCameraGesture, type AttrElement } from '../src/viewer/contract';
-import { selectionReducer, clickAction } from '../src/viewer/selection';
+import {
+  type AttrElement,
+  isCameraGesture,
+  isContractCompatible,
+  parseContractVersion,
+  resolveOwner,
+} from '../src/domContract';
+import { DOM_CONTRACT_VERSION, render } from '../src/index';
 import { Emitter } from '../src/viewer/events';
+import { clickAction, selectionReducer } from '../src/viewer/selection';
 import { SFL_SAMPLE } from './fixtures';
 
 // The interaction tier's PURE core — no DOM. These run under environment:'node'.
@@ -25,12 +31,19 @@ describe('contract helpers', () => {
 describe('owner resolution (DOM-agnostic)', () => {
   // Minimal fake element: the clicked node carries data-sf-* directly (flat SVG).
   const fake = (attrs: Record<string, string>): AttrElement => ({
-    getAttribute: (n) => attrs[n] ?? null,
-    closest: (sel) => (sel === '[data-sf-id]' && attrs['data-sf-id'] ? fake(attrs) : null),
+    getAttribute: n => attrs[n] ?? null,
+    closest: sel => (sel === '[data-sf-id]' && attrs['data-sf-id'] ? fake(attrs) : null),
   });
 
   it('resolves role/id/kind/label of an owner', () => {
-    const owner = resolveOwner(fake({ 'data-sf-role': 'entity', 'data-sf-id': 'start', 'data-sf-kind': 'rounded_rectangle', 'aria-label': 'Start' }));
+    const owner = resolveOwner(
+      fake({
+        'data-sf-role': 'entity',
+        'data-sf-id': 'start',
+        'data-sf-kind': 'rounded_rectangle',
+        'aria-label': 'Start',
+      }),
+    );
     expect(owner).toEqual({ role: 'entity', id: 'start', kind: 'rounded_rectangle', label: 'Start' });
   });
 

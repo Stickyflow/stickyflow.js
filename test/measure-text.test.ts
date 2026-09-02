@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { renderCanvas } from '../src/index';
 import type { MeasureTextFactory, RenderInput } from '../src/index';
+import { renderCanvas } from '../src/index';
 import { wrapText } from '../src/model/geometry/text';
 import type { Shape } from '../src/model/shapes';
 
@@ -14,12 +14,26 @@ import type { Shape } from '../src/model/shapes';
 // Everything downstream of the wrap (label height -> link label gap) follows
 // from those, so getting the resolved font wrong is the failure that matters.
 
-const baseShape = (text: string, extra: Partial<Shape> = {}): Shape => ({
-  id: 'e', boardId: 'board', shapeType: 'rectangle', x: 0, y: 0, width: 220, height: 80,
-  text, fillColor: '#eef2ff', strokeColor: '#123456', strokeWidth: 2,
-  layer_group: 'default', order_key: 'a', is_visible: true, is_locked: false, createdAt: '',
-  ...extra,
-} as Shape);
+const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
+  ({
+    id: 'e',
+    boardId: 'board',
+    shapeType: 'rectangle',
+    x: 0,
+    y: 0,
+    width: 220,
+    height: 80,
+    text,
+    fillColor: '#eef2ff',
+    strokeColor: '#123456',
+    strokeWidth: 2,
+    layer_group: 'default',
+    order_key: 'a',
+    is_visible: true,
+    is_locked: false,
+    createdAt: '',
+    ...extra,
+  }) as Shape;
 
 function renderShape(text: string, extra: Partial<Shape> = {}, measureText?: MeasureTextFactory) {
   const input = { shapes: [baseShape(text, extra)], frames: [], swimlanes: [], links: [] } as unknown as RenderInput;
@@ -40,8 +54,7 @@ function spyMeasurer(pxPerChar: number, boldPxPerChar = pxPerChar) {
   return { factory, calls };
 }
 
-const tspans = (svg: string): string[] =>
-  [...svg.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map(match => match[1]);
+const tspans = (svg: string): string[] => [...svg.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map(match => match[1]);
 
 describe('wrapText — measured vs heuristic', () => {
   it('without metrics, wraps by character count exactly as before', () => {
@@ -92,7 +105,7 @@ describe('RenderOptions.measureText', () => {
     expect(tspans(measured.svg)).toEqual(['one', 'two', 'three', 'four', 'five', 'six']);
   });
 
-  it('receives the shape\'s resolved font family and size', () => {
+  it("receives the shape's resolved font family and size", () => {
     const { factory, calls } = spyMeasurer(5);
     renderShape('hello', { fontFamily: 'Georgia, serif', fontSize: 21 }, factory);
     expect(calls).toEqual([{ fontFamily: 'Georgia, serif', fontSize: 21 }]);
@@ -119,24 +132,29 @@ describe('RenderOptions.measureText', () => {
 });
 
 describe('RenderOptions.measureText — link labels', () => {
-  const linkInput = (fontFamily?: string): RenderInput => ({
-    shapes: [
-      baseShape('A', { id: 'a', x: 0, y: 0 }),
-      baseShape('B', { id: 'b', x: 0, y: 300 }),
-    ],
-    frames: [], swimlanes: [],
-    links: [{
-      link: {
-        id: 'l', fromId: 'a', toId: 'b', text: 'alpha beta gamma', showText: true,
-        pathType: 'straight',
-        style: fontFamily ? { fontFamily, fontSize: 10 } : { fontSize: 10 },
-      },
-      from: { x: 110, y: 80 },
-      to: { x: 110, y: 300 },
-    }],
-  } as unknown as RenderInput);
+  const linkInput = (fontFamily?: string): RenderInput =>
+    ({
+      shapes: [baseShape('A', { id: 'a', x: 0, y: 0 }), baseShape('B', { id: 'b', x: 0, y: 300 })],
+      frames: [],
+      swimlanes: [],
+      links: [
+        {
+          link: {
+            id: 'l',
+            fromId: 'a',
+            toId: 'b',
+            text: 'alpha beta gamma',
+            showText: true,
+            pathType: 'straight',
+            style: fontFamily ? { fontFamily, fontSize: 10 } : { fontSize: 10 },
+          },
+          from: { x: 110, y: 80 },
+          to: { x: 110, y: 300 },
+        },
+      ],
+    }) as unknown as RenderInput;
 
-  it('is called with the link style\'s own font family', () => {
+  it("is called with the link style's own font family", () => {
     const { factory, calls } = spyMeasurer(4);
     renderCanvas(linkInput('Courier New, monospace'), { measureText: factory });
     expect(calls).toContainEqual({ fontFamily: 'Courier New, monospace', fontSize: 10 });

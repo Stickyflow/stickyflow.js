@@ -1,0 +1,23 @@
+import type { SflBlock } from '../../../ast';
+import { directProperties } from '../../blockEntries';
+import { asNumber, asString } from '../../valueAccess';
+import { readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
+import type { ChartSeries } from './types';
+
+export function readSeries(block: SflBlock): ChartSeries {
+  const properties = directProperties(block);
+  return {
+    id: block.name,
+    label: asString(properties.get('label')) ?? block.name,
+    color: asString(properties.get('color')),
+    opacity: asNumber(properties.get('opacity')),
+    values: readSeriesValues(properties.get('values')),
+    error: readSeriesErrors(properties.get('error')),
+    source: asString(properties.get('source')),
+    target: asString(properties.get('target')),
+    size: asNumber(properties.get('size')),
+    symbol: readSeriesSymbol(properties.get('symbol')),
+    stroke: asString(properties.get('stroke')),
+    strokeWidth: asNumber(properties.get('strokeWidth')),
+  };
+}

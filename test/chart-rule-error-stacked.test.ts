@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 import type { RenderInput } from '../src/index';
+import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
 // SFL 1.4, §5.4.1/§5.4.5/§5.4.8 - mirrors stickyflow-atlas's Stage 2 Chart
 // ruleset (stacked/unit/error/Rule) on this package's own, simpler compact
@@ -86,7 +86,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     // bar's own fill, where the series color would vanish against itself.
     const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
     const { svg } = render(sfl);
-    const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)![0];
+    const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)?.[0];
     expect(whisker).toContain('stroke="#0f172a"');
     expect(whisker).not.toContain('stroke="#000000"');
     expect(whisker).not.toContain('stroke="#0ea5e9"');
@@ -94,7 +94,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
 
   it("colors a Rule's label to match its own line, not the chart's generic text color", () => {
     const { svg } = render(STACKED_SFL);
-    const label = svg.match(/<text id="sf-chart-rule-label-chart-target"[^>]*>/)![0];
+    const label = svg.match(/<text id="sf-chart-rule-label-chart-target"[^>]*>/)?.[0];
     expect(label).toContain('fill="#ef4444"');
   });
 
@@ -105,18 +105,29 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   });
 
   it('computes waterfall segments with a floating per-series baseline', () => {
-    const base: RenderInput['charts'] = [{
-      id: 'wf', x: 0, y: 0, width: 400, height: 300, chart_type: 'bar',
-      axis_x: { min: 0, max: 4, step: 1 }, axis_y: { min: -20, max: 40, step: 10 },
-      config: { stacked: 'waterfall' },
-      fill_color: '#fff', stroke_color: '#000', text_color: '#111',
-      series: [{ id: 's1', label: 'Flow', values: [10, -5, 20] }],
-    }];
+    const base: RenderInput['charts'] = [
+      {
+        id: 'wf',
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 300,
+        chart_type: 'bar',
+        axis_x: { min: 0, max: 4, step: 1 },
+        axis_y: { min: -20, max: 40, step: 10 },
+        config: { stacked: 'waterfall' },
+        fill_color: '#fff',
+        stroke_color: '#000',
+        text_color: '#111',
+        series: [{ id: 's1', label: 'Flow', values: [10, -5, 20] }],
+      },
+    ];
     const { scene } = renderCanvas({ shapes: [], frames: [], swimlanes: [], links: [], charts: base } as RenderInput);
-    const bars = scene.nodes.filter(node => node.id.startsWith('chart-bar-wf-s1-'))
+    const bars = scene.nodes
+      .filter(node => node.id.startsWith('chart-bar-wf-s1-'))
       .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     expect(bars).toHaveLength(3);
-    const heights = bars.map(bar => (bar.type === 'rect' ? bar.height : 0)!);
+    const heights = bars.map(bar => (bar.type === 'rect' ? bar.height : 0));
     // Segment heights scale with |value| (10, -5, 20) regardless of the
     // exact plot padding - a 2:1:4 ratio either way.
     expect(heights[0] / heights[1]).toBeCloseTo(2, 1);
@@ -131,32 +142,52 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   });
 
   it('computes percent-stacked segments normalized to the full plot height', () => {
-    const base: RenderInput['charts'] = [{
-      id: 'pct', x: 0, y: 0, width: 400, height: 200, chart_type: 'bar',
-      axis_x: { min: 0, max: 4, step: 1 }, axis_y: { min: 0, max: 100, step: 10 },
-      config: { stacked: 'percent' },
-      fill_color: '#fff', stroke_color: '#000', text_color: '#111',
-      series: [
-        { id: 's1', label: 'A', values: [25] },
-        { id: 's2', label: 'B', values: [75] },
-      ],
-    }];
+    const base: RenderInput['charts'] = [
+      {
+        id: 'pct',
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 200,
+        chart_type: 'bar',
+        axis_x: { min: 0, max: 4, step: 1 },
+        axis_y: { min: 0, max: 100, step: 10 },
+        config: { stacked: 'percent' },
+        fill_color: '#fff',
+        stroke_color: '#000',
+        text_color: '#111',
+        series: [
+          { id: 's1', label: 'A', values: [25] },
+          { id: 's2', label: 'B', values: [75] },
+        ],
+      },
+    ];
     const { scene } = renderCanvas({ shapes: [], frames: [], swimlanes: [], links: [], charts: base } as RenderInput);
     const bar1 = scene.nodes.find(node => node.id === 'chart-bar-pct-s1-0');
     const bar2 = scene.nodes.find(node => node.id === 'chart-bar-pct-s2-0');
     // 25% and 75% of the plot's own height, back-to-back, span it exactly.
     const height1 = bar1?.type === 'rect' ? bar1.height : 0;
     const height2 = bar2?.type === 'rect' ? bar2.height : 0;
-    expect(height2! / height1!).toBeCloseTo(3, 1);
+    expect(height2 / height1).toBeCloseTo(3, 1);
   });
 
   it('renders a line chart error whisker at a point with an asymmetric [low, high] error', () => {
-    const base: RenderInput['charts'] = [{
-      id: 'ln', x: 0, y: 0, width: 400, height: 300, chart_type: 'line',
-      axis_x: { min: 0, max: 4, step: 1 }, axis_y: { min: 0, max: 100, step: 10 },
-      fill_color: '#fff', stroke_color: '#000', text_color: '#111',
-      series: [{ id: 's1', label: 'A', values: [50], error: [[10, 5]] }],
-    }];
+    const base: RenderInput['charts'] = [
+      {
+        id: 'ln',
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 300,
+        chart_type: 'line',
+        axis_x: { min: 0, max: 4, step: 1 },
+        axis_y: { min: 0, max: 100, step: 10 },
+        fill_color: '#fff',
+        stroke_color: '#000',
+        text_color: '#111',
+        series: [{ id: 's1', label: 'A', values: [50], error: [[10, 5]] }],
+      },
+    ];
     const { scene } = renderCanvas({ shapes: [], frames: [], swimlanes: [], links: [], charts: base } as RenderInput);
     const whisker = scene.nodes.find(node => node.id === 'chart-line-error-ln-s1-0');
     expect(whisker?.type === 'path' && whisker.d).toBeTruthy();
