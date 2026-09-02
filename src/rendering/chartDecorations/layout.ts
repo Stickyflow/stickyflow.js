@@ -36,7 +36,10 @@ export function chartLayout(chart: Chart): ChartLayout {
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
 
   return {
-    bounds: boxBounds(chart.x, chart.y, chart.width, chart.height, finite(chart.stroke_width, 1) + 2),
+    bounds: boxBounds(
+      { x: chart.x, y: chart.y, width: chart.width, height: chart.height },
+      finite(chart.stroke_width, 1) + 2,
+    ),
     plot: {
       x: chart.x + padLeft,
       y: chart.y + padTop,

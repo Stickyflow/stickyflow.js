@@ -25,7 +25,7 @@ function horizontalLabel(context: SwimlaneRenderContext, lane: PositionedLane, i
   const y = centerY - thickness / 2;
   return {
     ...labelBase(context, lane, index),
-    bounds: rotatedBounds(x, y, width, thickness, -90, 12),
+    bounds: rotatedBounds({ x, y, width, height: thickness }, -90, 12),
     x,
     y,
     width,

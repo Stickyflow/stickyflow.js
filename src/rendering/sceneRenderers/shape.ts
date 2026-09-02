@@ -57,7 +57,7 @@ function createRenderContext(
       shape,
       id: `shape-${shape.id}`,
       order: orderOf(shape, 10_000 + index),
-      bounds: rotatedBounds(x, y, width, height, rotation, strokeWidth + (shape.hasShadow ? 20 : 2)),
+      bounds: rotatedBounds({ x, y, width, height }, rotation, strokeWidth + (shape.hasShadow ? 20 : 2)),
       rotation,
       rotationCenter: { x: x + width / 2, y: y + height / 2 },
       style: shapeStyle(shape, diagnostics),

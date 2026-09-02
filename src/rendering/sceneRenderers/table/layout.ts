@@ -35,7 +35,7 @@ export function createTableRenderContext(table: Table, index: number): TableRend
     footerY: table.y + headerHeight + table.rows.length * rowHeight,
     doubleBorderGap,
     gridInset,
-    bounds: boxBounds(table.x, table.y, table.width, height, table.stroke_width + 4),
+    bounds: boxBounds({ x: table.x, y: table.y, width: table.width, height }, table.stroke_width + 4),
     columns: positionColumns(table),
   };
 }

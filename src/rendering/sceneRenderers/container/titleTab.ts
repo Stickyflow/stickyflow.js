@@ -21,7 +21,7 @@ export function renderTitleTab(input: TitleTabInput): RenderNode[] {
   const width = Math.max(120, input.title.length * input.fontSize * 0.62 + padding * 2);
   const x = input.x + Math.max(12, input.cornerRadius);
   const y = input.y - height;
-  const bounds = boxBounds(x, y, width, height, 6);
+  const bounds = boxBounds({ x, y, width, height }, 6);
   return [
     {
       type: 'rect',

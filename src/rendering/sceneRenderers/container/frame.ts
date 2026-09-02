@@ -9,7 +9,10 @@ export function buildFrame(frame: Frame, index: number): RenderNode[] {
     return [];
   }
   const order = orderOf(frame, index);
-  const bounds = boxBounds(frame.x, frame.y, frame.width, frame.height, frame.stroke_width + 4);
+  const bounds = boxBounds(
+    { x: frame.x, y: frame.y, width: frame.width, height: frame.height },
+    frame.stroke_width + 4,
+  );
   const nodes: RenderNode[] = [
     {
       type: 'rect',
