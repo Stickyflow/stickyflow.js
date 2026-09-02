@@ -28,32 +28,14 @@ const byOrder = <T extends { order?: number }>(items: readonly T[]): T[] =>
   [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 export function collectEntities(state: SflCanvasState): CollectedEntities {
-  const collected: CollectedEntities = {
-    shapes: [],
-    frames: [],
-    swimlanes: [],
-    tables: [],
-    paths: [],
-    charts: [],
-    links: [],
+  const entities = byOrder(state.entities);
+  return {
+    shapes: entities.filter(entity => entity.entityType === 'shape').map(shapeObject),
+    frames: entities.filter(entity => entity.entityType === 'frame').map(frameObject),
+    swimlanes: entities.filter(entity => entity.entityType === 'swimlane').map(swimlaneObject),
+    tables: entities.filter(entity => entity.entityType === 'table').map(tableObject),
+    paths: entities.filter(entity => entity.entityType === 'path').map(pathObject),
+    charts: entities.filter(entity => entity.entityType === 'chart').map(chartObject),
+    links: byOrder(state.links).map(linkObject),
   };
-
-  for (const entity of byOrder(state.entities)) {
-    if (entity.entityType === 'frame') {
-      collected.frames.push(frameObject(entity));
-    } else if (entity.entityType === 'swimlane') {
-      collected.swimlanes.push(swimlaneObject(entity));
-    } else if (entity.entityType === 'table') {
-      collected.tables.push(tableObject(entity));
-    } else if (entity.entityType === 'path') {
-      collected.paths.push(pathObject(entity));
-    } else if (entity.entityType === 'chart') {
-      collected.charts.push(chartObject(entity));
-    } else {
-      collected.shapes.push(shapeObject(entity));
-    }
-  }
-
-  collected.links = byOrder(state.links).map(linkObject);
-  return collected;
 }
