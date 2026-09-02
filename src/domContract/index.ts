@@ -4,6 +4,14 @@ export {
   updateAlignmentGuides,
 } from './alignmentGuideOverlay';
 export {
+  CHANGE_COLOR,
+  FLASH_DURATION_MS,
+  linkChangeOverlay,
+  REDUCED_MOTION_DURATION_MS,
+  shapeChangeOverlay,
+  startChangeFade,
+} from './changeOverlay';
+export {
   type AttrElement,
   isCameraGesture,
   isContractCompatible,
