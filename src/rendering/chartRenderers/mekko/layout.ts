@@ -1,58 +1,57 @@
 import { finite } from '../../renderPrimitives';
 import type { ChartRenderContext } from '../types';
-import type { MekkoLayout } from './types';
+import type { MekkoColumn, MekkoGrid, MekkoLayout } from './types';
 
 const COLUMN_GAP = 4;
 
 export function createMekkoLayout(context: ChartRenderContext): MekkoLayout {
-  const { chart, plot, showLabels } = context;
-  const columns = chart.config?.categories?.length
-    ? chart.config.categories
-    : ((chart.series[0]?.values as number[] | undefined)?.map((_, index) => String(index + 1)) ?? []);
-  const fontSize = Math.max(9, finite(chart.font_size, 12));
-  const labelGutterWidth = showLabels ? 30 : 0;
-  const topGutter = showLabels ? 18 : 0;
-  const bottomGutter = showLabels ? 32 : 0;
-  const grid = {
-    x: plot.x + labelGutterWidth,
-    y: plot.y + topGutter,
-    width: Math.max(1, plot.width - labelGutterWidth),
-    height: Math.max(1, plot.height - topGutter - bottomGutter),
-  };
-  const columnTotals = columns.map((_, columnIndex) =>
-    chart.series.reduce((sum, series) => sum + ((series.values as number[])[columnIndex] ?? 0), 0),
-  );
-  const grandTotal = columnTotals.reduce((sum, total) => sum + total, 0);
-  const maxColumnTotal = Math.max(1, ...columnTotals);
-  const totalGapWidth = COLUMN_GAP * Math.max(0, columns.length - 1);
-  const availableWidth = Math.max(1, grid.width - totalGapWidth);
-  const columnWidths = columnTotals.map(total =>
-    grandTotal > 0 ? (total / grandTotal) * availableWidth : availableWidth / columns.length,
-  );
-  const columnX = calculateColumnPositions(columnWidths, grid.x);
-  const columnHeights = columnTotals.map(total =>
-    chart.config?.mekkoVaryHeight ? grid.height * (total / maxColumnTotal) : grid.height,
-  );
-  const columnY = columnHeights.map(height => grid.y + grid.height - height);
+  const labels = mekkoColumnLabels(context);
+  const labelGutterWidth = context.showLabels ? 30 : 0;
+  const grid = createMekkoGrid(context, labelGutterWidth);
+  const fontSize = Math.max(9, finite(context.chart.font_size, 12));
 
   return {
-    columns,
+    columns: createMekkoColumns(context, grid, labels),
     fontSize,
     smallFontSize: Math.max(8, fontSize - 1),
     labelGutterWidth,
     grid,
-    columnTotals,
-    columnWidths,
-    columnX,
-    columnHeights,
-    columnY,
   };
 }
 
-function calculateColumnPositions(widths: number[], startX: number): number[] {
-  const positions: number[] = [];
-  widths.forEach((_, index) => {
-    positions.push(index === 0 ? startX : positions[index - 1] + widths[index - 1] + COLUMN_GAP);
+function mekkoColumnLabels(context: ChartRenderContext): string[] {
+  const { chart } = context;
+  return chart.config?.categories?.length
+    ? chart.config.categories
+    : ((chart.series[0]?.values as number[] | undefined)?.map((_, index) => String(index + 1)) ?? []);
+}
+
+function createMekkoGrid(context: ChartRenderContext, labelGutterWidth: number): MekkoGrid {
+  const topGutter = context.showLabels ? 18 : 0;
+  const bottomGutter = context.showLabels ? 32 : 0;
+  return {
+    x: context.plot.x + labelGutterWidth,
+    y: context.plot.y + topGutter,
+    width: Math.max(1, context.plot.width - labelGutterWidth),
+    height: Math.max(1, context.plot.height - topGutter - bottomGutter),
+  };
+}
+
+function createMekkoColumns(context: ChartRenderContext, grid: MekkoGrid, labels: string[]): MekkoColumn[] {
+  const totals = labels.map((_, columnIndex) =>
+    context.chart.series.reduce((sum, series) => sum + ((series.values as number[])[columnIndex] ?? 0), 0),
+  );
+  const grandTotal = totals.reduce((sum, total) => sum + total, 0);
+  const maximumTotal = Math.max(1, ...totals);
+  const availableWidth = Math.max(1, grid.width - COLUMN_GAP * Math.max(0, labels.length - 1));
+  let nextX = grid.x;
+
+  return labels.map((label, index) => {
+    const total = totals[index];
+    const width = grandTotal > 0 ? (total / grandTotal) * availableWidth : availableWidth / labels.length;
+    const height = context.chart.config?.mekkoVaryHeight ? grid.height * (total / maximumTotal) : grid.height;
+    const column = { label, total, x: nextX, y: grid.y + grid.height - height, width, height };
+    nextX += width + COLUMN_GAP;
+    return column;
   });
-  return positions;
 }

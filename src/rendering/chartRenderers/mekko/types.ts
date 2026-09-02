@@ -5,15 +5,19 @@ export interface MekkoGrid {
   height: number;
 }
 
+export interface MekkoColumn {
+  label: string;
+  total: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface MekkoLayout {
-  columns: string[];
+  columns: MekkoColumn[];
   fontSize: number;
   smallFontSize: number;
   labelGutterWidth: number;
   grid: MekkoGrid;
-  columnTotals: number[];
-  columnWidths: number[];
-  columnX: number[];
-  columnHeights: number[];
-  columnY: number[];
 }

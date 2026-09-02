@@ -9,9 +9,9 @@ export function renderMekko(context: ChartRenderContext): RenderNode[] {
   const layout = createMekkoLayout(context);
   const nodes = renderMekkoGrid(context, layout);
 
-  layout.columns.forEach((label, columnIndex) => {
+  layout.columns.forEach((column, columnIndex) => {
     nodes.push(...renderMekkoColumnSegments(context, layout, columnIndex));
-    nodes.push(...renderMekkoColumnLabels(context, layout, columnIndex, label));
+    nodes.push(...renderMekkoColumnLabels(context, layout, columnIndex, column));
   });
 
   return nodes;

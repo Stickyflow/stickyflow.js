@@ -2,22 +2,30 @@ import { wrapText } from '../../../model/geometry/text';
 import { chartText } from '../../chartPrimitives';
 import type { RenderNode } from '../../scene';
 import type { ChartRenderContext } from '../types';
-import type { MekkoLayout } from './types';
+import type { MekkoColumn, MekkoLayout } from './types';
 
 export function renderMekkoColumnLabels(
   context: ChartRenderContext,
   layout: MekkoLayout,
   columnIndex: number,
-  label: string,
+  column: MekkoColumn,
 ): RenderNode[] {
   if (!context.showLabels) {
     return [];
   }
 
-  return [createTotalLabel(context, layout, columnIndex), createColumnLabel(context, layout, columnIndex, label)];
+  return [
+    createTotalLabel(context, layout, columnIndex, column),
+    createColumnLabel(context, layout, columnIndex, column),
+  ];
 }
 
-function createTotalLabel(context: ChartRenderContext, layout: MekkoLayout, columnIndex: number): RenderNode {
+function createTotalLabel(
+  context: ChartRenderContext,
+  layout: MekkoLayout,
+  columnIndex: number,
+  column: MekkoColumn,
+): RenderNode {
   const { chart, plot, bounds, nextOrder } = context;
   return {
     ...chartText({
@@ -25,12 +33,12 @@ function createTotalLabel(context: ChartRenderContext, layout: MekkoLayout, colu
       order: nextOrder(),
       bounds,
       frame: {
-        x: layout.columnX[columnIndex],
+        x: column.x,
         y: plot.y,
-        width: layout.columnWidths[columnIndex],
+        width: column.width,
         height: layout.smallFontSize + 2,
       },
-      text: String(layout.columnTotals[columnIndex]),
+      text: String(column.total),
       chart,
       align: 'center',
     }),
@@ -42,17 +50,17 @@ function createColumnLabel(
   context: ChartRenderContext,
   layout: MekkoLayout,
   columnIndex: number,
-  label: string,
+  column: MekkoColumn,
 ): RenderNode {
   const { chart, bounds, nextOrder } = context;
-  const width = layout.columnWidths[columnIndex];
+  const { label, width } = column;
   return {
     ...chartText({
       id: `chart-mekko-col-label-${chart.id}-${columnIndex}`,
       order: nextOrder(),
       bounds,
       frame: {
-        x: layout.columnX[columnIndex],
+        x: column.x,
         y: layout.grid.y + layout.grid.height + 4,
         width,
         height: layout.smallFontSize * 2 + 4,

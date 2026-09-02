@@ -32,13 +32,13 @@ export function renderMekkoColumnSegments(
 
 function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout, columnIndex: number): MekkoSegment[] {
   const segments: MekkoSegment[] = [];
-  const total = layout.columnTotals[columnIndex];
+  const column = layout.columns[columnIndex];
   let cumulativeHeight = 0;
 
   seriesList.forEach((series, seriesIndex) => {
     const value = (series.values as number[])[columnIndex] ?? 0;
-    const height = (total > 0 ? value / total : 0) * layout.columnHeights[columnIndex];
-    const y = layout.columnY[columnIndex] + cumulativeHeight;
+    const height = (column.total > 0 ? value / column.total : 0) * column.height;
+    const y = column.y + cumulativeHeight;
     cumulativeHeight += height;
     const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
     segments.push({
@@ -48,9 +48,9 @@ function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout,
       value,
       color,
       frame: {
-        x: layout.columnX[columnIndex],
+        x: column.x,
         y,
-        width: layout.columnWidths[columnIndex],
+        width: column.width,
         height,
       },
     });
