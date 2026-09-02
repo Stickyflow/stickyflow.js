@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Vollständiger stickyflow.js Execution Trace für ein Rounded Rectangle">
+    <title>stickyflow.js · Rounded Rectangle Trace</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #090b10;
+        --panel: #111620;
+        --panel-2: #171e2b;
+        --line: #2a3447;
+        --text: #f3f6fa;
+        --muted: #9ca9bb;
+        --cyan: #50ddd4;
+        --blue: #77adff;
+        --green: #74dfa1;
+        --amber: #ffca72;
+        --red: #ff8592;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--text);
+        background: radial-gradient(circle at 80% 0%, rgb(80 221 212 / 10%), transparent 32rem), var(--bg);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+      a { color: var(--cyan); }
+      code, pre { font-family: "SFMono-Regular", Consolas, monospace; }
+      header, main, footer { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+      header { padding: 68px 0 46px; border-bottom: 1px solid var(--line); }
+      .back { font-size: 13px; text-decoration: none; }
+      .eyebrow { margin: 30px 0 10px; color: var(--cyan); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+      h1 { max-width: 900px; margin: 0; font-size: clamp(38px, 7vw, 72px); line-height: 1.08; letter-spacing: -.045em; }
+      h2 { margin: 0 0 14px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.035em; }
+      h3 { margin: 0 0 8px; font-size: 18px; }
+      .lead { max-width: 780px; color: var(--muted); font-size: 18px; }
+      section { padding-top: 58px; scroll-margin-top: 20px; }
+      .notice { padding: 17px 20px; border-left: 3px solid var(--amber); border-radius: 0 12px 12px 0; color: #d8dfeb; background: rgb(255 202 114 / 7%); }
+      .code { padding: 20px; border: 1px solid var(--line); border-radius: 14px; color: #dce5f0; background: #070a0f; overflow-x: auto; font-size: 12px; line-height: 1.7; }
+      .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+      .badge { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 11px; }
+      .runtime { color: var(--green); }
+      .contract { color: var(--blue); }
+      .loaded { color: var(--amber); }
+      .phase { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); overflow: hidden; }
+      .phase summary { display: grid; grid-template-columns: 42px 1fr auto; gap: 13px; align-items: center; padding: 19px 21px; cursor: pointer; list-style: none; }
+      .phase summary::-webkit-details-marker { display: none; }
+      .phase[open] summary { border-bottom: 1px solid var(--line); background: var(--panel-2); }
+      .number { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid rgb(80 221 212 / 30%); border-radius: 10px; color: var(--cyan); font-size: 11px; font-weight: 800; }
+      .summary-copy strong { display: block; }
+      .summary-copy small { color: var(--muted); }
+      .phase-body { padding: 20px; }
+      table { width: 100%; border-spacing: 0; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+      th { color: #dce4ef; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+      td { color: var(--muted); }
+      td:first-child { width: 34%; color: #c7f5f1; }
+      tr:last-child td { border-bottom: 0; }
+      .call { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin: 16px 0; }
+      .state { padding: 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: #0b0f16; font-size: 12px; }
+      .arrow { color: var(--cyan); font-size: 22px; }
+      .source-link { white-space: nowrap; font-size: 11px; text-decoration: none; }
+      .source-link::after { content: " ↗"; }
+      .result { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+      .result div { padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+      .result strong { display: block; color: var(--cyan); font-size: 18px; }
+      .result span { color: var(--muted); font-size: 11px; }
+      footer { margin-top: 65px; padding: 28px 0 45px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+      @media (max-width: 720px) {
+        .phase summary { grid-template-columns: 42px 1fr; }
+        .phase summary .source-link { display: none; }
+        .call, .result { grid-template-columns: 1fr; }
+        .arrow { transform: rotate(90deg); text-align: center; }
+        th:nth-child(3), td:nth-child(3) { display: none; }
+        td:first-child { width: 45%; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="back" href="./architecture.html">← Zur Architekturübersicht</a>
+      <p class="eyebrow">Execution Trace · ein konkretes Objekt</p>
+      <h1>Eine abgerundete Box, Datei für Datei.</h1>
+      <p class="lead">
+        Diese Seite verfolgt genau einen Aufruf von <code>render(source)</code> für ein
+        <code>rounded_rectangle</code>. Sie zeigt die aktive Funktionskette, die Verträge und die Module, die zwar
+        geladen werden, deren Variantenpfad für dieses Beispiel aber nicht ausgeführt wird.
+      </p>
+    </header>
+
+    <main>
+      <section id="input">
+        <h2>Die exakte Eingabe</h2>
+        <pre class="code"><code>import { render } from 'stickyflow';
+
+const source = `sfl 1.2
+
+Model Demo {
+  Entity start {
+    shape: rounded_rectangle
+    text: "Start"
+    layout {
+      position: 40, 60
+      size: 160, 80
+    }
+    style {
+      fill: "#0f766e"
+      stroke: "#5eead4"
+      strokeWidth: 2
+      cornerRadius: 14
+    }
+  }
+}`;
+
+const result = render(source);</code></pre>
+        <p class="notice">
+          Entscheidend ist <code>shape: rounded_rectangle</code>. <code>kind: rounded_rectangle</code> wäre keine
+          Formauswahl: <code>classifyEntity()</code> liest die Form aus der Property <code>shape</code>, und
+          <code>shapeObject()</code> würde andernfalls auf <code>rectangle</code> zurückfallen.
+        </p>
+        <div class="legend">
+          <span class="badge runtime">● aktiv ausgeführt</span>
+          <span class="badge contract">● Typ oder Vertrag</span>
+          <span class="badge loaded">● geladen, Variante nicht aktiv</span>
+        </div>
+      </section>
+
+      <section id="trace">
+        <h2>Der vollständige aktive Pfad</h2>
+
+        <details class="phase" open>
+          <summary><span class="number">01</span><span class="summary-copy"><strong>Öffentlicher Einstieg</strong><small>Source-Text wird in die statische Pipeline gegeben.</small></span><a class="source-link" href="../src/render.ts">render.ts</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>source: string</code><br>Der unveränderte SFL-Text.</div><div class="arrow">→</div><div class="state"><code>render(source)</code><br>Delegiert ohne eigene Fachlogik.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Aufgabe</th></tr></thead><tbody>
+              <tr><td><a href="../src/index.ts">src/index.ts</a></td><td><code>export { render }</code></td><td>Öffentlicher Package-Export; enthält keine Implementierung.</td></tr>
+              <tr><td><a href="../src/render.ts">src/render.ts</a></td><td><code>render()</code></td><td>Ruft <code>sflToRenderInput()</code>, danach <code>renderCanvas()</code>.</td></tr>
+              <tr><td><a href="../src/render.ts">src/render.ts</a></td><td><code>renderCanvas()</code></td><td>Komponiert Scene-Aufbau und SVG-Serialisierung zum <code>RenderResult</code>.</td></tr>
+            </tbody></table>
+          </div>
+        </details>
+
+        <details class="phase" open>
+          <summary><span class="number">02</span><span class="summary-copy"><strong>Lexer</strong><small>Zeichen werden zu positionierten Tokens.</small></span><a class="source-link" href="../src/sfl/language/lexing/tokenizer.ts">lexing/</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>sfl 1.2 ...</code><br>Zeichenstrom.</div><div class="arrow">→</div><div class="state"><code>Token[]</code><br><code>ident</code>, <code>number</code>, <code>string</code>, Klammern, Newlines, EOF.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Warum beteiligt?</th></tr></thead><tbody>
+              <tr><td><a href="../src/sfl/lexer.ts">sfl/lexer.ts</a></td><td><code>tokenize()</code></td><td>Stabile Fassade zur Lexer-Implementierung.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/tokenizer.ts">lexing/tokenizer.ts</a></td><td><code>tokenizeSource()</code></td><td>Token-Loop, EOF und Quellbereich.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/cursor.ts">lexing/cursor.ts</a></td><td><code>SourceCursor</code></td><td>Position, Zeile, Spalte und Zeichenverbrauch.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/nextToken.ts">lexing/nextToken.ts</a></td><td><code>readNextToken()</code></td><td>Wählt den passenden Token-Leser.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/identifiers.ts">identifiers.ts</a></td><td><code>readIdentifier()</code></td><td>Liest Header, Blockarten, Namen, Keys und Ident-Werte.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/numbers.ts">numbers.ts</a></td><td><code>readNumber()</code></td><td>Liest Version, Position, Größe, Stroke und Radius.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/stringToken.ts">stringToken.ts</a></td><td><code>readStringToken()</code></td><td>Liest Text und Farben als String-Tokens.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/strings.ts">strings.ts</a></td><td><code>readString()</code></td><td>Verarbeitet Stringinhalt und Escapes.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/punctuation.ts">punctuation.ts</a></td><td><code>readPunctuation()</code></td><td>Liest <code>{ }</code>, Doppelpunkt und Komma.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/spacing.ts">spacing.ts</a></td><td><code>consumeSpacing()</code></td><td>Überspringt horizontale Zwischenräume.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/lineBreak.ts">lineBreak.ts</a></td><td><code>readLineBreak()</code></td><td>Erzeugt strukturelle Newline-Tokens.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/tokenCreation.ts">tokenCreation.ts</a></td><td><code>createToken()</code></td><td>Gemeinsamer Token-Vertrag mit Source-Position.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/characters.ts">characters.ts</a></td><td>Zeichenprädikate</td><td>Buchstaben- und Ziffernerkennung.</td></tr>
+              <tr><td><a href="../src/sfl/language/lexing/types.ts">lexing/types.ts</a></td><td><code>Token</code>, <code>TokenType</code></td><td class="contract">Reiner Lexer-Vertrag.</td></tr>
+            </tbody></table>
+          </div>
+        </details>
+
+        <details class="phase" open>
+          <summary><span class="number">03</span><span class="summary-copy"><strong>Parser und AST</strong><small>Tokens werden zur syntaktischen Dokumentstruktur.</small></span><a class="source-link" href="../src/sfl/parser.ts">parser.ts</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>Token[]</code></div><div class="arrow">→</div><div class="state"><code>SflDocument</code><br>Model → Entity → Layout/Style → Properties.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Warum beteiligt?</th></tr></thead><tbody>
+              <tr><td><a href="../src/sfl/parser.ts">sfl/parser.ts</a></td><td><code>parse()</code></td><td>Erzeugt Cursor und DocumentParser.</td></tr>
+              <tr><td><a href="../src/sfl/language/parsing/cursor.ts">parsing/cursor.ts</a></td><td><code>TokenCursor</code></td><td>Lookahead, Expect und Newline-Steuerung.</td></tr>
+              <tr><td><a href="../src/sfl/language/parsing/document.ts">parsing/document.ts</a></td><td><code>parseDocument()</code></td><td>Validiert <code>sfl 1.2</code> und liest Top-Level-Blöcke.</td></tr>
+              <tr><td><a href="../src/sfl/language/parsing/blocks.ts">parsing/blocks.ts</a></td><td><code>BlockParser</code></td><td>Erzeugt Model-, Entity-, Layout- und Style-Blöcke.</td></tr>
+              <tr><td><a href="../src/sfl/language/parsing/properties.ts">parsing/properties.ts</a></td><td><code>PropertyParser</code></td><td>Erzeugt Properties aus Key, Doppelpunkt und Value.</td></tr>
+              <tr><td><a href="../src/sfl/language/parsing/values.ts">parsing/values.ts</a></td><td><code>parseValue()</code></td><td>Erzeugt Ident-, String-, Number- und Tuple-Werte.</td></tr>
+              <tr><td><a href="../src/sfl/language/ast.ts">language/ast.ts</a></td><td><code>SflDocument</code>, <code>SflBlock</code>, <code>SflValue</code></td><td class="contract">Definiert die resultierende Syntaxstruktur.</td></tr>
+            </tbody></table>
+            <pre class="code"><code>{ version: "1.2", blocks: [{
+  kind: "Model", name: "Demo", entries: [{ type: "block", block: {
+    kind: "Entity", name: "start", composition: [], entries: [/* properties */]
+  }}]
+}]}</code></pre>
+          </div>
+        </details>
+
+        <details class="phase" open>
+          <summary><span class="number">04</span><span class="summary-copy"><strong>Semantische Resolution</strong><small>Definitionen, Properties und Entity-Bedeutung werden aufgelöst.</small></span><a class="source-link" href="../src/sfl/sflToCanvasState.ts">semantic/</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>SflDocument</code><br>Syntaxorientiert.</div><div class="arrow">→</div><div class="state"><code>SflCanvasState</code><br>Semantisch aufgelöste Entities.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Warum beteiligt?</th></tr></thead><tbody>
+              <tr><td><a href="../src/sfl/sflToCanvasState.ts">sflToCanvasState.ts</a></td><td><code>sflToCanvasState()</code></td><td>Orchestriert Resolution, Baum und leere Linkliste.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/resolution.ts">semantic/resolution.ts</a></td><td><code>createCanvasResolution()</code></td><td>Findet Model und erzeugt Reader-Kontext und Diagnosen.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/chartDiagnostics.ts">chartDiagnostics.ts</a></td><td><code>collectUnsupportedChartTypes()</code></td><td>Scannt das Dokument; findet in diesem Beispiel keinen Chart.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/definitions.ts">semantic/definitions.ts</a></td><td><code>collectCanvasDefinitions()</code></td><td>Indexiert Model, Styles, Layouts und Symbole.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/compositionReferences.ts">compositionReferences.ts</a></td><td>Reference-Klassifikation</td><td>Unser Entity hat keine Komposition; Ergebnis ist leer.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/definitionInheritance.ts">definitionInheritance.ts</a></td><td><code>resolveDefinitionInheritance()</code></td><td>Erzeugt leere Style-/Layout-Vererbungsauflösung.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/propertyReaders.ts">propertyReaders.ts</a></td><td><code>createEntityPropertyReaders()</code></td><td>Baut <code>mergedProps()</code> und <code>layoutProp()</code>.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/blockEntries.ts">blockEntries.ts</a></td><td>Entry-Leser</td><td>Trennt direkte, Style-, Layout- und Child-Properties.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/traversal.ts">traversal.ts</a></td><td><code>CanvasTreeReader.read()</code></td><td>Findet die Entity im Model und baut sie positioniert.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/flowLayout.ts">flowLayout.ts</a></td><td><code>createFlowPositioner()</code></td><td>Kein Flow gesetzt; liefert keinen Position-Override.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityReader.ts">entityReader.ts</a></td><td><code>buildEntity()</code></td><td>Montiert ID, Klassifikation, Geometrie und Präsentation.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityClassification.ts">entityClassification.ts</a></td><td><code>classifyEntity()</code></td><td>Liest <code>shape</code>; Ergebnis: EntityType shape, ShapeType rounded_rectangle.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityGeometry.ts">entityGeometry.ts</a></td><td><code>readEntityGeometry()</code></td><td>Ergebnis: x 40, y 60, width 160, height 80.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityPresentation.ts">entityPresentation.ts</a></td><td><code>readEntityPresentation()</code></td><td>Übernimmt Fill, Stroke, StrokeWidth und CornerRadius.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityReaders/table.ts">entityReaders/table.ts</a></td><td><code>readTable()</code></td><td>Der Varianten-Guard läuft und liefert für eine Entity <code>undefined</code>.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityReaders/swimlane.ts">entityReaders/swimlane.ts</a></td><td><code>readSwimlane()</code></td><td>Der Varianten-Guard läuft und liefert <code>undefined</code>.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityReaders/path.ts">entityReaders/path.ts</a></td><td><code>readPath()</code></td><td>Der Varianten-Guard läuft und liefert <code>undefined</code>.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/entityReaders/chart.ts">entityReaders/chart.ts</a></td><td><code>readChart()</code></td><td>Die Chart-Fassade erreicht den Reader; der Entity-Guard liefert <code>undefined</code>.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/valueAccess.ts">valueAccess.ts</a></td><td><code>asString()</code>, <code>tupleValues()</code></td><td>Konvertiert AST-Value-Varianten kontrolliert.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/linkReader.ts">linkReader.ts</a></td><td><code>readLinks()</code></td><td>Wird aufgerufen, verarbeitet hier aber eine leere Linkliste.</td></tr>
+              <tr><td><a href="../src/sfl/semantic/types.ts">semantic/types.ts</a></td><td><code>SflCanvasState</code>, <code>SflEntityOut</code></td><td class="contract">Vertrag der semantischen Ausgabe.</td></tr>
+            </tbody></table>
+          </div>
+        </details>
+
+        <details class="phase" open>
+          <summary><span class="number">05</span><span class="summary-copy"><strong>SFL → RenderInput</strong><small>Die semantische Entity wird zum stabilen Shape-Modell.</small></span><a class="source-link" href="../src/renderInput/fromSfl/entities/shape.ts">fromSfl/</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>SflEntityOut</code><br>SFL-nahe Propertywerte.</div><div class="arrow">→</div><div class="state"><code>Shape</code><br>Validierte Model-Felder und dekodierte Paints.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Warum beteiligt?</th></tr></thead><tbody>
+              <tr><td><a href="../src/sflToRenderInput.ts">sflToRenderInput.ts</a></td><td><code>sflToRenderInput()</code></td><td>Montiert Entities, Links und Diagnosen zum RenderInput.</td></tr>
+              <tr><td><a href="../src/renderInput/types.ts">renderInput/types.ts</a></td><td><code>RenderInput</code></td><td class="contract">Definiert den Eingang des Scene-Builders.</td></tr>
+              <tr><td><a href="../src/renderInput/fromSfl/entities/collect.ts">entities/collect.ts</a></td><td><code>collectEntities()</code></td><td>Filtert <code>entityType === 'shape'</code> und ruft <code>shapeObject()</code>.</td></tr>
+              <tr><td><a href="../src/renderInput/fromSfl/entities/shape.ts">entities/shape.ts</a></td><td><code>shapeObject()</code></td><td>Validiert ShapeType und übersetzt alle Shape-Felder.</td></tr>
+              <tr><td><a href="../src/renderInput/fromSfl/entities/values.ts">entities/values.ts</a></td><td><code>numOf()</code>, <code>strokePaint()</code></td><td>Konvertiert Zahlen und Stroke-Werte.</td></tr>
+              <tr><td><a href="../src/sfl/decodeStyles.ts">sfl/decodeStyles.ts</a></td><td><code>decodeColor()</code>, <code>decodeShadow()</code></td><td>Fassade der Style-Dekodierung.</td></tr>
+              <tr><td><a href="../src/sfl/styleDecoding/color.ts">styleDecoding/color.ts</a></td><td><code>decodeColor()</code></td><td>Erkennt die beiden Solid-Color-Strings.</td></tr>
+              <tr><td><a href="../src/sfl/styleDecoding/shadow.ts">styleDecoding/shadow.ts</a></td><td><code>decodeShadow()</code></td><td>Wird mit <code>undefined</code> aufgerufen und liefert keinen Shadow.</td></tr>
+              <tr><td><a href="../src/model/shape/types.ts">model/shape/types.ts</a></td><td><code>Shape</code>, <code>ShapeType</code></td><td class="contract">Dauerhafter fachlicher Shape-Vertrag.</td></tr>
+              <tr><td><a href="../src/model/shapes.ts">model/shapes.ts</a></td><td><code>SHAPE_TYPES</code></td><td>Runtime-Validierung von <code>rounded_rectangle</code>.</td></tr>
+              <tr><td><a href="../src/renderInput/fromSfl/links.ts">fromSfl/links.ts</a></td><td><code>resolveExportLinks()</code></td><td>Wird aufgerufen; Ergebnis für dieses Beispiel ist <code>[]</code>.</td></tr>
+            </tbody></table>
+            <pre class="code"><code>{
+  shapes: [{
+    id: "start", shapeType: "rounded_rectangle", text: "Start",
+    x: 40, y: 60, width: 160, height: 80,
+    fillColor: "#0f766e", strokeColor: "#5eead4",
+    strokeWidth: 2, cornerRadius: 14
+  }],
+  frames: [], swimlanes: [], tables: [], paths: [], charts: [], links: [], diagnostics: []
+}</code></pre>
+          </div>
+        </details>
+
+        <details class="phase" open>
+          <summary><span class="number">06</span><span class="summary-copy"><strong>Shape → RenderScene</strong><small>Das Model wird zu Rect- und Text-Nodes.</small></span><a class="source-link" href="../src/rendering/entities/shape.ts">entities/shape.ts</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>Shape</code><br>Fachliches Objekt.</div><div class="arrow">→</div><div class="state"><code>SceneRect + SceneText</code><br>Konkrete Zeichenoperationen.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Warum beteiligt?</th></tr></thead><tbody>
+              <tr><td><a href="../src/rendering/scene/build.ts">scene/build.ts</a></td><td><code>buildRenderScene()</code></td><td>Ruft für das einzige Shape <code>buildShape()</code>, taggt und sortiert.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape.ts">entities/shape.ts</a></td><td><code>buildShape()</code></td><td>Visibility-Guard, Kontext, Geometrie und Text.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape.ts">entities/shape.ts</a></td><td><code>createRenderContext()</code></td><td>Normalisiert Zahlen, Order, RotationCenter und Bounds.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape/style.ts">shape/style.ts</a></td><td><code>shapeStyle()</code></td><td>Erzeugt Fill, Stroke, StrokeWidth, Dash, Opacity und Shadow.</td></tr>
+              <tr><td><a href="../src/model/shape/defaults.ts">model/shape/defaults.ts</a></td><td><code>SHAPE_DEFAULTS</code></td><td>Liefert Default-Font und Fallback-Style der Variante.</td></tr>
+              <tr><td><a href="../src/rendering/scene/paint.ts">scene/paint.ts</a></td><td><code>paint()</code></td><td>Beide Stringfarben werden zu <code>ScenePaint { kind: 'solid' }</code>.</td></tr>
+              <tr><td><a href="../src/rendering/scene/numbers.ts">scene/numbers.ts</a></td><td><code>finite()</code></td><td>Schützt sämtliche numerischen Scene-Werte.</td></tr>
+              <tr><td><a href="../src/rendering/scene/order.ts">scene/order.ts</a></td><td><code>orderOf()</code></td><td>Erzeugt die deterministische Zeichenreihenfolge.</td></tr>
+              <tr><td><a href="../src/rendering/scene/bounds.ts">scene/bounds.ts</a></td><td><code>rotatedBounds()</code></td><td>Rotation ist 0; verwendet Box-Bounds mit Stroke-Padding.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape/geometry/index.ts">shape/geometry/index.ts</a></td><td><code>renderShapeGeometry()</code></td><td><code>GEOMETRY_RENDERERS.rounded_rectangle → renderRectangle</code>.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape/geometry/simple.ts">shape/geometry/simple.ts</a></td><td><code>renderRectangle()</code></td><td>Setzt <code>rx = cornerRadius = 14</code> und erzeugt <code>SceneRect</code>.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape/geometry/base.ts">shape/geometry/base.ts</a></td><td><code>shapeNodeBase()</code></td><td>Gemeinsame ID, Order, Bounds, Rotation und Style.</td></tr>
+              <tr><td><a href="../src/rendering/entities/shape/text.ts">shape/text.ts</a></td><td><code>renderShapeText()</code></td><td>Padding, Textbreite, Wrapping, Font und Alignment.</td></tr>
+              <tr><td><a href="../src/model/geometry/text.ts">model/geometry/text.ts</a></td><td><code>wrapText()</code></td><td>„Start“ passt in eine Zeile.</td></tr>
+              <tr><td><a href="../src/model/geometry/richText.ts">model/geometry/richText.ts</a></td><td><code>hasBoldMarkup()</code></td><td>Prüft Rich-Text-Markup; Ergebnis ist false.</td></tr>
+              <tr><td><a href="../src/rendering/scene/textStyle.ts">scene/textStyle.ts</a></td><td><code>DEFAULT_FONT</code></td><td>Liefert die Font-Familie, da keine eigene gesetzt ist.</td></tr>
+              <tr><td><a href="../src/rendering/scene/tagging.ts">scene/tagging.ts</a></td><td><code>tag()</code></td><td>Ergänzt Rolle entity, ID start, Kind rounded_rectangle und Primary.</td></tr>
+              <tr><td><a href="../src/rendering/scene/types.ts">scene/types.ts</a></td><td><code>SceneRect</code>, <code>SceneText</code>, <code>RenderScene</code></td><td class="contract">Verträge der erzeugten Nodes.</td></tr>
+            </tbody></table>
+          </div>
+        </details>
+
+        <details class="phase" open>
+          <summary><span class="number">07</span><span class="summary-copy"><strong>RenderScene → SVG</strong><small>Nodes werden sicher und deterministisch serialisiert.</small></span><a class="source-link" href="../src/rendering/svg/document.ts">svg/</a></summary>
+          <div class="phase-body">
+            <div class="call"><div class="state"><code>RenderScene</code><br>Rect, Text, Bounds, Diagnosen.</div><div class="arrow">→</div><div class="state"><code>SvgRenderResult</code><br>SVG-String, Breite, Höhe, Diagnosen.</div></div>
+            <table><thead><tr><th>Datei</th><th>Aktive Funktion</th><th>Warum beteiligt?</th></tr></thead><tbody>
+              <tr><td><a href="../src/rendering/svg/index.ts">svg/index.ts</a></td><td>Export-Fassade</td><td>Exportiert <code>renderSceneToSvg()</code>.</td></tr>
+              <tr><td><a href="../src/rendering/svg/renderScene.ts">svg/renderScene.ts</a></td><td><code>renderSceneToSvg()</code></td><td>Delegiert an den Dokumentrenderer.</td></tr>
+              <tr><td><a href="../src/rendering/svg/document.ts">svg/document.ts</a></td><td><code>renderSvgDocument()</code></td><td>Padding, Größe, ViewBox, Defs, Body und Root-SVG.</td></tr>
+              <tr><td><a href="../src/model/domContractVersion.ts">model/domContractVersion.ts</a></td><td><code>DOM_CONTRACT_VERSION</code></td><td>Schreibt <code>data-sf-contract="1"</code> auf das Root-SVG.</td></tr>
+              <tr><td><a href="../src/rendering/svg/definitions.ts">svg/definitions.ts</a></td><td><code>SvgDefinitionRegistry</code></td><td>Koordiniert Paint-, Filter- und Markerdefinitionen.</td></tr>
+              <tr><td><a href="../src/rendering/svg/paintDefinitions.ts">svg/paintDefinitions.ts</a></td><td><code>paint()</code></td><td>Solid Paints benötigen keine Defs und liefern direkt ihre Farben.</td></tr>
+              <tr><td><a href="../src/rendering/svg/filterDefinitions.ts">svg/filterDefinitions.ts</a></td><td><code>filter()</code></td><td>Prüft den Style; ohne Shadow wird keine Filterdefinition erzeugt.</td></tr>
+              <tr><td><a href="../src/rendering/svg/nodes.ts">svg/nodes.ts</a></td><td><code>nodeSvg()</code></td><td>Dispatcht Rect zu <code>&lt;rect&gt;</code> und Text zu <code>textSvg()</code>.</td></tr>
+              <tr><td><a href="../src/rendering/svg/attributes.ts">svg/attributes.ts</a></td><td><code>styleAttrs()</code></td><td>Fill, Stroke, StrokeWidth und Opacity.</td></tr>
+              <tr><td><a href="../src/rendering/svg/contract.ts">svg/contract.ts</a></td><td><code>contractAttrs()</code></td><td>Owner-Daten, Primary, tabindex und aria-label.</td></tr>
+              <tr><td><a href="../src/rendering/svg/text.ts">svg/text.ts</a></td><td><code>textSvg()</code></td><td>Textposition, Baseline und <code>&lt;tspan&gt;</code>.</td></tr>
+              <tr><td><a href="../src/rendering/svg/format.ts">svg/format.ts</a></td><td><code>num()</code>, <code>xml()</code>, <code>safeId()</code></td><td>Deterministische Zahlen, XML-Sicherheit und sichere IDs.</td></tr>
+              <tr><td><a href="../src/rendering/svg/types.ts">svg/types.ts</a></td><td><code>SvgRenderOptions</code>, <code>SvgRenderResult</code></td><td class="contract">Verträge der SVG-Stufe.</td></tr>
+            </tbody></table>
+            <pre class="code"><code>&lt;svg ... data-sf-contract="1"&gt;
+  &lt;defs&gt;&lt;/defs&gt;
+  &lt;rect id="shape-start" data-sf-role="entity" data-sf-id="start"
+    data-sf-kind="rounded_rectangle" data-sf-primary="true"
+    tabindex="0" aria-label="Start" fill="#0f766e" stroke="#5eead4"
+    stroke-width="2" opacity="1" x="40" y="60" width="160" height="80" rx="14"/&gt;
+  &lt;text ...&gt;&lt;tspan ...&gt;Start&lt;/tspan&gt;&lt;/text&gt;
+&lt;/svg&gt;</code></pre>
+          </div>
+        </details>
+      </section>
+
+      <section id="inactive">
+        <h2>Geladen, aber hier nicht aktiv</h2>
+        <p class="lead">
+          Statische Imports machen weitere Module Teil des Bundles beziehungsweise Modulgraphen. Sie sind architektonisch
+          beteiligt, ihre variantenspezifischen Funktionen laufen für dieses Shape aber nicht.
+        </p>
+        <table><thead><tr><th>Bereich</th><th>Beispiele</th><th>Warum nicht ausgeführt?</th></tr></thead><tbody>
+          <tr><td>Andere Entity-Adapter</td><td><code>frame.ts</code>, <code>table.ts</code>, <code>chart.ts</code>, <code>link.ts</code></td><td><code>collectEntities()</code> filtert ausschließlich die Shape-Entity.</td></tr>
+          <tr><td>Andere Scene-Renderer</td><td><code>charts/*</code>, <code>tables/*</code>, <code>entities/link/*</code>, <code>entities/container/*</code></td><td>Die zugehörigen RenderInput-Arrays sind leer.</td></tr>
+          <tr><td>Andere Shape-Geometrien</td><td><code>geometry/compound.ts</code>, <code>geometry/image.ts</code>, übrige Funktionen in <code>simple.ts</code></td><td>Das Renderer-Mapping wählt ausschließlich <code>renderRectangle()</code>.</td></tr>
+          <tr><td>Gradienten, Filter, Marker</td><td><code>filterDefinitions.ts</code>, <code>markerDefinitions.ts</code>, Gradientpfade in <code>paintDefinitions.ts</code></td><td>Solid Fill/Stroke, kein Shadow, Rect statt Path.</td></tr>
+          <tr><td>Browser-Runtime</td><td><code>domContract/*</code>, <code>viewer/*</code>, <code>interaction/*</code></td><td><code>render()</code> ist headless und erzeugt nur einen String.</td></tr>
+        </tbody></table>
+      </section>
+
+      <section id="result">
+        <h2>Was am Ende zurückkommt</h2>
+        <div class="result">
+          <div><strong>1</strong><span>RenderScene</span></div>
+          <div><strong>2</strong><span>Scene-Nodes: Rect + Text</span></div>
+          <div><strong>0</strong><span>Diagnosen</span></div>
+          <div><strong>1</strong><span>vollständiger SVG-String</span></div>
+        </div>
+        <p class="notice" style="margin-top: 18px">
+          Möchtest du einen einzelnen Schritt im Debugger nachvollziehen, setze zuerst einen Breakpoint in
+          <code>src/render.ts:render()</code> und danach in den fett beschriebenen Funktionen der sieben Phasen. Mit
+          „Step Into“ folgt VS Code exakt demselben Pfad.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      stickyflow.js · Rounded Rectangle Execution Trace · Quellpfade sind relativ zum Repository anklickbar.
+    </footer>
+  </body>
+</html>

@@ -1,4 +1,4 @@
-import { DOM_CONTRACT_VERSION } from '../rendering/domContractVersion';
+import { DOM_CONTRACT_VERSION } from '../model/domContractVersion';
 import type { SceneRole } from '../rendering/scene';
 import type { OwnerRef } from './types';
 
