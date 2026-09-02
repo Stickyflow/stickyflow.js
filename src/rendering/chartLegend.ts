@@ -9,7 +9,13 @@ export function buildOrderedChartLegend(
   renderOrder: ChartRenderOrder,
   diagnostics: RenderDiagnostic[],
 ): RenderNode[] {
-  const nodes = buildLegend(chart, layout.plot, layout.bounds, renderOrder.current(), diagnostics);
+  const nodes = buildLegend({
+    chart,
+    plot: layout.plot,
+    bounds: layout.bounds,
+    order: renderOrder.current(),
+    diagnostics,
+  });
   renderOrder.advance(nodes.length);
   return nodes;
 }
