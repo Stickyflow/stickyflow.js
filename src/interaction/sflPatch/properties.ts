@@ -1,9 +1,17 @@
 import type { Side } from '../../model/geometry/router';
 import { insertDirectProperty, replacePropertyValue } from './edits/propertyValues';
-import { escapeSflString, indentOf, round1, round2 } from './format';
+import { escapeSflString, indentOf, round1 } from './format';
+import { formatLinkEndpoint } from './linkPatch/endpointText';
 import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';
 
 type LayoutTuple = readonly [key: string, first: number, second: number];
+
+export interface LinkEndpointPatch {
+  end: 'from' | 'to';
+  targetName: string;
+  side: Side;
+  fraction: number;
+}
 
 export function setOrInsertText(lines: string[], range: LineRange, text: string): void {
   const value = `"${escapeSflString(text)}"`;
@@ -87,20 +95,13 @@ function layoutTupleValue(tuple: LayoutTuple): string {
   return `${round1(tuple[1])}, ${round1(tuple[2])}`;
 }
 
-export function setEndpoint(
-  lines: string[],
-  range: LineRange,
-  key: 'from' | 'to',
-  targetName: string,
-  side: Side,
-  fraction: number,
-): void {
-  const value = `${targetName}, ${side} (${round2(fraction)})`;
-  const existing = findDirectProperty(lines, range, key);
+export function setEndpoint(lines: string[], range: LineRange, patch: LinkEndpointPatch): void {
+  const value = formatLinkEndpoint({ id: patch.targetName, side: patch.side, fraction: patch.fraction });
+  const existing = findDirectProperty(lines, range, patch.end);
   if (existing !== null) {
     replacePropertyValue(lines, existing, value);
     return;
   }
   const indent = `${indentOf(lines[range.start])}    `;
-  insertDirectProperty(lines, range, indent, key, value);
+  insertDirectProperty(lines, range, indent, patch.end, value);
 }

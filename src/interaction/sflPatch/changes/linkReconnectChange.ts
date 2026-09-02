@@ -8,6 +8,11 @@ export function applyLinkReconnectChange(sfl: string, event: LinkReconnectEvent)
   if (!range) {
     return sfl;
   }
-  setEndpoint(lines, range, event.end, event.target.id, event.side, event.fraction);
+  setEndpoint(lines, range, {
+    end: event.end,
+    targetName: event.target.id,
+    side: event.side,
+    fraction: event.fraction,
+  });
   return lines.join('\n');
 }
