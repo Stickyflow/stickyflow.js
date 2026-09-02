@@ -3,6 +3,8 @@ import { insertDirectProperty, replacePropertyValue } from './edits/propertyValu
 import { escapeSflString, indentOf, round1, round2 } from './format';
 import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';
 
+type LayoutTuple = readonly [key: string, first: number, second: number];
+
 export function setOrInsertText(lines: string[], range: LineRange, text: string): void {
   const value = `"${escapeSflString(text)}"`;
   const existing = findDirectProperty(lines, range, 'text');
@@ -14,50 +16,75 @@ export function setOrInsertText(lines: string[], range: LineRange, text: string)
   insertDirectProperty(lines, range, indent, 'text', value);
 }
 
-export function setOrInsertLayoutTuples(
-  lines: string[],
-  range: LineRange,
-  props: ReadonlyArray<readonly [key: string, a: number, b: number]>,
-): void {
-  let layout = findChildBlock(lines, range, /^\s*layout\s*\{/);
+export function setOrInsertLayoutTuples(lines: string[], range: LineRange, props: ReadonlyArray<LayoutTuple>): void {
+  const layout = findChildBlock(lines, range, /^\s*layout\s*\{/);
+  if (layout) {
+    updateLayoutBlock(lines, layout, props);
+    return;
+  }
+
+  if (hasInlineLayout(lines, range)) {
+    updateInlineLayout(lines, range, props);
+    return;
+  }
+
+  if (range.start === range.end) {
+    insertCompactLayout(lines, range.start, props);
+  } else {
+    insertMultilineLayout(lines, range, props);
+  }
+}
+
+function hasInlineLayout(lines: string[], range: LineRange): boolean {
   const maskedStart = maskLines(lines)?.[range.start] ?? '';
-  if (!layout && range.start === range.end && /\blayout\s*\{/.test(maskedStart)) {
-    for (const [key, a, b] of props) {
-      const existing = findDirectProperty(lines, range, key, 2);
-      if (!existing) {
-        continue;
-      }
-      replacePropertyValue(lines, existing, `${round1(a)}, ${round1(b)}`);
+  return range.start === range.end && /\blayout\s*\{/.test(maskedStart);
+}
+
+function updateInlineLayout(lines: string[], range: LineRange, props: ReadonlyArray<LayoutTuple>): void {
+  for (const tuple of props) {
+    const existing = findDirectProperty(lines, range, tuple[0], 2);
+    if (existing) {
+      replacePropertyValue(lines, existing, layoutTupleValue(tuple));
     }
-    return;
   }
-  if (!layout) {
-    if (range.start === range.end) {
-      const line = lines[range.start];
-      const closeAt = line.lastIndexOf('}');
-      const before = line.slice(0, closeAt).replace(/\s+$/, '');
-      const sep = /\{$/.test(before) ? ' ' : '; ';
-      const body = props.map(([key, a, b]) => `${key}: ${round1(a)}, ${round1(b)}`).join('; ');
-      lines[range.start] = `${before}${sep}layout { ${body} } }${line.slice(closeAt + 1)}`;
-      return;
-    }
-    const indent = `${indentOf(lines[range.start])}    `;
-    const body = props.map(([key, a, b]) => `${indent}    ${key}: ${round1(a)}, ${round1(b)}`);
-    lines.splice(range.start + 1, 0, `${indent}layout {`, ...body, `${indent}}`);
-    return;
+}
+
+function insertCompactLayout(lines: string[], row: number, props: ReadonlyArray<LayoutTuple>): void {
+  const line = lines[row];
+  const closeAt = line.lastIndexOf('}');
+  const before = line.slice(0, closeAt).replace(/\s+$/, '');
+  const separator = /\{$/.test(before) ? ' ' : '; ';
+  const body = props.map(tuple => `${tuple[0]}: ${layoutTupleValue(tuple)}`).join('; ');
+  lines[row] = `${before}${separator}layout { ${body} } }${line.slice(closeAt + 1)}`;
+}
+
+function insertMultilineLayout(lines: string[], range: LineRange, props: ReadonlyArray<LayoutTuple>): void {
+  const indent = `${indentOf(lines[range.start])}    `;
+  const body = props.map(tuple => `${indent}    ${tuple[0]}: ${layoutTupleValue(tuple)}`);
+  lines.splice(range.start + 1, 0, `${indent}layout {`, ...body, `${indent}}`);
+}
+
+function updateLayoutBlock(lines: string[], layout: LineRange, props: ReadonlyArray<LayoutTuple>): void {
+  let currentLayout = layout;
+  for (const tuple of props) {
+    currentLayout = setLayoutTuple(lines, currentLayout, tuple);
   }
-  for (const [key, a, b] of props) {
-    const value = `${round1(a)}, ${round1(b)}`;
-    const existing = findDirectProperty(lines, layout, key);
-    if (existing !== null) {
-      replacePropertyValue(lines, existing, value);
-      continue;
-    }
-    const indent = `${indentOf(lines[layout.start])}    `;
-    const lengthBefore = lines.length;
-    insertDirectProperty(lines, layout, indent, key, value);
-    layout = { start: layout.start, end: layout.end + (lines.length - lengthBefore) };
+}
+
+function setLayoutTuple(lines: string[], layout: LineRange, tuple: LayoutTuple): LineRange {
+  const existing = findDirectProperty(lines, layout, tuple[0]);
+  if (existing !== null) {
+    replacePropertyValue(lines, existing, layoutTupleValue(tuple));
+    return layout;
   }
+  const indent = `${indentOf(lines[layout.start])}    `;
+  const lengthBefore = lines.length;
+  insertDirectProperty(lines, layout, indent, tuple[0], layoutTupleValue(tuple));
+  return { start: layout.start, end: layout.end + (lines.length - lengthBefore) };
+}
+
+function layoutTupleValue(tuple: LayoutTuple): string {
+  return `${round1(tuple[1])}, ${round1(tuple[2])}`;
 }
 
 export function setEndpoint(
