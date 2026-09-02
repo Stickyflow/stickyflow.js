@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const srcDir = resolve(here, '../src');
+const srcDir = resolve(here, '../../src');
 
 const TIERS = ['domContract', 'viewer', 'interaction', 'web-component'] as const;
 const TIER_RANK: Record<string, number> = {
