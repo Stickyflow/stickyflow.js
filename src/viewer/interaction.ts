@@ -23,7 +23,7 @@ export function bindInteraction(
 ): InteractionHandle {
   const selectable = options.selectable ?? true;
   const selection = new SelectionController(display.svg, emitter, diagramId);
-  const unbindPointer = bindPointerInteraction(display, emitter, diagramId, selection, selectable);
+  const unbindPointer = bindPointerInteraction({ display, emitter, diagramId, selection, selectable });
   const unbindWheel = bindWheelZoom(display);
   const unbindKeyboard = bindKeyboardSelection(display.svg, selection, selectable);
   return {

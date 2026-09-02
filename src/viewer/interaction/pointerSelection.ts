@@ -1,33 +1,64 @@
 import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
-import type { Emitter } from '../events';
+import type { Emitter, OwnerRef } from '../events';
 import { clickAction } from '../selection';
 import { modifiersOf } from './modifiers';
 import type { SelectionController } from './selectionController';
 
-export function emitOwnerHover(event: PointerEvent, emitter: Emitter, diagramId: string): void {
-  const owner = resolveOwner(event.target as Element | null);
-  emitter.emit('ownerHover', owner ? { diagramId, owner, modifiers: modifiersOf(event) } : { diagramId, owner: null });
+const SELECTION_OVERLAY_CONTROL_SELECTOR =
+  '[data-sf-resize-handle], [data-sf-link-endpoint], [data-sf-quick-duplicate]';
+
+export function isSelectionOverlayControl(target: Element | null): boolean {
+  return Boolean(target?.closest(SELECTION_OVERLAY_CONTROL_SELECTOR));
 }
 
-export function selectPointerTarget(
-  event: PointerEvent,
-  svg: SVGSVGElement,
-  emitter: Emitter,
-  diagramId: string,
-  selection: SelectionController,
-  isOverlayControl: (target: Element | null) => boolean,
-): void {
-  const target = event.target as Element | null;
-  const owner = resolveOwner(target);
-  if (!owner) {
-    if (!isOverlayControl(target)) {
-      selection.dispatch({ type: 'clear' });
-    }
-    return;
+export class OwnerPointerController {
+  readonly #svg: SVGSVGElement;
+  readonly #emitter: Emitter;
+  readonly #diagramId: string;
+  readonly #selection: SelectionController;
+
+  constructor(svg: SVGSVGElement, emitter: Emitter, diagramId: string, selection: SelectionController) {
+    this.#svg = svg;
+    this.#emitter = emitter;
+    this.#diagramId = diagramId;
+    this.#selection = selection;
   }
-  selection.remember(owner);
-  const modifiers = modifiersOf(event);
-  selection.dispatch(clickAction(owner.id, modifiers));
-  emitter.emit(owner.role === 'link' ? 'linkClick' : 'entityClick', { diagramId, owner, modifiers });
-  findOwnerNode(svg, owner.id, isPrimary)?.focus({ preventScroll: true });
+
+  hover(event: PointerEvent): void {
+    const owner = resolveOwner(event.target as Element | null);
+    this.#emitter.emit(
+      'ownerHover',
+      owner
+        ? { diagramId: this.#diagramId, owner, modifiers: modifiersOf(event) }
+        : { diagramId: this.#diagramId, owner: null },
+    );
+  }
+
+  select(event: PointerEvent): void {
+    const target = event.target as Element | null;
+    const owner = resolveOwner(target);
+    if (!owner) {
+      this.#clearWhenOutsideOverlay(target);
+      return;
+    }
+    this.#selectOwner(owner, event);
+  }
+
+  #clearWhenOutsideOverlay(target: Element | null): void {
+    if (!isSelectionOverlayControl(target)) {
+      this.#selection.dispatch({ type: 'clear' });
+    }
+  }
+
+  #selectOwner(owner: OwnerRef, event: PointerEvent): void {
+    this.#selection.remember(owner);
+    const modifiers = modifiersOf(event);
+    this.#selection.dispatch(clickAction(owner.id, modifiers));
+    this.#emitter.emit(owner.role === 'link' ? 'linkClick' : 'entityClick', {
+      diagramId: this.#diagramId,
+      owner,
+      modifiers,
+    });
+    findOwnerNode(this.#svg, owner.id, isPrimary)?.focus({ preventScroll: true });
+  }
 }
