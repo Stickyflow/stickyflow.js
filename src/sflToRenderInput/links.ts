@@ -1,6 +1,6 @@
 import type { ResolvedExportLink } from '../rendering/renderInput';
-import type { CollectedEntities } from '../sfl/adapters/entities/collect';
 import { resolveLinkEndpoint } from './endpoint';
+import type { CollectedEntities } from './entities/collect';
 import type { PositionedElement } from './types';
 
 function positionedElements(entities: CollectedEntities): PositionedElement[] {

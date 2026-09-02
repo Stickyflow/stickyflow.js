@@ -1,5 +1,5 @@
-import type { SflEntityOut } from '../../sflToCanvasState';
-import { decodeRamp } from '../decodeStyles';
+import { decodeRamp } from '../../sfl/decodeStyles';
+import type { SflEntityOut } from '../../sfl/sflToCanvasState';
 import { BORDER_STYLES, dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
 export function tableObject(e: SflEntityOut) {

@@ -1,11 +1,11 @@
-import type { SflCanvasState } from './canvas/types';
 import { parse } from './parser';
+import type { SflCanvasState } from './semantic/types';
 
-export type { SflCanvasState, SflDiagnostic, SflEntityOut, SflGroupOut, SflLinkOut } from './canvas/types';
+export type { SflCanvasState, SflDiagnostic, SflEntityOut, SflGroupOut, SflLinkOut } from './semantic/types';
 
-import { readLinks } from './canvas/linkReader';
-import { createCanvasResolution } from './canvas/resolution';
-import { readCanvasTree } from './canvas/traversal';
+import { readLinks } from './semantic/linkReader';
+import { createCanvasResolution } from './semantic/resolution';
+import { readCanvasTree } from './semantic/traversal';
 
 export function sflToCanvasState(source: string): SflCanvasState {
   const doc = parse(source);

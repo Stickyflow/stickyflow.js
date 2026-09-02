@@ -1,5 +1,5 @@
-import { sflToCanvasState } from '../../sflToCanvasState';
-import { collectEntities } from '../entities/collect';
+import { collectEntities } from '../../sflToRenderInput/entities/collect';
+import { sflToCanvasState } from '../sflToCanvasState';
 import { createBucketResolver, emptyBuckets, flattenGroups, indexGroupMembership } from './groups';
 import type { SflImportJson } from './types';
 

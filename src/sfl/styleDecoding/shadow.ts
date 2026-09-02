@@ -1,4 +1,4 @@
-import type { ShadowStyle } from '../../../model/shadows';
+import type { ShadowStyle } from '../../model/shadows';
 
 function applyShadowProperty(shadow: ShadowStyle, key: string, value: string): void {
   switch (key) {

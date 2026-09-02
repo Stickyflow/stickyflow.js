@@ -1,4 +1,4 @@
-import type { SflLinkOut } from '../../sflToCanvasState';
+import type { SflLinkOut } from '../../sfl/sflToCanvasState';
 import { MARKER_TYPES, numOf, optionalOneOf, PATH_TYPES, STROKE_STYLES, strokePaint } from './values';
 
 export function linkObject(l: SflLinkOut) {

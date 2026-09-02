@@ -1,5 +1,5 @@
-import type { SflEntityOut } from '../../sflToCanvasState';
-import { decodeColor, decodeRamp } from '../decodeStyles';
+import { decodeColor, decodeRamp } from '../../sfl/decodeStyles';
+import type { SflEntityOut } from '../../sfl/sflToCanvasState';
 import { numOf, solidColor } from './values';
 
 export function chartObject(e: SflEntityOut) {

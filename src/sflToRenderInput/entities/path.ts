@@ -1,4 +1,4 @@
-import type { SflEntityOut } from '../../sflToCanvasState';
+import type { SflEntityOut } from '../../sfl/sflToCanvasState';
 import { dashArray, numOf, oneOf, PATH_MARKERS, solidColor } from './values';
 
 export function pathObject(e: SflEntityOut) {

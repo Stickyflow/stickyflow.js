@@ -1,11 +1,11 @@
-import type { Chart } from '../../../model/charts';
-import type { Frame } from '../../../model/frames';
-import type { Link } from '../../../model/links';
-import type { FreeformPath } from '../../../model/paths';
-import type { Shape } from '../../../model/shapes';
-import type { Swimlane } from '../../../model/swimlanes';
-import type { Table } from '../../../model/tables';
-import type { SflDiagnostic } from '../../sflToCanvasState';
+import type { Chart } from '../../model/charts';
+import type { Frame } from '../../model/frames';
+import type { Link } from '../../model/links';
+import type { FreeformPath } from '../../model/paths';
+import type { Shape } from '../../model/shapes';
+import type { Swimlane } from '../../model/swimlanes';
+import type { Table } from '../../model/tables';
+import type { SflDiagnostic } from '../sflToCanvasState';
 
 export interface ImportBuckets {
   notes: never[];

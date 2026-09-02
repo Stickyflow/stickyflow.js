@@ -1,4 +1,4 @@
-import type { SflGroupOut } from '../../sflToCanvasState';
+import type { SflGroupOut } from '../sflToCanvasState';
 import type { ImportBuckets, ImportGroup } from './types';
 
 export function emptyBuckets(): ImportBuckets {
