@@ -1,5 +1,5 @@
-import type { BlockKind, SflBlock } from '../ast';
-import { collectBlockEntries } from './blockEntries';
+import type { BlockKind, SflBlock, SflProperty } from '../ast';
+import { type BlockEntries, collectBlockEntries } from './blockEntries';
 import { emitComposition } from './composition';
 import { compareLayoutProps, compareProps, compareStyleProps } from './order';
 import { emitPropertyBlock } from './propertyBlock';
@@ -41,33 +41,63 @@ export function emitBlock(block: SflBlock, depth: number, kinds: Map<string, Blo
   const pad = INDENT.repeat(depth);
   const header = `${block.kind} ${block.name}${emitComposition(block.composition, kinds)} {`;
   const entries = collectBlockEntries(block);
-  const properties = [...entries.properties].sort((a, b) => propertyComparator(block.kind)(a.key, b.key));
-  const compact =
-    (block.kind === 'Layout' || block.kind === 'Style') &&
-    !entries.blocks.length &&
-    !entries.layout &&
-    !entries.style &&
-    properties.length <= COMPACT_MAX_PROPS;
-
-  if (compact) {
-    const body = properties.map(emitProperty).join('; ');
-    return body ? `${pad}${header} ${body} }` : `${pad}${header} }`;
+  const properties = orderedProperties(block.kind, entries.properties);
+  if (usesCompactBlockForm(block.kind, entries, properties.length)) {
+    return emitCompactBlock(pad, header, properties);
   }
+  const body = emitExpandedBlockBody(entries, properties, depth, kinds);
+  return emitExpandedBlock(pad, header, body);
+}
 
+function orderedProperties(kind: BlockKind, properties: SflProperty[]): SflProperty[] {
+  return [...properties].sort((left, right) => propertyComparator(kind)(left.key, right.key));
+}
+
+function usesCompactBlockForm(kind: BlockKind, entries: BlockEntries, propertyCount: number): boolean {
+  const supportsCompactForm = kind === 'Layout' || kind === 'Style';
+  const hasNestedContent = entries.blocks.length > 0 || Boolean(entries.layout) || Boolean(entries.style);
+  return supportsCompactForm && !hasNestedContent && propertyCount <= COMPACT_MAX_PROPS;
+}
+
+function emitCompactBlock(pad: string, header: string, properties: SflProperty[]): string {
+  const body = properties.map(emitProperty).join('; ');
+  return body ? `${pad}${header} ${body} }` : `${pad}${header} }`;
+}
+
+function emitExpandedBlockBody(
+  entries: BlockEntries,
+  properties: SflProperty[],
+  depth: number,
+  kinds: Map<string, BlockKind>,
+): string {
+  const primaryEntries = emitPrimaryBlockEntries(entries, properties, depth, kinds);
+  const propertyBlocks = emitAttachedPropertyBlocks(entries, depth);
+  return [primaryEntries, propertyBlocks].filter(Boolean).join('\n');
+}
+
+function emitPrimaryBlockEntries(
+  entries: BlockEntries,
+  properties: SflProperty[],
+  depth: number,
+  kinds: Map<string, BlockKind>,
+): string {
   const innerPad = INDENT.repeat(depth + 1);
-  let inner = properties.map(property => `${innerPad}${emitProperty(property)}`).join('\n');
-  if (entries.blocks.length) {
-    const nested = joinSiblingBlocks(entries.blocks, depth + 1, kinds);
-    inner = inner ? `${inner}\n\n${nested}` : nested;
-  }
+  const propertyLines = properties.map(property => `${innerPad}${emitProperty(property)}`).join('\n');
+  const nestedBlocks = joinSiblingBlocks(entries.blocks, depth + 1, kinds);
+  return [propertyLines, nestedBlocks].filter(Boolean).join('\n\n');
+}
+
+function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number): string {
+  const blocks: string[] = [];
   if (entries.layout) {
-    const layout = emitPropertyBlock('layout', entries.layout.properties, depth + 1);
-    inner = inner ? `${inner}\n${layout}` : layout;
+    blocks.push(emitPropertyBlock('layout', entries.layout.properties, depth + 1));
   }
   if (entries.style) {
-    const style = emitPropertyBlock('style', entries.style.properties, depth + 1);
-    inner = inner ? `${inner}\n${style}` : style;
+    blocks.push(emitPropertyBlock('style', entries.style.properties, depth + 1));
   }
+  return blocks.join('\n');
+}
 
-  return inner ? `${pad}${header}\n${inner}\n${pad}}` : `${pad}${header}\n${pad}}`;
+function emitExpandedBlock(pad: string, header: string, body: string): string {
+  return body ? `${pad}${header}\n${body}\n${pad}}` : `${pad}${header}\n${pad}}`;
 }
