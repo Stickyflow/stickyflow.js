@@ -17,35 +17,59 @@ function projectModel(block: SflBlock): SflBlock | undefined {
 }
 
 export function collectCanvasDefinitions(sflDocument: SflDocument): CanvasDefinitions {
-  const styles: BlockDefinitions = new Map();
-  const layouts: BlockDefinitions = new Map();
-  const symbols: EntityReaderContext['symbolDefs'] = new Map();
-  let model: SflBlock | undefined;
+  return {
+    styles: collectStyleDefinitions(sflDocument),
+    layouts: collectLayoutDefinitions(sflDocument),
+    symbols: collectSymbolDefinitions(sflDocument),
+    model: findCanvasModel(sflDocument),
+  };
+}
 
+function collectStyleDefinitions(sflDocument: SflDocument): BlockDefinitions {
+  const styles: BlockDefinitions = new Map();
   for (const block of sflDocument.blocks) {
     if (block.kind === 'Style') {
       styles.set(block.name, block);
-      continue;
-    }
-    if (block.kind === 'Layout') {
-      layouts.set(block.name, block);
-      continue;
-    }
-    if (block.kind === 'Symbol') {
-      const symbol = readSymbolDefinition(block);
-      if (symbol) {
-        symbols.set(block.name, symbol);
-      }
-      continue;
-    }
-    if (block.kind === 'Model' && !model) {
-      model = block;
-      continue;
-    }
-    if (block.kind === 'Project' && !model) {
-      model = projectModel(block);
     }
   }
+  return styles;
+}
 
-  return { styles, layouts, symbols, model };
+function collectLayoutDefinitions(sflDocument: SflDocument): BlockDefinitions {
+  const layouts: BlockDefinitions = new Map();
+  for (const block of sflDocument.blocks) {
+    if (block.kind === 'Layout') {
+      layouts.set(block.name, block);
+    }
+  }
+  return layouts;
+}
+
+function collectSymbolDefinitions(sflDocument: SflDocument): EntityReaderContext['symbolDefs'] {
+  const symbols: EntityReaderContext['symbolDefs'] = new Map();
+  for (const block of sflDocument.blocks) {
+    if (block.kind !== 'Symbol') {
+      continue;
+    }
+    const symbol = readSymbolDefinition(block);
+    if (symbol) {
+      symbols.set(block.name, symbol);
+    }
+  }
+  return symbols;
+}
+
+function findCanvasModel(sflDocument: SflDocument): SflBlock | undefined {
+  for (const block of sflDocument.blocks) {
+    if (block.kind === 'Model') {
+      return block;
+    }
+    if (block.kind === 'Project') {
+      const model = projectModel(block);
+      if (model) {
+        return model;
+      }
+    }
+  }
+  return undefined;
 }
