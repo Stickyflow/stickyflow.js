@@ -11,12 +11,25 @@ function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
 }
 
 function detailAttrs(detail: SceneDetail): Array<string | undefined> {
-  if (detail.of === 'chartValue') {
-    return [`data-sf-series="${xml(detail.series)}"`, `data-sf-value-index="${detail.valueIndex}"`];
+  switch (detail.of) {
+    case 'chartValue':
+      return chartValueAttrs(detail);
+    case 'chartScale':
+      return chartScaleAttrs(detail);
+    case 'link':
+      return linkDetailAttrs(detail);
   }
-  if (detail.of === 'chartScale') {
-    return [`data-sf-value-scale="${detail.valueScale}"`];
-  }
+}
+
+function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): string[] {
+  return [`data-sf-series="${xml(detail.series)}"`, `data-sf-value-index="${detail.valueIndex}"`];
+}
+
+function chartScaleAttrs(detail: Extract<SceneDetail, { of: 'chartScale' }>): string[] {
+  return [`data-sf-value-scale="${detail.valueScale}"`];
+}
+
+function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<string | undefined> {
   return [
     detail.fromId ? `data-sf-from="${xml(detail.fromId)}"` : undefined,
     detail.toId ? `data-sf-to="${xml(detail.toId)}"` : undefined,
