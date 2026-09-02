@@ -57,7 +57,7 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
     {
       ...shapeNodeBase(context),
       type: 'path',
-      d: freeformPathData(points, finite(context.shape.symbol.tension, 0), true),
+      d: freeformPathData({ points, tension: finite(context.shape.symbol.tension, 0), closed: true }),
       rotationCenter: context.rotationCenter,
     },
   ];

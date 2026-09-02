@@ -20,7 +20,7 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
       id: `path-${path.id}`,
       order: orderOf(path, 30_000 + index),
       bounds,
-      d: freeformPathData(path.points, finite(path.tension, 0), path.closed === true),
+      d: freeformPathData({ points: path.points, tension: finite(path.tension, 0), closed: path.closed === true }),
       markerStart: path.start_marker,
       markerEnd: path.end_marker,
       style: {

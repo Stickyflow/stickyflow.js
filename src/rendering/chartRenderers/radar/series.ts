@@ -38,7 +38,7 @@ function seriesPoints(series: ChartSeries, context: ChartRenderContext, geometry
 
 function seriesPath(points: RadarPoint[], geometry: RadarGeometry): string {
   if (geometry.circular) {
-    return freeformPathData(points, 0.5, true);
+    return freeformPathData({ points, tension: 0.5, closed: true });
   }
   const commands = points.map((point, index) => `${index ? 'L ' : ''}${point.x} ${point.y}`);
   return `M ${commands.join(' ')} Z`;
