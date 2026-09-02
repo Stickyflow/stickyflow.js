@@ -1,7 +1,7 @@
-import type { RenderInput } from './rendering/renderInput';
+import { collectEntities } from './renderInput/fromSfl/entities/collect';
+import { resolveExportLinks } from './renderInput/fromSfl/links';
+import type { RenderInput } from './renderInput/types';
 import { sflToCanvasState } from './sfl';
-import { collectEntities } from './sflToRenderInput/entities/collect';
-import { resolveExportLinks } from './sflToRenderInput/links';
 
 export function sflToRenderInput(sfl: string): RenderInput {
   const state = sflToCanvasState(sfl);

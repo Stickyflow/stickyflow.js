@@ -1,5 +1,5 @@
+import type { Token } from '../../../sfl/lexer';
 import { tokenize } from '../../../sfl/lexer';
-import type { Token } from '../../../sfl/lexing/types';
 
 const STRING_FILLER = '"';
 

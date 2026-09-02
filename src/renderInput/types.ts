@@ -5,7 +5,7 @@ import type { FreeformPath } from '../model/paths';
 import type { Shape } from '../model/shapes';
 import type { Swimlane } from '../model/swimlanes';
 import type { Table } from '../model/tables';
-import type { Point, RenderDiagnostic } from './scene';
+import type { Point, RenderDiagnostic } from '../rendering/scene';
 export interface ResolvedExportLink {
   link: Link;
   from: Point;

@@ -1,4 +1,4 @@
-import type { ResolvedExportLink } from '../rendering/renderInput';
+import type { ResolvedExportLink } from '../types';
 import { resolveLinkEndpoint } from './endpoint';
 import type { CollectedEntities } from './entities/collect';
 import type { PositionedElement } from './types';

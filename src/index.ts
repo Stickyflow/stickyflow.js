@@ -6,8 +6,8 @@ export type { ShapeType } from './model/shapes';
 export { SHAPE_TYPES } from './model/shapes';
 export type { RenderOptions, RenderResult } from './render';
 export { render, renderCanvas } from './render';
+export type { RenderInput } from './renderInput/types';
 export { DOM_CONTRACT_VERSION } from './rendering/domContractVersion';
-export type { RenderInput } from './rendering/renderInput';
 export type {
   Bounds,
   Point,

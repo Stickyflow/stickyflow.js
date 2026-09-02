@@ -1,4 +1,4 @@
-import type { SflEntityOut } from '../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
 export function swimlaneObject(e: SflEntityOut) {

@@ -1,4 +1,4 @@
-import type { SymbolDef } from '../model/shapes';
+import type { SymbolDef } from '../../model/shapes';
 
 export interface PositionedElement {
   id: string;
