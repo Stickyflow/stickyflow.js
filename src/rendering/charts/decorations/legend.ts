@@ -2,6 +2,7 @@ import type { Chart, ChartSeries } from '../../../model/charts';
 import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
 import { CHART_COLORS, chartText } from '../primitives';
+import { seriesColorProp, seriesLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 export interface ChartLegendRender {
@@ -68,18 +69,22 @@ function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): R
     width: 10,
     height: 10,
     rx: 3,
+    prop: seriesColorProp(item.series.id),
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }
 
 function createLegendLabel(render: ChartLegendRender, item: ChartLegendItem): RenderNode {
   const { chart, bounds } = render;
-  return chartText({
-    id: `chart-legend-${chart.id}-${item.series.id}`,
-    order: item.order + 1,
-    bounds,
-    frame: { x: item.x + 15, y: chart.y + 13, width: item.width - 15, height: 18 },
-    text: item.series.label,
-    chart,
-  });
+  return {
+    ...chartText({
+      id: `chart-legend-${chart.id}-${item.series.id}`,
+      order: item.order + 1,
+      bounds,
+      frame: { x: item.x + 15, y: chart.y + 13, width: item.width - 15, height: 18 },
+      text: item.series.label,
+      chart,
+    }),
+    prop: seriesLabelProp(item.series.id),
+  };
 }

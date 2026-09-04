@@ -5,6 +5,7 @@ import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelecti
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
+import { bindPropertyEditing, type PropertyEditingHandle, type PropertyEditingOptions } from './propertyEdit';
 import { bindQuickDuplicate, type QuickDuplicateHandle } from './quickDuplicate';
 import { bindShapeResize, type ResizeDragHandle } from './resizeDrag';
 import { bindTextEditing, type TextEditingHandle } from './textEdit';
@@ -14,7 +15,11 @@ export interface Interaction {
   destroy(): void;
 }
 
-export function bindEditing(viewer: Viewer): Interaction {
+export interface EditingOptions {
+  properties?: PropertyEditingOptions;
+}
+
+export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Interaction {
   const emitter = new Emitter();
   const textEditing: TextEditingHandle = bindTextEditing(viewer, emitter);
   const movement: MoveDragHandle = bindShapeMovement(viewer, emitter);
@@ -23,6 +28,9 @@ export function bindEditing(viewer: Viewer): Interaction {
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
+  const properties: PropertyEditingHandle | null = options.properties
+    ? bindPropertyEditing(viewer, emitter, options.properties)
+    : null;
 
   return {
     on: (name, handler) => emitter.on(name, handler),
@@ -34,6 +42,7 @@ export function bindEditing(viewer: Viewer): Interaction {
       quickDuplicate.destroy();
       deleteSelection.destroy();
       chartValues.destroy();
+      properties?.destroy();
       emitter.clear();
     },
   };
@@ -48,6 +57,8 @@ export type {
   LinkReconnectEvent,
   LinkToEvent,
   MoveChangeEvent,
+  PropertyChangeEvent,
+  PropertyValue,
   QuickDuplicateEvent,
   ResizeChangeEvent,
   TextChangeEvent,
@@ -57,6 +68,7 @@ export {
   applyChartValueChange,
   applyLinkReconnectChange,
   applyMoveChange,
+  applyPropertyChange,
   applyResizeChange,
   applyTextChange,
   insertEntity,
@@ -64,3 +76,9 @@ export {
   removeEntity,
   removeLink,
 } from './patchSfl';
+export {
+  bindPropertyEditing,
+  type EditableRules,
+  type PropertyEditingHandle,
+  type PropertyEditingOptions,
+} from './propertyEdit';

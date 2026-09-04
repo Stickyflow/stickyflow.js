@@ -2,6 +2,7 @@ import type { Chart, ChartRule } from '../../../model/charts';
 import type { Bounds, RenderNode } from '../../scene';
 import { finite } from '../../scene';
 import { chartText, mapChartValue } from '../primitives';
+import { ruleAtProp, ruleTextProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 export interface ChartRulesRender {
@@ -56,6 +57,7 @@ function createChartRuleLine(render: ChartRulesRender, mark: ChartRuleMark): Ren
     order: mark.lineOrder,
     bounds: render.bounds,
     d: `M ${render.plot.x} ${mark.y} L ${render.plot.x + render.plot.width} ${mark.y}`,
+    prop: ruleAtProp(mark.rule.id),
     style: {
       fill: { kind: 'none' },
       stroke: { kind: 'solid', color: mark.color },
@@ -77,5 +79,6 @@ function createChartRuleLabel(render: ChartRulesRender, mark: ChartRuleMark): Re
       chart: render.chart,
     }),
     color: mark.color,
+    prop: ruleTextProp(mark.rule.id),
   };
 }

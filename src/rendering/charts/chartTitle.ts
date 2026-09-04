@@ -3,6 +3,7 @@ import type { Bounds, RenderNode } from '../scene';
 import { finite } from '../scene';
 import type { ChartRenderOrder } from './chartRenderOrder';
 import { chartText } from './primitives';
+import { CHART_TITLE_PROP } from './propPath';
 
 export function buildChartTitle(
   chart: Chart,
@@ -26,6 +27,7 @@ export function buildChartTitle(
       }),
       fontWeight: 'bold',
       fontSize: Math.max(10, finite(chart.font_size, 12)) + 2,
+      prop: CHART_TITLE_PROP,
     },
   ];
 }

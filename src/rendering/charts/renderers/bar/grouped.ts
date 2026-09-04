@@ -2,6 +2,7 @@ import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
 import { CHART_COLORS, createVerticalErrorWhiskerNode, errorBarRange, mapChartValue } from '../../primitives';
+import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 
 interface GroupedBarLayout {
@@ -97,6 +98,7 @@ function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark)
     ...mark.frame,
     rx: 2,
     detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex },
+    prop: seriesValueProp(mark.seriesId, mark.valueIndex),
     style: { fill: paint(mark.color, diagnostics, chart.id) },
   };
 }

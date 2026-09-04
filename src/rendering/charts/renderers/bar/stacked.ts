@@ -1,6 +1,7 @@
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
 import { CHART_COLORS, stackedSegment } from '../../primitives';
+import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
 
 export function renderStackedBars(context: ChartRenderContext, mode: StackedMode): RenderNode[] {
@@ -25,6 +26,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         height: Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart)),
         rx: 2,
         detail: { of: 'chartValue', series: series.id, valueIndex },
+        prop: seriesValueProp(series.id, valueIndex),
         style: { fill: paint(color, diagnostics, chart.id) },
       });
     });

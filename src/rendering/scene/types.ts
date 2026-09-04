@@ -52,6 +52,7 @@ export interface SceneBase {
   bounds: Bounds;
   identity?: SceneIdentity;
   detail?: SceneDetail;
+  prop?: string;
 }
 
 export interface SceneRect extends SceneBase {

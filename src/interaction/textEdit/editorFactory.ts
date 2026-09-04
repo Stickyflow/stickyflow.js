@@ -33,9 +33,8 @@ export function createActiveTextEditor(
 
   return new ActiveTextEditor({
     textarea,
-    owner,
     originalText,
-    emitter,
+    commit: text => emitter.emit('textChange', { owner, text }),
     unbindAutoGrow: bindTextareaAutoGrow(textarea, Math.max(rect.height, fontSize * 1.6)),
     onClose,
   });

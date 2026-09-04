@@ -57,6 +57,15 @@ export interface ChartValueChangeEvent {
   value: number;
 }
 
+export type PropertyValue = string | number | boolean | readonly number[];
+
+export interface PropertyChangeEvent {
+  owner: OwnerRef;
+  path: string;
+  value: PropertyValue;
+  quote?: boolean;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -66,6 +75,7 @@ export interface InteractionEventMap {
   linkTo: LinkToEvent;
   delete: DeleteEvent;
   chartValueChange: ChartValueChangeEvent;
+  propertyChange: PropertyChangeEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;
