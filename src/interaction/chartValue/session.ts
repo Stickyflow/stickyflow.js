@@ -31,7 +31,7 @@ export class ChartValueDragSession {
     }
     this.#drag.moved = true;
     const value = valueAtPixel(pointerUserY(this.#svg, event), this.#drag.scale);
-    updateChartValuePreview(this.#drag, value);
+    updateChartValuePreview(this.#svg, this.#drag, value);
 
     if (!this.#readout) {
       this.#readout = createValueReadout(this.#svg);
