@@ -1,6 +1,7 @@
 import type { ResizeHandle } from '../../domContract';
 import type { Rect } from '../../model/geometry/router';
 import type { OwnerRef } from '../../viewer';
+import { isCompositeOwner } from '../geometryRoles';
 import { findLiveLinks, type LiveLink } from '../linkPreview';
 import { findResizeQuickDuplicateBubbles } from './bubbleCapture';
 import { selectResizeTarget } from './selection';
@@ -14,6 +15,7 @@ export interface ResizeDragState {
   kind: string | null;
   isComposite: boolean;
   geometryNodes: SVGGraphicsElement[];
+  baseTransforms: Array<string | null>;
   overlay: SVGGElement | null;
   bubbles: SVGGElement | null;
   startBounds: Rect;
@@ -30,19 +32,21 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
   }
 
   const startBounds = selection.primary.getBBox();
+  const composite = isCompositeOwner(selection.owner);
   selection.captureTarget.setPointerCapture?.(event.pointerId);
   return {
     owner: selection.owner,
     handle: selection.handle,
     kind: selection.primary.getAttribute('data-sf-kind'),
-    isComposite: COMPOSITE_KINDS.has(selection.primary.getAttribute('data-sf-kind') ?? ''),
+    isComposite: composite || COMPOSITE_KINDS.has(selection.primary.getAttribute('data-sf-kind') ?? ''),
     geometryNodes: selection.geometryNodes,
+    baseTransforms: selection.geometryNodes.map(node => node.getAttribute('transform')),
     overlay: selection.overlay,
     bubbles: findResizeQuickDuplicateBubbles(svg, selection.ownerId, selection.overlay),
     startBounds,
     liveLinks: findLiveLinks(svg, selection.ownerId, startBounds),
     pointerId: event.pointerId,
     moved: false,
-    text: captureResizeText(selection.nodes, selection.primary),
+    text: composite ? null : captureResizeText(selection.nodes, selection.primary),
   };
 }

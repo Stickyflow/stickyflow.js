@@ -39,11 +39,17 @@ export function applySingleNodeBounds(primary: SVGGraphicsElement, kind: string 
   recenterRotation(primary, bounds);
 }
 
-export function applyCompositeScale(nodes: SVGGraphicsElement[], startBounds: Rect, liveBounds: Rect): void {
+export function applyCompositeScale(
+  nodes: SVGGraphicsElement[],
+  startBounds: Rect,
+  liveBounds: Rect,
+  baseTransforms?: ReadonlyArray<string | null>,
+): void {
   const scaleX = liveBounds.width / startBounds.width;
   const scaleY = liveBounds.height / startBounds.height;
   const transform = `translate(${liveBounds.x} ${liveBounds.y}) scale(${scaleX} ${scaleY}) translate(${-startBounds.x} ${-startBounds.y})`;
-  for (const node of nodes) {
-    node.setAttribute('transform', transform);
-  }
+  nodes.forEach((node, index) => {
+    const base = baseTransforms?.[index];
+    node.setAttribute('transform', base ? `${transform} ${base}` : transform);
+  });
 }

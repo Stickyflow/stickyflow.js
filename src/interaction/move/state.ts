@@ -1,9 +1,14 @@
 import { resolveOwner } from '../../domContract';
 import type { Viewer } from '../../viewer';
+import { hasEditableGeometry } from '../geometryRoles';
 import { captureDraggedEntities } from './entityCapture';
 import { captureInternalLinks } from './internalLinkCapture';
 import { selectedMoveGroup } from './selection';
 import type { MoveDragState } from './types';
+
+function isChartValueMark(target: Element | null): boolean {
+  return target?.closest?.('[data-sf-value-index]') != null;
+}
 
 export function createMoveDragState(
   viewer: Viewer,
@@ -11,7 +16,7 @@ export function createMoveDragState(
   startUser: { x: number; y: number },
 ): MoveDragState | null {
   const owner = resolveOwner(event.target as Element | null);
-  if (owner?.role !== 'entity') {
+  if (!hasEditableGeometry(owner) || isChartValueMark(event.target as Element | null)) {
     return null;
   }
 

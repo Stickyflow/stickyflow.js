@@ -8,7 +8,7 @@ import { applyLiveText } from './textPreview';
 
 function applyGeometryPreview(drag: ResizeDragState, bounds: Rect): void {
   if (drag.isComposite) {
-    applyCompositeScale(drag.geometryNodes, drag.startBounds, bounds);
+    applyCompositeScale(drag.geometryNodes, drag.startBounds, bounds, drag.baseTransforms);
     return;
   }
 
