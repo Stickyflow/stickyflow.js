@@ -7,7 +7,7 @@ import { selectedMoveGroup } from './selection';
 import type { MoveDragState } from './types';
 
 function isChartValueMark(target: Element | null): boolean {
-  return target?.closest?.('[data-sf-value-index]') != null;
+  return target?.closest?.('[data-sf-value-index], [data-sf-prop-kind="value"]') != null;
 }
 
 export function createMoveDragState(

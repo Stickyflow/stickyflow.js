@@ -58,6 +58,7 @@ function createChartRuleLine(render: ChartRulesRender, mark: ChartRuleMark): Ren
     bounds: render.bounds,
     d: `M ${render.plot.x} ${mark.y} L ${render.plot.x + render.plot.width} ${mark.y}`,
     prop: ruleAtProp(mark.rule.id),
+    propKind: 'value',
     style: {
       fill: { kind: 'none' },
       stroke: { kind: 'solid', color: mark.color },

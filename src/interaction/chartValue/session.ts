@@ -1,7 +1,7 @@
 import type { Emitter } from '../events';
 import { pointerUserY } from './coordinates';
 import { updateChartValuePreview } from './preview';
-import { createValueReadout, removeValueReadout, updateValueReadout } from './readout';
+import { createValueReadout, markAnchorX, removeValueReadout, updateValueReadout } from './readout';
 import { valueAtPixel } from './scale';
 import { resolveChartValueDrag } from './target';
 import type { ChartValueDragState } from './types';
@@ -36,7 +36,7 @@ export class ChartValueDragSession {
     if (!this.#readout) {
       this.#readout = createValueReadout(this.#svg);
     }
-    updateValueReadout(this.#readout, this.#drag, value);
+    updateValueReadout(this.#readout, { centerX: markAnchorX(this.#drag), scale: this.#drag.scale }, value);
   }
 
   cancel(): void {
