@@ -1,5 +1,5 @@
 import type { RenderNode } from '../../../scene';
-import { paint } from '../../../scene';
+import { finite, paint } from '../../../scene';
 import { CHART_COLORS, stackedSegment } from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
@@ -24,10 +24,14 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         y: plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd),
         width: barWidth,
         height: Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart)),
-        rx: 2,
+        rx: chart.config?.barCornerRadius ?? 2,
         detail: { of: 'chartValue', series: series.id, valueIndex },
         prop: seriesValueProp(series.id, valueIndex),
-        style: { fill: paint(color, diagnostics, chart.id) },
+        style: {
+          fill: paint(color, diagnostics, chart.id),
+          stroke: paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id),
+          strokeWidth: finite(chart.config?.barBorderWidth, 0),
+        },
       });
     });
   }

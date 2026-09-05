@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
-import { paint } from '../../../scene';
+import { finite, paint } from '../../../scene';
 import { CHART_COLORS, createVerticalErrorWhiskerNode, errorBarRange, mapChartValue } from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
@@ -96,10 +96,16 @@ function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark)
     order: nextOrder(),
     bounds,
     ...mark.frame,
-    rx: 2,
+    rx: chart.config?.barCornerRadius ?? 2,
     detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex },
     prop: seriesValueProp(mark.seriesId, mark.valueIndex),
-    style: { fill: paint(mark.color, diagnostics, chart.id) },
+    style: {
+      fill: paint(mark.color, diagnostics, chart.id),
+      // Default width 0 : an existing chart that never set these keeps
+      // rendering with no visible border at all, exactly as before.
+      stroke: paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id),
+      strokeWidth: finite(chart.config?.barBorderWidth, 0),
+    },
   };
 }
 
