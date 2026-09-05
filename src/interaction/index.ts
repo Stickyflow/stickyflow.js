@@ -1,6 +1,7 @@
 import type { Unsubscribe } from '../eventing/emitter';
 import type { Viewer } from '../viewer';
 import { bindChartValueDrag, type ChartValueDragHandle } from './chartValueDrag';
+import { bindColorEdit, type ColorEditHandle } from './colorEdit/binding';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
@@ -35,6 +36,9 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const propertyDrag: PropertyDragHandle | null = options.properties
     ? bindPropertyDrag(viewer, emitter, options.properties.editable)
     : null;
+  const colorEdit: ColorEditHandle | null = options.properties
+    ? bindColorEdit(viewer, emitter, options.properties.editable)
+    : null;
 
   return {
     on: (name, handler) => emitter.on(name, handler),
@@ -48,12 +52,14 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       chartValues.destroy();
       properties?.destroy();
       propertyDrag?.destroy();
+      colorEdit?.destroy();
       emitter.clear();
     },
   };
 }
 
 export type { Unsubscribe } from '../eventing/emitter';
+export type { ColorEditHandle } from './colorEdit/binding';
 export type {
   ChartValueChangeEvent,
   DeleteEvent,

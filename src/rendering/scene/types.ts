@@ -53,7 +53,7 @@ export interface SceneBase {
   identity?: SceneIdentity;
   detail?: SceneDetail;
   prop?: string;
-  propKind?: 'value';
+  propKind?: 'value' | 'color';
 }
 
 export interface SceneRect extends SceneBase {

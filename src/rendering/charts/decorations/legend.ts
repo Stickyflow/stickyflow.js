@@ -70,6 +70,7 @@ function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): R
     height: 10,
     rx: 3,
     prop: seriesColorProp(item.series.id),
+    propKind: 'color',
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }
