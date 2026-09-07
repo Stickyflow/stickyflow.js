@@ -4,7 +4,20 @@ import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src
 
 // SFL 1.4, §5.4.1/§5.4.5/§5.4.8 - mirrors stickyflow-atlas's Stage 2 Chart
 // ruleset (stacked/unit/error/Rule) on this package's own, simpler compact
-// bar/line implementation (no zones/horizontal/barCornerRadius here).
+// bar/line implementation (no zones/horizontal here).
+
+// A bar mark is a path (rounded top corners, see barShapePath), not a rect :
+// its y/height live in `d`, not in attributes.
+function barGeometry(node: { type: string; d?: string } | undefined): { top: number; height: number } {
+  const d = node?.type === 'path' ? node.d : undefined;
+  if (!d) {
+    return { top: 0, height: 0 };
+  }
+  const rounded = d.match(/Q [\d.-]+ ([\d.-]+)/);
+  const top = rounded ? Number(rounded[1]) : Number(d.match(/^M [\d.-]+ ([\d.-]+)/)?.[1]);
+  const bottom = Number(d.match(/V ([\d.-]+)/)?.[1]);
+  return { top, height: bottom - top };
+}
 
 const STACKED_SFL = `sfl 1.2
 
@@ -127,7 +140,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
       .filter(node => node.id.startsWith('chart-bar-wf-s1-'))
       .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     expect(bars).toHaveLength(3);
-    const heights = bars.map(bar => (bar.type === 'rect' ? bar.height : 0));
+    const heights = bars.map(bar => barGeometry(bar).height);
     // Segment heights scale with |value| (10, -5, 20) regardless of the
     // exact plot padding - a 2:1:4 ratio either way.
     expect(heights[0] / heights[1]).toBeCloseTo(2, 1);
@@ -136,9 +149,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     // sit strictly above the second (smaller y = higher up the plot), not
     // restart from a shared zero the way true/percent stacking would.
     const [, second, third] = bars;
-    expect(second.type === 'rect' && third.type === 'rect' && third.y).toBeLessThan(
-      second.type === 'rect' ? second.y : Infinity,
-    );
+    expect(barGeometry(third).top).toBeLessThan(barGeometry(second).top);
   });
 
   it('computes percent-stacked segments normalized to the full plot height', () => {
@@ -166,9 +177,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     const bar1 = scene.nodes.find(node => node.id === 'chart-bar-pct-s1-0');
     const bar2 = scene.nodes.find(node => node.id === 'chart-bar-pct-s2-0');
     // 25% and 75% of the plot's own height, back-to-back, span it exactly.
-    const height1 = bar1?.type === 'rect' ? bar1.height : 0;
-    const height2 = bar2?.type === 'rect' ? bar2.height : 0;
-    expect(height2 / height1).toBeCloseTo(3, 1);
+    expect(barGeometry(bar2).height / barGeometry(bar1).height).toBeCloseTo(3, 1);
   });
 
   it('renders a line chart error whisker at a point with an asymmetric [low, high] error', () => {

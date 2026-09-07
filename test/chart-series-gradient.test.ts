@@ -21,7 +21,7 @@ describe('Series.color as a gradient', () => {
     const { svg, diagnostics } = render(chart('bar', GRADIENT));
     expect(diagnostics).toEqual([]);
     expect(svg).toContain('<linearGradient');
-    const bar = svg.match(/<rect id="sf-chart-bar-c-a-0"[^>]*>/)?.[0];
+    const bar = svg.match(/<path id="sf-chart-bar-c-a-0"[^>]*>/)?.[0];
     expect(bar).toMatch(/fill="url\(#[^)]+\)"/);
     expect(bar).not.toContain('fill="gradient(');
   });
@@ -29,9 +29,9 @@ describe('Series.color as a gradient', () => {
   it('still accepts a plain hex string exactly as before (no regression)', () => {
     const { svg, diagnostics } = render(chart('bar', '#7c3aed'));
     expect(diagnostics).toEqual([]);
-    expect(svg).toContain('<rect id="sf-chart-bar-c-a-0"');
+    expect(svg).toContain('<path id="sf-chart-bar-c-a-0"');
     expect(svg).not.toContain('<linearGradient');
-    const bar = svg.match(/<rect id="sf-chart-bar-c-a-0"[^>]*>/)?.[0];
+    const bar = svg.match(/<path id="sf-chart-bar-c-a-0"[^>]*>/)?.[0];
     expect(bar).toContain('fill="#7c3aed"');
   });
 

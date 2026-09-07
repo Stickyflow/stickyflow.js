@@ -1,10 +1,12 @@
 import type { Viewer } from '../../viewer';
+import type { ColorPickerThemeOption } from '../colorEdit/theme';
 import type { Emitter } from '../events';
 import type { EditableRules } from './editable';
 import { PropertyEditingSession } from './session';
 
 export interface PropertyEditingOptions {
   editable?: EditableRules;
+  colorPickerTheme?: ColorPickerThemeOption;
 }
 
 export interface PropertyEditingHandle {

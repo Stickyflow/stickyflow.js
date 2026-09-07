@@ -33,15 +33,18 @@ function buildChart(svg: SVGSVGElement) {
     'data-sf-primary': 'true',
     'data-sf-value-scale': '40,200,0,100',
   });
-  const bar = node(svg, 'rect', {
+  const bar = node(svg, 'path', {
     'data-sf-role': 'chart',
     'data-sf-id': 'c',
     'data-sf-series': 'online',
     'data-sf-value-index': '0',
-    x: '100',
-    y: '140',
-    width: '40',
-    height: '100',
+    'data-sf-mark': 'bar',
+    'data-sf-bar-radius': '2',
+    d: 'M 100 140 H 140 V 240 H 100 Z',
+  });
+  Object.defineProperty(bar, 'getBBox', {
+    value: () => ({ x: 100, y: 140, width: 40, height: 100 }),
+    configurable: true,
   });
   return { chart, bar };
 }
@@ -71,6 +74,19 @@ describe('dragging a bar does not drag the chart', () => {
     svg.dispatchEvent(pointer('pointerup', 120, 150));
 
     expect(seen).toEqual(['chartValueChange']);
+  });
+
+  it('redraws the bar as a rounded path live, mid-drag, not just its own attributes', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer);
+    const { bar } = buildChart(svg);
+
+    bar.dispatchEvent(pointer('pointerdown', 120, 200));
+    svg.dispatchEvent(pointer('pointermove', 120, 150));
+
+    const d = bar.getAttribute('d') ?? '';
+    expect(d).toContain(' Q '); // still rounded - data-sf-bar-radius carried through the drag
+    expect(bar).not.toHaveProperty('y'); // never reverts to rect-style attributes
   });
 
   it('still moves the chart when the drag starts on its background', () => {

@@ -37,9 +37,7 @@ export function createValueReadout(svg: SVGSVGElement): SVGGElement {
 
 export function markAnchorX(drag: ChartValueDragState): number {
   if (drag.isBar) {
-    const x = Number(drag.element.getAttribute('x'));
-    const width = Number(drag.element.getAttribute('width'));
-    return Number.isFinite(x) && Number.isFinite(width) ? x + width / 2 : 0;
+    return drag.barX + drag.barWidth / 2;
   }
   const cx = Number(drag.element.getAttribute('cx'));
   return Number.isFinite(cx) ? cx : 0;

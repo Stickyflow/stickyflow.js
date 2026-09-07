@@ -20,15 +20,18 @@ function buildChart(svg: SVGSVGElement) {
   chart.setAttribute('data-sf-value-scale', '40,200,0,100');
   svg.appendChild(chart);
 
-  const bar = document.createElementNS(SVG_NS, 'rect') as SVGGraphicsElement;
+  const bar = document.createElementNS(SVG_NS, 'path') as SVGGraphicsElement;
   bar.setAttribute('data-sf-role', 'chart');
   bar.setAttribute('data-sf-id', 'c');
   bar.setAttribute('data-sf-series', 'online');
   bar.setAttribute('data-sf-value-index', '1');
-  bar.setAttribute('x', '100');
-  bar.setAttribute('y', '140');
-  bar.setAttribute('width', '40');
-  bar.setAttribute('height', '100');
+  bar.setAttribute('data-sf-mark', 'bar');
+  bar.setAttribute('data-sf-bar-radius', '2');
+  bar.setAttribute('d', 'M 100 140 H 140 V 240 H 100 Z');
+  Object.defineProperty(bar, 'getBBox', {
+    value: () => ({ x: 100, y: 140, width: 40, height: 100 }),
+    configurable: true,
+  });
   svg.appendChild(bar);
   return bar;
 }

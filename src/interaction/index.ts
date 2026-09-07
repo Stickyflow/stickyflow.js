@@ -37,7 +37,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
     ? bindPropertyDrag(viewer, emitter, options.properties.editable)
     : null;
   const colorEdit: ColorEditHandle | null = options.properties
-    ? bindColorEdit(viewer, emitter, options.properties.editable)
+    ? bindColorEdit(viewer, emitter, options.properties.editable, options.properties.colorPickerTheme)
     : null;
 
   return {
@@ -60,6 +60,13 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
 
 export type { Unsubscribe } from '../eventing/emitter';
 export type { ColorEditHandle } from './colorEdit/binding';
+export { openColorPopover } from './colorEdit/popover';
+export type { ColorPopoverHandle, ColorPopoverOptions } from './colorEdit/popover';
+export type { ColorPickerTheme, ColorPickerThemeOption } from './colorEdit/theme';
+export { resolveTheme } from './colorEdit/theme';
+export { cssBackground, formatPickerValue, seedFrom } from './colorEdit/value';
+export type { PickerValue } from './colorEdit/value';
+export { readGradientValue } from './colorEdit/gradientLookup';
 export type {
   ChartValueChangeEvent,
   DeleteEvent,

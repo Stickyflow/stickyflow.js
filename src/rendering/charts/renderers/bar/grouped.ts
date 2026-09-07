@@ -1,7 +1,13 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { CHART_COLORS, createVerticalErrorWhiskerNode, errorBarRange, mapChartValue } from '../../primitives';
+import {
+  barShapePath,
+  CHART_COLORS,
+  createVerticalErrorWhiskerNode,
+  errorBarRange,
+  mapChartValue,
+} from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 
@@ -90,14 +96,15 @@ function renderGroupedBarMark(context: ChartRenderContext, mark: GroupedBarMark)
 
 function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
+  const radius = chart.config?.barCornerRadius ?? 2;
+  const { x, y, width, height } = mark.frame;
   return {
-    type: 'rect',
+    type: 'path',
     id: `chart-bar-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
     order: nextOrder(),
     bounds,
-    ...mark.frame,
-    rx: chart.config?.barCornerRadius ?? 2,
-    detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex },
+    d: barShapePath(x, y, width, height, radius),
+    detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex, mark: 'bar', radius },
     prop: seriesValueProp(mark.seriesId, mark.valueIndex),
     style: {
       fill: paint(mark.color, diagnostics, chart.id),

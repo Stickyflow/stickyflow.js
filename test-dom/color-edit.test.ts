@@ -5,6 +5,10 @@ import { createFakeViewer } from './fakeViewer';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+if (typeof globalThis.CSS === 'undefined') {
+  globalThis.CSS = { escape: (value: string) => value.replace(/[^\w-]/g, '\\$&') } as typeof globalThis.CSS;
+}
+
 function swatch(svg: SVGSVGElement, fill: string | null): SVGGraphicsElement {
   const node = document.createElementNS(SVG_NS, 'rect') as SVGGraphicsElement;
   node.setAttribute('data-sf-role', 'chart');
@@ -14,15 +18,40 @@ function swatch(svg: SVGSVGElement, fill: string | null): SVGGraphicsElement {
   if (fill) {
     node.setAttribute('fill', fill);
   }
+  Object.defineProperty(node, 'getBBox', {
+    value: () => ({ x: 300, y: 12, width: 10, height: 10 }),
+    configurable: true,
+  });
+  Object.defineProperty(node, 'getScreenCTM', { value: () => null, configurable: true });
   svg.appendChild(node);
   return node;
+}
+
+function linearGradientDef(svg: SVGSVGElement, id: string, colors: string[]): void {
+  const def = document.createElementNS(SVG_NS, 'linearGradient');
+  def.setAttribute('id', id);
+  def.setAttribute('x1', '0');
+  def.setAttribute('y1', '0');
+  def.setAttribute('x2', '100');
+  def.setAttribute('y2', '0');
+  colors.forEach((color, index) => {
+    const stop = document.createElementNS(SVG_NS, 'stop');
+    stop.setAttribute('offset', `${(index / (colors.length - 1)) * 100}%`);
+    stop.setAttribute('stop-color', color);
+    def.appendChild(stop);
+  });
+  svg.appendChild(def);
 }
 
 const click = (node: Element) => {
   node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 };
 
-const picker = (): HTMLInputElement | null => document.querySelector('input[type="color"]');
+const popover = (): HTMLDivElement | null => document.querySelector<HTMLDivElement>('.sf-cp');
+const hexField = (): HTMLInputElement | null => document.querySelector<HTMLInputElement>('.sf-cp-text');
+const tab = (label: string): HTMLButtonElement | undefined =>
+  [...document.querySelectorAll<HTMLButtonElement>('.sf-cp-tab')].find(button => button.textContent === label);
+const stopHexes = (): string[] => [...document.querySelectorAll('.sf-cp-stop-hex')].map(node => node.textContent ?? '');
 
 describe('clicking a legend swatch', () => {
   beforeEach(() => {
@@ -33,36 +62,37 @@ describe('clicking a legend swatch', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer);
     click(swatch(svg, '#6d5ef0'));
-    expect(picker()).toBeNull();
+    expect(popover()).toBeNull();
   });
 
-  it('opens a native color picker seeded with the series color', () => {
+  it('opens a popover seeded with the series color, on the solid tab', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: {} });
     click(swatch(svg, '#6d5ef0'));
-    expect(picker()?.value).toBe('#6d5ef0');
+    expect(hexField()?.value).toBe('#6d5ef0');
+    expect(tab('Solid')?.getAttribute('aria-selected')).toBe('true');
   });
 
-  it('falls back to a neutral seed for a gradient fill, rather than black', () => {
+  it('falls back to a neutral solid seed for an unresolvable gradient fill, rather than black', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: {} });
     click(swatch(svg, 'url(#chart-gradient-c-online)'));
-    expect(picker()?.value).not.toBe('#000000');
+    expect(hexField()?.value).not.toBe('#000000');
   });
 
-  it('emits the property path and the picked color on change', () => {
+  it('emits the property path and the picked color when the hex field is committed', () => {
     const { viewer, svg } = createFakeViewer();
     const interaction = bindEditing(viewer, { properties: {} });
     const seen: PropertyChangeEvent[] = [];
     interaction.on('propertyChange', event => seen.push(event));
 
     click(swatch(svg, '#6d5ef0'));
-    const input = picker();
-    if (!input) {
-      throw new Error('no picker');
+    const hex = hexField();
+    if (!hex) {
+      throw new Error('no popover');
     }
-    input.value = '#db2777';
-    input.dispatchEvent(new Event('change'));
+    hex.value = '#db2777';
+    hex.dispatchEvent(new Event('change'));
 
     expect(seen).toEqual([
       {
@@ -73,27 +103,73 @@ describe('clicking a legend swatch', () => {
     ]);
   });
 
-  it('removes the picker after it commits', () => {
+  it('stays open after a commit so more than one adjustment is possible', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: {} });
     click(swatch(svg, '#6d5ef0'));
-    picker()?.dispatchEvent(new Event('change'));
-    expect(picker()).toBeNull();
+    const hex = hexField();
+    hex?.dispatchEvent(new Event('change'));
+    expect(popover()).not.toBeNull();
   });
 
-  it('removes the picker if dismissed without a choice', () => {
+  it('turns the solid color into a gradient when the gradient tab is picked', () => {
+    const { viewer, svg } = createFakeViewer();
+    const interaction = bindEditing(viewer, { properties: {} });
+    const seen: PropertyChangeEvent[] = [];
+    interaction.on('propertyChange', event => seen.push(event));
+
+    click(swatch(svg, '#6d5ef0'));
+    tab('Gradient')?.click();
+
+    expect(seen[0].value).toMatch(/^gradient\(90, #6d5ef0 0%, #[0-9a-f]{6} 100%\)$/);
+    expect(popover()).not.toBeNull();
+  });
+
+  it('reopens on the gradient tab, seeded from every existing stop', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    linearGradientDef(svg, 'g1', ['#aaaaaa', '#cccccc', '#bbbbbb']);
+    click(swatch(svg, 'url(#g1)'));
+
+    expect(tab('Gradient')?.getAttribute('aria-selected')).toBe('true');
+    expect(stopHexes()).toEqual(['#aaaaaa', '#cccccc', '#bbbbbb']);
+  });
+
+  it('recovers the angle the gradient was rendered with', () => {
+    const { viewer, svg } = createFakeViewer();
+    const interaction = bindEditing(viewer, { properties: {} });
+    const seen: PropertyChangeEvent[] = [];
+    interaction.on('propertyChange', event => seen.push(event));
+
+    linearGradientDef(svg, 'g2', ['#aaaaaa', '#bbbbbb']);
+    click(swatch(svg, 'url(#g2)'));
+    document.querySelector<HTMLButtonElement>('.sf-cp-section-head .sf-cp-icon-btn')?.click();
+
+    expect(seen[0].value).toMatch(/^gradient\(0, /);
+  });
+
+  it('closes the previous popover when a second swatch is clicked', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: {} });
     click(swatch(svg, '#6d5ef0'));
-    picker()?.dispatchEvent(new Event('blur'));
-    expect(picker()).toBeNull();
+    const first = popover();
+    click(swatch(svg, '#db2777'));
+    expect(document.body.contains(first)).toBe(false);
+    expect(popover()).not.toBeNull();
+  });
+
+  it('passes the host theme through to the popover', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: { colorPickerTheme: 'dark' } });
+    click(swatch(svg, '#6d5ef0'));
+    expect(popover()?.dataset.sfTheme).toBe('dark');
   });
 
   it('honours the editable whitelist', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: { editable: { 'Series[*].label': true } } });
     click(swatch(svg, '#6d5ef0'));
-    expect(picker()).toBeNull();
+    expect(popover()).toBeNull();
   });
 
   it('ignores a click on a node without the color prop kind', () => {
@@ -106,7 +182,7 @@ describe('clicking a legend swatch', () => {
     node.setAttribute('data-sf-prop-kind', 'value');
     svg.appendChild(node);
     click(node);
-    expect(picker()).toBeNull();
+    expect(popover()).toBeNull();
   });
 });
 
@@ -124,11 +200,21 @@ describe('color edit — lifecycle', () => {
     expect(tally(log.removed)).toEqual(tally(log.added));
   });
 
-  it('stops opening pickers once destroyed', () => {
+  it('closes an open popover when destroyed mid-session', () => {
+    document.body.innerHTML = '';
+    const { viewer, svg } = createFakeViewer();
+    const interaction = bindEditing(viewer, { properties: {} });
+    click(swatch(svg, '#6d5ef0'));
+    expect(popover()).not.toBeNull();
+    interaction.destroy();
+    expect(popover()).toBeNull();
+  });
+
+  it('stops opening popovers once destroyed', () => {
     document.body.innerHTML = '';
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: {} }).destroy();
     click(swatch(svg, '#6d5ef0'));
-    expect(picker()).toBeNull();
+    expect(popover()).toBeNull();
   });
 });

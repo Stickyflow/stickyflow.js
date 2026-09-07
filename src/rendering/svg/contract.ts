@@ -1,5 +1,5 @@
 import type { RenderNode, SceneDetail, SceneIdentity } from '../scene';
-import { xml } from './format';
+import { num, xml } from './format';
 
 function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
   return [
@@ -21,8 +21,13 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
   }
 }
 
-function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): string[] {
-  return [`data-sf-series="${xml(detail.series)}"`, `data-sf-value-index="${detail.valueIndex}"`];
+function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): Array<string | undefined> {
+  return [
+    `data-sf-series="${xml(detail.series)}"`,
+    `data-sf-value-index="${detail.valueIndex}"`,
+    detail.mark ? `data-sf-mark="${detail.mark}"` : undefined,
+    detail.radius !== undefined ? `data-sf-bar-radius="${num(detail.radius)}"` : undefined,
+  ];
 }
 
 function chartScaleAttrs(detail: Extract<SceneDetail, { of: 'chartScale' }>): string[] {
