@@ -6,5 +6,7 @@ export { CHART_COLORS, DEFAULT_HEATMAP_ZONES, DEFAULT_HEX_RADIUS, DEFAULT_ZONE_F
 export { createVerticalErrorWhiskerNode, errorBarRange } from './errors';
 export { formatFieldValue } from './format';
 export { linePathData } from './linePath';
+export type { PieGeometry, PiePoint, PieSliceAngles } from './pieShape';
+export { createPieSlicePath, pieArcPoint } from './pieShape';
 export { stackedSegment } from './stacking';
 export { chartText } from './text';

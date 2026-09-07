@@ -6,6 +6,7 @@ import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelecti
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
+import { bindPieSliceDrag, type PieSliceDragHandle } from './pieSliceDrag/binding';
 import { bindPropertyDrag, type PropertyDragHandle } from './propertyDrag/binding';
 import { bindPropertyEditing, type PropertyEditingHandle, type PropertyEditingOptions } from './propertyEdit';
 import { bindQuickDuplicate, type QuickDuplicateHandle } from './quickDuplicate';
@@ -30,6 +31,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
+  const pieSlices: PieSliceDragHandle = bindPieSliceDrag(viewer, emitter);
   const properties: PropertyEditingHandle | null = options.properties
     ? bindPropertyEditing(viewer, emitter, options.properties)
     : null;
@@ -50,6 +52,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       quickDuplicate.destroy();
       deleteSelection.destroy();
       chartValues.destroy();
+      pieSlices.destroy();
       properties?.destroy();
       propertyDrag?.destroy();
       colorEdit?.destroy();

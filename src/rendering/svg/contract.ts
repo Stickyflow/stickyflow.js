@@ -18,6 +18,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return chartScaleAttrs(detail);
     case 'chartSeries':
       return chartSeriesAttrs(detail);
+    case 'pieGeometry':
+      return pieGeometryAttrs(detail);
     case 'link':
       return linkDetailAttrs(detail);
   }
@@ -31,7 +33,14 @@ function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): Ar
     detail.radius !== undefined ? `data-sf-bar-radius="${num(detail.radius)}"` : undefined,
     detail.colorProp ? `data-sf-color-prop="${xml(detail.colorProp)}"` : undefined,
     detail.hasColorOverride ? 'data-sf-color-override="true"' : undefined,
+    detail.pieStart !== undefined ? `data-sf-pie-start="${num(detail.pieStart)}"` : undefined,
+    detail.pieEnd !== undefined ? `data-sf-pie-end="${num(detail.pieEnd)}"` : undefined,
+    detail.pieValue !== undefined ? `data-sf-pie-value="${num(detail.pieValue)}"` : undefined,
   ];
+}
+
+function pieGeometryAttrs(detail: Extract<SceneDetail, { of: 'pieGeometry' }>): string[] {
+  return [`data-sf-pie-geometry="${detail.pieGeometry}"`];
 }
 
 function chartScaleAttrs(detail: Extract<SceneDetail, { of: 'chartScale' }>): string[] {

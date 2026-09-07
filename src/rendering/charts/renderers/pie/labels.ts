@@ -48,6 +48,7 @@ function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark
     y: point.y - fontSize,
     width: LABEL_WIDTH,
     height: fontSize * 1.2 * 2,
+    detail: { of: 'chartSeries', series: mark.seriesId },
     lines: [mark.label, `${percent}%`],
     fontFamily: chart.font_family ?? 'Inter',
     fontSize,

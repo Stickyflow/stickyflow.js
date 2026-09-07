@@ -47,12 +47,16 @@ export type SceneDetail =
       of: 'chartValue';
       series: string;
       valueIndex: number;
-      mark?: 'bar';
+      mark?: 'bar' | 'pie-slice';
       radius?: number;
       colorProp?: string;
       hasColorOverride?: boolean;
+      pieStart?: number;
+      pieEnd?: number;
+      pieValue?: number;
     }
   | { of: 'chartScale'; valueScale: string }
+  | { of: 'pieGeometry'; pieGeometry: string }
   | { of: 'chartSeries'; series: string; lineTension?: number };
 
 export interface SceneBase {

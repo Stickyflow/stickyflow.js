@@ -1,6 +1,9 @@
 import { finite } from '../../../scene';
+import { pieArcPoint } from '../../primitives/pieShape';
 import type { ChartRenderContext } from '../types';
-import type { PieGeometry, PiePoint } from './types';
+import type { PieGeometry } from './types';
+
+export { pieArcPoint };
 
 export function createPieGeometry(context: ChartRenderContext): PieGeometry {
   const { chart, plot } = context;
@@ -11,12 +14,5 @@ export function createPieGeometry(context: ChartRenderContext): PieGeometry {
     outerRadius,
     innerRadius: Math.max(0, Math.min(chart.config?.innerRadius ?? 0, outerRadius - 1)),
     total: chart.series.reduce((sum, series) => sum + Math.max(0, finite((series.values as number[])[0], 0)), 0) || 1,
-  };
-}
-
-export function pieArcPoint(geometry: PieGeometry, angle: number, radius: number): PiePoint {
-  return {
-    x: geometry.centerX + radius * Math.cos(angle),
-    y: geometry.centerY + radius * Math.sin(angle),
   };
 }

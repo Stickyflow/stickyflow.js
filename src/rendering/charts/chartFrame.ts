@@ -6,7 +6,7 @@ import { CARTESIAN_VALUE_TYPES } from './decorations';
 export function buildChartFrame(
   chart: Chart,
   bounds: Bounds,
-  plot: { y: number; height: number },
+  plot: { x: number; y: number; width: number; height: number },
   order: number,
 ): SceneRect {
   const frame: SceneRect = {
@@ -30,6 +30,15 @@ export function buildChartFrame(
     frame.detail = {
       of: 'chartScale',
       valueScale: `${plot.y},${plot.height},${chart.axis_y.min},${chart.axis_y.max}`,
+    };
+  }
+
+  if (chart.chart_type === 'pie') {
+    const outerRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
+    const innerRadius = Math.max(0, Math.min(chart.config?.innerRadius ?? 0, outerRadius - 1));
+    frame.detail = {
+      of: 'pieGeometry',
+      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius}`,
     };
   }
 

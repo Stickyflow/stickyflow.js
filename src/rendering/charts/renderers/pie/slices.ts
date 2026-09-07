@@ -2,6 +2,7 @@ import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { CHART_COLORS } from '../../primitives';
+import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { renderPieLabels } from './labels';
 import { createPieSlicePath } from './path';
@@ -14,6 +15,7 @@ interface PieSliceMark {
   seriesId: string;
   label: string;
   color: NonNullable<ChartSeries['color']>;
+  value: number;
   share: number;
   angles: PieSliceAngles;
 }
@@ -48,6 +50,7 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
         seriesId: series.id,
         label: series.label,
         color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
+        value,
         share: value / total,
         angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
       });
@@ -65,6 +68,16 @@ function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mar
     order: nextOrder(),
     bounds,
     d: createPieSlicePath(geometry, mark.angles),
+    detail: {
+      of: 'chartValue',
+      series: mark.seriesId,
+      valueIndex: 0,
+      mark: 'pie-slice',
+      pieStart: mark.angles.start,
+      pieEnd: mark.angles.end,
+      pieValue: mark.value,
+    },
+    prop: seriesValueProp(mark.seriesId, 0),
     style: { fill: paint(mark.color, diagnostics, chart.id) },
   };
 }

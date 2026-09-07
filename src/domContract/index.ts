@@ -16,6 +16,7 @@ export {
   findSnapCandidateBounds,
   isPrimary,
   isTextLabel,
+  pointerUserPoint,
   pxPerUnit,
   screenRectOf,
 } from './domQuery';
