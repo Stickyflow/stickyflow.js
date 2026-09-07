@@ -21,7 +21,14 @@ function buildLineChart(svg: SVGSVGElement) {
   svg.appendChild(chart);
 
   const line = document.createElementNS(SVG_NS, 'path') as SVGGraphicsElement;
-  line.setAttribute('id', 'chart-line-c-a');
+  // A real render() with an idPrefix (every SflDiagram instance sets one, to
+  // avoid id collisions between multiple diagrams on one page) bakes that
+  // prefix into `id` - so the lookup this test guards must never key off the
+  // raw id string, only the data-sf-* attributes, which stay stable.
+  line.setAttribute('id', 'sf-r1-chart-line-c-a');
+  line.setAttribute('data-sf-role', 'chart');
+  line.setAttribute('data-sf-id', 'c');
+  line.setAttribute('data-sf-series', 'a');
   line.setAttribute('d', 'M 100 150 L 150 120 L 200 180');
   svg.appendChild(line);
 
@@ -84,8 +91,8 @@ describe('dragging a line point keeps the connecting line attached', () => {
   it('leaves scatter-style points (no connecting path) untouched', () => {
     const { viewer, svg } = createFakeViewer();
     bindChartValueDrag(viewer, new Emitter());
-    const { points } = buildLineChart(svg);
-    document.getElementById('chart-line-c-a')?.remove();
+    const { line, points } = buildLineChart(svg);
+    line.remove();
 
     points[1].dispatchEvent(pointer('pointerdown', 120));
     expect(() => svg.dispatchEvent(pointer('pointermove', 80))).not.toThrow();

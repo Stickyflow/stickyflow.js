@@ -17,6 +17,7 @@ export function createLinePath(
     id: `chart-line-${chart.id}-${series.id}`,
     order: nextOrder(),
     bounds,
+    detail: { of: 'chartSeries', series: series.id },
     d: `M ${commands.join(' ')}`,
     style: {
       fill: { kind: 'none' },

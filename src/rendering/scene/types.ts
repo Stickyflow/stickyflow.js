@@ -52,7 +52,8 @@ export type SceneDetail =
       colorProp?: string;
       hasColorOverride?: boolean;
     }
-  | { of: 'chartScale'; valueScale: string };
+  | { of: 'chartScale'; valueScale: string }
+  | { of: 'chartSeries'; series: string };
 
 export interface SceneBase {
   id: string;

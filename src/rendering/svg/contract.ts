@@ -16,6 +16,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return chartValueAttrs(detail);
     case 'chartScale':
       return chartScaleAttrs(detail);
+    case 'chartSeries':
+      return chartSeriesAttrs(detail);
     case 'link':
       return linkDetailAttrs(detail);
   }
@@ -34,6 +36,10 @@ function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): Ar
 
 function chartScaleAttrs(detail: Extract<SceneDetail, { of: 'chartScale' }>): string[] {
   return [`data-sf-value-scale="${detail.valueScale}"`];
+}
+
+function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): string[] {
+  return [`data-sf-series="${xml(detail.series)}"`];
 }
 
 function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<string | undefined> {

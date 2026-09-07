@@ -3,8 +3,10 @@ import { pixelForValue } from './scale';
 import type { ChartValueDragState } from './types';
 
 function findConnectedLine(svg: SVGSVGElement, drag: ChartValueDragState): SVGGraphicsElement | null {
-  const selector = `[id="chart-line-${CSS.escape(drag.owner.id)}-${CSS.escape(drag.series)}"]`;
-  return svg.querySelector<SVGGraphicsElement>(selector);
+  const selector = `[data-sf-id="${CSS.escape(drag.owner.id)}"][data-sf-series="${CSS.escape(drag.series)}"]`;
+  return (
+    [...svg.querySelectorAll<SVGGraphicsElement>(selector)].find(el => el.tagName.toLowerCase() === 'path') ?? null
+  );
 }
 
 function findSeriesPoints(svg: SVGSVGElement, drag: ChartValueDragState): SVGGraphicsElement[] {
