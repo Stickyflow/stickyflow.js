@@ -80,4 +80,17 @@ Model M {
     const svg = render(groupedOf('none, "gradient(90, #111111 0%, #eeeeee 100%)", none')).svg;
     expect(barPath(svg, 'sf-chart-bar-c-a-1')).toMatch(/fill="url\(#[^)]+\)"/);
   });
+
+  it('marks only the overridden bar, so the picker knows when it can offer a reset', () => {
+    const svg = render(groupedOf('none, "#db2777", none')).svg;
+    expect(barPath(svg, 'sf-chart-bar-c-a-0')).not.toContain('data-sf-color-override');
+    expect(barPath(svg, 'sf-chart-bar-c-a-1')).toContain('data-sf-color-override="true"');
+    expect(barPath(svg, 'sf-chart-bar-c-a-2')).not.toContain('data-sf-color-override');
+  });
+
+  it('marks a stacked segment the same way', () => {
+    const svg = render(stackedOf('none, "#f59e0b"')).svg;
+    expect(barPath(svg, 'sf-chart-bar-c-a-0')).not.toContain('data-sf-color-override');
+    expect(barPath(svg, 'sf-chart-bar-c-a-1')).toContain('data-sf-color-override="true"');
+  });
 });

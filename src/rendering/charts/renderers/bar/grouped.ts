@@ -22,6 +22,7 @@ interface GroupedBarMark {
   value: number;
   error: number | [number, number] | null | undefined;
   color: NonNullable<ChartSeries['color']>;
+  hasColorOverride: boolean;
   frame: {
     x: number;
     y: number;
@@ -64,6 +65,7 @@ function createSeriesBarMarks(
       value: numericValue,
       error: series.error?.[valueIndex],
       color: series.colors?.[valueIndex] ?? seriesColor,
+      hasColorOverride: series.colors?.[valueIndex] != null,
       frame: {
         x: plot.x + valueIndex * layout.slotWidth + 4 + seriesIndex * layout.seriesWidth,
         y: plot.y + plot.height - height,
@@ -111,6 +113,7 @@ function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark)
       mark: 'bar',
       radius,
       colorProp: seriesValueColorProp(mark.seriesId, mark.valueIndex),
+      hasColorOverride: mark.hasColorOverride,
     },
     prop: seriesValueProp(mark.seriesId, mark.valueIndex),
     style: {

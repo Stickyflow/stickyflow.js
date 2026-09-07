@@ -375,4 +375,19 @@ export const COLOR_PICKER_CSS = `
   opacity: 0.3;
   cursor: default;
 }
+
+.sf-cp-reset {
+  padding: 4px 0 0;
+  border: none;
+  border-top: 1px solid var(--sf-cp-border);
+  background: transparent;
+  color: var(--sf-cp-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sf-cp-reset:hover {
+  color: var(--sf-cp-accent);
+}
 `;

@@ -78,7 +78,7 @@ function replaceIndexed(text: string, indices: readonly number[], event: Propert
 
   const result = replaceListElement(text, head, current => {
     if (rest.length === 0) {
-      return withSpacing(current, formatValue(event.value, current, event.quote));
+      return withSpacing(current, formatValue(event.value, current, event.quote, true));
     }
     const inner = replaceIndexed(current, rest, event);
     if (inner === null) {
@@ -99,7 +99,12 @@ function withSpacing(current: string, value: string): string {
   return `${spacing?.[1] ?? ''}${value}${spacing?.[2] ?? ''}`;
 }
 
-function formatValue(value: PropertyValue, current: string | undefined, quote: boolean | undefined): string {
+function formatValue(
+  value: PropertyValue,
+  current: string | undefined,
+  quote: boolean | undefined,
+  indexed = false,
+): string {
   if (typeof value === 'object') {
     return value.map(String).join(', ');
   }
@@ -109,12 +114,16 @@ function formatValue(value: PropertyValue, current: string | undefined, quote: b
   if (typeof value === 'number') {
     return String(value);
   }
-  return shouldQuote(current, quote) ? `"${escapeSflString(value)}"` : value;
+  return shouldQuote(current, quote, indexed) ? `"${escapeSflString(value)}"` : value;
 }
 
-function shouldQuote(current: string | undefined, quote: boolean | undefined): boolean {
+function shouldQuote(current: string | undefined, quote: boolean | undefined, indexed: boolean): boolean {
   if (quote !== undefined) {
     return quote;
   }
-  return current === undefined || current.trim().startsWith('"');
+  const trimmed = current?.trim();
+  if (trimmed === undefined || trimmed.startsWith('"')) {
+    return true;
+  }
+  return indexed && trimmed === 'none';
 }

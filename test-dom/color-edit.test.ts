@@ -43,7 +43,7 @@ function linearGradientDef(svg: SVGSVGElement, id: string, colors: string[]): vo
   svg.appendChild(def);
 }
 
-function bar(svg: SVGSVGElement, fill: string | null, colorProp: string): SVGGraphicsElement {
+function bar(svg: SVGSVGElement, fill: string | null, colorProp: string, hasOverride = false): SVGGraphicsElement {
   const node = document.createElementNS(SVG_NS, 'path') as SVGGraphicsElement;
   node.setAttribute('data-sf-role', 'chart');
   node.setAttribute('data-sf-id', 'c');
@@ -51,6 +51,9 @@ function bar(svg: SVGSVGElement, fill: string | null, colorProp: string): SVGGra
   node.setAttribute('data-sf-prop-kind', 'value');
   node.setAttribute('data-sf-mark', 'bar');
   node.setAttribute('data-sf-color-prop', colorProp);
+  if (hasOverride) {
+    node.setAttribute('data-sf-color-override', 'true');
+  }
   if (fill) {
     node.setAttribute('fill', fill);
   }
@@ -196,6 +199,13 @@ describe('clicking a legend swatch', () => {
     expect(popover()).toBeNull();
   });
 
+  it('never offers a reset link for a series-level legend swatch', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    click(swatch(svg, '#6d5ef0'));
+    expect(document.querySelector('.sf-cp-reset')).toBeNull();
+  });
+
   it('ignores a click on a node without the color prop kind', () => {
     const { viewer, svg } = createFakeViewer();
     bindEditing(viewer, { properties: {} });
@@ -263,6 +273,35 @@ describe('double-clicking a single bar', () => {
     node.setAttribute('data-sf-mark', 'bar');
     svg.appendChild(node);
     dblclick(node);
+    expect(popover()).toBeNull();
+  });
+
+  it('offers no reset link for a bar that has never been overridden', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    dblclick(bar(svg, '#6d5ef0', 'Series[online].colors[1]', false));
+    expect(document.querySelector('.sf-cp-reset')).toBeNull();
+  });
+
+  it('offers a reset link for an overridden bar, and it clears the override unquoted', () => {
+    const { viewer, svg } = createFakeViewer();
+    const interaction = bindEditing(viewer, { properties: {} });
+    const seen: PropertyChangeEvent[] = [];
+    interaction.on('propertyChange', event => seen.push(event));
+
+    dblclick(bar(svg, '#db2777', 'Series[online].colors[1]', true));
+    const reset = document.querySelector<HTMLButtonElement>('.sf-cp-reset');
+    expect(reset).not.toBeNull();
+    reset?.click();
+
+    expect(seen).toEqual([
+      {
+        owner: { role: 'chart', id: 'c', kind: undefined, label: undefined },
+        path: 'Series[online].colors[1]',
+        value: 'none',
+        quote: false,
+      },
+    ]);
     expect(popover()).toBeNull();
   });
 });

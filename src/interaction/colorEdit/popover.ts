@@ -16,6 +16,7 @@ export interface ColorPopoverOptions {
   anchor: { left: number; top: number; width: number; height: number };
   theme?: ColorPickerTheme;
   onCommit(value: string): void;
+  onReset?(): void;
 }
 
 export interface ColorPopoverHandle {
@@ -97,7 +98,7 @@ interface StopRow {
 }
 
 export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHandle {
-  const { seed, anchor, onCommit } = options;
+  const { seed, anchor, onCommit, onReset } = options;
   ensureColorPickerStyles(document);
 
   let mode: PickerValue['mode'] = seed.mode;
@@ -150,6 +151,16 @@ export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHand
   addStop.title = 'Add stop';
   const stopList = el('div', 'sf-cp-stops', section);
   const stopRows: StopRow[] = [];
+
+  if (onReset) {
+    const resetButton = el('button', 'sf-cp-reset', root);
+    resetButton.type = 'button';
+    resetButton.textContent = 'Use series color';
+    resetButton.addEventListener('click', () => {
+      onReset();
+      close();
+    });
+  }
 
   document.body.appendChild(root);
   clampIntoViewport();

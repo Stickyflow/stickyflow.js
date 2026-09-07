@@ -40,6 +40,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
           mark: 'bar',
           radius,
           colorProp: seriesValueColorProp(series.id, valueIndex),
+          hasColorOverride: series.colors?.[valueIndex] != null,
         },
         prop: seriesValueProp(series.id, valueIndex),
         style: {

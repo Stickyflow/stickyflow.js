@@ -43,7 +43,15 @@ export type SceneDetail =
       toSide?: Side;
       labelGap?: boolean;
     }
-  | { of: 'chartValue'; series: string; valueIndex: number; mark?: 'bar'; radius?: number; colorProp?: string }
+  | {
+      of: 'chartValue';
+      series: string;
+      valueIndex: number;
+      mark?: 'bar';
+      radius?: number;
+      colorProp?: string;
+      hasColorOverride?: boolean;
+    }
   | { of: 'chartScale'; valueScale: string };
 
 export interface SceneBase {

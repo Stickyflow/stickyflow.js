@@ -104,6 +104,36 @@ describe('openColorPopover — what it opens with', () => {
   });
 });
 
+describe('openColorPopover — reset link', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  const resetButton = () => document.querySelector<HTMLButtonElement>('.sf-cp-reset');
+
+  it('is absent unless the caller passes onReset', () => {
+    openColorPopover({ seed: solidSeed, anchor: anchor(0, 0), onCommit: () => {} });
+    expect(resetButton()).toBeNull();
+  });
+
+  it('calls onReset and closes, without touching onCommit', () => {
+    const committed: string[] = [];
+    let reset = false;
+    openColorPopover({
+      seed: solidSeed,
+      anchor: anchor(0, 0),
+      onCommit: value => committed.push(value),
+      onReset: () => {
+        reset = true;
+      },
+    });
+    resetButton()?.click();
+    expect(reset).toBe(true);
+    expect(committed).toEqual([]);
+    expect(root()).toBeNull();
+  });
+});
+
 describe('openColorPopover — gradient stops', () => {
   beforeEach(() => {
     document.body.innerHTML = '';

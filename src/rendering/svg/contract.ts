@@ -28,6 +28,7 @@ function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): Ar
     detail.mark ? `data-sf-mark="${detail.mark}"` : undefined,
     detail.radius !== undefined ? `data-sf-bar-radius="${num(detail.radius)}"` : undefined,
     detail.colorProp ? `data-sf-color-prop="${xml(detail.colorProp)}"` : undefined,
+    detail.hasColorOverride ? 'data-sf-color-override="true"' : undefined,
   ];
 }
 

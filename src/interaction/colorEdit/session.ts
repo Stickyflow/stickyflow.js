@@ -40,6 +40,7 @@ export class ColorEditSession {
     this.#open?.close();
 
     const fill = target.node.getAttribute('fill');
+    const hasOverride = target.node.getAttribute('data-sf-color-override') === 'true';
     this.#open = openColorPopover({
       seed: seedFrom(fill, readGradientValue(this.#svg, fill)),
       anchor: screenRectOf(target.node),
@@ -47,6 +48,16 @@ export class ColorEditSession {
       onCommit: color => {
         this.#emitter.emit('propertyChange', { owner: target.owner, path: target.path, value: color });
       },
+      onReset: hasOverride
+        ? () => {
+            this.#emitter.emit('propertyChange', {
+              owner: target.owner,
+              path: target.path,
+              value: 'none',
+              quote: false,
+            });
+          }
+        : undefined,
     });
   };
 

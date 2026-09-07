@@ -196,6 +196,31 @@ describe('applyPropertyChange — inserting a missing property', () => {
   it('refuses to create a nested-index property that does not exist', () => {
     expect(applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].missing[0][1]', value: 1 })).toBe(BAR);
   });
+
+  it('quotes a value replacing an existing none placeholder, not just a brand-new list', () => {
+    const withList = applyPropertyChange(BAR, {
+      owner: chart(),
+      path: 'Series[online].colors[2]',
+      value: '#db2777',
+    });
+    const next = applyPropertyChange(withList, { owner: chart(), path: 'Series[online].colors[0]', value: '#111111' });
+    expect(next).toContain('colors: ["#111111", none, "#db2777"]');
+    expect(chartOf(next).series[0].colors).toEqual(['#111111', null, '#db2777']);
+  });
+
+  it('quotes a gradient value replacing a none placeholder', () => {
+    const withList = applyPropertyChange(BAR, {
+      owner: chart(),
+      path: 'Series[online].colors[2]',
+      value: '#db2777',
+    });
+    const next = applyPropertyChange(withList, {
+      owner: chart(),
+      path: 'Series[online].colors[0]',
+      value: 'gradient(90, #111111 0%, #eeeeee 100%)',
+    });
+    expect(next).toContain('colors: ["gradient(90, #111111 0%, #eeeeee 100%)", none, "#db2777"]');
+  });
 });
 
 describe('applyPropertyChange — refusals leave the source untouched', () => {
