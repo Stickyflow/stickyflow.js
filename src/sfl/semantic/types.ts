@@ -100,6 +100,27 @@ export interface SflEntityOut {
   };
 }
 
+export type SflChartEntity = SflEntityOut & { chart: NonNullable<SflEntityOut['chart']> };
+export type SflTableEntity = SflEntityOut & { table: NonNullable<SflEntityOut['table']> };
+export type SflSwimlaneEntity = SflEntityOut & { swimlane: NonNullable<SflEntityOut['swimlane']> };
+export type SflPathEntity = SflEntityOut & { path: NonNullable<SflEntityOut['path']> };
+
+export function isChartEntity(entity: SflEntityOut): entity is SflChartEntity {
+  return entity.entityType === 'chart' && entity.chart !== undefined;
+}
+
+export function isTableEntity(entity: SflEntityOut): entity is SflTableEntity {
+  return entity.entityType === 'table' && entity.table !== undefined;
+}
+
+export function isSwimlaneEntity(entity: SflEntityOut): entity is SflSwimlaneEntity {
+  return entity.entityType === 'swimlane' && entity.swimlane !== undefined;
+}
+
+export function isPathEntity(entity: SflEntityOut): entity is SflPathEntity {
+  return entity.entityType === 'path' && entity.path !== undefined;
+}
+
 export interface SflLinkOut {
   id: string;
   fromId?: string;
