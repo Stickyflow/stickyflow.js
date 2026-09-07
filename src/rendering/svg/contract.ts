@@ -38,8 +38,11 @@ function chartScaleAttrs(detail: Extract<SceneDetail, { of: 'chartScale' }>): st
   return [`data-sf-value-scale="${detail.valueScale}"`];
 }
 
-function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): string[] {
-  return [`data-sf-series="${xml(detail.series)}"`];
+function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): Array<string | undefined> {
+  return [
+    `data-sf-series="${xml(detail.series)}"`,
+    detail.lineTension !== undefined ? `data-sf-line-tension="${num(detail.lineTension)}"` : undefined,
+  ];
 }
 
 function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<string | undefined> {

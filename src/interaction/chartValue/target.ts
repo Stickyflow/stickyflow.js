@@ -1,10 +1,14 @@
 import { findOwnerNode, isCameraGesture, isPrimary, resolveOwner } from '../../domContract';
+import { findConnectedLine } from './lineLookup';
 import { parseValueScale } from './scale';
 import type { ChartValueDragState, ValueScale } from './types';
 
 type ChartValueTarget = Pick<ChartValueDragState, 'owner' | 'series' | 'index'>;
 
-type ChartValueGeometry = Pick<ChartValueDragState, 'element' | 'baseY' | 'isBar' | 'barX' | 'barWidth' | 'barRadius'>;
+type ChartValueGeometry = Pick<
+  ChartValueDragState,
+  'element' | 'baseY' | 'isBar' | 'barX' | 'barWidth' | 'barRadius' | 'lineTension'
+>;
 
 function chartGeometry(svg: SVGSVGElement, target: ChartValueTarget): SVGGraphicsElement | null {
   const selector =
@@ -88,14 +92,12 @@ function resolveChartValueGeometry(
     return null;
   }
   const isBar = element.getAttribute('data-sf-mark') === 'bar';
-  // A bar's rest geometry lives in its rendered path, not in x/y/width/height
-  // attributes a path doesn't have - getBBox() reads the same numbers back,
-  // since barShapePath's rounded corners never extend past that box.
   const bbox = isBar ? element.getBBox() : null;
   const baseY = bbox ? bbox.y + bbox.height : scale.plotY + scale.plotHeight;
   if (!Number.isFinite(baseY)) {
     return null;
   }
+  const line = isBar ? null : findConnectedLine(svg, target.owner.id, target.series);
   return {
     element,
     baseY,
@@ -103,5 +105,6 @@ function resolveChartValueGeometry(
     barX: bbox?.x ?? 0,
     barWidth: bbox?.width ?? 0,
     barRadius: isBar ? Number(element.getAttribute('data-sf-bar-radius')) || 0 : 0,
+    lineTension: Number(line?.getAttribute('data-sf-line-tension')) || 0,
   };
 }

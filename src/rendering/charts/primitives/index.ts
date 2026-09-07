@@ -5,5 +5,6 @@ export { contrastTextColor, representativeColor } from './colors';
 export { CHART_COLORS, DEFAULT_HEATMAP_ZONES, DEFAULT_HEX_RADIUS, DEFAULT_ZONE_FILL } from './defaults';
 export { createVerticalErrorWhiskerNode, errorBarRange } from './errors';
 export { formatFieldValue } from './format';
+export { linePathData } from './linePath';
 export { stackedSegment } from './stacking';
 export { chartText } from './text';

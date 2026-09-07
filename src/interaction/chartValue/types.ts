@@ -15,12 +15,10 @@ export interface ChartValueDragState {
   element: SVGGraphicsElement;
   baseY: number;
   isBar: boolean;
-  // A bar is a path (see barShapePath), not a rect : it has no x/width/rx
-  // attributes to read back mid-drag, so its resting geometry is captured
-  // once here instead, from getBBox() at drag start.
   barX: number;
   barWidth: number;
   barRadius: number;
+  lineTension: number;
   pointerId: number;
   moved: boolean;
 }

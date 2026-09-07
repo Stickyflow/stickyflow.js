@@ -9,7 +9,7 @@ if (typeof globalThis.CSS === 'undefined') {
   globalThis.CSS = { escape: (value: string) => value.replace(/[^\w-]/g, '\\$&') } as typeof globalThis.CSS;
 }
 
-function buildLineChart(svg: SVGSVGElement) {
+function buildLineChart(svg: SVGSVGElement, tension = 0) {
   svg.setAttribute('viewBox', '0 0 400 300');
   Object.defineProperty(svg, 'getScreenCTM', { value: () => null, configurable: true });
 
@@ -21,14 +21,13 @@ function buildLineChart(svg: SVGSVGElement) {
   svg.appendChild(chart);
 
   const line = document.createElementNS(SVG_NS, 'path') as SVGGraphicsElement;
-  // A real render() with an idPrefix (every SflDiagram instance sets one, to
-  // avoid id collisions between multiple diagrams on one page) bakes that
-  // prefix into `id` - so the lookup this test guards must never key off the
-  // raw id string, only the data-sf-* attributes, which stay stable.
   line.setAttribute('id', 'sf-r1-chart-line-c-a');
   line.setAttribute('data-sf-role', 'chart');
   line.setAttribute('data-sf-id', 'c');
   line.setAttribute('data-sf-series', 'a');
+  if (tension > 0) {
+    line.setAttribute('data-sf-line-tension', String(tension));
+  }
   line.setAttribute('d', 'M 100 150 L 150 120 L 200 180');
   svg.appendChild(line);
 
@@ -86,6 +85,17 @@ describe('dragging a line point keeps the connecting line attached', () => {
     const d = line.getAttribute('d') ?? '';
     expect(d).toContain('100 150');
     expect(d).toContain('200 180');
+  });
+
+  it('rebuilds a curved path (not a straight polyline) when the line carries its own tension', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindChartValueDrag(viewer, new Emitter());
+    const { line, points } = buildLineChart(svg, 0.5);
+
+    points[1].dispatchEvent(pointer('pointerdown', 120));
+    svg.dispatchEvent(pointer('pointermove', 80));
+
+    expect(line.getAttribute('d') ?? '').toMatch(/^M .* C /);
   });
 
   it('leaves scatter-style points (no connecting path) untouched', () => {

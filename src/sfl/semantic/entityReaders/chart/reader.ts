@@ -34,6 +34,7 @@ export function readChart(block: SflBlock, properties: ChartProperties): ChartDa
     isolines: numberList(properties.get('isolines')),
     zones: readChartZones(properties.get('zones')),
     boxWidth: asNumber(properties.get('boxWidth')),
+    lineTension: asNumber(properties.get('lineTension')),
     barCornerRadius: asNumber(properties.get('barCornerRadius')),
     showBoxplotPoints: readBoolean(properties.get('showBoxplotPoints')),
     barBorderColor: asString(properties.get('barBorderColor')),

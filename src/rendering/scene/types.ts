@@ -53,7 +53,7 @@ export type SceneDetail =
       hasColorOverride?: boolean;
     }
   | { of: 'chartScale'; valueScale: string }
-  | { of: 'chartSeries'; series: string };
+  | { of: 'chartSeries'; series: string; lineTension?: number };
 
 export interface SceneBase {
   id: string;

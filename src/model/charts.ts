@@ -98,6 +98,7 @@ export interface Chart {
     areaOpacity?: number;
     zones?: ChartZone[];
     boxWidth?: number;
+    lineTension?: number;
     barCornerRadius?: number;
     showBoxplotPoints?: boolean;
     barBorderColor?: string;
