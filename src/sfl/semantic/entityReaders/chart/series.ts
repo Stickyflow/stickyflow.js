@@ -1,7 +1,7 @@
 import type { SflBlock } from '../../../ast';
 import { directProperties } from '../../blockEntries';
 import { asNumber, asString } from '../../valueAccess';
-import { readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
+import { readSeriesColors, readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
 import type { ChartSeries } from './types';
 
 export function readSeries(block: SflBlock): ChartSeries {
@@ -10,6 +10,7 @@ export function readSeries(block: SflBlock): ChartSeries {
     id: block.name,
     label: asString(properties.get('label')) ?? block.name,
     color: asString(properties.get('color')),
+    colors: readSeriesColors(properties.get('colors')),
     opacity: asNumber(properties.get('opacity')),
     values: readSeriesValues(properties.get('values')),
     error: readSeriesErrors(properties.get('error')),

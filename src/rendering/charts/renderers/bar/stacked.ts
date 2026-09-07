@@ -1,7 +1,7 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { barShapePath, CHART_COLORS, stackedSegment } from '../../primitives';
-import { seriesValueProp } from '../../propPath';
+import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
 
 export function renderStackedBars(context: ChartRenderContext, mode: StackedMode): RenderNode[] {
@@ -21,7 +21,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
 
   for (let valueIndex = 0; valueIndex < valueCount; valueIndex++) {
     chart.series.forEach((series, seriesIndex) => {
-      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      const color = series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       const segment = stackedSegment(chart, mode, valueIndex, seriesIndex, plot.height);
       const radius = outerSeriesIndex === null || seriesIndex === outerSeriesIndex ? cornerRadius : 0;
       const x = plot.x + valueIndex * slotWidth + 4;
@@ -33,7 +33,14 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         order: nextOrder(),
         bounds,
         d: barShapePath(x, y, barWidth, height, radius),
-        detail: { of: 'chartValue', series: series.id, valueIndex, mark: 'bar', radius },
+        detail: {
+          of: 'chartValue',
+          series: series.id,
+          valueIndex,
+          mark: 'bar',
+          radius,
+          colorProp: seriesValueColorProp(series.id, valueIndex),
+        },
         prop: seriesValueProp(series.id, valueIndex),
         style: {
           fill: paint(color, diagnostics, chart.id),

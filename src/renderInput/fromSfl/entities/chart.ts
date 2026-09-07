@@ -33,7 +33,11 @@ export function chartObject(e: SflEntityOut) {
       hexRadius: e.chart?.hexRadius,
       innerRadius: e.chart?.innerRadius,
     },
-    series: (e.chart?.series ?? []).map(s => ({ ...s, color: decodeColor(s.color) })),
+    series: (e.chart?.series ?? []).map(s => ({
+      ...s,
+      color: decodeColor(s.color),
+      colors: s.colors?.map(c => (c === null ? null : (decodeColor(c) ?? null))),
+    })),
     rules: (e.chart?.rules ?? []).map(r => ({
       id: r.id,
       at: r.at,

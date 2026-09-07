@@ -2,7 +2,7 @@ import type { PropertyChangeEvent, PropertyValue } from '../../events';
 import { insertDirectProperty, replacePropertyValue } from '../edits/propertyValues';
 import { escapeSflString, indentOf } from '../format';
 import { findDirectProperty, findOwnerBlock, type PropertySpan, parsePropertyPath, resolveBlocks } from '../scanner';
-import { replaceListElement } from './listElement';
+import { growListElement, replaceListElement } from './listElement';
 
 export function applyPropertyChange(sfl: string, event: PropertyChangeEvent): string {
   const path = parsePropertyPath(event.path);
@@ -23,10 +23,19 @@ export function applyPropertyChange(sfl: string, event: PropertyChangeEvent): st
 
   const span = findDirectProperty(lines, range, path.property.name);
   if (span === null) {
+    const indent = `${indentOf(lines[range.start])}    `;
+    if (path.property.indices.length === 1) {
+      const [index] = path.property.indices;
+      const items = growListElement('[]', index, formatValue(event.value, undefined, event.quote));
+      if (items === null) {
+        return sfl;
+      }
+      insertDirectProperty(lines, range, indent, path.property.name, items);
+      return lines.join('\n');
+    }
     if (path.property.indices.length > 0) {
       return sfl;
     }
-    const indent = `${indentOf(lines[range.start])}    `;
     insertDirectProperty(lines, range, indent, path.property.name, formatValue(event.value, undefined, event.quote));
     return lines.join('\n');
   }
@@ -79,7 +88,10 @@ function replaceIndexed(text: string, indices: readonly number[], event: Propert
     return inner;
   });
 
-  return failed ? null : result;
+  if (result !== null) {
+    return failed ? null : result;
+  }
+  return rest.length === 0 ? growListElement(text, head, formatValue(event.value, undefined, event.quote)) : null;
 }
 
 function withSpacing(current: string, value: string): string {

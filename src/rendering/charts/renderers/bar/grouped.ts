@@ -8,7 +8,7 @@ import {
   errorBarRange,
   mapChartValue,
 } from '../../primitives';
-import { seriesValueProp } from '../../propPath';
+import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 
 interface GroupedBarLayout {
@@ -54,7 +54,7 @@ function createSeriesBarMarks(
   seriesIndex: number,
 ): GroupedBarMark[] {
   const { chart, plot } = context;
-  const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+  const seriesColor = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
   return series.values.map((value, valueIndex) => {
     const numericValue = Array.isArray(value) ? value[1] : value;
     const height = Math.max(0, mapChartValue(numericValue, chart.axis_y, plot.height));
@@ -63,7 +63,7 @@ function createSeriesBarMarks(
       valueIndex,
       value: numericValue,
       error: series.error?.[valueIndex],
-      color,
+      color: series.colors?.[valueIndex] ?? seriesColor,
       frame: {
         x: plot.x + valueIndex * layout.slotWidth + 4 + seriesIndex * layout.seriesWidth,
         y: plot.y + plot.height - height,
@@ -104,7 +104,14 @@ function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark)
     order: nextOrder(),
     bounds,
     d: barShapePath(x, y, width, height, radius),
-    detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex, mark: 'bar', radius },
+    detail: {
+      of: 'chartValue',
+      series: mark.seriesId,
+      valueIndex: mark.valueIndex,
+      mark: 'bar',
+      radius,
+      colorProp: seriesValueColorProp(mark.seriesId, mark.valueIndex),
+    },
     prop: seriesValueProp(mark.seriesId, mark.valueIndex),
     style: {
       fill: paint(mark.color, diagnostics, chart.id),

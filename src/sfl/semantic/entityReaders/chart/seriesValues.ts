@@ -1,5 +1,5 @@
 import type { SflValue } from '../../../ast';
-import { asNumber } from '../../valueAccess';
+import { asNumber, asString } from '../../valueAccess';
 import type { ChartSeries } from './types';
 
 type SeriesValueShape = 'scalar' | 'tuple';
@@ -68,6 +68,20 @@ function readSeriesErrorRange(value: SflValue): [number, number] | null {
   const low = asNumber(value.values[0]);
   const high = asNumber(value.values[1]);
   return low !== undefined && high !== undefined ? [low, high] : null;
+}
+
+export function readSeriesColors(value?: SflValue): ChartSeries['colors'] {
+  if (value?.type !== 'list') {
+    return undefined;
+  }
+  return value.values.map(readSeriesColor);
+}
+
+function readSeriesColor(value: SflValue): string | null {
+  if (value.type === 'ident' && value.segments.join('.') === 'none') {
+    return null;
+  }
+  return asString(value) ?? null;
 }
 
 export function readSeriesSymbol(value?: SflValue): ChartSeries['symbol'] {

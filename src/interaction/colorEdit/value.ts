@@ -2,8 +2,8 @@ import { hexToHsv, hsvToHex, normalizeHex } from './color';
 import {
   DEFAULT_GRADIENT_ANGLE,
   formatGradient,
-  gradientCss,
   type GradientValue,
+  gradientCss,
   parseGradient,
   sortStops,
 } from './gradientValue';

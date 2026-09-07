@@ -84,6 +84,7 @@ export interface SflEntityOut {
       id: string;
       label: string;
       color?: string;
+      colors?: Array<string | null>;
       opacity?: number;
       values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];
       error?: Array<number | [number, number] | null>;

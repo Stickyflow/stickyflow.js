@@ -8,16 +8,29 @@ export interface ColorEditTarget {
   node: SVGGraphicsElement;
 }
 
-export function resolveColorEditTarget(event: MouseEvent, rules: EditableRules | undefined): ColorEditTarget | null {
-  const node = (event.target as Element | null)?.closest?.('[data-sf-prop-kind="color"]') as SVGGraphicsElement | null;
+function resolveTarget(
+  event: Event,
+  selector: string,
+  pathOf: (node: SVGGraphicsElement) => string | null,
+  rules: EditableRules | undefined,
+): ColorEditTarget | null {
+  const node = (event.target as Element | null)?.closest?.(selector) as SVGGraphicsElement | null;
   if (!node) {
     return null;
   }
 
-  const path = node.getAttribute('data-sf-prop');
+  const path = pathOf(node);
   const owner = resolveOwner(node);
   if (!path || !owner || !isEditablePath(path, rules)) {
     return null;
   }
   return { owner, path, node };
+}
+
+export function resolveColorEditTarget(event: Event, rules: EditableRules | undefined): ColorEditTarget | null {
+  return resolveTarget(event, '[data-sf-prop-kind="color"]', node => node.getAttribute('data-sf-prop'), rules);
+}
+
+export function resolveBarColorEditTarget(event: Event, rules: EditableRules | undefined): ColorEditTarget | null {
+  return resolveTarget(event, '[data-sf-color-prop]', node => node.getAttribute('data-sf-color-prop'), rules);
 }

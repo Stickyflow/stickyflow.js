@@ -158,6 +158,15 @@ describe('applyPropertyChange — list elements', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].values[1]', value: 70 });
     expect(next).toContain('values: [60, 70, 58, 65]');
   });
+
+  it('grows a too-short list to reach an out-of-range index, padding with none', () => {
+    const next = applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].values[9]', value: 1 });
+    expect(next).toContain('values: [60, 62, 58, 65, none, none, none, none, none, 1]');
+  });
+
+  it('refuses to grow a nested index (e.g. a missing tuple component)', () => {
+    expect(applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].values[9][1]', value: 1 })).toBe(BAR);
+  });
 });
 
 describe('applyPropertyChange — inserting a missing property', () => {
@@ -178,8 +187,14 @@ describe('applyPropertyChange — inserting a missing property', () => {
     expect(next).toContain('label: "Quartal"');
   });
 
-  it('refuses to index into a property that does not exist', () => {
-    expect(applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].missing[0]', value: 1 })).toBe(BAR);
+  it('creates a single-index list property that does not exist yet, padded with none', () => {
+    const next = applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].colors[2]', value: '#db2777' });
+    expect(next).toContain('colors: [none, none, "#db2777"]');
+    expect(chartOf(next).series[0].colors).toEqual([null, null, '#db2777']);
+  });
+
+  it('refuses to create a nested-index property that does not exist', () => {
+    expect(applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].missing[0][1]', value: 1 })).toBe(BAR);
   });
 });
 
@@ -193,7 +208,6 @@ describe('applyPropertyChange — refusals leave the source untouched', () => {
 
   it('unknown block', () => unchanged('Series[missing].color', '#fff'));
   it('unknown nested block', () => unchanged('Axis[z].max', 10));
-  it('index out of range', () => unchanged('Series[online].values[9]', 1));
   it('malformed path', () => unchanged('Series[online]..values', 1));
   it('empty path', () => unchanged('', 1));
   it('non-finite number', () => unchanged('Axis[y].max', Number.NaN));

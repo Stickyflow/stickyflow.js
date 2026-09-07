@@ -62,6 +62,7 @@ export interface ChartSeries {
   id: string;
   label: string;
   color?: string | GradientColorObject | MeshGradientObject;
+  colors?: Array<string | GradientColorObject | MeshGradientObject | null>;
   opacity?: number;
   values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];
   error?: Array<number | [number, number] | null>;

@@ -43,8 +43,32 @@ function linearGradientDef(svg: SVGSVGElement, id: string, colors: string[]): vo
   svg.appendChild(def);
 }
 
+function bar(svg: SVGSVGElement, fill: string | null, colorProp: string): SVGGraphicsElement {
+  const node = document.createElementNS(SVG_NS, 'path') as SVGGraphicsElement;
+  node.setAttribute('data-sf-role', 'chart');
+  node.setAttribute('data-sf-id', 'c');
+  node.setAttribute('data-sf-prop', 'Series[online].values[1]');
+  node.setAttribute('data-sf-prop-kind', 'value');
+  node.setAttribute('data-sf-mark', 'bar');
+  node.setAttribute('data-sf-color-prop', colorProp);
+  if (fill) {
+    node.setAttribute('fill', fill);
+  }
+  Object.defineProperty(node, 'getBBox', {
+    value: () => ({ x: 60, y: 40, width: 20, height: 30 }),
+    configurable: true,
+  });
+  Object.defineProperty(node, 'getScreenCTM', { value: () => null, configurable: true });
+  svg.appendChild(node);
+  return node;
+}
+
 const click = (node: Element) => {
   node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+};
+
+const dblclick = (node: Element) => {
+  node.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
 };
 
 const popover = (): HTMLDivElement | null => document.querySelector<HTMLDivElement>('.sf-cp');
@@ -182,6 +206,63 @@ describe('clicking a legend swatch', () => {
     node.setAttribute('data-sf-prop-kind', 'value');
     svg.appendChild(node);
     click(node);
+    expect(popover()).toBeNull();
+  });
+});
+
+describe('double-clicking a single bar', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('is ignored on a plain (single) click, so it never fights the value drag', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    click(bar(svg, '#6d5ef0', 'Series[online].colors[1]'));
+    expect(popover()).toBeNull();
+  });
+
+  it('opens a popover addressing that one value, not the whole series', () => {
+    const { viewer, svg } = createFakeViewer();
+    const interaction = bindEditing(viewer, { properties: {} });
+    const seen: PropertyChangeEvent[] = [];
+    interaction.on('propertyChange', event => seen.push(event));
+
+    dblclick(bar(svg, '#6d5ef0', 'Series[online].colors[1]'));
+    const hex = hexField();
+    if (!hex) {
+      throw new Error('no popover');
+    }
+    hex.value = '#db2777';
+    hex.dispatchEvent(new Event('change'));
+
+    expect(seen).toEqual([
+      {
+        owner: { role: 'chart', id: 'c', kind: undefined, label: undefined },
+        path: 'Series[online].colors[1]',
+        value: '#db2777',
+      },
+    ]);
+  });
+
+  it('honours the editable whitelist independently of the series-level color rule', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: { editable: { 'Series[*].color': true } } });
+    dblclick(bar(svg, '#6d5ef0', 'Series[online].colors[1]'));
+    expect(popover()).toBeNull();
+  });
+
+  it('ignores a bar with no color-prop attribute', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    const node = document.createElementNS(SVG_NS, 'path');
+    node.setAttribute('data-sf-role', 'chart');
+    node.setAttribute('data-sf-id', 'c');
+    node.setAttribute('data-sf-prop', 'Series[online].values[0]');
+    node.setAttribute('data-sf-prop-kind', 'value');
+    node.setAttribute('data-sf-mark', 'bar');
+    svg.appendChild(node);
+    dblclick(node);
     expect(popover()).toBeNull();
   });
 });

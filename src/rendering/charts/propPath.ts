@@ -22,6 +22,10 @@ export function seriesValueProp(id: string, index: number): string | undefined {
   return Number.isInteger(index) && index >= 0 ? block('Series', id, `values[${index}]`) : undefined;
 }
 
+export function seriesValueColorProp(id: string, index: number): string | undefined {
+  return Number.isInteger(index) && index >= 0 ? block('Series', id, `colors[${index}]`) : undefined;
+}
+
 export function ruleTextProp(id: string): string | undefined {
   return block('Rule', id, 'text');
 }
