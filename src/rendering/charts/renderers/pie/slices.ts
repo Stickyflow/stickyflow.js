@@ -3,6 +3,7 @@ import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { CHART_COLORS } from '../../primitives';
 import type { ChartRenderContext } from '../types';
+import { renderPieLabels } from './labels';
 import { createPieSlicePath } from './path';
 import type { PieGeometry, PieSliceAngles } from './types';
 
@@ -11,14 +12,29 @@ const MAXIMUM_SWEEP = Math.PI * 2 * (359.999 / 360);
 
 interface PieSliceMark {
   seriesId: string;
+  label: string;
   color: NonNullable<ChartSeries['color']>;
+  share: number;
   angles: PieSliceAngles;
 }
 
 export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
-  return createPieSliceMarks(context.chart.series, geometry.total).map(mark =>
-    createSliceNode(context, geometry, mark),
-  );
+  const marks = createPieSliceMarks(context.chart.series, geometry.total);
+  return [
+    ...marks.map(mark => createSliceNode(context, geometry, mark)),
+    ...renderPieLabels(
+      context,
+      geometry,
+      marks.map(mark => ({
+        seriesId: mark.seriesId,
+        label: mark.label,
+        color: mark.color,
+        share: mark.share,
+        start: mark.angles.start,
+        end: mark.angles.end,
+      })),
+    ),
+  ];
 }
 
 function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSliceMark[] {
@@ -30,7 +46,9 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
     if (sweep > 0) {
       marks.push({
         seriesId: series.id,
+        label: series.label,
         color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
+        share: value / total,
         angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
       });
       angle += sweep;
