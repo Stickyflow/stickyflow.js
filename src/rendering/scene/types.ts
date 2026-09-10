@@ -47,7 +47,7 @@ export type SceneDetail =
       of: 'chartValue';
       series: string;
       valueIndex: number;
-      mark?: 'bar' | 'pie-slice';
+      mark?: 'bar' | 'pie-slice' | 'radar-vertex';
       radius?: number;
       colorProp?: string;
       hasColorOverride?: boolean;
@@ -57,6 +57,7 @@ export type SceneDetail =
     }
   | { of: 'chartScale'; valueScale: string }
   | { of: 'pieGeometry'; pieGeometry: string }
+  | { of: 'radarGeometry'; radarGeometry: string }
   | { of: 'chartSeries'; series: string; lineTension?: number };
 
 export interface SceneBase {

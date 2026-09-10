@@ -1,7 +1,9 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
-import { freeformPathData, paint } from '../../../scene';
+import { paint } from '../../../scene';
 import { CHART_COLORS } from '../../primitives';
+import { radarSeriesPath } from '../../primitives/radarShape';
+import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import type { RadarGeometry, RadarPoint } from './types';
 
@@ -21,7 +23,7 @@ function renderSeries(
 ): RenderNode[] {
   const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
   const points = seriesPoints(series, context, geometry);
-  const path = seriesPath(points, geometry);
+  const path = radarSeriesPath(points, geometry.circular);
   return [
     createSeriesFill(context, geometry, series, path, color),
     createSeriesStroke(context, series, path, color),
@@ -34,14 +36,6 @@ function seriesPoints(series: ChartSeries, context: ChartRenderContext, geometry
   return geometry.categories.map((_, categoryIndex) =>
     geometry.pointAt(geometry.radiusForValue(values[categoryIndex] ?? context.chart.axis_y.min), categoryIndex),
   );
-}
-
-function seriesPath(points: RadarPoint[], geometry: RadarGeometry): string {
-  if (geometry.circular) {
-    return freeformPathData({ points, tension: 0.5, closed: true });
-  }
-  const commands = points.map((point, index) => `${index ? 'L ' : ''}${point.x} ${point.y}`);
-  return `M ${commands.join(' ')} Z`;
 }
 
 function createSeriesFill(
@@ -58,6 +52,7 @@ function createSeriesFill(
     order: nextOrder(),
     bounds,
     d: path,
+    detail: { of: 'chartSeries', series: series.id },
     style: {
       fill: paint(color, diagnostics, chart.id),
       stroke: { kind: 'none' },
@@ -79,6 +74,7 @@ function createSeriesStroke(
     order: nextOrder(),
     bounds,
     d: path,
+    detail: { of: 'chartSeries', series: series.id },
     style: {
       fill: { kind: 'none' },
       stroke: paint(color, diagnostics, chart.id),
@@ -104,6 +100,8 @@ function createSeriesPoints(
     cy: point.y,
     rx: 3,
     ry: 3,
+    detail: { of: 'chartValue', series: series.id, valueIndex: pointIndex, mark: 'radar-vertex' },
+    prop: seriesValueProp(series.id, pointIndex),
     style: { fill: paint(color, diagnostics, chart.id) },
   }));
 }

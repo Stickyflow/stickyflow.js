@@ -48,7 +48,7 @@ export interface ReadoutAnchor {
   scale: ValueScale;
 }
 
-function formatValue(value: number): string {
+export function formatReadoutValue(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
 
@@ -59,7 +59,7 @@ function formatValue(value: number): string {
 function readoutWidth(scale: ValueScale): number {
   const magnitude = Math.max(Math.abs(scale.min), Math.abs(scale.max));
   const sign = scale.min < 0 ? 1 : 0;
-  const chars = sign + formatValue(magnitude).length + 2; // + '.' + one decimal digit, always reserved
+  const chars = sign + formatReadoutValue(magnitude).length + 2; // + '.' + one decimal digit, always reserved
   return Math.max(28, (chars * FONT_SIZE) / 1.7 + PADDING_X * 2);
 }
 
@@ -70,7 +70,7 @@ export function updateValueReadout(readout: SVGGElement, anchor: ReadoutAnchor, 
     return;
   }
 
-  text.textContent = formatValue(value);
+  text.textContent = formatReadoutValue(value);
   const width = readoutWidth(anchor.scale);
 
   const markY = pixelForValue(value, anchor.scale);

@@ -20,6 +20,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return chartSeriesAttrs(detail);
     case 'pieGeometry':
       return pieGeometryAttrs(detail);
+    case 'radarGeometry':
+      return radarGeometryAttrs(detail);
     case 'link':
       return linkDetailAttrs(detail);
   }
@@ -41,6 +43,10 @@ function chartValueAttrs(detail: Extract<SceneDetail, { of: 'chartValue' }>): Ar
 
 function pieGeometryAttrs(detail: Extract<SceneDetail, { of: 'pieGeometry' }>): string[] {
   return [`data-sf-pie-geometry="${detail.pieGeometry}"`];
+}
+
+function radarGeometryAttrs(detail: Extract<SceneDetail, { of: 'radarGeometry' }>): string[] {
+  return [`data-sf-radar-geometry="${detail.radarGeometry}"`];
 }
 
 function chartScaleAttrs(detail: Extract<SceneDetail, { of: 'chartScale' }>): string[] {
