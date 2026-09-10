@@ -24,11 +24,16 @@ function findSliceMark(event: PointerEvent): SVGGraphicsElement | null {
   return (event.target as Element | null)?.closest?.('[data-sf-mark="pie-slice"]') as SVGGraphicsElement | null;
 }
 
+function sliceOrder(a: SVGGraphicsElement, b: SVGGraphicsElement): number {
+  const byStart = Number(a.getAttribute('data-sf-pie-start')) - Number(b.getAttribute('data-sf-pie-start'));
+  return byStart !== 0
+    ? byStart
+    : Number(a.getAttribute('data-sf-pie-end')) - Number(b.getAttribute('data-sf-pie-end'));
+}
+
 function pieSlices(svg: SVGSVGElement, ownerId: string): SVGGraphicsElement[] {
   const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-mark="pie-slice"]`;
-  return [...svg.querySelectorAll<SVGGraphicsElement>(selector)].sort(
-    (a, b) => Number(a.getAttribute('data-sf-pie-start')) - Number(b.getAttribute('data-sf-pie-start')),
-  );
+  return [...svg.querySelectorAll<SVGGraphicsElement>(selector)].sort(sliceOrder);
 }
 
 function sliceInfo(element: SVGGraphicsElement): PieSliceInfo | null {
@@ -80,11 +85,10 @@ export function resolvePieSliceDrag(svg: SVGSVGElement, event: PointerEvent): Pi
     return null;
   }
   const clickedIndex = elements.indexOf(clickedElement);
-  const angle = pointerAngle(svg, event, geometry);
-  if (clickedIndex === -1 || angle === null) {
+  if (clickedIndex === -1) {
     return null;
   }
-  const boundary = resolvePieBoundary(slices as PieSliceInfo[], clickedIndex, angle);
+  const boundary = resolvePieBoundary(slices as PieSliceInfo[], clickedIndex);
   if (!boundary) {
     return null;
   }
@@ -98,6 +102,7 @@ export function resolvePieSliceDrag(svg: SVGSVGElement, event: PointerEvent): Pi
     owner,
     pointerId: event.pointerId,
     moved: false,
+    lastSplit: null,
     centerX: geometry.centerX,
     centerY: geometry.centerY,
     boundary,
@@ -105,6 +110,6 @@ export function resolvePieSliceDrag(svg: SVGSVGElement, event: PointerEvent): Pi
     afterElement,
     outerRadius: geometry.outerRadius,
     innerRadius: geometry.innerRadius,
-    total: (slices as PieSliceInfo[]).reduce((sum, slice) => sum + slice.value, 0),
+    total: (slices as PieSliceInfo[]).reduce((sum, slice) => sum + slice.value, 0) || 1,
   };
 }

@@ -30,8 +30,10 @@ export class PieSliceDragSession {
     if (angle === null) {
       return;
     }
+    const split = pieBoundaryValueAt(this.#drag.boundary, angle, this.#drag.lastSplit?.boundary);
     this.#drag.moved = true;
-    updatePieSliceDragPreview(this.#svg, this.#drag, angle);
+    this.#drag.lastSplit = split;
+    updatePieSliceDragPreview(this.#svg, this.#drag, split);
   }
 
   cancel(): void {
@@ -48,19 +50,22 @@ export class PieSliceDragSession {
     if (!drag.moved) {
       return;
     }
-    const angle = pointerAngle(this.#svg, event, drag) ?? drag.boundary.arcStart;
-    const { beforeValue, afterValue } = pieBoundaryValueAt(drag.boundary, angle);
+    const angle = pointerAngle(this.#svg, event, drag);
+    const split = angle === null ? drag.lastSplit : pieBoundaryValueAt(drag.boundary, angle, drag.lastSplit?.boundary);
+    if (!split) {
+      return;
+    }
     this.#emitter.emit('chartValueChange', {
       owner: drag.owner,
       series: drag.boundary.before.seriesId,
       index: 0,
-      value: beforeValue,
+      value: split.beforeValue,
     });
     this.#emitter.emit('chartValueChange', {
       owner: drag.owner,
       series: drag.boundary.after.seriesId,
       index: 0,
-      value: afterValue,
+      value: split.afterValue,
     });
   }
 }

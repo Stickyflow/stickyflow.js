@@ -1,5 +1,4 @@
 const TWO_PI = Math.PI * 2;
-const CLAMP_MARGIN = 1e-4;
 
 export interface PieSliceInfo {
   seriesId: string;
@@ -22,58 +21,49 @@ export interface PieBoundaryValue {
   boundary: number;
 }
 
-function normalizeNear(angle: number, start: number, end: number): number {
-  let result = angle;
-  while (result < start - Math.PI) {
-    result += TWO_PI;
-  }
-  while (result > end + Math.PI) {
-    result -= TWO_PI;
-  }
-  return result;
-}
-
-export function resolvePieBoundary(
-  slices: readonly PieSliceInfo[],
-  clickedIndex: number,
-  pointerAngle: number,
-): PieBoundaryDrag | null {
-  const n = slices.length;
-  if (n < 2 || clickedIndex < 0 || clickedIndex >= n) {
+export function resolvePieBoundary(slices: readonly PieSliceInfo[], clickedIndex: number): PieBoundaryDrag | null {
+  const count = slices.length;
+  if (count < 2 || clickedIndex < 0 || clickedIndex >= count) {
     return null;
   }
-  const clicked = slices[clickedIndex];
-  const angle = normalizeNear(pointerAngle, clicked.start, clicked.end);
-  const activeIsStart = Math.abs(angle - clicked.start) <= Math.abs(angle - clicked.end);
-
-  if (activeIsStart) {
-    const neighborIndex = (clickedIndex - 1 + n) % n;
-    const neighbor = slices[neighborIndex];
-    const shift = neighborIndex > clickedIndex ? -TWO_PI : 0;
-    return {
-      before: { seriesId: neighbor.seriesId, value: neighbor.value },
-      after: { seriesId: clicked.seriesId, value: clicked.value },
-      arcStart: neighbor.start + shift,
-      arcEnd: clicked.end,
-      combinedValue: neighbor.value + clicked.value,
-    };
+  const beforeIndex = clickedIndex === count - 1 ? clickedIndex - 1 : clickedIndex;
+  const before = slices[beforeIndex];
+  const after = slices[beforeIndex + 1];
+  if (!(after.end > before.start)) {
+    return null;
   }
-
-  const neighborIndex = (clickedIndex + 1) % n;
-  const neighbor = slices[neighborIndex];
-  const shift = neighborIndex < clickedIndex ? TWO_PI : 0;
   return {
-    before: { seriesId: clicked.seriesId, value: clicked.value },
-    after: { seriesId: neighbor.seriesId, value: neighbor.value },
-    arcStart: clicked.start,
-    arcEnd: neighbor.end + shift,
-    combinedValue: clicked.value + neighbor.value,
+    before: { seriesId: before.seriesId, value: before.value },
+    after: { seriesId: after.seriesId, value: after.value },
+    arcStart: before.start,
+    arcEnd: after.end,
+    combinedValue: before.value + after.value,
   };
 }
 
-export function pieBoundaryValueAt(drag: PieBoundaryDrag, pointerAngle: number): PieBoundaryValue {
-  const angle = normalizeNear(pointerAngle, drag.arcStart, drag.arcEnd);
-  const boundary = Math.min(Math.max(angle, drag.arcStart + CLAMP_MARGIN), drag.arcEnd - CLAMP_MARGIN);
-  const beforeValue = drag.combinedValue * ((boundary - drag.arcStart) / (drag.arcEnd - drag.arcStart));
-  return { beforeValue, afterValue: drag.combinedValue - beforeValue, boundary };
+export function initialPieBoundary(drag: PieBoundaryDrag): number {
+  const span = drag.arcEnd - drag.arcStart;
+  const share = drag.combinedValue > 0 ? drag.before.value / drag.combinedValue : 0;
+  return drag.arcStart + span * share;
+}
+
+function nearestTurn(offset: number, previous: number): number {
+  const candidates = [offset - TWO_PI, offset, offset + TWO_PI];
+  return candidates.reduce((best, candidate) =>
+    Math.abs(candidate - previous) < Math.abs(best - previous) ? candidate : best,
+  );
+}
+
+export function pieBoundaryValueAt(
+  drag: PieBoundaryDrag,
+  pointerAngle: number,
+  previousBoundary?: number,
+): PieBoundaryValue {
+  const span = drag.arcEnd - drag.arcStart;
+  const previous = (previousBoundary ?? initialPieBoundary(drag)) - drag.arcStart;
+  const offset = (pointerAngle - drag.arcStart) % TWO_PI;
+  const unwrapped = nearestTurn(offset < 0 ? offset + TWO_PI : offset, previous);
+  const swept = Math.min(Math.max(unwrapped, 0), span);
+  const beforeValue = drag.combinedValue * (swept / span);
+  return { beforeValue, afterValue: drag.combinedValue - beforeValue, boundary: drag.arcStart + swept };
 }

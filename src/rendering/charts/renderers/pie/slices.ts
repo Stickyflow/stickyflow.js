@@ -45,17 +45,15 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
   seriesList.forEach((series, seriesIndex) => {
     const value = Math.max(0, finite((series.values as number[])[0], 0));
     const sweep = (value / total) * Math.PI * 2;
-    if (sweep > 0) {
-      marks.push({
-        seriesId: series.id,
-        label: series.label,
-        color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
-        value,
-        share: value / total,
-        angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
-      });
-      angle += sweep;
-    }
+    marks.push({
+      seriesId: series.id,
+      label: series.label,
+      color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
+      value,
+      share: value / total,
+      angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
+    });
+    angle += sweep;
   });
   return marks;
 }

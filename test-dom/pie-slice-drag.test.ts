@@ -6,6 +6,7 @@ import { createFakeViewer } from './fakeViewer';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CENTER = { centerX: 200, centerY: 200, outerRadius: 100, innerRadius: 0 };
+const START = -Math.PI / 2;
 const TWO_PI = Math.PI * 2;
 
 if (typeof globalThis.CSS === 'undefined') {
@@ -33,11 +34,18 @@ interface SliceSpec {
   value: number;
 }
 
-const SLICES: SliceSpec[] = [
-  { seriesId: 'a', start: 0, end: TWO_PI / 3, value: 10 },
-  { seriesId: 'b', start: TWO_PI / 3, end: (2 * TWO_PI) / 3, value: 20 },
-  { seriesId: 'c', start: (2 * TWO_PI) / 3, end: TWO_PI, value: 30 },
+const TOTAL = 100;
+const SHARES = [
+  { seriesId: 'online', value: 58 },
+  { seriesId: 'retail', value: 37 },
+  { seriesId: 'other', value: 5 },
 ];
+
+const SLICES: SliceSpec[] = SHARES.reduce<SliceSpec[]>((acc, share) => {
+  const start = acc.length === 0 ? START : acc[acc.length - 1].end;
+  acc.push({ ...share, start, end: start + (share.value / TOTAL) * TWO_PI });
+  return acc;
+}, []);
 
 function buildPieChart(svg: SVGSVGElement) {
   svg.setAttribute('viewBox', '0 0 400 400');
@@ -72,7 +80,7 @@ function buildPieChart(svg: SVGSVGElement) {
     const nameTspan = document.createElementNS(SVG_NS, 'tspan');
     nameTspan.textContent = slice.seriesId;
     const percentTspan = document.createElementNS(SVG_NS, 'tspan');
-    percentTspan.textContent = `${Math.round((slice.value / 60) * 100)}%`;
+    percentTspan.textContent = `${Math.round((slice.value / TOTAL) * 100)}%`;
     label.appendChild(nameTspan);
     label.appendChild(percentTspan);
     svg.appendChild(label);
@@ -94,79 +102,135 @@ function pointerAt(type: string, angle: number, radius = CENTER.outerRadius / 2)
   return event as PointerEvent;
 }
 
-describe('dragging a pie slice boundary redistributes only the two adjacent slices', () => {
+function setup() {
+  const { viewer, svg } = createFakeViewer();
+  const emitter = new Emitter();
+  const events: Array<{ series: string; index: number; value: number }> = [];
+  emitter.on('chartValueChange', event => events.push(event));
+  bindPieSliceDrag(viewer, emitter);
+  const { elements } = buildPieChart(svg);
+  const [online, retail, other] = elements;
+  return { svg, events, online, retail, other };
+}
+
+describe('dragging a pie slice edge redistributes only the two slices that share it', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
-  it('reshapes the two involved slices live and leaves the third slice completely untouched', () => {
-    const { viewer, svg } = createFakeViewer();
-    bindPieSliceDrag(viewer, new Emitter());
-    const { elements } = buildPieChart(svg);
-    const [sliceA, sliceB, sliceC] = elements;
-    const dBefore = { a: sliceA.getAttribute('d'), b: sliceB.getAttribute('d'), c: sliceC.getAttribute('d') };
+  it('grabs the clicked slice own clockwise edge, wherever inside the slice the drag starts', () => {
+    const { svg, events, online } = setup();
 
-    const boundaryAngle = SLICES[0].end;
-    sliceA.dispatchEvent(pointerAt('pointerdown', boundaryAngle - 0.05));
-    svg.dispatchEvent(pointerAt('pointermove', 1.5));
+    online.dispatchEvent(pointerAt('pointerdown', SLICES[0].start + 0.05));
+    svg.dispatchEvent(pointerAt('pointermove', START + TWO_PI * 0.3));
+    svg.dispatchEvent(pointerAt('pointerup', START + TWO_PI * 0.3));
 
-    expect(sliceA.getAttribute('d')).not.toBe(dBefore.a);
-    expect(sliceB.getAttribute('d')).not.toBe(dBefore.b);
-    expect(sliceC.getAttribute('d')).toBe(dBefore.c);
-
-    const expectedA = createPieSlicePath(CENTER, { start: SLICES[0].start, end: 1.5 });
-    const expectedB = createPieSlicePath(CENTER, { start: 1.5, end: SLICES[1].end });
-    expect(roundedPath(sliceA.getAttribute('d') ?? '')).toBe(roundedPath(expectedA));
-    expect(roundedPath(sliceB.getAttribute('d') ?? '')).toBe(roundedPath(expectedB));
+    expect(events.map(event => event.series)).toEqual(['online', 'retail']);
+    expect(events[0].value).toBeCloseTo(30, 6);
+    expect(events[1].value).toBeCloseTo(65, 6);
   });
 
-  it('updates only the two involved percentage labels during the drag', () => {
-    const { viewer, svg } = createFakeViewer();
-    bindPieSliceDrag(viewer, new Emitter());
-    buildPieChart(svg);
-    const labelPercent = (seriesId: string) => {
-      const label = [...svg.querySelectorAll('text')].find(el => el.getAttribute('data-sf-series') === seriesId);
-      return label?.querySelectorAll('tspan')[1]?.textContent;
-    };
-    const sliceA = svg.querySelector('[data-sf-series="a"][data-sf-mark="pie-slice"]') as SVGGraphicsElement;
+  it('keeps a pointer that wraps past the seam inside the arc, instead of closing the circle', () => {
+    const { svg, events, online, retail, other } = setup();
+    const otherBefore = other.getAttribute('d');
+    const wrapped = START + TWO_PI * 0.8;
+    expect(Math.atan2(Math.sin(wrapped), Math.cos(wrapped))).toBeLessThan(0);
 
-    const boundaryAngle = SLICES[0].end;
-    sliceA.dispatchEvent(pointerAt('pointerdown', boundaryAngle - 0.05));
-    svg.dispatchEvent(pointerAt('pointermove', 1.5));
+    online.dispatchEvent(pointerAt('pointerdown', SLICES[0].end - 0.05));
+    svg.dispatchEvent(pointerAt('pointermove', wrapped));
+    svg.dispatchEvent(pointerAt('pointerup', wrapped));
 
-    expect(labelPercent('a')).toBe('18%');
-    expect(labelPercent('b')).toBe('32%');
-    expect(labelPercent('c')).toBe('50%');
+    expect(events[0].value).toBeCloseTo(80, 6);
+    expect(events[1].value).toBeCloseTo(15, 6);
+    expect(roundedPath(online.getAttribute('d') ?? '')).toBe(
+      roundedPath(createPieSlicePath(CENTER, { start: SLICES[0].start, end: wrapped })),
+    );
+    expect(roundedPath(retail.getAttribute('d') ?? '')).toBe(
+      roundedPath(createPieSlicePath(CENTER, { start: wrapped, end: SLICES[1].end })),
+    );
+    expect(other.getAttribute('d')).toBe(otherBefore);
   });
 
-  it('emits two chartValueChange events on release, conserving the combined value exactly', () => {
-    const { viewer, svg } = createFakeViewer();
-    const emitter = new Emitter();
-    const events: Array<{ series: string; index: number; value: number }> = [];
-    emitter.on('chartValueChange', event => events.push(event));
-    bindPieSliceDrag(viewer, emitter);
-    const { elements } = buildPieChart(svg);
-    const [sliceA] = elements;
+  it('lets a slice collapse to exactly zero rather than destroying it', () => {
+    const { svg, events, online, retail } = setup();
 
-    const boundaryAngle = SLICES[0].end;
-    sliceA.dispatchEvent(pointerAt('pointerdown', boundaryAngle - 0.05));
-    svg.dispatchEvent(pointerAt('pointermove', 1.5));
-    svg.dispatchEvent(pointerAt('pointerup', 1.5));
+    online.dispatchEvent(pointerAt('pointerdown', SLICES[0].end - 0.05));
+    svg.dispatchEvent(pointerAt('pointermove', SLICES[1].end - 0.2));
+    svg.dispatchEvent(pointerAt('pointermove', SLICES[1].end));
+    svg.dispatchEvent(pointerAt('pointerup', SLICES[1].end));
 
-    expect(events).toHaveLength(2);
-    expect(events[0]).toMatchObject({ series: 'a', index: 0 });
-    expect(events[1]).toMatchObject({ series: 'b', index: 0 });
-    expect(events[0].value + events[1].value).toBeCloseTo(30, 10);
-    expect(events[0].value).toBeCloseTo((30 * (1.5 - 0)) / ((TWO_PI / 3) * 2 - 0), 10);
+    expect(events[0].value).toBeCloseTo(95, 6);
+    expect(events[1].value).toBe(0);
+    expect(retail.isConnected).toBe(true);
+    expect(retail.getAttribute('d')).toBeTruthy();
+    expect(roundedPath(online.getAttribute('d') ?? '')).toBe(
+      roundedPath(createPieSlicePath(CENTER, { start: SLICES[0].start, end: SLICES[1].end })),
+    );
+  });
+
+  it('holds a collapsed slice at zero when the pointer keeps going past the edge', () => {
+    const { svg, events, online } = setup();
+
+    online.dispatchEvent(pointerAt('pointerdown', SLICES[0].end - 0.05));
+    svg.dispatchEvent(pointerAt('pointermove', SLICES[1].end - 0.05));
+    svg.dispatchEvent(pointerAt('pointermove', SLICES[2].end - 0.05));
+    svg.dispatchEvent(pointerAt('pointerup', SLICES[2].end - 0.05));
+
+    expect(events[0].value).toBeCloseTo(95, 6);
+    expect(events[1].value).toBe(0);
+  });
+
+  it('never lets the two dragged slices take anything from the third', () => {
+    const { svg, events, online, other } = setup();
+    const otherBefore = other.getAttribute('d');
+
+    online.dispatchEvent(pointerAt('pointerdown', SLICES[0].end - 0.05));
+    for (const step of [0.1, 0.9, 0.35, 0.6, 0.99, 0.02, 0.5]) {
+      svg.dispatchEvent(pointerAt('pointermove', START + TWO_PI * step));
+    }
+    svg.dispatchEvent(pointerAt('pointerup', START + TWO_PI * 0.5));
+
+    expect(events[0].value + events[1].value).toBeCloseTo(95, 6);
+    expect(events[0].value).toBeGreaterThanOrEqual(0);
+    expect(events[1].value).toBeGreaterThanOrEqual(0);
+    expect(other.getAttribute('d')).toBe(otherBefore);
+  });
+
+  it('drags the last slice by its leading edge, never by the seam at twelve', () => {
+    const { svg, events, online, other } = setup();
+    const onlineBefore = online.getAttribute('d');
+
+    other.dispatchEvent(pointerAt('pointerdown', SLICES[2].start + 0.02));
+    svg.dispatchEvent(pointerAt('pointermove', START + TWO_PI * 0.9));
+    svg.dispatchEvent(pointerAt('pointerup', START + TWO_PI * 0.9));
+
+    expect(events.map(event => event.series)).toEqual(['retail', 'other']);
+    expect(events[0].value + events[1].value).toBeCloseTo(42, 6);
+    expect(events[1].value).toBeCloseTo(10, 6);
+    expect(online.getAttribute('d')).toBe(onlineBefore);
+  });
+
+  it('pins the seam at twelve even when the drag pushes hard past it', () => {
+    const { svg, events, retail, other } = setup();
+    const seam = SLICES[2].end;
+
+    other.dispatchEvent(pointerAt('pointerdown', SLICES[2].start + 0.02));
+    svg.dispatchEvent(pointerAt('pointermove', SLICES[2].end - 0.02));
+    svg.dispatchEvent(pointerAt('pointermove', START + TWO_PI * 1.1));
+    svg.dispatchEvent(pointerAt('pointerup', START + TWO_PI * 1.1));
+
+    expect(events[0].value).toBeCloseTo(42, 6);
+    expect(events[1].value).toBe(0);
+    expect(roundedPath(retail.getAttribute('d') ?? '')).toBe(
+      roundedPath(createPieSlicePath(CENTER, { start: SLICES[1].start, end: seam })),
+    );
+    expect(roundedPath(other.getAttribute('d') ?? '')).toBe(
+      roundedPath(createPieSlicePath(CENTER, { start: seam, end: seam })),
+    );
   });
 
   it('does not start a drag when clicking outside any pie slice', () => {
-    const { viewer, svg } = createFakeViewer();
-    const emitter = new Emitter();
-    const events: unknown[] = [];
-    emitter.on('chartValueChange', event => events.push(event));
-    bindPieSliceDrag(viewer, emitter);
-    buildPieChart(svg);
+    const { svg, events } = setup();
 
     svg.dispatchEvent(pointerAt('pointerdown', 0));
     svg.dispatchEvent(pointerAt('pointermove', 1.5));
@@ -176,17 +240,10 @@ describe('dragging a pie slice boundary redistributes only the two adjacent slic
   });
 
   it('does nothing on a plain click with no movement', () => {
-    const { viewer, svg } = createFakeViewer();
-    const emitter = new Emitter();
-    const events: unknown[] = [];
-    emitter.on('chartValueChange', event => events.push(event));
-    bindPieSliceDrag(viewer, emitter);
-    const { elements } = buildPieChart(svg);
-    const [sliceA] = elements;
+    const { svg, events, online } = setup();
 
-    const clickAngle = SLICES[0].end - 0.05;
-    sliceA.dispatchEvent(pointerAt('pointerdown', clickAngle));
-    svg.dispatchEvent(pointerAt('pointerup', clickAngle));
+    online.dispatchEvent(pointerAt('pointerdown', SLICES[0].end - 0.05));
+    svg.dispatchEvent(pointerAt('pointerup', SLICES[0].end - 0.05));
 
     expect(events).toHaveLength(0);
   });

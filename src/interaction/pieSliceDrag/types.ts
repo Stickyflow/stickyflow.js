@@ -1,5 +1,5 @@
 import type { OwnerRef } from '../../viewer';
-import type { PieBoundaryDrag } from './boundary';
+import type { PieBoundaryDrag, PieBoundaryValue } from './boundary';
 
 export interface PieSliceDragState {
   owner: OwnerRef;
@@ -8,6 +8,7 @@ export interface PieSliceDragState {
   centerX: number;
   centerY: number;
   boundary: PieBoundaryDrag;
+  lastSplit: PieBoundaryValue | null;
   beforeElement: SVGGraphicsElement;
   afterElement: SVGGraphicsElement;
   outerRadius: number;

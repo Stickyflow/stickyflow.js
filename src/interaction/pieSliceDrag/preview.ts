@@ -1,5 +1,5 @@
 import { createPieSlicePath } from '../../rendering/charts/primitives/pieShape';
-import { pieBoundaryValueAt } from './boundary';
+import type { PieBoundaryValue } from './boundary';
 import type { PieSliceDragState } from './types';
 
 function updateSlicePath(drag: PieSliceDragState, element: SVGGraphicsElement, start: number, end: number): void {
@@ -21,13 +21,12 @@ function updateLabelPercent(svg: SVGSVGElement, ownerId: string, seriesId: strin
   }
 }
 
-export function updatePieSliceDragPreview(svg: SVGSVGElement, drag: PieSliceDragState, angle: number): void {
+export function updatePieSliceDragPreview(svg: SVGSVGElement, drag: PieSliceDragState, split: PieBoundaryValue): void {
   const { boundary } = drag;
-  const { beforeValue, afterValue, boundary: split } = pieBoundaryValueAt(boundary, angle);
 
-  updateSlicePath(drag, drag.beforeElement, boundary.arcStart, split);
-  updateSlicePath(drag, drag.afterElement, split, boundary.arcEnd);
+  updateSlicePath(drag, drag.beforeElement, boundary.arcStart, split.boundary);
+  updateSlicePath(drag, drag.afterElement, split.boundary, boundary.arcEnd);
 
-  updateLabelPercent(svg, drag.owner.id, boundary.before.seriesId, beforeValue, drag.total);
-  updateLabelPercent(svg, drag.owner.id, boundary.after.seriesId, afterValue, drag.total);
+  updateLabelPercent(svg, drag.owner.id, boundary.before.seriesId, split.beforeValue, drag.total);
+  updateLabelPercent(svg, drag.owner.id, boundary.after.seriesId, split.afterValue, drag.total);
 }
