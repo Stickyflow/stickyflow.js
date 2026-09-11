@@ -43,6 +43,8 @@ export function readChart(block: SflBlock, properties: ChartProperties): ChartDa
     hexRadius: asNumber(properties.get('hexRadius')),
     innerRadius: asNumber(properties.get('innerRadius')),
     cellGap: asNumber(properties.get('cellGap')),
+    showValues: readBoolean(properties.get('showValues')),
+    squareCells: readBoolean(properties.get('squareCells')),
     axisX: readAxis(axes.find(axis => axis.name === 'x')),
     axisY: readAxis(axes.find(axis => axis.name === 'y' || axis.name === 'value')),
     series: children.filter(child => child.kind === 'Series').map(readSeries),

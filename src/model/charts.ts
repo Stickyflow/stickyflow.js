@@ -108,6 +108,8 @@ export interface Chart {
     hexRadius?: number;
     innerRadius?: number;
     cellGap?: number;
+    showValues?: boolean;
+    squareCells?: boolean;
     scale?: ChartRamp;
     interpolate?: 'idw';
     idwPower?: number;

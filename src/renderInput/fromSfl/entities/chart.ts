@@ -34,6 +34,8 @@ export function chartObject(e: SflEntityOut) {
       hexRadius: e.chart?.hexRadius,
       innerRadius: e.chart?.innerRadius,
       cellGap: e.chart?.cellGap,
+      showValues: e.chart?.showValues,
+      squareCells: e.chart?.squareCells,
     },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,

@@ -13,9 +13,9 @@ const ROW_GAP = 2;
 // *legend* reads better as a smooth low -> high ramp — that is what actually
 // shows a reader which end of the scale is which, and a tick under every
 // band boundary spells out exactly where the values run from and to, which
-// a row of disconnected boxes never communicated. zone.label (if given)
-// still renders, as a caption above the segment of the bar its own band
-// covers, so it isn't lost — just no longer crowding the numbers below.
+// a row of disconnected boxes never communicated. Zone labels (Low/Medium/…)
+// aren't drawn here — the numbers already say where each band starts and
+// ends, and a label row above the bar just repeated that.
 export function renderHeatmapLegend(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
   if (layout.reservedSpace.legend <= 0 || layout.zones.length === 0) {
     return [];
@@ -24,11 +24,10 @@ export function renderHeatmapLegend(context: ChartRenderContext, layout: Heatmap
   const barX = layout.grid.x;
   const barWidth = layout.grid.width;
   const labelHeight = layout.fontSize + 2;
-  const barY = layout.grid.y + layout.grid.height + 6 + labelHeight + ROW_GAP;
+  const barY = layout.grid.y + layout.grid.height + 6;
   const barBounds = boxBounds({ x: barX, y: barY, width: barWidth, height: BAR_HEIGHT });
 
   return [
-    ...createZoneLabels(context, layout, barX, barY, barWidth, labelHeight),
     createGradientBar(context, layout, barX, barY, barWidth, barBounds),
     ...createZoneColorTargets(context, layout, barX, barY, barWidth, barBounds),
     ...createBoundaryTicks(context, layout, barX, barY, barWidth, labelHeight),
@@ -156,37 +155,5 @@ function createBoundaryTicks(
       align,
     });
     return [tick, label];
-  });
-}
-
-function createZoneLabels(
-  context: ChartRenderContext,
-  layout: HeatmapLayout,
-  barX: number,
-  barY: number,
-  barWidth: number,
-  labelHeight: number,
-): RenderNode[] {
-  const { chart, bounds, nextOrder } = context;
-  const labelY = barY - ROW_GAP - labelHeight;
-  return layout.zones.flatMap((zone, index) => {
-    const start = layout.bands[index];
-    const end = layout.bands[index + 1];
-    if (!zone.label || start === undefined || end === undefined) {
-      return [];
-    }
-    const centerX = barX + ((bandRatio(layout, start) + bandRatio(layout, end)) / 2) * barWidth;
-    const width = Math.max(1, (bandRatio(layout, end) - bandRatio(layout, start)) * barWidth - 4);
-    return [
-      chartText({
-        id: `chart-heatmap-legend-${chart.id}-${index}`,
-        order: nextOrder(),
-        bounds,
-        frame: { x: centerX - width / 2, y: labelY, width, height: labelHeight },
-        text: zone.label,
-        chart,
-        align: 'center',
-      }),
-    ];
   });
 }

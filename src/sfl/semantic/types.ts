@@ -80,6 +80,8 @@ export interface SflEntityOut {
     hexRadius?: number;
     innerRadius?: number;
     cellGap?: number;
+    showValues?: boolean;
+    squareCells?: boolean;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{

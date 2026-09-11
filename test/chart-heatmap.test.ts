@@ -95,6 +95,55 @@ describe('Heatmap chart', () => {
     expect(Number(gapped_?.[4])).toBeCloseTo(Number(plain?.[4]) - 4);
   });
 
+  it('rounds cell corners to match cellGap when barCornerRadius is not set, but honors an explicit override', () => {
+    const gapOnly = HEATMAP_SFL.replace('type: heatmap', 'type: heatmap\n    cellGap: 4');
+    const gapSquare = HEATMAP_SFL.replace('type: heatmap', 'type: heatmap\n    cellGap: 4\n    barCornerRadius: 0');
+    const { svg: gapOnlySvg } = render(gapOnly);
+    const { svg: gapSquareSvg } = render(gapSquare);
+    const gapOnlyCell = gapOnlySvg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const gapSquareCell = gapSquareSvg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    expect(gapOnlyCell).toContain('rx="4"');
+    expect(gapSquareCell).not.toContain('rx=');
+  });
+
+  it('sizes the row-header gutter to the longest row label, not a fixed fraction of chart width', () => {
+    const shortLabels = HEATMAP_SFL;
+    const longLabels = HEATMAP_SFL.replace('"Morning"', '"Wednesday Overnight Shift"').replace(
+      '"Evening"',
+      '"Extended Weekend Coverage"',
+    );
+    const shortCell = render(shortLabels).svg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const longCell = render(longLabels).svg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const shortX = Number(shortCell?.match(/ x="([\d.]+)"/)?.[1]);
+    const longX = Number(longCell?.match(/ x="([\d.]+)"/)?.[1]);
+    // "Morning"/"Evening" no longer reserve the old fixed-96px gutter - the
+    // grid starts noticeably closer to the row labels - while a much longer
+    // label still pushes the grid further right to make room for it.
+    expect(shortX).toBeLessThan(longX);
+    expect(longX - shortX).toBeGreaterThan(20);
+  });
+
+  it('squareCells forces a 1:1 cell aspect ratio instead of stretching to fill the grid', () => {
+    const stretched = render(HEATMAP_SFL).svg;
+    const stretchedCell = stretched.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const [, stretchedW, stretchedH] = stretchedCell?.match(/width="([\d.]+)" height="([\d.]+)"/) ?? [];
+    expect(Number(stretchedW)).not.toBeCloseTo(Number(stretchedH));
+
+    const squared = HEATMAP_SFL.replace('type: heatmap', 'type: heatmap\n    squareCells: true');
+    const squaredSvg = render(squared).svg;
+    const squaredCell = squaredSvg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const [, squaredW, squaredH] = squaredCell?.match(/width="([\d.]+)" height="([\d.]+)"/) ?? [];
+    expect(Number(squaredW)).toBeCloseTo(Number(squaredH));
+    expect(Number(squaredW)).toBeGreaterThan(0);
+  });
+
+  it('showValues: false drops the per-cell number but keeps the cell shapes', () => {
+    const noValues = HEATMAP_SFL.replace('type: heatmap', 'type: heatmap\n    showValues: false');
+    const { svg } = render(noValues);
+    expect(svg).not.toContain('chart-heatmap-value-');
+    expect(svg.match(/chart-heatmap-cell-/g)?.length).toBe(6);
+  });
+
   it('labels rows from Series.label and columns from config.categories', () => {
     const { svg } = render(HEATMAP_SFL);
     expect(svg).toContain('>Morning<');
@@ -115,11 +164,11 @@ describe('Heatmap chart', () => {
     expect(stops).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
   });
 
-  it('labels each zone above its own stretch of the bar, and the axis range below it', () => {
+  it('labels the axis range below the bar, without a redundant zone-name row above it', () => {
     const { svg } = render(HEATMAP_SFL);
-    expect(svg).toContain('>Low<');
-    expect(svg).toContain('>Medium<');
-    expect(svg).toContain('>High<');
+    expect(svg).not.toContain('>Low<');
+    expect(svg).not.toContain('>Medium<');
+    expect(svg).not.toContain('>High<');
     // Axis y runs 0-10 with thresholds [3, 7] : four boundary ticks (0, 3, 7, 10).
     for (const boundary of ['0', '3', '7', '10']) {
       expect(svg).toContain(`>${boundary}<`);

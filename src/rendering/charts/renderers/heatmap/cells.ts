@@ -65,7 +65,11 @@ function colorForValue(value: number, layout: HeatmapLayout): string {
 }
 
 function renderHeatmapCell(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode[] {
-  return [createCellBackground(context, layout, cell), createCellValueLabel(context, layout, cell)];
+  const background = createCellBackground(context, layout, cell);
+  if (context.chart.config?.showValues === false) {
+    return [background];
+  }
+  return [background, createCellValueLabel(context, layout, cell)];
 }
 
 function createCellBackground(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode {
