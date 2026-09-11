@@ -12,6 +12,7 @@ export function readSeries(block: SflBlock): ChartSeries {
     color: asString(properties.get('color')),
     colors: readSeriesColors(properties.get('colors')),
     opacity: asNumber(properties.get('opacity')),
+    group: asString(properties.get('group')),
     values: readSeriesValues(properties.get('values')),
     error: readSeriesErrors(properties.get('error')),
     source: asString(properties.get('source')),

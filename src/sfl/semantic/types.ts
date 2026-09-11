@@ -90,6 +90,7 @@ export interface SflEntityOut {
       color?: string;
       colors?: Array<string | null>;
       opacity?: number;
+      group?: string;
       values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];
       error?: Array<number | [number, number] | null>;
       source?: string;

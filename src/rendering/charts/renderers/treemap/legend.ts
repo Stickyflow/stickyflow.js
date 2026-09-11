@@ -36,7 +36,12 @@ function legendItemWidth(zone: ChartZone, fontSize: number): number {
 function createTreemapLegendItems(layout: TreemapLayout, origin: TreemapLegendOrigin): TreemapLegendItem[] {
   const items: TreemapLegendItem[] = [];
   let x = origin.x;
-  layout.zones.forEach((zone, zoneIndex) => {
+  // layout.zones always has entries (falls back to the 3-zone default) even
+  // when axis_y has no thresholds and so only one real band exists - only
+  // render as many legend items as there are actual bands, or the extra
+  // zones show a bogus "undefined-undefined" range past the last boundary.
+  const bandCount = Math.max(0, layout.bands.length - 1);
+  layout.zones.slice(0, bandCount).forEach((zone, zoneIndex) => {
     const width = legendItemWidth(zone, layout.fontSize);
     items.push({
       zone,

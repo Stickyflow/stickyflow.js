@@ -64,6 +64,10 @@ export interface ChartSeries {
   color?: string | GradientColorObject | MeshGradientObject;
   colors?: Array<string | GradientColorObject | MeshGradientObject | null>;
   opacity?: number;
+  /** Treemap only: assigns a leaf to a top-level branch, rendered as a
+   *  header band above its own squarified sub-region. Leaves with no group
+   *  (or when no leaf in the chart has one) render as a flat treemap. */
+  group?: string;
   values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];
   error?: Array<number | [number, number] | null>;
   source?: string;
