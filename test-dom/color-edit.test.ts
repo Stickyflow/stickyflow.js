@@ -27,6 +27,25 @@ function swatch(svg: SVGSVGElement, fill: string | null): SVGGraphicsElement {
   return node;
 }
 
+function zoneSwatch(svg: SVGSVGElement, fill: string | null): SVGGraphicsElement {
+  const node = document.createElementNS(SVG_NS, 'rect') as SVGGraphicsElement;
+  node.setAttribute('data-sf-role', 'chart');
+  node.setAttribute('data-sf-id', 'c');
+  node.setAttribute('data-sf-prop', 'zones[0][1]');
+  node.setAttribute('data-sf-prop-kind', 'color');
+  node.setAttribute('data-sf-prop-solid-only', 'true');
+  if (fill) {
+    node.setAttribute('fill', fill);
+  }
+  Object.defineProperty(node, 'getBBox', {
+    value: () => ({ x: 20, y: 200, width: 40, height: 10 }),
+    configurable: true,
+  });
+  Object.defineProperty(node, 'getScreenCTM', { value: () => null, configurable: true });
+  svg.appendChild(node);
+  return node;
+}
+
 function linearGradientDef(svg: SVGSVGElement, id: string, colors: string[]): void {
   const def = document.createElementNS(SVG_NS, 'linearGradient');
   def.setAttribute('id', id);
@@ -173,6 +192,39 @@ describe('clicking a legend swatch', () => {
     document.querySelector<HTMLButtonElement>('.sf-cp-section-head .sf-cp-icon-btn')?.click();
 
     expect(seen[0].value).toMatch(/^gradient\(0, /);
+  });
+
+  it("hides the tab switcher entirely for a solid-only target (a zone swatch feeding a gradient bar's own stop)", () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    click(zoneSwatch(svg, '#ede9fe'));
+    expect(popover()).not.toBeNull();
+    expect(document.querySelector<HTMLDivElement>('.sf-cp-tabs')?.hidden).toBe(true);
+    expect(hexField()?.value).toBe('#ede9fe');
+  });
+
+  it('opens a solid-only target on Solid even if its current fill happens to be a gradient reference', () => {
+    const { viewer, svg } = createFakeViewer();
+    bindEditing(viewer, { properties: {} });
+    linearGradientDef(svg, 'g3', ['#aaaaaa', '#bbbbbb']);
+    click(zoneSwatch(svg, 'url(#g3)'));
+    expect(hexField()?.value).toBe('#aaaaaa');
+  });
+
+  it('never writes a gradient() value for a solid-only target', () => {
+    const { viewer, svg } = createFakeViewer();
+    const interaction = bindEditing(viewer, { properties: {} });
+    const seen: PropertyChangeEvent[] = [];
+    interaction.on('propertyChange', event => seen.push(event));
+
+    click(zoneSwatch(svg, '#ede9fe'));
+    const hex = hexField();
+    if (hex) {
+      hex.value = '#123456';
+      hex.dispatchEvent(new Event('change'));
+    }
+    expect(seen).toHaveLength(1);
+    expect(seen[0].value).toBe('#123456');
   });
 
   it('closes the previous popover when a second swatch is clicked', () => {

@@ -11,12 +11,6 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
   const slotWidth = plot.width / valueCount;
   const barWidth = Math.max(1, slotWidth - 8);
   const cornerRadius = chart.config?.barCornerRadius ?? 2;
-  // Rounding every segment's corners would round the seam between two
-  // stacked bars too, which reads as a gap that isn't there. `true`/percent
-  // stack series bottom-to-top in series order, so only the last series ever
-  // sits at the visible top of a column. Waterfall's bars don't stack on top
-  // of each other at all (see stackedSegment) : each one is its own free-
-  // standing column, so each gets the same rounding a grouped bar would.
   const outerSeriesIndex = mode === 'waterfall' ? null : chart.series.length - 1;
 
   for (let valueIndex = 0; valueIndex < valueCount; valueIndex++) {

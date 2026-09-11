@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sflToRenderInput } from '../src/index';
+import { render, sflToRenderInput } from '../src/index';
 import { applyPropertyChange } from '../src/interaction/patchSfl';
 import type { OwnerRef } from '../src/viewer';
 
@@ -166,6 +166,66 @@ describe('applyPropertyChange — list elements', () => {
 
   it('refuses to grow a nested index (e.g. a missing tuple component)', () => {
     expect(applyPropertyChange(BAR, { owner: chart(), path: 'Series[online].values[9][1]', value: 1 })).toBe(BAR);
+  });
+});
+
+describe('applyPropertyChange — list elements whose value contains a comma', () => {
+  // zones[N][1] is a nested-list-of-pairs edit target (heatmap's and
+  // treemap's legend color-edit), and a gradient/mesh-gradient color
+  // string ("gradient(90, #7c3aed 0%, #ec4899 100%)") legitimately
+  // contains commas of its own. The color picker's onCommit fires
+  // repeatedly while dragging a slider, so the SAME element gets
+  // re-edited over and over in normal use, not just once.
+  const TREEMAP = `sfl 1.4
+
+Model M {
+  Chart c {
+    type: treemap
+    zones: [["Small", "#ede9fe"], ["Medium", "#c4b5fd"], ["Large", "#8b5cf6"]]
+
+    Axis x { min: 0; max: 1; step: 1 }
+    Axis y { min: 0; max: 100; step: 20 }
+
+    Series a { label: "A"; values: [10] }
+
+    layout { position: 0, 0; size: 300, 200 }
+  }
+}
+`;
+
+  it('does not corrupt the list when a comma-bearing value is committed to the same element twice', () => {
+    let next = applyPropertyChange(TREEMAP, {
+      owner: chart(),
+      path: 'zones[0][1]',
+      value: 'gradient(90, #7c3aed 0%, #ec4899 100%)',
+    });
+    // Re-committing to the same element - this is what corrupted the list
+    // before the fix: a nested-list scanner that split on every comma
+    // without skipping the ones inside this already-quoted string.
+    next = applyPropertyChange(next, {
+      owner: chart(),
+      path: 'zones[0][1]',
+      value: 'gradient(180, #7c3aed 0%, #ec4899 100%)',
+    });
+    expect(next).toContain('"gradient(180, #7c3aed 0%, #ec4899 100%)"');
+    expect(next).toContain('["Medium", "#c4b5fd"]');
+    expect(next).toContain('["Large", "#8b5cf6"]');
+    const { diagnostics } = render(next);
+    expect(diagnostics).toEqual([]);
+  });
+
+  it('keeps the other two zones intact after editing a third, unrelated index', () => {
+    let next = applyPropertyChange(TREEMAP, {
+      owner: chart(),
+      path: 'zones[0][1]',
+      value: 'gradient(90, #7c3aed 0%, #ec4899 100%)',
+    });
+    next = applyPropertyChange(next, { owner: chart(), path: 'zones[2][1]', value: '#654321' });
+    expect(next).toContain('"gradient(90, #7c3aed 0%, #ec4899 100%)"');
+    expect(next).toContain('["Medium", "#c4b5fd"]');
+    expect(next).toContain('["Large", "#654321"]');
+    const { diagnostics } = render(next);
+    expect(diagnostics).toEqual([]);
   });
 });
 

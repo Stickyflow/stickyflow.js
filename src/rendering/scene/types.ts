@@ -68,6 +68,7 @@ export interface SceneBase {
   detail?: SceneDetail;
   prop?: string;
   propKind?: 'value' | 'color';
+  propSolidOnly?: boolean;
 }
 
 export interface SceneRect extends SceneBase {

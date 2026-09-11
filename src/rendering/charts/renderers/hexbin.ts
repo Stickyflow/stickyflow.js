@@ -22,9 +22,6 @@ export function renderHexbin(context: ChartRenderContext): RenderNode[] {
     const pairs = explicit
       ? (series.values as [number, number][])
       : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
-    // Binned in plot-local pixels, then offset onto the canvas: the grid is
-    // anchored at Math.round(x / dx), so feeding it absolute coordinates
-    // would re-bin the same cloud differently every time the chart moves.
     const pixelPoints = pairs.map(([vx, vy]) => ({
       x: mapChartValue(vx, chart.axis_x, plot.width),
       y: plot.height - mapChartValue(vy, chart.axis_y, plot.height),

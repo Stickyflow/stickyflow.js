@@ -7,7 +7,8 @@ import type { TreemapLayout } from './types';
 export function createTreemapLayout(context: ChartRenderContext): TreemapLayout {
   const { chart, plot, showLegend } = context;
   const fontSize = Math.max(9, finite(chart.font_size, 12));
-  const legendHeight = showLegend ? 28 : 0;
+  const legendHeight = showLegend ? 38 : 0;
+  const cellGap = Math.max(0, finite(chart.config?.cellGap, 0));
   return {
     leaves: chart.series,
     bands: axisBands(chart.axis_y),
@@ -17,6 +18,8 @@ export function createTreemapLayout(context: ChartRenderContext): TreemapLayout 
     legendHeight,
     gridWidth: Math.max(1, plot.width),
     gridHeight: Math.max(1, plot.height - legendHeight),
+    cellGap,
+    cellRadius: Math.max(0, finite(chart.config?.barCornerRadius, cellGap)),
   };
 }
 

@@ -36,6 +36,7 @@ export function chartObject(e: SflEntityOut) {
       cellGap: e.chart?.cellGap,
       showValues: e.chart?.showValues,
       squareCells: e.chart?.squareCells,
+      headerColor: e.chart?.headerColor,
     },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,

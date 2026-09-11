@@ -52,10 +52,6 @@ export function formatReadoutValue(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
 
-// A width from the live value's own string length flips every time rounding
-// crosses a decimal boundary (60 <-> 60.1), resizing the box every frame the
-// mouse jitters near that boundary. The scale is fixed for the whole drag, so
-// sizing from its worst-case digit count keeps the box a constant size.
 function readoutWidth(scale: ValueScale): number {
   const magnitude = Math.max(Math.abs(scale.min), Math.abs(scale.max));
   const sign = scale.min < 0 ? 1 : 0;

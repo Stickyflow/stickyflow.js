@@ -82,6 +82,7 @@ export interface SflEntityOut {
     cellGap?: number;
     showValues?: boolean;
     squareCells?: boolean;
+    headerColor?: string;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{

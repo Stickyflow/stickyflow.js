@@ -78,6 +78,7 @@ export function contractAttrs(node: RenderNode): string {
     ...(node.detail ? detailAttrs(node.detail) : []),
     node.prop ? `data-sf-prop="${xml(node.prop)}"` : undefined,
     node.propKind ? `data-sf-prop-kind="${node.propKind}"` : undefined,
+    node.propSolidOnly ? 'data-sf-prop-solid-only="true"' : undefined,
     label ? `tabindex="0" aria-label="${xml(label.replace(/\s+/g, ' ').trim())}"` : undefined,
   ].filter((attribute): attribute is string => attribute !== undefined);
 

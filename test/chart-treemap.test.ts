@@ -100,6 +100,56 @@ describe('Treemap chart', () => {
     expect(svg.match(/chart-treemap-legend-swatch-usage-\d+"/g)).toHaveLength(1);
   });
 
+  it('draws a single gradient bar spanning every zone color, low to high, not discrete swatches', () => {
+    const { svg } = render(TREEMAP_SFL);
+    const bar = svg.match(/<rect id="[^"]*chart-treemap-legend-bar-usage"[^>]*>/)?.[0];
+    expect(bar).toBeDefined();
+    expect(bar).toMatch(/fill="url\(#[^"]+\)"/);
+  });
+
+  it('places each zone color stop at its own band boundary, not evenly spaced by zone count', () => {
+    // 0-100 axis with thresholds [10, 90] : a tiny "Low" band and a tiny
+    // "High" band either side of a huge "Medium" one. Evenly spacing 3
+    // zone colors by count (33%/66%/100%) would put the first stop at
+    // 33% instead of 10%, nowhere near the actual boundary. Still one
+    // smooth gradient throughout - one stop per zone, not a hard-edged
+    // pair - just positioned by real value, not by zone index.
+    const uneven = TREEMAP_SFL.replace(
+      'Axis y { min: 0; max: 100; step: 20 }',
+      'Axis y { min: 0; max: 100; step: 20; thresholds: [10, 90] }',
+    );
+    const { svg } = render(uneven);
+    const gradient = svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0];
+    expect(gradient).toBeDefined();
+    const offsets = [...(gradient ?? '').matchAll(/stop offset="([\d.]+)%"/g)].map(match => Number(match[1]));
+    expect(offsets).toEqual([10, 90, 100]);
+  });
+
+  it('tile borders use the theme grid color, not a hardcoded white', () => {
+    const themed = TREEMAP_SFL.replace('type: treemap', 'type: treemap\n    style { gridColor: "#475569" }');
+    const { svg } = render(themed);
+    const videos = svg.match(/<rect id="[^"]*chart-treemap-tile-usage-videos"[^>]*>/)?.[0];
+    expect(videos).toContain('stroke="#475569"');
+  });
+
+  it('cellGap insets each tile and rounds it to match, honoring an explicit barCornerRadius override', () => {
+    const plain = render(TREEMAP_SFL).svg;
+    const plainTile = plain.match(/<rect id="[^"]*chart-treemap-tile-usage-videos"[^>]*>/)?.[0];
+    expect(plainTile).not.toContain('rx=');
+
+    const gapped = TREEMAP_SFL.replace('type: treemap', 'type: treemap\n    cellGap: 4');
+    const gappedSvg = render(gapped).svg;
+    const gappedTile = gappedSvg.match(/<rect id="[^"]*chart-treemap-tile-usage-videos"[^>]*>/)?.[0];
+    expect(gappedTile).toContain('rx="4"');
+    const [, plainW] = plainTile?.match(/ width="([\d.]+)"/) ?? [];
+    const [, gappedW] = gappedTile?.match(/ width="([\d.]+)"/) ?? [];
+    expect(Number(gappedW)).toBeCloseTo(Number(plainW) - 4);
+
+    const square = TREEMAP_SFL.replace('type: treemap', 'type: treemap\n    cellGap: 4\n    barCornerRadius: 0');
+    const squareTile = render(square).svg.match(/<rect id="[^"]*chart-treemap-tile-usage-videos"[^>]*>/)?.[0];
+    expect(squareTile).not.toContain('rx=');
+  });
+
   it('renders no header bands for a flat treemap (no leaf has a group)', () => {
     const { svg } = render(TREEMAP_SFL);
     expect(svg).not.toContain('chart-treemap-header-');
@@ -118,6 +168,100 @@ describe('Treemap chart', () => {
     for (const id of ['videos', 'photos', 'docs', 'misc']) {
       expect(svg).toContain(`chart-treemap-tile-usage-${id}`);
     }
+  });
+
+  it('headerColor overrides the header band fill, defaulting to gridColor', () => {
+    const defaultColor = render(GROUPED_TREEMAP_SFL).svg;
+    const defaultHeader = defaultColor.match(/<rect id="[^"]*chart-treemap-header-usage-0"[^>]*>/)?.[0];
+    expect(defaultHeader).toContain('fill="#e2e8f0"');
+
+    const custom = GROUPED_TREEMAP_SFL.replace('type: treemap', 'type: treemap\n    headerColor: "#312e81"');
+    const customSvg = render(custom).svg;
+    const customHeader = customSvg.match(/<rect id="[^"]*chart-treemap-header-usage-0"[^>]*>/)?.[0];
+    expect(customHeader).toContain('fill="#312e81"');
+  });
+
+  it('separates sibling group regions by exactly cellGap, the same width as a leaf-to-leaf gap', () => {
+    const gapped = GROUPED_TREEMAP_SFL.replace('type: treemap', 'type: treemap\n    cellGap: 4');
+    const { svg, scene } = render(gapped);
+    const headers = [
+      ...svg.matchAll(
+        /<rect id="[^"]*chart-treemap-header-usage-\d+"[^>]* x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g,
+      ),
+    ].map(m => ({ x: Number(m[1]), y: Number(m[2]), width: Number(m[3]), height: Number(m[4]) }));
+    expect(headers.length).toBe(3);
+    // Media (biggest branch) shares its top row with one other branch -
+    // find that horizontally-adjacent pair (same y) and check their gap :
+    // exactly the 4px cellGap, the same size as any leaf-to-leaf gap, so
+    // the whole chart reads as one consistent gap width rather than
+    // branches getting a conspicuously different one from leaves.
+    const sameRow = headers.filter(h => headers.some(other => other !== h && Math.abs(other.y - h.y) < 0.01));
+    expect(sameRow.length).toBeGreaterThanOrEqual(2);
+    sameRow.sort((a, b) => a.x - b.x);
+    const gapBetween = sameRow[1].x - (sameRow[0].x + sameRow[0].width);
+    expect(gapBetween).toBeCloseTo(4);
+    // Leaves still render, just inset within their (now smaller) group region.
+    const misc = scene.nodes.find(n => n.id === 'chart-treemap-tile-usage-misc');
+    expect(misc?.type === 'rect' && misc.width > 0 && misc.height > 0).toBe(true);
+  });
+
+  it("gives a leaf at its own group's edge the same gap to its cross-group neighbor as to a sibling leaf", () => {
+    // Two groups side by side, each with one big and one small leaf - the
+    // group rects are exactly touching before any gap (squarify's raw
+    // output), so this is the case that used to double up : Photos (Media's
+    // own right edge) picking up both its own per-leaf inset AND a second,
+    // group-level inset at the same boundary, making the Media|Work gap
+    // read wider than the Videos|Photos gap right next to it.
+    const twoGroups = `sfl 1.2
+
+Model board {
+  Chart usage {
+    type: treemap
+    cellGap: 4
+
+    Axis x { min: 0; max: 1; step: 1 }
+    Axis y { min: 0; max: 100; step: 20 }
+
+    Series videos { label: "Videos"; group: "Media"; values: [40] }
+    Series photos { label: "Photos"; group: "Media"; values: [30] }
+    Series docs   { label: "Docs";   group: "Work";  values: [30] }
+
+    layout { position: 0, 0; size: 400, 260 }
+  }
+}`;
+    const { scene } = render(twoGroups);
+    const frame = (id: string) => {
+      const node = scene.nodes.find(n => n.id === `chart-treemap-tile-usage-${id}`);
+      return node?.type === 'rect' ? node : undefined;
+    };
+    const videos = frame('videos');
+    const photos = frame('photos');
+    const docs = frame('docs');
+    expect(videos && photos && docs).toBeTruthy();
+    if (!videos || !photos || !docs) {
+      return;
+    }
+    // Videos and Photos are Media's own two leaves, side by side.
+    const withinGroupGap = photos.x - (videos.x + videos.width);
+    // Photos (Media's right edge) and Docs (Work's left edge) are
+    // neighbors across the group boundary.
+    const acrossGroupGap = docs.x - (photos.x + photos.width);
+    expect(withinGroupGap).toBeGreaterThan(0);
+    expect(acrossGroupGap).toBeCloseTo(withinGroupGap);
+  });
+
+  it('rounds header band corners to match cellRadius, same as leaf tiles', () => {
+    const gapped = GROUPED_TREEMAP_SFL.replace('type: treemap', 'type: treemap\n    cellGap: 4');
+    const { svg } = render(gapped);
+    const header = svg.match(/<rect id="[^"]*chart-treemap-header-usage-0"[^>]*>/)?.[0];
+    expect(header).toContain('rx="4"');
+
+    const square = GROUPED_TREEMAP_SFL.replace(
+      'type: treemap',
+      'type: treemap\n    cellGap: 4\n    barCornerRadius: 0',
+    );
+    const squareHeader = render(square).svg.match(/<rect id="[^"]*chart-treemap-header-usage-0"[^>]*>/)?.[0];
+    expect(squareHeader).not.toContain('rx=');
   });
 
   it("keeps a group's own leaves visually together, not interleaved by size with another group", () => {

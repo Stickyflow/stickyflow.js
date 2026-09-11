@@ -118,8 +118,6 @@ function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark)
     prop: seriesValueProp(mark.seriesId, mark.valueIndex),
     style: {
       fill: paint(mark.color, diagnostics, chart.id),
-      // Default width 0 : an existing chart that never set these keeps
-      // rendering with no visible border at all, exactly as before.
       stroke: paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id),
       strokeWidth: finite(chart.config?.barBorderWidth, 0),
     },

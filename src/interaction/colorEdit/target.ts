@@ -6,6 +6,7 @@ export interface ColorEditTarget {
   owner: OwnerRef;
   path: string;
   node: SVGGraphicsElement;
+  solidOnly: boolean;
 }
 
 function resolveTarget(
@@ -24,7 +25,8 @@ function resolveTarget(
   if (!path || !owner || !isEditablePath(path, rules)) {
     return null;
   }
-  return { owner, path, node };
+  const solidOnly = node.getAttribute('data-sf-prop-solid-only') === 'true';
+  return { owner, path, node, solidOnly };
 }
 
 export function resolveColorEditTarget(event: Event, rules: EditableRules | undefined): ColorEditTarget | null {

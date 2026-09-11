@@ -160,8 +160,12 @@ describe('Heatmap chart', () => {
     expect(bar).toMatch(/fill="url\(#[^"]+\)"/);
     const gradient = svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0];
     expect(gradient).toBeDefined();
+    // Two stops per band (a hard edge at each boundary, not a smooth blend
+    // between zone centers) - dedupe consecutive repeats to check the
+    // sequence of actual colors, not the stop count.
     const stops = [...(gradient ?? '').matchAll(/stop-color="([^"]+)"/g)].map(match => match[1]);
-    expect(stops).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
+    const distinctInOrder = stops.filter((color, index) => color !== stops[index - 1]);
+    expect(distinctInOrder).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
   });
 
   it('labels the axis range below the bar, without a redundant zone-name row above it', () => {
@@ -224,6 +228,7 @@ describe('Heatmap chart', () => {
     const stops = [
       ...(svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0] ?? '').matchAll(/stop-color="([^"]+)"/g),
     ].map(match => match[1]);
-    expect(stops).toEqual(['#ddd6fe', '#ff00ff', '#6d28d9']);
+    const distinctInOrder = stops.filter((color, index) => color !== stops[index - 1]);
+    expect(distinctInOrder).toEqual(['#ddd6fe', '#ff00ff', '#6d28d9']);
   });
 });

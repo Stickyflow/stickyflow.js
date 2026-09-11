@@ -3,13 +3,26 @@ interface ListElementSpan {
   end: number;
 }
 
+function skipString(text: string, quoteIndex: number): number {
+  for (let cursor = quoteIndex + 1; cursor < text.length; cursor++) {
+    if (text[cursor] === '\\') {
+      cursor++;
+    } else if (text[cursor] === '"') {
+      return cursor;
+    }
+  }
+  return text.length - 1;
+}
+
 function closingBracket(text: string, openIndex: number): number {
   if (openIndex < 0) {
     return -1;
   }
   let depth = 0;
   for (let cursor = openIndex; cursor < text.length; cursor++) {
-    if (text[cursor] === '[') {
+    if (text[cursor] === '"') {
+      cursor = skipString(text, cursor);
+    } else if (text[cursor] === '[') {
       depth++;
     } else if (text[cursor] === ']') {
       depth--;
@@ -37,7 +50,9 @@ function listElementSpans(text: string): { spans: ListElementSpan[]; start: numb
   let elementStart = 0;
   for (let cursor = 0; cursor < body.length; cursor++) {
     const character = body[cursor];
-    if (character === '[') {
+    if (character === '"') {
+      cursor = skipString(body, cursor);
+    } else if (character === '[') {
       depth++;
     } else if (character === ']') {
       depth--;

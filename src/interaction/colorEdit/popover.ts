@@ -15,6 +15,7 @@ export interface ColorPopoverOptions {
   seed: PickerValue;
   anchor: { left: number; top: number; width: number; height: number };
   theme?: ColorPickerTheme;
+  allowGradient?: boolean;
   onCommit(value: string): void;
   onReset?(): void;
 }
@@ -99,9 +100,10 @@ interface StopRow {
 
 export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHandle {
   const { seed, anchor, onCommit, onReset } = options;
+  const allowGradient = options.allowGradient ?? true;
   ensureColorPickerStyles(document);
 
-  let mode: PickerValue['mode'] = seed.mode;
+  let mode: PickerValue['mode'] = allowGradient ? seed.mode : 'solid';
   let solid = toSolid(seed);
   let gradient: GradientValue = toGradient(seed);
   let selected = 0;
@@ -114,6 +116,7 @@ export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHand
 
   const tabs = el('div', 'sf-cp-tabs', root);
   tabs.setAttribute('role', 'tablist');
+  tabs.hidden = !allowGradient;
   const solidTab = tabButton('Solid', tabs);
   const gradientTab = tabButton('Gradient', tabs);
 

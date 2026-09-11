@@ -9,4 +9,6 @@ export interface TreemapLayout {
   legendHeight: number;
   gridWidth: number;
   gridHeight: number;
+  cellGap: number;
+  cellRadius: number;
 }

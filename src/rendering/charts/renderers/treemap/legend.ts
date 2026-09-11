@@ -1,92 +1,145 @@
-import type { ChartZone } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
-import { chartText, DEFAULT_ZONE_FILL } from '../../primitives';
+import { boxBounds } from '../../../scene';
+import { chartText, DEFAULT_ZONE_FILL, formatFieldValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { TreemapLayout } from './types';
 
-interface TreemapLegendItem {
-  zone: ChartZone;
-  zoneIndex: number;
-  lowerBound: number;
-  upperBound: number;
-  x: number;
-  y: number;
-  width: number;
-  labelHeight: number;
-}
-
-interface TreemapLegendOrigin {
-  x: number;
-  y: number;
-}
+const BAR_HEIGHT = 10;
+const TICK_HEIGHT = 4;
+const ROW_GAP = 2;
 
 export function renderTreemapLegend(context: ChartRenderContext, layout: TreemapLayout): RenderNode[] {
-  if (layout.legendHeight <= 0) {
+  if (layout.legendHeight <= 0 || layout.zones.length === 0) {
     return [];
   }
 
-  const origin = { x: context.plot.x, y: context.plot.y + layout.gridHeight + 6 };
-  return createTreemapLegendItems(layout, origin).flatMap(item => renderTreemapLegendItem(context, item));
+  const barX = context.plot.x;
+  const barWidth = layout.gridWidth;
+  const labelHeight = layout.fontSize + 2;
+  const barY = context.plot.y + layout.gridHeight + 6;
+  const barBounds = boxBounds({ x: barX, y: barY, width: barWidth, height: BAR_HEIGHT });
+
+  return [
+    createGradientBar(context, layout, barX, barY, barWidth, barBounds),
+    ...createZoneColorTargets(context, layout, barX, barY, barWidth, barBounds),
+    ...createBoundaryTicks(context, layout, barX, barY, barWidth, labelHeight),
+  ];
 }
 
-function legendItemWidth(zone: ChartZone, fontSize: number): number {
-  return Math.max(64, (zone.label?.length ?? 0) * (fontSize - 1) * 0.55 + 40);
-}
-
-function createTreemapLegendItems(layout: TreemapLayout, origin: TreemapLegendOrigin): TreemapLegendItem[] {
-  const items: TreemapLegendItem[] = [];
-  let x = origin.x;
-  // layout.zones always has entries (falls back to the 3-zone default) even
-  // when axis_y has no thresholds and so only one real band exists - only
-  // render as many legend items as there are actual bands, or the extra
-  // zones show a bogus "undefined-undefined" range past the last boundary.
-  const bandCount = Math.max(0, layout.bands.length - 1);
-  layout.zones.slice(0, bandCount).forEach((zone, zoneIndex) => {
-    const width = legendItemWidth(zone, layout.fontSize);
-    items.push({
-      zone,
-      zoneIndex,
-      lowerBound: layout.bands[zoneIndex],
-      upperBound: layout.bands[zoneIndex + 1],
-      x,
-      y: origin.y,
-      width,
-      labelHeight: layout.fontSize,
-    });
-    x += width;
+function createZoneColorTargets(
+  context: ChartRenderContext,
+  layout: TreemapLayout,
+  barX: number,
+  barY: number,
+  barWidth: number,
+  barBounds: RenderNode['bounds'],
+): RenderNode[] {
+  const { chart, nextOrder } = context;
+  return layout.zones.flatMap((_zone, index) => {
+    const start = layout.bands[index];
+    const end = layout.bands[index + 1];
+    if (start === undefined || end === undefined) {
+      return [];
+    }
+    const x = barX + bandRatio(layout, start) * barWidth;
+    const width = Math.max(1, (bandRatio(layout, end) - bandRatio(layout, start)) * barWidth);
+    return [
+      {
+        type: 'rect' as const,
+        id: `chart-treemap-legend-swatch-${chart.id}-${index}`,
+        order: nextOrder(),
+        bounds: barBounds,
+        x,
+        y: barY,
+        width,
+        height: BAR_HEIGHT,
+        prop: `zones[${index}][1]`,
+        propKind: 'color' as const,
+        propSolidOnly: true,
+        style: { fill: { kind: 'solid' as const, color: 'transparent' } },
+      },
+    ];
   });
-  return items;
 }
 
-function renderTreemapLegendItem(context: ChartRenderContext, item: TreemapLegendItem): RenderNode[] {
-  return [createLegendSwatch(context, item), createLegendLabel(context, item)];
+function bandRatio(layout: TreemapLayout, value: number): number {
+  const first = layout.bands[0];
+  const last = layout.bands[layout.bands.length - 1];
+  return last === first ? 0 : (value - first) / (last - first);
 }
 
-function createLegendSwatch(context: ChartRenderContext, item: TreemapLegendItem): RenderNode {
-  const { chart, bounds, nextOrder } = context;
+function createGradientBar(
+  context: ChartRenderContext,
+  layout: TreemapLayout,
+  barX: number,
+  barY: number,
+  barWidth: number,
+  barBounds: RenderNode['bounds'],
+): RenderNode {
+  const { chart, nextOrder } = context;
+  const bandCount = Math.max(0, layout.bands.length - 1);
+  const zones = layout.zones.slice(0, bandCount);
+  const stops = zones.map((zone, index) => ({
+    offset: bandRatio(layout, layout.bands[index + 1] ?? layout.bands[layout.bands.length - 1]) * 100,
+    color: zone.color ?? DEFAULT_ZONE_FILL,
+  }));
   return {
     type: 'rect',
-    id: `chart-treemap-legend-swatch-${chart.id}-${item.zoneIndex}`,
+    id: `chart-treemap-legend-bar-${chart.id}`,
     order: nextOrder(),
-    bounds,
-    x: item.x,
-    y: item.y + 2,
-    width: 10,
-    height: 10,
-    rx: 2,
-    style: { fill: { kind: 'solid', color: item.zone.color ?? DEFAULT_ZONE_FILL } },
+    bounds: barBounds,
+    x: barX,
+    y: barY,
+    width: barWidth,
+    height: BAR_HEIGHT,
+    rx: 3,
+    style: {
+      fill: stops.length ? { kind: 'linear-gradient', angle: 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
+      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+      strokeWidth: 1,
+    },
   };
 }
 
-function createLegendLabel(context: ChartRenderContext, item: TreemapLegendItem): RenderNode {
+function createBoundaryTicks(
+  context: ChartRenderContext,
+  layout: TreemapLayout,
+  barX: number,
+  barY: number,
+  barWidth: number,
+  labelHeight: number,
+): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
-  const range = `${item.lowerBound}-${item.upperBound}`;
-  return chartText({
-    id: `chart-treemap-legend-${chart.id}-${item.zoneIndex}`,
-    order: nextOrder(),
-    bounds,
-    frame: { x: item.x + 15, y: item.y, width: item.width - 15, height: item.labelHeight },
-    text: item.zone.label ? `${item.zone.label} (${range})` : range,
-    chart,
+  const labelY = barY + BAR_HEIGHT + TICK_HEIGHT + ROW_GAP;
+  const labelWidth = 48;
+
+  return layout.bands.flatMap((value, index) => {
+    const x = barX + bandRatio(layout, value) * barWidth;
+    const tick: RenderNode = {
+      type: 'path',
+      id: `chart-treemap-legend-tick-${chart.id}-${index}`,
+      order: nextOrder(),
+      bounds,
+      d: `M ${x} ${barY + BAR_HEIGHT} L ${x} ${barY + BAR_HEIGHT + TICK_HEIGHT}`,
+      style: {
+        fill: { kind: 'none' },
+        stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+        strokeWidth: 1,
+      },
+    };
+    const isFirst = index === 0;
+    const isLast = index === layout.bands.length - 1;
+    const align = isFirst ? 'left' : isLast ? 'right' : 'center';
+    const frameX = isFirst ? x : isLast ? x - labelWidth : x - labelWidth / 2;
+    const label = chartText({
+      id: `chart-treemap-legend-tick-label-${chart.id}-${index}`,
+      order: nextOrder(),
+      bounds,
+      frame: { x: frameX, y: labelY, width: labelWidth, height: labelHeight },
+      text: formatFieldValue(value),
+      chart,
+      align,
+    });
+    return [tick, label];
   });
 }

@@ -45,6 +45,7 @@ export function readChart(block: SflBlock, properties: ChartProperties): ChartDa
     cellGap: asNumber(properties.get('cellGap')),
     showValues: readBoolean(properties.get('showValues')),
     squareCells: readBoolean(properties.get('squareCells')),
+    headerColor: asString(properties.get('headerColor')),
     axisX: readAxis(axes.find(axis => axis.name === 'x')),
     axisY: readAxis(axes.find(axis => axis.name === 'y' || axis.name === 'value')),
     series: children.filter(child => child.kind === 'Series').map(readSeries),

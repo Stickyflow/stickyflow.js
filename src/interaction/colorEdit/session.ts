@@ -45,6 +45,7 @@ export class ColorEditSession {
       seed: seedFrom(fill, readGradientValue(this.#svg, fill)),
       anchor: screenRectOf(target.node),
       theme: resolveTheme(this.#theme),
+      allowGradient: !target.solidOnly,
       onCommit: color => {
         this.#emitter.emit('propertyChange', { owner: target.owner, path: target.path, value: color });
       },

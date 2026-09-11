@@ -8,14 +8,6 @@ const BAR_HEIGHT = 10;
 const TICK_HEIGHT = 4;
 const ROW_GAP = 2;
 
-// One continuous gradient bar rather than a discrete swatch per zone : cells
-// are still colored by a hard band lookup (bandIndexForValue), but the
-// *legend* reads better as a smooth low -> high ramp — that is what actually
-// shows a reader which end of the scale is which, and a tick under every
-// band boundary spells out exactly where the values run from and to, which
-// a row of disconnected boxes never communicated. Zone labels (Low/Medium/…)
-// aren't drawn here — the numbers already say where each band starts and
-// ends, and a label row above the bar just repeated that.
 export function renderHeatmapLegend(context: ChartRenderContext, layout: HeatmapLayout): RenderNode[] {
   if (layout.reservedSpace.legend <= 0 || layout.zones.length === 0) {
     return [];
@@ -34,13 +26,6 @@ export function renderHeatmapLegend(context: ChartRenderContext, layout: Heatmap
   ];
 }
 
-// One invisible hit target per zone, stacked on top of the gradient bar (a
-// later `order` paints on top) over exactly the stretch of bar that zone's
-// band covers. fill: transparent rather than `none` — SVG only hit-tests a
-// "painted" shape, and a `none` fill isn't one, but a transparent solid
-// color still is. Lets a reader click any segment of the bar to open a
-// color picker for that one zone (zones[index][1] — index 0 of the pair is
-// the zone's label, left alone), without touching how the bar itself looks.
 function createZoneColorTargets(
   context: ChartRenderContext,
   layout: HeatmapLayout,
@@ -70,6 +55,7 @@ function createZoneColorTargets(
         height: BAR_HEIGHT,
         prop: `zones[${index}][1]`,
         propKind: 'color' as const,
+        propSolidOnly: true,
         style: { fill: { kind: 'solid' as const, color: 'transparent' } },
       },
     ];
@@ -91,8 +77,10 @@ function createGradientBar(
   barBounds: RenderNode['bounds'],
 ): RenderNode {
   const { chart, nextOrder } = context;
-  const stops = layout.zones.map((zone, index) => ({
-    offset: layout.zones.length === 1 ? 0 : (index / (layout.zones.length - 1)) * 100,
+  const bandCount = Math.max(0, layout.bands.length - 1);
+  const zones = layout.zones.slice(0, bandCount);
+  const stops = zones.map((zone, index) => ({
+    offset: bandRatio(layout, layout.bands[index + 1] ?? layout.bands[layout.bands.length - 1]) * 100,
     color: zone.color ?? DEFAULT_ZONE_FILL,
   }));
   return {
@@ -106,15 +94,13 @@ function createGradientBar(
     height: BAR_HEIGHT,
     rx: 3,
     style: {
-      fill: { kind: 'linear-gradient', angle: 0, stops },
+      fill: stops.length ? { kind: 'linear-gradient', angle: 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: 1,
     },
   };
 }
 
-// A tick at every band boundary (axis min, each threshold, axis max), each
-// labelled with its actual value underneath — the "from where to where".
 function createBoundaryTicks(
   context: ChartRenderContext,
   layout: HeatmapLayout,
