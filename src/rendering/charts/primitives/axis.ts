@@ -1,4 +1,6 @@
-import type { ChartAxis } from '../../../model/charts';
+import type { ChartAxis, ChartZone } from '../../../model/charts';
+import { interpolateHexColorStops } from '../../../model/colorInterpolation';
+import { DEFAULT_ZONE_FILL } from './defaults';
 
 export function mapChartValue(value: number, axis: ChartAxis, extent: number): number {
   if (axis.max === axis.min) {
@@ -26,11 +28,14 @@ export function axisBands(axis: ChartAxis): number[] {
   return [axis.min, ...thresholds, axis.max];
 }
 
-export function bandIndexForValue(value: number, bands: number[]): number {
-  for (let index = 0; index < bands.length - 2; index++) {
-    if (value < bands[index + 1]) {
-      return index;
-    }
+export function zoneColorAtValue(value: number, bands: number[], zones: ChartZone[]): string {
+  const bandCount = Math.max(0, bands.length - 1);
+  const stops = zones.slice(0, bandCount).map((zone, index) => ({
+    position: bands[index + 1] ?? bands[bands.length - 1],
+    color: zone.color ?? DEFAULT_ZONE_FILL,
+  }));
+  if (!stops.length) {
+    return DEFAULT_ZONE_FILL;
   }
-  return Math.max(0, bands.length - 2);
+  return interpolateHexColorStops(stops, value);
 }

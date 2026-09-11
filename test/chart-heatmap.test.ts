@@ -6,11 +6,10 @@ import { applyPropertyChange } from '../src/interaction';
 const solidFill = (node: RenderNode): string | undefined =>
   'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
-// Heatmap ported from stickyflow-atlas's buildHeatmapMarks (this package's
-// first chart type added after the initial six) - config.categories are
-// column headers (reusing the field radar already uses for its own category
-// labels, not a chart-family-specific spot on Axis), each Series is one row,
-// and axis_y.thresholds + config.zones bucket a cell's value into a color band.
+// config.categories are column headers (reusing the field radar already uses
+// for its own category labels), each Series is one row, and axis_y.thresholds
+// + config.zones anchor a continuous low -> high color scale a cell's value
+// is interpolated along.
 
 const HEATMAP_SFL = `sfl 1.2
 
@@ -60,12 +59,16 @@ describe('Heatmap chart', () => {
     expect(svg).toContain('data-sf-kind="heatmap"');
   });
 
-  it('buckets each cell into the correct zone color : 1<3 low, 5 in [3,7) medium, 9>=7 high', () => {
+  it('colors each cell by interpolating along the zone scale, not snapping to the nearest zone', () => {
     const { scene } = render(HEATMAP_SFL);
     const cells = scene.nodes.filter(node => node.id.startsWith('chart-heatmap-cell-') && node.type === 'rect');
-    // Morning row: [1, 5, 9] -> low, medium, high
     const morning = cells.filter(node => node.id.includes('-morning-'));
-    expect(morning.map(solidFill)).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
+    // Morning row: [1, 5, 9]. 1 is before the first threshold (3), so it's
+    // flat "Low". 5 sits halfway between the Medium (7) and Low (3)
+    // boundaries, so its color is halfway between those two zone colors,
+    // not a flat "Medium". Same for 9, two-thirds of the way from Medium
+    // (7) to High (10).
+    expect(morning.map(solidFill)).toEqual(['#ddd6fe', '#c2b1fc', '#8049e4']);
   });
 
   it('cells touch edge-to-edge with square corners by default', () => {
@@ -220,11 +223,12 @@ describe('Heatmap chart', () => {
 
     const { diagnostics, svg } = render(patched);
     expect(diagnostics).toEqual([]);
-    // Morning's own values are [1, 5, 9] : 5 sits in the [3, 7) "Medium"
-    // band, so that one cell should pick up the new color - the recolor
-    // reaches the cells themselves, not just the legend's own gradient.
+    // Morning's own values are [1, 5, 9] : 5 sits exactly halfway between
+    // the Low (3) and Medium (7) boundaries, so its color is now halfway
+    // between Low's unchanged #ddd6fe and Medium's new #ff00ff - the
+    // recolor reaches the cells themselves, not just the legend's gradient.
     const morning = svg.match(/chart-heatmap-cell-activity-morning-1"[^>]* fill="([^"]+)"/)?.[1];
-    expect(morning).toBe('#ff00ff');
+    expect(morning).toBe('#ee6bff');
     const stops = [
       ...(svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0] ?? '').matchAll(/stop-color="([^"]+)"/g),
     ].map(match => match[1]);

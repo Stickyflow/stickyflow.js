@@ -1,4 +1,4 @@
-export { axisBands, bandIndexForValue, chartTicks, mapChartValue } from './axis';
+export { axisBands, chartTicks, mapChartValue, zoneColorAtValue } from './axis';
 export { barShapePath } from './barShape';
 export { computeBoxplotStats } from './boxplot';
 export { contrastTextColor, representativeColor } from './colors';

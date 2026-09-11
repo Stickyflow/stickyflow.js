@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite } from '../../../scene';
-import { bandIndexForValue, chartText, contrastTextColor, DEFAULT_ZONE_FILL } from '../../primitives';
+import { chartText, contrastTextColor, zoneColorAtValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapLayout } from './types';
 
@@ -61,7 +61,7 @@ function createHeatmapCell(
 }
 
 function colorForValue(value: number, layout: HeatmapLayout): string {
-  return layout.zones[bandIndexForValue(value, layout.bands)]?.color ?? DEFAULT_ZONE_FILL;
+  return zoneColorAtValue(value, layout.bands, layout.zones);
 }
 
 function renderHeatmapCell(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode[] {

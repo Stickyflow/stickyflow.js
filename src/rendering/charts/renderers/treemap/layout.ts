@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../../model/charts';
 import { finite } from '../../../scene';
-import { axisBands, bandIndexForValue, DEFAULT_HEATMAP_ZONES, DEFAULT_ZONE_FILL } from '../../primitives';
+import { axisBands, DEFAULT_HEATMAP_ZONES, zoneColorAtValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { TreemapLayout } from './types';
 
@@ -28,6 +28,5 @@ export function treemapLeafValue(leaf: ChartSeries): number {
 }
 
 export function treemapLeafColor(leaf: ChartSeries, layout: TreemapLayout) {
-  const zone = layout.zones[bandIndexForValue(treemapLeafValue(leaf), layout.bands)];
-  return leaf.color ?? zone?.color ?? DEFAULT_ZONE_FILL;
+  return leaf.color ?? zoneColorAtValue(treemapLeafValue(leaf), layout.bands, layout.zones);
 }

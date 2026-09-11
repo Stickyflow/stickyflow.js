@@ -78,10 +78,20 @@ describe('Treemap chart', () => {
     expect(videos && solidFill(videos)).toBe('#4e3180');
   });
 
-  it('falls back to the value-bucketed zone color when a series has none', () => {
+  it('falls back to the zone-scale color when a series has none', () => {
     const { scene } = render(TREEMAP_SFL);
     const photos = scene.nodes.find(node => node.id === 'chart-treemap-tile-usage-photos');
     expect(photos && solidFill(photos)).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+
+  it('interpolates a leaf between zone colors instead of snapping to the nearest one', () => {
+    const withThresholds = TREEMAP_SFL.replace(
+      'Axis y { min: 0; max: 100; step: 20 }',
+      'Axis y { min: 0; max: 100; step: 20; thresholds: [30, 60] }',
+    ).replace('Series photos { label: "Photos"; values: [25] }', 'Series photos { label: "Photos"; values: [45] }');
+    const { scene } = render(withThresholds);
+    const photos = scene.nodes.find(node => node.id === 'chart-treemap-tile-usage-photos');
+    expect(photos && solidFill(photos)).toBe('#c2b1fc');
   });
 
   it('suppresses the generic per-series legend', () => {
