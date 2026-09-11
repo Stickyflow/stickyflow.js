@@ -7,6 +7,8 @@ export interface HeatmapGrid {
   height: number;
   cellWidth: number;
   cellHeight: number;
+  cellGap: number;
+  cellRadius: number;
 }
 
 export interface HeatmapReservedSpace {

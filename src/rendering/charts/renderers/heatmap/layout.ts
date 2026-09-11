@@ -30,7 +30,12 @@ function heatmapReservedSpace(context: ChartRenderContext): HeatmapReservedSpace
   return {
     rowHeaders: context.showLabels ? Math.min(96, Math.max(0, context.plot.width * 0.3)) : 0,
     columnHeaders: context.showLabels ? 24 : 0,
-    legend: context.showLegend ? 22 : 0,
+    // Gap to the legend (6) + a zone-label row above the bar (~14) + gap (2)
+    // + the gradient bar itself (10) + tick marks (4) + gap (2) + a
+    // boundary-value row below (~14) — taller than the old discrete-swatch
+    // legend (22) since a gradient bar carries its labels in two separate
+    // rows (zone names above, exact values below) instead of one inline row.
+    legend: context.showLegend ? 54 : 0,
   };
 }
 
@@ -39,6 +44,7 @@ function createHeatmapGrid(
   reservedSpace: HeatmapReservedSpace,
   columnCount: number,
 ): HeatmapGrid {
+  const { chart } = context;
   const width = Math.max(1, context.plot.width - reservedSpace.rowHeaders);
   const height = Math.max(1, context.plot.height - reservedSpace.columnHeaders - reservedSpace.legend);
   return {
@@ -48,5 +54,7 @@ function createHeatmapGrid(
     height,
     cellWidth: columnCount ? width / columnCount : width,
     cellHeight: context.chart.series.length ? height / context.chart.series.length : height,
+    cellGap: Math.max(0, finite(chart.config?.cellGap, 0)),
+    cellRadius: Math.max(0, finite(chart.config?.barCornerRadius, 0)),
   };
 }

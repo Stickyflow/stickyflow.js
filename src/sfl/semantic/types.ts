@@ -79,6 +79,7 @@ export interface SflEntityOut {
     mekkoVaryHeight?: boolean;
     hexRadius?: number;
     innerRadius?: number;
+    cellGap?: number;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{

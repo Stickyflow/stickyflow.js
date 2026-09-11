@@ -107,6 +107,7 @@ export interface Chart {
     mekkoVaryHeight?: boolean;
     hexRadius?: number;
     innerRadius?: number;
+    cellGap?: number;
     scale?: ChartRamp;
     interpolate?: 'idw';
     idwPower?: number;

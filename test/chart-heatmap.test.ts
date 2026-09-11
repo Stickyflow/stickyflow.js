@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderNode } from '../src/index';
 import { render, sflToCanvasState } from '../src/index';
+import { applyPropertyChange } from '../src/interaction';
 
 const solidFill = (node: RenderNode): string | undefined =>
   'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
@@ -67,6 +68,33 @@ describe('Heatmap chart', () => {
     expect(morning.map(solidFill)).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
   });
 
+  it('cells touch edge-to-edge with square corners by default', () => {
+    const { svg } = render(HEATMAP_SFL);
+    const cell = svg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    expect(cell).toBeDefined();
+    expect(cell).not.toContain('rx=');
+    const next = svg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-1"[^>]*>/)?.[0];
+    const [, x, width] = cell?.match(/ x="([\d.]+)"[^>]*width="([\d.]+)"/) ?? [];
+    const [, nextX] = next?.match(/ x="([\d.]+)"/) ?? [];
+    expect(Number(x) + Number(width)).toBeCloseTo(Number(nextX));
+  });
+
+  it('cellGap insets each cell and barCornerRadius rounds it, without touching layout math', () => {
+    const gapped = HEATMAP_SFL.replace('type: heatmap', 'type: heatmap\n    cellGap: 4\n    barCornerRadius: 3');
+    const { svg: plainSvg } = render(HEATMAP_SFL);
+    const { svg: gappedSvg } = render(gapped);
+    const plainCell = plainSvg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const gappedCell = gappedSvg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
+    const plain = plainCell?.match(/ x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/);
+    const gapped_ = gappedCell?.match(/ x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/);
+    expect(gapped_).toBeDefined();
+    expect(gappedCell).toContain('rx="3"');
+    expect(Number(gapped_?.[1])).toBeCloseTo(Number(plain?.[1]) + 2);
+    expect(Number(gapped_?.[2])).toBeCloseTo(Number(plain?.[2]) + 2);
+    expect(Number(gapped_?.[3])).toBeCloseTo(Number(plain?.[3]) - 4);
+    expect(Number(gapped_?.[4])).toBeCloseTo(Number(plain?.[4]) - 4);
+  });
+
   it('labels rows from Series.label and columns from config.categories', () => {
     const { svg } = render(HEATMAP_SFL);
     expect(svg).toContain('>Morning<');
@@ -76,11 +104,26 @@ describe('Heatmap chart', () => {
     expect(svg).toContain('>Wed<');
   });
 
-  it('draws a zone legend with the band range in each label', () => {
+  it('draws a single gradient bar spanning every zone color, low to high', () => {
     const { svg } = render(HEATMAP_SFL);
-    expect(svg).toContain('Low (0-3)');
-    expect(svg).toContain('Medium (3-7)');
-    expect(svg).toContain('High (7-10)');
+    const bar = svg.match(/<rect id="[^"]*chart-heatmap-legend-bar-activity"[^>]*>/)?.[0];
+    expect(bar).toBeDefined();
+    expect(bar).toMatch(/fill="url\(#[^"]+\)"/);
+    const gradient = svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0];
+    expect(gradient).toBeDefined();
+    const stops = [...(gradient ?? '').matchAll(/stop-color="([^"]+)"/g)].map(match => match[1]);
+    expect(stops).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
+  });
+
+  it('labels each zone above its own stretch of the bar, and the axis range below it', () => {
+    const { svg } = render(HEATMAP_SFL);
+    expect(svg).toContain('>Low<');
+    expect(svg).toContain('>Medium<');
+    expect(svg).toContain('>High<');
+    // Axis y runs 0-10 with thresholds [3, 7] : four boundary ticks (0, 3, 7, 10).
+    for (const boundary of ['0', '3', '7', '10']) {
+      expect(svg).toContain(`>${boundary}<`);
+    }
   });
 
   it('falls back to the default three-zone palette when zones is omitted', () => {
@@ -96,5 +139,42 @@ describe('Heatmap chart', () => {
     expect(svg).not.toContain('chart-grid-y-');
     expect(svg).not.toContain('chart-x-tick-');
     expect(svg).not.toContain('chart-y-tick-');
+  });
+
+  it('exposes one invisible, independently color-editable target per zone over the bar', () => {
+    const { svg } = render(HEATMAP_SFL);
+    const targets = [...svg.matchAll(/<rect id="[^"]*chart-heatmap-legend-swatch-activity-(\d)"[^>]*>/g)];
+    expect(targets).toHaveLength(3);
+    targets.forEach((match, index) => {
+      expect(match[0]).toContain(`data-sf-prop="zones[${index}][1]"`);
+      expect(match[0]).toContain('data-sf-prop-kind="color"');
+      // transparent, not "none" - a `none` fill isn't hit-tested by SVG, so
+      // clicking the bar wouldn't reach a target at all.
+      expect(match[0]).toContain('fill="transparent"');
+    });
+  });
+
+  it('round-trips a click-to-recolor edit through the source and back into the render', () => {
+    const patched = applyPropertyChange(HEATMAP_SFL, {
+      owner: { role: 'chart', id: 'activity' },
+      path: 'zones[1][1]',
+      value: '#ff00ff',
+    });
+    expect(patched).toContain('["Medium", "#ff00ff"]');
+    // Every other zone's own color is untouched by the edit.
+    expect(patched).toContain('["Low", "#ddd6fe"]');
+    expect(patched).toContain('["High", "#6d28d9"]');
+
+    const { diagnostics, svg } = render(patched);
+    expect(diagnostics).toEqual([]);
+    // Morning's own values are [1, 5, 9] : 5 sits in the [3, 7) "Medium"
+    // band, so that one cell should pick up the new color - the recolor
+    // reaches the cells themselves, not just the legend's own gradient.
+    const morning = svg.match(/chart-heatmap-cell-activity-morning-1"[^>]* fill="([^"]+)"/)?.[1];
+    expect(morning).toBe('#ff00ff');
+    const stops = [
+      ...(svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0] ?? '').matchAll(/stop-color="([^"]+)"/g),
+    ].map(match => match[1]);
+    expect(stops).toEqual(['#ddd6fe', '#ff00ff', '#6d28d9']);
   });
 });

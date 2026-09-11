@@ -33,6 +33,7 @@ export function chartObject(e: SflEntityOut) {
       mekkoVaryHeight: e.chart?.mekkoVaryHeight,
       hexRadius: e.chart?.hexRadius,
       innerRadius: e.chart?.innerRadius,
+      cellGap: e.chart?.cellGap,
     },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,
