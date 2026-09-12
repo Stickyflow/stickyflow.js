@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
 import type { RenderNode } from '../../../scene';
-import { paint } from '../../../scene';
+import { finite, paint } from '../../../scene';
 import { CHART_COLORS, chartText, contrastTextColor, representativeColor } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';
@@ -81,8 +81,8 @@ function createSegmentNode(context: ChartRenderContext, segment: MekkoSegment): 
     ...segment.frame,
     style: {
       fill: paint(segment.color, diagnostics, chart.id),
-      stroke: { kind: 'solid', color: '#ffffff' },
-      strokeWidth: 1,
+      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+      strokeWidth: finite(chart.grid_width, 1),
     },
   };
 }
