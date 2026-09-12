@@ -7,4 +7,10 @@ export const DEFAULT_HEATMAP_ZONES: ChartZone[] = [
   { label: 'Medium', color: '#a78bfa' },
   { label: 'High', color: '#6d28d9' },
 ];
+export const DEFAULT_MATRIX_ZONES: ChartZone[] = [
+  { label: 'Eliminate', color: '#dcfce7' },
+  { label: 'Delegate', color: '#fef9c3' },
+  { label: 'Schedule', color: '#bfdbfe' },
+  { label: 'Do First', color: '#fecaca' },
+];
 export const DEFAULT_HEX_RADIUS = 14;

@@ -71,11 +71,63 @@ describe('Matrix chart', () => {
     expect(svg).not.toContain('chart-x-tick-');
   });
 
-  it('skips zone backgrounds entirely when config.zones is unset', () => {
+  it('falls back to the default four-quadrant palette when config.zones is unset', () => {
     const noZones = MATRIX_SFL.replace(/zones:.*\n/, '');
     expect(noZones).not.toContain('zones:');
     const { diagnostics, svg } = render(noZones);
     expect(diagnostics).toEqual([]);
-    expect(svg).not.toContain('chart-matrix-zone-');
+    expect(svg.match(/chart-matrix-zone-priority-\d-\d"/g)).toHaveLength(4);
+    expect(svg).toContain('>Eliminate<');
+    expect(svg).toContain('>Delegate<');
+    expect(svg).toContain('>Schedule<');
+    expect(svg).toContain('>Do First<');
+  });
+
+  it('renders a full NxN grid beyond a plain 2x2 (2 thresholds per axis -> 3x3, 9 zones)', () => {
+    const nineZones = Array.from({ length: 9 }, (_, i) => `["Z${i}", "#e2e8f0"]`).join(', ');
+    const grid = MATRIX_SFL.replace(/zones:.*/, `zones: [${nineZones}]`).replace(
+      /thresholds: \[5\]/g,
+      'thresholds: [3, 7]',
+    );
+    const { diagnostics, svg } = render(grid);
+    expect(diagnostics).toEqual([]);
+    for (let x = 0; x < 3; x++) {
+      for (let y = 0; y < 3; y++) {
+        expect(svg).toContain(`chart-matrix-zone-priority-${x}-${y}`);
+      }
+    }
+    expect(svg.match(/chart-matrix-divider-x-priority-\d/g)).toHaveLength(2);
+    expect(svg.match(/chart-matrix-divider-y-priority-\d/g)).toHaveLength(2);
+  });
+
+  it('exposes each point as a draggable chart value (data-sf-series/value-index), same as scatter', () => {
+    const { svg } = render(MATRIX_SFL);
+    const pointA = svg.match(/<ellipse id="[^"]*chart-matrix-point-priority-a"[^>]*>/)?.[0];
+    expect(pointA).toContain('data-sf-series="a" data-sf-value-index="0"');
+  });
+
+  it('point borders use the theme grid color, not a hardcoded white', () => {
+    const themed = MATRIX_SFL.replace('type: matrix', 'type: matrix\n    style { gridColor: "#475569" }');
+    const { svg } = render(themed);
+    const point = svg.match(/<ellipse id="[^"]*chart-matrix-point-priority-a"[^>]*>/)?.[0];
+    expect(point).toContain('stroke="#475569"');
+  });
+
+  it('cellGap insets each quadrant and rounds it to match, honoring an explicit barCornerRadius override', () => {
+    const plain = render(MATRIX_SFL).svg;
+    const plainZone = plain.match(/<rect id="[^"]*chart-matrix-zone-priority-0-0"[^>]*>/)?.[0];
+    expect(plainZone).not.toContain('rx=');
+
+    const gapped = MATRIX_SFL.replace('type: matrix', 'type: matrix\n    cellGap: 8');
+    const gappedSvg = render(gapped).svg;
+    const gappedZone = gappedSvg.match(/<rect id="[^"]*chart-matrix-zone-priority-0-0"[^>]*>/)?.[0];
+    expect(gappedZone).toContain('rx="8"');
+    const [, plainW] = plainZone?.match(/ width="([\d.]+)"/) ?? [];
+    const [, gappedW] = gappedZone?.match(/ width="([\d.]+)"/) ?? [];
+    expect(Number(gappedW)).toBeCloseTo(Number(plainW) - 8);
+
+    const square = MATRIX_SFL.replace('type: matrix', 'type: matrix\n    cellGap: 8\n    barCornerRadius: 0');
+    const squareZone = render(square).svg.match(/<rect id="[^"]*chart-matrix-zone-priority-0-0"[^>]*>/)?.[0];
+    expect(squareZone).not.toContain('rx=');
   });
 });

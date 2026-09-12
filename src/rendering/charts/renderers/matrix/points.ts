@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
-import { paint } from '../../../scene';
+import { finite, paint } from '../../../scene';
 import { CHART_COLORS, chartText } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MatrixGeometry } from './types';
@@ -66,7 +66,12 @@ function createPointNode(
     cy: point.y,
     rx: point.radius,
     ry: point.radius,
-    style: { fill: paint(color, diagnostics, chart.id) },
+    detail: { of: 'chartValue', series: series.id, valueIndex: 0 },
+    style: {
+      fill: paint(color, diagnostics, chart.id),
+      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+      strokeWidth: finite(chart.grid_width, 1),
+    },
   };
 }
 
