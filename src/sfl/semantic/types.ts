@@ -83,6 +83,9 @@ export interface SflEntityOut {
     showValues?: boolean;
     squareCells?: boolean;
     headerColor?: string;
+    labelPosition?: 'outside' | 'inside';
+    labelOrientation?: 'horizontal' | 'vertical';
+    labelColor?: string;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{

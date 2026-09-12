@@ -37,6 +37,9 @@ export function chartObject(e: SflEntityOut) {
       showValues: e.chart?.showValues,
       squareCells: e.chart?.squareCells,
       headerColor: e.chart?.headerColor,
+      labelPosition: e.chart?.labelPosition,
+      labelOrientation: e.chart?.labelOrientation,
+      labelColor: e.chart?.labelColor,
     },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,

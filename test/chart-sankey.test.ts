@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { RenderNode } from '../src/index';
 import { render, sflToCanvasState } from '../src/index';
 
 const SANKEY_SFL = `sfl 1.2
@@ -69,5 +70,137 @@ describe('Sankey chart', () => {
     );
     const { diagnostics } = render(bad);
     expect(diagnostics).toEqual([]);
+  });
+
+  it('colors a link by its own series color at full opacity, or by its target node at reduced opacity', () => {
+    const colored = SANKEY_SFL.replace(
+      'Series a { source: "Visits"; target: "Signups"; values: [80] }',
+      'Series a { source: "Visits"; target: "Signups"; color: "#ec4899"; values: [80] }',
+    );
+    const { scene } = render(colored);
+    const fill = (node?: RenderNode) =>
+      node && 'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
+    const ownColorLink = scene.nodes.find(node => node.id === 'chart-sankey-link-flow-0');
+    const targetColorLink = scene.nodes.find(node => node.id === 'chart-sankey-link-flow-1');
+    expect(ownColorLink?.type === 'path' && ownColorLink.style?.opacity).toBe(0.85);
+    expect(fill(ownColorLink)).toBe('#ec4899');
+    expect(targetColorLink?.type === 'path' && targetColorLink.style?.opacity).toBe(0.45);
+    const activeNode = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Active');
+    expect(fill(targetColorLink)).toBe(fill(activeNode));
+  });
+
+  it('stacks multiple nodes in the same column with a gap, none overlapping', () => {
+    const multiSource = SANKEY_SFL.replace(
+      'zones: [["Visits", "#4e3180"], ["Signups", "#0ea5e9"], ["Churned", "#94a3b8"], ["Active", "#10b981"]]',
+      'zones: [["Visits", "#4e3180"], ["Signups", "#0ea5e9"], ["Referrals", "#f59e0b"], ["Churned", "#94a3b8"], ["Active", "#10b981"]]',
+    ).replace(
+      'Series a { source: "Visits"; target: "Signups"; values: [80] }',
+      'Series a { source: "Visits"; target: "Signups"; values: [80] }\n    Series e { source: "Referrals"; target: "Signups"; values: [20] }',
+    );
+    const { diagnostics, scene } = render(multiSource);
+    expect(diagnostics).toEqual([]);
+    const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
+    const referrals = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Referrals');
+    expect(visits?.type === 'rect' && referrals?.type === 'rect').toBe(true);
+    if (visits?.type === 'rect' && referrals?.type === 'rect') {
+      expect(visits.x).toBe(referrals.x);
+      const gapBetween =
+        referrals.y >= visits.y + visits.height
+          ? referrals.y - (visits.y + visits.height)
+          : visits.y - (referrals.y + referrals.height);
+      expect(gapBetween).toBeGreaterThan(0);
+    }
+  });
+
+  it('drops both the label gutter and node label text when showAxisLabels is false', () => {
+    const noLabels = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    style { showAxisLabels: false }');
+    const { svg, scene } = render(noLabels);
+    expect(svg).not.toContain('>Visits<');
+    const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
+    expect(visits?.type === 'rect' && visits.x).toBeLessThan(20);
+  });
+
+  it('rounds only the outer edge of the first and last column nodes when barCornerRadius is set', () => {
+    const rounded = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    barCornerRadius: 10');
+    const { scene } = render(rounded);
+    const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
+    const signups = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Signups');
+    const active = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Active');
+    expect(visits?.type).toBe('path');
+    expect(active?.type).toBe('path');
+    expect(signups?.type).toBe('rect');
+    expect(signups?.type === 'rect' && signups.rx).toBeUndefined();
+  });
+
+  it('renders plain square-cornered rects with no barCornerRadius set', () => {
+    const { scene } = render(SANKEY_SFL);
+    for (const id of [
+      'chart-sankey-node-flow-Visits',
+      'chart-sankey-node-flow-Signups',
+      'chart-sankey-node-flow-Active',
+    ]) {
+      const node = scene.nodes.find(n => n.id === id);
+      expect(node?.type).toBe('rect');
+    }
+  });
+
+  it('keeps the label outside the node, to the right and unrotated, by default', () => {
+    const { scene } = render(SANKEY_SFL);
+    const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(visits?.type === 'rect' && label?.type === 'text').toBe(true);
+    if (visits?.type === 'rect' && label?.type === 'text') {
+      expect(label.x).toBeGreaterThan(visits.x + visits.width);
+      expect(label.rotation).toBeUndefined();
+    }
+  });
+
+  it('moves the label inside the node and centers it when labelPosition is inside', () => {
+    const inside = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    labelPosition: inside');
+    const { scene } = render(inside);
+    const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(visits?.type === 'rect' && label?.type === 'text').toBe(true);
+    if (visits?.type === 'rect' && label?.type === 'text') {
+      expect(label.x).toBeGreaterThanOrEqual(visits.x);
+      expect(label.x + label.width).toBeLessThanOrEqual(visits.x + visits.width + 1);
+      expect(label.rotation).toBeUndefined();
+    }
+  });
+
+  it('rotates the inside label -90deg around the node center when labelOrientation is vertical', () => {
+    const rotated = SANKEY_SFL.replace(
+      'type: sankey',
+      'type: sankey\n    labelPosition: inside\n    labelOrientation: vertical',
+    );
+    const { scene } = render(rotated);
+    const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(visits?.type === 'rect' && label?.type === 'text').toBe(true);
+    if (visits?.type === 'rect' && label?.type === 'text') {
+      expect(label.rotation).toBe(-90);
+      const nodeCenter = { x: visits.x + visits.width / 2, y: visits.y + visits.height / 2 };
+      expect(label.rotationCenter?.x).toBeCloseTo(nodeCenter.x);
+      expect(label.rotationCenter?.y).toBeCloseTo(nodeCenter.y);
+    }
+  });
+
+  it('defaults an inside label to an auto-contrast color, and lets labelColor override it', () => {
+    const inside = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    labelPosition: inside');
+    const { scene: autoScene } = render(inside);
+    const autoLabel = autoScene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(autoLabel?.type === 'text' && autoLabel.color).toBe('#ffffff');
+
+    const overridden = inside.replace('labelPosition: inside', 'labelPosition: inside\n    labelColor: "#f59e0b"');
+    const { scene: overrideScene } = render(overridden);
+    const overrideLabel = overrideScene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(overrideLabel?.type === 'text' && overrideLabel.color).toBe('#f59e0b');
+  });
+
+  it('lets labelColor override an outside label too', () => {
+    const colored = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    labelColor: "#f59e0b"');
+    const { scene } = render(colored);
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(label?.type === 'text' && label.color).toBe('#f59e0b');
   });
 });
