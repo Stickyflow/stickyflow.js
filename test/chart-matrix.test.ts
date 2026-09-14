@@ -83,6 +83,14 @@ describe('Matrix chart', () => {
     expect(svg).toContain('>Do First<');
   });
 
+  it('labels a light pastel zone with a darker shade of its own hue, not a flat neutral black', () => {
+    const noZones = MATRIX_SFL.replace(/zones:.*\n/, '');
+    const { svg } = render(noZones);
+    const eliminateLabel = svg.match(/<text id="[^"]*chart-matrix-zone-label-priority-0-0"[^>]*>/)?.[0];
+    expect(eliminateLabel).toContain('fill="#096729"');
+    expect(eliminateLabel).not.toContain('fill="#0f172a"');
+  });
+
   it('renders a full NxN grid beyond a plain 2x2 (2 thresholds per axis -> 3x3, 9 zones)', () => {
     const nineZones = Array.from({ length: 9 }, (_, i) => `["Z${i}", "#e2e8f0"]`).join(', ');
     const grid = MATRIX_SFL.replace(/zones:.*/, `zones: [${nineZones}]`).replace(
