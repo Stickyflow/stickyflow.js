@@ -101,6 +101,26 @@ describe('applyMoveChange', () => {
     expect(applyMoveChange(sfl, { owner: owner('missing'), dx: 1, dy: 1 })).toBe(sfl);
   });
 
+  it('writes a parent-relative position for a child moved inside a Container away from the canvas origin', () => {
+    // Regression: entity.x/entity.y from sflToCanvasState are ABSOLUTE
+    // (the container's own origin already folded in), but layout.position is
+    // relative to the immediate parent. Writing the absolute value straight
+    // back double-counts the container's offset on the next render, sending
+    // the child far outside it. Every prior test here has its container at
+    // the canvas origin, where absolute and relative coincide and this bug
+    // is invisible - this one deliberately doesn't.
+    const sfl = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    layout { position: -200, -900; size: 1000, 250 }\n    Entity inner {\n      layout { position: 490, 140; size: 220, 60 }\n    }\n  }\n}\n`;
+    const next = applyMoveChange(sfl, { owner: owner('inner'), dx: 0, dy: 30 });
+    // Parent-relative position moves by the same delta as the absolute drag...
+    expect(next).toContain('position: 490, 170');
+    // ...and the container's own layout is untouched.
+    expect(next).toContain('position: -200, -900');
+    // The child's resolved absolute position actually reflects the drag.
+    const entity = sflToCanvasState(next).entities.find(e => e.id === 'inner');
+    expect(entity?.x).toBe(290); // -200 + 490, unchanged (no horizontal drag)
+    expect(entity?.y).toBe(-730); // -900 + 170, i.e. the pre-drag -760 shifted by +30
+  });
+
   it('updates position in place on a single-line layout block, without duplicating it as a stray sibling line', () => {
     // Regression (see applyTextChange's matching test for the full mechanism):
     // a compact `layout { position: 80, 80; size: 200, 80 }` is routine LLM
@@ -156,6 +176,17 @@ describe('applyResizeChange', () => {
   it('is a no-op for an unknown owner id', () => {
     const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n}\n`;
     expect(applyResizeChange(sfl, { ...event, owner: owner('missing') })).toBe(sfl);
+  });
+
+  it('writes a parent-relative position for a child resized inside a Container away from the canvas origin', () => {
+    // Same absolute-vs-relative bug as applyMoveChange's matching test:
+    // event.x/event.y are the resize gesture's absolute bounds.
+    const sfl = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    layout { position: -200, -900; size: 1000, 250 }\n    Entity inner {\n      layout { position: 490, 140; size: 220, 60 }\n    }\n  }\n}\n`;
+    // Absolute bounds after the resize: top-left moved from (290, -760) to (300, -750).
+    const next = applyResizeChange(sfl, { ...event, owner: owner('inner'), x: 300, y: -750, width: 240, height: 70 });
+    expect(next).toContain('position: 500, 150'); // 300 - (-200), -750 - (-900)
+    expect(next).toContain('size: 240, 70');
+    expect(next).toContain('position: -200, -900'); // container's own layout untouched
   });
 
   it('sets position and size in place on a single-line layout block, without duplicating either as a stray sibling line', () => {
