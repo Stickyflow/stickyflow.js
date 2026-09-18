@@ -27,8 +27,6 @@ export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
   if (!range) {
     return sfl;
   }
-  setOrInsertLayoutTuples(lines, range, [
-    ['position', entity.x - originX + event.dx, entity.y - originY + event.dy],
-  ]);
+  setOrInsertLayoutTuples(lines, range, [['position', entity.x - originX + event.dx, entity.y - originY + event.dy]]);
   return lines.join('\n');
 }
