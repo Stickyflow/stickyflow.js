@@ -4,6 +4,9 @@ import { numOf, solidColor } from './values';
 
 export function chartObject(e: SflEntityOut) {
   const p = e.props;
+  const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
+  const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
+    p.gridLineStyle === 'dashed' ? 'dashed' : p.gridLineStyle === 'dotted' ? 'dotted' : 'solid';
   return {
     id: e.id,
     type: 'chart',
@@ -60,6 +63,9 @@ export function chartObject(e: SflEntityOut) {
     corner_radius: numOf(p.cornerRadius) ?? 12,
     grid_color: p.gridColor ?? '#e2e8f0',
     grid_width: numOf(p.gridWidth) ?? 1,
+    grid_shape: gridShape,
+    grid_line_style: gridLineStyle,
+    grid_rounded_corners: p.gridRoundedCorners === 'true',
     text_color: p.textColor ?? '#0f172a',
     font_size: numOf(p.fontSize) ?? 12,
     font_family: p.fontFamily ?? 'Inter',

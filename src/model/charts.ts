@@ -41,6 +41,8 @@ export function isChartType(value: string | undefined): value is ChartType {
   return value !== undefined && (CHART_TYPES as string[]).includes(value);
 }
 
+export const CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'grid', 'custom', 'hexbin']);
+
 export interface ChartAxis {
   min: number;
   max: number;
@@ -128,6 +130,9 @@ export interface Chart {
   fill_color?: string;
   grid_color?: string;
   grid_width?: number;
+  grid_shape?: 'rect' | 'circle';
+  grid_line_style?: 'solid' | 'dashed' | 'dotted';
+  grid_rounded_corners?: boolean;
   text_color?: string;
   font_family?: string;
   font_size?: number;

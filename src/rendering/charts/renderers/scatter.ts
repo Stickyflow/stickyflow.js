@@ -5,13 +5,13 @@ import { CHART_COLORS } from '../primitives';
 import { type CartesianPoint, pixelPoints, seriesValuePairs } from './cartesianPoints';
 import type { ChartRenderContext } from './types';
 
-export function renderScatter(context: ChartRenderContext): RenderNode[] {
+export function renderScatter(context: ChartRenderContext, radius = 4): RenderNode[] {
   const nodes: RenderNode[] = [];
   context.chart.series.forEach((series, seriesIndex) => {
     const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
     const points = pixelPoints(context, seriesValuePairs(context.chart, series));
     points.forEach((point, pointIndex) => {
-      nodes.push(createScatterPoint(context, series, point, pointIndex, color));
+      nodes.push(createScatterPoint(context, series, point, pointIndex, color, radius));
     });
   });
   return nodes;
@@ -23,6 +23,7 @@ function createScatterPoint(
   point: CartesianPoint,
   pointIndex: number,
   color: Parameters<typeof paint>[0],
+  radius: number,
 ): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
   return {
@@ -32,8 +33,8 @@ function createScatterPoint(
     bounds,
     cx: point.x,
     cy: point.y,
-    rx: 4,
-    ry: 4,
+    rx: radius,
+    ry: radius,
     detail: { of: 'chartValue', series: series.id, valueIndex: pointIndex },
     style: { fill: paint(color, diagnostics, chart.id) },
   };

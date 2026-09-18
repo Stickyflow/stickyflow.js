@@ -36,6 +36,11 @@ export function radarAngleAt(count: number, index: number): number {
   return START_ANGLE + (index * Math.PI * 2) / count;
 }
 
+export function angleForAxisValue(min: number, max: number, value: number): number {
+  const ratio = max === min ? 0 : (value - min) / (max - min);
+  return START_ANGLE + ratio * Math.PI * 2;
+}
+
 export function radarPointAt(frame: RadarFrame, index: number, pointRadius: number): RadarPoint {
   const angle = radarAngleAt(frame.count, index);
   return {
