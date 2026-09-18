@@ -4,7 +4,6 @@ import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
 import { renderCustom } from './custom';
 import { renderField } from './field';
-import { renderGrid } from './grid';
 import { renderHeatmap } from './heatmap';
 import { renderHexbin } from './hexbin';
 import { renderLine } from './line';
@@ -24,7 +23,6 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   boxplot: renderBoxplot,
   custom: renderCustom,
   field: renderField,
-  grid: renderGrid,
   heatmap: renderHeatmap,
   hexbin: renderHexbin,
   line: renderLine,

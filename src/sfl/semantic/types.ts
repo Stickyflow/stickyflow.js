@@ -60,7 +60,6 @@ export interface SflEntityOut {
       | 'hexbin'
       | 'pie'
       | 'matrix'
-      | 'grid'
       | 'custom';
     categories?: string[];
     areaOpacity?: number;

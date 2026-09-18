@@ -9,6 +9,7 @@ export interface TitleTabInput {
   cornerRadius: number;
   title: string;
   color: string;
+  textColor: string;
   fontFamily?: string;
   fontSize: number;
   fontWeight: 'normal' | 'bold';
@@ -52,7 +53,7 @@ export function renderTitleTab(input: TitleTabInput): RenderNode[] {
       fontFamily: input.fontFamily ?? DEFAULT_FONT,
       fontSize: input.fontSize,
       fontWeight: input.fontWeight,
-      color: '#ffffff',
+      color: input.textColor,
       align: 'left',
       verticalAlign: 'middle',
       lineHeight: 1.2,

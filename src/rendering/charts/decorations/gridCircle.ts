@@ -3,6 +3,7 @@ import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
 import { chartTicks } from '../primitives';
 import { angleForAxisValue } from '../primitives/radarShape';
+import { createGridDot } from './gridDots';
 import { gridLineDashStyle } from './gridLineStyle';
 import type { ChartLayout } from './layout';
 
@@ -16,6 +17,11 @@ export function buildCircularChartGrid(
   const centerY = plot.y + plot.height / 2;
   const radius = Math.max(0, Math.min(plot.width, plot.height) / 2);
   const width = finite(chart.grid_width, 1);
+
+  if (chart.grid_line_style === 'dotted') {
+    return buildDottedCircularGrid(chart, bounds, order, centerX, centerY, radius, width);
+  }
+
   const style: SceneStyle = {
     fill: { kind: 'none' },
     stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
@@ -55,6 +61,31 @@ export function buildCircularChartGrid(
     });
   });
 
+  return nodes;
+}
+
+function buildDottedCircularGrid(
+  chart: Chart,
+  bounds: Bounds,
+  order: number,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  width: number,
+): RenderNode[] {
+  const yTicks = chartTicks(chart.axis_y).filter(tick => tick > chart.axis_y.min);
+  const xTicks = chartTicks(chart.axis_x);
+  const nodes: RenderNode[] = [];
+  yTicks.forEach(yTick => {
+    const ringRadius = radius * ringRatio(chart, yTick);
+    xTicks.forEach(xTick => {
+      const angle = angleForAxisValue(chart.axis_x.min, chart.axis_x.max, xTick);
+      const x = centerX + Math.cos(angle) * ringRadius;
+      const y = centerY + Math.sin(angle) * ringRadius;
+      const id = `chart-grid-dot-${chart.id}-${xTick}-${yTick}`;
+      nodes.push(createGridDot(chart, id, order + nodes.length, bounds, x, y, width));
+    });
+  });
   return nodes;
 }
 

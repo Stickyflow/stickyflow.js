@@ -13,7 +13,7 @@ export function swimlaneObject(e: SflEntityOut) {
     height: e.height,
     orientation: e.swimlane?.orientation ?? 'horizontal',
     lanes: e.swimlane?.lanes ?? [],
-    fill_color: p.fill ?? 'transparent',
+    fill_color: p.fill ?? 'rgba(107, 114, 128, 0.05)',
     stroke_color: p.stroke ?? '#6b7280',
     stroke_width: numOf(p.strokeWidth) ?? 2,
     corner_radius: numOf(p.cornerRadius) ?? 12,

@@ -17,7 +17,7 @@ export function frameObject(e: SflEntityOut) {
     stroke_color: p.stroke ?? '#9b42df',
     stroke_width: numOf(p.strokeWidth) ?? 2,
     corner_radius: numOf(p.cornerRadius) ?? 12,
-    text_color: p.textColor ?? '#9b42df',
+    text_color: p.textColor ?? '#ffffff',
     font_size: numOf(p.fontSize) ?? 14,
     font_weight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
     font_family: p.fontFamily,

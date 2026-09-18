@@ -37,6 +37,7 @@ export function buildFrame(frame: Frame, index: number): RenderNode[] {
         cornerRadius: frame.corner_radius,
         title: frame.title,
         color: frame.stroke_color,
+        textColor: frame.text_color,
         fontFamily: frame.font_family,
         fontSize: frame.font_size,
         fontWeight: frame.font_weight,

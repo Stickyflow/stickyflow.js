@@ -28,20 +28,27 @@ describe('gridLineStyle', () => {
     expect(line).not.toContain('stroke-linecap="round"');
   });
 
-  it('draws dotted gridlines with a butt cap by default', () => {
-    const { svg } = render(chart('bar', 'gridLineStyle: dotted'));
-    const line = svg.match(/<path id="[^"]*chart-grid-x-[^"]*"[^>]*>/)?.[0];
-    expect(line).toContain('stroke-dasharray');
-  });
-
-  it('rounds the dash/dot caps when gridRoundedCorners is set', () => {
+  it('rounds the dashed caps when gridRoundedCorners is set', () => {
     const dashed = render(chart('bar', 'gridLineStyle: dashed\n      gridRoundedCorners: true')).svg;
     const dashedLine = dashed.match(/<path id="[^"]*chart-grid-x-[^"]*"[^>]*>/)?.[0];
     expect(dashedLine).toContain('stroke-linecap="round"');
+  });
 
-    const dotted = render(chart('bar', 'gridLineStyle: dotted\n      gridRoundedCorners: true')).svg;
-    const dottedLine = dotted.match(/<path id="[^"]*chart-grid-x-[^"]*"[^>]*>/)?.[0];
-    expect(dottedLine).toContain('stroke-linecap="round"');
+  it('draws no lines at all for dotted — one dot per axis-tick intersection instead', () => {
+    const { svg } = render(chart('bar', 'gridLineStyle: dotted'));
+    expect(svg).not.toContain('chart-grid-x-');
+    expect(svg).not.toContain('chart-grid-y-');
+    expect(svg.match(/chart-grid-dot-c-/g)).toHaveLength(9);
+  });
+
+  it('renders each dot as a small square by default, or a circle with gridRoundedCorners', () => {
+    const { scene } = render(chart('bar', 'gridLineStyle: dotted'));
+    const dot = scene.nodes.find(node => node.id.includes('chart-grid-dot-'));
+    expect(dot?.type).toBe('rect');
+
+    const { scene: roundedScene } = render(chart('bar', 'gridLineStyle: dotted\n      gridRoundedCorners: true'));
+    const roundedDot = roundedScene.nodes.find(node => node.id.includes('chart-grid-dot-'));
+    expect(roundedDot?.type).toBe('ellipse');
   });
 
   it('draws the same gridlines pixel-for-pixel as a stroked line, not a filled rect, for the default solid style', () => {
@@ -52,7 +59,7 @@ describe('gridLineStyle', () => {
 });
 
 describe('gridShape: circle', () => {
-  it.each(['scatter', 'grid', 'custom', 'hexbin'])(
+  it.each(['scatter', 'custom', 'hexbin'])(
     'draws concentric rings and spokes instead of a rectangular grid on %s, with no diagnostic',
     type => {
       const { diagnostics, svg } = render(chart(type, 'gridShape: circle'));
@@ -79,5 +86,12 @@ describe('gridShape: circle', () => {
   it.each(['radar', 'radial'])('reports no diagnostic on %s, which is already circular by nature', type => {
     const { diagnostics } = render(chart(type, 'gridShape: circle'));
     expect(diagnostics.filter(d => d.code === 'unsupported-grid-shape')).toEqual([]);
+  });
+
+  it('combines with gridLineStyle: dotted — dots at each ring/spoke intersection, no rings or spokes drawn', () => {
+    const { svg } = render(chart('scatter', 'gridShape: circle\n      gridLineStyle: dotted'));
+    expect(svg).not.toContain('chart-grid-ring-');
+    expect(svg).not.toContain('chart-grid-spoke-');
+    expect(svg.match(/chart-grid-dot-c-/g)).toHaveLength(6);
   });
 });

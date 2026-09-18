@@ -31,7 +31,6 @@ describe('supported chart types', () => {
       'boxplot',
       'custom',
       'field',
-      'grid',
       'heatmap',
       'hexbin',
       'line',
