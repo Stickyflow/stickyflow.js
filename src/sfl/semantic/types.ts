@@ -100,7 +100,7 @@ export interface SflEntityOut {
       source?: string;
       target?: string;
       size?: number;
-      symbol?: { points: Array<[number, number]> };
+      symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
       stroke?: string;
       strokeWidth?: number;
     }>;

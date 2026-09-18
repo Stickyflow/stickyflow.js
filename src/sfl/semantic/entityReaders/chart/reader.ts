@@ -19,7 +19,9 @@ function asStackedMode(value: string | undefined): ChartData['stacked'] {
   return STACKED_MODES.find(mode => mode === value);
 }
 
-export function readChart(block: SflBlock, properties: ChartProperties): ChartData {
+type SymbolDefinitions = Map<string, { points: Array<[number, number]>; tension?: number }>;
+
+export function readChart(block: SflBlock, properties: ChartProperties, symbolDefs: SymbolDefinitions): ChartData {
   const children = childBlocks(block);
   const axes = children.filter(child => child.kind === 'Axis');
   const stacked = asString(properties.get('stacked'));
@@ -51,7 +53,7 @@ export function readChart(block: SflBlock, properties: ChartProperties): ChartDa
     labelColor: asString(properties.get('labelColor')),
     axisX: readAxis(axes.find(axis => axis.name === 'x')),
     axisY: readAxis(axes.find(axis => axis.name === 'y' || axis.name === 'value')),
-    series: children.filter(child => child.kind === 'Series').map(readSeries),
+    series: children.filter(child => child.kind === 'Series').map(child => readSeries(child, symbolDefs)),
     rules: readChartRules(block),
   };
 }

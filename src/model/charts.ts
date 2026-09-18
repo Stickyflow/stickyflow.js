@@ -15,7 +15,6 @@ export type ChartType =
   | 'hexbin'
   | 'pie'
   | 'matrix'
-  | 'grid'
   | 'custom';
 
 export const CHART_TYPES: ChartType[] = [
@@ -33,7 +32,6 @@ export const CHART_TYPES: ChartType[] = [
   'hexbin',
   'pie',
   'matrix',
-  'grid',
   'custom',
 ];
 
@@ -41,7 +39,7 @@ export function isChartType(value: string | undefined): value is ChartType {
   return value !== undefined && (CHART_TYPES as string[]).includes(value);
 }
 
-export const CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'grid', 'custom', 'hexbin']);
+export const CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'custom', 'hexbin']);
 
 export interface ChartAxis {
   min: number;
@@ -72,7 +70,7 @@ export interface ChartSeries {
   source?: string;
   target?: string;
   size?: number;
-  symbol?: { points: Array<[number, number]> };
+  symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
   stroke?: string;
   stroke_width?: number;
 }

@@ -84,12 +84,19 @@ function readSeriesColor(value: SflValue): string | null {
   return asString(value) ?? null;
 }
 
-export function readSeriesSymbol(value?: SflValue): ChartSeries['symbol'] {
-  if (value?.type !== 'list') {
+type SymbolDefinitions = Map<string, { points: Array<[number, number]>; tension?: number }>;
+
+export function readSeriesSymbol(value: SflValue | undefined, symbolDefs: SymbolDefinitions): ChartSeries['symbol'] {
+  if (value?.type === 'list') {
+    const points = value.values.flatMap(readSeriesSymbolPoint);
+    return points.length > 0 ? { points } : undefined;
+  }
+  const name = asString(value);
+  const definition = name ? symbolDefs.get(name) : undefined;
+  if (!definition) {
     return undefined;
   }
-  const points = value.values.flatMap(readSeriesSymbolPoint);
-  return points.length > 0 ? { points } : undefined;
+  return { points: definition.points, normalized: true, tension: definition.tension };
 }
 
 function readSeriesSymbolPoint(value: SflValue): Array<[number, number]> {

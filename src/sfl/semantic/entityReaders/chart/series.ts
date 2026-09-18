@@ -4,7 +4,9 @@ import { asNumber, asString } from '../../valueAccess';
 import { readSeriesColors, readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
 import type { ChartSeries } from './types';
 
-export function readSeries(block: SflBlock): ChartSeries {
+type SymbolDefinitions = Map<string, { points: Array<[number, number]>; tension?: number }>;
+
+export function readSeries(block: SflBlock, symbolDefs: SymbolDefinitions): ChartSeries {
   const properties = directProperties(block);
   return {
     id: block.name,
@@ -18,7 +20,7 @@ export function readSeries(block: SflBlock): ChartSeries {
     source: asString(properties.get('source')),
     target: asString(properties.get('target')),
     size: asNumber(properties.get('size')),
-    symbol: readSeriesSymbol(properties.get('symbol')),
+    symbol: readSeriesSymbol(properties.get('symbol'), symbolDefs),
     stroke: asString(properties.get('stroke')),
     strokeWidth: asNumber(properties.get('strokeWidth')),
   };

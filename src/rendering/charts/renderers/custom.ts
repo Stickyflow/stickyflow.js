@@ -1,6 +1,6 @@
 import type { Chart, ChartSeries } from '../../../model/charts';
 import type { RenderNode, SceneStyle } from '../../scene';
-import { finite, paint } from '../../scene';
+import { finite, freeformPathData, paint } from '../../scene';
 import { CHART_COLORS, mapChartValue } from '../primitives';
 import type { ChartRenderContext } from './types';
 
@@ -54,24 +54,26 @@ function customSeriesStyle(context: ChartRenderContext, series: ChartSeries, ser
 }
 
 function createCustomSymbolMark(context: ChartRenderContext, mark: CustomMark): RenderNode {
-  const symbolPoints = mark.series.symbol?.points ?? [];
-  const path = symbolPoints
-    .map(
-      ([offsetX, offsetY], pointIndex) =>
-        `${pointIndex === 0 ? 'M' : 'L'} ${mark.point.x + offsetX} ${mark.point.y + offsetY}`,
-    )
-    .join(' ');
+  const symbol = mark.series.symbol;
+  const size = finite(mark.series.size, 3);
+  const scale = symbol?.normalized ? size * 2 : 1;
+  const offset = symbol?.normalized ? 0.5 : 0;
+  const points = (symbol?.points ?? []).map(([x, y]) => ({
+    x: mark.point.x + (x - offset) * scale,
+    y: mark.point.y + (y - offset) * scale,
+  }));
   return {
     type: 'path',
     id: customMarkId(context.chart, mark.series, mark.valueIndex),
     order: context.nextOrder(),
     bounds: context.bounds,
-    d: `${path} Z`,
+    d: freeformPathData({ points, tension: finite(symbol?.tension, 0), closed: true }),
     style: mark.style,
   };
 }
 
 function createCustomPointMark(context: ChartRenderContext, mark: CustomMark): RenderNode {
+  const radius = finite(mark.series.size, 3);
   return {
     type: 'ellipse',
     id: customMarkId(context.chart, mark.series, mark.valueIndex),
@@ -79,8 +81,8 @@ function createCustomPointMark(context: ChartRenderContext, mark: CustomMark): R
     bounds: context.bounds,
     cx: mark.point.x,
     cy: mark.point.y,
-    rx: 3,
-    ry: 3,
+    rx: radius,
+    ry: radius,
     style: mark.style,
   };
 }
