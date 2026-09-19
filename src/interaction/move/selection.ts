@@ -1,8 +1,7 @@
 import { resolveOwner } from '../../domContract';
 import type { OwnerRef, Viewer } from '../../viewer';
+import { CONTAINER_ROLES } from '../containerGeometry';
 import { hasEditableGeometry } from '../geometryRoles';
-
-const CONTAINER_ROLES: ReadonlySet<string> = new Set(['frame', 'swimlane']);
 
 function containedChildren(viewer: Viewer, owner: OwnerRef): OwnerRef[] {
   if (!CONTAINER_ROLES.has(owner.role)) {

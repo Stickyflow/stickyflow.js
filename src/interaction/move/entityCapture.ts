@@ -11,6 +11,23 @@ function externalLiveLinks(svg: SVGSVGElement, ownerId: string, groupIds: Set<st
   });
 }
 
+function parentContainerBounds(
+  svg: SVGSVGElement,
+  primary: SVGGraphicsElement,
+  groupIds: Set<string>,
+): Rect | undefined {
+  const parentId = primary.getAttribute('data-sf-parent-frame');
+  if (!parentId || groupIds.has(parentId)) {
+    return undefined;
+  }
+  const container = findOwnerNode(svg, parentId, isPrimary);
+  if (!container) {
+    return undefined;
+  }
+  const bbox = container.getBBox();
+  return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
+}
+
 function captureEntity(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<string>): DraggedEntity | null {
   const nodes = findAllOwnerNodes(svg, owner.id);
   const primary = findOwnerNode(svg, owner.id, isPrimary);
@@ -28,6 +45,7 @@ function captureEntity(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<string
     overlayBaseTransforms: overlays.map(overlay => overlay.getAttribute('transform')),
     draggedBounds,
     liveLinks: externalLiveLinks(svg, owner.id, groupIds, draggedBounds),
+    containerBounds: parentContainerBounds(svg, primary, groupIds),
   };
 }
 

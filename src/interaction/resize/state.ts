@@ -1,6 +1,7 @@
 import type { ResizeHandle } from '../../domContract';
 import type { Rect } from '../../model/geometry/router';
 import type { OwnerRef } from '../../viewer';
+import { CONTAINER_ROLES, childrenUnionBounds } from '../containerGeometry';
 import { isCompositeOwner } from '../geometryRoles';
 import { findLiveLinks, type LiveLink } from '../linkPreview';
 import { findResizeQuickDuplicateBubbles } from './bubbleCapture';
@@ -19,6 +20,7 @@ export interface ResizeDragState {
   overlay: SVGGElement | null;
   bubbles: SVGGElement | null;
   startBounds: Rect;
+  childrenBounds?: Rect;
   liveLinks: LiveLink[];
   pointerId: number;
   moved: boolean;
@@ -44,6 +46,7 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
     overlay: selection.overlay,
     bubbles: findResizeQuickDuplicateBubbles(svg, selection.ownerId, selection.overlay),
     startBounds,
+    childrenBounds: CONTAINER_ROLES.has(selection.owner.role) ? childrenUnionBounds(svg, selection.ownerId) : undefined,
     liveLinks: findLiveLinks(svg, selection.ownerId, startBounds),
     pointerId: event.pointerId,
     moved: false,

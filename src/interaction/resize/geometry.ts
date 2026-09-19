@@ -36,3 +36,14 @@ export function resizedBounds(start: Rect, handle: ResizeHandle, pointer: { x: n
   }
   return { x, y, width, height };
 }
+
+export function clampResizeToChildren(bounds: Rect, childrenBounds: Rect | undefined): Rect {
+  if (!childrenBounds) {
+    return bounds;
+  }
+  const minX = Math.min(bounds.x, childrenBounds.x);
+  const minY = Math.min(bounds.y, childrenBounds.y);
+  const maxX = Math.max(bounds.x + bounds.width, childrenBounds.x + childrenBounds.width);
+  const maxY = Math.max(bounds.y + bounds.height, childrenBounds.y + childrenBounds.height);
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
