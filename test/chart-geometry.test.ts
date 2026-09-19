@@ -36,9 +36,15 @@ describe('charts take part in move and resize', () => {
 
   it('still refuses the roles that have no editable geometry', () => {
     expect(hasEditableGeometry({ role: 'link', id: 'l' })).toBe(false);
-    expect(hasEditableGeometry({ role: 'frame', id: 'f' })).toBe(false);
+    expect(hasEditableGeometry({ role: 'table', id: 't' })).toBe(false);
+    expect(hasEditableGeometry({ role: 'path', id: 'p' })).toBe(false);
     expect(hasEditableGeometry(null)).toBe(false);
     expect(hasEditableGeometry(undefined)).toBe(false);
+  });
+
+  it('accepts frame and swimlane owners too', () => {
+    expect(hasEditableGeometry({ role: 'frame', id: 'f' })).toBe(true);
+    expect(hasEditableGeometry({ role: 'swimlane', id: 's' })).toBe(true);
   });
 
   it('moves a chart by the dragged delta', () => {

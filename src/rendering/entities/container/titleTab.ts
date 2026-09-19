@@ -1,11 +1,21 @@
-import type { RenderNode } from '../../scene';
+import {
+  bottomRoundedRectPath,
+  leftRoundedRectPath,
+  rightRoundedRectPath,
+  topRoundedRectPath,
+} from '../../../model/geometry/roundedRect';
+import type { Bounds, RenderNode } from '../../scene';
 import { boxBounds, DEFAULT_FONT } from '../../scene';
+
+export type TitleTabPosition = 'top' | 'bottom' | 'left' | 'right';
 
 export interface TitleTabInput {
   tabId: string;
   titleId: string;
   x: number;
   y: number;
+  width: number;
+  height: number;
   cornerRadius: number;
   title: string;
   color: string;
@@ -13,50 +23,126 @@ export interface TitleTabInput {
   fontFamily?: string;
   fontSize: number;
   fontWeight: 'normal' | 'bold';
+  labelPosition: TitleTabPosition;
+  shadow: boolean;
   order: number;
 }
 
+interface TabBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  path: string;
+}
+
+const TAB_RADIUS = 8;
+
+function tabBox(input: TitleTabInput, thickness: number, length: number): TabBox {
+  switch (input.labelPosition) {
+    case 'bottom': {
+      const x = input.x;
+      const y = input.y + input.height;
+      return {
+        x,
+        y,
+        width: length,
+        height: thickness,
+        path: bottomRoundedRectPath(x, y, length, thickness, TAB_RADIUS),
+      };
+    }
+    case 'left': {
+      const x = input.x - thickness;
+      const y = input.y;
+      return { x, y, width: thickness, height: length, path: leftRoundedRectPath(x, y, thickness, length, TAB_RADIUS) };
+    }
+    case 'right': {
+      const x = input.x + input.width;
+      const y = input.y;
+      return {
+        x,
+        y,
+        width: thickness,
+        height: length,
+        path: rightRoundedRectPath(x, y, thickness, length, TAB_RADIUS),
+      };
+    }
+    default: {
+      const x = input.x;
+      const y = input.y - thickness;
+      return { x, y, width: length, height: thickness, path: topRoundedRectPath(x, y, length, thickness, TAB_RADIUS) };
+    }
+  }
+}
+
 export function renderTitleTab(input: TitleTabInput): RenderNode[] {
-  const height = Math.max(32, input.fontSize + 18);
+  const thickness = Math.max(32, input.fontSize + 18);
   const padding = 16;
-  const width = Math.max(120, input.title.length * input.fontSize * 0.62 + padding * 2);
-  const x = input.x + Math.max(12, input.cornerRadius);
-  const y = input.y - height;
-  const bounds = boxBounds({ x, y, width, height }, 6);
+  const length = Math.max(120, input.title.length * input.fontSize * 0.62 + padding * 2);
+  const box = tabBox(input, thickness, length);
+  const bounds = boxBounds(box, 6);
+  const vertical = input.labelPosition === 'left' || input.labelPosition === 'right';
   return [
     {
-      type: 'rect',
+      type: 'path',
       id: input.tabId,
       order: input.order + 0.1,
       bounds,
-      x,
-      y,
-      width,
-      height,
-      rx: 8,
+      d: box.path,
       style: {
         fill: { kind: 'solid', color: input.color },
         stroke: { kind: 'none' },
-        shadow: { color: '#000000', opacity: 0.1, blur: 4, dx: 0, dy: 2 },
+        shadow: input.shadow ? { color: '#000000', opacity: 0.1, blur: 4, dx: 0, dy: 2 } : undefined,
       },
     },
-    {
-      type: 'text',
-      id: input.titleId,
-      order: input.order + 0.2,
-      bounds,
-      x: x + padding,
-      y,
-      width: Math.max(0, width - padding * 2),
-      height,
-      lines: [input.title],
-      fontFamily: input.fontFamily ?? DEFAULT_FONT,
-      fontSize: input.fontSize,
-      fontWeight: input.fontWeight,
-      color: input.textColor,
-      align: 'left',
-      verticalAlign: 'middle',
-      lineHeight: 1.2,
-    },
+    vertical ? verticalTitleText(input, box, padding, bounds) : horizontalTitleText(input, box, padding, bounds),
   ];
+}
+
+function horizontalTitleText(input: TitleTabInput, box: TabBox, padding: number, bounds: Bounds): RenderNode {
+  return {
+    type: 'text',
+    id: input.titleId,
+    order: input.order + 0.2,
+    bounds,
+    x: box.x + padding,
+    y: box.y,
+    width: Math.max(0, box.width - padding * 2),
+    height: box.height,
+    lines: [input.title],
+    fontFamily: input.fontFamily ?? DEFAULT_FONT,
+    fontSize: input.fontSize,
+    fontWeight: input.fontWeight,
+    color: input.textColor,
+    align: 'left',
+    verticalAlign: 'middle',
+    lineHeight: 1.2,
+  };
+}
+
+function verticalTitleText(input: TitleTabInput, box: TabBox, padding: number, bounds: Bounds): RenderNode {
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  const textThickness = input.fontSize * 1.4;
+  const textLength = Math.max(1, box.height - padding * 2);
+  return {
+    type: 'text',
+    id: input.titleId,
+    order: input.order + 0.2,
+    bounds,
+    x: centerX - textLength / 2,
+    y: centerY - textThickness / 2,
+    width: textLength,
+    height: textThickness,
+    lines: [input.title],
+    fontFamily: input.fontFamily ?? DEFAULT_FONT,
+    fontSize: input.fontSize,
+    fontWeight: input.fontWeight,
+    color: input.textColor,
+    align: 'center',
+    verticalAlign: 'middle',
+    lineHeight: 1.2,
+    rotation: -90,
+    rotationCenter: { x: centerX, y: centerY },
+  };
 }

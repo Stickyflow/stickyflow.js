@@ -57,6 +57,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
         shape.id,
         shape.shapeType,
         shape.text || shape.shapeType,
+        shape.parent_frame_id ?? undefined,
       ),
     ),
   ].sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

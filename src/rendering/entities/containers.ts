@@ -1,9 +1,9 @@
-export { buildFrame } from './container/frame';
 export {
   bottomRoundedRectPath,
   leftRoundedRectPath,
   rightRoundedRectPath,
   topRoundedRectPath,
-} from './container/roundedRect';
+} from '../../model/geometry/roundedRect';
+export { buildFrame } from './container/frame';
 export { simpleContainerStyle } from './container/style';
 export { buildSwimlane } from './container/swimlane';

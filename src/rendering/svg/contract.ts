@@ -7,6 +7,7 @@ function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
     `data-sf-id="${xml(identity.id)}"`,
     identity.kind ? `data-sf-kind="${xml(identity.kind)}"` : undefined,
     identity.primary ? 'data-sf-primary="true"' : undefined,
+    identity.parentFrameId ? `data-sf-parent-frame="${xml(identity.parentFrameId)}"` : undefined,
   ];
 }
 
@@ -24,6 +25,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return radarGeometryAttrs(detail);
     case 'link':
       return linkDetailAttrs(detail);
+    case 'frameBoundary':
+      return frameBoundaryAttrs(detail);
   }
 }
 
@@ -58,6 +61,10 @@ function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): 
     `data-sf-series="${xml(detail.series)}"`,
     detail.lineTension !== undefined ? `data-sf-line-tension="${num(detail.lineTension)}"` : undefined,
   ];
+}
+
+function frameBoundaryAttrs(detail: Extract<SceneDetail, { of: 'frameBoundary' }>): string[] {
+  return [`data-sf-corner-radius="${num(detail.cornerRadius)}"`, `data-sf-square-corner="${detail.squareCorner}"`];
 }
 
 function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<string | undefined> {

@@ -31,6 +31,7 @@ export interface SceneIdentity {
   kind?: string;
   primary?: boolean;
   label?: string;
+  parentFrameId?: string;
 }
 
 export type SceneDetail =
@@ -58,7 +59,8 @@ export type SceneDetail =
   | { of: 'chartScale'; valueScale: string }
   | { of: 'pieGeometry'; pieGeometry: string }
   | { of: 'radarGeometry'; radarGeometry: string }
-  | { of: 'chartSeries'; series: string; lineTension?: number };
+  | { of: 'chartSeries'; series: string; lineTension?: number }
+  | { of: 'frameBoundary'; cornerRadius: number; squareCorner: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' };
 
 export interface SceneBase {
   id: string;

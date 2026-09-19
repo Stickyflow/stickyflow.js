@@ -174,4 +174,46 @@ describe('interactive DOM contract', () => {
     expect(svg).not.toContain('href="javascript:');
     expect(svg).toContain('&quot;&gt;&lt;script&gt;'); // confirms it round-tripped as inert text, not silently dropped
   });
+
+  it("tags an entity nested in a frame with the frame's id, so dragging the frame can find its children", () => {
+    const { svg } = render(`sfl 1.2
+
+Model M {
+  Container f {
+    kind: frame
+    text: "Group"
+    layout { position: 0, 0; size: 300, 200 }
+
+    Entity child {
+      text: "Inside"
+      layout { position: 20, 40; size: 100, 60 }
+    }
+  }
+
+  Entity outside {
+    text: "Outside"
+    layout { position: 400, 0; size: 100, 60 }
+  }
+}
+`);
+    expect(svg).toMatch(/<rect id="sf-shape-child"[^>]*data-sf-parent-frame="f"/);
+    expect(svg).not.toMatch(/<rect id="sf-shape-outside"[^>]*data-sf-parent-frame/);
+  });
+
+  it('marks the frame boundary with its corner radius and which corner the title tab squares off', () => {
+    const { svg } = render(`sfl 1.2
+
+Model M {
+  Container f {
+    kind: frame
+    text: "Group"
+    labelPosition: right
+    cornerRadius: 18
+    layout { position: 0, 0; size: 300, 200 }
+  }
+}
+`);
+    expect(svg).toMatch(/<path id="sf-frame-f"[^>]*data-sf-corner-radius="18"/);
+    expect(svg).toMatch(/<path id="sf-frame-f"[^>]*data-sf-square-corner="topRight"/);
+  });
 });

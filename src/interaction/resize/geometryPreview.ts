@@ -1,3 +1,4 @@
+import { cornersRoundedRectPath, type RectCornerRadii } from '../../model/geometry/roundedRect';
 import type { Rect } from '../../model/geometry/router';
 import { localShapePath } from '../../model/geometry/shapes';
 import type { ShapeType } from '../../model/shapes';
@@ -27,12 +28,29 @@ function applyPathBounds(path: SVGGraphicsElement, kind: string, bounds: Rect): 
   }
 }
 
+function applyFrameBoundaryBounds(path: SVGGraphicsElement, bounds: Rect): void {
+  const cornerRadius = Number(path.getAttribute('data-sf-corner-radius') ?? 0);
+  const squareCorner = path.getAttribute('data-sf-square-corner') as keyof RectCornerRadii | null;
+  const radii: RectCornerRadii = {
+    topLeft: cornerRadius,
+    topRight: cornerRadius,
+    bottomRight: cornerRadius,
+    bottomLeft: cornerRadius,
+  };
+  if (squareCorner) {
+    radii[squareCorner] = 0;
+  }
+  path.setAttribute('d', cornersRoundedRectPath(bounds.x, bounds.y, bounds.width, bounds.height, radii));
+}
+
 export function applySingleNodeBounds(primary: SVGGraphicsElement, kind: string | null, bounds: Rect): void {
   const tag = primary.tagName.toLowerCase();
   if (tag === 'rect') {
     applyRectBounds(primary, kind, bounds);
   } else if (tag === 'ellipse') {
     applyEllipseBounds(primary, bounds);
+  } else if (tag === 'path' && primary.hasAttribute('data-sf-corner-radius')) {
+    applyFrameBoundaryBounds(primary, bounds);
   } else if (tag === 'path' && kind) {
     applyPathBounds(primary, kind, bounds);
   }

@@ -1,5 +1,5 @@
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
-import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
+import { dashArray, FONT_WEIGHTS, LABEL_POSITIONS, numOf, oneOf } from './values';
 
 export function frameObject(e: SflEntityOut) {
   const p = e.props;
@@ -23,6 +23,8 @@ export function frameObject(e: SflEntityOut) {
     font_family: p.fontFamily,
     dash: dashArray(p.dash),
     show_label: p.showLabel !== 'false',
+    label_position: oneOf(p.labelPosition, LABEL_POSITIONS, 'top'),
+    shadow: p.shadow !== 'false',
     order: e.order,
   };
 }

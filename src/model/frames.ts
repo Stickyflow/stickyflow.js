@@ -19,6 +19,8 @@ export interface Frame {
   font_weight: 'normal' | 'bold';
   font_family?: string;
   show_label: boolean;
+  label_position?: 'top' | 'bottom' | 'left' | 'right';
+  shadow?: boolean;
 
   layer_group?: string;
   order_key?: string;
@@ -48,6 +50,8 @@ export interface FrameCreate {
   font_weight?: 'normal' | 'bold';
   font_family?: string;
   show_label?: boolean;
+  label_position?: 'top' | 'bottom' | 'left' | 'right';
+  shadow?: boolean;
   layer_group?: string;
   order_key?: string;
   entity_group_id?: string | null;
@@ -70,6 +74,8 @@ export interface FrameUpdate {
   font_weight?: 'normal' | 'bold';
   font_family?: string;
   show_label?: boolean;
+  label_position?: 'top' | 'bottom' | 'left' | 'right';
+  shadow?: boolean;
   layer_group?: string;
   order_key?: string;
   is_visible?: boolean;
@@ -91,6 +97,8 @@ export const FRAME_DEFAULTS = {
   font_weight: 'bold' as const,
   font_family: "'Inter', sans-serif",
   show_label: true,
+  label_position: 'top' as const,
+  shadow: true,
   layer_group: 'background',
   order_key: 'e',
 };
