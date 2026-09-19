@@ -37,6 +37,13 @@ describe('selecting a frame or swimlane and dragging it moves its contained enti
     expect(group).toEqual([frame, { role: 'entity', id: 'a' }, { role: 'entity', id: 'b' }]);
   });
 
+  it('still cascades when the frame is already the sole selection (select-then-drag, not just click-and-drag)', () => {
+    const child = fakeNode({ 'data-sf-id': 'a', 'data-sf-role': 'entity', 'data-sf-parent-frame': 'f' });
+    const viewer = fakeViewer([child], [frame]);
+
+    expect(selectedMoveGroup(viewer, frame)).toEqual([frame, { role: 'entity', id: 'a' }]);
+  });
+
   it('does not expand a plain entity owner', () => {
     const viewer = fakeViewer([]);
     const owner: OwnerRef = { role: 'entity', id: 'e' };

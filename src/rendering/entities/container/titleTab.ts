@@ -17,6 +17,7 @@ export interface TitleTabInput {
   width: number;
   height: number;
   cornerRadius: number;
+  strokeWidth: number;
   title: string;
   color: string;
   textColor: string;
@@ -24,7 +25,6 @@ export interface TitleTabInput {
   fontSize: number;
   fontWeight: 'normal' | 'bold';
   labelPosition: TitleTabPosition;
-  shadow: boolean;
   order: number;
 }
 
@@ -39,9 +39,10 @@ interface TabBox {
 const TAB_RADIUS = 8;
 
 function tabBox(input: TitleTabInput, thickness: number, length: number): TabBox {
+  const inset = input.strokeWidth / 2;
   switch (input.labelPosition) {
     case 'bottom': {
-      const x = input.x;
+      const x = input.x - inset;
       const y = input.y + input.height;
       return {
         x,
@@ -53,12 +54,12 @@ function tabBox(input: TitleTabInput, thickness: number, length: number): TabBox
     }
     case 'left': {
       const x = input.x - thickness;
-      const y = input.y;
+      const y = input.y - inset;
       return { x, y, width: thickness, height: length, path: leftRoundedRectPath(x, y, thickness, length, TAB_RADIUS) };
     }
     case 'right': {
       const x = input.x + input.width;
-      const y = input.y;
+      const y = input.y - inset;
       return {
         x,
         y,
@@ -68,7 +69,7 @@ function tabBox(input: TitleTabInput, thickness: number, length: number): TabBox
       };
     }
     default: {
-      const x = input.x;
+      const x = input.x - inset;
       const y = input.y - thickness;
       return { x, y, width: length, height: thickness, path: topRoundedRectPath(x, y, length, thickness, TAB_RADIUS) };
     }
@@ -92,7 +93,6 @@ export function renderTitleTab(input: TitleTabInput): RenderNode[] {
       style: {
         fill: { kind: 'solid', color: input.color },
         stroke: { kind: 'none' },
-        shadow: input.shadow ? { color: '#000000', opacity: 0.1, blur: 4, dx: 0, dy: 2 } : undefined,
       },
     },
     vertical ? verticalTitleText(input, box, padding, bounds) : horizontalTitleText(input, box, padding, bounds),

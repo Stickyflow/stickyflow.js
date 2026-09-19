@@ -13,11 +13,15 @@ const SQUARED_CORNER_BY_LABEL_POSITION: Record<TitleTabPosition, keyof RectCorne
 };
 
 function frameBoundaryNode(frame: Frame, order: number, hasTab: boolean): RenderNode {
+  const shadow = frame.shadow ?? true;
   const bounds = boxBounds(
     { x: frame.x, y: frame.y, width: frame.width, height: frame.height },
-    frame.stroke_width + 4,
+    frame.stroke_width + (shadow ? 20 : 4),
   );
-  const style = simpleContainerStyle(frame.fill_color, frame.stroke_color, frame.stroke_width, frame.dash);
+  const style = {
+    ...simpleContainerStyle(frame.fill_color, frame.stroke_color, frame.stroke_width, frame.dash),
+    shadow: shadow ? { color: '#000000', opacity: 0.2, blur: 12, dx: 0, dy: 4 } : undefined,
+  };
   if (!hasTab) {
     return {
       type: 'rect',
@@ -68,6 +72,7 @@ export function buildFrame(frame: Frame, index: number): RenderNode[] {
         width: frame.width,
         height: frame.height,
         cornerRadius: frame.corner_radius,
+        strokeWidth: frame.stroke_width,
         title: frame.title,
         color: frame.stroke_color,
         textColor: frame.text_color,
@@ -75,7 +80,6 @@ export function buildFrame(frame: Frame, index: number): RenderNode[] {
         fontSize: frame.font_size,
         fontWeight: frame.font_weight,
         labelPosition: frame.label_position ?? 'top',
-        shadow: frame.shadow ?? true,
         order,
       }),
     );

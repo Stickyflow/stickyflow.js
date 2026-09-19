@@ -55,14 +55,14 @@ describe('Frame — title tab position and shape', () => {
     const { svg } = render(frame(''));
     const tab = svg.match(/<path id="[^"]*frame-tab-f"[^>]*>/)?.[0];
     expect(tab).toBeDefined();
-    expect(tab).toMatch(/d="M 0 /);
-    expect(tab).toContain('V 0 H 0 Z');
+    expect(tab).toMatch(/d="M -1 /);
+    expect(tab).toContain('V 0 H -1 Z');
   });
 
   it('moves the tab below the frame with labelPosition: bottom, square top corners and rounded bottom corners', () => {
     const { svg } = render(frame('    labelPosition: bottom'));
     const tab = svg.match(/<path id="[^"]*frame-tab-f"[^>]*>/)?.[0];
-    expect(tab).toMatch(/d="M 0 200 H [\d.]+ V/);
+    expect(tab).toMatch(/d="M -1 200 H [\d.]+ V/);
   });
 
   it('places the tab to the left of the frame with labelPosition: left, text rotated -90', () => {
@@ -83,12 +83,27 @@ describe('Frame — title tab position and shape', () => {
     expect(title).toContain('rotate(-90');
   });
 
-  it('draws a drop shadow on the tab by default, and lets shadow: false remove it', () => {
+  it("draws a drop shadow on the frame's own boundary by default, and lets shadow: false remove it — the tab never gets its own", () => {
     const shown = render(frame('')).svg;
-    expect(shown).toContain('filter="url(#sf-shadow-frame-tab-f-0)"');
+    expect(shown).toMatch(/<path id="[^"]*frame-f"[^>]*filter="url\(#sf-shadow-frame-f-0\)"/);
+    expect(shown).not.toMatch(/<path id="[^"]*frame-tab-f"[^>]*filter=/);
 
     const hidden = render(frame('    shadow: false')).svg;
-    expect(hidden).not.toContain('filter="url(#sf-shadow-frame-tab-f-0)"');
+    expect(hidden).not.toContain('filter="url(#sf-shadow-frame-f-0)"');
+  });
+
+  it('reaches past a thick stroke to stay flush with its visible outer edge, not the unstroked geometry', () => {
+    const { svg } = render(frame('    strokeWidth: 6'));
+    const tab = svg.match(/<path id="[^"]*frame-tab-f"[^>]*>/)?.[0];
+    expect(tab).toMatch(/d="M -3 /);
+    expect(tab).toContain('V 0 H -3 Z');
+  });
+
+  it('sits exactly at the frame edge when there is no stroke to bulge outward', () => {
+    const { svg } = render(frame('    strokeWidth: 0'));
+    const tab = svg.match(/<path id="[^"]*frame-tab-f"[^>]*>/)?.[0];
+    expect(tab).toMatch(/d="M 0 /);
+    expect(tab).toContain('V 0 H 0 Z');
   });
 });
 

@@ -14,7 +14,8 @@ function containedChildren(viewer: Viewer, owner: OwnerRef): OwnerRef[] {
 
 export function selectedMoveGroup(viewer: Viewer, owner: OwnerRef): OwnerRef[] {
   const selection = viewer.getSelection();
-  if (selection.some(selected => selected.id === owner.id)) {
+  const isMultiSelect = selection.length > 1 && selection.some(selected => selected.id === owner.id);
+  if (isMultiSelect) {
     return selection.filter(hasEditableGeometry);
   }
   return [owner, ...containedChildren(viewer, owner)];
