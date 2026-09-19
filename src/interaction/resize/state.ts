@@ -35,6 +35,7 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
 
   const startBounds = selection.primary.getBBox();
   const composite = isCompositeOwner(selection.owner);
+  const isContainer = CONTAINER_ROLES.has(selection.owner.role);
   selection.captureTarget.setPointerCapture?.(event.pointerId);
   return {
     owner: selection.owner,
@@ -46,10 +47,10 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
     overlay: selection.overlay,
     bubbles: findResizeQuickDuplicateBubbles(svg, selection.ownerId, selection.overlay),
     startBounds,
-    childrenBounds: CONTAINER_ROLES.has(selection.owner.role) ? childrenUnionBounds(svg, selection.ownerId) : undefined,
+    childrenBounds: isContainer ? childrenUnionBounds(svg, selection.ownerId) : undefined,
     liveLinks: findLiveLinks(svg, selection.ownerId, startBounds),
     pointerId: event.pointerId,
     moved: false,
-    text: composite ? null : captureResizeText(selection.nodes, selection.primary),
+    text: composite || isContainer ? null : captureResizeText(selection.nodes, selection.primary),
   };
 }
