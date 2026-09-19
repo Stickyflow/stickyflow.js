@@ -80,11 +80,6 @@ export const SHAPE_DEFAULTS = {
     ...COMMON_DEFAULTS,
     rotation: 0,
   },
-  image: {
-    ...COMMON_DEFAULTS,
-    rotation: 0,
-    imageFit: 'cover' as const,
-  },
 } as const;
 
 export const SHAPE_TYPES = Object.keys(SHAPE_DEFAULTS) as ShapeType[];

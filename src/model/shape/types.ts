@@ -16,8 +16,7 @@ export type ShapeType =
   | 'hexagon'
   | 'parallelogram'
   | 'trapezoid'
-  | 'symbol'
-  | 'image';
+  | 'symbol';
 
 export interface Shape {
   id: string;
@@ -64,9 +63,6 @@ export interface Shape {
   subShapes?: SubShape[] | null;
 
   symbol?: SymbolDef | null;
-
-  imageUrl?: string | null;
-  imageFit?: 'cover' | 'contain';
 
   createdAt?: string;
 }

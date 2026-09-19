@@ -2,7 +2,6 @@ import type { ShapeType } from '../../../../model/shapes';
 import type { RenderNode } from '../../../scene';
 import type { ShapeGeometryRenderer, ShapeRenderContext } from '../types';
 import { renderCylinder, renderPerson } from './compound';
-import { renderImage } from './image';
 import { renderEllipse, renderPath, renderRectangle, renderSymbol } from './simple';
 
 const GEOMETRY_RENDERERS: Record<ShapeType, ShapeGeometryRenderer> = {
@@ -12,7 +11,6 @@ const GEOMETRY_RENDERERS: Record<ShapeType, ShapeGeometryRenderer> = {
   diamond: renderPath,
   document: renderPath,
   hexagon: renderPath,
-  image: renderImage,
   oval: renderEllipse,
   parallelogram: renderPath,
   person: renderPerson,

@@ -1,4 +1,4 @@
-import type { RenderNode, SceneImage, SceneStyle, SceneText } from '../scene';
+import type { RenderNode, SceneStyle, SceneText } from '../scene';
 import type { SvgDefinitionRegistry } from './definitions';
 import { num, xml } from './format';
 
@@ -20,7 +20,7 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
   return '#64748b';
 }
 
-export function styleAttrs(node: Exclude<RenderNode, SceneText | SceneImage>, defs: SvgDefinitionRegistry): string {
+export function styleAttrs(node: Exclude<RenderNode, SceneText>, defs: SvgDefinitionRegistry): string {
   const stroke = defs.paint(node.style.stroke, `${node.id}-stroke`, node.bounds);
   const fill = defs.paint(node.style.fill, `${node.id}-fill`, node.bounds);
   const attrs = [`fill="${xml(fill)}"`, `stroke="${xml(stroke)}"`];
@@ -50,7 +50,7 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
 
 function addVisualEffectAttrs(
   attrs: string[],
-  node: Exclude<RenderNode, SceneText | SceneImage>,
+  node: Exclude<RenderNode, SceneText>,
   defs: SvgDefinitionRegistry,
 ): void {
   const filter = defs.filter(node.style, node.id);
@@ -59,11 +59,7 @@ function addVisualEffectAttrs(
   }
 }
 
-function addPathMarkerAttrs(
-  attrs: string[],
-  node: Exclude<RenderNode, SceneText | SceneImage>,
-  defs: SvgDefinitionRegistry,
-): void {
+function addPathMarkerAttrs(attrs: string[], node: Exclude<RenderNode, SceneText>, defs: SvgDefinitionRegistry): void {
   if (node.type !== 'path') {
     return;
   }

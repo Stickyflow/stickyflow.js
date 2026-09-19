@@ -123,20 +123,7 @@ export interface SceneText extends SceneBase {
   richLines?: Array<Array<{ text: string; bold: boolean }>>;
 }
 
-export interface SceneImage extends SceneBase {
-  type: 'image';
-  href: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  preserveAspectRatio: string;
-  opacity?: number;
-  rotation?: number;
-  rotationCenter?: Point;
-}
-
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneImage;
+export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText;
 
 export interface RenderScene {
   nodes: RenderNode[];

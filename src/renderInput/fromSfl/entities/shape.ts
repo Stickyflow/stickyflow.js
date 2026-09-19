@@ -46,8 +46,6 @@ export function shapeObject(e: SflEntityOut) {
     dash: dashArray(p.dash),
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
     shapeStyle: p.opacity !== undefined ? { opacity: numOf(p.opacity) } : undefined,
-    imageUrl: p.src,
-    imageFit: p.fit as 'cover' | 'contain' | undefined,
     parent_frame_id: e.parentFrameId,
     order: e.order,
   };

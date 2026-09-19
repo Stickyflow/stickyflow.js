@@ -80,9 +80,7 @@ export function buildShape(
   }
   const { context, strokeWidth } = createRenderContext(shape, index, diagnostics);
   const nodes =
-    shape.strokeStyle === 'double' && shape.shapeType !== 'image'
-      ? renderDoubleStroke(context, strokeWidth || 1)
-      : renderShapeGeometry(context);
+    shape.strokeStyle === 'double' ? renderDoubleStroke(context, strokeWidth || 1) : renderShapeGeometry(context);
   const text = renderShapeText(context, strokeWidth, measureText);
   if (text) {
     nodes.push(text);
