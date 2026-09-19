@@ -24,11 +24,11 @@ export function paintSelectionOverlays(
     const owner = owners.get(id);
     const overlay =
       owner?.role === 'link'
-        ? linkSelectionOverlay(document, primary as unknown as SVGPathElement, id)
-        : shapeSelectionOverlay(document, primary, id);
+        ? linkSelectionOverlay(document, primary as unknown as SVGPathElement, id, svg)
+        : shapeSelectionOverlay(document, primary, id, svg);
     svg.appendChild(overlay);
     if (owner?.role === 'entity' && selectedIds.size === 1) {
-      svg.appendChild(quickDuplicateBubbles(document, primary, id));
+      svg.appendChild(quickDuplicateBubbles(document, primary, id, svg));
     }
   }
 }

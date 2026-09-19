@@ -1,64 +1,92 @@
 import { selectionOverlayGroup, svgElement } from './dom';
+import { screenPx } from './scale';
 import type { OverlayBounds, QuickDuplicateDirection } from './types';
 
-const BUBBLE_RADIUS = 8;
-const BUBBLE_OFFSET = BUBBLE_RADIUS + 15;
-const PLUS_HALF_SIZE = 4;
+const BUBBLE_RADIUS_PX = 8;
+const BUBBLE_MARGIN_PX = 15;
+const PLUS_HALF_SIZE_PX = 4;
+const BUBBLE_STROKE_WIDTH_PX = 1.5;
 
-function quickDuplicatePositions(bounds: OverlayBounds): Array<[number, number, QuickDuplicateDirection]> {
+function quickDuplicatePositions(
+  bounds: OverlayBounds,
+  offset: number,
+): Array<[number, number, QuickDuplicateDirection]> {
   const centerX = bounds.x + bounds.width / 2;
   const centerY = bounds.y + bounds.height / 2;
   return [
-    [centerX, bounds.y - BUBBLE_OFFSET, 'top'],
-    [bounds.x + bounds.width + BUBBLE_OFFSET, centerY, 'right'],
-    [centerX, bounds.y + bounds.height + BUBBLE_OFFSET, 'bottom'],
-    [bounds.x - BUBBLE_OFFSET, centerY, 'left'],
+    [centerX, bounds.y - offset, 'top'],
+    [bounds.x + bounds.width + offset, centerY, 'right'],
+    [centerX, bounds.y + bounds.height + offset, 'bottom'],
+    [bounds.x - offset, centerY, 'left'],
   ];
 }
 
-function plusPath(x: number, y: number): string {
-  return `M ${x - PLUS_HALF_SIZE} ${y} L ${x + PLUS_HALF_SIZE} ${y} M ${x} ${y - PLUS_HALF_SIZE} L ${x} ${y + PLUS_HALF_SIZE}`;
+function plusPath(x: number, y: number, halfSize: number): string {
+  return `M ${x - halfSize} ${y} L ${x + halfSize} ${y} M ${x} ${y - halfSize} L ${x} ${y + halfSize}`;
 }
 
 function duplicateBubble(
   document: Document,
   x: number,
   y: number,
+  radius: number,
+  strokeWidth: number,
   direction: QuickDuplicateDirection,
 ): SVGCircleElement {
   const bubble = svgElement(document, 'circle');
   bubble.setAttribute('cx', String(x));
   bubble.setAttribute('cy', String(y));
-  bubble.setAttribute('r', String(BUBBLE_RADIUS));
+  bubble.setAttribute('r', String(radius));
   bubble.setAttribute('fill', '#e8e8e8');
   bubble.setAttribute('stroke', '#ccc');
-  bubble.setAttribute('stroke-width', '1.5');
+  bubble.setAttribute('stroke-width', String(strokeWidth));
   bubble.setAttribute('data-sf-quick-duplicate', direction);
   bubble.style.pointerEvents = 'auto';
   bubble.style.cursor = 'pointer';
   return bubble;
 }
 
-function duplicatePlus(document: Document, x: number, y: number): SVGPathElement {
+function duplicatePlus(
+  document: Document,
+  x: number,
+  y: number,
+  halfSize: number,
+  strokeWidth: number,
+): SVGPathElement {
   const plus = svgElement(document, 'path');
-  plus.setAttribute('d', plusPath(x, y));
+  plus.setAttribute('d', plusPath(x, y, halfSize));
   plus.setAttribute('stroke', '#999');
-  plus.setAttribute('stroke-width', '1.5');
+  plus.setAttribute('stroke-width', String(strokeWidth));
   plus.setAttribute('stroke-linecap', 'round');
   return plus;
 }
 
-export function quickDuplicateBubbles(document: Document, primary: SVGGraphicsElement, id: string): SVGGElement {
+export function quickDuplicateBubbles(
+  document: Document,
+  primary: SVGGraphicsElement,
+  id: string,
+  svg: SVGSVGElement,
+): SVGGElement {
   const group = selectionOverlayGroup(document, id, primary);
-  for (const [x, y, direction] of quickDuplicatePositions(primary.getBBox())) {
-    group.append(duplicateBubble(document, x, y, direction), duplicatePlus(document, x, y));
+  const radius = screenPx(svg, BUBBLE_RADIUS_PX);
+  const offset = radius + screenPx(svg, BUBBLE_MARGIN_PX);
+  const halfSize = screenPx(svg, PLUS_HALF_SIZE_PX);
+  const strokeWidth = screenPx(svg, BUBBLE_STROKE_WIDTH_PX);
+  for (const [x, y, direction] of quickDuplicatePositions(primary.getBBox(), offset)) {
+    group.append(
+      duplicateBubble(document, x, y, radius, strokeWidth, direction),
+      duplicatePlus(document, x, y, halfSize, strokeWidth),
+    );
   }
   return group;
 }
 
 export function updateQuickDuplicateBubbles(group: SVGGElement, bounds: OverlayBounds): void {
   const bubbles = group.querySelectorAll('circle[data-sf-quick-duplicate]');
-  for (const [index, [x, y]] of quickDuplicatePositions(bounds).entries()) {
+  const firstRadius = Number(bubbles[0]?.getAttribute('r')) || BUBBLE_RADIUS_PX;
+  const offset = firstRadius * ((BUBBLE_RADIUS_PX + BUBBLE_MARGIN_PX) / BUBBLE_RADIUS_PX);
+  const halfSize = firstRadius * (PLUS_HALF_SIZE_PX / BUBBLE_RADIUS_PX);
+  for (const [index, [x, y]] of quickDuplicatePositions(bounds, offset).entries()) {
     const bubble = bubbles[index];
     if (!bubble) {
       continue;
@@ -67,7 +95,7 @@ export function updateQuickDuplicateBubbles(group: SVGGElement, bounds: OverlayB
     bubble.setAttribute('cy', String(y));
     const plus = bubble.nextElementSibling;
     if (plus) {
-      plus.setAttribute('d', plusPath(x, y));
+      plus.setAttribute('d', plusPath(x, y, halfSize));
     }
   }
 }
