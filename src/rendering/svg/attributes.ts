@@ -57,6 +57,10 @@ function addVisualEffectAttrs(
   if (filter) {
     attrs.push(`filter="url(#${filter})"`);
   }
+  const clip = defs.clip(node.style);
+  if (clip) {
+    attrs.push(`clip-path="url(#${clip})"`);
+  }
 }
 
 function addPathMarkerAttrs(attrs: string[], node: Exclude<RenderNode, SceneText>, defs: SvgDefinitionRegistry): void {

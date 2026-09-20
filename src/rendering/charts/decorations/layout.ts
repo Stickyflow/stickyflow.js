@@ -23,7 +23,7 @@ export function decorations(chart: Chart): ChartLayout {
   const padLeft = showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
   const basePadBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
   const hasColorBar = chart.chart_type === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
-  const padBottom = basePadBottom + (hasColorBar ? 34 : 0);
+  const padBottom = basePadBottom + (hasColorBar ? 44 : 0);
   const padTop = chart.title || (showLegend && chart.series.length) ? 44 : 24;
 
   return {

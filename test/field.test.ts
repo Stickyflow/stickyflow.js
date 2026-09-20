@@ -111,7 +111,7 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
   it('caps the interpolated grid well below one cell per pixel, so a 400x300 chart stays under a thousand SVG rects', () => {
     const { svg } = render(FIELD_SFL);
     const cellCount = (svg.match(/chart-field-cell-/g) ?? []).length;
-    expect(cellCount).toBe(576);
+    expect(cellCount).toBe(544);
     expect(cellCount).toBeLessThan(1000);
   });
 
@@ -120,5 +120,29 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     const { scene } = renderCanvas(sflToRenderInput(noLegend));
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-colorbar-'))).toBe(false);
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-cell-'))).toBe(true);
+  });
+
+  it('clips every surface cell to a single rounded rect matching cornerRadius, not one clipPath per cell', () => {
+    const rounded = FIELD_SFL.replace('type: field', 'type: field\n    style { cornerRadius: 20 }');
+    const { scene } = renderCanvas(sflToRenderInput(rounded));
+    const cells = scene.nodes.filter(node => node.id.startsWith('chart-field-cell-'));
+    expect(cells.length).toBeGreaterThan(0);
+    expect(cells.every(node => node.type === 'rect' && node.style.clip?.rx === 20)).toBe(true);
+
+    const { svg } = render(rounded);
+    expect((svg.match(/<clipPath/g) ?? []).length).toBe(1);
+    expect((svg.match(/clip-path="url\(#/g) ?? []).length).toBe(cells.length);
+  });
+
+  it('keeps the legend clear of the frame edge: colorbar + labels fit inside the reserved bottom padding', () => {
+    const { scene } = renderCanvas(sflToRenderInput(FIELD_SFL));
+    const chart = scene.nodes.find(node => node.id === 'chart-wlan');
+    const minLabel = scene.nodes.find(node => node.id === 'chart-field-colorbar-min-wlan');
+    if (chart?.type !== 'rect' || minLabel?.type !== 'text') {
+      throw new Error('expected chart frame rect and colorbar min label');
+    }
+    const frameBottom = chart.y + chart.height;
+    const labelBottom = minLabel.y + minLabel.height;
+    expect(labelBottom).toBeLessThan(frameBottom);
   });
 });

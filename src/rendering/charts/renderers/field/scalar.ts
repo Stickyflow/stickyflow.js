@@ -51,7 +51,10 @@ function createFieldCell(context: ChartRenderContext, grid: ScalarFieldGrid, row
     y: centerY - grid.cellHeight / 2,
     width: grid.cellWidth,
     height: grid.cellHeight,
-    style: { fill: { kind: 'solid', color } },
+    style: {
+      fill: { kind: 'solid', color },
+      clip: { x: plot.x, y: plot.y, width: plot.width, height: plot.height, rx: chart.corner_radius ?? 12 },
+    },
   };
 }
 
