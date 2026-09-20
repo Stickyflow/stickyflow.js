@@ -1,5 +1,5 @@
 import type { Chart } from '../../../model/charts';
-import type { Bounds, RenderNode } from '../../scene';
+import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 
 export function createGridDot(
   chart: Chart,
@@ -9,9 +9,10 @@ export function createGridDot(
   x: number,
   y: number,
   width: number,
+  clip: SceneStyle['clip'],
 ): RenderNode {
   const radius = Math.max(1, width * 1.5);
-  const style = { fill: { kind: 'solid' as const, color: chart.grid_color ?? '#e2e8f0' } };
+  const style = { fill: { kind: 'solid' as const, color: chart.grid_color ?? '#e2e8f0' }, clip };
   if (chart.grid_rounded_corners === true) {
     return { type: 'ellipse', id, order, bounds, cx: x, cy: y, rx: radius, ry: radius, style };
   }

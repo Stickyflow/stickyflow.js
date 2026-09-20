@@ -27,6 +27,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return linkDetailAttrs(detail);
     case 'frameBoundary':
       return frameBoundaryAttrs(detail);
+    case 'symbolGeometry':
+      return symbolGeometryAttrs(detail);
   }
 }
 
@@ -65,6 +67,13 @@ function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): 
 
 function frameBoundaryAttrs(detail: Extract<SceneDetail, { of: 'frameBoundary' }>): string[] {
   return [`data-sf-corner-radius="${num(detail.cornerRadius)}"`, `data-sf-square-corner="${detail.squareCorner}"`];
+}
+
+function symbolGeometryAttrs(detail: Extract<SceneDetail, { of: 'symbolGeometry' }>): string[] {
+  return [
+    `data-sf-symbol-points="${xml(JSON.stringify(detail.points))}"`,
+    `data-sf-symbol-tension="${num(detail.tension)}"`,
+  ];
 }
 
 function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<string | undefined> {

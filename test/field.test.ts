@@ -122,16 +122,22 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-cell-'))).toBe(true);
   });
 
-  it('clips every surface cell to a single rounded rect matching cornerRadius, not one clipPath per cell', () => {
+  it('clips the surface cells and the grid lines to the same single rounded rect matching cornerRadius, not one clipPath per node', () => {
     const rounded = FIELD_SFL.replace('type: field', 'type: field\n    style { cornerRadius: 20 }');
     const { scene } = renderCanvas(sflToRenderInput(rounded));
     const cells = scene.nodes.filter(node => node.id.startsWith('chart-field-cell-'));
+    const gridLines = scene.nodes.filter(node => node.id.startsWith('chart-grid-'));
+    const isolines = scene.nodes.filter(node => node.id.startsWith('chart-field-isoline-'));
     expect(cells.length).toBeGreaterThan(0);
+    expect(gridLines.length).toBeGreaterThan(0);
+    expect(isolines.length).toBeGreaterThan(0);
     expect(cells.every(node => node.type === 'rect' && node.style.clip?.rx === 20)).toBe(true);
+    expect(gridLines.every(node => node.type === 'path' && node.style.clip?.rx === 20)).toBe(true);
+    expect(isolines.every(node => node.type === 'path' && node.style.clip?.rx === 20)).toBe(true);
 
     const { svg } = render(rounded);
     expect((svg.match(/<clipPath/g) ?? []).length).toBe(1);
-    expect((svg.match(/clip-path="url\(#/g) ?? []).length).toBe(cells.length);
+    expect((svg.match(/clip-path="url\(#/g) ?? []).length).toBe(cells.length + gridLines.length + isolines.length);
   });
 
   it('keeps the legend clear of the frame edge: colorbar + labels fit inside the reserved bottom padding', () => {

@@ -1,7 +1,16 @@
+import type { Chart } from '../../../model/charts';
+import type { SceneStyle } from '../../scene';
 import { idwInterpolate } from './idw';
 import type { FieldGrid, FieldSample } from './types';
 
 export const FIELD_GRID_MAX_CELLS = 32;
+
+export function fieldSurfaceClip(
+  chart: Chart,
+  plot: { x: number; y: number; width: number; height: number },
+): SceneStyle['clip'] {
+  return { x: plot.x, y: plot.y, width: plot.width, height: plot.height, rx: chart.corner_radius ?? 12 };
+}
 
 export function computeFieldGrid(samples: FieldSample[], width: number, height: number, power: number): FieldGrid {
   const aspect = width > 0 && height > 0 ? width / height : 1;

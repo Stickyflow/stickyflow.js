@@ -49,6 +49,7 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
   if (!context.shape.symbol || context.shape.symbol.points.length < 2) {
     return renderRectangle(context);
   }
+  const tension = finite(context.shape.symbol.tension, 0);
   const points = context.shape.symbol.points.map(([x, y]) => ({
     x: context.x + x * context.width,
     y: context.y + y * context.height,
@@ -57,8 +58,9 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
     {
       ...shapeNodeBase(context),
       type: 'path',
-      d: freeformPathData({ points, tension: finite(context.shape.symbol.tension, 0), closed: true }),
+      d: freeformPathData({ points, tension, closed: true }),
       rotationCenter: context.rotationCenter,
+      detail: { of: 'symbolGeometry', points: context.shape.symbol.points, tension },
     },
   ];
 }

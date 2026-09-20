@@ -1,6 +1,7 @@
 import { type Chart, CIRCULAR_GRID_CHART_TYPES } from '../../../model/charts';
 import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
+import { fieldSurfaceClip } from '../field/grid';
 import { chartTicks, mapChartValue } from '../primitives';
 import { buildCircularChartGrid } from './gridCircle';
 import { createGridDot } from './gridDots';
@@ -17,8 +18,9 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
   }
 
   const width = finite(chart.grid_width, 1);
+  const clip = chart.chart_type === 'field' ? fieldSurfaceClip(chart, plot) : undefined;
   if (chart.grid_line_style === 'dotted') {
-    return buildDottedRectGrid(chart, plot, bounds, order, width);
+    return buildDottedRectGrid(chart, plot, bounds, order, width, clip);
   }
 
   const style: SceneStyle = {
@@ -26,6 +28,7 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
     stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
     strokeWidth: width,
     ...gridLineDashStyle(chart, width),
+    clip,
   };
 
   const nodes: RenderNode[] = [];
@@ -60,6 +63,7 @@ function buildDottedRectGrid(
   bounds: Bounds,
   order: number,
   width: number,
+  clip: SceneStyle['clip'],
 ): RenderNode[] {
   const xTicks = chartTicks(chart.axis_x);
   const yTicks = chartTicks(chart.axis_y);
@@ -69,7 +73,7 @@ function buildDottedRectGrid(
     yTicks.forEach(yTick => {
       const y = plot.y + plot.height - mapChartValue(yTick, chart.axis_y, plot.height);
       const id = `chart-grid-dot-${chart.id}-${xTick}-${yTick}`;
-      nodes.push(createGridDot(chart, id, order + nodes.length, bounds, x, y, width));
+      nodes.push(createGridDot(chart, id, order + nodes.length, bounds, x, y, width, clip));
     });
   });
   return nodes;

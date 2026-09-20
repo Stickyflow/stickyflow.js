@@ -69,6 +69,12 @@ Model board {
     expect(state.entities[0].symbol).toBeUndefined();
   });
 
+  it('tags the rendered path with its points/tension so live resize can rebuild the exact polygon', () => {
+    const { svg } = render(SFL);
+    expect(svg).toContain('data-sf-symbol-points="[[0.5,0],[1,1],[0,1]]"');
+    expect(svg).toContain('data-sf-symbol-tension="0"');
+  });
+
   it('scales tension into a smoothed curve instead of straight polygon segments', () => {
     const sfl = `sfl 1.4
 

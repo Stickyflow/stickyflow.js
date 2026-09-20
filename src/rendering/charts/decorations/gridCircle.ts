@@ -83,7 +83,7 @@ function buildDottedCircularGrid(
       const x = centerX + Math.cos(angle) * ringRadius;
       const y = centerY + Math.sin(angle) * ringRadius;
       const id = `chart-grid-dot-${chart.id}-${xTick}-${yTick}`;
-      nodes.push(createGridDot(chart, id, order + nodes.length, bounds, x, y, width));
+      nodes.push(createGridDot(chart, id, order + nodes.length, bounds, x, y, width, undefined));
     });
   });
   return nodes;

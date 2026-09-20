@@ -2,6 +2,7 @@ import { cornersRoundedRectPath, type RectCornerRadii } from '../../model/geomet
 import type { Rect } from '../../model/geometry/router';
 import { localShapePath } from '../../model/geometry/shapes';
 import type { ShapeType } from '../../model/shapes';
+import { freeformPathData } from '../../rendering/scene/freeformPath';
 import { recenterRotation } from './rotation';
 
 function applyRectBounds(rect: SVGGraphicsElement, kind: string | null, bounds: Rect): void {
@@ -21,7 +22,24 @@ function applyEllipseBounds(ellipse: SVGGraphicsElement, bounds: Rect): void {
   ellipse.setAttribute('ry', String(bounds.height / 2));
 }
 
+function applySymbolBounds(path: SVGGraphicsElement, bounds: Rect): boolean {
+  const raw = path.getAttribute('data-sf-symbol-points');
+  if (!raw) {
+    return false;
+  }
+  const points = (JSON.parse(raw) as Array<[number, number]>).map(([x, y]) => ({
+    x: bounds.x + x * bounds.width,
+    y: bounds.y + y * bounds.height,
+  }));
+  const tension = Number(path.getAttribute('data-sf-symbol-tension')) || 0;
+  path.setAttribute('d', freeformPathData({ points, tension, closed: true }));
+  return true;
+}
+
 function applyPathBounds(path: SVGGraphicsElement, kind: string, bounds: Rect): void {
+  if (kind === 'symbol' && applySymbolBounds(path, bounds)) {
+    return;
+  }
   const pathData = localShapePath(kind as ShapeType, bounds.x, bounds.y, bounds.width, bounds.height);
   if (pathData) {
     path.setAttribute('d', pathData);
