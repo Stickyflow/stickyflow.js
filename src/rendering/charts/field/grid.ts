@@ -1,7 +1,7 @@
 import { idwInterpolate } from './idw';
 import type { FieldGrid, FieldSample } from './types';
 
-export const FIELD_GRID_MAX_CELLS = 64;
+export const FIELD_GRID_MAX_CELLS = 32;
 
 export function computeFieldGrid(samples: FieldSample[], width: number, height: number, power: number): FieldGrid {
   const aspect = width > 0 && height > 0 ? width / height : 1;

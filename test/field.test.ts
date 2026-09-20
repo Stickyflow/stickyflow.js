@@ -108,6 +108,13 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     expect(max?.type === 'text' && max.lines).toEqual(['1']);
   });
 
+  it('caps the interpolated grid well below one cell per pixel, so a 400x300 chart stays under a thousand SVG rects', () => {
+    const { svg } = render(FIELD_SFL);
+    const cellCount = (svg.match(/chart-field-cell-/g) ?? []).length;
+    expect(cellCount).toBe(576);
+    expect(cellCount).toBeLessThan(1000);
+  });
+
   it('omits the colorbar (but keeps the surface) when the legend is off', () => {
     const noLegend = FIELD_SFL.replace('text: "WLAN signal"', 'text: "WLAN signal"\n    style { showLegend: false }');
     const { scene } = renderCanvas(sflToRenderInput(noLegend));
