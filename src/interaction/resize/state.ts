@@ -1,4 +1,4 @@
-import type { ResizeHandle } from '../../domContract';
+import { type ResizeHandle, symbolDeclaredBounds } from '../../domContract';
 import type { Rect } from '../../model/geometry/router';
 import type { OwnerRef } from '../../viewer';
 import { CONTAINER_ROLES, childrenUnionBounds } from '../containerGeometry';
@@ -33,7 +33,7 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
     return null;
   }
 
-  const startBounds = selection.primary.getBBox();
+  const startBounds = symbolDeclaredBounds(selection.primary) ?? selection.primary.getBBox();
   const composite = isCompositeOwner(selection.owner);
   const isContainer = CONTAINER_ROLES.has(selection.owner.role);
   selection.captureTarget.setPointerCapture?.(event.pointerId);

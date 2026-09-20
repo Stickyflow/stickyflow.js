@@ -62,7 +62,12 @@ export type SceneDetail =
   | { of: 'radarGeometry'; radarGeometry: string }
   | { of: 'chartSeries'; series: string; lineTension?: number }
   | { of: 'frameBoundary'; cornerRadius: number; squareCorner: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' }
-  | { of: 'symbolGeometry'; points: Array<[number, number]>; tension: number };
+  | {
+      of: 'symbolGeometry';
+      points: Array<[number, number]>;
+      tension: number;
+      declaredBounds: { x: number; y: number; width: number; height: number };
+    };
 
 export interface SceneBase {
   id: string;

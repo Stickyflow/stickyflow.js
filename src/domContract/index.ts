@@ -9,6 +9,7 @@ export {
   isContractCompatible,
   parseContractVersion,
   resolveOwner,
+  symbolDeclaredBounds,
 } from './contract';
 export {
   findAllOwnerNodes,

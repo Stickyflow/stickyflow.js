@@ -22,6 +22,19 @@ export function isContractCompatible(version: number | null): boolean {
 
 const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane', 'table', 'chart', 'path']);
 
+export function symbolDeclaredBounds(el: {
+  getAttribute(name: string): string | null;
+}): { x: number; y: number; width: number; height: number } | null {
+  const raw = el.getAttribute('data-sf-symbol-bounds');
+  if (!raw) {
+    return null;
+  }
+  const [x, y, width, height] = raw.split(',').map(Number);
+  return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(width) && Number.isFinite(height)
+    ? { x, y, width, height }
+    : null;
+}
+
 export function resolveOwner(target: AttrElement | null): OwnerRef | null {
   const el = target?.closest('[data-sf-id]');
   if (!el) {

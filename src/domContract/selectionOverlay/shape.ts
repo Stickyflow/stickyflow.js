@@ -1,3 +1,4 @@
+import { symbolDeclaredBounds } from '../contract';
 import { selectionOverlayGroup, svgElement } from './dom';
 import { renderResizeHandles } from './resizeHandles';
 import { screenPx } from './scale';
@@ -12,7 +13,7 @@ export function shapeSelectionOverlay(
   id: string,
   svg: SVGSVGElement,
 ): SVGGElement {
-  const bounds = primary.getBBox();
+  const bounds = symbolDeclaredBounds(primary) ?? primary.getBBox();
   const group = selectionOverlayGroup(document, id, primary);
   const offset = screenPx(svg, RING_OFFSET_PX);
   const ring = svgElement(document, 'rect');

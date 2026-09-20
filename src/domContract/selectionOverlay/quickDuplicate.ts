@@ -1,3 +1,4 @@
+import { symbolDeclaredBounds } from '../contract';
 import { selectionOverlayGroup, svgElement } from './dom';
 import { screenPx } from './scale';
 import type { OverlayBounds, QuickDuplicateDirection } from './types';
@@ -72,7 +73,8 @@ export function quickDuplicateBubbles(
   const offset = radius + screenPx(svg, BUBBLE_MARGIN_PX);
   const halfSize = screenPx(svg, PLUS_HALF_SIZE_PX);
   const strokeWidth = screenPx(svg, BUBBLE_STROKE_WIDTH_PX);
-  for (const [x, y, direction] of quickDuplicatePositions(primary.getBBox(), offset)) {
+  const bounds = symbolDeclaredBounds(primary) ?? primary.getBBox();
+  for (const [x, y, direction] of quickDuplicatePositions(bounds, offset)) {
     group.append(
       duplicateBubble(document, x, y, radius, strokeWidth, direction),
       duplicatePlus(document, x, y, halfSize, strokeWidth),

@@ -60,7 +60,12 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
       type: 'path',
       d: freeformPathData({ points, tension, closed: true }),
       rotationCenter: context.rotationCenter,
-      detail: { of: 'symbolGeometry', points: context.shape.symbol.points, tension },
+      detail: {
+        of: 'symbolGeometry',
+        points: context.shape.symbol.points,
+        tension,
+        declaredBounds: { x: context.x, y: context.y, width: context.width, height: context.height },
+      },
     },
   ];
 }

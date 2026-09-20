@@ -70,9 +70,11 @@ function frameBoundaryAttrs(detail: Extract<SceneDetail, { of: 'frameBoundary' }
 }
 
 function symbolGeometryAttrs(detail: Extract<SceneDetail, { of: 'symbolGeometry' }>): string[] {
+  const bounds = detail.declaredBounds;
   return [
     `data-sf-symbol-points="${xml(JSON.stringify(detail.points))}"`,
     `data-sf-symbol-tension="${num(detail.tension)}"`,
+    `data-sf-symbol-bounds="${num(bounds.x)},${num(bounds.y)},${num(bounds.width)},${num(bounds.height)}"`,
   ];
 }
 
