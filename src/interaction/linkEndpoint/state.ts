@@ -2,6 +2,7 @@ import type { LinkEndpoint } from '../../domContract';
 import type { Side } from '../../model/geometry/router';
 import type { PathType } from '../../model/links';
 import type { OwnerRef } from '../../viewer';
+import { LinkGhost } from '../linkGhost/ghost';
 import { collectEndpointCandidates, type EndpointCandidate } from './candidates';
 import { resolveFixedEndpoint } from './fixedEndpoint';
 import { selectLinkEndpoint } from './selection';
@@ -16,6 +17,7 @@ export interface LinkEndpointDragState {
   fixedPoint: { x: number; y: number };
   fixedSide: Side;
   candidates: EndpointCandidate[];
+  ghost: LinkGhost;
   pointerId: number;
   startScreen: { x: number; y: number };
   moved: boolean;
@@ -44,6 +46,7 @@ export function createLinkEndpointDragState(svg: SVGSVGElement, event: PointerEv
     fixedPoint: fixedEndpoint.point,
     fixedSide: fixedEndpoint.side,
     candidates: collectEndpointCandidates(svg),
+    ghost: new LinkGhost(svg, selection.path),
     pointerId: event.pointerId,
     startScreen: { x: event.clientX, y: event.clientY },
     moved: false,

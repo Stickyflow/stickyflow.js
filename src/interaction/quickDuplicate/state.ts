@@ -2,6 +2,7 @@ import type { QuickDuplicateDirection } from '../../domContract';
 import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
 import { portToPoint, type Rect, type Side } from '../../model/geometry/router';
 import type { OwnerRef } from '../../viewer';
+import { LinkGhost } from '../linkGhost/ghost';
 
 export interface DuplicateCandidate {
   owner: OwnerRef;
@@ -13,6 +14,7 @@ export interface QuickDuplicateDragState {
   direction: QuickDuplicateDirection;
   fixedPoint: { x: number; y: number };
   previewPath: SVGPathElement;
+  ghost: LinkGhost;
   candidates: DuplicateCandidate[];
   pointerId: number;
   startScreen: { x: number; y: number };
@@ -58,6 +60,7 @@ export function createQuickDuplicateDragState(
     direction,
     fixedPoint: portToPoint(primary.getBBox(), { side: direction, offset: 0.5 }),
     previewPath,
+    ghost: new LinkGhost(svg, previewPath),
     candidates: duplicateCandidates(svg, sourceId),
     pointerId: event.pointerId,
     startScreen: { x: event.clientX, y: event.clientY },

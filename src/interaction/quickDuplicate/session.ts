@@ -1,4 +1,4 @@
-import { isCameraGesture } from '../../domContract';
+import { isCameraGesture, pxPerUnit } from '../../domContract';
 import type { Emitter } from '../events';
 import { emitQuickDuplicateCompletion } from './completion';
 import { crossedDuplicateDragThreshold, duplicatePointerPosition } from './pointer';
@@ -21,7 +21,7 @@ export class QuickDuplicateSession {
       return;
     }
 
-    this.#drag = createQuickDuplicateDragState(this.#svg, event, createDuplicatePreviewPath());
+    this.#drag = createQuickDuplicateDragState(this.#svg, event, createDuplicatePreviewPath(this.#svg));
   };
 
   readonly pointerMove = (event: PointerEvent): void => {
@@ -34,8 +34,9 @@ export class QuickDuplicateSession {
     }
 
     this.beginPreview(drag);
-    const target = resolveDuplicateTarget(drag, duplicatePointerPosition(this.#svg, event));
+    const target = resolveDuplicateTarget(drag, duplicatePointerPosition(this.#svg, event), 1 / pxPerUnit(this.#svg));
     updateDuplicatePreview(drag, target.point, target.side);
+    drag.ghost.show(target.hit !== null, target.bounds);
   };
 
   readonly pointerUp = (event: PointerEvent): void => {
@@ -47,11 +48,13 @@ export class QuickDuplicateSession {
     this.#drag = null;
     (event.target as Element).releasePointerCapture?.(drag.pointerId);
     drag.previewPath.remove();
+    drag.ghost.hide();
     emitQuickDuplicateCompletion(this.#emitter, drag);
   };
 
   cancel(): void {
     this.#drag?.previewPath.remove();
+    this.#drag?.ghost.hide();
     this.#drag = null;
   }
 

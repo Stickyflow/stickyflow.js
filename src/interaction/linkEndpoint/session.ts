@@ -1,4 +1,4 @@
-import { isCameraGesture } from '../../domContract';
+import { isCameraGesture, pxPerUnit } from '../../domContract';
 import type { Emitter } from '../events';
 import { completeLinkEndpointDrag } from './completion';
 import { crossedEndpointDragThreshold, endpointPointerPosition } from './pointer';
@@ -34,8 +34,9 @@ export class LinkEndpointSession {
     }
 
     drag.moved = true;
-    const target = resolveEndpointTarget(drag, endpointPointerPosition(this.#svg, event));
+    const target = resolveEndpointTarget(drag, endpointPointerPosition(this.#svg, event), 1 / pxPerUnit(this.#svg));
     updateEndpointPreview(drag, target.point, target.side);
+    drag.ghost.show(target.hit !== null, target.bounds);
   };
 
   readonly pointerUp = (event: PointerEvent): void => {
@@ -46,10 +47,12 @@ export class LinkEndpointSession {
 
     this.#drag = null;
     (event.target as Element).releasePointerCapture?.(drag.pointerId);
+    drag.ghost.hide();
     completeLinkEndpointDrag(this.#emitter, drag);
   };
 
   cancel(): void {
+    this.#drag?.ghost.hide();
     this.#drag = null;
   }
 }
