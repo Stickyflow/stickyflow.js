@@ -2,6 +2,7 @@ import type { Unsubscribe } from '../eventing/emitter';
 import type { Viewer } from '../viewer';
 import { bindChartValueDrag, type ChartValueDragHandle } from './chartValueDrag';
 import { bindColorEdit, type ColorEditHandle } from './colorEdit/binding';
+import { bindColumnResize, type ColumnResizeDragHandle } from './columnResizeDrag';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
@@ -28,6 +29,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const textEditing: TextEditingHandle = bindTextEditing(viewer, emitter);
   const movement: MoveDragHandle = bindShapeMovement(viewer, emitter);
   const resize: ResizeDragHandle = bindShapeResize(viewer, emitter);
+  const columnResize: ColumnResizeDragHandle = bindColumnResize(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
@@ -50,6 +52,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       textEditing.destroy();
       movement.destroy();
       resize.destroy();
+      columnResize.destroy();
       linkEndpoints.destroy();
       quickDuplicate.destroy();
       deleteSelection.destroy();
@@ -75,6 +78,7 @@ export type { PickerValue } from './colorEdit/value';
 export { cssBackground, formatPickerValue, seedFrom } from './colorEdit/value';
 export type {
   ChartValueChangeEvent,
+  ColumnResizeChangeEvent,
   DeleteEvent,
   InteractionEventMap,
   InteractionEventName,
@@ -90,6 +94,7 @@ export type {
 export type { InsertEntityOptions, InsertLinkOptions, RemoveEntityOptions } from './patchSfl';
 export {
   applyChartValueChange,
+  applyColumnResizeChange,
   applyLinkReconnectChange,
   applyMoveChange,
   applyPropertyChange,

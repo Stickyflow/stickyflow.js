@@ -81,6 +81,22 @@ export function applySingleNodeBounds(primary: SVGGraphicsElement, kind: string 
   recenterRotation(primary, bounds);
 }
 
+function applyTextAnchorTranslate(
+  node: SVGGraphicsElement,
+  startBounds: Rect,
+  liveBounds: Rect,
+  scaleX: number,
+  scaleY: number,
+  base: string | null | undefined,
+): void {
+  const anchorX = Number(node.getAttribute('x') ?? 0);
+  const anchorY = Number(node.getAttribute('y') ?? 0);
+  const dx = liveBounds.x + scaleX * (anchorX - startBounds.x) - anchorX;
+  const dy = liveBounds.y + scaleY * (anchorY - startBounds.y) - anchorY;
+  const transform = `translate(${dx} ${dy})`;
+  node.setAttribute('transform', base ? `${transform} ${base}` : transform);
+}
+
 export function applyCompositeScale(
   nodes: SVGGraphicsElement[],
   startBounds: Rect,
@@ -92,6 +108,10 @@ export function applyCompositeScale(
   const transform = `translate(${liveBounds.x} ${liveBounds.y}) scale(${scaleX} ${scaleY}) translate(${-startBounds.x} ${-startBounds.y})`;
   nodes.forEach((node, index) => {
     const base = baseTransforms?.[index];
+    if (node.tagName.toLowerCase() === 'text') {
+      applyTextAnchorTranslate(node, startBounds, liveBounds, scaleX, scaleY, base);
+      return;
+    }
     node.setAttribute('transform', base ? `${transform} ${base}` : transform);
   });
 }

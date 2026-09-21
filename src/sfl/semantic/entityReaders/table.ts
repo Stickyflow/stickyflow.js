@@ -34,6 +34,9 @@ function readBlockTable(block: SflBlock): TableData | undefined {
     columns,
     rows: rowsBlock ? readBlockRows(rowsBlock, columns) : [],
     footer: footerBlock ? { id: footerBlock.name, cells: readBlockCells(footerBlock, columns) } : undefined,
+    columnsBlockName: columnsBlock.name,
+    rowsBlockName: rowsBlock?.name,
+    footerBlockName: footerBlock?.name,
   };
 }
 

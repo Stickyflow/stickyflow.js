@@ -21,6 +21,7 @@ export {
   pxPerUnit,
   screenRectOf,
 } from './domQuery';
+export { DERIVED_HEIGHT_ROLES } from './entityRoles';
 export {
   type LinkEndpoint,
   linkSelectionOverlay,

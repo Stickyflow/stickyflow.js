@@ -1,4 +1,5 @@
 import {
+  DERIVED_HEIGHT_ROLES,
   findOwnerNode,
   isPrimary,
   linkSelectionOverlay,
@@ -25,7 +26,7 @@ export function paintSelectionOverlays(
     const overlay =
       owner?.role === 'link'
         ? linkSelectionOverlay(document, primary as unknown as SVGPathElement, id, svg)
-        : shapeSelectionOverlay(document, primary, id, svg);
+        : shapeSelectionOverlay(document, primary, id, svg, owner ? DERIVED_HEIGHT_ROLES.has(owner.role) : false);
     svg.appendChild(overlay);
     if (owner?.role === 'entity' && selectedIds.size === 1) {
       svg.appendChild(quickDuplicateBubbles(document, primary, id, svg));

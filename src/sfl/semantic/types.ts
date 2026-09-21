@@ -31,6 +31,9 @@ export interface SflEntityOut {
     }>;
     rows: Array<{ id: string; cells: Record<string, string | boolean> }>;
     footer?: { id: string; cells: Record<string, string | boolean> };
+    columnsBlockName?: string;
+    rowsBlockName?: string;
+    footerBlockName?: string;
   };
   swimlane?: {
     orientation: 'horizontal' | 'vertical';

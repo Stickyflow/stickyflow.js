@@ -31,10 +31,20 @@ export function resizeHandlePositions(bounds: OverlayBounds): Array<[number, num
   ];
 }
 
-export function renderResizeHandles(document: Document, bounds: OverlayBounds, svg: SVGSVGElement): SVGRectElement[] {
+const LOCKED_HEIGHT_HANDLES: ReadonlySet<ResizeHandle> = new Set(['top', 'bottom']);
+
+export function renderResizeHandles(
+  document: Document,
+  bounds: OverlayBounds,
+  svg: SVGSVGElement,
+  lockHeight = false,
+): SVGRectElement[] {
   const size = screenPx(svg, HANDLE_SIZE_PX);
   const strokeWidth = screenPx(svg, HANDLE_STROKE_WIDTH_PX);
-  return resizeHandlePositions(bounds).map(([centerX, centerY, name]) => {
+  const positions = lockHeight
+    ? resizeHandlePositions(bounds).filter(([, , name]) => !LOCKED_HEIGHT_HANDLES.has(name))
+    : resizeHandlePositions(bounds);
+  return positions.map(([centerX, centerY, name]) => {
     const handle = svgElement(document, 'rect');
     handle.setAttribute('x', String(centerX - size / 2));
     handle.setAttribute('y', String(centerY - size / 2));
@@ -45,7 +55,7 @@ export function renderResizeHandles(document: Document, bounds: OverlayBounds, s
     handle.setAttribute('stroke-width', String(strokeWidth));
     handle.setAttribute('data-sf-resize-handle', name);
     handle.style.pointerEvents = 'auto';
-    handle.style.cursor = HANDLE_CURSORS[name];
+    handle.style.cursor = lockHeight ? 'ew-resize' : HANDLE_CURSORS[name];
     return handle;
   });
 }

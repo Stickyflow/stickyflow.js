@@ -1,12 +1,21 @@
 import type { RenderNode } from '../scene';
 import { DEFAULT_FONT } from '../scene';
+import { renderCellHitArea } from './cellHitArea';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 export function renderFooterCell(context: TableRenderContext, column: PositionedTableColumn): RenderNode[] {
   if (!context.table.footer) {
     return [];
   }
+  const footerBlockName = context.table.footer_block_name;
+  const prop = footerBlockName ? `Footer[${footerBlockName}].${column.id}` : undefined;
   return [
+    ...renderCellHitArea(context, `table-footer-hit-${context.table.id}-${column.id}`, prop, {
+      x: column.x,
+      y: context.footerY,
+      width: column.width,
+      height: context.rowHeight,
+    }),
     {
       type: 'text',
       id: `table-footer-${context.table.id}-${column.id}`,
@@ -24,6 +33,8 @@ export function renderFooterCell(context: TableRenderContext, column: Positioned
       align: column.align ?? 'left',
       verticalAlign: 'middle',
       lineHeight: 1.2,
+      prop,
+      propKind: prop ? 'value' : undefined,
     },
   ];
 }

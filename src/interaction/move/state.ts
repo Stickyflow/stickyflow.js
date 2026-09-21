@@ -1,4 +1,5 @@
 import { resolveOwner } from '../../domContract';
+import { TABLE_COLUMN_DIVIDER_ATTR } from '../../model/domContractAttributes';
 import type { Viewer } from '../../viewer';
 import { hasEditableGeometry } from '../geometryRoles';
 import { captureDraggedEntities } from './entityCapture';
@@ -10,13 +11,18 @@ function isChartValueMark(target: Element | null): boolean {
   return target?.closest?.('[data-sf-value-index], [data-sf-prop-kind="value"]') != null;
 }
 
+function isColumnDividerTarget(target: Element | null): boolean {
+  return target?.closest?.(`[${TABLE_COLUMN_DIVIDER_ATTR}]`) != null;
+}
+
 export function createMoveDragState(
   viewer: Viewer,
   event: PointerEvent,
   startUser: { x: number; y: number },
 ): MoveDragState | null {
-  const owner = resolveOwner(event.target as Element | null);
-  if (!hasEditableGeometry(owner) || isChartValueMark(event.target as Element | null)) {
+  const target = event.target as Element | null;
+  const owner = resolveOwner(target);
+  if (!hasEditableGeometry(owner) || isChartValueMark(target) || isColumnDividerTarget(target)) {
     return null;
   }
 
@@ -27,7 +33,7 @@ export function createMoveDragState(
     return null;
   }
 
-  (event.target as Element).setPointerCapture?.(event.pointerId);
+  (target as SVGGraphicsElement)?.setPointerCapture?.(event.pointerId);
   return {
     entities,
     internalLinks: captureInternalLinks(viewer.svg, groupIds),

@@ -2,6 +2,7 @@ import { colorAtRamp } from '../charts/field/colorRamp';
 import { simpleContainerStyle } from '../entities/containers';
 import type { RenderNode } from '../scene';
 import { DEFAULT_FONT } from '../scene';
+import { renderCellHitArea } from './cellHitArea';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 function renderCellBackground(
@@ -33,12 +34,24 @@ function renderCellBackground(
   ];
 }
 
+function cellPropPath(context: TableRenderContext, rowId: string, columnId: string): string | undefined {
+  const rowsBlockName = context.table.rows_block_name;
+  return rowsBlockName ? `Rows[${rowsBlockName}].Row[${rowId}].${columnId}` : undefined;
+}
+
 export function renderBodyCells(context: TableRenderContext, column: PositionedTableColumn): RenderNode[] {
   return context.table.rows.flatMap((row, rowIndex) => {
     const value = row.cells[column.id];
     const y = context.table.y + context.headerHeight + rowIndex * context.rowHeight;
+    const prop = cellPropPath(context, row.id, column.id);
     return [
       ...renderCellBackground(context, column, row.id, value, y),
+      ...renderCellHitArea(context, `table-cell-hit-${context.table.id}-${row.id}-${column.id}`, prop, {
+        x: column.x,
+        y,
+        width: column.width,
+        height: context.rowHeight,
+      }),
       {
         type: 'text' as const,
         id: `table-cell-${context.table.id}-${row.id}-${column.id}`,
@@ -56,6 +69,8 @@ export function renderBodyCells(context: TableRenderContext, column: PositionedT
         align: column.align ?? 'left',
         verticalAlign: 'middle' as const,
         lineHeight: 1.2,
+        prop,
+        propKind: prop ? ('value' as const) : undefined,
       },
     ];
   });

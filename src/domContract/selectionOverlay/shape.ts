@@ -12,6 +12,7 @@ export function shapeSelectionOverlay(
   primary: SVGGraphicsElement,
   id: string,
   svg: SVGSVGElement,
+  lockHeight = false,
 ): SVGGElement {
   const bounds = symbolDeclaredBounds(primary) ?? primary.getBBox();
   const group = selectionOverlayGroup(document, id, primary);
@@ -25,6 +26,6 @@ export function shapeSelectionOverlay(
   ring.setAttribute('stroke', RING_COLOR);
   ring.setAttribute('stroke-width', String(screenPx(svg, RING_STROKE_WIDTH_PX)));
   group.appendChild(ring);
-  group.append(...renderResizeHandles(document, bounds, svg));
+  group.append(...renderResizeHandles(document, bounds, svg, lockHeight));
   return group;
 }

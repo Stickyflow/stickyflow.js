@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sflToRenderInput } from '../src/index';
-import { hasEditableGeometry } from '../src/interaction/geometryRoles';
+import { hasDerivedHeight, hasEditableGeometry, isCompositeOwner } from '../src/interaction/geometryRoles';
 import { applyMoveChange, applyResizeChange } from '../src/interaction/patchSfl';
 import type { OwnerRef } from '../src/viewer';
 
@@ -36,7 +36,6 @@ describe('charts take part in move and resize', () => {
 
   it('still refuses the roles that have no editable geometry', () => {
     expect(hasEditableGeometry({ role: 'link', id: 'l' })).toBe(false);
-    expect(hasEditableGeometry({ role: 'table', id: 't' })).toBe(false);
     expect(hasEditableGeometry({ role: 'path', id: 'p' })).toBe(false);
     expect(hasEditableGeometry(null)).toBe(false);
     expect(hasEditableGeometry(undefined)).toBe(false);
@@ -45,6 +44,13 @@ describe('charts take part in move and resize', () => {
   it('accepts frame and swimlane owners too', () => {
     expect(hasEditableGeometry({ role: 'frame', id: 'f' })).toBe(true);
     expect(hasEditableGeometry({ role: 'swimlane', id: 's' })).toBe(true);
+  });
+
+  it('gives tables geometry, as a composite whose height stays derived', () => {
+    expect(hasEditableGeometry({ role: 'table', id: 't' })).toBe(true);
+    expect(isCompositeOwner({ role: 'table', id: 't' })).toBe(true);
+    expect(hasDerivedHeight({ role: 'table', id: 't' })).toBe(true);
+    expect(hasDerivedHeight({ role: 'entity', id: 'e' })).toBe(false);
   });
 
   it('moves a chart by the dragged delta', () => {

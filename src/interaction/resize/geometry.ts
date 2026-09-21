@@ -37,6 +37,10 @@ export function resizedBounds(start: Rect, handle: ResizeHandle, pointer: { x: n
   return { x, y, width, height };
 }
 
+export function lockDerivedHeight(bounds: Rect, start: Rect, locked: boolean): Rect {
+  return locked ? { ...bounds, y: start.y, height: start.height } : bounds;
+}
+
 export function clampResizeToChildren(bounds: Rect, childrenBounds: Rect | undefined): Rect {
   if (!childrenBounds) {
     return bounds;

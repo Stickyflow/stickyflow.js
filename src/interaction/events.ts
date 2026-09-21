@@ -66,6 +66,12 @@ export interface PropertyChangeEvent {
   quote?: boolean;
 }
 
+export interface ColumnResizeChangeEvent {
+  owner: OwnerRef;
+  columnId: string;
+  width: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -76,6 +82,7 @@ export interface InteractionEventMap {
   delete: DeleteEvent;
   chartValueChange: ChartValueChangeEvent;
   propertyChange: PropertyChangeEvent;
+  columnResizeChange: ColumnResizeChangeEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

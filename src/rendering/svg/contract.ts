@@ -4,6 +4,9 @@ import {
   SYMBOL_BOUNDS_ATTR,
   SYMBOL_POINTS_ATTR,
   SYMBOL_TENSION_ATTR,
+  TABLE_COLUMN_DIVIDER_ATTR,
+  TABLE_COLUMN_START_WIDTH_ATTR,
+  TABLE_COLUMN_WIDTH_SCALE_ATTR,
 } from '../../model/domContractAttributes';
 import type { RenderNode, SceneDetail, SceneIdentity } from '../scene';
 import { num, xml } from './format';
@@ -36,6 +39,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return frameBoundaryAttrs(detail);
     case 'symbolGeometry':
       return symbolGeometryAttrs(detail);
+    case 'tableColumnDivider':
+      return tableColumnDividerAttrs(detail);
   }
 }
 
@@ -82,6 +87,14 @@ function symbolGeometryAttrs(detail: Extract<SceneDetail, { of: 'symbolGeometry'
     `${SYMBOL_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
     `${SYMBOL_TENSION_ATTR}="${num(detail.tension)}"`,
     `${SYMBOL_BOUNDS_ATTR}="${num(bounds.x)},${num(bounds.y)},${num(bounds.width)},${num(bounds.height)}"`,
+  ];
+}
+
+function tableColumnDividerAttrs(detail: Extract<SceneDetail, { of: 'tableColumnDivider' }>): string[] {
+  return [
+    `${TABLE_COLUMN_DIVIDER_ATTR}="${xml(detail.columnId)}"`,
+    `${TABLE_COLUMN_START_WIDTH_ATTR}="${num(detail.startWidth)}"`,
+    `${TABLE_COLUMN_WIDTH_SCALE_ATTR}="${num(detail.widthScale)}"`,
   ];
 }
 

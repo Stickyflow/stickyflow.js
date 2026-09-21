@@ -1,8 +1,9 @@
 import type { GuideLine } from '../../domContract';
 import { findSnapCandidateBounds, pxPerUnit } from '../../domContract';
 import type { Rect } from '../../model/geometry/router';
+import { hasDerivedHeight } from '../geometryRoles';
 import { applyAxisSnap, computeSnap, nearestCandidates, resizeActivePoints } from '../snapGeometry';
-import { HANDLE_AXES, MIN_SIZE, resizedBounds } from './geometry';
+import { HANDLE_AXES, lockDerivedHeight, MIN_SIZE, resizedBounds } from './geometry';
 import type { ResizeDragState } from './state';
 
 const SNAP_THRESHOLD_PX = 20;
@@ -23,8 +24,9 @@ export function snapResize(
     guideOverhang: GUIDE_OVERHANG,
   });
 
+  const snapped = applyAxisSnap(proposed, axes.x, axes.y, snap, MIN_SIZE);
   return {
-    bounds: applyAxisSnap(proposed, axes.x, axes.y, snap, MIN_SIZE),
+    bounds: lockDerivedHeight(snapped, drag.startBounds, hasDerivedHeight(drag.owner)),
     guides: [snap.x.guide, snap.y.guide].filter((guide): guide is GuideLine => guide !== null),
   };
 }
