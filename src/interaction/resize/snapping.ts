@@ -3,7 +3,7 @@ import { findSnapCandidateBounds, pxPerUnit } from '../../domContract';
 import type { Rect } from '../../model/geometry/router';
 import { hasDerivedHeight } from '../geometryRoles';
 import { applyAxisSnap, computeSnap, nearestCandidates, resizeActivePoints } from '../snapGeometry';
-import { HANDLE_AXES, lockDerivedHeight, MIN_SIZE, resizedBounds } from './geometry';
+import { HANDLE_AXES, keepTextInside, lockDerivedHeight, MIN_SIZE, resizedBounds } from './geometry';
 import type { ResizeDragState } from './state';
 
 const SNAP_THRESHOLD_PX = 20;
@@ -26,7 +26,12 @@ export function snapResize(
 
   const snapped = applyAxisSnap(proposed, axes.x, axes.y, snap, MIN_SIZE);
   return {
-    bounds: lockDerivedHeight(snapped, drag.startBounds, hasDerivedHeight(drag.owner)),
+    bounds: keepTextInside(
+      lockDerivedHeight(snapped, drag.startBounds, hasDerivedHeight(drag.owner)),
+      drag.startBounds,
+      drag.handle,
+      drag.textFit,
+    ),
     guides: [snap.x.guide, snap.y.guide].filter((guide): guide is GuideLine => guide !== null),
   };
 }

@@ -5,8 +5,10 @@ import { CONTAINER_ROLES, childrenUnionBounds } from '../containerGeometry';
 import { isCompositeOwner } from '../geometryRoles';
 import { findLiveLinks, type LiveLink } from '../linkPreview';
 import { findResizeQuickDuplicateBubbles } from './bubbleCapture';
+import { type BoundsInset, insetWithin, NO_INSET } from './geometry';
 import { selectResizeTarget } from './selection';
 import { captureResizeText, type ResizeTextCapture } from './textCapture';
+import { captureTextFit, type TextFit } from './textFit';
 
 export interface ResizeDragState {
   owner: OwnerRef;
@@ -14,6 +16,7 @@ export interface ResizeDragState {
   kind: string | null;
   isComposite: boolean;
   geometryNodes: SVGGraphicsElement[];
+  insets: BoundsInset[];
   baseTransforms: Array<string | null>;
   overlay: SVGGElement | null;
   bubbles: SVGGElement | null;
@@ -23,6 +26,7 @@ export interface ResizeDragState {
   pointerId: number;
   moved: boolean;
   text: ResizeTextCapture | null;
+  textFit: TextFit | null;
 }
 
 export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): ResizeDragState | null {
@@ -35,12 +39,17 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
   const composite = isCompositeOwner(selection.owner);
   const isContainer = CONTAINER_ROLES.has(selection.owner.role);
   selection.captureTarget.setPointerCapture?.(event.pointerId);
+  const kind = selection.primary.getAttribute('data-sf-kind');
+  const text = composite || isContainer ? null : captureResizeText(selection.nodes, selection.primary);
   return {
     owner: selection.owner,
     handle: selection.handle,
-    kind: selection.primary.getAttribute('data-sf-kind'),
+    kind,
     isComposite: composite,
     geometryNodes: selection.geometryNodes,
+    insets: selection.geometryNodes.map(node =>
+      node === selection.primary ? NO_INSET : insetWithin(startBounds, symbolDeclaredBounds(node) ?? node.getBBox()),
+    ),
     baseTransforms: selection.geometryNodes.map(node => node.getAttribute('transform')),
     overlay: selection.overlay,
     bubbles: findResizeQuickDuplicateBubbles(svg, selection.ownerId, selection.overlay),
@@ -49,6 +58,7 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
     liveLinks: findLiveLinks(svg, selection.ownerId, startBounds),
     pointerId: event.pointerId,
     moved: false,
-    text: composite || isContainer ? null : captureResizeText(selection.nodes, selection.primary),
+    text,
+    textFit: text && selection.owner.role === 'entity' && kind !== 'person' ? captureTextFit(text) : null,
   };
 }

@@ -6,7 +6,7 @@ import {
 } from '../../model/domContractAttributes';
 import { cornersRoundedRectPath, type RectCornerRadii } from '../../model/geometry/roundedRect';
 import type { Rect } from '../../model/geometry/router';
-import { localShapePath } from '../../model/geometry/shapes';
+import { localShapePath, pillCornerRadius } from '../../model/geometry/shapes';
 import type { ShapeType } from '../../model/shapes';
 import { freeformPathData } from '../../rendering/scene/freeformPath';
 import { recenterRotation } from './rotation';
@@ -17,7 +17,7 @@ function applyRectBounds(rect: SVGGraphicsElement, kind: string | null, bounds: 
   rect.setAttribute('width', String(bounds.width));
   rect.setAttribute('height', String(bounds.height));
   if (kind === 'pill') {
-    rect.setAttribute('rx', String(Math.min(bounds.width, bounds.height) / 2));
+    rect.setAttribute('rx', String(pillCornerRadius(bounds.width, bounds.height)));
   }
 }
 

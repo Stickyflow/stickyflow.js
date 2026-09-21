@@ -2,6 +2,7 @@ import { updateQuickDuplicateBubbles } from '../../domContract';
 import { personLabelArea } from '../../model/geometry/roundedForms';
 import type { Rect } from '../../model/geometry/router';
 import { updateLiveLinks } from '../linkPreview';
+import { applyInset, NO_INSET } from './geometry';
 import { applyCompositeScale, applySingleNodeBounds } from './geometryPreview';
 import { updateSelectionOverlay } from './overlayPreview';
 import type { ResizeDragState } from './state';
@@ -17,9 +18,9 @@ function applyGeometryPreview(drag: ResizeDragState, bounds: Rect): void {
     return;
   }
 
-  for (const node of drag.geometryNodes) {
-    applySingleNodeBounds(node, drag.kind, bounds);
-  }
+  drag.geometryNodes.forEach((node, index) => {
+    applySingleNodeBounds(node, drag.kind, applyInset(bounds, drag.insets[index] ?? NO_INSET));
+  });
 }
 
 export function applyResizePreview(drag: ResizeDragState, bounds: Rect): void {

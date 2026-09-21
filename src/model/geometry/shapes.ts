@@ -12,6 +12,10 @@ const QUARTER_SINE_SLOPE = Math.PI / 6;
 const NOTE_FOLD_RATIO = 0.25;
 const PREDEFINED_PROCESS_BAR_RATIO = 0.15;
 
+export function pillCornerRadius(width: number, height: number): number {
+  return Math.min(width, height) / 2;
+}
+
 export function localShapePath(type: ShapeType, x: number, y: number, width: number, height: number): string | null {
   const p = (...coords: number[]) => polygonPath(coords);
   switch (type) {

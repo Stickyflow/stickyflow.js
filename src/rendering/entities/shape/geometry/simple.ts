@@ -1,4 +1,4 @@
-import { localShapePath } from '../../../../model/geometry/shapes';
+import { localShapePath, pillCornerRadius } from '../../../../model/geometry/shapes';
 import type { RenderNode } from '../../../scene';
 import { finite, freeformPathData } from '../../../scene';
 import type { ShapeRenderContext } from '../types';
@@ -25,7 +25,7 @@ export function renderBoundedPath(context: ShapeRenderContext): RenderNode[] {
 export function renderRectangle(context: ShapeRenderContext): RenderNode[] {
   const rx =
     context.shape.shapeType === 'pill'
-      ? Math.min(context.width, context.height) / 2
+      ? pillCornerRadius(context.width, context.height)
       : context.shape.shapeType === 'rounded_rectangle'
         ? finite(context.shape.cornerRadius, 8)
         : 0;
