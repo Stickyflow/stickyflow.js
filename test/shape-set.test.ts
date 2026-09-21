@@ -72,3 +72,29 @@ Model M {
     expect(diagnostics?.some(d => d.code === 'unknown-shape-type' && d.entityId === 'e')).toBe(true);
   });
 });
+
+describe('cylinder and person are single silhouettes', () => {
+  it('draws a cylinder as one path, so no stray line crosses its lid or floor', () => {
+    const { svg } = render(entity('shape: cylinder'));
+    expect(svg.match(/data-sf-id="e"/g)?.length).toBe(1);
+    expect(svg).toMatch(/<path id="sf-shape-e"[^>]*data-sf-kind="cylinder"/);
+  });
+
+  it('keeps a person label, seated in the shoulders instead of across the head', () => {
+    const sfl = `sfl 1.4
+
+Model M {
+  Entity e {
+    text: "Customer"
+    style { shape: person }
+    layout { position: 0, 0; size: 100, 100 }
+  }
+}
+`;
+    const { svg, diagnostics } = render(sfl);
+    expect(diagnostics).toEqual([]);
+    expect(svg).toMatch(/<path id="sf-shape-e"[^>]*data-sf-kind="person"/);
+    const labelY = Number(/<text[^>]*\sy="([\d.]+)"/.exec(svg)?.[1]);
+    expect(labelY).toBeGreaterThan(50);
+  });
+});

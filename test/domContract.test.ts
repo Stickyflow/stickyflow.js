@@ -20,14 +20,16 @@ describe('interactive DOM contract', () => {
   });
 
   it('maps every sub-node of an owner back to the same data-sf-id', () => {
-    // A cylinder emits body + two ellipse caps; all must share the owner id so a
-    // click on any part resolves to the entity via closest('[data-sf-id]').
+    // A double-stroked shape emits an outer ring, an inner ring and a label; all
+    // must share the owner id so a click on any part resolves to the entity via
+    // closest('[data-sf-id]').
     const { svg } = renderCanvas({
       shapes: [
         {
           id: 'tank',
           boardId: 'b',
-          shapeType: 'cylinder',
+          shapeType: 'rectangle',
+          strokeStyle: 'double',
           x: 0,
           y: 0,
           width: 100,

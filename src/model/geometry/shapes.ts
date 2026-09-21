@@ -1,5 +1,6 @@
 import type { ShapeType } from '../shapes';
 import { cloudPath } from './cloud';
+import { cylinderPath, personPath } from './roundedForms';
 
 const polygonPath = (points: number[]): string =>
   points.length < 4
@@ -61,6 +62,10 @@ export function localShapePath(type: ShapeType, x: number, y: number, width: num
     }
     case 'cloud':
       return cloudPath(x, y, width, height);
+    case 'cylinder':
+      return cylinderPath(x, y, width, height);
+    case 'person':
+      return personPath(x, y, width, height);
     case 'predefined_process': {
       const bar = Math.min(width, height) * PREDEFINED_PROCESS_BAR_RATIO;
       return (

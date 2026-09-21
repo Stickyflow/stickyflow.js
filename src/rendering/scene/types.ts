@@ -68,6 +68,7 @@ export type SceneDetail =
       tension: number;
       declaredBounds: { x: number; y: number; width: number; height: number };
     }
+  | { of: 'declaredBounds'; bounds: { x: number; y: number; width: number; height: number } }
   | { of: 'tableColumnDivider'; columnId: string; startWidth: number; widthScale: number };
 
 export interface SceneBase {

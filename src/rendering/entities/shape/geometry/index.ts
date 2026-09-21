@@ -1,19 +1,18 @@
 import type { ShapeType } from '../../../../model/shapes';
 import type { RenderNode } from '../../../scene';
 import type { ShapeGeometryRenderer, ShapeRenderContext } from '../types';
-import { renderCylinder, renderPerson } from './compound';
-import { renderEllipse, renderPath, renderRectangle, renderSymbol } from './simple';
+import { renderBoundedPath, renderEllipse, renderPath, renderRectangle, renderSymbol } from './simple';
 
 const GEOMETRY_RENDERERS: Record<ShapeType, ShapeGeometryRenderer> = {
   cloud: renderPath,
-  cylinder: renderCylinder,
+  cylinder: renderPath,
   diamond: renderPath,
   document: renderPath,
   hexagon: renderPath,
   note: renderPath,
   oval: renderEllipse,
   parallelogram: renderPath,
-  person: renderPerson,
+  person: renderBoundedPath,
   pill: renderRectangle,
   predefined_process: renderPath,
   rectangle: renderRectangle,

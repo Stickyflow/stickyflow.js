@@ -79,6 +79,8 @@ const KINDS: Array<{ kind: string; extra?: string }> = [
   { kind: 'note' },
   { kind: 'cloud' },
   { kind: 'predefined_process' },
+  { kind: 'cylinder' },
+  { kind: 'person' },
 ];
 
 describe('the live-preview path (single-node kinds) produces the same geometry as a real render at the same end bounds', () => {

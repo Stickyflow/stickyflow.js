@@ -39,6 +39,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return frameBoundaryAttrs(detail);
     case 'symbolGeometry':
       return symbolGeometryAttrs(detail);
+    case 'declaredBounds':
+      return [declaredBoundsAttr(detail.bounds)];
     case 'tableColumnDivider':
       return tableColumnDividerAttrs(detail);
   }
@@ -81,12 +83,15 @@ function frameBoundaryAttrs(detail: Extract<SceneDetail, { of: 'frameBoundary' }
   return [`${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`, `${SQUARE_CORNER_ATTR}="${detail.squareCorner}"`];
 }
 
+function declaredBoundsAttr(bounds: { x: number; y: number; width: number; height: number }): string {
+  return `${SYMBOL_BOUNDS_ATTR}="${num(bounds.x)},${num(bounds.y)},${num(bounds.width)},${num(bounds.height)}"`;
+}
+
 function symbolGeometryAttrs(detail: Extract<SceneDetail, { of: 'symbolGeometry' }>): string[] {
-  const bounds = detail.declaredBounds;
   return [
     `${SYMBOL_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
     `${SYMBOL_TENSION_ATTR}="${num(detail.tension)}"`,
-    `${SYMBOL_BOUNDS_ATTR}="${num(bounds.x)},${num(bounds.y)},${num(bounds.width)},${num(bounds.height)}"`,
+    declaredBoundsAttr(detail.declaredBounds),
   ];
 }
 

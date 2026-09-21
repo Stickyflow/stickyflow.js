@@ -100,10 +100,18 @@ const BOXES = [
   { label: 'tall 80x200', box: { x: -20, y: 5, width: 80, height: 200 } },
 ];
 
+// person keeps its circle head and semicircle body undistorted, so it is fitted
+// uniformly into the box (see the dedicated test below) and declares the box
+// through data-sf-symbol-bounds instead of filling it.
+const FITTED_SHAPES = new Set<ShapeType>(['person']);
+
 describe('a shape draws exactly the box it declares', () => {
   for (const { label, box } of BOXES) {
     describe(label, () => {
       for (const shapeType of ALL_SHAPE_TYPES) {
+        if (FITTED_SHAPES.has(shapeType)) {
+          continue;
+        }
         it(shapeType, () => {
           const env = drawnEnvelope(shapeInput(shapeType, box), 's');
           expect(env.minX).toBeCloseTo(box.x, 6);
@@ -114,6 +122,25 @@ describe('a shape draws exactly the box it declares', () => {
       }
     });
   }
+
+  it('person stays inside its box, touches it on the limiting axis, and declares the full box', () => {
+    for (const { box } of BOXES) {
+      const env = drawnEnvelope(shapeInput('person', box), 's');
+      const width = env.maxX - env.minX;
+      const height = env.maxY - env.minY;
+      expect(env.minX).toBeGreaterThanOrEqual(box.x - 1e-6);
+      expect(env.maxX).toBeLessThanOrEqual(box.x + box.width + 1e-6);
+      expect(env.minY).toBeGreaterThanOrEqual(box.y - 1e-6);
+      expect(env.maxY).toBeLessThanOrEqual(box.y + box.height + 1e-6);
+      const fitsWidth = Math.abs(width - box.width) < 1e-6;
+      const fitsHeight = Math.abs(height - box.height) < 1e-6;
+      expect(fitsWidth || fitsHeight).toBe(true);
+      expect(env.minX + width / 2).toBeCloseTo(box.x + box.width / 2, 6);
+      expect(env.minY + height / 2).toBeCloseTo(box.y + box.height / 2, 6);
+      const svg = render(shapeSfl('person', box)).svg;
+      expect(svg).toContain(`data-sf-symbol-bounds="${box.x},${box.y},${box.width},${box.height}"`);
+    }
+  });
 
   it('document is one smooth wave along the bottom, not a row of scallops', () => {
     const box = { x: 0, y: 0, width: 100, height: 100 };
@@ -176,3 +203,15 @@ Model M {
     });
   }
 });
+
+function shapeSfl(shapeType: string, box: { x: number; y: number; width: number; height: number }): string {
+  return `sfl 1.4
+
+Model M {
+  Entity s {
+    style { shape: ${shapeType} }
+    layout { position: ${box.x}, ${box.y}; size: ${box.width}, ${box.height} }
+  }
+}
+`;
+}

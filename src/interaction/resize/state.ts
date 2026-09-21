@@ -8,8 +8,6 @@ import { findResizeQuickDuplicateBubbles } from './bubbleCapture';
 import { selectResizeTarget } from './selection';
 import { captureResizeText, type ResizeTextCapture } from './textCapture';
 
-const COMPOSITE_KINDS = new Set(['cylinder', 'person']);
-
 export interface ResizeDragState {
   owner: OwnerRef;
   handle: ResizeHandle;
@@ -41,7 +39,7 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
     owner: selection.owner,
     handle: selection.handle,
     kind: selection.primary.getAttribute('data-sf-kind'),
-    isComposite: composite || COMPOSITE_KINDS.has(selection.primary.getAttribute('data-sf-kind') ?? ''),
+    isComposite: composite,
     geometryNodes: selection.geometryNodes,
     baseTransforms: selection.geometryNodes.map(node => node.getAttribute('transform')),
     overlay: selection.overlay,

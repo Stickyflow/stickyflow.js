@@ -12,6 +12,16 @@ export function renderPath(context: ShapeRenderContext): RenderNode[] {
   return [{ ...shapeNodeBase(context), type: 'path', d: path, rotationCenter: context.rotationCenter }];
 }
 
+export function renderBoundedPath(context: ShapeRenderContext): RenderNode[] {
+  return renderPath(context).map(node => ({
+    ...node,
+    detail: {
+      of: 'declaredBounds',
+      bounds: { x: context.x, y: context.y, width: context.width, height: context.height },
+    },
+  }));
+}
+
 export function renderRectangle(context: ShapeRenderContext): RenderNode[] {
   const rx =
     context.shape.shapeType === 'pill'
