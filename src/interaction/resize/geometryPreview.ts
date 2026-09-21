@@ -1,3 +1,9 @@
+import {
+  CORNER_RADIUS_ATTR,
+  SQUARE_CORNER_ATTR,
+  SYMBOL_POINTS_ATTR,
+  SYMBOL_TENSION_ATTR,
+} from '../../model/domContractAttributes';
 import { cornersRoundedRectPath, type RectCornerRadii } from '../../model/geometry/roundedRect';
 import type { Rect } from '../../model/geometry/router';
 import { localShapePath } from '../../model/geometry/shapes';
@@ -23,7 +29,7 @@ function applyEllipseBounds(ellipse: SVGGraphicsElement, bounds: Rect): void {
 }
 
 function applySymbolBounds(path: SVGGraphicsElement, bounds: Rect): boolean {
-  const raw = path.getAttribute('data-sf-symbol-points');
+  const raw = path.getAttribute(SYMBOL_POINTS_ATTR);
   if (!raw) {
     return false;
   }
@@ -31,7 +37,7 @@ function applySymbolBounds(path: SVGGraphicsElement, bounds: Rect): boolean {
     x: bounds.x + x * bounds.width,
     y: bounds.y + y * bounds.height,
   }));
-  const tension = Number(path.getAttribute('data-sf-symbol-tension')) || 0;
+  const tension = Number(path.getAttribute(SYMBOL_TENSION_ATTR)) || 0;
   path.setAttribute('d', freeformPathData({ points, tension, closed: true }));
   return true;
 }
@@ -47,8 +53,8 @@ function applyPathBounds(path: SVGGraphicsElement, kind: string, bounds: Rect): 
 }
 
 function applyFrameBoundaryBounds(path: SVGGraphicsElement, bounds: Rect): void {
-  const cornerRadius = Number(path.getAttribute('data-sf-corner-radius') ?? 0);
-  const squareCorner = path.getAttribute('data-sf-square-corner') as keyof RectCornerRadii | null;
+  const cornerRadius = Number(path.getAttribute(CORNER_RADIUS_ATTR) ?? 0);
+  const squareCorner = path.getAttribute(SQUARE_CORNER_ATTR) as keyof RectCornerRadii | null;
   const radii: RectCornerRadii = {
     topLeft: cornerRadius,
     topRight: cornerRadius,
@@ -67,7 +73,7 @@ export function applySingleNodeBounds(primary: SVGGraphicsElement, kind: string 
     applyRectBounds(primary, kind, bounds);
   } else if (tag === 'ellipse') {
     applyEllipseBounds(primary, bounds);
-  } else if (tag === 'path' && primary.hasAttribute('data-sf-corner-radius')) {
+  } else if (tag === 'path' && primary.hasAttribute(CORNER_RADIUS_ATTR)) {
     applyFrameBoundaryBounds(primary, bounds);
   } else if (tag === 'path' && kind) {
     applyPathBounds(primary, kind, bounds);

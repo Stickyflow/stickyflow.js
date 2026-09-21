@@ -1,3 +1,10 @@
+import {
+  CORNER_RADIUS_ATTR,
+  SQUARE_CORNER_ATTR,
+  SYMBOL_BOUNDS_ATTR,
+  SYMBOL_POINTS_ATTR,
+  SYMBOL_TENSION_ATTR,
+} from '../../model/domContractAttributes';
 import type { RenderNode, SceneDetail, SceneIdentity } from '../scene';
 import { num, xml } from './format';
 
@@ -66,15 +73,15 @@ function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): 
 }
 
 function frameBoundaryAttrs(detail: Extract<SceneDetail, { of: 'frameBoundary' }>): string[] {
-  return [`data-sf-corner-radius="${num(detail.cornerRadius)}"`, `data-sf-square-corner="${detail.squareCorner}"`];
+  return [`${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`, `${SQUARE_CORNER_ATTR}="${detail.squareCorner}"`];
 }
 
 function symbolGeometryAttrs(detail: Extract<SceneDetail, { of: 'symbolGeometry' }>): string[] {
   const bounds = detail.declaredBounds;
   return [
-    `data-sf-symbol-points="${xml(JSON.stringify(detail.points))}"`,
-    `data-sf-symbol-tension="${num(detail.tension)}"`,
-    `data-sf-symbol-bounds="${num(bounds.x)},${num(bounds.y)},${num(bounds.width)},${num(bounds.height)}"`,
+    `${SYMBOL_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
+    `${SYMBOL_TENSION_ATTR}="${num(detail.tension)}"`,
+    `${SYMBOL_BOUNDS_ATTR}="${num(bounds.x)},${num(bounds.y)},${num(bounds.width)},${num(bounds.height)}"`,
   ];
 }
 

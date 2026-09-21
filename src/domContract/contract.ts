@@ -1,3 +1,4 @@
+import { SYMBOL_BOUNDS_ATTR } from '../model/domContractAttributes';
 import { DOM_CONTRACT_VERSION } from '../model/domContractVersion';
 import type { SceneRole } from '../rendering/scene';
 import type { OwnerRef } from './types';
@@ -25,7 +26,7 @@ const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane
 export function symbolDeclaredBounds(el: {
   getAttribute(name: string): string | null;
 }): { x: number; y: number; width: number; height: number } | null {
-  const raw = el.getAttribute('data-sf-symbol-bounds');
+  const raw = el.getAttribute(SYMBOL_BOUNDS_ATTR);
   if (!raw) {
     return null;
   }
