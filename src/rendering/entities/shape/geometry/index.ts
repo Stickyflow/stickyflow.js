@@ -5,16 +5,17 @@ import { renderCylinder, renderPerson } from './compound';
 import { renderEllipse, renderPath, renderRectangle, renderSymbol } from './simple';
 
 const GEOMETRY_RENDERERS: Record<ShapeType, ShapeGeometryRenderer> = {
-  circle: renderEllipse,
-  container_rectangle: renderRectangle,
+  cloud: renderPath,
   cylinder: renderCylinder,
   diamond: renderPath,
   document: renderPath,
   hexagon: renderPath,
+  note: renderPath,
   oval: renderEllipse,
   parallelogram: renderPath,
   person: renderPerson,
   pill: renderRectangle,
+  predefined_process: renderPath,
   rectangle: renderRectangle,
   rounded_rectangle: renderRectangle,
   symbol: renderSymbol,

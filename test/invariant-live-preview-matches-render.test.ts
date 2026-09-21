@@ -69,14 +69,16 @@ const KINDS: Array<{ kind: string; extra?: string }> = [
   { kind: 'rectangle' },
   { kind: 'pill' },
   { kind: 'rounded_rectangle', extra: '; cornerRadius: 18' },
-  { kind: 'circle' },
   { kind: 'oval' },
-  { kind: 'container_rectangle' },
   { kind: 'triangle' },
   { kind: 'diamond' },
   { kind: 'hexagon' },
   { kind: 'parallelogram' },
   { kind: 'trapezoid' },
+  { kind: 'document' },
+  { kind: 'note' },
+  { kind: 'cloud' },
+  { kind: 'predefined_process' },
 ];
 
 describe('the live-preview path (single-node kinds) produces the same geometry as a real render at the same end bounds', () => {

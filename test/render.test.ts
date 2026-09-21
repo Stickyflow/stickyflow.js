@@ -12,9 +12,7 @@ describe('render core runs headless through the package (real app source)', () =
       'rectangle',
       'rounded_rectangle',
       'diamond',
-      'circle',
       'oval',
-      'container_rectangle',
       'cylinder',
       'document',
       'pill',
@@ -23,6 +21,9 @@ describe('render core runs headless through the package (real app source)', () =
       'hexagon',
       'parallelogram',
       'trapezoid',
+      'note',
+      'cloud',
+      'predefined_process',
     ];
     const input = {
       shapes: types.map((shapeType, index) => ({
@@ -199,7 +200,7 @@ describe('render core runs headless through the package (real app source)', () =
       shapes: [
         { ...base('gradient', 'rectangle', 0), fillColor: gradient, strokeColor: gradient },
         {
-          ...base('mesh', 'circle', 200),
+          ...base('mesh', 'oval', 200),
           fillColor: {
             type: 'mesh' as const,
             points: [

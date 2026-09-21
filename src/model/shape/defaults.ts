@@ -37,7 +37,6 @@ export const SHAPE_DEFAULTS = {
     ...COMMON_DEFAULTS,
     cornerRadius: 8,
   },
-  circle: COMMON_DEFAULTS,
   triangle: {
     ...COMMON_DEFAULTS,
     rotation: 0,
@@ -70,7 +69,18 @@ export const SHAPE_DEFAULTS = {
     ...COMMON_DEFAULTS,
     rotation: 0,
   },
-  container_rectangle: COMMON_DEFAULTS,
+  note: {
+    ...COMMON_DEFAULTS,
+    rotation: 0,
+  },
+  cloud: {
+    ...COMMON_DEFAULTS,
+    rotation: 0,
+  },
+  predefined_process: {
+    ...COMMON_DEFAULTS,
+    rotation: 0,
+  },
   pill: COMMON_DEFAULTS,
   person: {
     ...COMMON_DEFAULTS,

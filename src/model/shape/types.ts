@@ -5,9 +5,7 @@ export type ShapeType =
   | 'rounded_rectangle'
   | 'rectangle'
   | 'diamond'
-  | 'circle'
   | 'oval'
-  | 'container_rectangle'
   | 'cylinder'
   | 'document'
   | 'pill'
@@ -16,6 +14,9 @@ export type ShapeType =
   | 'hexagon'
   | 'parallelogram'
   | 'trapezoid'
+  | 'note'
+  | 'cloud'
+  | 'predefined_process'
   | 'symbol';
 
 export interface Shape {

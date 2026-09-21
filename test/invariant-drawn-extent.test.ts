@@ -26,6 +26,35 @@ function extendPoint(env: Envelope, x: number, y: number): void {
   env.maxY = Math.max(env.maxY, y);
 }
 
+const CURVE_SAMPLES = 64;
+
+function extendPathData(env: Envelope, d: string): void {
+  const tokens = d.match(/[MLCZ]|-?[\d.]+(?:e-?\d+)?/g) ?? [];
+  let index = 0;
+  const next = () => Number(tokens[index++]);
+  let current: [number, number] = [0, 0];
+  while (index < tokens.length) {
+    const command = tokens[index++];
+    if (command === 'M' || command === 'L') {
+      current = [next(), next()];
+      extendPoint(env, current[0], current[1]);
+    } else if (command === 'C') {
+      const [x0, y0] = current;
+      const [x1, y1, x2, y2, x3, y3] = [next(), next(), next(), next(), next(), next()];
+      for (let step = 1; step <= CURVE_SAMPLES; step++) {
+        const t = step / CURVE_SAMPLES;
+        const u = 1 - t;
+        extendPoint(
+          env,
+          u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3,
+          u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3,
+        );
+      }
+      current = [x3, y3];
+    }
+  }
+}
+
 function drawnEnvelope(input: RenderInput, id: string): Envelope {
   const env: Envelope = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   const { scene } = renderCanvas(input);
@@ -40,10 +69,7 @@ function drawnEnvelope(input: RenderInput, id: string): Envelope {
       extendPoint(env, node.cx - node.rx, node.cy - node.ry);
       extendPoint(env, node.cx + node.rx, node.cy + node.ry);
     } else if (node.type === 'path') {
-      const numbers = (node.d.match(/-?[\d.]+/g) ?? []).map(Number);
-      for (let i = 0; i + 1 < numbers.length; i += 2) {
-        extendPoint(env, numbers[i], numbers[i + 1]);
-      }
+      extendPathData(env, node.d);
     }
   }
   return env;
@@ -74,44 +100,26 @@ const BOXES = [
   { label: 'tall 80x200', box: { x: -20, y: 5, width: 80, height: 200 } },
 ];
 
-// document's wavy bottom edge overshoots its own declared box (a pre-existing
-// geometry bug this test found, not something this change fixes) : its Q
-// control points sit at height + wave*0.15 below the top, which pulls the
-// drawn curve that far past the box rather than stopping at it.
-// person doesn't fill a non-square box at all : radius = min(width, height)
-// means the whole figure is sized off the shorter side and drawn centered on
-// it, so the longer side is neither reached nor respected as a limit.
-const KNOWN_EXCEPTIONS = new Set<ShapeType>(['document', 'person']);
-
 describe('a shape draws exactly the box it declares', () => {
   for (const { label, box } of BOXES) {
     describe(label, () => {
       for (const shapeType of ALL_SHAPE_TYPES) {
-        if (KNOWN_EXCEPTIONS.has(shapeType)) {
-          continue;
-        }
         it(shapeType, () => {
           const env = drawnEnvelope(shapeInput(shapeType, box), 's');
-          expect(env).toEqual({ minX: box.x, minY: box.y, maxX: box.x + box.width, maxY: box.y + box.height });
+          expect(env.minX).toBeCloseTo(box.x, 6);
+          expect(env.minY).toBeCloseTo(box.y, 6);
+          expect(env.maxX).toBeCloseTo(box.x + box.width, 6);
+          expect(env.maxY).toBeCloseTo(box.y + box.height, 6);
         });
       }
     });
   }
 
-  it('document overshoots its own box at the bottom by a known amount (pre-existing, not asserted as correct)', () => {
+  it('document is one smooth wave along the bottom, not a row of scallops', () => {
     const box = { x: 0, y: 0, width: 100, height: 100 };
-    const env = drawnEnvelope(shapeInput('document', box), 's');
-    expect(env.minX).toBe(box.x);
-    expect(env.minY).toBe(box.y);
-    expect(env.maxX).toBe(box.x + box.width);
-    expect(env.maxY).toBeGreaterThan(box.y + box.height);
-  });
-
-  it('person does not fill a non-square box (pre-existing, not asserted as correct)', () => {
-    const wide = { x: 0, y: 0, width: 200, height: 80 };
-    const env = drawnEnvelope(shapeInput('person', wide), 's');
-    expect(env.maxX).toBeLessThan(wide.x + wide.width);
-    expect(env.maxY).toBeGreaterThan(wide.y + wide.height);
+    const { scene } = renderCanvas(shapeInput('document', box));
+    const path = scene.nodes.find(node => node.type === 'path' && node.identity?.id === 's');
+    expect(path?.type === 'path' ? (path.d.match(/C/g) ?? []).length : 0).toBe(4);
   });
 });
 
