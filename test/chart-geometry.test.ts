@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { sflToRenderInput } from '../src/index';
-import { hasDerivedHeight, hasEditableGeometry, isCompositeOwner } from '../src/interaction/geometryRoles';
+import {
+  hasDerivedHeight,
+  hasEditableGeometry,
+  hasMovableGeometry,
+  isCompositeOwner,
+} from '../src/interaction/geometryRoles';
 import { applyMoveChange, applyResizeChange } from '../src/interaction/patchSfl';
 import type { OwnerRef } from '../src/viewer';
 
@@ -51,6 +56,19 @@ describe('charts take part in move and resize', () => {
     expect(isCompositeOwner({ role: 'table', id: 't' })).toBe(true);
     expect(hasDerivedHeight({ role: 'table', id: 't' })).toBe(true);
     expect(hasDerivedHeight({ role: 'entity', id: 'e' })).toBe(false);
+  });
+
+  it('lets a path move by dragging its stroke, but keeps it off box-resize (its points are the geometry)', () => {
+    expect(hasMovableGeometry({ role: 'path', id: 'p' })).toBe(true);
+    expect(hasEditableGeometry({ role: 'path', id: 'p' })).toBe(false);
+    expect(hasMovableGeometry({ role: 'link', id: 'l' })).toBe(false);
+    expect(hasMovableGeometry(null)).toBe(false);
+  });
+
+  it('carries every hasEditableGeometry role forward into hasMovableGeometry too', () => {
+    for (const role of ['entity', 'chart', 'frame', 'swimlane', 'table'] as const) {
+      expect(hasMovableGeometry({ role, id: 'x' })).toBe(true);
+    }
   });
 
   it('moves a chart by the dragged delta', () => {

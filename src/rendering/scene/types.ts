@@ -69,7 +69,8 @@ export type SceneDetail =
       declaredBounds: { x: number; y: number; width: number; height: number };
     }
   | { of: 'declaredBounds'; bounds: { x: number; y: number; width: number; height: number } }
-  | { of: 'tableColumnDivider'; columnId: string; startWidth: number; widthScale: number };
+  | { of: 'tableColumnDivider'; columnId: string; startWidth: number; widthScale: number }
+  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean };
 
 export interface SceneBase {
   id: string;

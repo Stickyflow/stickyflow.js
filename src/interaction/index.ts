@@ -7,6 +7,8 @@ import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelecti
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
+import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
+import { bindPathReshape, type PathReshapeDragHandle } from './pathReshapeDrag';
 import { bindPieSliceDrag, type PieSliceDragHandle } from './pieSliceDrag/binding';
 import { bindPropertyDrag, type PropertyDragHandle } from './propertyDrag/binding';
 import { bindPropertyEditing, type PropertyEditingHandle, type PropertyEditingOptions } from './propertyEdit';
@@ -17,6 +19,8 @@ import { bindTextEditing, type TextEditingHandle } from './textEdit';
 
 export interface Interaction {
   on<T extends InteractionEventName>(name: T, handler: (event: InteractionEventMap[T]) => void): Unsubscribe;
+  startPathDraw(options?: PathDrawOptions): void;
+  cancelPathDraw(): void;
   destroy(): void;
 }
 
@@ -26,10 +30,12 @@ export interface EditingOptions {
 
 export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Interaction {
   const emitter = new Emitter();
+  const pathDraw: PathDrawDragHandle = bindPathDraw(viewer, emitter);
   const textEditing: TextEditingHandle = bindTextEditing(viewer, emitter);
   const movement: MoveDragHandle = bindShapeMovement(viewer, emitter);
   const resize: ResizeDragHandle = bindShapeResize(viewer, emitter);
   const columnResize: ColumnResizeDragHandle = bindColumnResize(viewer, emitter);
+  const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
@@ -48,11 +54,15 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
 
   return {
     on: (name, handler) => emitter.on(name, handler),
+    startPathDraw: startOptions => pathDraw.start(startOptions),
+    cancelPathDraw: () => pathDraw.cancel(),
     destroy() {
+      pathDraw.destroy();
       textEditing.destroy();
       movement.destroy();
       resize.destroy();
       columnResize.destroy();
+      pathReshape.destroy();
       linkEndpoints.destroy();
       quickDuplicate.destroy();
       deleteSelection.destroy();
@@ -85,26 +95,32 @@ export type {
   LinkReconnectEvent,
   LinkToEvent,
   MoveChangeEvent,
+  PathDrawCompleteEvent,
+  PathPoint,
+  PathPointChangeEvent,
   PropertyChangeEvent,
   PropertyValue,
   QuickDuplicateEvent,
   ResizeChangeEvent,
   TextChangeEvent,
 } from './events';
-export type { InsertEntityOptions, InsertLinkOptions, RemoveEntityOptions } from './patchSfl';
+export type { InsertEntityOptions, InsertLinkOptions, InsertPathOptions, RemoveEntityOptions } from './patchSfl';
 export {
   applyChartValueChange,
   applyColumnResizeChange,
   applyLinkReconnectChange,
   applyMoveChange,
+  applyPathPointChange,
   applyPropertyChange,
   applyResizeChange,
   applyTextChange,
   insertEntity,
   insertLink,
+  insertPath,
   removeEntity,
   removeLink,
 } from './patchSfl';
+export type { PathDrawOptions } from './pathDrawDrag';
 export {
   bindPropertyEditing,
   type EditableRules,

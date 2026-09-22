@@ -1,5 +1,8 @@
 import {
   CORNER_RADIUS_ATTR,
+  PATH_CLOSED_ATTR,
+  PATH_POINTS_ATTR,
+  PATH_TENSION_ATTR,
   SQUARE_CORNER_ATTR,
   SYMBOL_BOUNDS_ATTR,
   SYMBOL_POINTS_ATTR,
@@ -43,6 +46,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return [declaredBoundsAttr(detail.bounds)];
     case 'tableColumnDivider':
       return tableColumnDividerAttrs(detail);
+    case 'pathGeometry':
+      return pathGeometryAttrs(detail);
   }
 }
 
@@ -92,6 +97,14 @@ function symbolGeometryAttrs(detail: Extract<SceneDetail, { of: 'symbolGeometry'
     `${SYMBOL_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
     `${SYMBOL_TENSION_ATTR}="${num(detail.tension)}"`,
     declaredBoundsAttr(detail.declaredBounds),
+  ];
+}
+
+function pathGeometryAttrs(detail: Extract<SceneDetail, { of: 'pathGeometry' }>): string[] {
+  return [
+    `${PATH_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
+    `${PATH_TENSION_ATTR}="${num(detail.tension)}"`,
+    `${PATH_CLOSED_ATTR}="${detail.closed}"`,
   ];
 }
 

@@ -3,39 +3,10 @@ import type { MoveChangeEvent } from '../../events';
 import { replacePropertyValue } from '../edits/propertyValues';
 import { round1 } from '../format';
 import { setOrInsertLayoutTuples } from '../properties';
-import { findDirectProperty, findOwnerBlock, type LineRange, type PropertySpan } from '../scanner';
+import { findOwnerBlock, type LineRange } from '../scanner';
+import { pointsSpan, readSpan } from './pathPoints';
 
 const POINT_PAIR = /\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/g;
-
-function pointsSpan(lines: string[], range: LineRange): PropertySpan | null {
-  const start = findDirectProperty(lines, range, 'points');
-  if (start === null) {
-    return null;
-  }
-  let depth = 0;
-  for (let row = start.line; row <= range.end; row++) {
-    const line = lines[row] ?? '';
-    for (let column = row === start.line ? start.start : 0; column < line.length; column++) {
-      if (line[column] === '[') {
-        depth++;
-      } else if (line[column] === ']' && --depth === 0) {
-        return { line: start.line, start: start.start, endLine: row, end: column + 1 };
-      }
-    }
-  }
-  return null;
-}
-
-function readSpan(lines: string[], span: PropertySpan): string {
-  if (span.line === span.endLine) {
-    return lines[span.line].slice(span.start, span.end);
-  }
-  return [
-    lines[span.line].slice(span.start),
-    ...lines.slice(span.line + 1, span.endLine),
-    lines[span.endLine].slice(0, span.end),
-  ].join('\n');
-}
 
 function movePathPoints(lines: string[], range: LineRange, dx: number, dy: number): void {
   const span = pointsSpan(lines, range);

@@ -72,6 +72,22 @@ export interface ColumnResizeChangeEvent {
   width: number;
 }
 
+export interface PathPoint {
+  x: number;
+  y: number;
+}
+
+export interface PathPointChangeEvent {
+  owner: OwnerRef;
+  points: PathPoint[];
+}
+
+export interface PathDrawCompleteEvent {
+  points: PathPoint[];
+  closed: boolean;
+  tension: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -83,6 +99,8 @@ export interface InteractionEventMap {
   chartValueChange: ChartValueChangeEvent;
   propertyChange: PropertyChangeEvent;
   columnResizeChange: ColumnResizeChangeEvent;
+  pathPointChange: PathPointChangeEvent;
+  pathDrawComplete: PathDrawCompleteEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

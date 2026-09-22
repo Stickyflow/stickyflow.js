@@ -1,7 +1,7 @@
 import { resolveOwner } from '../../domContract';
 import { TABLE_COLUMN_DIVIDER_ATTR } from '../../model/domContractAttributes';
 import type { Viewer } from '../../viewer';
-import { hasEditableGeometry } from '../geometryRoles';
+import { hasMovableGeometry } from '../geometryRoles';
 import { captureDraggedEntities } from './entityCapture';
 import { captureInternalLinks } from './internalLinkCapture';
 import { selectedMoveGroup } from './selection';
@@ -22,7 +22,7 @@ export function createMoveDragState(
 ): MoveDragState | null {
   const target = event.target as Element | null;
   const owner = resolveOwner(target);
-  if (!hasEditableGeometry(owner) || isChartValueMark(target) || isColumnDividerTarget(target)) {
+  if (!hasMovableGeometry(owner) || isChartValueMark(target) || isColumnDividerTarget(target)) {
     return null;
   }
 

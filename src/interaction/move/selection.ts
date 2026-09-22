@@ -1,7 +1,7 @@
 import { resolveOwner } from '../../domContract';
 import type { OwnerRef, Viewer } from '../../viewer';
 import { CONTAINER_ROLES } from '../containerGeometry';
-import { hasEditableGeometry } from '../geometryRoles';
+import { hasMovableGeometry } from '../geometryRoles';
 
 function containedChildren(viewer: Viewer, owner: OwnerRef): OwnerRef[] {
   if (!CONTAINER_ROLES.has(owner.role)) {
@@ -15,7 +15,7 @@ export function selectedMoveGroup(viewer: Viewer, owner: OwnerRef): OwnerRef[] {
   const selection = viewer.getSelection();
   const isMultiSelect = selection.length > 1 && selection.some(selected => selected.id === owner.id);
   if (isMultiSelect) {
-    return selection.filter(hasEditableGeometry);
+    return selection.filter(hasMovableGeometry);
   }
   return [owner, ...containedChildren(viewer, owner)];
 }
