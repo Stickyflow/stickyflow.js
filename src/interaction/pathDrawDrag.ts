@@ -22,7 +22,10 @@ export function bindPathDraw(viewer: Viewer, emitter: Emitter): PathDrawDragHand
   window.addEventListener('keyup', session.keyUp);
 
   return {
-    start: options => session.start(options),
+    start: options => {
+      viewer.select([]);
+      session.start(options);
+    },
     cancel: () => session.cancel(),
     destroy() {
       session.cancel();

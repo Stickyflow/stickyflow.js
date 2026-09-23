@@ -65,7 +65,7 @@ function mount(sfl: string) {
   const viewer = createViewer({ container: host, source: sfl, interactive: true, selectable: true });
   const editing = bindEditing(viewer, {});
   const events: EventLog[] = [];
-  for (const name of ['moveChange', 'pathPointChange', 'pathDrawComplete'] as const) {
+  for (const name of ['moveChange', 'pathPointChange', 'pathDrawComplete', 'delete'] as const) {
     editing.on(name, detail => events.push({ name, detail: detail as unknown as Record<string, unknown> }));
   }
   viewer.on('selectionChange', detail =>
@@ -275,6 +275,48 @@ describe('the path-drawing tool', () => {
     expect(complete?.detail).toMatchObject({ closed: false });
   });
 
+  it('aligns onto an earlier point with a guide while Shift is held, letting you close an exact square', () => {
+    const { svg, editing, events } = mount(PATH_SFL);
+    editing.startPathDraw();
+    fire(window, 'keydown', { clientX: 0, clientY: 0, key: 'Shift' });
+    fire(svg, 'pointerdown', { clientX: 0, clientY: 0 });
+    fire(svg, 'pointerdown', { clientX: 100, clientY: 0 });
+    fire(svg, 'pointerdown', { clientX: 100, clientY: 100 });
+
+    fire(svg, 'pointermove', { clientX: 5, clientY: 97 });
+    expect(svg.querySelector('[data-sf-alignment-guides] line')).toBeTruthy();
+
+    fire(svg, 'pointerdown', { clientX: 5, clientY: 97 });
+    expect(svg.querySelector('[data-sf-alignment-guides]')).toBeFalsy();
+    fire(window, 'keyup', { clientX: 0, clientY: 0, key: 'Shift' });
+    fire(svg, 'dblclick', { clientX: 5, clientY: 97 });
+
+    const complete = events.find(event => event.name === 'pathDrawComplete');
+    const points = complete?.detail.points as Array<{ x: number; y: number }>;
+    expect(points[3].x).toBeCloseTo(0, 6);
+    expect(points[3].y).toBeCloseTo(100, 6);
+  });
+
+  it('clears any existing selection when entering draw mode, so Backspace cannot delete something stale mid-draw', () => {
+    const { svg, editing, events } = mount(PATH_SFL);
+    fire(svg.querySelector('[data-sf-id="other"][data-sf-primary]') as Element, 'pointerdown', {
+      clientX: 320,
+      clientY: 320,
+    });
+    fire(svg.querySelector('[data-sf-id="other"][data-sf-primary]') as Element, 'pointerup', {
+      clientX: 320,
+      clientY: 320,
+    });
+    expect(svg.querySelectorAll('[data-sf-selection-overlay]').length).toBeGreaterThan(0);
+
+    editing.startPathDraw();
+    expect(svg.querySelectorAll('[data-sf-selection-overlay]')).toHaveLength(0);
+
+    fire(svg, 'pointerdown', { clientX: 200, clientY: 200 });
+    fire(window, 'keydown', { clientX: 0, clientY: 0, key: 'Backspace' });
+    expect(events.filter(event => event.name === 'delete')).toHaveLength(0);
+  });
+
   it('does not let a placement click also select an existing entity underneath it', () => {
     const { svg, editing, events } = mount(PATH_SFL);
     editing.startPathDraw();
@@ -288,5 +330,17 @@ describe('the path-drawing tool', () => {
     expect(
       events.filter(event => event.name === 'selectionChange' && (event.detail.selection as unknown[])?.length),
     ).toHaveLength(0);
+  });
+});
+
+describe('deleting a whole, already-selected Path with Backspace (outside a draw session)', () => {
+  it('reports the selected Path via the delete event, the same as any other entity', () => {
+    const { svg, pathNode, events } = mount(PATH_SFL);
+    fire(pathNode(), 'pointerdown', { clientX: 60, clientY: 20 });
+    fire(pathNode(), 'pointerup', { clientX: 60, clientY: 20 });
+
+    fire(svg, 'keydown', { clientX: 0, clientY: 0, key: 'Backspace' });
+    const deleted = events.find(event => event.name === 'delete');
+    expect(deleted?.detail.owners).toMatchObject([{ role: 'path', id: 'p' }]);
   });
 });

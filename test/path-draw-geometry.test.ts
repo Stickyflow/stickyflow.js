@@ -4,6 +4,7 @@ import {
   MIN_POINTS_OPEN,
   MIN_POINTS_TO_CLOSE,
   snapTo45Degrees,
+  snapToSessionGuides,
 } from '../src/interaction/pathDraw/geometry';
 
 describe('isCloseToStart', () => {
@@ -59,5 +60,55 @@ describe('snapTo45Degrees', () => {
   it('is relative to the reference point, not the origin', () => {
     const snapped = snapTo45Degrees({ x: 200, y: 300 }, { x: 210, y: 391 });
     expect(snapped.x).toBeCloseTo(200, 6);
+  });
+});
+
+describe('snapToSessionGuides', () => {
+  it('snaps the closing side of a square onto the first point, with a vertical guide', () => {
+    const last = { x: 100, y: 100 };
+    const angleSnapped = snapTo45Degrees(last, { x: 5, y: 103 });
+    const result = snapToSessionGuides(
+      last,
+      angleSnapped,
+      [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      { x: 5, y: 103 },
+      14,
+    );
+    expect(result.point.x).toBeCloseTo(0, 6);
+    expect(result.point.y).toBeCloseTo(100, 6);
+    expect(result.guide?.orientation).toBe('vertical');
+    expect(result.guide?.position).toBeCloseTo(0, 6);
+    expect(result.guide?.from).toBeCloseTo(0, 6);
+    expect(result.guide?.to).toBeCloseTo(100, 6);
+  });
+
+  it('falls back to the plain angle snap when no prior point is close enough to the ray', () => {
+    const last = { x: 0, y: 0 };
+    const raw = { x: 100, y: 8 };
+    const angleSnapped = snapTo45Degrees(last, raw);
+    const result = snapToSessionGuides(last, angleSnapped, [{ x: 500, y: 500 }], raw, 14);
+    expect(result.point).toEqual(angleSnapped);
+    expect(result.guide).toBeNull();
+  });
+
+  it('prefers the candidate closest to the raw cursor when several priors qualify', () => {
+    const last = { x: 0, y: 0 };
+    const raw = { x: 0, y: 50 };
+    const angleSnapped = snapTo45Degrees(last, raw);
+    const result = snapToSessionGuides(
+      last,
+      angleSnapped,
+      [
+        { x: 20, y: 20 },
+        { x: 20, y: 25 },
+      ],
+      raw,
+      40,
+    );
+    expect(result.point.x).toBeCloseTo(0, 6);
+    expect(result.point.y).toBeCloseTo(25, 6);
   });
 });

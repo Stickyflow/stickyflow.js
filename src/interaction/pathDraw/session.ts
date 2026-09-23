@@ -1,6 +1,20 @@
-import { isCameraGesture, pointerUserPoint, pxPerUnit } from '../../domContract';
+import {
+  clearAlignmentGuides,
+  type GuideLine,
+  isCameraGesture,
+  pointerUserPoint,
+  pxPerUnit,
+  updateAlignmentGuides,
+} from '../../domContract';
 import type { Emitter } from '../events';
-import { type DrawPoint, isCloseToStart, MIN_POINTS_OPEN, MIN_POINTS_TO_CLOSE, snapTo45Degrees } from './geometry';
+import {
+  type DrawPoint,
+  isCloseToStart,
+  MIN_POINTS_OPEN,
+  MIN_POINTS_TO_CLOSE,
+  snapTo45Degrees,
+  snapToSessionGuides,
+} from './geometry';
 import { createPathDrawPreview, updatePathDrawPreview } from './preview';
 import { createIdlePathDrawState, type PathDrawState } from './state';
 
@@ -10,6 +24,8 @@ export interface PathDrawOptions {
 }
 
 const CLOSE_SNAP_PX = 12;
+const GUIDE_SNAP_PX = 14;
+const GUIDE_COLOR = '#4CAF50';
 const DOUBLE_CLICK_MS = 400;
 const DOUBLE_CLICK_PX = 10;
 
@@ -79,6 +95,7 @@ export class PathDrawSession {
     this.#state.cursor = resolved.point;
     this.#state.willClose = false;
     updatePathDrawPreview(this.#svg, this.#state);
+    clearAlignmentGuides(this.#svg);
   };
 
   readonly pointerMove = (event: PointerEvent): void => {
@@ -94,6 +111,11 @@ export class PathDrawSession {
     this.#state.cursor = resolved.point;
     this.#state.willClose = resolved.willClose;
     updatePathDrawPreview(this.#svg, this.#state);
+    if (resolved.guide) {
+      updateAlignmentGuides(this.#svg, [resolved.guide], GUIDE_COLOR);
+    } else {
+      clearAlignmentGuides(this.#svg);
+    }
   };
 
   readonly pointerUp = (event: PointerEvent): void => {
@@ -135,6 +157,7 @@ export class PathDrawSession {
         ? isCloseToStart(this.#state.points, this.#state.cursor, closeSnapUnits)
         : false;
       updatePathDrawPreview(this.#svg, this.#state);
+      clearAlignmentGuides(this.#svg);
     }
   };
 
@@ -144,14 +167,20 @@ export class PathDrawSession {
     }
   };
 
-  #resolvePoint(raw: DrawPoint): { point: DrawPoint; willClose: boolean } {
+  #resolvePoint(raw: DrawPoint): { point: DrawPoint; willClose: boolean; guide: GuideLine | null } {
     const closeSnapUnits = CLOSE_SNAP_PX / pxPerUnit(this.#svg);
     if (isCloseToStart(this.#state.points, raw, closeSnapUnits)) {
-      return { point: this.#state.points[0], willClose: true };
+      return { point: this.#state.points[0], willClose: true, guide: null };
     }
-    const last = this.#state.points[this.#state.points.length - 1];
-    const point = this.#shiftHeld && last ? snapTo45Degrees(last, raw) : raw;
-    return { point, willClose: false };
+    const points = this.#state.points;
+    const last = points[points.length - 1];
+    if (!this.#shiftHeld || !last) {
+      return { point: raw, willClose: false, guide: null };
+    }
+    const angleSnapped = snapTo45Degrees(last, raw);
+    const guideSnapUnits = GUIDE_SNAP_PX / pxPerUnit(this.#svg);
+    const { point, guide } = snapToSessionGuides(last, angleSnapped, points.slice(0, -1), raw, guideSnapUnits);
+    return { point, willClose: false, guide };
   }
 
   #commit(closed: boolean): void {
@@ -165,6 +194,7 @@ export class PathDrawSession {
 
   #reset(callExit: boolean): void {
     this.#state.previewGroup?.remove();
+    clearAlignmentGuides(this.#svg);
     const exit = this.#state.onExit;
     this.#state = createIdlePathDrawState();
     this.#shiftHeld = false;
