@@ -19,6 +19,7 @@ export function bindPathDraw(viewer: Viewer, emitter: Emitter): PathDrawDragHand
   svg.addEventListener('pointerup', session.pointerUp, true);
   svg.addEventListener('dblclick', session.dblClick, true);
   window.addEventListener('keydown', session.keyDown);
+  window.addEventListener('keyup', session.keyUp);
 
   return {
     start: options => session.start(options),
@@ -30,6 +31,7 @@ export function bindPathDraw(viewer: Viewer, emitter: Emitter): PathDrawDragHand
       svg.removeEventListener('pointerup', session.pointerUp, true);
       svg.removeEventListener('dblclick', session.dblClick, true);
       window.removeEventListener('keydown', session.keyDown);
+      window.removeEventListener('keyup', session.keyUp);
     },
   };
 }

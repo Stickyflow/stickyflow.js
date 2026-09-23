@@ -1,6 +1,6 @@
 import { isCameraGesture, pointerUserPoint, pxPerUnit } from '../../domContract';
 import type { Emitter } from '../events';
-import { isCloseToStart, MIN_POINTS_OPEN, MIN_POINTS_TO_CLOSE } from './geometry';
+import { type DrawPoint, isCloseToStart, MIN_POINTS_OPEN, MIN_POINTS_TO_CLOSE, snapTo45Degrees } from './geometry';
 import { createPathDrawPreview, updatePathDrawPreview } from './preview';
 import { createIdlePathDrawState, type PathDrawState } from './state';
 
@@ -17,6 +17,7 @@ export class PathDrawSession {
   readonly #svg: SVGSVGElement;
   readonly #emitter: Emitter;
   #state: PathDrawState = createIdlePathDrawState();
+  #shiftHeld = false;
 
   constructor(svg: SVGSVGElement, emitter: Emitter) {
     this.#svg = svg;
@@ -68,14 +69,15 @@ export class PathDrawSession {
       return;
     }
 
-    const closeSnapUnits = CLOSE_SNAP_PX / pxPerUnit(this.#svg);
-    if (isCloseToStart(this.#state.points, point, closeSnapUnits)) {
+    const resolved = this.#resolvePoint(point);
+    if (resolved.willClose) {
       this.#commit(true);
       return;
     }
 
-    this.#state.points = [...this.#state.points, point];
-    this.#state.cursor = point;
+    this.#state.points = [...this.#state.points, resolved.point];
+    this.#state.cursor = resolved.point;
+    this.#state.willClose = false;
     updatePathDrawPreview(this.#svg, this.#state);
   };
 
@@ -88,9 +90,9 @@ export class PathDrawSession {
     if (!point) {
       return;
     }
-    const closeSnapUnits = CLOSE_SNAP_PX / pxPerUnit(this.#svg);
-    this.#state.cursor = point;
-    this.#state.willClose = isCloseToStart(this.#state.points, point, closeSnapUnits);
+    const resolved = this.#resolvePoint(point);
+    this.#state.cursor = resolved.point;
+    this.#state.willClose = resolved.willClose;
     updatePathDrawPreview(this.#svg, this.#state);
   };
 
@@ -113,6 +115,9 @@ export class PathDrawSession {
   };
 
   readonly keyDown = (event: KeyboardEvent): void => {
+    if (event.key === 'Shift') {
+      this.#shiftHeld = true;
+    }
     if (!this.#state.active) {
       return;
     }
@@ -122,8 +127,32 @@ export class PathDrawSession {
     } else if (event.key === 'Enter' && this.#state.points.length >= MIN_POINTS_OPEN) {
       event.preventDefault();
       this.#commit(false);
+    } else if (event.key === 'Backspace' && this.#state.points.length > 0) {
+      event.preventDefault();
+      this.#state.points = this.#state.points.slice(0, -1);
+      const closeSnapUnits = CLOSE_SNAP_PX / pxPerUnit(this.#svg);
+      this.#state.willClose = this.#state.cursor
+        ? isCloseToStart(this.#state.points, this.#state.cursor, closeSnapUnits)
+        : false;
+      updatePathDrawPreview(this.#svg, this.#state);
     }
   };
+
+  readonly keyUp = (event: KeyboardEvent): void => {
+    if (event.key === 'Shift') {
+      this.#shiftHeld = false;
+    }
+  };
+
+  #resolvePoint(raw: DrawPoint): { point: DrawPoint; willClose: boolean } {
+    const closeSnapUnits = CLOSE_SNAP_PX / pxPerUnit(this.#svg);
+    if (isCloseToStart(this.#state.points, raw, closeSnapUnits)) {
+      return { point: this.#state.points[0], willClose: true };
+    }
+    const last = this.#state.points[this.#state.points.length - 1];
+    const point = this.#shiftHeld && last ? snapTo45Degrees(last, raw) : raw;
+    return { point, willClose: false };
+  }
 
   #commit(closed: boolean): void {
     const points = this.#state.points;
@@ -138,6 +167,7 @@ export class PathDrawSession {
     this.#state.previewGroup?.remove();
     const exit = this.#state.onExit;
     this.#state = createIdlePathDrawState();
+    this.#shiftHeld = false;
     if (callExit) {
       exit?.();
     }

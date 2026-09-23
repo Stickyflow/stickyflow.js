@@ -44,11 +44,11 @@ function fire(
   type: string,
   init: { clientX: number; clientY: number; pointerId?: number; key?: string },
 ) {
-  const event =
-    type === 'keydown'
-      ? new window.KeyboardEvent(type, { bubbles: true, cancelable: true, key: init.key })
-      : new window.MouseEvent(type, { bubbles: true, cancelable: true, button: 0, ...init });
-  if (type !== 'keydown') {
+  const isKeyEvent = type === 'keydown' || type === 'keyup';
+  const event = isKeyEvent
+    ? new window.KeyboardEvent(type, { bubbles: true, cancelable: true, key: init.key })
+    : new window.MouseEvent(type, { bubbles: true, cancelable: true, button: 0, ...init });
+  if (!isKeyEvent) {
     Object.defineProperty(event, 'pointerId', { value: init.pointerId ?? 1 });
   }
   target.dispatchEvent(event);
@@ -217,6 +217,62 @@ describe('the path-drawing tool', () => {
     expect(exited).toBe(true);
     expect(events.filter(event => event.name === 'pathDrawComplete')).toHaveLength(0);
     expect(svg.querySelectorAll('[data-sf-path-point], [pointer-events="none"] circle')).toHaveLength(0);
+  });
+
+  it('constrains the next segment to 45 degrees while Shift is held, and stops once released', () => {
+    const { svg, editing, events } = mount(PATH_SFL);
+    editing.startPathDraw();
+    fire(svg, 'pointerdown', { clientX: 0, clientY: 0 });
+
+    fire(window, 'keydown', { clientX: 0, clientY: 0, key: 'Shift' });
+    fire(svg, 'pointerdown', { clientX: 100, clientY: 8 });
+    fire(window, 'keyup', { clientX: 0, clientY: 0, key: 'Shift' });
+    fire(svg, 'pointerdown', { clientX: 150, clientY: 40 });
+    fire(svg, 'dblclick', { clientX: 150, clientY: 40 });
+
+    const complete = events.find(event => event.name === 'pathDrawComplete');
+    const points = complete?.detail.points as Array<{ x: number; y: number }>;
+    expect(points[1].y).toBeCloseTo(0, 6);
+    expect(points[2]).toEqual({ x: 150, y: 40 });
+  });
+
+  it('removes the last placed point on Backspace without ending the session', () => {
+    const { svg, editing, events } = mount(PATH_SFL);
+    editing.startPathDraw();
+    fire(svg, 'pointerdown', { clientX: 0, clientY: 0 });
+    fire(svg, 'pointerdown', { clientX: 50, clientY: 0 });
+    fire(svg, 'pointerdown', { clientX: 999, clientY: 999 });
+
+    fire(window, 'keydown', { clientX: 0, clientY: 0, key: 'Backspace' });
+    expect(svg.querySelectorAll('[pointer-events="none"] circle')).toHaveLength(2);
+
+    fire(svg, 'pointerdown', { clientX: 50, clientY: 50 });
+    fire(svg, 'dblclick', { clientX: 50, clientY: 50 });
+
+    const complete = events.find(event => event.name === 'pathDrawComplete');
+    expect(complete?.detail).toEqual({
+      points: [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 50, y: 50 },
+      ],
+      closed: false,
+      tension: 0,
+    });
+  });
+
+  it('Backspace down to zero points keeps the session alive to place new ones', () => {
+    const { svg, editing, events } = mount(PATH_SFL);
+    editing.startPathDraw();
+    fire(svg, 'pointerdown', { clientX: 0, clientY: 0 });
+    fire(window, 'keydown', { clientX: 0, clientY: 0, key: 'Backspace' });
+    expect(svg.querySelectorAll('[pointer-events="none"] circle')).toHaveLength(0);
+
+    fire(svg, 'pointerdown', { clientX: 200, clientY: 200 });
+    fire(svg, 'pointerdown', { clientX: 240, clientY: 200 });
+    fire(svg, 'dblclick', { clientX: 240, clientY: 200 });
+    const complete = events.find(event => event.name === 'pathDrawComplete');
+    expect(complete?.detail).toMatchObject({ closed: false });
   });
 
   it('does not let a placement click also select an existing entity underneath it', () => {
