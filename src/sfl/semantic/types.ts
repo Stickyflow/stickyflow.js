@@ -62,6 +62,7 @@ export interface SflEntityOut {
       | 'mekko'
       | 'hexbin'
       | 'pie'
+      | 'radialBar'
       | 'matrix'
       | 'custom';
     categories?: string[];
@@ -83,6 +84,8 @@ export interface SflEntityOut {
     innerRadius?: number;
     pieCornerRadius?: number;
     pieSliceGap?: number;
+    ringThickness?: number;
+    ringGap?: number;
     cellGap?: number;
     showValues?: boolean;
     squareCells?: boolean;

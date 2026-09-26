@@ -38,6 +38,8 @@ export function chartObject(e: SflEntityOut) {
       innerRadius: e.chart?.innerRadius,
       pieCornerRadius: e.chart?.pieCornerRadius,
       pieSliceGap: e.chart?.pieSliceGap,
+      ringThickness: e.chart?.ringThickness,
+      ringGap: e.chart?.ringGap,
       cellGap: e.chart?.cellGap,
       showValues: e.chart?.showValues,
       squareCells: e.chart?.squareCells,

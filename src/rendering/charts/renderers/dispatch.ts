@@ -11,6 +11,7 @@ import { renderMatrix } from './matrix';
 import { renderMekko } from './mekko';
 import { renderPie } from './pie';
 import { renderRadar } from './radar';
+import { renderRadialBar } from './radialBar';
 import { renderSankey } from './sankey';
 import { renderScatter } from './scatter';
 import { renderTreemap } from './treemap';
@@ -31,6 +32,7 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   pie: renderPie,
   radar: renderRadar,
   radial: renderRadar,
+  radialBar: renderRadialBar,
   sankey: renderSankey,
   scatter: renderScatter,
   treemap: renderTreemap,

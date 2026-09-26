@@ -14,6 +14,7 @@ export type ChartType =
   | 'mekko'
   | 'hexbin'
   | 'pie'
+  | 'radialBar'
   | 'matrix'
   | 'custom';
 
@@ -31,6 +32,7 @@ export const CHART_TYPES: ChartType[] = [
   'mekko',
   'hexbin',
   'pie',
+  'radialBar',
   'matrix',
   'custom',
 ];
@@ -111,6 +113,8 @@ export interface Chart {
     innerRadius?: number;
     pieCornerRadius?: number;
     pieSliceGap?: number;
+    ringThickness?: number;
+    ringGap?: number;
     cellGap?: number;
     showValues?: boolean;
     squareCells?: boolean;

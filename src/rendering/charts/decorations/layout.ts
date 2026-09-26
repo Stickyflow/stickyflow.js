@@ -3,7 +3,15 @@ import type { Bounds } from '../../scene';
 import { boxBounds, finite } from '../../scene';
 
 export const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'field']);
-const CHARTS_WITHOUT_CARTESIAN_DECORATIONS = new Set(['heatmap', 'sankey', 'treemap', 'mekko', 'pie', 'matrix']);
+const CHARTS_WITHOUT_CARTESIAN_DECORATIONS = new Set([
+  'heatmap',
+  'sankey',
+  'treemap',
+  'mekko',
+  'pie',
+  'radialBar',
+  'matrix',
+]);
 
 export function hasCartesianDecorations(chart: Chart): boolean {
   return !CHARTS_WITHOUT_CARTESIAN_DECORATIONS.has(chart.chart_type);
