@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { CHART_COLORS, maxPieCornerRadius } from '../../primitives';
+import { CHART_COLORS, gapInsetAngle, maxPieCornerRadius, pieUsesInnerArc } from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { renderPieLabels } from './labels';
@@ -15,6 +15,8 @@ interface PieSliceMark {
   seriesId: string;
   label: string;
   color: NonNullable<ChartSeries['color']>;
+  stroke?: string;
+  strokeWidth?: number;
   value: number;
   share: number;
   angles: PieSliceAngles;
@@ -23,8 +25,9 @@ interface PieSliceMark {
 
 export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
   const marks = createPieSliceMarks(context.chart.series, geometry.total);
+  const gapPx = context.chart.config?.pieSliceGap ?? 0;
   return [
-    ...marks.map(mark => createSliceNode(context, geometry, mark)),
+    ...marks.map(mark => createSliceNode(context, geometry, mark, gapPx)),
     ...renderPieLabels(
       context,
       geometry,
@@ -51,6 +54,8 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
       seriesId: series.id,
       label: series.label,
       color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
+      stroke: series.stroke,
+      strokeWidth: series.stroke_width,
       value,
       share: value / total,
       angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
@@ -61,20 +66,29 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
   return marks;
 }
 
-function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mark: PieSliceMark): RenderNode {
+function createSliceNode(
+  context: ChartRenderContext,
+  geometry: PieGeometry,
+  mark: PieSliceMark,
+  gapPx: number,
+): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
   const fill = paint(mark.color, diagnostics, chart.id);
-  const sweep = mark.angles.end - mark.angles.start;
+  const halfGap = Math.max(0, gapPx) / 2;
+  const innerBoundaryRadius = pieUsesInnerArc(geometry, mark.angles, gapPx) ? geometry.innerRadius : 0;
+  const rawSweep = mark.angles.end - mark.angles.start;
+  const gapSweep = 2 * gapInsetAngle(halfGap, geometry.outerRadius);
+  const availableSweep = Math.max(0, rawSweep - gapSweep);
   const cornerRadius = Math.min(
     geometry.cornerRadius,
-    maxPieCornerRadius(geometry.outerRadius, geometry.innerRadius, sweep),
+    maxPieCornerRadius(geometry.outerRadius, innerBoundaryRadius, availableSweep),
   );
   return {
     type: 'path',
     id: `chart-pie-slice-${chart.id}-${mark.seriesId}`,
     order: nextOrder(),
     bounds,
-    d: createPieSlicePath(geometry, mark.angles, cornerRadius),
+    d: createPieSlicePath(geometry, mark.angles, cornerRadius, gapPx),
     detail: {
       of: 'chartValue',
       series: mark.seriesId,
@@ -85,6 +99,8 @@ function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mar
       pieValue: mark.value,
     },
     prop: seriesValueProp(mark.seriesId, 0),
-    style: { fill },
+    style: mark.stroke
+      ? { fill, stroke: { kind: 'solid', color: mark.stroke }, strokeWidth: finite(mark.strokeWidth, 1) }
+      : { fill },
   };
 }

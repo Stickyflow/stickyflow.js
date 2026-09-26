@@ -13,6 +13,13 @@ export { createVerticalErrorWhiskerNode, errorBarRange } from './errors';
 export { formatFieldValue } from './format';
 export { linePathData } from './linePath';
 export type { PieGeometry, PiePoint, PieSliceAngles } from './pieShape';
-export { createPieSlicePath, maxPieCornerRadius, pieArcPoint } from './pieShape';
+export {
+  createPieSlicePath,
+  gapInsetAngle,
+  maxPieCornerRadius,
+  pieApexRadius,
+  pieArcPoint,
+  pieUsesInnerArc,
+} from './pieShape';
 export { stackedSegment } from './stacking';
 export { chartText } from './text';

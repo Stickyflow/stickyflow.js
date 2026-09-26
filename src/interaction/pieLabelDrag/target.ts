@@ -10,6 +10,11 @@ function isLabelPointer(event: PointerEvent): boolean {
   return event.button === 0 && !isCameraGesture(event);
 }
 
+function findLabelSiblings(svg: SVGSVGElement, ownerId: string, seriesId: string): SVGGraphicsElement[] {
+  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(seriesId)}"][data-sf-mark="pie-label"]`;
+  return [...svg.querySelectorAll<SVGGraphicsElement>(selector)];
+}
+
 export function resolvePieLabelDrag(svg: SVGSVGElement, event: PointerEvent): PieLabelDragState | null {
   if (!isLabelPointer(event)) {
     return null;
@@ -34,6 +39,10 @@ export function resolvePieLabelDrag(svg: SVGSVGElement, event: PointerEvent): Pi
   if (!start) {
     return null;
   }
+  const labelElements = findLabelSiblings(svg, owner.id, seriesId);
+  if (!labelElements.length) {
+    return null;
+  }
   clicked.setPointerCapture?.(event.pointerId);
   return {
     owner,
@@ -46,6 +55,6 @@ export function resolvePieLabelDrag(svg: SVGSVGElement, event: PointerEvent): Pi
     startY: start.y,
     moved: false,
     pulled: false,
-    labelElement: clicked,
+    labelElements,
   };
 }

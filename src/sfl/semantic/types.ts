@@ -82,6 +82,7 @@ export interface SflEntityOut {
     hexRadius?: number;
     innerRadius?: number;
     pieCornerRadius?: number;
+    pieSliceGap?: number;
     cellGap?: number;
     showValues?: boolean;
     squareCells?: boolean;

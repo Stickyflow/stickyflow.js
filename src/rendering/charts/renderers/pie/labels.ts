@@ -2,6 +2,7 @@ import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode, SceneText } from '../../../scene';
 import { DEFAULT_FONT, finite } from '../../../scene';
 import { contrastTextColor, representativeColor, sameHueTint } from '../../primitives';
+import { seriesLabelProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { pieArcPoint } from './geometry';
 import type { PieGeometry } from './types';
@@ -37,34 +38,66 @@ export function renderPieLabels(
     .flatMap(mark => createPieLabel(context, geometry, mark));
 }
 
+function labelTextPair(
+  context: ChartRenderContext,
+  mark: PieLabelMark,
+  point: { x: number; y: number },
+  color: string,
+  fontSize: number,
+  percent: number,
+): [SceneText, SceneText] {
+  const { chart, bounds, nextOrder } = context;
+  const lineHeight = fontSize * 1.2;
+  const base = {
+    bounds,
+    x: point.x - LABEL_WIDTH / 2,
+    width: LABEL_WIDTH,
+    height: lineHeight,
+    fontFamily: chart.font_family ?? DEFAULT_FONT,
+    fontSize,
+    align: 'center' as const,
+    verticalAlign: 'middle' as const,
+    lineHeight: 1.2,
+    color,
+  };
+  const detail = (extra: Record<string, unknown>) => ({
+    of: 'chartSeries' as const,
+    series: mark.seriesId,
+    mark: 'pie-label',
+    pulled: mark.labelPulled || undefined,
+    ...extra,
+  });
+  const nameText: SceneText = {
+    type: 'text',
+    id: `chart-pie-label-name-${chart.id}-${mark.seriesId}`,
+    order: nextOrder(),
+    ...base,
+    y: point.y - lineHeight,
+    lines: [mark.label],
+    fontWeight: 'bold',
+    detail: detail({}),
+    prop: seriesLabelProp(mark.seriesId),
+  };
+  const valueText: SceneText = {
+    type: 'text',
+    id: `chart-pie-label-value-${chart.id}-${mark.seriesId}`,
+    order: nextOrder(),
+    ...base,
+    y: point.y,
+    lines: [`${percent}%`],
+    fontWeight: 'normal',
+    detail: detail({}),
+    prop: seriesValueProp(mark.seriesId, 0),
+    propKind: 'value',
+  };
+  return [nameText, valueText];
+}
+
 function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark: PieLabelMark): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
   const mid = (mark.start + mark.end) / 2;
   const fontSize = Math.max(9, finite(chart.font_size, 12));
   const percent = Math.round(mark.share * 100);
-  const richLines = [[{ text: mark.label, bold: true }], [{ text: `${percent}%`, bold: false }]];
-  const textBase = {
-    type: 'text' as const,
-    id: `chart-pie-label-${chart.id}-${mark.seriesId}`,
-    order: nextOrder(),
-    bounds,
-    width: LABEL_WIDTH,
-    height: fontSize * 1.2 * 2,
-    detail: {
-      of: 'chartSeries' as const,
-      series: mark.seriesId,
-      mark: 'pie-label',
-      pulled: mark.labelPulled || undefined,
-    },
-    lines: [mark.label, `${percent}%`],
-    richLines,
-    fontFamily: chart.font_family ?? DEFAULT_FONT,
-    fontSize,
-    fontWeight: 'normal' as const,
-    align: 'center' as const,
-    verticalAlign: 'middle' as const,
-    lineHeight: 1.2,
-  };
 
   const ringThickness = geometry.outerRadius - geometry.innerRadius;
   if (mark.labelPulled || ringThickness < fontSize * 1.2 * 2 + 6) {
@@ -83,13 +116,11 @@ function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark
       d: `M ${tickStart.x} ${tickStart.y} L ${tickEnd.x} ${tickEnd.y}`,
       style: { stroke: { kind: 'solid', color }, strokeWidth: 1.5 },
     };
-    const text: SceneText = { ...textBase, x: point.x - LABEL_WIDTH / 2, y: point.y - fontSize, color };
-    return [tick, text];
+    return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent)];
   }
 
   const labelRadius = geometry.innerRadius + ringThickness * LABEL_RADIUS_FRACTION;
   const point = pieArcPoint(geometry, mid, labelRadius);
   const color = contrastTextColor(representativeColor(mark.color, '#0f172a'));
-  const text: SceneText = { ...textBase, x: point.x - LABEL_WIDTH / 2, y: point.y - fontSize, color };
-  return [text];
+  return labelTextPair(context, mark, point, color, fontSize, percent);
 }

@@ -45,6 +45,7 @@ export function readChart(block: SflBlock, properties: ChartProperties, symbolDe
     hexRadius: asNumber(properties.get('hexRadius')),
     innerRadius: asNumber(properties.get('innerRadius')),
     pieCornerRadius: asNumber(properties.get('pieCornerRadius')),
+    pieSliceGap: asNumber(properties.get('pieSliceGap')),
     cellGap: asNumber(properties.get('cellGap')),
     showValues: readBoolean(properties.get('showValues')),
     squareCells: readBoolean(properties.get('squareCells')),

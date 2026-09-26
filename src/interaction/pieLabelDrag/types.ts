@@ -11,5 +11,5 @@ export interface PieLabelDragState {
   startY: number;
   moved: boolean;
   pulled: boolean;
-  labelElement: SVGGraphicsElement;
+  labelElements: SVGGraphicsElement[];
 }

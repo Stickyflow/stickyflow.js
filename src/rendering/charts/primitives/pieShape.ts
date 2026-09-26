@@ -36,39 +36,56 @@ export function pieArcPoint(geometry: PieGeometry, angle: number, radius: number
   };
 }
 
-interface PieSliceArc {
-  outerStart: PiePoint;
-  outerEnd: PiePoint;
-  innerEnd: PiePoint;
-  innerStart: PiePoint;
-  largeArc: number;
+function largeArcFlag(a: number, b: number): number {
+  return Math.abs(b - a) > Math.PI ? 1 : 0;
 }
 
-function createPieSliceArc(geometry: PieGeometry, angles: PieSliceAngles): PieSliceArc {
-  return {
-    outerStart: pieArcPoint(geometry, angles.start, geometry.outerRadius),
-    outerEnd: pieArcPoint(geometry, angles.end, geometry.outerRadius),
-    innerEnd: pieArcPoint(geometry, angles.end, geometry.innerRadius),
-    innerStart: pieArcPoint(geometry, angles.start, geometry.innerRadius),
-    largeArc: angles.end - angles.start > Math.PI ? 1 : 0,
-  };
+export function gapInsetAngle(halfGap: number, radius: number): number {
+  if (halfGap <= 0 || radius <= 0) {
+    return 0;
+  }
+  return Math.asin(Math.min(1, halfGap / radius));
 }
 
-function createDonutSlicePath(geometry: PieGeometry, arc: PieSliceArc): string {
+function insetAngles(angles: PieSliceAngles, inset: number): PieSliceAngles {
+  return { start: angles.start + inset, end: angles.end - inset };
+}
+
+export function pieApexRadius(halfGap: number, sweep: number, outerRadius: number): number {
+  if (halfGap <= 0) {
+    return 0;
+  }
+  const halfSweep = Math.min(Math.abs(sweep) / 2, Math.PI / 2);
+  const denominator = Math.sin(halfSweep);
+  return denominator <= 1e-6 ? outerRadius : Math.min(halfGap / denominator, outerRadius);
+}
+
+function apexSlicePath(geometry: PieGeometry, outerAngles: PieSliceAngles, apex: PiePoint): string {
+  const start = pieArcPoint(geometry, outerAngles.start, geometry.outerRadius);
+  const end = pieArcPoint(geometry, outerAngles.end, geometry.outerRadius);
   return [
-    `M ${arc.outerStart.x} ${arc.outerStart.y}`,
-    `A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${arc.largeArc} 1 ${arc.outerEnd.x} ${arc.outerEnd.y}`,
-    `L ${arc.innerEnd.x} ${arc.innerEnd.y}`,
-    `A ${geometry.innerRadius} ${geometry.innerRadius} 0 ${arc.largeArc} 0 ${arc.innerStart.x} ${arc.innerStart.y}`,
+    `M ${apex.x} ${apex.y}`,
+    `L ${start.x} ${start.y}`,
+    `A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${largeArcFlag(outerAngles.start, outerAngles.end)} 1 ${end.x} ${end.y}`,
     'Z',
   ].join(' ');
 }
 
-function plainPieSlicePath(geometry: PieGeometry, arc: PieSliceArc): string {
+function donutSlicePath(
+  geometry: PieGeometry,
+  innerRadius: number,
+  outerAngles: PieSliceAngles,
+  innerAngles: PieSliceAngles,
+): string {
+  const outerStart = pieArcPoint(geometry, outerAngles.start, geometry.outerRadius);
+  const outerEnd = pieArcPoint(geometry, outerAngles.end, geometry.outerRadius);
+  const innerEnd = pieArcPoint(geometry, innerAngles.end, innerRadius);
+  const innerStart = pieArcPoint(geometry, innerAngles.start, innerRadius);
   return [
-    `M ${geometry.centerX} ${geometry.centerY}`,
-    `L ${arc.outerStart.x} ${arc.outerStart.y}`,
-    `A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${arc.largeArc} 1 ${arc.outerEnd.x} ${arc.outerEnd.y}`,
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${geometry.outerRadius} ${geometry.outerRadius} 0 ${largeArcFlag(outerAngles.start, outerAngles.end)} 1 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerEnd.x} ${innerEnd.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag(innerAngles.start, innerAngles.end)} 0 ${innerStart.x} ${innerStart.y}`,
     'Z',
   ].join(' ');
 }
@@ -108,46 +125,75 @@ export function maxPieCornerRadius(outerRadius: number, innerRadius: number, swe
   return Math.max(0, Math.min(outerLimit, innerLimit, ringLimit));
 }
 
-function roundedPieSlicePath(geometry: PieGeometry, angles: PieSliceAngles, cornerRadius: number): string {
-  const { centerX, centerY, outerRadius, innerRadius } = geometry;
+function roundedApexSlicePath(
+  geometry: PieGeometry,
+  outerAngles: PieSliceAngles,
+  cornerRadius: number,
+  apex: PiePoint,
+): string {
+  const { outerRadius } = geometry;
   const outerFilletCenterRadius = outerRadius - cornerRadius;
-  const outerStart = pieFillet(geometry, outerRadius, outerFilletCenterRadius, angles.start, cornerRadius, 1);
-  const outerEnd = pieFillet(geometry, outerRadius, outerFilletCenterRadius, angles.end, cornerRadius, -1);
-  const outerLargeArc = Math.abs(outerEnd.angle - outerStart.angle) > Math.PI ? 1 : 0;
+  const start = pieFillet(geometry, outerRadius, outerFilletCenterRadius, outerAngles.start, cornerRadius, 1);
+  const end = pieFillet(geometry, outerRadius, outerFilletCenterRadius, outerAngles.end, cornerRadius, -1);
+  return [
+    `M ${apex.x} ${apex.y}`,
+    `L ${start.lineTangent.x} ${start.lineTangent.y}`,
+    `A ${cornerRadius} ${cornerRadius} 0 0 1 ${start.arcTangent.x} ${start.arcTangent.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag(start.angle, end.angle)} 1 ${end.arcTangent.x} ${end.arcTangent.y}`,
+    `A ${cornerRadius} ${cornerRadius} 0 0 1 ${end.lineTangent.x} ${end.lineTangent.y}`,
+    'Z',
+  ].join(' ');
+}
 
-  if (innerRadius <= 0) {
-    return [
-      `M ${centerX} ${centerY}`,
-      `L ${outerStart.lineTangent.x} ${outerStart.lineTangent.y}`,
-      `A ${cornerRadius} ${cornerRadius} 0 0 1 ${outerStart.arcTangent.x} ${outerStart.arcTangent.y}`,
-      `A ${outerRadius} ${outerRadius} 0 ${outerLargeArc} 1 ${outerEnd.arcTangent.x} ${outerEnd.arcTangent.y}`,
-      `A ${cornerRadius} ${cornerRadius} 0 0 1 ${outerEnd.lineTangent.x} ${outerEnd.lineTangent.y}`,
-      'Z',
-    ].join(' ');
-  }
+function roundedDonutSlicePath(
+  geometry: PieGeometry,
+  innerRadius: number,
+  outerAngles: PieSliceAngles,
+  innerAngles: PieSliceAngles,
+  cornerRadius: number,
+): string {
+  const { outerRadius } = geometry;
+  const outerFilletCenterRadius = outerRadius - cornerRadius;
+  const outerStart = pieFillet(geometry, outerRadius, outerFilletCenterRadius, outerAngles.start, cornerRadius, 1);
+  const outerEnd = pieFillet(geometry, outerRadius, outerFilletCenterRadius, outerAngles.end, cornerRadius, -1);
 
   const innerFilletCenterRadius = innerRadius + cornerRadius;
-  const innerStart = pieFillet(geometry, innerRadius, innerFilletCenterRadius, angles.start, cornerRadius, 1);
-  const innerEnd = pieFillet(geometry, innerRadius, innerFilletCenterRadius, angles.end, cornerRadius, -1);
-  const innerLargeArc = Math.abs(innerEnd.angle - innerStart.angle) > Math.PI ? 1 : 0;
+  const innerStart = pieFillet(geometry, innerRadius, innerFilletCenterRadius, innerAngles.start, cornerRadius, 1);
+  const innerEnd = pieFillet(geometry, innerRadius, innerFilletCenterRadius, innerAngles.end, cornerRadius, -1);
 
   return [
     `M ${outerStart.lineTangent.x} ${outerStart.lineTangent.y}`,
     `A ${cornerRadius} ${cornerRadius} 0 0 1 ${outerStart.arcTangent.x} ${outerStart.arcTangent.y}`,
-    `A ${outerRadius} ${outerRadius} 0 ${outerLargeArc} 1 ${outerEnd.arcTangent.x} ${outerEnd.arcTangent.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag(outerStart.angle, outerEnd.angle)} 1 ${outerEnd.arcTangent.x} ${outerEnd.arcTangent.y}`,
     `A ${cornerRadius} ${cornerRadius} 0 0 1 ${outerEnd.lineTangent.x} ${outerEnd.lineTangent.y}`,
     `L ${innerEnd.lineTangent.x} ${innerEnd.lineTangent.y}`,
     `A ${cornerRadius} ${cornerRadius} 0 0 1 ${innerEnd.arcTangent.x} ${innerEnd.arcTangent.y}`,
-    `A ${innerRadius} ${innerRadius} 0 ${innerLargeArc} 0 ${innerStart.arcTangent.x} ${innerStart.arcTangent.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag(innerEnd.angle, innerStart.angle)} 0 ${innerStart.arcTangent.x} ${innerStart.arcTangent.y}`,
     `A ${cornerRadius} ${cornerRadius} 0 0 1 ${innerStart.lineTangent.x} ${innerStart.lineTangent.y}`,
     'Z',
   ].join(' ');
 }
 
-export function createPieSlicePath(geometry: PieGeometry, angles: PieSliceAngles, cornerRadius = 0): string {
-  if (cornerRadius > 0) {
-    return roundedPieSlicePath(geometry, angles, cornerRadius);
+export function pieUsesInnerArc(geometry: PieGeometry, angles: PieSliceAngles, gapPx: number): boolean {
+  const halfGap = Math.max(0, gapPx) / 2;
+  const apexRadius = pieApexRadius(halfGap, angles.end - angles.start, geometry.outerRadius);
+  return geometry.innerRadius > 0 && geometry.innerRadius >= apexRadius;
+}
+
+export function createPieSlicePath(geometry: PieGeometry, angles: PieSliceAngles, cornerRadius = 0, gapPx = 0): string {
+  const halfGap = Math.max(0, gapPx) / 2;
+  const outerAngles = insetAngles(angles, gapInsetAngle(halfGap, geometry.outerRadius));
+
+  if (!pieUsesInnerArc(geometry, angles, gapPx)) {
+    const apexRadius = pieApexRadius(halfGap, angles.end - angles.start, geometry.outerRadius);
+    const apex = pieArcPoint(geometry, (angles.start + angles.end) / 2, apexRadius);
+    return cornerRadius > 0
+      ? roundedApexSlicePath(geometry, outerAngles, cornerRadius, apex)
+      : apexSlicePath(geometry, outerAngles, apex);
   }
-  const arc = createPieSliceArc(geometry, angles);
-  return geometry.innerRadius > 0 ? createDonutSlicePath(geometry, arc) : plainPieSlicePath(geometry, arc);
+
+  const innerAngles = insetAngles(angles, gapInsetAngle(halfGap, geometry.innerRadius));
+  return cornerRadius > 0
+    ? roundedDonutSlicePath(geometry, geometry.innerRadius, outerAngles, innerAngles, cornerRadius)
+    : donutSlicePath(geometry, geometry.innerRadius, outerAngles, innerAngles);
 }
