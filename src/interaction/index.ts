@@ -10,7 +10,6 @@ import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
 import { bindPathReshape, type PathReshapeDragHandle } from './pathReshapeDrag';
 import { bindPieLabelDrag, type PieLabelDragHandle } from './pieLabelDrag/binding';
-import { bindPieSliceDrag, type PieSliceDragHandle } from './pieSliceDrag/binding';
 import { bindPropertyDrag, type PropertyDragHandle } from './propertyDrag/binding';
 import { bindPropertyEditing, type PropertyEditingHandle, type PropertyEditingOptions } from './propertyEdit';
 import { bindQuickDuplicate, type QuickDuplicateHandle } from './quickDuplicate';
@@ -42,7 +41,6 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
   const pieLabels: PieLabelDragHandle = bindPieLabelDrag(viewer, emitter);
-  const pieSlices: PieSliceDragHandle = bindPieSliceDrag(viewer, emitter);
   const radarVertices: RadarVertexDragHandle = bindRadarVertexDrag(viewer, emitter);
   const properties: PropertyEditingHandle | null = options.properties
     ? bindPropertyEditing(viewer, emitter, options.properties)
@@ -70,7 +68,6 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       deleteSelection.destroy();
       chartValues.destroy();
       pieLabels.destroy();
-      pieSlices.destroy();
       radarVertices.destroy();
       properties?.destroy();
       propertyDrag?.destroy();
