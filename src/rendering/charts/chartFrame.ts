@@ -36,7 +36,7 @@ export function buildChartFrame(
   }
 
   if (chart.chart_type === 'pie') {
-    const { outerRadius, innerRadius } = resolvePieRadii(
+    const { outerRadius, innerRadius, cornerRadius } = resolvePieRadii(
       plot.width,
       plot.height,
       chart.config?.innerRadius,
@@ -44,7 +44,7 @@ export function buildChartFrame(
     );
     frame.detail = {
       of: 'pieGeometry',
-      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius}`,
+      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius},${cornerRadius}`,
     };
   }
 

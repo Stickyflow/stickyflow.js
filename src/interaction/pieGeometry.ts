@@ -5,6 +5,7 @@ export interface ParsedPieGeometry {
   centerY: number;
   outerRadius: number;
   innerRadius: number;
+  cornerRadius: number;
 }
 
 export function readPieGeometry(svg: SVGSVGElement, ownerId: string): ParsedPieGeometry | null {
@@ -12,8 +13,8 @@ export function readPieGeometry(svg: SVGSVGElement, ownerId: string): ParsedPieG
   if (!raw) {
     return null;
   }
-  const [centerX, centerY, outerRadius, innerRadius] = raw.split(',').map(Number);
+  const [centerX, centerY, outerRadius, innerRadius, cornerRadius = 0] = raw.split(',').map(Number);
   return [centerX, centerY, outerRadius, innerRadius].every(Number.isFinite)
-    ? { centerX, centerY, outerRadius, innerRadius }
+    ? { centerX, centerY, outerRadius, innerRadius, cornerRadius: Number.isFinite(cornerRadius) ? cornerRadius : 0 }
     : null;
 }

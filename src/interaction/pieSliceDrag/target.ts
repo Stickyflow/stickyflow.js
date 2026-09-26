@@ -93,6 +93,7 @@ export function resolvePieSliceDrag(svg: SVGSVGElement, event: PointerEvent): Pi
     afterElement,
     outerRadius: geometry.outerRadius,
     innerRadius: geometry.innerRadius,
+    cornerRadius: geometry.cornerRadius,
     total: (slices as PieSliceInfo[]).reduce((sum, slice) => sum + slice.value, 0) || 1,
   };
 }

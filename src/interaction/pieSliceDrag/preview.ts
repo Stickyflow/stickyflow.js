@@ -1,13 +1,15 @@
-import { createPieSlicePath } from '../../rendering/charts/primitives/pieShape';
+import { createPieSlicePath, maxPieCornerRadius } from '../../rendering/charts/primitives/pieShape';
 import type { PieBoundaryValue } from './boundary';
 import type { PieSliceDragState } from './types';
 
 function updateSlicePath(drag: PieSliceDragState, element: SVGGraphicsElement, start: number, end: number): void {
+  const cornerRadius = Math.min(drag.cornerRadius, maxPieCornerRadius(drag.outerRadius, drag.innerRadius, end - start));
   element.setAttribute(
     'd',
     createPieSlicePath(
       { centerX: drag.centerX, centerY: drag.centerY, outerRadius: drag.outerRadius, innerRadius: drag.innerRadius },
       { start, end },
+      cornerRadius,
     ),
   );
 }

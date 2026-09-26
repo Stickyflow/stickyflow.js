@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { CHART_COLORS } from '../../primitives';
+import { CHART_COLORS, maxPieCornerRadius } from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { renderPieLabels } from './labels';
@@ -64,12 +64,17 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
 function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mark: PieSliceMark): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
   const fill = paint(mark.color, diagnostics, chart.id);
+  const sweep = mark.angles.end - mark.angles.start;
+  const cornerRadius = Math.min(
+    geometry.cornerRadius,
+    maxPieCornerRadius(geometry.outerRadius, geometry.innerRadius, sweep),
+  );
   return {
     type: 'path',
     id: `chart-pie-slice-${chart.id}-${mark.seriesId}`,
     order: nextOrder(),
     bounds,
-    d: createPieSlicePath(geometry, mark.angles),
+    d: createPieSlicePath(geometry, mark.angles, cornerRadius),
     detail: {
       of: 'chartValue',
       series: mark.seriesId,
@@ -80,9 +85,6 @@ function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mar
       pieValue: mark.value,
     },
     prop: seriesValueProp(mark.seriesId, 0),
-    style:
-      geometry.cornerRadius > 0
-        ? { fill, stroke: fill, strokeWidth: geometry.cornerRadius * 2, lineJoin: 'round' }
-        : { fill },
+    style: { fill },
   };
 }

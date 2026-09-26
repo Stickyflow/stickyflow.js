@@ -13,5 +13,6 @@ export interface PieSliceDragState {
   afterElement: SVGGraphicsElement;
   outerRadius: number;
   innerRadius: number;
+  cornerRadius: number;
   total: number;
 }

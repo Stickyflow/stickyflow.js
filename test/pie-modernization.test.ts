@@ -63,18 +63,31 @@ describe('pie chart — pieCornerRadius', () => {
     expect(state.entities[0].chart?.pieCornerRadius).toBe(8);
   });
 
-  it('gives each slice a same-color round-joined stroke, so its corners read as rounded', () => {
-    const { scene } = render(pieOf([50, 50], 'pieCornerRadius: 8'));
-    const slice = scene.nodes.find(node => node.id === 'chart-pie-slice-c-s0');
-    expect(slice?.type === 'path' && slice.style.stroke).toEqual({ kind: 'solid', color: '#4e3180' });
-    expect(slice?.type === 'path' && slice.style.strokeWidth).toBe(16);
-    expect(slice?.type === 'path' && slice.style.lineJoin).toBe('round');
+  it('rounds the outer corners of EVERY slice, not just the last one drawn', () => {
+    const { scene } = render(pieOf([30, 70], 'pieCornerRadius: 10'));
+    const sliceA = scene.nodes.find(node => node.id === 'chart-pie-slice-c-s0');
+    const sliceB = scene.nodes.find(node => node.id === 'chart-pie-slice-c-s1');
+    expect(sliceA?.type === 'path' && sliceA.d).toContain('A 10 10 0 0 1');
+    expect(sliceB?.type === 'path' && sliceB.d).toContain('A 10 10 0 0 1');
   });
 
-  it('leaves the stroke unset when pieCornerRadius is 0 or unset', () => {
-    const { scene } = render(pieOf([50, 50]));
+  it('rounds a donut slice on all four corners, outer and inner', () => {
+    const { scene } = render(pieOf([30, 70], 'pieCornerRadius: 10\n    innerRadius: 60'));
+    const sliceA = scene.nodes.find(node => node.id === 'chart-pie-slice-c-s0');
+    const cornerArcs = sliceA?.type === 'path' ? (sliceA.d.match(/A 10 10 /g) ?? []) : [];
+    expect(cornerArcs).toHaveLength(4);
+  });
+
+  it('never fakes the rounding with a stroke', () => {
+    const { scene } = render(pieOf([50, 50], 'pieCornerRadius: 8'));
     const slice = scene.nodes.find(node => node.id === 'chart-pie-slice-c-s0');
     expect(slice?.type === 'path' && slice.style.stroke).toBeUndefined();
+  });
+
+  it('shrinks the effective corner radius for a slice too thin to fit the configured one', () => {
+    const { scene } = render(pieOf([1, 99], 'pieCornerRadius: 40'));
+    const tinySlice = scene.nodes.find(node => node.id === 'chart-pie-slice-c-s0');
+    expect(tinySlice?.type === 'path' && tinySlice.d).not.toContain('A 40 40');
   });
 
   it('shrinks the outer radius by the corner radius, so a rounded pie still fits its plot area', () => {
