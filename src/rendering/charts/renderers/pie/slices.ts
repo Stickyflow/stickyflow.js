@@ -20,7 +20,8 @@ interface PieSliceMark {
   value: number;
   share: number;
   angles: PieSliceAngles;
-  labelPulled: boolean;
+  labelOffsetX: number;
+  labelOffsetY: number;
 }
 
 export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
@@ -38,7 +39,8 @@ export function renderPieSlices(context: ChartRenderContext, geometry: PieGeomet
         share: mark.share,
         start: mark.angles.start,
         end: mark.angles.end,
-        labelPulled: mark.labelPulled,
+        labelOffsetX: mark.labelOffsetX,
+        labelOffsetY: mark.labelOffsetY,
       })),
     ),
   ];
@@ -59,7 +61,8 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
       value,
       share: value / total,
       angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
-      labelPulled: series.labelPulled === true,
+      labelOffsetX: finite(series.labelOffsetX, 0),
+      labelOffsetY: finite(series.labelOffsetY, 0),
     });
     angle += sweep;
   });

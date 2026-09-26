@@ -1,5 +1,5 @@
 import { pointerUserPoint } from '../../domContract';
-import { seriesLabelPulledProp } from '../../rendering/charts/propPath';
+import { seriesLabelOffsetXProp, seriesLabelOffsetYProp } from '../../rendering/charts/propPath';
 import type { Emitter } from '../events';
 import { clearPieLabelDragPreview, updatePieLabelDragPreview } from './preview';
 import { resolvePieLabelDrag } from './target';
@@ -7,6 +7,7 @@ import type { PieLabelDragState } from './types';
 
 const PULL_THRESHOLD = 14;
 const MOVE_NOISE = 2;
+const MAX_PULL_FACTOR = 1.5;
 
 export class PieLabelDragSession {
   readonly #svg: SVGSVGElement;
@@ -41,8 +42,8 @@ export class PieLabelDragSession {
       return;
     }
     drag.moved = true;
-    const distance = Math.hypot(point.x - drag.centerX, point.y - drag.centerY);
-    drag.pulled = distance > drag.outerRadius + PULL_THRESHOLD;
+    drag.lastDx = dx;
+    drag.lastDy = dy;
     updatePieLabelDragPreview(drag, dx, dy);
   }
 
@@ -64,10 +65,23 @@ export class PieLabelDragSession {
     if (!drag.moved) {
       return;
     }
-    const path = seriesLabelPulledProp(drag.seriesId);
-    if (!path) {
+    const pathX = seriesLabelOffsetXProp(drag.seriesId);
+    const pathY = seriesLabelOffsetYProp(drag.seriesId);
+    if (!pathX || !pathY) {
       return;
     }
-    this.#emitter.emit('propertyChange', { owner: drag.owner, path, value: drag.pulled });
+    const newX = drag.restX + drag.lastDx;
+    const newY = drag.restY + drag.lastDy;
+    const distanceFromCenter = Math.hypot(newX - drag.centerX, newY - drag.centerY);
+    const pulled = distanceFromCenter > drag.outerRadius + PULL_THRESHOLD;
+    const maxOffset = drag.outerRadius * MAX_PULL_FACTOR;
+    const offsetX = pulled ? clampOffset(newX - drag.anchorX, maxOffset) : 0;
+    const offsetY = pulled ? clampOffset(newY - drag.anchorY, maxOffset) : 0;
+    this.#emitter.emit('propertyChange', { owner: drag.owner, path: pathX, value: Math.round(offsetX) });
+    this.#emitter.emit('propertyChange', { owner: drag.owner, path: pathY, value: Math.round(offsetY) });
   }
+}
+
+function clampOffset(value: number, max: number): number {
+  return Math.max(-max, Math.min(max, value));
 }

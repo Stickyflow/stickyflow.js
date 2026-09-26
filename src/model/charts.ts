@@ -75,7 +75,8 @@ export interface ChartSeries {
   symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
   stroke?: string;
   stroke_width?: number;
-  labelPulled?: boolean;
+  labelOffsetX?: number;
+  labelOffsetY?: number;
 }
 
 export interface ChartRule {

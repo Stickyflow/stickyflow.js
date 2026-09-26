@@ -18,8 +18,12 @@ export function seriesColorProp(id: string): string | undefined {
   return block('Series', id, 'color');
 }
 
-export function seriesLabelPulledProp(id: string): string | undefined {
-  return block('Series', id, 'labelPulled');
+export function seriesLabelOffsetXProp(id: string): string | undefined {
+  return block('Series', id, 'labelOffsetX');
+}
+
+export function seriesLabelOffsetYProp(id: string): string | undefined {
+  return block('Series', id, 'labelOffsetY');
 }
 
 export function seriesValueProp(id: string, index: number): string | undefined {

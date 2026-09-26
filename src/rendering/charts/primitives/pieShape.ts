@@ -36,6 +36,27 @@ export function pieArcPoint(geometry: PieGeometry, angle: number, radius: number
   };
 }
 
+export function clipSegmentToRect(from: PiePoint, to: PiePoint, halfWidth: number, halfHeight: number): PiePoint {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  let tMin = 0;
+  let tMax = 1;
+  if (Math.abs(dx) > 1e-6) {
+    const tx1 = (to.x - halfWidth - from.x) / dx;
+    const tx2 = (to.x + halfWidth - from.x) / dx;
+    tMin = Math.max(tMin, Math.min(tx1, tx2));
+    tMax = Math.min(tMax, Math.max(tx1, tx2));
+  }
+  if (Math.abs(dy) > 1e-6) {
+    const ty1 = (to.y - halfHeight - from.y) / dy;
+    const ty2 = (to.y + halfHeight - from.y) / dy;
+    tMin = Math.max(tMin, Math.min(ty1, ty2));
+    tMax = Math.min(tMax, Math.max(ty1, ty2));
+  }
+  const t = tMin <= tMax ? tMin : 1;
+  return { x: from.x + t * dx, y: from.y + t * dy };
+}
+
 function largeArcFlag(a: number, b: number): number {
   return Math.abs(b - a) > Math.PI ? 1 : 0;
 }

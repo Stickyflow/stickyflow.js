@@ -1,17 +1,17 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode, SceneText } from '../../../scene';
 import { DEFAULT_FONT, finite } from '../../../scene';
-import { contrastTextColor, representativeColor, sameHueTint } from '../../primitives';
+import { clipSegmentToRect, contrastTextColor, representativeColor, sameHueTint } from '../../primitives';
 import { seriesLabelProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { pieArcPoint } from './geometry';
 import type { PieGeometry } from './types';
 
 const MIN_LABEL_SWEEP = (14 * Math.PI) / 180;
-const LABEL_WIDTH = 80;
+export const LABEL_WIDTH = 80;
 const LABEL_RADIUS_FRACTION = 0.62;
 const OUTSIDE_GAP = 14;
-const LEADER_INSET = 3;
+export const LEADER_INSET = 3;
 const OUTSIDE_TINT_LIGHTNESS = 0.32;
 const OUTSIDE_FALLBACK_COLOR = '#334155';
 
@@ -22,7 +22,8 @@ export interface PieLabelMark {
   share: number;
   start: number;
   end: number;
-  labelPulled: boolean;
+  labelOffsetX: number;
+  labelOffsetY: number;
 }
 
 export function renderPieLabels(
@@ -45,6 +46,8 @@ function labelTextPair(
   color: string,
   fontSize: number,
   percent: number,
+  outside: boolean,
+  midAngle: number,
 ): [SceneText, SceneText] {
   const { chart, bounds, nextOrder } = context;
   const lineHeight = fontSize * 1.2;
@@ -64,7 +67,8 @@ function labelTextPair(
     of: 'chartSeries' as const,
     series: mark.seriesId,
     mark: 'pie-label',
-    pulled: mark.labelPulled || undefined,
+    pulled: outside || undefined,
+    midAngle,
     ...extra,
   });
   const nameText: SceneText = {
@@ -93,34 +97,57 @@ function labelTextPair(
   return [nameText, valueText];
 }
 
-function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark: PieLabelMark): RenderNode[] {
+function createTick(
+  context: ChartRenderContext,
+  mark: PieLabelMark,
+  tickStart: { x: number; y: number },
+  tickEnd: { x: number; y: number },
+  color: string,
+  outside: boolean,
+): RenderNode {
   const { chart, bounds, nextOrder } = context;
+  return {
+    type: 'path',
+    id: `chart-pie-label-tick-${chart.id}-${mark.seriesId}`,
+    order: nextOrder(),
+    bounds,
+    d: `M ${tickStart.x} ${tickStart.y} L ${tickEnd.x} ${tickEnd.y}`,
+    detail: { of: 'chartSeries', series: mark.seriesId, mark: 'pie-label-tick' },
+    style: outside ? { stroke: { kind: 'solid', color }, strokeWidth: 1.5 } : { stroke: { kind: 'none' } },
+  };
+}
+
+function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark: PieLabelMark): RenderNode[] {
   const mid = (mark.start + mark.end) / 2;
-  const fontSize = Math.max(9, finite(chart.font_size, 12));
+  const fontSize = Math.max(9, finite(context.chart.font_size, 12));
   const percent = Math.round(mark.share * 100);
+  const lineHeight = fontSize * 1.2;
+  const tickStart = pieArcPoint(geometry, mid, geometry.outerRadius + LEADER_INSET);
 
   const ringThickness = geometry.outerRadius - geometry.innerRadius;
-  if (mark.labelPulled || ringThickness < fontSize * 1.2 * 2 + 6) {
-    const anchorRadius = geometry.outerRadius + OUTSIDE_GAP;
-    const point = pieArcPoint(geometry, mid, anchorRadius);
-    const tickStart = pieArcPoint(geometry, mid, geometry.outerRadius + LEADER_INSET);
-    const tickEnd = pieArcPoint(geometry, mid, anchorRadius - LEADER_INSET);
+  const tooThin = ringThickness < lineHeight * 2 + 6;
+  const hasManualOffset = mark.labelOffsetX !== 0 || mark.labelOffsetY !== 0;
+  const outside = hasManualOffset || tooThin;
+
+  if (outside) {
+    const point = hasManualOffset
+      ? addOffset(pieArcPoint(geometry, mid, geometry.outerRadius), mark.labelOffsetX, mark.labelOffsetY)
+      : pieArcPoint(geometry, mid, geometry.outerRadius + OUTSIDE_GAP);
+    const tickEnd = clipSegmentToRect(tickStart, point, LABEL_WIDTH / 2, lineHeight);
     const color =
       sameHueTint(representativeColor(mark.color, OUTSIDE_FALLBACK_COLOR), OUTSIDE_TINT_LIGHTNESS) ??
       OUTSIDE_FALLBACK_COLOR;
-    const tick: RenderNode = {
-      type: 'path',
-      id: `chart-pie-label-tick-${chart.id}-${mark.seriesId}`,
-      order: nextOrder(),
-      bounds,
-      d: `M ${tickStart.x} ${tickStart.y} L ${tickEnd.x} ${tickEnd.y}`,
-      style: { stroke: { kind: 'solid', color }, strokeWidth: 1.5 },
-    };
-    return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent)];
+    const tick = createTick(context, mark, tickStart, tickEnd, color, true);
+    return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent, true, mid)];
   }
 
   const labelRadius = geometry.innerRadius + ringThickness * LABEL_RADIUS_FRACTION;
   const point = pieArcPoint(geometry, mid, labelRadius);
   const color = contrastTextColor(representativeColor(mark.color, '#0f172a'));
-  return labelTextPair(context, mark, point, color, fontSize, percent);
+  const tick = createTick(context, mark, tickStart, tickStart, color, false);
+  return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent, false, mid)];
+}
+
+function addOffset(point: { x: number; y: number }, dx: number, dy: number): { x: number; y: number } {
+  return { x: point.x + dx, y: point.y + dy };
 }

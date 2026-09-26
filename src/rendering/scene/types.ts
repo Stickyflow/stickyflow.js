@@ -60,7 +60,14 @@ export type SceneDetail =
   | { of: 'chartScale'; valueScale: string }
   | { of: 'pieGeometry'; pieGeometry: string }
   | { of: 'radarGeometry'; radarGeometry: string }
-  | { of: 'chartSeries'; series: string; lineTension?: number; mark?: string; pulled?: boolean }
+  | {
+      of: 'chartSeries';
+      series: string;
+      lineTension?: number;
+      mark?: string;
+      pulled?: boolean;
+      midAngle?: number;
+    }
   | { of: 'frameBoundary'; cornerRadius: number; squareCorner: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' }
   | {
       of: 'symbolGeometry';

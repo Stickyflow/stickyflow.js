@@ -14,6 +14,7 @@ export { formatFieldValue } from './format';
 export { linePathData } from './linePath';
 export type { PieGeometry, PiePoint, PieSliceAngles } from './pieShape';
 export {
+  clipSegmentToRect,
   createPieSlicePath,
   gapInsetAngle,
   maxPieCornerRadius,

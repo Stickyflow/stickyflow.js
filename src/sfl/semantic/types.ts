@@ -110,7 +110,8 @@ export interface SflEntityOut {
       symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
       stroke?: string;
       strokeWidth?: number;
-      labelPulled?: boolean;
+      labelOffsetX?: number;
+      labelOffsetY?: number;
     }>;
     rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
   };
