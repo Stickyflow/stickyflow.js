@@ -81,6 +81,7 @@ export interface SflEntityOut {
     mekkoVaryHeight?: boolean;
     hexRadius?: number;
     innerRadius?: number;
+    pieCornerRadius?: number;
     cellGap?: number;
     showValues?: boolean;
     squareCells?: boolean;
@@ -105,6 +106,7 @@ export interface SflEntityOut {
       symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
       stroke?: string;
       strokeWidth?: number;
+      labelPulled?: boolean;
     }>;
     rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
   };

@@ -81,6 +81,8 @@ function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): 
   return [
     `data-sf-series="${xml(detail.series)}"`,
     detail.lineTension !== undefined ? `data-sf-line-tension="${num(detail.lineTension)}"` : undefined,
+    detail.mark ? `data-sf-mark="${xml(detail.mark)}"` : undefined,
+    detail.pulled ? 'data-sf-label-pulled="true"' : undefined,
   ];
 }
 

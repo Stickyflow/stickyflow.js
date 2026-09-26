@@ -3,6 +3,7 @@ import { directProperties } from '../../blockEntries';
 import { asNumber, asString } from '../../valueAccess';
 import { readSeriesColors, readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
 import type { ChartSeries } from './types';
+import { readBoolean } from './values';
 
 type SymbolDefinitions = Map<string, { points: Array<[number, number]>; tension?: number }>;
 
@@ -23,5 +24,6 @@ export function readSeries(block: SflBlock, symbolDefs: SymbolDefinitions): Char
     symbol: readSeriesSymbol(properties.get('symbol'), symbolDefs),
     stroke: asString(properties.get('stroke')),
     strokeWidth: asNumber(properties.get('strokeWidth')),
+    labelPulled: readBoolean(properties.get('labelPulled')),
   };
 }

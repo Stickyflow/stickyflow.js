@@ -1,24 +1,7 @@
-import { findOwnerNode, isCameraGesture, isPrimary, pointerUserPoint, resolveOwner } from '../../domContract';
+import { isCameraGesture, pointerUserPoint, resolveOwner } from '../../domContract';
+import { readPieGeometry } from '../pieGeometry';
 import { type PieSliceInfo, resolvePieBoundary } from './boundary';
 import type { PieSliceDragState } from './types';
-
-interface PieGeometry {
-  centerX: number;
-  centerY: number;
-  outerRadius: number;
-  innerRadius: number;
-}
-
-function parsePieGeometry(node: SVGGraphicsElement | null): PieGeometry | null {
-  const raw = node?.getAttribute('data-sf-pie-geometry');
-  if (!raw) {
-    return null;
-  }
-  const [centerX, centerY, outerRadius, innerRadius] = raw.split(',').map(Number);
-  return [centerX, centerY, outerRadius, innerRadius].every(Number.isFinite)
-    ? { centerX, centerY, outerRadius, innerRadius }
-    : null;
-}
 
 function findSliceMark(event: PointerEvent): SVGGraphicsElement | null {
   return (event.target as Element | null)?.closest?.('[data-sf-mark="pie-slice"]') as SVGGraphicsElement | null;
@@ -75,7 +58,7 @@ export function resolvePieSliceDrag(svg: SVGSVGElement, event: PointerEvent): Pi
   if (owner?.role !== 'chart') {
     return null;
   }
-  const geometry = parsePieGeometry(findOwnerNode(svg, owner.id, isPrimary));
+  const geometry = readPieGeometry(svg, owner.id);
   if (!geometry) {
     return null;
   }

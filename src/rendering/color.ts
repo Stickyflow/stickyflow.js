@@ -86,6 +86,8 @@ function contrastRatio(luminanceA: number, luminanceB: number): number {
 const SAME_HUE_LIGHTNESS_GAP = 0.35;
 const SAME_HUE_MIN_LIGHTNESS = 0.08;
 const SAME_HUE_MAX_LIGHTNESS = 0.22;
+const SAME_HUE_LIGHT_MIN_LIGHTNESS = 0.78;
+const SAME_HUE_LIGHT_MAX_LIGHTNESS = 0.92;
 const SAME_HUE_MIN_CONTRAST = 3;
 
 export function contrastTextColor(hex: string | undefined): string {
@@ -99,11 +101,26 @@ export function contrastTextColor(hex: string | undefined): string {
   if (saturation === 0) {
     return fallback;
   }
-  const targetLightness = Math.max(
-    SAME_HUE_MIN_LIGHTNESS,
-    Math.min(lightness - SAME_HUE_LIGHTNESS_GAP, SAME_HUE_MAX_LIGHTNESS),
-  );
-  const darker = hslToRgb(hue, saturation, targetLightness);
-  const ratio = contrastRatio(relativeLuminance(red, green, blue), relativeLuminance(...darker));
-  return ratio >= SAME_HUE_MIN_CONTRAST ? rgbToHex(...darker) : fallback;
+  const targetLightness =
+    lightness > 0.5
+      ? Math.max(SAME_HUE_MIN_LIGHTNESS, Math.min(lightness - SAME_HUE_LIGHTNESS_GAP, SAME_HUE_MAX_LIGHTNESS))
+      : Math.min(
+          SAME_HUE_LIGHT_MAX_LIGHTNESS,
+          Math.max(lightness + SAME_HUE_LIGHTNESS_GAP, SAME_HUE_LIGHT_MIN_LIGHTNESS),
+        );
+  const variant = hslToRgb(hue, saturation, targetLightness);
+  const ratio = contrastRatio(relativeLuminance(red, green, blue), relativeLuminance(...variant));
+  return ratio >= SAME_HUE_MIN_CONTRAST ? rgbToHex(...variant) : fallback;
+}
+
+export function sameHueTint(hex: string | undefined, targetLightness: number): string | undefined {
+  const rgb = hexToRgb(hex);
+  if (!rgb) {
+    return undefined;
+  }
+  const [hue, saturation] = rgbToHsl(...rgb);
+  if (saturation === 0) {
+    return undefined;
+  }
+  return rgbToHex(...hslToRgb(hue, saturation, targetLightness));
 }

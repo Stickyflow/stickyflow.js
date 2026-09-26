@@ -73,6 +73,7 @@ export interface ChartSeries {
   symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
   stroke?: string;
   stroke_width?: number;
+  labelPulled?: boolean;
 }
 
 export interface ChartRule {
@@ -108,6 +109,7 @@ export interface Chart {
     mekkoVaryHeight?: boolean;
     hexRadius?: number;
     innerRadius?: number;
+    pieCornerRadius?: number;
     cellGap?: number;
     showValues?: boolean;
     squareCells?: boolean;

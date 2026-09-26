@@ -7,8 +7,8 @@ import { captureInternalLinks } from './internalLinkCapture';
 import { selectedMoveGroup } from './selection';
 import type { MoveDragState } from './types';
 
-function isChartValueMark(target: Element | null): boolean {
-  return target?.closest?.('[data-sf-value-index], [data-sf-prop-kind="value"]') != null;
+function isChartInteractiveMark(target: Element | null): boolean {
+  return target?.closest?.('[data-sf-value-index], [data-sf-prop-kind="value"], [data-sf-mark]') != null;
 }
 
 function isColumnDividerTarget(target: Element | null): boolean {
@@ -22,7 +22,7 @@ export function createMoveDragState(
 ): MoveDragState | null {
   const target = event.target as Element | null;
   const owner = resolveOwner(target);
-  if (!hasMovableGeometry(owner) || isChartValueMark(target) || isColumnDividerTarget(target)) {
+  if (!hasMovableGeometry(owner) || isChartInteractiveMark(target) || isColumnDividerTarget(target)) {
     return null;
   }
 

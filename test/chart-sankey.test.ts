@@ -185,11 +185,12 @@ describe('Sankey chart', () => {
     }
   });
 
-  it('defaults an inside label to an auto-contrast color, and lets labelColor override it', () => {
+  it('defaults an inside label to a lighter shade of the node color, not a flat white, and lets labelColor override it', () => {
     const inside = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    labelPosition: inside');
     const { scene: autoScene } = render(inside);
     const autoLabel = autoScene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
-    expect(autoLabel?.type === 'text' && autoLabel.color).toBe('#ffffff');
+    expect(autoLabel?.type === 'text' && autoLabel.color).toBe('#c0aee0');
+    expect(autoLabel?.type === 'text' && autoLabel.color).not.toBe('#ffffff');
 
     const overridden = inside.replace('labelPosition: inside', 'labelPosition: inside\n    labelColor: "#f59e0b"');
     const { scene: overrideScene } = render(overridden);

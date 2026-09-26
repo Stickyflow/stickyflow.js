@@ -18,6 +18,10 @@ export function seriesColorProp(id: string): string | undefined {
   return block('Series', id, 'color');
 }
 
+export function seriesLabelPulledProp(id: string): string | undefined {
+  return block('Series', id, 'labelPulled');
+}
+
 export function seriesValueProp(id: string, index: number): string | undefined {
   return Number.isInteger(index) && index >= 0 ? block('Series', id, `values[${index}]`) : undefined;
 }

@@ -10,6 +10,20 @@ export interface PieGeometry {
   innerRadius: number;
 }
 
+export function resolvePieRadii(
+  plotWidth: number,
+  plotHeight: number,
+  configInnerRadius: number | undefined,
+  configCornerRadius: number | undefined,
+): { outerRadius: number; innerRadius: number; cornerRadius: number } {
+  const rawOuterRadius = Math.max(1, Math.min(plotWidth, plotHeight) / 2 - 4);
+  const rawInnerRadius = Math.max(0, Math.min(configInnerRadius ?? 0, rawOuterRadius - 1));
+  const cornerRadius = Math.max(0, Math.min(configCornerRadius ?? 0, rawOuterRadius / 2));
+  const outerRadius = Math.max(1, rawOuterRadius - cornerRadius);
+  const innerRadius = rawInnerRadius > 0 ? Math.min(rawInnerRadius + cornerRadius, outerRadius - 1) : 0;
+  return { outerRadius, innerRadius, cornerRadius };
+}
+
 export interface PieSliceAngles {
   start: number;
   end: number;

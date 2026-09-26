@@ -18,6 +18,7 @@ interface PieSliceMark {
   value: number;
   share: number;
   angles: PieSliceAngles;
+  labelPulled: boolean;
 }
 
 export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
@@ -34,6 +35,7 @@ export function renderPieSlices(context: ChartRenderContext, geometry: PieGeomet
         share: mark.share,
         start: mark.angles.start,
         end: mark.angles.end,
+        labelPulled: mark.labelPulled,
       })),
     ),
   ];
@@ -52,6 +54,7 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
       value,
       share: value / total,
       angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
+      labelPulled: series.labelPulled === true,
     });
     angle += sweep;
   });
@@ -60,6 +63,7 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
 
 function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mark: PieSliceMark): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
+  const fill = paint(mark.color, diagnostics, chart.id);
   return {
     type: 'path',
     id: `chart-pie-slice-${chart.id}-${mark.seriesId}`,
@@ -76,6 +80,9 @@ function createSliceNode(context: ChartRenderContext, geometry: PieGeometry, mar
       pieValue: mark.value,
     },
     prop: seriesValueProp(mark.seriesId, 0),
-    style: { fill: paint(mark.color, diagnostics, chart.id) },
+    style:
+      geometry.cornerRadius > 0
+        ? { fill, stroke: fill, strokeWidth: geometry.cornerRadius * 2, lineJoin: 'round' }
+        : { fill },
   };
 }

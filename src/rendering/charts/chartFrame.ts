@@ -2,6 +2,7 @@ import type { Chart } from '../../model/charts';
 import type { Bounds, SceneRect } from '../scene';
 import { finite } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
+import { resolvePieRadii } from './primitives/pieShape';
 import { radarCategoryCount, radarRadius } from './primitives/radarShape';
 
 export function buildChartFrame(
@@ -35,8 +36,12 @@ export function buildChartFrame(
   }
 
   if (chart.chart_type === 'pie') {
-    const outerRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
-    const innerRadius = Math.max(0, Math.min(chart.config?.innerRadius ?? 0, outerRadius - 1));
+    const { outerRadius, innerRadius } = resolvePieRadii(
+      plot.width,
+      plot.height,
+      chart.config?.innerRadius,
+      chart.config?.pieCornerRadius,
+    );
     frame.detail = {
       of: 'pieGeometry',
       pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius}`,

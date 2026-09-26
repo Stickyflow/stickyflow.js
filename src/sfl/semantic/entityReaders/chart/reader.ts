@@ -44,6 +44,7 @@ export function readChart(block: SflBlock, properties: ChartProperties, symbolDe
     mekkoVaryHeight: readBoolean(properties.get('mekkoVaryHeight')),
     hexRadius: asNumber(properties.get('hexRadius')),
     innerRadius: asNumber(properties.get('innerRadius')),
+    pieCornerRadius: asNumber(properties.get('pieCornerRadius')),
     cellGap: asNumber(properties.get('cellGap')),
     showValues: readBoolean(properties.get('showValues')),
     squareCells: readBoolean(properties.get('squareCells')),
