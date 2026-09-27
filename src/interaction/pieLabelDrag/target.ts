@@ -3,21 +3,33 @@ import { LABEL_WIDTH, LEADER_INSET } from '../../rendering/charts/renderers/pie/
 import { readPieGeometry } from '../pieGeometry';
 import type { PieLabelDragState } from './types';
 
+const LABEL_MARKS = ['pie-label', 'polar-area-label'];
+const TICK_MARKS: Record<string, string> = {
+  'pie-label': 'pie-label-tick',
+  'polar-area-label': 'polar-area-label-tick',
+};
+
 function findLabelMark(event: PointerEvent): SVGGraphicsElement | null {
-  return (event.target as Element | null)?.closest?.('[data-sf-mark="pie-label"]') as SVGGraphicsElement | null;
+  const selector = LABEL_MARKS.map(mark => `[data-sf-mark="${mark}"]`).join(', ');
+  return (event.target as Element | null)?.closest?.(selector) as SVGGraphicsElement | null;
 }
 
 function isLabelPointer(event: PointerEvent): boolean {
   return event.button === 0 && !isCameraGesture(event);
 }
 
-function findLabelSiblings(svg: SVGSVGElement, ownerId: string, seriesId: string): SVGGraphicsElement[] {
-  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(seriesId)}"][data-sf-mark="pie-label"]`;
+function findLabelSiblings(svg: SVGSVGElement, ownerId: string, seriesId: string, mark: string): SVGGraphicsElement[] {
+  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(seriesId)}"][data-sf-mark="${mark}"]`;
   return [...svg.querySelectorAll<SVGGraphicsElement>(selector)];
 }
 
-function findTickElement(svg: SVGSVGElement, ownerId: string, seriesId: string): SVGGraphicsElement | null {
-  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(seriesId)}"][data-sf-mark="pie-label-tick"]`;
+function findTickElement(
+  svg: SVGSVGElement,
+  ownerId: string,
+  seriesId: string,
+  tickMark: string,
+): SVGGraphicsElement | null {
+  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(seriesId)}"][data-sf-mark="${tickMark}"]`;
   return svg.querySelector<SVGGraphicsElement>(selector);
 }
 
@@ -60,17 +72,20 @@ export function resolvePieLabelDrag(svg: SVGSVGElement, event: PointerEvent): Pi
   if (!geometry) {
     return null;
   }
+  const explicitRadius = Number(clicked.getAttribute('data-sf-pie-wedge-radius'));
+  const outerRadius = Number.isFinite(explicitRadius) ? explicitRadius : geometry.outerRadius;
   const start = pointerUserPoint(svg, event);
   if (!start) {
     return null;
   }
-  const labelElements = findLabelSiblings(svg, owner.id, seriesId);
+  const mark = clicked.getAttribute('data-sf-mark') ?? 'pie-label';
+  const labelElements = findLabelSiblings(svg, owner.id, seriesId, mark);
   if (!labelElements.length) {
     return null;
   }
   const fontSize = Number.parseFloat(clicked.getAttribute('font-size') ?? '12') || 12;
   const { x: restX, y: restY } = combinedCenter(labelElements);
-  const tickElement = findTickElement(svg, owner.id, seriesId);
+  const tickElement = findTickElement(svg, owner.id, seriesId, TICK_MARKS[mark] ?? 'pie-label-tick');
   clicked.setPointerCapture?.(event.pointerId);
   return {
     owner,
@@ -78,11 +93,11 @@ export function resolvePieLabelDrag(svg: SVGSVGElement, event: PointerEvent): Pi
     seriesId,
     centerX: geometry.centerX,
     centerY: geometry.centerY,
-    outerRadius: geometry.outerRadius,
-    anchorX: geometry.centerX + geometry.outerRadius * Math.cos(midAngle),
-    anchorY: geometry.centerY + geometry.outerRadius * Math.sin(midAngle),
-    tickStartX: geometry.centerX + (geometry.outerRadius + LEADER_INSET) * Math.cos(midAngle),
-    tickStartY: geometry.centerY + (geometry.outerRadius + LEADER_INSET) * Math.sin(midAngle),
+    outerRadius,
+    anchorX: geometry.centerX + outerRadius * Math.cos(midAngle),
+    anchorY: geometry.centerY + outerRadius * Math.sin(midAngle),
+    tickStartX: geometry.centerX + (outerRadius + LEADER_INSET) * Math.cos(midAngle),
+    tickStartY: geometry.centerY + (outerRadius + LEADER_INSET) * Math.sin(midAngle),
     restX,
     restY,
     startX: start.x,

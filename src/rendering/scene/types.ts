@@ -67,6 +67,7 @@ export type SceneDetail =
       mark?: string;
       pulled?: boolean;
       midAngle?: number;
+      wedgeRadius?: number;
     }
   | { of: 'frameBoundary'; cornerRadius: number; squareCorner: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' }
   | {

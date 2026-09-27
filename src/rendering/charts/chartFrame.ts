@@ -48,6 +48,16 @@ export function buildChartFrame(
     };
   }
 
+  if (chart.chart_type === 'polarArea') {
+    const maxRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
+    const innerRadius = Math.max(0, Math.min(finite(chart.config?.innerRadius, 0), maxRadius - 1));
+    const cornerRadius = Math.max(0, finite(chart.config?.pieCornerRadius, 0));
+    frame.detail = {
+      of: 'pieGeometry',
+      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${maxRadius},${innerRadius},${cornerRadius}`,
+    };
+  }
+
   if (chart.chart_type === 'radar' || chart.chart_type === 'radial') {
     const configuredCount = (chart.config?.categories?.filter(Boolean) ?? []).length;
     const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));

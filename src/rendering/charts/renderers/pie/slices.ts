@@ -1,7 +1,14 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { CHART_COLORS, gapInsetAngle, maxPieCornerRadius, pieUsesInnerArc } from '../../primitives';
+import {
+  CHART_COLORS,
+  gapInsetAngle,
+  maxApexCornerRadius,
+  maxPieCornerRadius,
+  pieApexRadius,
+  pieUsesInnerArc,
+} from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { renderPieLabels } from './labels';
@@ -78,13 +85,19 @@ function createSliceNode(
   const { chart, bounds, diagnostics, nextOrder } = context;
   const fill = paint(mark.color, diagnostics, chart.id);
   const halfGap = Math.max(0, gapPx) / 2;
-  const innerBoundaryRadius = pieUsesInnerArc(geometry, mark.angles, gapPx) ? geometry.innerRadius : 0;
   const rawSweep = mark.angles.end - mark.angles.start;
+  const usesInnerArc = pieUsesInnerArc(geometry, mark.angles, gapPx);
   const gapSweep = 2 * gapInsetAngle(halfGap, geometry.outerRadius);
   const availableSweep = Math.max(0, rawSweep - gapSweep);
   const cornerRadius = Math.min(
     geometry.cornerRadius,
-    maxPieCornerRadius(geometry.outerRadius, innerBoundaryRadius, availableSweep),
+    usesInnerArc
+      ? maxPieCornerRadius(geometry.outerRadius, geometry.innerRadius, availableSweep)
+      : maxApexCornerRadius(
+          geometry.outerRadius,
+          pieApexRadius(halfGap, rawSweep, geometry.outerRadius),
+          availableSweep,
+        ),
   );
   return {
     type: 'path',

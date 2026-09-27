@@ -84,6 +84,7 @@ function chartSeriesAttrs(detail: Extract<SceneDetail, { of: 'chartSeries' }>): 
     detail.mark ? `data-sf-mark="${xml(detail.mark)}"` : undefined,
     detail.pulled ? 'data-sf-label-pulled="true"' : undefined,
     detail.midAngle !== undefined ? `data-sf-pie-mid-angle="${num(detail.midAngle)}"` : undefined,
+    detail.wedgeRadius !== undefined ? `data-sf-pie-wedge-radius="${num(detail.wedgeRadius)}"` : undefined,
   ];
 }
 

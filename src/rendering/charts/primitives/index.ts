@@ -1,7 +1,7 @@
 export { axisBands, chartTicks, mapChartValue, zoneColorAtValue } from './axis';
 export { barShapePath } from './barShape';
 export { computeBoxplotStats } from './boxplot';
-export { contrastTextColor, representativeColor, sameHueTint } from './colors';
+export { contrastTextColor, representativeColor, sameHueContrastColor, sameHueTint } from './colors';
 export {
   CHART_COLORS,
   DEFAULT_HEATMAP_ZONES,
@@ -17,6 +17,7 @@ export {
   clipSegmentToRect,
   createPieSlicePath,
   gapInsetAngle,
+  maxApexCornerRadius,
   maxPieCornerRadius,
   pieApexRadius,
   pieArcPoint,

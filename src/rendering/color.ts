@@ -113,6 +113,29 @@ export function contrastTextColor(hex: string | undefined): string {
   return ratio >= SAME_HUE_MIN_CONTRAST ? rgbToHex(...variant) : fallback;
 }
 
+// Same lightness targeting as contrastTextColor, but never falls back to plain
+// white/black : a slice's inline label always stays in the slice's own hue,
+// even if that undercuts the usual minimum contrast ratio.
+export function sameHueContrastColor(hex: string | undefined, fallback: string): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) {
+    return fallback;
+  }
+  const [red, green, blue] = rgb;
+  const [hue, saturation, lightness] = rgbToHsl(red, green, blue);
+  if (saturation === 0) {
+    return fallback;
+  }
+  const targetLightness =
+    lightness > 0.5
+      ? Math.max(SAME_HUE_MIN_LIGHTNESS, Math.min(lightness - SAME_HUE_LIGHTNESS_GAP, SAME_HUE_MAX_LIGHTNESS))
+      : Math.min(
+          SAME_HUE_LIGHT_MAX_LIGHTNESS,
+          Math.max(lightness + SAME_HUE_LIGHTNESS_GAP, SAME_HUE_LIGHT_MIN_LIGHTNESS),
+        );
+  return rgbToHex(...hslToRgb(hue, saturation, targetLightness));
+}
+
 export function sameHueTint(hex: string | undefined, targetLightness: number): string | undefined {
   const rgb = hexToRgb(hex);
   if (!rgb) {
