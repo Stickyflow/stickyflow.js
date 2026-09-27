@@ -8,6 +8,7 @@ import {
   maxPieCornerRadius,
   pieApexRadius,
   pieUsesInnerArc,
+  resolveChartShadow,
 } from '../../primitives';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
@@ -35,7 +36,7 @@ export function renderPieSlices(context: ChartRenderContext, geometry: PieGeomet
   const marks = createPieSliceMarks(context.chart.series, geometry.total);
   const gapPx = context.chart.config?.pieSliceGap ?? 0;
   return [
-    ...marks.map(mark => createSliceNode(context, geometry, mark, gapPx)),
+    ...marks.flatMap(mark => createSliceNodes(context, geometry, mark, gapPx)),
     ...renderPieLabels(
       context,
       geometry,
@@ -76,12 +77,16 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
   return marks;
 }
 
-function createSliceNode(
+function fullCirclePath(cx: number, cy: number, r: number): string {
+  return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
+}
+
+function createSliceNodes(
   context: ChartRenderContext,
   geometry: PieGeometry,
   mark: PieSliceMark,
   gapPx: number,
-): RenderNode {
+): RenderNode[] {
   const { chart, bounds, diagnostics, nextOrder } = context;
   const fill = paint(mark.color, diagnostics, chart.id);
   const halfGap = Math.max(0, gapPx) / 2;
@@ -99,12 +104,34 @@ function createSliceNode(
           availableSweep,
         ),
   );
-  return {
+  const slicePath = createPieSlicePath(geometry, mark.angles, cornerRadius, gapPx);
+  const shadow = resolveChartShadow(chart.shadow_style);
+  const strokeStyle = mark.stroke
+    ? { stroke: { kind: 'solid' as const, color: mark.stroke }, strokeWidth: finite(mark.strokeWidth, 1) }
+    : {};
+
+  const shadowCaster: RenderNode | undefined = shadow
+    ? {
+        type: 'path',
+        id: `chart-pie-slice-shadow-${chart.id}-${mark.seriesId}`,
+        order: nextOrder(),
+        bounds,
+        d: slicePath,
+        style: {
+          fill,
+          ...strokeStyle,
+          shadow,
+          clip: { type: 'path', d: fullCirclePath(geometry.centerX, geometry.centerY, geometry.outerRadius) },
+        },
+      }
+    : undefined;
+
+  const slice: RenderNode = {
     type: 'path',
     id: `chart-pie-slice-${chart.id}-${mark.seriesId}`,
     order: nextOrder(),
     bounds,
-    d: createPieSlicePath(geometry, mark.angles, cornerRadius, gapPx),
+    d: slicePath,
     detail: {
       of: 'chartValue',
       series: mark.seriesId,
@@ -115,8 +142,8 @@ function createSliceNode(
       pieValue: mark.value,
     },
     prop: seriesValueProp(mark.seriesId, 0),
-    style: mark.stroke
-      ? { fill, stroke: { kind: 'solid', color: mark.stroke }, strokeWidth: finite(mark.strokeWidth, 1) }
-      : { fill },
+    style: { fill, ...strokeStyle, innerShadow: shadow },
   };
+
+  return shadowCaster ? [shadowCaster, slice] : [slice];
 }

@@ -23,5 +23,7 @@ export {
   pieArcPoint,
   pieUsesInnerArc,
 } from './pieShape';
+export type { ResolvedShadow } from './shadow';
+export { resolveChartShadow } from './shadow';
 export { stackedSegment } from './stacking';
 export { chartText } from './text';

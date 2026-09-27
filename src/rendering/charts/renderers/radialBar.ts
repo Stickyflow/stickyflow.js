@@ -1,6 +1,6 @@
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite, paint } from '../../scene';
-import { CHART_COLORS } from '../primitives';
+import { CHART_COLORS, resolveChartShadow } from '../primitives';
 import { seriesValueProp } from '../propPath';
 import type { ChartRenderContext } from './types';
 
@@ -17,6 +17,14 @@ interface ArcPoint {
 
 function arcPoint(cx: number, cy: number, r: number, angle: number): ArcPoint {
   return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+}
+
+function fullCirclePath(cx: number, cy: number, r: number): string {
+  return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
+}
+
+function annulusClipPath(cx: number, cy: number, outerRadius: number, innerRadius: number): string {
+  return `${fullCirclePath(cx, cy, outerRadius)} ${fullCirclePath(cx, cy, Math.max(0, innerRadius))}`;
 }
 
 function ringProgressPath(cx: number, cy: number, r: number, sweep: number): string {
@@ -40,6 +48,7 @@ export function renderRadialBar(context: ChartRenderContext): RenderNode[] {
   const ringGap = Math.max(0, finite(chart.config?.ringGap, DEFAULT_RING_GAP));
   const axisMin = finite(chart.axis_y.min, 0);
   const range = finite(chart.axis_y.max, 100) - axisMin;
+  const shadow = resolveChartShadow(chart.shadow_style);
 
   return chart.series.flatMap((series, index): RenderNode[] => {
     const radius = outerRadius - index * (ringThickness + ringGap) - ringThickness / 2;
@@ -66,22 +75,46 @@ export function renderRadialBar(context: ChartRenderContext): RenderNode[] {
       return [track];
     }
 
+    const progressPath = ringProgressPath(centerX, centerY, radius, fraction * Math.PI * 2);
+
+    const shadowCaster: RenderNode | undefined = shadow
+      ? {
+          type: 'path',
+          id: `chart-radial-bar-ring-shadow-${chart.id}-${series.id}`,
+          order: nextOrder(),
+          bounds,
+          d: progressPath,
+          style: {
+            fill: { kind: 'none' },
+            stroke: color,
+            strokeWidth: ringThickness,
+            lineCap: 'round',
+            shadow,
+            clip: {
+              type: 'path',
+              d: annulusClipPath(centerX, centerY, radius + ringThickness / 2, radius - ringThickness / 2),
+            },
+          },
+        }
+      : undefined;
+
     const progressStyle: SceneStyle = {
       fill: { kind: 'none' },
       stroke: color,
       strokeWidth: ringThickness,
       lineCap: 'round',
+      innerShadow: shadow,
     };
     const progress: RenderNode = {
       type: 'path',
       id: `chart-radial-bar-ring-${chart.id}-${series.id}`,
       order: nextOrder(),
       bounds,
-      d: ringProgressPath(centerX, centerY, radius, fraction * Math.PI * 2),
+      d: progressPath,
       detail: { of: 'chartValue', series: series.id, valueIndex: 0, mark: 'radial-bar-ring' },
       prop: seriesValueProp(series.id, 0),
       style: progressStyle,
     };
-    return [track, progress];
+    return shadowCaster ? [track, shadowCaster, progress] : [track, progress];
   });
 }

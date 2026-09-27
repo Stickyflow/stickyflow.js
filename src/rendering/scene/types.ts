@@ -21,7 +21,10 @@ export interface SceneStyle {
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
-  clip?: { x: number; y: number; width: number; height: number; rx: number };
+  innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
+  clip?:
+    | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
+    | { type: 'path'; d: string };
 }
 
 export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';

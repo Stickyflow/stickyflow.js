@@ -1,5 +1,5 @@
 import type { SceneStyle } from '../scene';
-import { num, safeId } from './format';
+import { num, safeId, xml } from './format';
 
 export class SvgClipDefinitions {
   private readonly ids = new Map<string, string>();
@@ -20,9 +20,11 @@ export class SvgClipDefinitions {
       id = safeId(`${this.prefix}clip-${this.ids.size}`);
       this.ids.set(key, id);
       const clip = style.clip;
-      this.addDefinition(
-        `<clipPath id="${id}"><rect x="${num(clip.x)}" y="${num(clip.y)}" width="${num(clip.width)}" height="${num(clip.height)}" rx="${num(clip.rx)}"/></clipPath>`,
-      );
+      const shape =
+        clip.type === 'path'
+          ? `<path clip-rule="evenodd" d="${xml(clip.d)}"/>`
+          : `<rect x="${num(clip.x)}" y="${num(clip.y)}" width="${num(clip.width)}" height="${num(clip.height)}" rx="${num(clip.rx)}"/>`;
+      this.addDefinition(`<clipPath id="${id}">${shape}</clipPath>`);
     }
     return id;
   }

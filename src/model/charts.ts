@@ -1,3 +1,4 @@
+import type { ShadowStyle } from './shadows';
 import type { GradientColorObject, MeshGradientObject } from './shapes';
 
 export type ChartType =
@@ -147,6 +148,7 @@ export interface Chart {
   show_grid?: boolean;
   show_axis_labels?: boolean;
   show_legend?: boolean;
+  shadow_style?: ShadowStyle;
   order?: number;
   is_visible?: boolean;
 }

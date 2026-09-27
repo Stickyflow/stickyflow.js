@@ -1,4 +1,4 @@
-import { decodeColor, decodeRamp } from '../../../sfl/decodeStyles';
+import { decodeColor, decodeRamp, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { numOf, solidColor } from './values';
 
@@ -76,6 +76,7 @@ export function chartObject(e: SflEntityOut) {
     show_grid: p.showGrid !== 'false',
     show_axis_labels: p.showAxisLabels !== 'false',
     show_legend: p.showLegend !== 'false',
+    shadow_style: decodeShadow(p.shadow),
     order: e.order,
   };
 }

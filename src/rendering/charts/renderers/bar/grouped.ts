@@ -7,6 +7,7 @@ import {
   createVerticalErrorWhiskerNode,
   errorBarRange,
   mapChartValue,
+  resolveChartShadow,
 } from '../../primitives';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
@@ -88,7 +89,7 @@ function renderGroupedBarSeries(
 }
 
 function renderGroupedBarMark(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
-  const nodes = [createGroupedBarNode(context, mark)];
+  const nodes = createGroupedBarNodes(context, mark);
   const errorNode = createGroupedBarError(context, mark);
   if (errorNode) {
     nodes.push(errorNode);
@@ -96,16 +97,38 @@ function renderGroupedBarMark(context: ChartRenderContext, mark: GroupedBarMark)
   return nodes;
 }
 
-function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark): RenderNode {
-  const { chart, bounds, diagnostics, nextOrder } = context;
+function plotClipPath(plot: { x: number; y: number; width: number; height: number }): string {
+  const { x, y, width, height } = plot;
+  return `M ${x} ${y} H ${x + width} V ${y + height} H ${x} Z`;
+}
+
+function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
+  const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const radius = chart.config?.barCornerRadius ?? 2;
   const { x, y, width, height } = mark.frame;
-  return {
+  const barPath = barShapePath(x, y, width, height, radius);
+  const fill = paint(mark.color, diagnostics, chart.id);
+  const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
+  const strokeWidth = finite(chart.config?.barBorderWidth, 0);
+  const shadow = resolveChartShadow(chart.shadow_style);
+
+  const shadowCaster: RenderNode | undefined = shadow
+    ? {
+        type: 'path',
+        id: `chart-bar-shadow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
+        order: nextOrder(),
+        bounds,
+        d: barPath,
+        style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: plotClipPath(plot) } },
+      }
+    : undefined;
+
+  const bar: RenderNode = {
     type: 'path',
     id: `chart-bar-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
     order: nextOrder(),
     bounds,
-    d: barShapePath(x, y, width, height, radius),
+    d: barPath,
     detail: {
       of: 'chartValue',
       series: mark.seriesId,
@@ -116,12 +139,10 @@ function createGroupedBarNode(context: ChartRenderContext, mark: GroupedBarMark)
       hasColorOverride: mark.hasColorOverride,
     },
     prop: seriesValueProp(mark.seriesId, mark.valueIndex),
-    style: {
-      fill: paint(mark.color, diagnostics, chart.id),
-      stroke: paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id),
-      strokeWidth: finite(chart.config?.barBorderWidth, 0),
-    },
+    style: { fill, stroke, strokeWidth, innerShadow: shadow },
   };
+
+  return shadowCaster ? [shadowCaster, bar] : [bar];
 }
 
 function createGroupedBarError(context: ChartRenderContext, mark: GroupedBarMark): RenderNode | null {

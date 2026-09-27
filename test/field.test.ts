@@ -131,9 +131,15 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     expect(cells.length).toBeGreaterThan(0);
     expect(gridLines.length).toBeGreaterThan(0);
     expect(isolines.length).toBeGreaterThan(0);
-    expect(cells.every(node => node.type === 'rect' && node.style.clip?.rx === 20)).toBe(true);
-    expect(gridLines.every(node => node.type === 'path' && node.style.clip?.rx === 20)).toBe(true);
-    expect(isolines.every(node => node.type === 'path' && node.style.clip?.rx === 20)).toBe(true);
+    expect(
+      cells.every(node => node.type === 'rect' && node.style.clip?.type === 'rect' && node.style.clip.rx === 20),
+    ).toBe(true);
+    expect(
+      gridLines.every(node => node.type === 'path' && node.style.clip?.type === 'rect' && node.style.clip.rx === 20),
+    ).toBe(true);
+    expect(
+      isolines.every(node => node.type === 'path' && node.style.clip?.type === 'rect' && node.style.clip.rx === 20),
+    ).toBe(true);
 
     const { svg } = render(rounded);
     expect((svg.match(/<clipPath/g) ?? []).length).toBe(1);

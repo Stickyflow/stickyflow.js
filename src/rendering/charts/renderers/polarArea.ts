@@ -13,6 +13,7 @@ import {
   pieArcPoint,
   pieUsesInnerArc,
   representativeColor,
+  resolveChartShadow,
   sameHueContrastColor,
   sameHueTint,
 } from '../primitives';
@@ -43,6 +44,7 @@ export function renderPolarArea(context: ChartRenderContext): RenderNode[] {
   const sweep = seriesList.length > 0 ? (Math.PI * 2) / seriesList.length : 0;
   const trackColor = paint(chart.grid_color ?? TRACK_COLOR_FALLBACK, diagnostics, chart.id);
   const showLabels = context.showLabels && sweep >= MIN_LABEL_SWEEP;
+  const shadow = resolveChartShadow(chart.shadow_style);
 
   const clampedCorner = (outerRadius: number, angles: { start: number; end: number }): number => {
     const geometry = { centerX, centerY, outerRadius, innerRadius };
@@ -64,31 +66,45 @@ export function renderPolarArea(context: ChartRenderContext): RenderNode[] {
     const rawColor = series.color ?? CHART_COLORS[index % CHART_COLORS.length];
     const color = paint(rawColor, diagnostics, chart.id);
 
+    const trackPath = createPieSlicePath(
+      { centerX, centerY, outerRadius: maxRadius, innerRadius },
+      angles,
+      clampedCorner(maxRadius, angles),
+      gapPx,
+    );
     const track: RenderNode = {
       type: 'path',
       id: `chart-polar-area-track-${chart.id}-${series.id}`,
       order: nextOrder(),
       bounds,
-      d: createPieSlicePath(
-        { centerX, centerY, outerRadius: maxRadius, innerRadius },
-        angles,
-        clampedCorner(maxRadius, angles),
-        gapPx,
-      ),
+      d: trackPath,
       style: { fill: trackColor },
     };
+
+    const wedgePath = createPieSlicePath(
+      { centerX, centerY, outerRadius, innerRadius },
+      angles,
+      clampedCorner(outerRadius, angles),
+      gapPx,
+    );
+
+    const shadowCaster: RenderNode | undefined = shadow
+      ? {
+          type: 'path',
+          id: `chart-polar-area-wedge-shadow-${chart.id}-${series.id}`,
+          order: nextOrder(),
+          bounds,
+          d: wedgePath,
+          style: { fill: color, shadow, clip: { type: 'path', d: trackPath } },
+        }
+      : undefined;
 
     const wedge: RenderNode = {
       type: 'path',
       id: `chart-polar-area-wedge-${chart.id}-${series.id}`,
       order: nextOrder(),
       bounds,
-      d: createPieSlicePath(
-        { centerX, centerY, outerRadius, innerRadius },
-        angles,
-        clampedCorner(outerRadius, angles),
-        gapPx,
-      ),
+      d: wedgePath,
       detail: {
         of: 'chartValue',
         series: series.id,
@@ -99,15 +115,15 @@ export function renderPolarArea(context: ChartRenderContext): RenderNode[] {
         pieValue: value,
       },
       prop: seriesValueProp(series.id, 0),
-      style: { fill: color },
+      style: { fill: color, innerShadow: shadow },
     };
 
+    const nodes = shadowCaster ? [track, shadowCaster, wedge] : [track, wedge];
     if (!showLabels) {
-      return [track, wedge];
+      return nodes;
     }
     return [
-      track,
-      wedge,
+      ...nodes,
       ...createWedgeLabel(context, { centerX, centerY, outerRadius, innerRadius }, angles, series, value, rawColor),
     ];
   });
