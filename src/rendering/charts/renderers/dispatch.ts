@@ -10,6 +10,7 @@ import { renderLine } from './line';
 import { renderMatrix } from './matrix';
 import { renderMekko } from './mekko';
 import { renderPie } from './pie';
+import { renderPolarArea } from './polarArea';
 import { renderRadar } from './radar';
 import { renderRadialBar } from './radialBar';
 import { renderSankey } from './sankey';
@@ -30,6 +31,7 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   matrix: renderMatrix,
   mekko: renderMekko,
   pie: renderPie,
+  polarArea: renderPolarArea,
   radar: renderRadar,
   radial: renderRadar,
   radialBar: renderRadialBar,

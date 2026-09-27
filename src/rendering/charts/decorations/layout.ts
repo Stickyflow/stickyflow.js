@@ -10,6 +10,7 @@ const CHARTS_WITHOUT_CARTESIAN_DECORATIONS = new Set([
   'mekko',
   'pie',
   'radialBar',
+  'polarArea',
   'matrix',
 ]);
 

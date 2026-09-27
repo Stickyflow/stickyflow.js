@@ -15,6 +15,7 @@ export type ChartType =
   | 'hexbin'
   | 'pie'
   | 'radialBar'
+  | 'polarArea'
   | 'matrix'
   | 'custom';
 
@@ -33,6 +34,7 @@ export const CHART_TYPES: ChartType[] = [
   'hexbin',
   'pie',
   'radialBar',
+  'polarArea',
   'matrix',
   'custom',
 ];

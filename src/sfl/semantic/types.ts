@@ -63,6 +63,7 @@ export interface SflEntityOut {
       | 'hexbin'
       | 'pie'
       | 'radialBar'
+      | 'polarArea'
       | 'matrix'
       | 'custom';
     categories?: string[];

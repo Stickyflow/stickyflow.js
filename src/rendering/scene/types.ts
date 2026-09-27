@@ -49,7 +49,7 @@ export type SceneDetail =
       of: 'chartValue';
       series: string;
       valueIndex: number;
-      mark?: 'bar' | 'pie-slice' | 'radar-vertex' | 'radial-bar-ring';
+      mark?: 'bar' | 'pie-slice' | 'radar-vertex' | 'radial-bar-ring' | 'polar-area-wedge';
       radius?: number;
       colorProp?: string;
       hasColorOverride?: boolean;
