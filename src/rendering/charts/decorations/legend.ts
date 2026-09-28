@@ -17,6 +17,7 @@ interface ChartLegendItem {
   series: ChartSeries;
   seriesIndex: number;
   x: number;
+  y: number;
   width: number;
   order: number;
 }
@@ -40,15 +41,32 @@ function legendSeries(chart: Chart): ChartSeries[] {
     : chart.series;
 }
 
+function legendStartX(chart: Chart, plot: ChartLegendRender['plot'], totalWidth: number): number {
+  if (chart.legend_position === 'bottomLeft') {
+    return plot.x;
+  }
+  if (chart.legend_position === 'bottom') {
+    return plot.x + (plot.width - totalWidth) / 2;
+  }
+  return plot.x + plot.width - totalWidth;
+}
+
+function legendY(chart: Chart, plot: ChartLegendRender['plot']): number {
+  return (chart.legend_position ?? 'top') === 'top' ? chart.y + 16 : plot.y + plot.height + 16;
+}
+
 function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
   const { chart, plot, order } = render;
   const series = legendSeries(chart);
-  let nextX = plot.x + plot.width;
-  return [...series].reverse().map((item, reverseIndex) => {
-    const seriesIndex = series.length - 1 - reverseIndex;
-    const width = Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22);
-    nextX -= width;
-    return { series: item, seriesIndex, x: nextX, width, order: order + reverseIndex * 2 };
+  const widths = series.map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+  const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+  const y = legendY(chart, plot);
+  let x = legendStartX(chart, plot, totalWidth);
+  return series.map((item, seriesIndex) => {
+    const width = widths[seriesIndex];
+    const itemX = x;
+    x += width;
+    return { series: item, seriesIndex, x: itemX, y, width, order: order + (series.length - 1 - seriesIndex) * 2 };
   });
 }
 
@@ -65,7 +83,7 @@ function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): R
     order: item.order,
     bounds,
     x: item.x,
-    y: chart.y + 16,
+    y: item.y,
     width: 10,
     height: 10,
     rx: 3,
@@ -82,7 +100,7 @@ function createLegendLabel(render: ChartLegendRender, item: ChartLegendItem): Re
       id: `chart-legend-${chart.id}-${item.series.id}`,
       order: item.order + 1,
       bounds,
-      frame: { x: item.x + 15, y: chart.y + 13, width: item.width - 15, height: 18 },
+      frame: { x: item.x + 15, y: item.y - 3, width: item.width - 15, height: 18 },
       text: item.series.label,
       chart,
     }),

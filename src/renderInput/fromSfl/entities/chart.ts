@@ -7,6 +7,10 @@ export function chartObject(e: SflEntityOut) {
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
   const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
     p.gridLineStyle === 'dashed' ? 'dashed' : p.gridLineStyle === 'dotted' ? 'dotted' : 'solid';
+  const legendPosition: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' =
+    p.legendPosition === 'bottom' || p.legendPosition === 'bottomLeft' || p.legendPosition === 'bottomRight'
+      ? p.legendPosition
+      : 'top';
   return {
     id: e.id,
     type: 'chart',
@@ -77,6 +81,7 @@ export function chartObject(e: SflEntityOut) {
     show_grid: p.showGrid !== 'false',
     show_axis_labels: p.showAxisLabels !== 'false',
     show_legend: p.showLegend !== 'false',
+    legend_position: legendPosition,
     shadow_style: decodeShadow(p.shadow),
     order: e.order,
   };
