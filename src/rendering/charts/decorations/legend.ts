@@ -42,9 +42,19 @@ function legendSeries(chart: Chart): ChartSeries[] {
 }
 
 export const LEGEND_ROW_HEIGHT = 22;
+export const LEGEND_COLUMN_GAP = 16;
 
 export function isStackedLegendPosition(position: Chart['legend_position']): boolean {
   return position === 'bottomLeft' || position === 'bottomRight';
+}
+
+function legendItemWidths(chart: Chart): number[] {
+  return legendSeries(chart).map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+}
+
+export function stackedLegendColumnWidth(chart: Chart): number {
+  const widths = legendItemWidths(chart);
+  return widths.length ? Math.max(...widths) : 0;
 }
 
 function legendStartX(chart: Chart, plot: ChartLegendRender['plot'], totalWidth: number): number {
@@ -61,15 +71,22 @@ function legendY(chart: Chart, plot: ChartLegendRender['plot']): number {
 function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] {
   const { chart, plot, order } = render;
   const series = legendSeries(chart);
-  const widths = series.map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+  const widths = legendItemWidths(chart);
   const maxWidth = Math.max(...widths);
-  const x = chart.legend_position === 'bottomLeft' ? plot.x : plot.x + plot.width - maxWidth;
-  const startY = plot.y + plot.height + 16;
+  const x =
+    chart.legend_position === 'bottomLeft'
+      ? plot.x - LEGEND_COLUMN_GAP - maxWidth
+      : plot.x + plot.width + LEGEND_COLUMN_GAP;
+  // Mirrors 'top', which sits chart.y + 16 from the chart's own top edge -
+  // the bottom-most row sits the same 16px in from the chart's own bottom
+  // edge (not the plot's, which is pulled up by axis-label padding this
+  // chart type may not even draw). Earlier items stack upward from there.
+  const lastY = chart.y + chart.height - 26;
   return series.map((item, seriesIndex) => ({
     series: item,
     seriesIndex,
     x,
-    y: startY + seriesIndex * LEGEND_ROW_HEIGHT,
+    y: lastY - (series.length - 1 - seriesIndex) * LEGEND_ROW_HEIGHT,
     width: widths[seriesIndex],
     order: order + (series.length - 1 - seriesIndex) * 2,
   }));
@@ -78,7 +95,7 @@ function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] 
 function createRowLegendItems(render: ChartLegendRender): ChartLegendItem[] {
   const { chart, plot, order } = render;
   const series = legendSeries(chart);
-  const widths = series.map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+  const widths = legendItemWidths(chart);
   const totalWidth = widths.reduce((sum, width) => sum + width, 0);
   const y = legendY(chart, plot);
   let x = legendStartX(chart, plot, totalWidth);

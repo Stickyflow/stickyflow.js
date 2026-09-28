@@ -1,7 +1,7 @@
 import type { Chart } from '../../../model/charts';
 import type { Bounds } from '../../scene';
 import { boxBounds, finite } from '../../scene';
-import { isStackedLegendPosition, LEGEND_ROW_HEIGHT } from './legend';
+import { isStackedLegendPosition, LEGEND_COLUMN_GAP, LEGEND_ROW_HEIGHT, stackedLegendColumnWidth } from './legend';
 
 export const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'field']);
 const CHARTS_WITHOUT_CARTESIAN_DECORATIONS = new Set([
@@ -30,14 +30,21 @@ export interface ChartLayout {
 export function decorations(chart: Chart): ChartLayout {
   const showLabels = chart.show_axis_labels !== false;
   const showLegend = chart.show_legend !== false;
-  const legendAtTop = (chart.legend_position ?? 'top') === 'top';
+  const legendPosition = chart.legend_position ?? 'top';
+  const legendAtTop = legendPosition === 'top';
   const hasLegendItems = showLegend && chart.series.length > 0;
-  const padLeft = showLabels ? (chart.axis_y.label ? 60 : 46) : 12;
+  const legendStacked = hasLegendItems && isStackedLegendPosition(legendPosition);
+  // bottomLeft/bottomRight sit beside the plot as a column, not below it -
+  // they reserve horizontal space instead of a padBottom band.
+  const sideColumnWidth = legendStacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0;
+
+  const padLeft =
+    (showLabels ? (chart.axis_y.label ? 60 : 46) : 12) + (legendPosition === 'bottomLeft' ? sideColumnWidth : 0);
+  const padRight = 24 + (legendPosition === 'bottomRight' ? sideColumnWidth : 0);
   const basePadBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
   const hasColorBar = chart.chart_type === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
-  const legendRows = isStackedLegendPosition(chart.legend_position) ? Math.max(1, chart.series.length) : 1;
-  const legendBandHeight = 16 + legendRows * LEGEND_ROW_HEIGHT;
-  const padBottom = basePadBottom + (hasColorBar ? 44 : 0) + (!legendAtTop && hasLegendItems ? legendBandHeight : 0);
+  const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
+  const padBottom = basePadBottom + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
   const padTop = chart.title || (legendAtTop && hasLegendItems) ? 44 : 24;
 
   return {
@@ -48,7 +55,7 @@ export function decorations(chart: Chart): ChartLayout {
     plot: {
       x: chart.x + padLeft,
       y: chart.y + padTop,
-      width: Math.max(1, chart.width - padLeft - 24),
+      width: Math.max(1, chart.width - padLeft - padRight),
       height: Math.max(1, chart.height - padTop - padBottom),
     },
     showLabels,
