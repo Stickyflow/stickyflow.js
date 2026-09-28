@@ -1,6 +1,6 @@
 import { CHART_TYPES, type ChartType, CIRCULAR_GRID_CHART_TYPES, isChartType } from '../../model/charts';
 import type { SflBlock, SflDocument } from '../ast';
-import { childBlocks, directProperties, styleProperties } from './blockEntries';
+import { childBlocks, contentChildren, directProperties, styleProperties } from './blockEntries';
 import type { SflDiagnostic } from './types';
 import { asString } from './valueAccess';
 
@@ -19,6 +19,40 @@ export function collectUnsupportedChartTypes(doc: SflDocument): SflDiagnostic[] 
           entityId: block.name,
           message: `Unsupported chart type '${declared}' — drawn as a plain series plot. Supported: ${CHART_TYPES.join(', ')}.`,
         });
+      }
+    }
+    for (const child of childBlocks(block)) {
+      visit(child);
+    }
+  };
+
+  for (const block of doc.blocks) {
+    visit(block);
+  }
+  return diagnostics;
+}
+
+// Inside data{}, a name with no Kind in front of it is read as a Series -
+// so a missing/mistyped `Axis`/`Rule` keyword doesn't fail to parse, it
+// silently becomes an empty Series instead. Any Series without `values` is
+// almost certainly one of those two (a real series always has values), so
+// this catches the mistake without needing to know whether the block was
+// written as `Series name { }` or the bare `name { }` shorthand - the AST
+// doesn't keep that distinction once parsed, and doesn't need to.
+export function collectEmptySeries(doc: SflDocument): SflDiagnostic[] {
+  const diagnostics: SflDiagnostic[] = [];
+
+  const visit = (block: SflBlock): void => {
+    if (block.kind === 'Chart') {
+      for (const series of contentChildren(block).filter(child => child.kind === 'Series')) {
+        if (!directProperties(series).has('values')) {
+          diagnostics.push({
+            severity: 'warning',
+            code: 'series-without-values',
+            entityId: series.name,
+            message: `Series '${series.name}' has no values. If this was meant to be an Axis or Rule, it needs that keyword in front of the name — inside data{}, a bare name is read as a Series.`,
+          });
+        }
       }
     }
     for (const child of childBlocks(block)) {

@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument } from '../ast';
-import { collectUnsupportedChartTypes, collectUnsupportedGridShapes } from './chartDiagnostics';
+import { collectEmptySeries, collectUnsupportedChartTypes, collectUnsupportedGridShapes } from './chartDiagnostics';
 import { collectUnresolvedCompositionReferences } from './compositionReferences';
 import { collectCanvasDefinitions } from './definitions';
 import type { EntityReaderContext } from './entityReader';
@@ -21,6 +21,7 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectUnresolvedCompositionReferences(doc, definitions.styles, definitions.layouts),
       ...collectUnsupportedChartTypes(doc),
       ...collectUnsupportedGridShapes(doc),
+      ...collectEmptySeries(doc),
     ],
     entityReaderContext: createEntityPropertyReaders(definitions),
   };
