@@ -17,7 +17,7 @@ Model M {
     }
     layout { position: 0, 200; size: 200, 100 }
   }
-  Entity s {
+  Shape s {
     text: "plain"
     layout { position: 0, 320; size: 100, 50 }
   }

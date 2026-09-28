@@ -11,9 +11,9 @@ import { sflToCanvasState } from '../src/index';
 const SFL = `sfl 1.4
 
 Model board {
-  Entity amp1 { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
-  Entity amp2 { shape: rectangle; layout { position: 300, 0; size: 100, 60 } }
-  Entity psu  { shape: rectangle; layout { position: 600, 0; size: 100, 60 } }
+  Shape amp1 { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape amp2 { shape: rectangle; layout { position: 300, 0; size: 100, 60 } }
+  Shape psu  { shape: rectangle; layout { position: 600, 0; size: 100, 60 } }
 
   Net vcc { members: [amp1, amp2, psu]; text: "+5V" }
 }`;
@@ -47,7 +47,7 @@ describe('Net (§3.5, star decomposition)', () => {
     const single = `sfl 1.4
 
 Model board {
-  Entity a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
   Net lonely { members: [a] }
 }`;
     const state = sflToCanvasState(single);

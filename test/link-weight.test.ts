@@ -9,8 +9,8 @@ import { render, sflToCanvasState } from '../src/index';
 const SFL = `sfl 1.2
 
 Model board {
-  Entity a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
-  Entity b { shape: rectangle; layout { position: 300, 0; size: 100, 60 } }
+  Shape a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape b { shape: rectangle; layout { position: 300, 0; size: 100, 60 } }
 
   Link heavy {
     from: a

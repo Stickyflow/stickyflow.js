@@ -4,7 +4,7 @@ import { render, SHAPE_TYPES } from '../src/index';
 const entity = (style: string) => `sfl 1.4
 
 Model M {
-  Entity e {
+  Shape e {
     style { ${style} }
     layout { position: 0, 0; size: 120, 80 }
   }
@@ -65,7 +65,7 @@ describe('an unknown or removed shape name is reported, not silently swapped', (
 Style Base { shape: hexagonn }
 
 Model M {
-  Entity e : Base { layout { position: 0, 0; size: 120, 80 } }
+  Shape e : Base { layout { position: 0, 0; size: 120, 80 } }
 }
 `;
     const { diagnostics } = render(sfl);
@@ -84,7 +84,7 @@ describe('cylinder and person are single silhouettes', () => {
     const sfl = `sfl 1.4
 
 Model M {
-  Entity e {
+  Shape e {
     text: "Customer"
     style { shape: person }
     layout { position: 0, 0; size: 100, 100 }

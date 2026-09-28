@@ -47,7 +47,7 @@ class CanvasTreeReader {
     switch (child.kind) {
       case 'Container':
         return this.#readContainer(child, location, nextFlowPosition);
-      case 'Entity':
+      case 'Shape':
       case 'Table':
       case 'Path':
       case 'Chart':

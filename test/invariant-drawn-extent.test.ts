@@ -158,7 +158,7 @@ Symbol S {
 }
 
 Model M {
-  Entity e {
+  Shape e {
     shape: S
     layout { position: ${box.x}, ${box.y}; size: ${box.width}, ${box.height} }
   }
@@ -208,7 +208,7 @@ function shapeSfl(shapeType: string, box: { x: number; y: number; width: number;
   return `sfl 1.4
 
 Model M {
-  Entity s {
+  Shape s {
     style { shape: ${shapeType} }
     layout { position: ${box.x}, ${box.y}; size: ${box.width}, ${box.height} }
   }

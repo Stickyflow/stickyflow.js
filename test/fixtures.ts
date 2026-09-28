@@ -253,7 +253,7 @@ Style Flow {
 Model Demo {
   text: "Demo"
 
-  Entity start : Box {
+  Shape start : Box {
     kind: process
     text: "Start"
     layout {
@@ -262,7 +262,7 @@ Model Demo {
     }
   }
 
-  Entity finish : Box {
+  Shape finish : Box {
     kind: process
     text: "Finish"
     layout {

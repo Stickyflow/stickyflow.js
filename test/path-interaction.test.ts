@@ -85,7 +85,7 @@ Model M {
     points: [[20, 20], [120, 20], [120, 100]]
     style { stroke: "#7c3aed" }
   }
-  Entity other {
+  Shape other {
     style { shape: rectangle }
     layout { position: 300, 300; size: 80, 60 }
   }

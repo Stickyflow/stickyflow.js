@@ -186,13 +186,13 @@ Model M {
     text: "Group"
     layout { position: 0, 0; size: 300, 200 }
 
-    Entity child {
+    Shape child {
       text: "Inside"
       layout { position: 20, 40; size: 100, 60 }
     }
   }
 
-  Entity outside {
+  Shape outside {
     text: "Outside"
     layout { position: 400, 0; size: 100, 60 }
   }

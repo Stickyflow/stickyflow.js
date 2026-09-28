@@ -3,9 +3,9 @@ import type { RenderInput } from '../src/index';
 import { renderCanvas } from '../src/index';
 import type { Shape } from '../src/model/shapes';
 
-// §1.4 Infographics: inline `**bold**` runs inside an Entity/shape's own
+// §1.4 Infographics: inline `**bold**` runs inside a Shape's own
 // `text:` property (buildRenderScene.ts's buildShape + renderSceneToSvg.ts's
-// textSvg rich-tspan branch). Entity labels only - Link/Chart/Table text
+// textSvg rich-tspan branch). Shape labels only - Link/Chart/Table text
 // keeps rendering literal asterisks unchanged, proven below too.
 
 const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
@@ -34,7 +34,7 @@ function renderShape(text: string, extra: Partial<Shape> = {}) {
   return renderCanvas(input);
 }
 
-describe('Entity label inline **bold** rendering', () => {
+describe('Shape label inline **bold** rendering', () => {
   it('renders a bold word inside its own bold tspan, plain text around it normal', () => {
     const { svg } = renderShape('Output **doubled** this year.');
     expect(svg).toContain('xml:space="preserve"');

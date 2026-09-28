@@ -1,12 +1,12 @@
 import { escapeSflString, indentBlock, round1 } from '../format';
 import type { InsertEntityOptions } from './types';
 
-function entityBlockKind(kind: InsertEntityOptions['kind']): 'Table' | 'Entity' | 'Container' {
+function entityBlockKind(kind: InsertEntityOptions['kind']): 'Table' | 'Shape' | 'Container' {
   if (kind === 'table') {
     return 'Table';
   }
   if (kind === 'shape') {
-    return 'Entity';
+    return 'Shape';
   }
   return 'Container';
 }

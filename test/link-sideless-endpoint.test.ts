@@ -4,8 +4,8 @@ import { render } from '../src/render';
 const board = (bx: number, by: number) => `sfl 1.2
 
 Model m {
-  Entity a { text: "A"; layout { position: 0, 0; size: 180, 60 } }
-  Entity b { text: "B"; layout { position: ${bx}, ${by}; size: 180, 60 } }
+  Shape a { text: "A"; layout { position: 0, 0; size: 180, 60 } }
+  Shape b { text: "B"; layout { position: ${bx}, ${by}; size: 180, 60 } }
   Link l1 { from: a; to: b }
 }
 `;
@@ -61,8 +61,8 @@ describe('links with no explicit side', () => {
     const explicit = `sfl 1.2
 
 Model m {
-  Entity a { text: "A"; layout { position: 0, 0; size: 180, 60 } }
-  Entity b { text: "B"; layout { position: 0, 200; size: 180, 60 } }
+  Shape a { text: "A"; layout { position: 0, 0; size: 180, 60 } }
+  Shape b { text: "B"; layout { position: 0, 200; size: 180, 60 } }
   Link l1 { from: a, bottom (0.25); to: b, top (0.75) }
 }
 `;

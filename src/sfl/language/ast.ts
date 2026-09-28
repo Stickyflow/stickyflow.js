@@ -6,7 +6,7 @@ export type BlockKind =
   | 'Table'
   | 'Path'
   | 'Chart'
-  | 'Entity'
+  | 'Shape'
   | 'Link'
   | 'Layout'
   | 'Style'
@@ -31,7 +31,7 @@ export const BLOCK_KINDS: readonly BlockKind[] = [
   'Table',
   'Path',
   'Chart',
-  'Entity',
+  'Shape',
   'Link',
   'Layout',
   'Style',

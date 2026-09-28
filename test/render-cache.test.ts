@@ -4,7 +4,7 @@ import { render } from '../src/index';
 const SFL = `sfl 1.4
 
 Model M {
-  Entity e { text: "Hello"; layout { position: 0, 0; size: 100, 60 } }
+  Shape e { text: "Hello"; layout { position: 0, 0; size: 100, 60 } }
 }`;
 
 describe('render() caches the parsed scene by source text', () => {
@@ -37,7 +37,7 @@ describe('render() caches the parsed scene by source text', () => {
     const variant = (n: number) => `sfl 1.4
 
 Model M {
-  Entity e { text: "v${n}"; layout { position: 0, 0; size: 100, 60 } }
+  Shape e { text: "v${n}"; layout { position: 0, 0; size: 100, 60 } }
 }`;
     for (let n = 0; n < 60; n++) {
       render(variant(n));

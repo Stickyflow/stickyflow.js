@@ -14,7 +14,7 @@ Symbol Triangle {
 }
 
 Model board {
-  Entity tri { shape: Triangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape tri { shape: Triangle; layout { position: 0, 0; size: 100, 60 } }
 }`;
 
 describe('Symbol (§5.5, free-form shape)', () => {
@@ -40,7 +40,7 @@ describe('Symbol (§5.5, free-form shape)', () => {
     const sfl = `sfl 1.4
 
 Model board {
-  Entity a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
 }`;
     const state = sflToCanvasState(sfl);
     expect(state.entities[0].shapeType).toBe('rectangle');
@@ -55,7 +55,7 @@ Symbol Degenerate {
 }
 
 Model board {
-  Entity a { shape: Degenerate; layout { position: 0, 0; size: 100, 60 } }
+  Shape a { shape: Degenerate; layout { position: 0, 0; size: 100, 60 } }
 }`;
     const state = sflToCanvasState(sfl);
     // symbolDefs only registers a Symbol with >= 2 points - an unresolved
@@ -92,7 +92,7 @@ Symbol Kite {
 }
 
 Model board {
-  Entity k { shape: Kite; layout { position: 0, 0; size: 100, 100 } }
+  Shape k { shape: Kite; layout { position: 0, 0; size: 100, 100 } }
 }`;
     const { svg } = render(sfl);
     // The polygon's own tight bbox tops out at y=80 (0.8 * 100), well short
@@ -111,7 +111,7 @@ Symbol Blob {
 }
 
 Model board {
-  Entity b { shape: Blob; layout { position: 0, 0; size: 100, 100 } }
+  Shape b { shape: Blob; layout { position: 0, 0; size: 100, 100 } }
 }`;
     const { svg } = render(sfl);
     // Straight-segment rendering would use "L" commands; a positive tension

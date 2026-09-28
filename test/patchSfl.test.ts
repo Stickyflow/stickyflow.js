@@ -16,32 +16,32 @@ const owner = (id: string, role: OwnerRef['role'] = 'entity'): OwnerRef => ({ ro
 
 describe('applyTextChange', () => {
   it('replaces an existing text value', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "Old"\n    layout { position: 0, 0 }\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    text: "Old"\n    layout { position: 0, 0 }\n  }\n}\n`;
     const next = applyTextChange(sfl, { owner: owner('a'), text: 'New' });
     expect(next).toContain('text: "New"');
     expect(next).not.toContain('text: "Old"');
   });
 
   it('inserts text when the owner has none yet (e.g. an unlabeled link)', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Link l {\n    from: a, right (0.5)\n    to: b, left (0.5)\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n  Link l {\n    from: a, right (0.5)\n    to: b, left (0.5)\n  }\n}\n`;
     const next = applyTextChange(sfl, { owner: owner('l', 'link'), text: 'creates' });
     expect(next).toContain('text: "creates"');
     expect(next).toMatch(/Link l \{\n\s*text: "creates"/);
   });
 
   it('escapes quotes and backslashes in the new value', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "Old"\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    text: "Old"\n  }\n}\n`;
     const next = applyTextChange(sfl, { owner: owner('a'), text: 'She said "hi" \\ bye' });
     expect(next).toContain('text: "She said \\"hi\\" \\\\ bye"');
   });
 
   it('is a no-op for an unknown owner id', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "Old" }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { text: "Old" }\n}\n`;
     expect(applyTextChange(sfl, { owner: owner('missing'), text: 'New' })).toBe(sfl);
   });
 
   it('leaves unrelated blocks, comments and formatting untouched', () => {
-    const sfl = `sfl 1.2\n\n// board comment\nModel M {\n  // a's own comment\n  Entity a {\n    text: "Old"\n  }\n\n  Entity b {\n    text: "Keep me"\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\n// board comment\nModel M {\n  // a's own comment\n  Shape a {\n    text: "Old"\n  }\n\n  Shape b {\n    text: "Keep me"\n  }\n}\n`;
     const next = applyTextChange(sfl, { owner: owner('a'), text: 'New' });
     expect(next).toContain('// board comment');
     expect(next).toContain("// a's own comment");
@@ -55,7 +55,7 @@ describe('applyTextChange', () => {
     // path, which for a single-line owner spliced the new line in as a
     // SIBLING of the block (past its closing brace) rather than replacing
     // anything. The real property was silently never touched again.
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "Old"; layout { position: 0, 0 } }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { text: "Old"; layout { position: 0, 0 } }\n}\n`;
     const next = applyTextChange(sfl, { owner: owner('a'), text: 'New' });
     expect(next).toContain('text: "New"');
     expect(next).not.toContain('text: "Old"');
@@ -65,21 +65,21 @@ describe('applyTextChange', () => {
 
 describe('applyMoveChange', () => {
   it('adds the delta to an existing local layout { position }', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    layout {\n      position: 100, 50\n      size: 80, 40\n    }\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    layout {\n      position: 100, 50\n      size: 80, 40\n    }\n  }\n}\n`;
     const next = applyMoveChange(sfl, { owner: owner('a'), dx: 10, dy: -5 });
     expect(next).toContain('position: 110, 45');
     expect(next).toContain('size: 80, 40'); // untouched sibling property
   });
 
   it('inserts a local layout { position } when the entity has none', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    text: "A"\n  }\n}\n`;
     const next = applyMoveChange(sfl, { owner: owner('a'), dx: 5, dy: 5 });
     expect(next).toContain('layout {');
     expect(next).toContain('position: 5, 5');
   });
 
   it('resolves the current position through a composed Layout reference, not just a local block', () => {
-    const sfl = `sfl 1.2\n\nLayout Card {\n  position: 200, 100\n  size: 120, 60\n}\n\nModel M {\n  Entity a : Card {\n    text: "A"\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nLayout Card {\n  position: 200, 100\n  size: 120, 60\n}\n\nModel M {\n  Shape a : Card {\n    text: "A"\n  }\n}\n`;
     const next = applyMoveChange(sfl, { owner: owner('a'), dx: 10, dy: 20 });
     // The shared Layout block itself must stay untouched...
     expect(next).toContain('position: 200, 100');
@@ -90,14 +90,14 @@ describe('applyMoveChange', () => {
   });
 
   it("does not confuse a Container's own layout with a nested child entity's", () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    Entity inner {\n      layout { position: 5, 5 }\n    }\n    layout {\n      position: 0, 0\n      size: 300, 200\n    }\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    Shape inner {\n      layout { position: 5, 5 }\n    }\n    layout {\n      position: 0, 0\n      size: 300, 200\n    }\n  }\n}\n`;
     const next = applyMoveChange(sfl, { owner: owner('f'), dx: 10, dy: 10 });
     expect(next).toContain('position: 10, 10'); // the frame's own
     expect(next).toContain('position: 5, 5'); // inner entity's, untouched
   });
 
   it('is a no-op for an unknown owner id', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n}\n`;
     expect(applyMoveChange(sfl, { owner: owner('missing'), dx: 1, dy: 1 })).toBe(sfl);
   });
 
@@ -109,7 +109,7 @@ describe('applyMoveChange', () => {
     // line beside the real one instead of updating it, so the entity never
     // actually moved on commit (it only looked like it had, until the
     // viewer's next re-render snapped it back to the untouched original).
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n    layout { position: 80, 80; size: 200, 80 }\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    text: "A"\n    layout { position: 80, 80; size: 200, 80 }\n  }\n}\n`;
     const next = applyMoveChange(sfl, { owner: owner('a'), dx: 20, dy: 20 });
     expect(next).toContain('layout { position: 100, 100; size: 200, 80 }');
     expect(next.match(/position:/g)?.length).toBe(1);
@@ -122,12 +122,12 @@ describe('applyMoveChange', () => {
 
   it("updates position in place when the layout block shares its OWN physical line with the entity's opening brace too", () => {
     // Same regression as applyResizeChange's matching test, hit via a plain
-    // drag instead of a resize handle: `Entity a : Style { text: "A"; layout
+    // drag instead of a resize handle: `Shape a : Style { text: "A"; layout
     // { position: 80, 80; size: 200, 80 } }` all on one line - what an LLM
     // asked to write compact SFL for a whole diagram routinely produces for
     // EVERY entity, not just one. Dropping the shape used to silently revert
     // to its pre-drag position because the patched document no longer parsed.
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "A"; layout { position: 80, 80; size: 200, 80 } }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { text: "A"; layout { position: 80, 80; size: 200, 80 } }\n}\n`;
     const next = applyMoveChange(sfl, { owner: owner('a'), dx: 20, dy: 20 });
     expect(next).toContain('layout { position: 100, 100; size: 200, 80 }');
     expect(next.match(/position:/g)?.length).toBe(1);
@@ -139,7 +139,7 @@ describe('applyResizeChange', () => {
   const event = { owner: owner('a'), dx: 0, dy: 0, dWidth: 20, dHeight: 10, x: 0, y: 0, width: 120, height: 60 };
 
   it('sets absolute position and size in an existing local layout block', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    layout {\n      position: 0, 0\n      size: 100, 50\n      rotation: 15\n    }\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    layout {\n      position: 0, 0\n      size: 100, 50\n      rotation: 15\n    }\n  }\n}\n`;
     const next = applyResizeChange(sfl, event);
     expect(next).toContain('position: 0, 0');
     expect(next).toContain('size: 120, 60');
@@ -147,14 +147,14 @@ describe('applyResizeChange', () => {
   });
 
   it('inserts a local layout block with both properties when the entity has none', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    text: "A"\n  }\n}\n`;
     const next = applyResizeChange(sfl, event);
     expect(next).toContain('position: 0, 0');
     expect(next).toContain('size: 120, 60');
   });
 
   it('is a no-op for an unknown owner id', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n}\n`;
     expect(applyResizeChange(sfl, { ...event, owner: owner('missing') })).toBe(sfl);
   });
 
@@ -163,7 +163,7 @@ describe('applyResizeChange', () => {
     // (single-line) child — the structure real SFL actually has, including
     // every fixture in this file and everything an LLM has produced in
     // practice.
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    text: "A"\n    layout { position: 0, 0; size: 100, 50 }\n  }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    text: "A"\n    layout { position: 0, 0; size: 100, 50 }\n  }\n}\n`;
     const next = applyResizeChange(sfl, event);
     expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
     expect(next.match(/position:/g)?.length).toBe(1);
@@ -171,7 +171,7 @@ describe('applyResizeChange', () => {
   });
 
   it("sets position and size in place when the layout block shares its OWN physical line with the entity's opening brace too", () => {
-    // Regression: `Entity a { text: "A"; layout { position: 0, 0; size: 100,
+    // Regression: `Shape a { text: "A"; layout { position: 0, 0; size: 100,
     // 50 } }` all on one line - routine LLM output optimizing for fewer
     // tokens, and valid SFL either way. findChildBlock's header search is
     // per LINE, so it could never see a child header starting mid-line; the
@@ -180,7 +180,7 @@ describe('applyResizeChange', () => {
     // document. A drag/resize on a document shaped like this used to look
     // like it worked and then silently snap back on the next re-render, once
     // the app's caller rejected the now-invalid SFL and reverted.
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "A"; layout { position: 0, 0; size: 100, 50 } }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { text: "A"; layout { position: 0, 0; size: 100, 50 } }\n}\n`;
     const next = applyResizeChange(sfl, event);
     expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
     expect(next.match(/position:/g)?.length).toBe(1);
@@ -189,7 +189,7 @@ describe('applyResizeChange', () => {
   });
 
   it('inserts a brand-new layout block inline when the entity itself is single-line and has no layout at all', () => {
-    const sfl = `sfl 1.2\n\nModel M {\n  Entity a { text: "A" }\n}\n`;
+    const sfl = `sfl 1.2\n\nModel M {\n  Shape a { text: "A" }\n}\n`;
     const next = applyResizeChange(sfl, event);
     expect(next).toContain('layout { position: 0, 0; size: 120, 60 }');
     expect(next).not.toMatch(/\n\s*layout\s*\{/); // stayed inline, not spliced as a new sibling line
@@ -198,7 +198,7 @@ describe('applyResizeChange', () => {
 });
 
 describe('applyLinkReconnectChange', () => {
-  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l {\n    from: a, right (0.5)\n    to: b, left (0.5)\n    text: "creates"\n  }\n}\n`;
+  const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n  Shape c { layout { position: 200, 0 } }\n  Link l {\n    from: a, right (0.5)\n    to: b, left (0.5)\n    text: "creates"\n  }\n}\n`;
 
   it('reconnects the `to` end to a different entity, side, and fraction', () => {
     const event = {
@@ -259,7 +259,7 @@ describe('applyLinkReconnectChange', () => {
     // error) with two `to:` values effectively present for the same link —
     // exactly the "two endpoints, contradiction" shape a reader (human or an
     // LLM asked to comment on the document) would flag on sight.
-    const compact = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l { from: a, right (0.5); to: b, left (0.5) }\n}\n`;
+    const compact = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n  Shape c { layout { position: 200, 0 } }\n  Link l { from: a, right (0.5); to: b, left (0.5) }\n}\n`;
     const event = {
       owner: owner('l', 'link'),
       end: 'to' as const,
@@ -274,9 +274,9 @@ describe('applyLinkReconnectChange', () => {
 });
 
 describe('insertEntity', () => {
-  const sfl = `sfl 1.2\n\nModel M {\n  Entity a {\n    layout { position: 0, 0; size: 100, 60 }\n  }\n  Container f {\n    kind: frame\n    text: "F"\n    layout { position: 200, 200; size: 400, 300 }\n  }\n}\n`;
+  const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    layout { position: 0, 0; size: 100, 60 }\n  }\n  Container f {\n    kind: frame\n    text: "F"\n    layout { position: 200, 200; size: 400, 300 }\n  }\n}\n`;
 
-  it('appends a new shape as an Entity block at the end of the Model', () => {
+  it('appends a new shape as an Shape block at the end of the Model', () => {
     const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: 'B', x: 300, y: 0, width: 120, height: 60 });
     expect(() => parse(next)).not.toThrow();
     const entity = sflToCanvasState(next).entities.find(e => e.id === 'b');
@@ -284,7 +284,7 @@ describe('insertEntity', () => {
     expect(entity?.text).toBe('B');
     expect([entity?.x, entity?.y, entity?.width, entity?.height]).toEqual([300, 0, 120, 60]);
     // The existing entities are untouched, still present, in their original form.
-    expect(next).toContain('Entity a {');
+    expect(next).toContain('Shape a {');
     expect(next).toContain('Container f {');
   });
 
@@ -331,7 +331,7 @@ describe('insertEntity', () => {
       height: 50,
       parentId: 'f',
     });
-    expect(next).toMatch(/Container f \{[\s\S]*Entity child \{[\s\S]*position: 10, 10[\s\S]*\}[\s\S]*\}/);
+    expect(next).toMatch(/Container f \{[\s\S]*Shape child \{[\s\S]*position: 10, 10[\s\S]*\}[\s\S]*\}/);
     const child = sflToCanvasState(next).entities.find(e => e.id === 'child');
     expect(child?.parentFrameId).toBe('f'); // resolved back to the same absolute position
     expect([child?.x, child?.y]).toEqual([210, 210]);
@@ -361,18 +361,18 @@ describe('insertEntity', () => {
 });
 
 describe('removeEntity', () => {
-  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Entity c { layout { position: 200, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n  Link l2 {\n    from: b\n    to: c\n  }\n}\n`;
+  const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n  Shape c { layout { position: 200, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n  Link l2 {\n    from: b\n    to: c\n  }\n}\n`;
 
   it('removes the entity block', () => {
     const next = removeEntity(sfl, 'b', { alsoRemoveLinks: false });
-    expect(next).not.toContain('Entity b {');
-    expect(next).toContain('Entity a {');
-    expect(next).toContain('Entity c {');
+    expect(next).not.toContain('Shape b {');
+    expect(next).toContain('Shape a {');
+    expect(next).toContain('Shape c {');
   });
 
   it('by default also removes links that reference the removed entity', () => {
     const next = removeEntity(sfl, 'b');
-    expect(next).not.toContain('Entity b {');
+    expect(next).not.toContain('Shape b {');
     expect(next).not.toContain('Link l1 {'); // referenced b via to:
     expect(next).not.toContain('Link l2 {'); // referenced b via from:
     expect(() => parse(next)).not.toThrow();
@@ -385,11 +385,11 @@ describe('removeEntity', () => {
   });
 
   it('does not corrupt the document when a referenced link is nested INSIDE the removed entity', () => {
-    const nested = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    Entity x { layout { position: 10, 10 } }\n    Entity y { layout { position: 50, 10 } }\n    Link inner {\n      from: x\n      to: y\n    }\n    layout { position: 0, 0; size: 300, 200 }\n  }\n  Entity outside { layout { position: 500, 0 } }\n}\n`;
+    const nested = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    Shape x { layout { position: 10, 10 } }\n    Shape y { layout { position: 50, 10 } }\n    Link inner {\n      from: x\n      to: y\n    }\n    layout { position: 0, 0; size: 300, 200 }\n  }\n  Shape outside { layout { position: 500, 0 } }\n}\n`;
     const next = removeEntity(nested, 'f');
     expect(next).not.toContain('Container f {');
     expect(next).not.toContain('Link inner {');
-    expect(next).toContain('Entity outside {'); // untouched, well past the removed range
+    expect(next).toContain('Shape outside {'); // untouched, well past the removed range
     expect(() => parse(next)).not.toThrow();
   });
 
@@ -399,7 +399,7 @@ describe('removeEntity', () => {
 });
 
 describe('insertLink', () => {
-  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n}\n`;
+  const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n}\n`;
 
   it('appends a new Link with sides and fractions', () => {
     const next = insertLink(sfl, {
@@ -436,13 +436,13 @@ describe('insertLink', () => {
 });
 
 describe('removeLink', () => {
-  const sfl = `sfl 1.2\n\nModel M {\n  Entity a { layout { position: 0, 0 } }\n  Entity b { layout { position: 100, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n}\n`;
+  const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n}\n`;
 
   it('removes the link block, leaving its entities untouched', () => {
     const next = removeLink(sfl, 'l1');
     expect(next).not.toContain('Link l1 {');
-    expect(next).toContain('Entity a {');
-    expect(next).toContain('Entity b {');
+    expect(next).toContain('Shape a {');
+    expect(next).toContain('Shape b {');
   });
 
   it('is a no-op for an unknown id', () => {

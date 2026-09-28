@@ -39,7 +39,7 @@ const CASES: Array<{ label: string; owner: { role: 'entity' | 'frame' | 'chart';
     sfl: `sfl 1.4
 
 Model M {
-  Entity e { text: "E"; layout { position: 0, 0; size: 100, 60 } }
+  Shape e { text: "E"; layout { position: 0, 0; size: 100, 60 } }
 }`,
   },
   {

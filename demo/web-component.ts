@@ -21,13 +21,13 @@ Style Flow {
 Model Demo {
   text: "Demo"
 
-  Entity a : Box {
+  Shape a : Box {
     kind: process
     text: "Schritt A"
     layout { position: 120, 80  size: 180, 70 }
   }
 
-  Entity b : Box {
+  Shape b : Box {
     kind: process
     text: "Schritt B"
     layout { position: 120, 260  size: 180, 70 }

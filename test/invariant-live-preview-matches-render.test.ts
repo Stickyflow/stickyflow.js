@@ -42,7 +42,7 @@ function shapeSfl(kind: string, box: { x: number; y: number; width: number; heig
   return `sfl 1.4
 
 Model M {
-  Entity e {
+  Shape e {
     style { shape: ${kind}${extra} }
     layout { position: ${box.x}, ${box.y}; size: ${box.width}, ${box.height} }
   }
@@ -109,7 +109,7 @@ Symbol Kite {
 }
 
 Model M {
-  Entity e {
+  Shape e {
     shape: Kite
     layout { position: ${box.x}, ${box.y}; size: ${box.width}, ${box.height} }
   }
@@ -163,8 +163,8 @@ describe('a link with no explicit side also matches : it anchors to the edge fac
   const linkSfl = (bx: number, by: number) => `sfl 1.4
 
 Model M {
-  Entity a { text: "A"; layout { position: 0, 0; size: 100, 60 } }
-  Entity b { text: "B"; layout { position: ${bx}, ${by}; size: 100, 60 } }
+  Shape a { text: "A"; layout { position: 0, 0; size: 100, 60 } }
+  Shape b { text: "B"; layout { position: ${bx}, ${by}; size: 100, 60 } }
   Link l { from: a; to: b }
 }
 `;

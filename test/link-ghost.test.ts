@@ -10,8 +10,8 @@ const xsOf = (d: string) => numbers(d).filter((_, index) => index % 2 === 0);
 const SFL = `sfl 1.4
 
 Model M {
-  Entity a { style { shape: rectangle }; layout { position: 0, 0; size: 100, 60 } }
-  Entity b { style { shape: rectangle }; layout { position: 300, 0; size: 100, 60 } }
+  Shape a { style { shape: rectangle }; layout { position: 0, 0; size: 100, 60 } }
+  Shape b { style { shape: rectangle }; layout { position: 300, 0; size: 100, 60 } }
   Link l {
     from: a, right
     to: b, left

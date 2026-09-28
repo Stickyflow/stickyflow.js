@@ -34,19 +34,19 @@ Style Flow {
 Model Checkout {
   text: "Checkout"
 
-  Entity start : Box {
+  Shape start : Box {
     kind: process
     text: "Warenkorb"
     layout { position: 120, 80  size: 180, 70 }
   }
 
-  Entity check : Decision {
+  Shape check : Decision {
     kind: decision
     text: "Zahlung ok?"
     layout { position: 140, 240  size: 160, 100 }
   }
 
-  Entity done : Box {
+  Shape done : Box {
     kind: process
     text: "Bestellung"
     layout { position: 120, 420  size: 180, 70 }

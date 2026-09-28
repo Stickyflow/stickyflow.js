@@ -17,7 +17,7 @@ function pillSfl(width: number, height: number): string {
   return `sfl 1.4
 
 Model M {
-  Entity e {
+  Shape e {
     style { shape: pill }
     layout { position: 0, 0; size: ${width}, ${height} }
   }
@@ -72,7 +72,7 @@ describe('a double-stroked pill keeps its inner ring inset and round while it is
     const doubleSfl = (width: number, height: number) => `sfl 1.4
 
 Model M {
-  Entity e {
+  Shape e {
     style { shape: pill; strokeStyle: double; strokeWidth: 3 }
     layout { position: 0, 0; size: ${width}, ${height} }
   }
