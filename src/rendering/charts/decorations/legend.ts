@@ -41,10 +41,13 @@ function legendSeries(chart: Chart): ChartSeries[] {
     : chart.series;
 }
 
+export const LEGEND_ROW_HEIGHT = 22;
+
+export function isStackedLegendPosition(position: Chart['legend_position']): boolean {
+  return position === 'bottomLeft' || position === 'bottomRight';
+}
+
 function legendStartX(chart: Chart, plot: ChartLegendRender['plot'], totalWidth: number): number {
-  if (chart.legend_position === 'bottomLeft') {
-    return plot.x;
-  }
   if (chart.legend_position === 'bottom') {
     return plot.x + (plot.width - totalWidth) / 2;
   }
@@ -55,7 +58,24 @@ function legendY(chart: Chart, plot: ChartLegendRender['plot']): number {
   return (chart.legend_position ?? 'top') === 'top' ? chart.y + 16 : plot.y + plot.height + 16;
 }
 
-function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
+function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] {
+  const { chart, plot, order } = render;
+  const series = legendSeries(chart);
+  const widths = series.map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+  const maxWidth = Math.max(...widths);
+  const x = chart.legend_position === 'bottomLeft' ? plot.x : plot.x + plot.width - maxWidth;
+  const startY = plot.y + plot.height + 16;
+  return series.map((item, seriesIndex) => ({
+    series: item,
+    seriesIndex,
+    x,
+    y: startY + seriesIndex * LEGEND_ROW_HEIGHT,
+    width: widths[seriesIndex],
+    order: order + (series.length - 1 - seriesIndex) * 2,
+  }));
+}
+
+function createRowLegendItems(render: ChartLegendRender): ChartLegendItem[] {
   const { chart, plot, order } = render;
   const series = legendSeries(chart);
   const widths = series.map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
@@ -68,6 +88,12 @@ function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
     x += width;
     return { series: item, seriesIndex, x: itemX, y, width, order: order + (series.length - 1 - seriesIndex) * 2 };
   });
+}
+
+function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
+  return isStackedLegendPosition(render.chart.legend_position)
+    ? createStackedLegendItems(render)
+    : createRowLegendItems(render);
 }
 
 function renderLegendItem(render: ChartLegendRender, item: ChartLegendItem): RenderNode[] {
