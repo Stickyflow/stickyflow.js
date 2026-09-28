@@ -1,6 +1,6 @@
 import type { ChartValueChangeEvent } from '../../events';
 import { round1 } from '../format';
-import { findChildBlock, findDirectProperty, findOwnerBlock, VALID_IDENT } from '../scanner';
+import { findContentChild, findDirectProperty, findOwnerBlock, VALID_IDENT } from '../scanner';
 import { replaceListElement } from './listElement';
 
 function replaceChartValue(current: string, value: number): string {
@@ -19,7 +19,12 @@ export function applyChartValueChange(sfl: string, event: ChartValueChangeEvent)
     return sfl;
   }
 
-  const series = findChildBlock(lines, chart, new RegExp(`^\\s*Series\\s+${event.series}\\b`));
+  const series = findContentChild(
+    lines,
+    chart,
+    new RegExp(`^\\s*Series\\s+${event.series}\\b`),
+    new RegExp(`^\\s*${event.series}\\s*(?::[^{]*)?\\{`),
+  );
   if (!series) {
     return sfl;
   }

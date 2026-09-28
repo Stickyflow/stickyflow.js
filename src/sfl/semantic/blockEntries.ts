@@ -37,3 +37,29 @@ export function layoutProperties(block: SflBlock): Map<string, SflValue> {
 export function childBlocks(block: SflBlock): SflBlock[] {
   return block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
 }
+
+function dataEntryBlock(block: SflBlock): SflBlock | undefined {
+  for (const entry of block.entries) {
+    if (entry.type === 'data') {
+      return entry.data;
+    }
+  }
+  return undefined;
+}
+
+// A Chart's Axis/Series/Rule children may sit directly on the Chart block
+// (the older, flat form) or inside its data{} - both stay valid forever, so
+// callers look in both places rather than picking one.
+export function contentChildren(block: SflBlock): SflBlock[] {
+  const data = dataEntryBlock(block);
+  return data ? [...childBlocks(block), ...childBlocks(data)] : childBlocks(block);
+}
+
+export function contentProperty(block: SflBlock, key: string): SflValue | undefined {
+  const direct = directProperties(block).get(key);
+  if (direct !== undefined) {
+    return direct;
+  }
+  const data = dataEntryBlock(block);
+  return data ? directProperties(data).get(key) : undefined;
+}

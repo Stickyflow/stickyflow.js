@@ -1,4 +1,4 @@
-import { findChildBlock, type LineRange } from './blocks';
+import { findContentChild, type LineRange } from './blocks';
 
 const BLOCK_SEGMENT = /^([A-Za-z_][A-Za-z0-9_]*)(?:\[([A-Za-z_][A-Za-z0-9_]*)\])?$/;
 const PROPERTY_SEGMENT = /^([A-Za-z_][A-Za-z0-9_]*)((?:\[\d+\])*)$/;
@@ -61,7 +61,7 @@ function parsePropertySegment(segment: string): PropertySegment | null {
 export function resolveBlocks(lines: string[], owner: LineRange, blocks: readonly BlockSegment[]): LineRange | null {
   let range = owner;
   for (const block of blocks) {
-    const next = findChildBlock(lines, range, blockHeader(block));
+    const next = findContentChild(lines, range, blockHeader(block), bareSeriesHeader(block));
     if (next === null) {
       return null;
     }
@@ -74,4 +74,12 @@ function blockHeader(block: BlockSegment): RegExp {
   return block.id === undefined
     ? new RegExp(`^\\s*${block.name}\\s*(?::[^{]*)?\\{`)
     : new RegExp(`^\\s*${block.name}\\s+${block.id}\\s*(?::[^{]*)?\\{`);
+}
+
+// Inside data{}, `Series` may be dropped entirely (`online { ... }`) - only
+// a Series can take that shorthand, so this only fires for that segment.
+function bareSeriesHeader(block: BlockSegment): RegExp | undefined {
+  return block.name === 'Series' && block.id !== undefined
+    ? new RegExp(`^\\s*${block.id}\\s*(?::[^{]*)?\\{`)
+    : undefined;
 }

@@ -34,7 +34,12 @@ export class BlockParser {
     return composition;
   }
 
-  private parseEntries(): SflEntry[] {
+  // `bareBlocksAreSeries` only applies to the entries directly inside a
+  // data{} block, never to entries of blocks nested within it (Axis/Series/
+  // Rule parse their own bodies via parseBlock(), which always calls this
+  // with the default false) - so `Axis x { ... }`'s own properties are never
+  // mistaken for series.
+  private parseEntries(bareBlocksAreSeries = false): SflEntry[] {
     this.cursor.skipNewlines();
     this.cursor.expect('lbrace', "'{'");
     const entries: SflEntry[] = [];
@@ -44,7 +49,7 @@ export class BlockParser {
         const token = this.cursor.peek();
         throw new SflParseError('unterminated block (missing "}")', token.line, token.col);
       }
-      entries.push(this.parseEntry());
+      entries.push(this.parseEntry(bareBlocksAreSeries));
       if (this.cursor.at('semi')) {
         this.cursor.next();
       }
@@ -54,7 +59,7 @@ export class BlockParser {
     return entries;
   }
 
-  private parseEntry(): SflEntry {
+  private parseEntry(bareBlocksAreSeries: boolean): SflEntry {
     const token = this.cursor.peek();
     if (token.type !== 'ident') {
       throw new SflParseError(
@@ -72,6 +77,51 @@ export class BlockParser {
     if (token.value === 'style' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'style', style: this.properties.parseStyle() };
     }
+    if (token.value === 'data' && this.cursor.peek(1).type === 'lbrace') {
+      return { type: 'data', data: this.parseDataBlock() };
+    }
+    if (bareBlocksAreSeries && !isBlockKind(token.value) && this.looksLikeBareSeries()) {
+      return { type: 'block', block: this.parseBareSeries() };
+    }
     return { type: 'property', property: this.properties.parseProperty() };
+  }
+
+  private parseDataBlock(): SflBlock {
+    this.cursor.next(); // consume 'data'
+    return { kind: 'data', name: '', composition: [], entries: this.parseEntries(true) };
+  }
+
+  // Inside data{}, a name with no Kind in front of it is shorthand for
+  // `Series name { ... }`. Disambiguated from an ordinary `key: value`
+  // property by scanning past an optional `: ref & ref2` composition chain
+  // (property values never contain '&') and checking whether a '{' follows -
+  // a bare identifier value (e.g. `fill: none`) never does.
+  private looksLikeBareSeries(): boolean {
+    if (this.cursor.peek(1).type === 'lbrace') {
+      return true;
+    }
+    if (this.cursor.peek(1).type !== 'colon') {
+      return false;
+    }
+    let offset = 2;
+    if (this.cursor.peek(offset).type !== 'ident') {
+      return false;
+    }
+    offset++;
+    while (this.cursor.peek(offset).type === 'amp') {
+      offset++;
+      if (this.cursor.peek(offset).type !== 'ident') {
+        return false;
+      }
+      offset++;
+    }
+    return this.cursor.peek(offset).type === 'lbrace';
+  }
+
+  private parseBareSeries(): SflBlock {
+    const name = this.cursor.expect('ident', 'series name');
+    const composition = this.parseComposition();
+    const entries = this.parseEntries();
+    return { kind: 'Series', name: name.value, composition, entries };
   }
 }

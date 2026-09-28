@@ -1,6 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
+import type { ResolvedShadow } from '../../primitives';
 import {
   CHART_COLORS,
   gapInsetAngle,
@@ -81,6 +82,24 @@ function fullCirclePath(cx: number, cy: number, r: number): string {
   return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
 }
 
+// With a gap between slices, the outward shadow's own blur/offset can reach
+// past the visible slice edge into that empty gap - there's no neighboring
+// color there to receive it, so it reads as a stray gray smudge rather than
+// a shadow. Keep both proportional to the gap so it stays inside it (same
+// idea as radialBar's ringShadow clamp). No gap means no empty space to leak
+// into, so the shadow is left at its full configured size.
+function pieOuterShadow(shadow: ResolvedShadow, gapPx: number): ResolvedShadow {
+  if (gapPx <= 0) {
+    return shadow;
+  }
+  const halfGap = gapPx / 2;
+  const blur = Math.min(shadow.blur, halfGap * 2);
+  const maxDistance = halfGap;
+  const distance = Math.hypot(shadow.dx, shadow.dy);
+  const scale = distance > maxDistance ? maxDistance / distance : 1;
+  return { ...shadow, blur, dx: shadow.dx * scale, dy: shadow.dy * scale };
+}
+
 function createSliceNodes(
   context: ChartRenderContext,
   geometry: PieGeometry,
@@ -120,7 +139,7 @@ function createSliceNodes(
         style: {
           fill,
           ...strokeStyle,
-          shadow,
+          shadow: pieOuterShadow(shadow, gapPx),
           clip: { type: 'path', d: fullCirclePath(geometry.centerX, geometry.centerY, geometry.outerRadius) },
         },
       }

@@ -4,6 +4,11 @@ import { escapeSflString, indentOf } from '../format';
 import { findDirectProperty, findOwnerBlock, type PropertySpan, parsePropertyPath, resolveBlocks } from '../scanner';
 import { growListElement, replaceListElement } from './listElement';
 
+// A block's own nested style{} sits one level deeper than its direct
+// properties. A Series (or any leaf block resolved down to by path.blocks)
+// only ever nests a style{}, never another block, so depth 2 is unambiguous.
+const NESTED_STYLE_DEPTH = 2;
+
 export function applyPropertyChange(sfl: string, event: PropertyChangeEvent): string {
   const path = parsePropertyPath(event.path);
   if (path === null || !isWritableValue(event.value)) {
@@ -21,7 +26,13 @@ export function applyPropertyChange(sfl: string, event: PropertyChangeEvent): st
     return sfl;
   }
 
-  const span = findDirectProperty(lines, range, path.property.name);
+  // A property already living in the block's own nested style{} (e.g. a
+  // Series' color) must be edited in place there, not re-inserted as a new
+  // direct property - a direct property never wins the merge over the
+  // block's own style{}, so the edit would silently have no visible effect.
+  const span =
+    findDirectProperty(lines, range, path.property.name, NESTED_STYLE_DEPTH) ??
+    findDirectProperty(lines, range, path.property.name);
   if (span === null) {
     const indent = `${indentOf(lines[range.start])}    `;
     if (path.property.indices.length === 1) {

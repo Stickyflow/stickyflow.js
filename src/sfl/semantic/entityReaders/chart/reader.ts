@@ -1,6 +1,6 @@
 import { isChartType } from '../../../../model/charts';
 import type { SflBlock } from '../../../ast';
-import { childBlocks } from '../../blockEntries';
+import { contentChildren, contentProperty } from '../../blockEntries';
 import { asNumber, asString } from '../../valueAccess';
 import { readAxis } from './axis';
 import { readChartRules } from './rules';
@@ -27,12 +27,12 @@ export function readChart(
   symbolDefs: SymbolDefinitions,
   mergedProps: (block: SflBlock) => ChartProperties,
 ): ChartData {
-  const children = childBlocks(block);
+  const children = contentChildren(block);
   const axes = children.filter(child => child.kind === 'Axis');
   const stacked = asString(properties.get('stacked'));
   return {
     chartType: asChartType(asString(properties.get('type'))),
-    categories: stringList(properties.get('categories')),
+    categories: stringList(contentProperty(block, 'categories')),
     areaOpacity: asNumber(properties.get('areaOpacity')),
     stacked: asStackedMode(stacked),
     scale: asString(properties.get('scale')),

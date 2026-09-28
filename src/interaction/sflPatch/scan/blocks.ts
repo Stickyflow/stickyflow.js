@@ -60,6 +60,30 @@ export function findChildBlock(lines: string[], range: LineRange, headerRe: RegE
   return null;
 }
 
+const DATA_BLOCK_HEADER = /^\s*data\s*\{/;
+
+// Axis/Series/Rule may sit directly on the Chart block (older, flat form) or
+// inside its data{} - try the direct spot first, then look one level deeper.
+// A Series may additionally drop the `Series` keyword entirely inside data{}
+// (`online { ... }` instead of `Series online { ... }`) - bareHeaderRe, when
+// given, is tried last for that shorthand.
+export function findContentChild(
+  lines: string[],
+  range: LineRange,
+  headerRe: RegExp,
+  bareHeaderRe?: RegExp,
+): LineRange | null {
+  const direct = findChildBlock(lines, range, headerRe);
+  if (direct !== null) {
+    return direct;
+  }
+  const data = findChildBlock(lines, range, DATA_BLOCK_HEADER);
+  if (!data) {
+    return null;
+  }
+  return findChildBlock(lines, data, headerRe) ?? (bareHeaderRe ? findChildBlock(lines, data, bareHeaderRe) : null);
+}
+
 export function findFirstBlockOfKind(lines: string[], kind: string): LineRange | null {
   const masked = maskLines(lines);
   if (masked === null) {

@@ -1,11 +1,11 @@
 import type { SflBlock } from '../../../ast';
-import { childBlocks, directProperties } from '../../blockEntries';
+import { contentChildren, directProperties } from '../../blockEntries';
 import { asNumber, asString } from '../../valueAccess';
 import type { ChartData } from './types';
 import { numberList } from './values';
 
 export function readChartRules(block: SflBlock): ChartData['rules'] {
-  return childBlocks(block)
+  return contentChildren(block)
     .filter(child => child.kind === 'Rule')
     .map(rule => {
       const properties = directProperties(rule);
