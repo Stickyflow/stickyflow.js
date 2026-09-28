@@ -52,6 +52,7 @@ export function chartObject(e: SflEntityOut) {
       ...s,
       color: decodeColor(s.color),
       colors: s.colors?.map(c => (c === null ? null : (decodeColor(c) ?? null))),
+      stroke_width: s.strokeWidth,
     })),
     rules: (e.chart?.rules ?? []).map(r => ({
       id: r.id,

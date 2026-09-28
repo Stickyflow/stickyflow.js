@@ -72,6 +72,6 @@ export function resolveBlocks(lines: string[], owner: LineRange, blocks: readonl
 
 function blockHeader(block: BlockSegment): RegExp {
   return block.id === undefined
-    ? new RegExp(`^\\s*${block.name}\\s*\\{`)
-    : new RegExp(`^\\s*${block.name}\\s+${block.id}\\s*\\{`);
+    ? new RegExp(`^\\s*${block.name}\\s*(?::[^{]*)?\\{`)
+    : new RegExp(`^\\s*${block.name}\\s+${block.id}\\s*(?::[^{]*)?\\{`);
 }

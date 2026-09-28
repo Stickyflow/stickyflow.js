@@ -46,6 +46,6 @@ export function buildEntity(
     table: readTable(block, properties, layoutProp, presentation),
     swimlane: readSwimlane(properties),
     path: readPath(properties, origin),
-    chart: readChart(block, properties, symbolDefs),
+    chart: readChart(block, properties, symbolDefs, mergedProps),
   };
 }

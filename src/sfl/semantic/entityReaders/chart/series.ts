@@ -1,13 +1,16 @@
 import type { SflBlock } from '../../../ast';
-import { directProperties } from '../../blockEntries';
 import { asNumber, asString } from '../../valueAccess';
 import { readSeriesColors, readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
-import type { ChartSeries } from './types';
+import type { ChartProperties, ChartSeries } from './types';
 
 type SymbolDefinitions = Map<string, { points: Array<[number, number]>; tension?: number }>;
 
-export function readSeries(block: SflBlock, symbolDefs: SymbolDefinitions): ChartSeries {
-  const properties = directProperties(block);
+export function readSeries(
+  block: SflBlock,
+  symbolDefs: SymbolDefinitions,
+  mergedProps: (block: SflBlock) => ChartProperties,
+): ChartSeries {
+  const properties = mergedProps(block);
   return {
     id: block.name,
     label: asString(properties.get('label')) ?? block.name,
