@@ -44,6 +44,7 @@ export function createLineAreaFill(
         ],
       },
       stroke: { kind: 'none' },
+      pointerEvents: 'none',
     },
   };
 }

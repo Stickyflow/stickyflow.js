@@ -9,7 +9,7 @@ export function createLinePath(
   context: ChartRenderContext,
   series: ChartSeries,
   points: CartesianPoint[],
-  color: NonNullable<ChartSeries['color']>,
+  color: string,
   tension: number,
 ): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;

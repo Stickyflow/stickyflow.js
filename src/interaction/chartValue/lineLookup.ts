@@ -1,8 +1,15 @@
 export function findConnectedLine(svg: SVGSVGElement, ownerId: string, series: string): SVGGraphicsElement | null {
   const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(series)}"]`;
   return (
-    [...svg.querySelectorAll<SVGGraphicsElement>(selector)].find(el => el.tagName.toLowerCase() === 'path') ?? null
+    [...svg.querySelectorAll<SVGGraphicsElement>(selector)].find(
+      el => el.tagName.toLowerCase() === 'path' && !el.id.includes('chart-line-area-'),
+    ) ?? null
   );
+}
+
+export function findConnectedLineArea(svg: SVGSVGElement, ownerId: string, series: string): SVGGraphicsElement | null {
+  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-series="${CSS.escape(series)}"]`;
+  return [...svg.querySelectorAll<SVGGraphicsElement>(selector)].find(el => el.id.includes('chart-line-area-')) ?? null;
 }
 
 export function findSeriesPoints(svg: SVGSVGElement, ownerId: string, series: string): SVGGraphicsElement[] {

@@ -1,7 +1,7 @@
 import type { Chart, ChartSeries } from '../../../model/charts';
 import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
-import { CHART_COLORS, chartText } from '../primitives';
+import { CHART_COLORS, chartText, representativeColor } from '../primitives';
 import { seriesColorProp, seriesLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
@@ -115,7 +115,9 @@ function renderLegendItem(render: ChartLegendRender, item: ChartLegendItem): Ren
 
 function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): RenderNode {
   const { chart, bounds, diagnostics } = render;
-  const color = item.series.color ?? CHART_COLORS[item.seriesIndex % CHART_COLORS.length];
+  const fallback = CHART_COLORS[item.seriesIndex % CHART_COLORS.length];
+  const solidOnly = chart.chart_type === 'line';
+  const color = solidOnly ? representativeColor(item.series.color, fallback) : (item.series.color ?? fallback);
   return {
     type: 'rect',
     id: `chart-legend-swatch-${chart.id}-${item.series.id}`,
@@ -128,6 +130,7 @@ function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): R
     rx: 3,
     prop: seriesColorProp(item.series.id),
     propKind: 'color',
+    propSolidOnly: solidOnly,
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }

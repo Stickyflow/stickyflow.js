@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
-import { createVerticalErrorWhiskerNode, errorBarRange, mapChartValue, representativeColor } from '../../primitives';
+import { createVerticalErrorWhiskerNode, errorBarRange, mapChartValue } from '../../primitives';
 import type { CartesianPoint } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
 
@@ -11,14 +11,14 @@ export interface LinePointMark {
   value: number;
   error: number | [number, number] | null | undefined;
   position: CartesianPoint;
-  color: NonNullable<ChartSeries['color']>;
+  color: string;
 }
 
 export function createLinePointMarks(
   series: ChartSeries,
   pairs: [number, number][],
   points: CartesianPoint[],
-  color: NonNullable<ChartSeries['color']>,
+  color: string,
 ): LinePointMark[] {
   return points.map((position, valueIndex) => ({
     seriesId: series.id,
@@ -59,7 +59,7 @@ function createLineError(context: ChartRenderContext, mark: LinePointMark): Rend
       startY: plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
       endY: plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
     },
-    color: representativeColor(mark.color, '#0f172a'),
+    color: mark.color,
     valueReference: { seriesId: mark.seriesId, valueIndex: mark.valueIndex },
   });
 }
