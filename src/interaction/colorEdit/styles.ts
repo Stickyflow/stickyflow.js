@@ -71,6 +71,10 @@ export const COLOR_PICKER_CSS = `
   background: var(--sf-cp-tabs-bg);
 }
 
+.sf-cp-tabs[hidden] {
+  display: none;
+}
+
 .sf-cp-tab {
   flex: 1;
   padding: 5px 12px;
@@ -245,6 +249,10 @@ export const COLOR_PICKER_CSS = `
   gap: 10px;
   padding-top: 12px;
   border-top: 1px solid var(--sf-cp-border);
+}
+
+.sf-cp-section[hidden] {
+  display: none;
 }
 
 .sf-cp-preview {
