@@ -34,11 +34,6 @@ export class BlockParser {
     return composition;
   }
 
-  // `bareBlocksAreSeries` only applies to the entries directly inside a
-  // data{} block, never to entries of blocks nested within it (Axis/Series/
-  // Rule parse their own bodies via parseBlock(), which always calls this
-  // with the default false) - so `Axis x { ... }`'s own properties are never
-  // mistaken for series.
   private parseEntries(bareBlocksAreSeries = false): SflEntry[] {
     this.cursor.skipNewlines();
     this.cursor.expect('lbrace', "'{'");
@@ -87,15 +82,10 @@ export class BlockParser {
   }
 
   private parseDataBlock(): SflBlock {
-    this.cursor.next(); // consume 'data'
+    this.cursor.next();
     return { kind: 'data', name: '', composition: [], entries: this.parseEntries(true) };
   }
 
-  // Inside data{}, a name with no Kind in front of it is shorthand for
-  // `Series name { ... }`. Disambiguated from an ordinary `key: value`
-  // property by scanning past an optional `: ref & ref2` composition chain
-  // (property values never contain '&') and checking whether a '{' follows -
-  // a bare identifier value (e.g. `fill: none`) never does.
   private looksLikeBareSeries(): boolean {
     if (this.cursor.peek(1).type === 'lbrace') {
       return true;

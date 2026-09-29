@@ -76,8 +76,6 @@ function blockHeader(block: BlockSegment): RegExp {
     : new RegExp(`^\\s*${block.name}\\s+${block.id}\\s*(?::[^{]*)?\\{`);
 }
 
-// Inside data{}, `Series` may be dropped entirely (`online { ... }`) - only
-// a Series can take that shorthand, so this only fires for that segment.
 function bareSeriesHeader(block: BlockSegment): RegExp | undefined {
   return block.name === 'Series' && block.id !== undefined
     ? new RegExp(`^\\s*${block.id}\\s*(?::[^{]*)?\\{`)

@@ -102,10 +102,6 @@ function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number, kinds:
   return blocks.join('\n');
 }
 
-// `data { }` has no Kind/name/composition header of its own - it's a bare
-// keyword wrapping a normal block body (properties and nested Axis/Series/
-// Rule blocks), so it reuses the same body machinery as emitBlock() rather
-// than needing its own recursive emitter.
 function emitDataBlock(data: SflBlock, depth: number, kinds: Map<string, BlockKind>): string {
   const pad = INDENT.repeat(depth);
   const entries = collectBlockEntries(data);

@@ -34,10 +34,6 @@ function arcSegmentPath(cx: number, cy: number, r: number, from: number, to: num
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${to - from > Math.PI ? 1 : 0} 1 ${end.x} ${end.y}`;
 }
 
-// A blur/offset sized for a whole slice or bar washes a thin ring's stroke out into a flat,
-// banded haze instead of a crisp edge - keep both proportional to the ring's own thickness so
-// the shadow reads as shading on the ring, not a blown-out blob (same idea as clamping a
-// corner radius to the shape it rounds).
 function ringShadow(shadow: ResolvedShadow, ringThickness: number): ResolvedShadow {
   const blur = Math.min(shadow.blur, ringThickness * 0.6);
   const maxDistance = ringThickness * 0.4;
@@ -98,10 +94,6 @@ export function renderRadialBar(context: ChartRenderContext): RenderNode[] {
     const progressPath = ringProgressPath(centerX, centerY, radius, sweep);
     const clampedShadow = shadow ? ringShadow(shadow, ringThickness) : undefined;
 
-    // Shadow only where the ring ends: a short stub of the arc at each end sits behind the
-    // ring and casts its shadow onto this ring's own track. Clipped to that track's band, the
-    // only part left visible is what falls past the rounded tip along the track - nothing
-    // along the ring's length. A full circle has no ends, so it casts none.
     const isFullCircle = sweep >= Math.PI * 2 - FULL_SWEEP_EPSILON;
     const stubSweep = Math.min(sweep, ringThickness / radius);
     const casters: RenderNode[] =

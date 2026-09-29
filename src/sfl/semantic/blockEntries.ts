@@ -47,9 +47,6 @@ function dataEntryBlock(block: SflBlock): SflBlock | undefined {
   return undefined;
 }
 
-// A Chart's Axis/Series/Rule children may sit directly on the Chart block
-// (the older, flat form) or inside its data{} - both stay valid forever, so
-// callers look in both places rather than picking one.
 export function contentChildren(block: SflBlock): SflBlock[] {
   const data = dataEntryBlock(block);
   return data ? [...childBlocks(block), ...childBlocks(data)] : childBlocks(block);

@@ -32,13 +32,6 @@ export function collectUnsupportedChartTypes(doc: SflDocument): SflDiagnostic[] 
   return diagnostics;
 }
 
-// Inside data{}, a name with no Kind in front of it is read as a Series -
-// so a missing/mistyped `Axis`/`Rule` keyword doesn't fail to parse, it
-// silently becomes an empty Series instead. Any Series without `values` is
-// almost certainly one of those two (a real series always has values), so
-// this catches the mistake without needing to know whether the block was
-// written as `Series name { }` or the bare `name { }` shorthand - the AST
-// doesn't keep that distinction once parsed, and doesn't need to.
 export function collectEmptySeries(doc: SflDocument): SflDiagnostic[] {
   const diagnostics: SflDiagnostic[] = [];
 

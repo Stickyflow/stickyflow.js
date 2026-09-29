@@ -41,10 +41,6 @@ function outerShadowPrimitives(shadow: NonNullable<SceneStyle['shadow']>): strin
   return `<feDropShadow dx="${num(shadow.dx)}" dy="${num(shadow.dy)}" stdDeviation="${num(shadow.blur / 2)}" flood-color="${xml(shadow.color)}" flood-opacity="${num(shadow.opacity)}"/>`;
 }
 
-// Inset shadow: invert the source's alpha, blur + offset it, flood-fill with the
-// shadow color, then clip twice - once to that blurred halo and once back to the
-// source's own silhouette - so the shadow reads inward from the shape's own edges
-// instead of bleeding into the (200%-padded) filter region around it.
 function innerShadowPrimitives(shadow: NonNullable<SceneStyle['shadow']>): string {
   return [
     '<feComponentTransfer in="SourceAlpha" result="sf-inverted-alpha">',

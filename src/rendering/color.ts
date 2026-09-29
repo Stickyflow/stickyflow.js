@@ -13,6 +13,16 @@ function hexToRgb(hex: string | undefined): [number, number, number] | undefined
   return [red, green, blue].some(channel => Number.isNaN(channel)) ? undefined : [red, green, blue];
 }
 
+export function colorWithAlpha(hex: string | undefined, alpha: number): string {
+  const rgb = hexToRgb(hex);
+  const clamped = Math.max(0, Math.min(1, alpha));
+  if (!rgb) {
+    return clamped <= 0 ? 'transparent' : (hex ?? 'transparent');
+  }
+  const [red, green, blue] = rgb;
+  return `rgba(${red}, ${green}, ${blue}, ${clamped})`;
+}
+
 function rgbToHex(red: number, green: number, blue: number): string {
   const channel = (value: number) =>
     Math.round(Math.max(0, Math.min(255, value)))
@@ -113,9 +123,6 @@ export function contrastTextColor(hex: string | undefined): string {
   return ratio >= SAME_HUE_MIN_CONTRAST ? rgbToHex(...variant) : fallback;
 }
 
-// Same lightness targeting as contrastTextColor, but never falls back to plain
-// white/black : a slice's inline label always stays in the slice's own hue,
-// even if that undercuts the usual minimum contrast ratio.
 export function sameHueContrastColor(hex: string | undefined, fallback: string): string {
   const rgb = hexToRgb(hex);
   if (!rgb) {

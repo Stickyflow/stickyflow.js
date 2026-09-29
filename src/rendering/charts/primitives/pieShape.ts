@@ -146,9 +146,6 @@ export function maxPieCornerRadius(outerRadius: number, innerRadius: number, swe
   return Math.max(0, Math.min(outerLimit, innerLimit, ringLimit));
 }
 
-// Apex slices meet at a point (or a gap-carved apex), not a rounded inner arc, so the
-// fillet only needs `lineTangent` to stay outside that apex: R <= (outer^2 - apex^2) / (2*outer).
-// maxPieCornerRadius's ringLimit assumes a two-sided-filleted ring and is too conservative here.
 export function maxApexCornerRadius(outerRadius: number, apexRadius: number, sweep: number): number {
   const halfSweep = Math.min(Math.abs(sweep) / 2, Math.PI / 2);
   const angleFactor = Math.sin(halfSweep * CORNER_ANGLE_HEADROOM);

@@ -34,8 +34,6 @@ export function decorations(chart: Chart): ChartLayout {
   const legendAtTop = legendPosition === 'top';
   const hasLegendItems = showLegend && chart.series.length > 0;
   const legendStacked = hasLegendItems && isStackedLegendPosition(legendPosition);
-  // bottomLeft/bottomRight sit beside the plot as a column, not below it -
-  // they reserve horizontal space instead of a padBottom band.
   const sideColumnWidth = legendStacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0;
 
   const padLeft =

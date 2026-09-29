@@ -77,11 +77,7 @@ function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] 
     chart.legend_position === 'bottomLeft'
       ? plot.x - LEGEND_COLUMN_GAP - maxWidth
       : plot.x + plot.width + LEGEND_COLUMN_GAP;
-  // Mirrors 'top', which sits chart.y + 16 from the chart's own top edge -
-  // the bottom-most row sits the same 16px in from the chart's own bottom
-  // edge (not the plot's, which is pulled up by axis-label padding this
-  // chart type may not even draw). Earlier items stack upward from there.
-  const lastY = chart.y + chart.height - 26;
+  const lastY = plot.y + plot.height - 15;
   return series.map((item, seriesIndex) => ({
     series: item,
     seriesIndex,
