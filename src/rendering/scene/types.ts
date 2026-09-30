@@ -93,6 +93,7 @@ export interface SceneBase {
   prop?: string;
   propKind?: 'value' | 'color';
   propSolidOnly?: boolean;
+  zoneGradient?: { axis: 'x' | 'y'; min: number; max: number };
 }
 
 export interface SceneRect extends SceneBase {

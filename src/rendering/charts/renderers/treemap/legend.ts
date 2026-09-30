@@ -51,38 +51,13 @@ function renderBottomLegend(context: ChartRenderContext, layout: TreemapLayout):
     width: barWidth,
     height: BAR_THICKNESS,
     rx: 3,
+    zoneGradient: { axis: 'y', min: chart.axis_y.min, max: chart.axis_y.max },
     style: {
       fill: stops.length ? { kind: 'linear-gradient', angle: 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: 1,
     },
   };
-
-  const swatches: RenderNode[] = layout.zones.flatMap((_zone, index) => {
-    const start = layout.bands[index];
-    const end = layout.bands[index + 1];
-    if (start === undefined || end === undefined) {
-      return [];
-    }
-    const x = barX + bandRatio(layout, start) * barWidth;
-    const width = Math.max(1, (bandRatio(layout, end) - bandRatio(layout, start)) * barWidth);
-    return [
-      {
-        type: 'rect' as const,
-        id: `chart-treemap-legend-swatch-${chart.id}-${index}`,
-        order: nextOrder(),
-        bounds: barBounds,
-        x,
-        y: barY,
-        width,
-        height: BAR_THICKNESS,
-        prop: `zones[${index}][1]`,
-        propKind: 'color' as const,
-        propSolidOnly: true,
-        style: { fill: { kind: 'solid' as const, color: 'transparent' } },
-      },
-    ];
-  });
 
   const ticks: RenderNode[] = layout.bands.flatMap((value, index) => {
     const x = barX + bandRatio(layout, value) * barWidth;
@@ -114,7 +89,7 @@ function renderBottomLegend(context: ChartRenderContext, layout: TreemapLayout):
     return [tick, label];
   });
 
-  return [bar, ...swatches, ...ticks];
+  return [bar, ...ticks];
 }
 
 function renderSideLegend(context: ChartRenderContext, layout: TreemapLayout): RenderNode[] {
@@ -136,38 +111,13 @@ function renderSideLegend(context: ChartRenderContext, layout: TreemapLayout): R
     width: BAR_THICKNESS,
     height: barHeight,
     rx: 3,
+    zoneGradient: { axis: 'y', min: chart.axis_y.min, max: chart.axis_y.max },
     style: {
       fill: stops.length ? { kind: 'linear-gradient', angle: 270, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: 1,
     },
   };
-
-  const swatches: RenderNode[] = layout.zones.flatMap((_zone, index) => {
-    const start = layout.bands[index];
-    const end = layout.bands[index + 1];
-    if (start === undefined || end === undefined) {
-      return [];
-    }
-    const y = barTop + (1 - bandRatio(layout, end)) * barHeight;
-    const height = Math.max(1, (bandRatio(layout, end) - bandRatio(layout, start)) * barHeight);
-    return [
-      {
-        type: 'rect' as const,
-        id: `chart-treemap-legend-swatch-${chart.id}-${index}`,
-        order: nextOrder(),
-        bounds: barBounds,
-        x: barX,
-        y,
-        width: BAR_THICKNESS,
-        height,
-        prop: `zones[${index}][1]`,
-        propKind: 'color' as const,
-        propSolidOnly: true,
-        style: { fill: { kind: 'solid' as const, color: 'transparent' } },
-      },
-    ];
-  });
 
   const tickX = side === 'left' ? barX : barX + BAR_THICKNESS;
   const tickEndX = side === 'left' ? tickX - TICK_LENGTH : tickX + TICK_LENGTH;
@@ -199,5 +149,5 @@ function renderSideLegend(context: ChartRenderContext, layout: TreemapLayout): R
     return [tick, label];
   });
 
-  return [bar, ...swatches, ...ticks];
+  return [bar, ...ticks];
 }

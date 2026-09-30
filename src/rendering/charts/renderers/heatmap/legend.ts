@@ -21,45 +21,8 @@ export function renderHeatmapLegend(context: ChartRenderContext, layout: Heatmap
 
   return [
     createGradientBar(context, layout, barX, barY, barWidth, barBounds),
-    ...createZoneColorTargets(context, layout, barX, barY, barWidth, barBounds),
     ...createBoundaryTicks(context, layout, barX, barY, barWidth, labelHeight),
   ];
-}
-
-function createZoneColorTargets(
-  context: ChartRenderContext,
-  layout: HeatmapLayout,
-  barX: number,
-  barY: number,
-  barWidth: number,
-  barBounds: RenderNode['bounds'],
-): RenderNode[] {
-  const { chart, nextOrder } = context;
-  return layout.zones.flatMap((_zone, index) => {
-    const start = layout.bands[index];
-    const end = layout.bands[index + 1];
-    if (start === undefined || end === undefined) {
-      return [];
-    }
-    const x = barX + bandRatio(layout, start) * barWidth;
-    const width = Math.max(1, (bandRatio(layout, end) - bandRatio(layout, start)) * barWidth);
-    return [
-      {
-        type: 'rect' as const,
-        id: `chart-heatmap-legend-swatch-${chart.id}-${index}`,
-        order: nextOrder(),
-        bounds: barBounds,
-        x,
-        y: barY,
-        width,
-        height: BAR_HEIGHT,
-        prop: `zones[${index}][1]`,
-        propKind: 'color' as const,
-        propSolidOnly: true,
-        style: { fill: { kind: 'solid' as const, color: 'transparent' } },
-      },
-    ];
-  });
 }
 
 function bandRatio(layout: HeatmapLayout, value: number): number {
@@ -93,6 +56,7 @@ function createGradientBar(
     width: barWidth,
     height: BAR_HEIGHT,
     rx: 3,
+    zoneGradient: { axis: 'y', min: chart.axis_y.min, max: chart.axis_y.max },
     style: {
       fill: stops.length ? { kind: 'linear-gradient', angle: 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },

@@ -197,17 +197,12 @@ describe('Heatmap chart', () => {
     expect(svg).not.toContain('chart-y-tick-');
   });
 
-  it('exposes one invisible, independently color-editable target per zone over the bar', () => {
+  it('exposes the whole gradient bar as one color-editable target, not per-zone swatches', () => {
     const { svg } = render(HEATMAP_SFL);
-    const targets = [...svg.matchAll(/<rect id="[^"]*chart-heatmap-legend-swatch-activity-(\d)"[^>]*>/g)];
-    expect(targets).toHaveLength(3);
-    targets.forEach((match, index) => {
-      expect(match[0]).toContain(`data-sf-prop="zones[${index}][1]"`);
-      expect(match[0]).toContain('data-sf-prop-kind="color"');
-      // transparent, not "none" - a `none` fill isn't hit-tested by SVG, so
-      // clicking the bar wouldn't reach a target at all.
-      expect(match[0]).toContain('fill="transparent"');
-    });
+    expect(svg).not.toContain('chart-heatmap-legend-swatch-');
+    const bar = svg.match(/<rect id="[^"]*chart-heatmap-legend-bar-activity"[^>]*>/)?.[0];
+    expect(bar).toBeDefined();
+    expect(bar).toContain('data-sf-zone-gradient="true"');
   });
 
   it('round-trips a click-to-recolor edit through the source and back into the render', () => {

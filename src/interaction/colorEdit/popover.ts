@@ -16,6 +16,7 @@ export interface ColorPopoverOptions {
   anchor: { left: number; top: number; width: number; height: number };
   theme?: ColorPickerTheme;
   allowGradient?: boolean;
+  lockStops?: boolean;
   onCommit(value: string): void;
   onReset?(): void;
 }
@@ -101,6 +102,7 @@ interface StopRow {
 export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHandle {
   const { seed, anchor, onCommit, onReset } = options;
   const allowGradient = options.allowGradient ?? true;
+  const lockStops = options.lockStops ?? false;
   ensureColorPickerStyles(document);
 
   let mode: PickerValue['mode'] = allowGradient ? seed.mode : 'solid';
@@ -144,6 +146,7 @@ export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHand
   const section = el('div', 'sf-cp-section', root);
   const preview = el('div', 'sf-cp-preview', section);
   const angleRow = labelledRow(section, 'Angle');
+  angleRow.hidden = lockStops;
   const angleRange = rangeField(angleRow, 0, 360);
   const angleNumber = numberField(angleRow, 0, 360);
   const head = el('div', 'sf-cp-section-head', section);
@@ -152,6 +155,7 @@ export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHand
   addStop.type = 'button';
   addStop.textContent = '+';
   addStop.title = 'Add stop';
+  addStop.hidden = lockStops;
   const stopList = el('div', 'sf-cp-stops', section);
   const stopRows: StopRow[] = [];
 
@@ -229,10 +233,12 @@ export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHand
       position.type = 'number';
       position.min = '0';
       position.max = '100';
+      position.disabled = lockStops;
       const remove = el('button', 'sf-cp-stop-remove', rowRoot);
       remove.type = 'button';
       remove.textContent = '×';
       remove.title = 'Remove stop';
+      remove.hidden = lockStops;
 
       rowRoot.addEventListener('mousedown', () => selectStop(index));
       position.addEventListener('input', () => {

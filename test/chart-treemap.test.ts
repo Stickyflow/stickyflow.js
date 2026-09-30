@@ -99,7 +99,7 @@ describe('Treemap chart', () => {
     expect(svg).not.toContain('chart-legend-swatch-');
   });
 
-  it('only shows one legend item per actual band, not one per default zone when axis_y has no thresholds', () => {
+  it('only shows one gradient stop for the one actual band, not one per default zone when axis_y has no thresholds', () => {
     // TREEMAP_SFL's Axis y has no thresholds, so there's exactly one real
     // band (0-100) even though the 3-entry default zone palette is used for
     // fill color - the legend used to still draw all 3 zones, and the 2nd
@@ -107,14 +107,19 @@ describe('Treemap chart', () => {
     // boundary.
     const { svg } = render(TREEMAP_SFL);
     expect(svg).not.toContain('undefined');
-    expect(svg.match(/chart-treemap-legend-swatch-usage-\d+"/g)).toHaveLength(1);
+    const stops = [
+      ...(svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0] ?? '').matchAll(/stop-color="([^"]+)"/g),
+    ];
+    expect(stops).toHaveLength(1);
   });
 
-  it('draws a single gradient bar spanning every zone color, low to high, not discrete swatches', () => {
+  it('draws a single gradient bar spanning every zone color, low to high, as one color-editable target, not discrete swatches', () => {
     const { svg } = render(TREEMAP_SFL);
     const bar = svg.match(/<rect id="[^"]*chart-treemap-legend-bar-usage"[^>]*>/)?.[0];
     expect(bar).toBeDefined();
     expect(bar).toMatch(/fill="url\(#[^"]+\)"/);
+    expect(bar).toContain('data-sf-zone-gradient="true"');
+    expect(svg).not.toContain('chart-treemap-legend-swatch-');
   });
 
   it('places each zone color stop at its own band boundary, not evenly spaced by zone count', () => {
