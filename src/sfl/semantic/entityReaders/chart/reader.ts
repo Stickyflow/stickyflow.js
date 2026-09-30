@@ -41,6 +41,7 @@ export function readChart(
     isolines: numberList(properties.get('isolines')),
     zones: readChartZones(properties.get('zones')),
     boxWidth: asNumber(properties.get('boxWidth')),
+    orientation: asString(properties.get('orientation')) === 'horizontal' ? 'horizontal' : undefined,
     lineTension: asNumber(properties.get('lineTension')),
     barCornerRadius: asNumber(properties.get('barCornerRadius')),
     showBoxplotPoints: readBoolean(properties.get('showBoxplotPoints')),

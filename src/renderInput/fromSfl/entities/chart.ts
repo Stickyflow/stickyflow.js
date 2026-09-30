@@ -32,6 +32,7 @@ export function chartObject(e: SflEntityOut) {
       isolines: e.chart?.isolines,
       zones: e.chart?.zones,
       boxWidth: e.chart?.boxWidth,
+      orientation: e.chart?.orientation,
       lineTension: e.chart?.lineTension,
       barCornerRadius: e.chart?.barCornerRadius,
       showBoxplotPoints: e.chart?.showBoxplotPoints,

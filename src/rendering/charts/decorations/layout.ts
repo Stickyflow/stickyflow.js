@@ -19,6 +19,16 @@ export function hasCartesianDecorations(chart: Chart): boolean {
   return !CHARTS_WITHOUT_CARTESIAN_DECORATIONS.has(chart.chart_type);
 }
 
+function isHorizontalBoxplot(chart: Chart): boolean {
+  return chart.chart_type === 'boxplot' && chart.config?.orientation === 'horizontal';
+}
+
+function boxplotCategoryLabelWidth(chart: Chart): number {
+  const fontSize = finite(chart.font_size, 12);
+  const longest = Math.max(0, ...chart.series.map(series => (series.label || series.id).length));
+  return longest * fontSize * 0.58 + 16;
+}
+
 export interface ChartLayout {
   bounds: Bounds;
   plot: { x: number; y: number; width: number; height: number };
@@ -37,7 +47,8 @@ export function decorations(chart: Chart): ChartLayout {
   const sideColumnWidth = legendStacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0;
 
   const padLeft =
-    (showLabels ? (chart.axis_y.label ? 60 : 46) : 12) + (legendPosition === 'bottomLeft' ? sideColumnWidth : 0);
+    (showLabels ? (isHorizontalBoxplot(chart) ? boxplotCategoryLabelWidth(chart) : chart.axis_y.label ? 60 : 46) : 12) +
+    (legendPosition === 'bottomLeft' ? sideColumnWidth : 0);
   const padRight = 24 + (legendPosition === 'bottomRight' ? sideColumnWidth : 0);
   const basePadBottom = showLabels ? (chart.axis_x.label ? 52 : 34) : 12;
   const hasColorBar = chart.chart_type === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);

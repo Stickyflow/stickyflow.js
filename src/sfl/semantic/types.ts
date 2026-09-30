@@ -75,6 +75,7 @@ export interface SflEntityOut {
     isolines?: number[];
     zones?: Array<{ label: string; color?: string }>;
     boxWidth?: number;
+    orientation?: 'horizontal' | 'vertical';
     lineTension?: number;
     barCornerRadius?: number;
     showBoxplotPoints?: boolean;
