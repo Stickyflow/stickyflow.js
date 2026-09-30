@@ -2,6 +2,7 @@ export interface RGB {
   r: number;
   g: number;
   b: number;
+  a?: number;
 }
 
 export interface HSV {
@@ -11,26 +12,25 @@ export interface HSV {
 }
 
 export const hexToRgb = (hex: string): RGB => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : { r: 255, g: 255, b: 255 };
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(hex);
+  if (!result) {
+    return { r: 255, g: 255, b: 255, a: 1 };
+  }
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+    a: result[4] === undefined ? 1 : parseInt(result[4], 16) / 255,
+  };
 };
 
-export const rgbToHex = (r: number, g: number, b: number): string => {
-  return (
-    '#' +
-    [r, g, b]
-      .map(x => {
-        const hex = Math.max(0, Math.min(255, x)).toString(16);
-        return hex.length === 1 ? `0${hex}` : hex;
-      })
-      .join('')
-  );
+export const rgbToHex = (r: number, g: number, b: number, a?: number): string => {
+  const channel = (x: number) => {
+    const hex = Math.max(0, Math.min(255, Math.round(x))).toString(16);
+    return hex.length === 1 ? `0${hex}` : hex;
+  };
+  const alphaChannel = a === undefined || a >= 1 ? '' : channel(a * 255);
+  return `#${channel(r)}${channel(g)}${channel(b)}${alphaChannel}`;
 };
 
 export const hsvToRgb = (h: number, s: number, v: number): RGB => {
