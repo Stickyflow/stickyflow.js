@@ -139,7 +139,7 @@ function renderTile(context: ChartRenderContext, layout: TreemapLayout, tile: Tr
   const color = treemapLeafColor(tile.item.leaf, layout);
   const nodes = [createTileNode(context, layout, tile, color)];
   if (context.showLabels && tile.width >= 34 && tile.height >= 18) {
-    nodes.push(createTileLabel(context, layout, tile, color));
+    nodes.push(...createTileLabel(context, layout, tile, color));
   }
   return nodes;
 }
@@ -175,27 +175,51 @@ function createTileLabel(
   layout: TreemapLayout,
   tile: TreemapTile,
   color: Parameters<typeof representativeColor>[0],
-): RenderNode {
+): RenderNode[] {
   const { chart, plot, bounds, nextOrder } = context;
   const { leaf, value } = tile.item;
   const gap = layout.cellGap;
   const width = Math.max(1, tile.width - gap - 8);
-  return {
+  const height = Math.max(1, tile.height - gap - 6);
+  const x = plot.x + tile.x + gap / 2 + 4;
+  const y = plot.y + tile.y + gap / 2 + 3;
+  const textColor = contrastTextColor(representativeColor(color, '#ffffff'));
+  const labelLines = wrapText(leaf.label, width, layout.smallFontSize);
+  const lineHeight = layout.smallFontSize * 1.2;
+
+  const label: RenderNode = {
     ...chartText({
       id: `chart-treemap-label-${chart.id}-${leaf.id}`,
       order: nextOrder(),
       bounds,
-      frame: {
-        x: plot.x + tile.x + gap / 2 + 4,
-        y: plot.y + tile.y + gap / 2 + 3,
-        width,
-        height: Math.max(1, tile.height - gap - 6),
-      },
-      text: `${leaf.label} ${value}`,
+      frame: { x, y, width, height },
+      text: leaf.label,
       chart,
     }),
-    lines: wrapText(`${leaf.label}\n${value}`, width, layout.smallFontSize),
+    lines: labelLines,
     fontSize: layout.smallFontSize,
-    color: contrastTextColor(representativeColor(color, '#ffffff')),
+    fontWeight: 'bold',
+    color: textColor,
   };
+
+  const valueNode: RenderNode = {
+    ...chartText({
+      id: `chart-treemap-value-${chart.id}-${leaf.id}`,
+      order: nextOrder(),
+      bounds,
+      frame: {
+        x,
+        y: y + labelLines.length * lineHeight,
+        width,
+        height: Math.max(1, height - labelLines.length * lineHeight),
+      },
+      text: String(value),
+      chart,
+    }),
+    lines: [String(value)],
+    fontSize: layout.smallFontSize,
+    color: textColor,
+  };
+
+  return [label, valueNode];
 }

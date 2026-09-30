@@ -7,8 +7,12 @@ export function chartObject(e: SflEntityOut) {
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
   const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
     p.gridLineStyle === 'dashed' ? 'dashed' : p.gridLineStyle === 'dotted' ? 'dotted' : 'solid';
-  const legendPosition: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' =
-    p.legendPosition === 'bottom' || p.legendPosition === 'bottomLeft' || p.legendPosition === 'bottomRight'
+  const legendPosition: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right' =
+    p.legendPosition === 'bottom' ||
+    p.legendPosition === 'bottomLeft' ||
+    p.legendPosition === 'bottomRight' ||
+    p.legendPosition === 'left' ||
+    p.legendPosition === 'right'
       ? p.legendPosition
       : 'top';
   return {

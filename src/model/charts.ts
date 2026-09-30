@@ -149,7 +149,7 @@ export interface Chart {
   show_grid?: boolean;
   show_axis_labels?: boolean;
   show_legend?: boolean;
-  legend_position?: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight';
+  legend_position?: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
   shadow_style?: ShadowStyle;
   order?: number;
   is_visible?: boolean;

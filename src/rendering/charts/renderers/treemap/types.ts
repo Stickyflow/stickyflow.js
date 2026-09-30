@@ -6,6 +6,7 @@ export interface TreemapLayout {
   zones: ChartZone[];
   fontSize: number;
   smallFontSize: number;
+  legendPosition: 'bottom' | 'left' | 'right';
   legendHeight: number;
   gridWidth: number;
   gridHeight: number;
