@@ -2,7 +2,7 @@ import type { SankeyLayoutNode } from '../../../../model/geometry/sankey';
 import { leftRoundedRectPath, rightRoundedRectPath } from '../../../entities/containers';
 import type { RenderNode, SceneText } from '../../../scene';
 import { finite } from '../../../scene';
-import { chartText, contrastTextColor, DEFAULT_ZONE_FILL } from '../../primitives';
+import { chartText, contrastTextColor, DEFAULT_ZONE_FILL, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { SankeyRenderData } from './types';
 
@@ -27,7 +27,10 @@ function createNodeRect(
   const { chart, bounds, nextOrder } = context;
   const x = data.baseX + node.x;
   const y = data.baseY + node.y;
-  const style = { fill: { kind: 'solid' as const, color: node.color || DEFAULT_ZONE_FILL } };
+  const style = {
+    fill: { kind: 'solid' as const, color: node.color || DEFAULT_ZONE_FILL },
+    shadow: resolveChartShadow(chart.shadow_style),
+  };
   const isFirstColumn = node.column === 0;
   const isLastColumn = node.column === data.columnCount - 1;
   if (cornerRadius > 0 && isFirstColumn && isLastColumn) {

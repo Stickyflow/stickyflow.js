@@ -1,6 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
+import { resolveChartShadow } from '../../primitives';
 import { linePathData } from '../../primitives/linePath';
 import type { CartesianPoint } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
@@ -25,6 +26,7 @@ export function createLinePath(
       stroke: paint(color, diagnostics, chart.id),
       strokeWidth: 2,
       lineJoin: 'round',
+      shadow: resolveChartShadow(chart.shadow_style),
     },
   };
 }

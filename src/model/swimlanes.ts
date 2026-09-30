@@ -1,3 +1,5 @@
+import type { ShadowStyle } from './shadows';
+
 export interface Lane {
   id: string;
   label: string;
@@ -23,6 +25,7 @@ export interface Swimlane {
   dash?: number[];
   corner_radius: number;
   fill_color: string;
+  shadow_style?: ShadowStyle;
 
   text_color: string;
   font_size: number;

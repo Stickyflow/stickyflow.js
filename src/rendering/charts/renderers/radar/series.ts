@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
-import { CHART_COLORS } from '../../primitives';
+import { CHART_COLORS, resolveChartShadow } from '../../primitives';
 import { radarSeriesPath } from '../../primitives/radarShape';
 import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
@@ -80,6 +80,7 @@ function createSeriesStroke(
       stroke: paint(color, diagnostics, chart.id),
       strokeWidth: 2,
       lineJoin: 'round',
+      shadow: resolveChartShadow(chart.shadow_style),
     },
   };
 }

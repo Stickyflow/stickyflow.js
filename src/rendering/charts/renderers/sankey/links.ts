@@ -1,6 +1,6 @@
 import type { SankeyLayoutLink } from '../../../../model/geometry/sankey';
 import type { RenderNode } from '../../../scene';
-import { DEFAULT_ZONE_FILL } from '../../primitives';
+import { DEFAULT_ZONE_FILL, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { SankeyRenderData } from './types';
 
@@ -20,9 +20,14 @@ interface SankeyLinkRibbon {
 }
 
 export function renderSankeyLinks(context: ChartRenderContext, data: SankeyRenderData): RenderNode[] {
+  const shadow = resolveChartShadow(context.chart.shadow_style);
+  const { plot } = context;
+  const clipPath = shadow
+    ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
+    : undefined;
   return data.links.map((link, linkIndex) => {
     const ribbon = createSankeyLinkRibbon(data, link, linkIndex);
-    return createSankeyRibbonNode(context, ribbon);
+    return createSankeyRibbonNode(context, ribbon, shadow, clipPath);
   });
 }
 
@@ -47,7 +52,12 @@ function createSankeyLinkRibbon(data: SankeyRenderData, link: SankeyLayoutLink, 
   };
 }
 
-function createSankeyRibbonNode(context: ChartRenderContext, ribbon: SankeyLinkRibbon): RenderNode {
+function createSankeyRibbonNode(
+  context: ChartRenderContext,
+  ribbon: SankeyLinkRibbon,
+  shadow: ReturnType<typeof resolveChartShadow>,
+  clipPath: string | undefined,
+): RenderNode {
   const { chart, bounds, nextOrder } = context;
   return {
     type: 'path',
@@ -58,6 +68,8 @@ function createSankeyRibbonNode(context: ChartRenderContext, ribbon: SankeyLinkR
     style: {
       fill: { kind: 'solid', color: ribbon.color },
       opacity: ribbon.opacity,
+      shadow,
+      clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },
   };
 }

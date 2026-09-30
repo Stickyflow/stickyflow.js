@@ -1,3 +1,4 @@
+import { resolveShadow } from '../../../../model/shadows';
 import type { Swimlane } from '../../../../model/swimlanes';
 import type { RenderNode } from '../../../scene';
 import { simpleContainerStyle } from '../style';
@@ -21,7 +22,10 @@ export function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
       width: swimlane.width,
       height: swimlane.height,
       rx: swimlane.corner_radius,
-      style: simpleContainerStyle(swimlane.fill_color, swimlane.stroke_color, swimlane.stroke_width, swimlane.dash),
+      style: {
+        ...simpleContainerStyle(swimlane.fill_color, swimlane.stroke_color, swimlane.stroke_width, swimlane.dash),
+        shadow: resolveShadow(swimlane.shadow_style),
+      },
     },
     ...renderLaneDividers(context),
     ...renderLaneLabels(context),

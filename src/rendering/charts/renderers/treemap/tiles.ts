@@ -3,7 +3,7 @@ import { wrapText } from '../../../../model/geometry/text';
 import { squarifyTreemap } from '../../../../model/geometry/treemap';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { chartText, contrastTextColor, representativeColor } from '../../primitives';
+import { chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import { treemapLeafColor, treemapLeafValue } from './layout';
 import type { TreemapLayout } from './types';
@@ -152,6 +152,10 @@ function createTileNode(
 ): RenderNode {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const gap = layout.cellGap;
+  const shadow = resolveChartShadow(chart.shadow_style);
+  const clipPath = shadow
+    ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
+    : undefined;
   return {
     type: 'rect',
     id: `chart-treemap-tile-${chart.id}-${tile.item.leaf.id}`,
@@ -166,6 +170,8 @@ function createTileNode(
       fill: paint(color, diagnostics, chart.id),
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: finite(chart.grid_width, 1),
+      shadow,
+      clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },
   };
 }

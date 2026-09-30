@@ -2,7 +2,7 @@ import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { CHART_COLORS, chartText, contrastTextColor, representativeColor } from '../../primitives';
+import { CHART_COLORS, chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';
 
@@ -72,7 +72,11 @@ function shouldRenderSegmentLabel(context: ChartRenderContext, segment: MekkoSeg
 }
 
 function createSegmentNode(context: ChartRenderContext, segment: MekkoSegment): RenderNode {
-  const { chart, bounds, diagnostics, nextOrder } = context;
+  const { chart, plot, bounds, diagnostics, nextOrder } = context;
+  const shadow = resolveChartShadow(chart.shadow_style);
+  const clipPath = shadow
+    ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
+    : undefined;
   return {
     type: 'rect',
     id: `chart-mekko-seg-${chart.id}-${segment.columnIndex}-${segment.seriesId}`,
@@ -83,6 +87,8 @@ function createSegmentNode(context: ChartRenderContext, segment: MekkoSegment): 
       fill: paint(segment.color, diagnostics, chart.id),
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: finite(chart.grid_width, 1),
+      shadow,
+      clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },
   };
 }
