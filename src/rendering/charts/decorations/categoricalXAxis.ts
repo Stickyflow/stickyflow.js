@@ -33,3 +33,26 @@ export function buildCategoricalXAxisTicks(chart: Chart, layout: ChartLayout, or
     });
   });
 }
+
+export function buildSeriesXAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
+  const count = Math.max(1, chart.series.length);
+  const slotWidth = layout.plot.width / count;
+
+  return chart.series.map((series, index) => {
+    const centerX = layout.plot.x + (index + 0.5) * slotWidth;
+    return chartText({
+      id: `chart-x-tick-${chart.id}-${index}`,
+      order: order + index,
+      bounds: layout.bounds,
+      frame: {
+        x: centerX - slotWidth / 2,
+        y: layout.plot.y + layout.plot.height + 4,
+        width: slotWidth,
+        height: 18,
+      },
+      text: series.label || series.id,
+      chart,
+      align: 'center',
+    });
+  });
+}
