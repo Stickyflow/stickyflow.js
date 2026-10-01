@@ -1,3 +1,5 @@
+import type { Point } from '../types';
+
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 
 export interface Rect {
@@ -32,5 +34,3 @@ export interface OrthoPath {
   points: number[];
   segments: PathSegment[];
 }
-
-import type { Point } from '../types';
