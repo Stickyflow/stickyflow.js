@@ -3,11 +3,6 @@ export interface ColorStop {
   color: string;
 }
 
-export interface SolidColor {
-  type: 'solid';
-  color: string;
-}
-
 export interface GradientColor {
   type: 'gradient';
   angle: number;
@@ -25,5 +20,3 @@ export interface MeshGradientColor {
   type: 'mesh';
   points: MeshPoint[];
 }
-
-export type ColorValue = SolidColor | GradientColor | MeshGradientColor;

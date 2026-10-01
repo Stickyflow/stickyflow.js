@@ -8,6 +8,7 @@ import type {
   CategoryChartConfig,
   CustomChartConfig,
   FieldChartConfig,
+  GenericChartConfig,
   HeatmapChartConfig,
   HexbinChartConfig,
   LineChartConfig,
@@ -17,7 +18,6 @@ import type {
   RadialBarChartConfig,
   SankeyChartConfig,
   TreemapChartConfig,
-  UnnarrowedChartConfig,
 } from './configs';
 import type { ChartSeries } from './series';
 
@@ -53,7 +53,7 @@ export interface ChartBase {
   isVisible?: boolean;
 }
 
-export interface TypedChart<TType extends ChartType = ChartType, TConfig extends object = UnnarrowedChartConfig>
+export interface TypedChart<TType extends ChartType = ChartType, TConfig extends object = GenericChartConfig>
   extends ChartBase {
   chartType: TType;
   config?: TConfig;

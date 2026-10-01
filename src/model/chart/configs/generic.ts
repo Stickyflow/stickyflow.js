@@ -4,9 +4,9 @@ import type { HeatmapChartConfig, TreemapChartConfig } from './matrix';
 import type { PieChartConfig, RadarChartConfig, RadialBarChartConfig } from './polar';
 import type { CustomChartConfig, MekkoChartConfig, SankeyChartConfig } from './specialized';
 
-// Only adapters that have not narrowed chartType use this transitional contract.
-// Concrete chart entities always expose their exact config type.
-export interface UnnarrowedChartConfig
+// Generic chart consumers may inspect any optional capability. Concrete chart
+// entities still expose their exact config type through the Chart union.
+export interface GenericChartConfig
   extends BarChartConfig,
     BoxplotChartConfig,
     CustomChartConfig,
