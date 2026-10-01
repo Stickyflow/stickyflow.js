@@ -1,6 +1,6 @@
 import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
-import { getPathPoints } from '../../model/geometry/connectionLine';
 import type { Side } from '../../model/geometry/router';
+import { getPathPoints } from '../../model/link/geometry';
 import type { Link, PathType } from '../../model/links';
 import { previewPathData } from '../linkPreview';
 import type { QuickDuplicateDragState } from './state';

@@ -1,5 +1,5 @@
-import { labelGapDash } from '../../model/geometry/connectionLine';
 import type { Rect } from '../../model/geometry/router';
+import { labelGapDash } from '../../model/link/geometry';
 import { previewPathData, routePreviewLink } from './geometry';
 import type { LiveLink } from './types';
 

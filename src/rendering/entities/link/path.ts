@@ -1,5 +1,5 @@
-import { roundedOrthogonalPathData } from '../../../model/geometry/connectionLine';
 import type { PathSegment } from '../../../model/geometry/router';
+import { roundedOrthogonalPathData } from '../../../model/link/geometry';
 import type { PathType } from '../../../model/links';
 import type { ScenePath } from '../../scene';
 import { markerForEnd } from './markers';

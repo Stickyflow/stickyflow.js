@@ -1,5 +1,5 @@
-import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../../../model/geometry/connectionLine';
 import { type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
+import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../../../model/link/geometry';
 import { getLinkStrokeColor } from '../../../model/links';
 import { resolveShadow } from '../../../model/shadows';
 import type { RenderInput } from '../../../renderInput/types';

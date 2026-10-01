@@ -1,6 +1,6 @@
-import { getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../../model/geometry/connectionLine';
 import { edgePointToward, elementCenter } from '../../model/geometry/edgePoint';
 import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/router';
+import { getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../../model/link/geometry';
 import type { Link, PathType } from '../../model/links';
 
 export function centerOf(bounds: Rect): { x: number; y: number } {

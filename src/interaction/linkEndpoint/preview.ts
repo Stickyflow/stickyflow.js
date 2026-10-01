@@ -1,5 +1,5 @@
-import { getPathPoints } from '../../model/geometry/connectionLine';
 import type { Side } from '../../model/geometry/router';
+import { getPathPoints } from '../../model/link/geometry';
 import type { Link } from '../../model/links';
 import { previewPathData } from '../linkPreview';
 import type { LinkEndpointDragState } from './state';
