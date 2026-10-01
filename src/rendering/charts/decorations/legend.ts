@@ -22,7 +22,7 @@ interface ChartLegendItem {
   order: number;
 }
 
-const CHARTS_WITH_OWN_LEGEND = new Set(['heatmap', 'boxplot', 'sankey', 'treemap', 'mekko', 'matrix']);
+const CHARTS_WITH_OWN_LEGEND = new Set(['heatmap', 'boxplot', 'sankey', 'treemap', 'mekko']);
 
 export function buildLegend(render: ChartLegendRender): RenderNode[] {
   if (!usesStandardLegend(render.chart)) {

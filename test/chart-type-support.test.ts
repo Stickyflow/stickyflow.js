@@ -34,7 +34,6 @@ describe('supported chart types', () => {
       'heatmap',
       'hexbin',
       'line',
-      'matrix',
       'mekko',
       'pie',
       'radar',

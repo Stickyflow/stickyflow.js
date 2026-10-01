@@ -7,7 +7,6 @@ import { renderField } from './field';
 import { renderHeatmap } from './heatmap';
 import { renderHexbin } from './hexbin';
 import { renderLine } from './line';
-import { renderMatrix } from './matrix';
 import { renderMekko } from './mekko';
 import { renderPie } from './pie';
 import { renderPolarArea } from './polarArea';
@@ -28,7 +27,6 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   heatmap: renderHeatmap,
   hexbin: renderHexbin,
   line: renderLine,
-  matrix: renderMatrix,
   mekko: renderMekko,
   pie: renderPie,
   polarArea: renderPolarArea,

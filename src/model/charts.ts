@@ -17,7 +17,6 @@ export type ChartType =
   | 'pie'
   | 'radialBar'
   | 'polarArea'
-  | 'matrix'
   | 'custom';
 
 export const CHART_TYPES: ChartType[] = [
@@ -36,7 +35,6 @@ export const CHART_TYPES: ChartType[] = [
   'pie',
   'radialBar',
   'polarArea',
-  'matrix',
   'custom',
 ];
 

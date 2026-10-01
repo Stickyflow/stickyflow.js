@@ -64,7 +64,6 @@ export interface SflEntityOut {
       | 'pie'
       | 'radialBar'
       | 'polarArea'
-      | 'matrix'
       | 'custom';
     categories?: string[];
     areaOpacity?: number;

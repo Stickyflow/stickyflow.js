@@ -82,7 +82,7 @@ describe('chart mark addressing (DOM contract)', () => {
   });
 
   it('omits the mapping on types whose axis_y is not a linear pixel scale', () => {
-    for (const type of ['heatmap', 'pie', 'treemap', 'sankey', 'matrix', 'mekko']) {
+    for (const type of ['heatmap', 'pie', 'treemap', 'sankey', 'mekko']) {
       expect(render(BAR_SFL.replace('type: bar', `type: ${type}`)).svg).not.toContain('data-sf-value-scale');
     }
   });

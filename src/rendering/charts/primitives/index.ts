@@ -6,7 +6,6 @@ export {
   CHART_COLORS,
   DEFAULT_HEATMAP_ZONES,
   DEFAULT_HEX_RADIUS,
-  DEFAULT_MATRIX_ZONES,
   DEFAULT_ZONE_FILL,
 } from './defaults';
 export { createVerticalErrorWhiskerNode, errorBarRange } from './errors';

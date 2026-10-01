@@ -12,7 +12,6 @@ const CHARTS_WITHOUT_CARTESIAN_DECORATIONS = new Set([
   'pie',
   'radialBar',
   'polarArea',
-  'matrix',
 ]);
 
 export function hasCartesianDecorations(chart: Chart): boolean {
