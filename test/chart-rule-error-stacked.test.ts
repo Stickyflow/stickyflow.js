@@ -71,8 +71,13 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
 
   it('renders stacked bars cumulatively and a Rule reference line', () => {
     const input = sflToRenderInput(STACKED_SFL);
-    expect(input.charts?.[0].config?.stacked).toBe('true');
-    expect(input.charts?.[0].rules).toHaveLength(1);
+    const chart = input.charts?.[0];
+    expect(chart?.chart_type).toBe('bar');
+    if (chart?.chart_type !== 'bar') {
+      throw new Error('expected a bar chart');
+    }
+    expect(chart.config?.stacked).toBe('true');
+    expect(chart.rules).toHaveLength(1);
 
     const { svg } = render(STACKED_SFL);
     expect(svg).toContain('sf-chart-bar-chart-a-0');

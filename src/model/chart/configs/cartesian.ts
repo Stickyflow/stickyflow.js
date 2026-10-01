@@ -2,7 +2,7 @@ export interface CategoryChartConfig {
   categories?: string[];
 }
 
-export interface BarChartConfig {
+export interface BarChartConfig extends CategoryChartConfig {
   barCornerRadius?: number;
   barBorderColor?: string;
   barBorderWidth?: number;

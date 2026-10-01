@@ -1,11 +1,11 @@
-import type { Chart } from '../../model/charts';
+import type { RenderableChart } from '../../model/charts';
 import type { RenderDiagnostic } from '../scene';
 import type { ChartRenderOrder } from './chartRenderOrder';
 import type { ChartLayout } from './decorations';
 import type { ChartRenderContext } from './renderers';
 
 export function createChartRenderContext(
-  chart: Chart,
+  chart: RenderableChart,
   layout: ChartLayout,
   renderOrder: ChartRenderOrder,
   diagnostics: RenderDiagnostic[],

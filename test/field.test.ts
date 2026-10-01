@@ -58,7 +58,12 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
 
   it('decodes scale into a ChartRamp object on the render-input config', () => {
     const input = sflToRenderInput(FIELD_SFL);
-    expect(input.charts?.[0].config?.scale).toEqual({
+    const chart = input.charts?.[0];
+    expect(chart?.chart_type).toBe('field');
+    if (chart?.chart_type !== 'field') {
+      throw new Error('expected a field chart');
+    }
+    expect(chart.config?.scale).toEqual({
       type: 'ramp',
       stops: [
         { color: '#0b1d51', position: 0 },
@@ -66,9 +71,9 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
         { color: '#f5d90a', position: 1 },
       ],
     });
-    expect(input.charts?.[0].config?.interpolate).toBe('idw');
-    expect(input.charts?.[0].config?.idwPower).toBe(2);
-    expect(input.charts?.[0].config?.isolines).toEqual([0.5]);
+    expect(chart.config?.interpolate).toBe('idw');
+    expect(chart.config?.idwPower).toBe(2);
+    expect(chart.config?.isolines).toEqual([0.5]);
   });
 
   it('renders the interpolated surface as colored cells, an isoline path, and a vector arrow', () => {

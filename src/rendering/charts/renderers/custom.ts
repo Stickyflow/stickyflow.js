@@ -1,4 +1,4 @@
-import type { Chart, ChartSeries } from '../../../model/charts';
+import type { ChartSeries, RenderableChart } from '../../../model/charts';
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite, freeformPathData, paint } from '../../scene';
 import { CHART_COLORS, chartText, DEFAULT_ZONE_FILL, mapChartValue } from '../primitives';
@@ -36,7 +36,7 @@ function renderCustomSeries(context: ChartRenderContext, series: ChartSeries, se
   });
 }
 
-function isHorizontal(chart: Chart): boolean {
+function isHorizontal(chart: RenderableChart): boolean {
   return chart.config?.orientation === 'horizontal';
 }
 
@@ -52,7 +52,7 @@ function customSeriesValues(context: ChartRenderContext, series: ChartSeries): A
   return (series.values as number[]).map((value, index) => [chart.axis_x.min + index * chart.axis_x.step, value]);
 }
 
-function metricComponent(chart: Chart, point: [number, number]): number {
+function metricComponent(chart: RenderableChart, point: [number, number]): number {
   return isHorizontal(chart) ? point[0] : point[1];
 }
 
@@ -106,7 +106,7 @@ function createCustomPointMark(context: ChartRenderContext, mark: CustomMark): R
   };
 }
 
-function customMarkId(chart: Chart, series: ChartSeries, valueIndex: number): string {
+function customMarkId(chart: RenderableChart, series: ChartSeries, valueIndex: number): string {
   return `chart-custom-mark-${chart.id}-${series.id}-${valueIndex}`;
 }
 

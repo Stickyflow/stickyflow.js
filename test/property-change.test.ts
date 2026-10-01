@@ -53,6 +53,14 @@ const chartOf = (sfl: string) => {
   return first;
 };
 
+const barChartOf = (sfl: string) => {
+  const result = chartOf(sfl);
+  if (result.chart_type !== 'bar') {
+    throw new Error('expected a bar chart');
+  }
+  return result;
+};
+
 describe('applyPropertyChange — direct properties', () => {
   it('replaces a bare enum without quoting it', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'type', value: 'line' });
@@ -70,7 +78,7 @@ describe('applyPropertyChange — direct properties', () => {
   it('reads the quoting convention from the value already in the document', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'stacked', value: 'percent' });
     expect(next).toContain('stacked: percent');
-    expect(chartOf(next).config?.stacked).toBe('percent');
+    expect(barChartOf(next).config?.stacked).toBe('percent');
   });
 
   it('honours an explicit quote override', () => {
@@ -146,7 +154,7 @@ describe('applyPropertyChange — list elements', () => {
   it('replaces a category label and keeps it quoted', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'categories[0]', value: 'Q1 2026' });
     expect(next).toContain('"Q1 2026"');
-    expect(chartOf(next).config?.categories).toEqual(['Q1 2026', 'Q2', 'Q3', 'Q4']);
+    expect(barChartOf(next).config?.categories).toEqual(['Q1 2026', 'Q2', 'Q3', 'Q4']);
   });
 
   it('replaces a dash segment', () => {

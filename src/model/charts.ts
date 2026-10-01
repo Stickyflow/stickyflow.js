@@ -16,6 +16,7 @@ export type {
   PieChart,
   RadarChart,
   RadialBarChart,
+  RenderableChart,
   SankeyChart,
   ScatterChart,
   TreemapChart,

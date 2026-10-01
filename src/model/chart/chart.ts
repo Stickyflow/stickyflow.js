@@ -53,77 +53,93 @@ export interface ChartBase {
   is_visible?: boolean;
 }
 
-export interface Chart extends ChartBase {
+export interface RenderableChart extends ChartBase {
   chart_type: ChartType;
   config?: ChartConfig;
 }
 
-export interface BarChart extends ChartBase {
+export interface BarChart extends RenderableChart {
   chart_type: 'bar';
   config?: BarChartConfig;
 }
 
-export interface LineChart extends ChartBase {
+export interface LineChart extends RenderableChart {
   chart_type: 'line';
   config?: LineChartConfig;
 }
 
-export interface ScatterChart extends ChartBase {
+export interface ScatterChart extends RenderableChart {
   chart_type: 'scatter';
   config?: CategoryChartConfig;
 }
 
-export interface BoxplotChart extends ChartBase {
+export interface BoxplotChart extends RenderableChart {
   chart_type: 'boxplot';
   config?: BoxplotChartConfig;
 }
 
-export interface FieldChart extends ChartBase {
+export interface FieldChart extends RenderableChart {
   chart_type: 'field';
   config?: FieldChartConfig;
 }
 
-export interface HeatmapChart extends ChartBase {
+export interface HeatmapChart extends RenderableChart {
   chart_type: 'heatmap';
   config?: HeatmapChartConfig;
 }
 
-export interface HexbinChart extends ChartBase {
+export interface HexbinChart extends RenderableChart {
   chart_type: 'hexbin';
   config?: HexbinChartConfig;
 }
 
-export interface MekkoChart extends ChartBase {
+export interface MekkoChart extends RenderableChart {
   chart_type: 'mekko';
   config?: MekkoChartConfig;
 }
 
-export interface PieChart extends ChartBase {
+export interface PieChart extends RenderableChart {
   chart_type: 'pie' | 'polarArea';
   config?: PieChartConfig;
 }
 
-export interface RadarChart extends ChartBase {
+export interface RadarChart extends RenderableChart {
   chart_type: 'radar' | 'radial';
   config?: RadarChartConfig;
 }
 
-export interface RadialBarChart extends ChartBase {
+export interface RadialBarChart extends RenderableChart {
   chart_type: 'radialBar';
   config?: RadialBarChartConfig;
 }
 
-export interface SankeyChart extends ChartBase {
+export interface SankeyChart extends RenderableChart {
   chart_type: 'sankey';
   config?: SankeyChartConfig;
 }
 
-export interface TreemapChart extends ChartBase {
+export interface TreemapChart extends RenderableChart {
   chart_type: 'treemap';
   config?: TreemapChartConfig;
 }
 
-export interface CustomChart extends ChartBase {
+export interface CustomChart extends RenderableChart {
   chart_type: 'custom';
   config?: CustomChartConfig;
 }
+
+export type Chart =
+  | BarChart
+  | BoxplotChart
+  | CustomChart
+  | FieldChart
+  | HeatmapChart
+  | HexbinChart
+  | LineChart
+  | MekkoChart
+  | PieChart
+  | RadarChart
+  | RadialBarChart
+  | SankeyChart
+  | ScatterChart
+  | TreemapChart;
