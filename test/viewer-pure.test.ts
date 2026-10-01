@@ -7,6 +7,7 @@ import {
   resolveOwner,
 } from '../src/domContract';
 import { DOM_CONTRACT_VERSION, render } from '../src/index';
+import { classifySceneDiff } from '../src/viewer/display';
 import { Emitter } from '../src/viewer/events';
 import { clickAction, selectionReducer } from '../src/viewer/selection';
 import { SFL_SAMPLE } from './fixtures';
@@ -86,6 +87,43 @@ describe('selection reducer', () => {
   it('maps modifiers to replace vs multi-select', () => {
     expect(clickAction('a', { shift: false, ctrl: false, meta: false })).toEqual({ type: 'select', id: 'a' });
     expect(clickAction('a', { shift: false, ctrl: true, meta: false })).toEqual({ type: 'toggle', id: 'a' });
+  });
+});
+
+describe('scene diff classification (change-highlighting)', () => {
+  // patchSceneNodes (DOM-bound, browser-verified) feeds this pure function
+  // three owner-id sets it tracks while patching; this is the trickiest,
+  // most bug-prone part of that patch — worth pinning without a browser.
+  it('an id only present after the update is added', () => {
+    expect(classifySceneDiff(new Set(), new Set(['a']), new Set(['a']))).toEqual({
+      added: ['a'],
+      removed: [],
+      changed: [],
+    });
+  });
+
+  it('an id whose every piece is gone is removed', () => {
+    expect(classifySceneDiff(new Set(['a']), new Set(), new Set(['a']))).toEqual({
+      added: [],
+      removed: ['a'],
+      changed: [],
+    });
+  });
+
+  it('an id present before and after, with a touched piece, is changed', () => {
+    expect(classifySceneDiff(new Set(['a']), new Set(['a']), new Set(['a']))).toEqual({
+      added: [],
+      removed: [],
+      changed: ['a'],
+    });
+  });
+
+  it('an id present before and after but never touched is absent from all three', () => {
+    expect(classifySceneDiff(new Set(['a']), new Set(['a']), new Set())).toEqual({
+      added: [],
+      removed: [],
+      changed: [],
+    });
   });
 });
 

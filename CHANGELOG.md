@@ -17,6 +17,16 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- Change-highlighting: `viewer.update()` takes an opt-in `highlightChanges` flag
+  that briefly flashes the shapes an update actually added or changed, plus a
+  `sceneDiff` event (always emitted) reporting added/removed/changed owner ids
+  for a host to use on its own. `highlightChanges` also accepts `{ color }`
+  instead of `true`, so a host that can distinguish categories of external
+  update (e.g. a likely bulk/tool-driven rewrite vs. an ordinary one) can flash
+  a different color for each.
+
 ### Fixed
 
 - SFL patching no longer corrupts documents containing `"""` multiline strings.

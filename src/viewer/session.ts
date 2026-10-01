@@ -49,13 +49,18 @@ export class ViewerSession implements Viewer {
   update(next: ViewerSource): void {
     const svg = renderViewerSource(next, this.options.renderOptions);
     assertViewerUpdateContract(svg);
-    this.display.updateContent(svg);
+    const diff = this.display.updateContent(svg);
     if (next.resetView) {
       this.display.fit();
     }
     const selectedIds = this.interaction?.getSelection().map(owner => owner.id) ?? [];
     if (selectedIds.length > 0) {
       this.interaction?.select(selectedIds);
+    }
+    this.emitter.emit('sceneDiff', { diagramId: this.diagramId, ...diff });
+    if (next.highlightChanges) {
+      const color = typeof next.highlightChanges === 'object' ? next.highlightChanges.color : undefined;
+      this.interaction?.flashChanged([...diff.added, ...diff.changed], color);
     }
   }
 
