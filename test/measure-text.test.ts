@@ -17,7 +17,6 @@ import { wrapText } from '../src/rendering/scene/textLayout';
 const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
   ({
     id: 'e',
-    boardId: 'board',
     shapeType: 'rectangle',
     x: 0,
     y: 0,
@@ -31,7 +30,6 @@ const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
     order_key: 'a',
     is_visible: true,
     is_locked: false,
-    createdAt: '',
     ...extra,
   }) as Shape;
 

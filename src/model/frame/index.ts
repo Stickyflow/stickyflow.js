@@ -1,1 +1,1 @@
-export type { Frame, FrameCreate, FrameUpdate } from './types';
+export type { Frame } from './types';

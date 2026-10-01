@@ -1,2 +1,2 @@
 export { normalizeTableRows } from './rows';
-export type { Table, TableColumn, TableCreate, TableRow, TableUpdate } from './types';
+export type { Table, TableColumn, TableRow } from './types';

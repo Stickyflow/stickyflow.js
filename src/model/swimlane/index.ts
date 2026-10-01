@@ -1,1 +1,1 @@
-export type { Lane, Swimlane, SwimlaneCreate, SwimlaneUpdate } from './types';
+export type { Lane, Swimlane } from './types';

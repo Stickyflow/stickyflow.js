@@ -22,7 +22,6 @@ export type ShapeType =
 
 export interface Shape {
   id: string;
-  boardId?: string;
   name?: string;
   shapeType: ShapeType;
   x: number;
@@ -64,8 +63,6 @@ export interface Shape {
   subShapes?: SubShape[] | null;
 
   symbol?: SymbolDef | null;
-
-  createdAt?: string;
 }
 
 export interface SubShape {

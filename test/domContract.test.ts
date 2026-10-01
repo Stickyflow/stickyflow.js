@@ -27,7 +27,6 @@ describe('interactive DOM contract', () => {
       shapes: [
         {
           id: 'tank',
-          boardId: 'b',
           shapeType: 'rectangle',
           strokeStyle: 'double',
           x: 0,
@@ -42,7 +41,6 @@ describe('interactive DOM contract', () => {
           order_key: 'a',
           is_visible: true,
           is_locked: false,
-          createdAt: '',
         },
       ],
       frames: [],
@@ -111,7 +109,6 @@ describe('interactive DOM contract', () => {
       shapes: [
         {
           id: 'a"b',
-          boardId: 'b',
           shapeType: 'rectangle',
           x: 0,
           y: 0,
@@ -125,7 +122,6 @@ describe('interactive DOM contract', () => {
           order_key: 'a',
           is_visible: true,
           is_locked: false,
-          createdAt: '',
         },
       ],
       frames: [],
@@ -149,7 +145,6 @@ describe('interactive DOM contract', () => {
       shapes: [
         {
           id: 'a',
-          boardId: 'b',
           shapeType: 'rectangle',
           x: 0,
           y: 0,
@@ -163,7 +158,6 @@ describe('interactive DOM contract', () => {
           order_key: 'a',
           is_visible: true,
           is_locked: false,
-          createdAt: '',
         },
       ],
       frames: [],

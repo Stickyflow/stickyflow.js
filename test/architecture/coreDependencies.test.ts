@@ -129,4 +129,12 @@ describe('core dependency direction', () => {
       .map(sourcePath);
     expect(offenders).toEqual([]);
   });
+
+  it('keeps application mutation DTOs out of the model layer', () => {
+    const mutationDtoExport = /^export\s+(?:interface|type)\s+[A-Za-z0-9_]+(?:Create|Update)\b/m;
+    const offenders = tsFiles(join(srcDir, 'model'))
+      .filter(file => mutationDtoExport.test(readFileSync(file, 'utf8')))
+      .map(sourcePath);
+    expect(offenders).toEqual([]);
+  });
 });

@@ -12,7 +12,6 @@ import type { Table } from '../src/model/table';
 const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape> = {}): Shape =>
   ({
     id,
-    boardId: 'board',
     shapeType,
     x,
     y: 20,
@@ -26,7 +25,6 @@ const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape
     order_key: `a${x}`,
     is_visible: true,
     is_locked: false,
-    createdAt: '',
     ...extra,
   }) as Shape;
 
@@ -50,7 +48,6 @@ export const ALL_SHAPE_TYPES: ShapeType[] = [
 
 const frame: Frame = {
   id: 'frame',
-  board_id: 'board',
   x: -20,
   y: -20,
   width: 500,
@@ -69,12 +66,10 @@ const frame: Frame = {
   order_key: 'a',
   is_visible: true,
   is_locked: false,
-  created_at: '',
 };
 
 const swimlane: Swimlane = {
   id: 'swimlane',
-  board_id: 'board',
   x: 0,
   y: 220,
   width: 400,
@@ -97,12 +92,10 @@ const swimlane: Swimlane = {
   order_key: 'b',
   is_visible: true,
   is_locked: false,
-  created_at: '',
 };
 
 const table: Table = {
   id: 'users',
-  board_id: 'board',
   name: 'users',
   title: 'Users',
   x: 10,
@@ -131,7 +124,6 @@ const table: Table = {
   order_key: 'a',
   is_visible: true,
   is_locked: false,
-  created_at: '',
 } as Table;
 
 const linkStraight: Link = {

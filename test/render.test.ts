@@ -28,7 +28,6 @@ describe('render core runs headless through the package (real app source)', () =
     const input = {
       shapes: types.map((shapeType, index) => ({
         id: String(index),
-        boardId: 'board',
         shapeType,
         x: index * 150,
         y: 20,
@@ -42,7 +41,6 @@ describe('render core runs headless through the package (real app source)', () =
         order_key: `a${index}`,
         is_visible: true,
         is_locked: false,
-        createdAt: '',
       })),
       frames: [],
       swimlanes: [],
@@ -71,7 +69,6 @@ describe('render core runs headless through the package (real app source)', () =
       shapes: [
         {
           id: 'mystery',
-          boardId: 'board',
           shapeType: 'not_a_real_shape',
           x: 0,
           y: 0,
@@ -82,7 +79,6 @@ describe('render core runs headless through the package (real app source)', () =
           order_key: 'a',
           is_visible: true,
           is_locked: false,
-          createdAt: '',
         },
       ],
       frames: [],
@@ -106,7 +102,6 @@ describe('render core runs headless through the package (real app source)', () =
       shapes: [
         {
           id: 'unfilled',
-          boardId: 'board',
           shapeType: 'pill',
           x: 0,
           y: 0,
@@ -117,7 +112,6 @@ describe('render core runs headless through the package (real app source)', () =
           order_key: 'a',
           is_visible: true,
           is_locked: false,
-          createdAt: '',
         },
       ],
       frames: [],
@@ -182,7 +176,6 @@ describe('render core runs headless through the package (real app source)', () =
     };
     const base = (id: string, shapeType: string, x: number) => ({
       id,
-      boardId: 'board',
       shapeType,
       x,
       y: 20,
@@ -194,7 +187,6 @@ describe('render core runs headless through the package (real app source)', () =
       order_key: `a${x}`,
       is_visible: true,
       is_locked: false,
-      createdAt: '',
     });
     const input = {
       shapes: [

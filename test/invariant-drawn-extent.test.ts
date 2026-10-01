@@ -78,7 +78,6 @@ function drawnEnvelope(input: RenderInput, id: string): Envelope {
 function shapeInput(shapeType: ShapeType, box: { x: number; y: number; width: number; height: number }): RenderInput {
   const shape: Shape = {
     id: 's',
-    boardId: 'b',
     shapeType,
     ...box,
     text: '',
@@ -89,7 +88,6 @@ function shapeInput(shapeType: ShapeType, box: { x: number; y: number; width: nu
     order_key: 'a',
     is_visible: true,
     is_locked: false,
-    createdAt: '',
   };
   return { shapes: [shape], frames: [], swimlanes: [], links: [] };
 }
