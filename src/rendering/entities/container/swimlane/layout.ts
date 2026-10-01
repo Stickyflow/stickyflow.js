@@ -26,7 +26,7 @@ export function createSwimlaneRenderContext(swimlane: Swimlane, index: number): 
     order: orderOf(swimlane, 5_000 + index),
     bounds: boxBounds(
       { x: swimlane.x, y: swimlane.y, width: swimlane.width, height: swimlane.height },
-      swimlane.stroke_width + 4,
+      swimlane.strokeWidth + 4,
     ),
     lanes: positionLanes(swimlane),
   };

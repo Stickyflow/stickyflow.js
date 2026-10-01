@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '../src/index';
+import type { RenderInput } from '../src/index';
+import { render, renderCanvas, sflToRenderInput } from '../src/index';
 
 const swimlane = (extra: string) => `sfl 1.2
 
@@ -19,6 +20,23 @@ ${extra}
 `;
 
 describe('Swimlane — SFL style properties', () => {
+  it('maps SFL properties to the canonical camelCase swimlane contract', () => {
+    expect(sflToRenderInput(swimlane('    cornerRadius: 24\n    showLaneLabels: false')).swimlanes[0]).toMatchObject({
+      strokeColor: '#6b7280',
+      strokeWidth: 2,
+      cornerRadius: 24,
+      fillColor: 'rgba(107, 114, 128, 0.05)',
+      showLaneLabels: false,
+    });
+  });
+
+  it('does not render a swimlane whose canonical visibility flag is false', () => {
+    const hiddenSwimlane = { ...sflToRenderInput(swimlane('')).swimlanes[0], isVisible: false };
+    const input = { shapes: [], frames: [], swimlanes: [hiddenSwimlane], links: [] } as RenderInput;
+
+    expect(renderCanvas(input).svg).not.toContain('sf-swimlane-process');
+  });
+
   it('defaults fill to the same tinted gray as a UI-created swimlane, not transparent', () => {
     const { svg } = render(swimlane(''));
     const rect = svg.match(/<rect id="[^"]*swimlane-process"[^>]*>/)?.[0];
