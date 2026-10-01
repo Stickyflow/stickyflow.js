@@ -1,14 +1,12 @@
+import type { Link } from '../../../model/link';
 import { decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflLinkOut } from '../../../sfl/sflToCanvasState';
 import { MARKER_TYPES, numOf, optionalOneOf, PATH_TYPES, STROKE_STYLES, strokePaint } from './values';
 
-export function linkObject(l: SflLinkOut) {
+export function linkObject(l: SflLinkOut): Link {
   const p = l.props;
   return {
     id: l.id,
-    type: 'link',
-    from: l.fromId,
-    to: l.toId,
     fromId: l.fromId,
     toId: l.toId,
     text: l.text ?? '',
@@ -31,14 +29,14 @@ export function linkObject(l: SflLinkOut) {
     endMarker: optionalOneOf(p.markerEnd, MARKER_TYPES),
     segmentOffsets: l.segments,
     fromPoint: l.fromPort
-      ? { port: l.fromPort, isPort: true as const }
+      ? { kind: 'port' as const, port: l.fromPort }
       : l.fromSide
-        ? { side: l.fromSide, offset: l.fromFraction }
+        ? { kind: 'side' as const, side: l.fromSide, offset: l.fromFraction }
         : undefined,
     toPoint: l.toPort
-      ? { port: l.toPort, isPort: true as const }
+      ? { kind: 'port' as const, port: l.toPort }
       : l.toSide
-        ? { side: l.toSide, offset: l.toFraction }
+        ? { kind: 'side' as const, side: l.toSide, offset: l.toFraction }
         : undefined,
     order: l.order,
   };

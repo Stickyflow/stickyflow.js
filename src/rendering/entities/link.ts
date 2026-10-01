@@ -12,7 +12,7 @@ export function buildLink(
   index: number,
   measureText?: MeasureTextFactory,
 ): RenderNode[] {
-  if (item.link.is_visible === false || item.link.isVisible === false) {
+  if (item.link.isVisible === false) {
     return [];
   }
   const context = createLinkRenderContext(item, index, measureText);

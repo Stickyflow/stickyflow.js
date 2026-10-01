@@ -53,9 +53,9 @@ export interface LinkStyle {
 }
 
 export type LinkEndpoint =
-  | { side: 'top' | 'right' | 'bottom' | 'left'; offset?: number }
-  | { x: number; y: number; isAbsolute: true }
-  | { port: string; isPort: true };
+  | { kind: 'side'; side: 'top' | 'right' | 'bottom' | 'left'; offset?: number }
+  | { kind: 'absolute'; x: number; y: number }
+  | { kind: 'port'; port: string };
 
 export interface Link {
   id: string;
@@ -73,18 +73,12 @@ export interface Link {
   waypoints?: Array<{ x: number; y: number }>;
   startMarker?: MarkerType;
   endMarker?: MarkerType;
-  start_marker?: MarkerType;
-  end_marker?: MarkerType;
-  layer_group?: string;
   layerGroup?: string;
-  order_key?: string;
   orderKey?: string;
-  is_visible?: boolean;
+  order?: number;
   isVisible?: boolean;
-  is_locked?: boolean;
   isLocked?: boolean;
-  parent_frame_id?: string;
   parentFrameId?: string;
-  parent_swimlane_id?: string;
-  lane_id?: string;
+  parentSwimlaneId?: string;
+  laneId?: string;
 }

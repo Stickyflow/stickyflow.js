@@ -27,7 +27,7 @@ function sidePoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, {
   }
 }
 
-function namedPortPoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, { isPort: true }>): Point {
+function namedPortPoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, { kind: 'port' }>): Point {
   const port = element.symbol?.ports?.find(candidate => candidate.name === endpoint.port);
   if (!port) {
     return elementCenter(element);
@@ -68,14 +68,14 @@ function selectLinkEndpoint(link: Link, end: LinkEnd): SelectedLinkEndpoint {
 }
 
 function explicitAbsolutePoint(endpoint: LinkEndpoint | undefined): Point | null {
-  return endpoint && 'isAbsolute' in endpoint ? { x: endpoint.x, y: endpoint.y } : null;
+  return endpoint?.kind === 'absolute' ? { x: endpoint.x, y: endpoint.y } : null;
 }
 
 function explicitAnchorPoint(element: PositionedElement, endpoint: LinkEndpoint | undefined): Point | null {
-  if (endpoint && 'isPort' in endpoint) {
+  if (endpoint?.kind === 'port') {
     return namedPortPoint(element, endpoint);
   }
-  if (endpoint && 'side' in endpoint) {
+  if (endpoint?.kind === 'side') {
     return sidePoint(element, endpoint);
   }
   return null;

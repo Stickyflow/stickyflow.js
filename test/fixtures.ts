@@ -141,10 +141,10 @@ const linkStraight: Link = {
   startMarker: 'triangle',
   endMarker: 'zero_many',
   style: { pathType: 'straight', color: '#334155', startLabel: '1', endLabel: '0..*' },
-  layer_group: 'content',
-  order_key: 'a',
-  is_visible: true,
-  is_locked: false,
+  layerGroup: 'content',
+  orderKey: 'a',
+  isVisible: true,
+  isLocked: false,
 } as Link;
 
 const linkCurved: Link = {
@@ -155,18 +155,18 @@ const linkCurved: Link = {
   showText: true,
   text: 'curved',
   style: { pathType: 'curved', color: '#ef4444', strokeWidth: 3 },
-  layer_group: 'content',
-  order_key: 'b',
-  is_visible: true,
-  is_locked: false,
+  layerGroup: 'content',
+  orderKey: 'b',
+  isVisible: true,
+  isLocked: false,
 } as Link;
 
 const linkOrthogonal: Link = {
   id: 'ortho',
   fromId: 'a',
   toId: 'b',
-  fromPoint: { side: 'right', offset: 0.5 },
-  toPoint: { side: 'left', offset: 0.5 },
+  fromPoint: { kind: 'side', side: 'right', offset: 0.5 },
+  toPoint: { kind: 'side', side: 'left', offset: 0.5 },
   waypoints: [
     { x: 160, y: 60 },
     { x: 160, y: 140 },
@@ -174,10 +174,10 @@ const linkOrthogonal: Link = {
   ],
   endMarker: 'filled_arrow',
   style: { pathType: 'orthogonal', color: '#0369a1', strokeWidth: 3 },
-  layer_group: 'default',
-  order_key: 'c',
-  is_visible: true,
-  is_locked: false,
+  layerGroup: 'default',
+  orderKey: 'c',
+  isVisible: true,
+  isLocked: false,
 } as Link;
 
 export const fixtures: Record<string, RenderInput> = {

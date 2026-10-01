@@ -152,10 +152,10 @@ describe('render core runs headless through the package (real app source)', () =
           ],
         },
       },
-      layer_group: 'default',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'default',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -232,10 +232,10 @@ describe('render core runs headless through the package (real app source)', () =
       startMarker: 'triangle',
       endMarker: 'zero_many',
       style: { pathType: 'straight', color: '#334155', startLabel: '1', endLabel: '0..*' },
-      layer_group: 'content',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'content',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -265,10 +265,10 @@ describe('render core runs headless through the package (real app source)', () =
       text: 'HTTP Request',
       showText: true,
       style: { pathType: 'straight', color: '#334155' },
-      layer_group: 'content',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'content',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -304,10 +304,10 @@ describe('render core runs headless through the package (real app source)', () =
       text: 'retry',
       showText: true,
       style: { pathType: 'straight', color: '#334155', strokeStyle: 'dashed' },
-      layer_group: 'content',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'content',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],

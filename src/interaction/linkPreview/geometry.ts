@@ -46,12 +46,12 @@ function previewLink(fromSide: Side | null, toSide: Side | null): Link {
     id: 'preview',
     fromId: '',
     toId: '',
-    layer_group: '',
-    order_key: '',
-    is_visible: true,
-    is_locked: false,
-    fromPoint: fromSide ? { side: fromSide, offset: 0.5 } : undefined,
-    toPoint: toSide ? { side: toSide, offset: 0.5 } : undefined,
+    layerGroup: '',
+    orderKey: '',
+    isVisible: true,
+    isLocked: false,
+    fromPoint: fromSide ? { kind: 'side', side: fromSide, offset: 0.5 } : undefined,
+    toPoint: toSide ? { kind: 'side', side: toSide, offset: 0.5 } : undefined,
   };
 }
 

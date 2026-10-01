@@ -49,6 +49,8 @@ describe('Named Ports (§3.5, entity.portName)', () => {
   it('resolves the port to a world point via the bounding box (unrotated)', () => {
     const input = sflToRenderInput(SFL);
     const resolved = input.links.find(link => link.link.id === 'rueckkopplung');
+    expect(resolved?.link.fromPoint).toEqual({ kind: 'port', port: 'out' });
+    expect(resolved?.link.toPoint).toEqual({ kind: 'port', port: 'in_minus' });
     expect(resolved?.from).toEqual({ x: 100, y: 30 });
     expect(resolved?.to).toEqual({ x: 300, y: 45 });
   });
@@ -80,7 +82,7 @@ Model board {
   // symbol, so that branch is unreachable through the pure SFL-text pipeline
   // - it exists for callers of the lower-level Link/Shape API (e.g. the
   // interaction layer) that could otherwise hand pointFor an inconsistent
-  // isPort reference. See the equivalent comment in stickyflow-atlas's
+  // named-port reference. See the equivalent comment in stickyflow-atlas's
   // useResolvedLinks.ts.
 
   it('renders end-to-end without crashing and produces a link path', () => {

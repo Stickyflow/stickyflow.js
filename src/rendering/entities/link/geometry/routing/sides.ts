@@ -21,7 +21,7 @@ export function connectionSides(
   from: LinkRoutePoint,
   to: LinkRoutePoint,
 ): { fromSide: Side; toSide: Side } {
-  const fromSide = link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : facingSide(from, to);
-  const toSide = link.toPoint && 'side' in link.toPoint ? link.toPoint.side : facingSide(to, from);
+  const fromSide = link.fromPoint?.kind === 'side' ? link.fromPoint.side : facingSide(from, to);
+  const toSide = link.toPoint?.kind === 'side' ? link.toPoint.side : facingSide(to, from);
   return { fromSide, toSide };
 }

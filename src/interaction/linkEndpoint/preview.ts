@@ -9,12 +9,12 @@ function previewLink(fromSide: Side, toSide: Side): Link {
     id: 'preview',
     fromId: '',
     toId: '',
-    layer_group: '',
-    order_key: '',
-    is_visible: true,
-    is_locked: false,
-    fromPoint: { side: fromSide, offset: 0.5 },
-    toPoint: { side: toSide, offset: 0.5 },
+    layerGroup: '',
+    orderKey: '',
+    isVisible: true,
+    isLocked: false,
+    fromPoint: { kind: 'side', side: fromSide, offset: 0.5 },
+    toPoint: { kind: 'side', side: toSide, offset: 0.5 },
   };
 }
 
