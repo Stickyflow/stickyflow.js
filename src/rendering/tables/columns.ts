@@ -8,7 +8,7 @@ import { type TableRenderContext, tableGridStyle } from './types';
 const COLUMN_RESIZE_HIT_WIDTH = 10;
 
 function renderColumnDivider(context: TableRenderContext, columnIndex: number): RenderNode[] {
-  if (columnIndex === 0 || !(context.table.show_vertical_lines ?? true)) {
+  if (columnIndex === 0 || !(context.table.showVerticalLines ?? true)) {
     return [];
   }
   const column = context.columns[columnIndex];

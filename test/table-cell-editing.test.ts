@@ -31,9 +31,26 @@ Model M {
 describe('a table cell, header, and footer are each tagged for property-path editing', () => {
   it('threads the Columns/Rows/Footer block names through to the render input', () => {
     const table = sflToRenderInput(TABLE_SFL).tables?.[0];
-    expect(table?.columns_block_name).toBe('cols');
-    expect(table?.rows_block_name).toBe('rows');
-    expect(table?.footer_block_name).toBe('total');
+    expect(table).toMatchObject({
+      columnsBlockName: 'cols',
+      rowsBlockName: 'rows',
+      footerBlockName: 'total',
+      strokeColor: '#000000',
+      strokeWidth: 1,
+      fillColor: '#ffffff',
+      showHeader: true,
+    });
+  });
+
+  it('does not render a table whose canonical visibility flag is false', () => {
+    const table = sflToRenderInput(TABLE_SFL).tables?.[0];
+    if (!table) {
+      throw new Error('Expected the SFL fixture to produce a table.');
+    }
+    const hiddenTable = { ...table, isVisible: false };
+    const { svg } = renderCanvas({ shapes: [], frames: [], swimlanes: [], links: [], tables: [hiddenTable] });
+
+    expect(svg).not.toContain('sf-table-t');
   });
 
   it('tags a body cell with a Rows[block].Row[id].column path', () => {
@@ -101,14 +118,14 @@ Model M {
           columns: [{ id: 'field', label: 'Field', width: 150, type: 'text' }],
           rows: [{ id: 'row1', cells: { field: 'id' } }],
           footer: { id: 'total', cells: { field: 'n=1' } },
-          stroke_color: '#000',
-          stroke_width: 1,
-          corner_radius: 8,
-          fill_color: '#fff',
-          text_color: '#111',
-          font_size: 14,
-          font_weight: 'bold',
-          show_header: true,
+          strokeColor: '#000',
+          strokeWidth: 1,
+          cornerRadius: 8,
+          fillColor: '#fff',
+          textColor: '#111',
+          fontSize: 14,
+          fontWeight: 'bold',
+          showHeader: true,
         },
       ],
     });

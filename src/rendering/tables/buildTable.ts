@@ -7,7 +7,7 @@ import { createTableRenderContext } from './layout';
 import { renderTableRules } from './rules';
 
 export function buildTable(table: Table, index: number): RenderNode[] {
-  if (table.is_visible === false) {
+  if (table.isVisible === false) {
     return [];
   }
   const context = createTableRenderContext(table, index);

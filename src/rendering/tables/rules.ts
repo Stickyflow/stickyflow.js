@@ -23,14 +23,14 @@ function renderBodyRules(context: TableRenderContext): RenderNode[] {
   return context.table.rows.flatMap((_, rowIndex) => {
     const y = context.table.y + context.headerHeight + rowIndex * context.rowHeight;
     const showRule =
-      rowIndex === 0 && context.table.show_header
-        ? context.table.header_rule_style !== 'none'
-        : (context.table.show_horizontal_lines ?? true);
+      rowIndex === 0 && context.table.showHeader
+        ? context.table.headerRuleStyle !== 'none'
+        : (context.table.showHorizontalLines ?? true);
     const nodes: RenderNode[] = [];
     if (y > context.table.y && showRule) {
       nodes.push(horizontalRule(context, `table-row-${context.table.id}-${rowIndex}`, y));
     }
-    if (rowIndex === 0 && context.table.show_header && context.table.header_rule_style === 'double') {
+    if (rowIndex === 0 && context.table.showHeader && context.table.headerRuleStyle === 'double') {
       nodes.push(horizontalRule(context, `table-row-double-${context.table.id}`, y - 4));
     }
     return nodes;

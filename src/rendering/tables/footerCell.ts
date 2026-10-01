@@ -7,7 +7,7 @@ export function renderFooterCell(context: TableRenderContext, column: Positioned
   if (!context.table.footer) {
     return [];
   }
-  const footerBlockName = context.table.footer_block_name;
+  const footerBlockName = context.table.footerBlockName;
   const prop = footerBlockName ? `Footer[${footerBlockName}].${column.id}` : undefined;
   return [
     ...renderCellHitArea(context, `table-footer-hit-${context.table.id}-${column.id}`, prop, {
@@ -26,10 +26,10 @@ export function renderFooterCell(context: TableRenderContext, column: Positioned
       width: Math.max(0, column.width - 12),
       height: context.rowHeight,
       lines: [String(context.table.footer.cells[column.id] ?? '')],
-      fontFamily: context.table.font_family ?? DEFAULT_FONT,
-      fontSize: context.table.font_size,
+      fontFamily: context.table.fontFamily ?? DEFAULT_FONT,
+      fontSize: context.table.fontSize,
       fontWeight: 'bold',
-      color: context.table.text_color,
+      color: context.table.textColor,
       align: column.align ?? 'left',
       verticalAlign: 'middle',
       lineHeight: 1.2,

@@ -4,13 +4,13 @@ export function computeRowHeight(fontSize: number): number {
   return Math.max(24, fontSize * 1.8);
 }
 
-export function tableBorderGeometry(table: Pick<Table, 'border_style' | 'stroke_width' | 'width'>) {
-  const doubleBorderGap = Math.max(4, table.stroke_width * 2 + 2);
+export function tableBorderGeometry(table: Pick<Table, 'borderStyle' | 'strokeWidth' | 'width'>) {
+  const doubleBorderGap = Math.max(4, table.strokeWidth * 2 + 2);
   const gridInset =
-    table.border_style === 'none'
+    table.borderStyle === 'none'
       ? 0
-      : table.border_style === 'double'
-        ? doubleBorderGap + table.stroke_width / 2
-        : Math.max(1, table.stroke_width / 2);
+      : table.borderStyle === 'double'
+        ? doubleBorderGap + table.strokeWidth / 2
+        : Math.max(1, table.strokeWidth / 2);
   return { doubleBorderGap, gridInset, gridSpan: Math.max(0, table.width - gridInset * 2) };
 }

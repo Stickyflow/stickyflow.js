@@ -14,18 +14,18 @@ export function renderTableFills(context: TableRenderContext): RenderNode[] {
       y: table.y,
       width: table.width,
       height,
-      rx: table.corner_radius,
-      style: simpleContainerStyle(table.fill_color, 'transparent', 0, []),
+      rx: table.cornerRadius,
+      style: simpleContainerStyle(table.fillColor, 'transparent', 0, []),
     },
   ];
-  if (table.show_header) {
+  if (table.showHeader) {
     nodes.push({
       type: 'path',
       id: `table-header-fill-${table.id}`,
       order: order + 0.06,
       bounds,
-      d: topRoundedRectPath(table.x, table.y, table.width, rowHeight, table.corner_radius),
-      style: simpleContainerStyle(table.header_fill_color ?? '#f1f5f9', 'transparent', 0, []),
+      d: topRoundedRectPath(table.x, table.y, table.width, rowHeight, table.cornerRadius),
+      style: simpleContainerStyle(table.headerFillColor ?? '#f1f5f9', 'transparent', 0, []),
     });
   }
   if (table.footer) {
@@ -34,8 +34,8 @@ export function renderTableFills(context: TableRenderContext): RenderNode[] {
       id: `table-footer-fill-${table.id}`,
       order: order + 0.06,
       bounds,
-      d: bottomRoundedRectPath(table.x, footerY, table.width, rowHeight, table.corner_radius),
-      style: simpleContainerStyle(table.header_fill_color ?? '#f1f5f9', 'transparent', 0, []),
+      d: bottomRoundedRectPath(table.x, footerY, table.width, rowHeight, table.cornerRadius),
+      style: simpleContainerStyle(table.headerFillColor ?? '#f1f5f9', 'transparent', 0, []),
     });
   }
   return nodes;
