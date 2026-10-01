@@ -1,8 +1,15 @@
 import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
-import type { RenderNode } from '../../../scene';
+import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { CHART_COLORS, chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
+import {
+  barShapePath,
+  CHART_COLORS,
+  chartText,
+  contrastTextColor,
+  representativeColor,
+  resolveChartShadow,
+} from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';
 
@@ -14,6 +21,7 @@ interface MekkoSegment {
   seriesLabel: string;
   value: number;
   color: NonNullable<ChartSeries['color']>;
+  isTop: boolean;
   frame: {
     x: number;
     y: number;
@@ -29,8 +37,10 @@ export function renderMekkoColumnSegments(
 ): RenderNode[] {
   const showBackdrop = context.chart.config?.showColumnBackdrop !== false;
   const backdrop = showBackdrop ? [createColumnBackdrop(context, layout, columnIndex)] : [];
-  const segments = calculateColumnSegments(context.chart.series, layout, columnIndex).flatMap(segment =>
-    renderSegment(context, layout, segment),
+  const gradientFlow = Boolean(context.chart.config?.tileGradient);
+  const columnSegments = calculateColumnSegments(context.chart.series, layout, columnIndex);
+  const segments = columnSegments.flatMap((segment, index) =>
+    renderSegment(context, layout, segment, gradientFlow ? columnSegments[index + 1]?.color : undefined),
   );
   return [...backdrop, ...segments];
 }
@@ -38,17 +48,19 @@ export function renderMekkoColumnSegments(
 function createColumnBackdrop(context: ChartRenderContext, layout: MekkoLayout, columnIndex: number): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
   const column = layout.columns[columnIndex];
+  const cornerRadius = mekkoCornerRadius(context);
   return {
-    type: 'rect',
+    type: 'path',
     id: `chart-mekko-column-backdrop-${chart.id}-${columnIndex}`,
     order: nextOrder(),
     bounds,
-    x: column.x,
-    y: layout.grid.y,
-    width: column.width,
-    height: layout.grid.height,
+    d: barShapePath(column.x, layout.grid.y, column.width, layout.grid.height, cornerRadius),
     style: { fill: paint(chart.grid_color ?? '#e2e8f0', diagnostics, chart.id), opacity: BACKDROP_OPACITY },
   };
+}
+
+function mekkoCornerRadius(context: ChartRenderContext): number {
+  return Math.max(0, finite(context.chart.config?.barCornerRadius, 2));
 }
 
 function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout, columnIndex: number): MekkoSegment[] {
@@ -68,6 +80,7 @@ function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout,
       seriesLabel: series.label,
       value,
       color,
+      isTop: seriesIndex === 0,
       frame: {
         x: column.x,
         y,
@@ -80,24 +93,53 @@ function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout,
   return segments;
 }
 
-function renderSegment(context: ChartRenderContext, layout: MekkoLayout, segment: MekkoSegment): RenderNode[] {
-  return [createSegmentNode(context, segment), ...createSegmentLabel(context, layout, segment)];
+function renderSegment(
+  context: ChartRenderContext,
+  layout: MekkoLayout,
+  segment: MekkoSegment,
+  nextColor: NonNullable<ChartSeries['color']> | undefined,
+): RenderNode[] {
+  return [createSegmentNode(context, segment, nextColor), ...createSegmentLabel(context, layout, segment)];
 }
 
-function createSegmentNode(context: ChartRenderContext, segment: MekkoSegment): RenderNode {
+function createSegmentNode(
+  context: ChartRenderContext,
+  segment: MekkoSegment,
+  nextColor: NonNullable<ChartSeries['color']> | undefined,
+): RenderNode {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const shadow = resolveChartShadow(chart.shadow_style);
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
+  const radius = segment.isTop ? mekkoCornerRadius(context) : 0;
+  const { x, y, width, height } = segment.frame;
+  const fallback = '#94a3b8';
+  // Forced-square bounds (side = height) so the angle:90 gradient spans exactly this segment, not the shared chart-wide bounds.
+  const gradientBounds: Bounds = {
+    minX: x + width / 2 - height / 2,
+    maxX: x + width / 2 + height / 2,
+    minY: y,
+    maxY: y + height,
+  };
+  const fill = nextColor
+    ? {
+        kind: 'linear-gradient' as const,
+        angle: 90,
+        stops: [
+          { offset: 0, color: representativeColor(segment.color, fallback) },
+          { offset: 100, color: representativeColor(nextColor, fallback) },
+        ],
+      }
+    : paint(segment.color, diagnostics, chart.id);
   return {
-    type: 'rect',
+    type: 'path',
     id: `chart-mekko-seg-${chart.id}-${segment.columnIndex}-${segment.seriesId}`,
     order: nextOrder(),
-    bounds,
-    ...segment.frame,
+    bounds: nextColor ? gradientBounds : bounds,
+    d: barShapePath(x, y, width, height, radius),
     style: {
-      fill: paint(segment.color, diagnostics, chart.id),
+      fill,
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: finite(chart.grid_width, 1),
       shadow,

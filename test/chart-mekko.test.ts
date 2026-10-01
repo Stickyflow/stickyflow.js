@@ -2,7 +2,18 @@ import { describe, expect, it } from 'vitest';
 import type { RenderNode } from '../src/index';
 import { render, sflToCanvasState } from '../src/index';
 
-const rect = (node: RenderNode | undefined) => (node?.type === 'rect' ? node : undefined);
+// Segments render as a barShapePath, not a rect - with barCornerRadius: 0 below it's a plain M x y H.. V.. H.. Z square.
+function rect(node: RenderNode | undefined): { x: number; y: number; width: number; height: number } | undefined {
+  if (node?.type !== 'path') {
+    return undefined;
+  }
+  const match = node.d.match(/M ([-\d.]+) ([-\d.]+) H ([-\d.]+) V ([-\d.]+) H [-\d.]+ Z/);
+  if (!match) {
+    return undefined;
+  }
+  const [, x, y, right, bottom] = match.map(Number);
+  return { x, y, width: right - x, height: bottom - y };
+}
 
 const MEKKO_SFL = `sfl 1.2
 
@@ -11,6 +22,7 @@ Model board {
     text: "Revenue by region and product"
     type: mekko
     categories: ["East", "West"]
+    barCornerRadius: 0
 
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 100; step: 20 }
@@ -99,7 +111,7 @@ describe('Mekko chart', () => {
   it('segment borders use the theme grid color, not a hardcoded white', () => {
     const themed = MEKKO_SFL.replace('type: mekko', 'type: mekko\n    style { gridColor: "#475569" }');
     const { svg } = render(themed);
-    const segment = svg.match(/<rect id="[^"]*chart-mekko-seg-revenue-0-hardware"[^>]*>/)?.[0];
+    const segment = svg.match(/<path id="[^"]*chart-mekko-seg-revenue-0-hardware"[^>]*>/)?.[0];
     expect(segment).toContain('stroke="#475569"');
   });
 });
