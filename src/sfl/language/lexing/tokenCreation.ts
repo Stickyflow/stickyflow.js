@@ -5,7 +5,7 @@ export function createToken(
   type: TokenType,
   value: string,
   start: SourcePosition,
-  detail: Pick<Token, 'numberValue' | 'multiline'> = {},
+  detail: Pick<Token, 'numberValue'> = {},
 ): Token {
   return {
     type,

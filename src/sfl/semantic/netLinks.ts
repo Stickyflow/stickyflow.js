@@ -17,7 +17,7 @@ function netLink(block: SflBlock, from: string[], to: string[], index: number, t
   if (text) {
     entries.push({
       type: 'property',
-      property: { key: 'text', value: { type: 'string', value: text, multiline: false } },
+      property: { key: 'text', value: { type: 'string', value: text } },
     });
   }
   return { kind: 'Link', name: `${block.name}_${index + 1}`, composition: [], entries };

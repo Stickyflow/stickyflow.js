@@ -27,8 +27,12 @@ export class SourceCursor {
   }
 
   advance(): string {
-    const character = this.input[this.offset++];
-    if (character === '\n') {
+    const character = this.input[this.offset];
+    if (character === undefined) {
+      throw new Error('Cannot advance beyond the end of the SFL source.');
+    }
+    this.offset++;
+    if (character === '\n' || (character === '\r' && this.peek() !== '\n')) {
       this.line++;
       this.col = 1;
     } else {

@@ -1,4 +1,4 @@
-import { isBlockKind, type SflBlock, type SflEntry } from '../ast';
+import { isNamedBlockKind, type SflBlock, type SflEntry } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
 import { PropertyParser } from './properties';
@@ -12,12 +12,12 @@ export class BlockParser {
 
   parseBlock(): SflBlock {
     const kind = this.cursor.expect('ident', 'block kind');
-    if (!isBlockKind(kind.value)) {
+    if (!isNamedBlockKind(kind.value)) {
       throw new SflParseError(`unknown block kind '${kind.value}'`, kind.line, kind.col);
     }
     const name = this.cursor.expect('ident', 'block name');
     const composition = this.parseComposition();
-    const entries = this.parseEntries();
+    const entries = this.parseBlockEntries();
     return { kind: kind.value, name: name.value, composition, entries };
   }
 
@@ -34,7 +34,15 @@ export class BlockParser {
     return composition;
   }
 
-  private parseEntries(bareBlocksAreSeries = false): SflEntry[] {
+  private parseBlockEntries(): SflEntry[] {
+    return this.parseEntries(() => this.parseBlockEntry());
+  }
+
+  private parseDataEntries(): SflEntry[] {
+    return this.parseEntries(() => this.parseDataEntry());
+  }
+
+  private parseEntries(parseEntry: () => SflEntry): SflEntry[] {
     this.cursor.skipNewlines();
     this.cursor.expect('lbrace', "'{'");
     const entries: SflEntry[] = [];
@@ -44,7 +52,7 @@ export class BlockParser {
         const token = this.cursor.peek();
         throw new SflParseError('unterminated block (missing "}")', token.line, token.col);
       }
-      entries.push(this.parseEntry(bareBlocksAreSeries));
+      entries.push(parseEntry());
       if (this.cursor.at('semi')) {
         this.cursor.next();
       }
@@ -54,7 +62,7 @@ export class BlockParser {
     return entries;
   }
 
-  private parseEntry(bareBlocksAreSeries: boolean): SflEntry {
+  private parseBlockEntry(): SflEntry {
     const token = this.cursor.peek();
     if (token.type !== 'ident') {
       throw new SflParseError(
@@ -63,7 +71,7 @@ export class BlockParser {
         token.col,
       );
     }
-    if (isBlockKind(token.value) && this.cursor.peek(1).type === 'ident') {
+    if (isNamedBlockKind(token.value) && this.cursor.peek(1).type === 'ident') {
       return { type: 'block', block: this.parseBlock() };
     }
     if (token.value === 'layout' && this.cursor.peek(1).type === 'lbrace') {
@@ -75,18 +83,23 @@ export class BlockParser {
     if (token.value === 'data' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'data', data: this.parseDataBlock() };
     }
-    if (bareBlocksAreSeries && !isBlockKind(token.value) && this.looksLikeBareSeries()) {
-      return { type: 'block', block: this.parseBareSeries() };
-    }
     return { type: 'property', property: this.properties.parseProperty() };
+  }
+
+  private parseDataEntry(): SflEntry {
+    const token = this.cursor.peek();
+    if (token.type === 'ident' && !isNamedBlockKind(token.value) && this.looksLikeSeriesEntry()) {
+      return { type: 'block', block: this.parseSeriesEntry() };
+    }
+    return this.parseBlockEntry();
   }
 
   private parseDataBlock(): SflBlock {
     this.cursor.next();
-    return { kind: 'data', name: '', composition: [], entries: this.parseEntries(true) };
+    return { kind: 'data', name: '', composition: [], entries: this.parseDataEntries() };
   }
 
-  private looksLikeBareSeries(): boolean {
+  private looksLikeSeriesEntry(): boolean {
     if (this.cursor.peek(1).type === 'lbrace') {
       return true;
     }
@@ -108,10 +121,10 @@ export class BlockParser {
     return this.cursor.peek(offset).type === 'lbrace';
   }
 
-  private parseBareSeries(): SflBlock {
+  private parseSeriesEntry(): SflBlock {
     const name = this.cursor.expect('ident', 'series name');
     const composition = this.parseComposition();
-    const entries = this.parseEntries();
+    const entries = this.parseBlockEntries();
     return { kind: 'Series', name: name.value, composition, entries };
   }
 }

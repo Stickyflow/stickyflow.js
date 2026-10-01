@@ -3,13 +3,13 @@ import type { SflBlock, SflLayout, SflProperty, SflStyle } from '../ast';
 export interface BlockEntries {
   properties: SflProperty[];
   blocks: SflBlock[];
-  layout?: SflLayout;
-  style?: SflStyle;
-  data?: SflBlock;
+  layouts: SflLayout[];
+  styles: SflStyle[];
+  dataBlocks: SflBlock[];
 }
 
 export function collectBlockEntries(block: SflBlock): BlockEntries {
-  const entries: BlockEntries = { properties: [], blocks: [] };
+  const entries: BlockEntries = { properties: [], blocks: [], layouts: [], styles: [], dataBlocks: [] };
 
   for (const entry of block.entries) {
     if (entry.type === 'property') {
@@ -17,11 +17,11 @@ export function collectBlockEntries(block: SflBlock): BlockEntries {
     } else if (entry.type === 'block') {
       entries.blocks.push(entry.block);
     } else if (entry.type === 'layout') {
-      entries.layout = entry.layout;
+      entries.layouts.push(entry.layout);
     } else if (entry.type === 'style') {
-      entries.style = entry.style;
+      entries.styles.push(entry.style);
     } else {
-      entries.data = entry.data;
+      entries.dataBlocks.push(entry.data);
     }
   }
 

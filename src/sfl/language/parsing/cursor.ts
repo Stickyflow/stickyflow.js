@@ -1,4 +1,4 @@
-import type { Token, TokenType } from '../../lexer';
+import type { Token, TokenType } from '../lexing/types';
 import { SflParseError } from './error';
 
 export class TokenCursor {

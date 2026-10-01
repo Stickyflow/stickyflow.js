@@ -62,7 +62,7 @@ export function parseValue(cursor: TokenCursor, allowTuple = true): SflValue {
   switch (token.type) {
     case 'string':
       cursor.next();
-      return { type: 'string', value: token.value, multiline: !!token.multiline };
+      return { type: 'string', value: token.value };
     case 'lbracket':
       return parseList(cursor);
     case 'number': {

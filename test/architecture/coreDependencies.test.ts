@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -100,6 +100,20 @@ describe('core dependency direction', () => {
         const targetLayer = coreLayer(target);
         if (targetLayer && !ALLOWED_DEPENDENCIES[sourceLayer].includes(targetLayer)) {
           offenders.push(`${sourceLayer}: ${from} -> ${targetLayer}: ${target}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps the SFL language implementation self-contained', () => {
+    const languageDir = join(srcDir, 'sfl/language');
+    const offenders: string[] = [];
+    for (const file of tsFiles(languageDir)) {
+      for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
+        const target = resolve(dirname(file), specifier);
+        if (target !== languageDir && !target.startsWith(`${languageDir}${sep}`)) {
+          offenders.push(`${sourcePath(file)} -> ${sourcePath(target)}`);
         }
       }
     }

@@ -1,5 +1,7 @@
 import type { SourceCursor, SourcePosition } from './cursor';
 import { SflLexError } from './error';
+import { createToken } from './tokenCreation';
+import type { Token } from './types';
 
 function indentationWidth(line: string): number {
   let width = 0;
@@ -31,15 +33,11 @@ function readLongString(cursor: SourceCursor, start: SourcePosition): string {
   while (!cursor.done) {
     if (cursor.startsWith('"""')) {
       consumeLongStringDelimiter(cursor);
-      break;
+      return dedent(body.replace(/^\r?\n/, '').replace(/\r?\n[ \t]*$/, ''));
     }
     body += cursor.advance();
-    if (cursor.done) {
-      throw new SflLexError('unterminated long string', start.line, start.col);
-    }
   }
-
-  return dedent(body.replace(/^\r?\n/, '').replace(/\r?\n[ \t]*$/, ''));
+  throw new SflLexError('unterminated long string', start.line, start.col);
 }
 
 function consumeLongStringDelimiter(cursor: SourceCursor): void {
@@ -65,6 +63,9 @@ function readShortString(cursor: SourceCursor, start: SourcePosition): string {
 }
 
 function readEscapedCharacter(cursor: SourceCursor, start: SourcePosition): string {
+  if (cursor.done) {
+    throw new SflLexError('unterminated escape sequence', start.line, start.col);
+  }
   const escaped = cursor.advance();
   switch (escaped) {
     case '"':
@@ -80,8 +81,10 @@ function readEscapedCharacter(cursor: SourceCursor, start: SourcePosition): stri
   }
 }
 
-export function readString(cursor: SourceCursor, start: SourcePosition): { value: string; multiline: boolean } {
-  const multiline = cursor.startsWith('"""');
-  const value = multiline ? readLongString(cursor, start) : readShortString(cursor, start);
-  return { value, multiline };
+function readString(cursor: SourceCursor, start: SourcePosition): string {
+  return cursor.startsWith('"""') ? readLongString(cursor, start) : readShortString(cursor, start);
+}
+
+export function readStringToken(cursor: SourceCursor, start: SourcePosition): Token {
+  return createToken('string', readString(cursor, start), start);
 }

@@ -6,7 +6,7 @@ import { consumeLineComment, startsLineComment } from './lineComment';
 import { readNumber, startsNumber } from './numbers';
 import { readPunctuation } from './punctuation';
 import { consumeSpacing, isSpacing } from './spacing';
-import { readStringToken } from './stringToken';
+import { readStringToken } from './strings';
 import type { Token } from './types';
 
 export function readNextToken(cursor: SourceCursor): Token | null {

@@ -1,32 +1,8 @@
-export type BlockKind =
-  | 'Project'
-  | 'Model'
-  | 'Group'
-  | 'Container'
-  | 'Table'
-  | 'Path'
-  | 'Chart'
-  | 'Shape'
-  | 'Link'
-  | 'Layout'
-  | 'Style'
-  | 'Columns'
-  | 'Column'
-  | 'Rows'
-  | 'Row'
-  | 'Axis'
-  | 'Series'
-  | 'Footer'
-  | 'Rule'
-  | 'Net'
-  | 'Symbol'
-  | 'Port'
-  | 'data';
-
-export const BLOCK_KINDS: readonly BlockKind[] = [
+export const NAMED_BLOCK_KINDS = [
   'Project',
   'Model',
   'Group',
+  'Entity',
   'Container',
   'Table',
   'Path',
@@ -46,7 +22,12 @@ export const BLOCK_KINDS: readonly BlockKind[] = [
   'Symbol',
   'Port',
   'Footer',
-];
+] as const;
+
+export type NamedBlockKind = (typeof NAMED_BLOCK_KINDS)[number];
+export type BlockKind = NamedBlockKind | 'data';
+
+export const BLOCK_KINDS: readonly BlockKind[] = [...NAMED_BLOCK_KINDS, 'data'];
 
 export type Side = 'top' | 'bottom' | 'left' | 'right';
 
@@ -95,7 +76,6 @@ export type SflValue =
 export interface SflStringValue {
   type: 'string';
   value: string;
-  multiline: boolean;
 }
 
 export interface SflNumberValue {
@@ -125,17 +105,7 @@ export interface SflEndpointValue {
   fraction?: number;
 }
 
-export const str = (value: string, multiline = false): SflStringValue => ({ type: 'string', value, multiline });
-export const num = (value: number): SflNumberValue => ({ type: 'number', value });
-export const tuple = (values: number[]): SflTupleValue => ({ type: 'tuple', values });
-export const list = (values: SflValue[]): SflListValue => ({ type: 'list', values });
-export const ident = (...segments: string[]): SflIdentValue => ({ type: 'ident', segments });
-export const endpoint = (segments: string[], side?: Side, fraction?: number): SflEndpointValue => ({
-  type: 'endpoint',
-  segments,
-  side,
-  fraction,
-});
-
 export const isSide = (s: string): s is Side => (SIDES as readonly string[]).includes(s);
 export const isBlockKind = (s: string): s is BlockKind => (BLOCK_KINDS as readonly string[]).includes(s);
+export const isNamedBlockKind = (s: string): s is NamedBlockKind =>
+  (NAMED_BLOCK_KINDS as readonly string[]).includes(s);

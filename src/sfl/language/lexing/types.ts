@@ -20,7 +20,6 @@ export interface Token {
   type: TokenType;
   value: string;
   numberValue?: number;
-  multiline?: boolean;
   line: number;
   col: number;
   endLine: number;

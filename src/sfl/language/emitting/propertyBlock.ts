@@ -1,5 +1,5 @@
 import type { SflProperty } from '../ast';
-import { compareLayoutProps, compareStyleProps } from './order';
+import { compareLayoutProps, compareStyleProps } from './propertyOrder';
 import { emitProperty } from './values';
 
 const INDENT = '  ';
