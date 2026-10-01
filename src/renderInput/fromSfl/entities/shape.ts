@@ -46,7 +46,7 @@ export function shapeObject(e: SflEntityOut) {
     dash: dashArray(p.dash),
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
     opacity: numOf(p.opacity),
-    parent_frame_id: e.parentFrameId,
+    parentFrameId: e.parentFrameId,
     order: e.order,
   };
 }

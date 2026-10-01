@@ -50,15 +50,15 @@ export interface Shape {
   hasShadow?: boolean;
   shadowStyle?: ShadowStyle;
 
-  layer_group?: string;
-  order_key?: string;
-  is_visible?: boolean;
-  is_locked?: boolean;
+  layerGroup?: string;
+  orderKey?: string;
+  isVisible?: boolean;
+  isLocked?: boolean;
 
-  parent_frame_id?: string | null;
+  parentFrameId?: string | null;
 
-  parent_swimlane_id?: string | null;
-  lane_id?: string | null;
+  parentSwimlaneId?: string | null;
+  laneId?: string | null;
 
   subShapes?: SubShape[] | null;
 

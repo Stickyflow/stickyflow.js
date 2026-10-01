@@ -21,10 +21,10 @@ const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape
     fillColor: '#eef2ff',
     strokeColor: '#123456',
     strokeWidth: 2,
-    layer_group: 'default',
-    order_key: `a${x}`,
-    is_visible: true,
-    is_locked: false,
+    layerGroup: 'default',
+    orderKey: `a${x}`,
+    isVisible: true,
+    isLocked: false,
     ...extra,
   }) as Shape;
 

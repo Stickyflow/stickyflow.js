@@ -7,6 +7,27 @@ import { render, renderCanvas, sflToCanvasState } from '../src/index';
 // import here — so a green run is itself the headless-portability proof.
 
 describe('render core runs headless through the package (real app source)', () => {
+  it('does not render a shape whose canonical visibility flag is false', () => {
+    const input = {
+      shapes: [
+        {
+          id: 'hidden',
+          shapeType: 'rectangle',
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 50,
+          isVisible: false,
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
+    } as unknown as RenderInput;
+
+    expect(renderCanvas(input).svg).not.toContain('sf-shape-hidden');
+  });
+
   it('renders every supported shape type as vector content and escapes text', () => {
     const types = [
       'rectangle',
@@ -37,10 +58,10 @@ describe('render core runs headless through the package (real app source)', () =
         fillColor: '#fff',
         strokeColor: '#123456',
         strokeWidth: 2,
-        layer_group: 'default',
-        order_key: `a${index}`,
-        is_visible: true,
-        is_locked: false,
+        layerGroup: 'default',
+        orderKey: `a${index}`,
+        isVisible: true,
+        isLocked: false,
       })),
       frames: [],
       swimlanes: [],
@@ -75,10 +96,10 @@ describe('render core runs headless through the package (real app source)', () =
           width: 120,
           height: 60,
           text: 'unknown shape',
-          layer_group: 'default',
-          order_key: 'a',
-          is_visible: true,
-          is_locked: false,
+          layerGroup: 'default',
+          orderKey: 'a',
+          isVisible: true,
+          isLocked: false,
         },
       ],
       frames: [],
@@ -108,10 +129,10 @@ describe('render core runs headless through the package (real app source)', () =
           width: 120,
           height: 60,
           text: 'no fill set',
-          layer_group: 'default',
-          order_key: 'a',
-          is_visible: true,
-          is_locked: false,
+          layerGroup: 'default',
+          orderKey: 'a',
+          isVisible: true,
+          isLocked: false,
         },
       ],
       frames: [],
@@ -183,10 +204,10 @@ describe('render core runs headless through the package (real app source)', () =
       height: 80,
       strokeColor: '#123456',
       strokeWidth: 2,
-      layer_group: 'default',
-      order_key: `a${x}`,
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'default',
+      orderKey: `a${x}`,
+      isVisible: true,
+      isLocked: false,
     });
     const input = {
       shapes: [

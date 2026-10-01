@@ -75,7 +75,7 @@ export function buildShape(
   diagnostics: RenderDiagnostic[],
   measureText?: MeasureTextFactory,
 ): RenderNode[] {
-  if (shape.is_visible === false) {
+  if (shape.isVisible === false) {
     return [];
   }
   const { context, strokeWidth } = createRenderContext(shape, index, diagnostics);

@@ -84,10 +84,10 @@ function shapeInput(shapeType: ShapeType, box: { x: number; y: number; width: nu
     fillColor: '#fff',
     strokeColor: '#000',
     strokeWidth: 1,
-    layer_group: 'default',
-    order_key: 'a',
-    is_visible: true,
-    is_locked: false,
+    layerGroup: 'default',
+    orderKey: 'a',
+    isVisible: true,
+    isLocked: false,
   };
   return { shapes: [shape], frames: [], swimlanes: [], links: [] };
 }

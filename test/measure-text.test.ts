@@ -26,10 +26,10 @@ const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
     fillColor: '#eef2ff',
     strokeColor: '#123456',
     strokeWidth: 2,
-    layer_group: 'default',
-    order_key: 'a',
-    is_visible: true,
-    is_locked: false,
+    layerGroup: 'default',
+    orderKey: 'a',
+    isVisible: true,
+    isLocked: false,
     ...extra,
   }) as Shape;
 
