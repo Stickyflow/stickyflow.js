@@ -1,4 +1,4 @@
-import type { Chart, ChartSeries } from '../../../model/charts';
+import type { Chart, ChartSeries } from '../../../model/chart';
 import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
 import { CHART_COLORS, chartText, representativeColor } from '../primitives';

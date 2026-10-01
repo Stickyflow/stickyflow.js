@@ -1,4 +1,4 @@
-import type { ShadowStyle } from '../shadows';
+import type { ShadowStyle } from '../shadow';
 
 export type {
   ColorStop,

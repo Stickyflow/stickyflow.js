@@ -1,4 +1,4 @@
-import type { ChartAxis, ChartZone } from '../../../model/charts';
+import type { ChartAxis, ChartZone } from '../../../model/chart';
 import { interpolateHexColorStops } from '../../../model/color';
 import { DEFAULT_ZONE_FILL } from './defaults';
 

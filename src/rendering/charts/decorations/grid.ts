@@ -1,4 +1,4 @@
-import { type Chart, CIRCULAR_GRID_CHART_TYPES } from '../../../model/charts';
+import { type Chart, CIRCULAR_GRID_CHART_TYPES } from '../../../model/chart';
 import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
 import { fieldSurfaceClip } from '../field/grid';

@@ -1,4 +1,4 @@
-import type { RenderableChart } from '../../model/charts';
+import type { RenderableChart } from '../../model/chart';
 import type { RenderDiagnostic } from '../scene';
 import type { ChartRenderOrder } from './chartRenderOrder';
 import type { ChartLayout } from './decorations';

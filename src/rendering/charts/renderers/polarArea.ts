@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../model/charts';
+import type { ChartSeries } from '../../../model/chart';
 import type { RenderNode, SceneText } from '../../scene';
 import { DEFAULT_FONT, finite, paint } from '../../scene';
 import {

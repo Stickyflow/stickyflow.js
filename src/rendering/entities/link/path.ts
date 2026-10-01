@@ -1,6 +1,6 @@
 import type { PathSegment } from '../../../model/geometry/router';
+import type { PathType } from '../../../model/link';
 import { roundedOrthogonalPathData } from '../../../model/link/geometry';
-import type { PathType } from '../../../model/links';
 import type { ScenePath } from '../../scene';
 import { markerForEnd } from './markers';
 import type { LinkRenderContext } from './types';

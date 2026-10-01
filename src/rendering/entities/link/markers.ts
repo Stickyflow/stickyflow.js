@@ -1,4 +1,4 @@
-import type { Link, MarkerType } from '../../../model/links';
+import type { Link, MarkerType } from '../../../model/link';
 
 export function markerForEnd(link: Link, end: 'start' | 'end'): MarkerType {
   const explicit = end === 'start' ? (link.startMarker ?? link.start_marker) : (link.endMarker ?? link.end_marker);

@@ -1,4 +1,4 @@
-import type { Frame } from '../../../model/frames';
+import type { Frame } from '../../../model/frame';
 import { cornersRoundedRectPath, type RectCornerRadii } from '../../../model/geometry/roundedRect';
 import type { RenderNode } from '../../scene';
 import { boxBounds, orderOf } from '../../scene';

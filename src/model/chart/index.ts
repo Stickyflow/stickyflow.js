@@ -1,7 +1,7 @@
-export type { ChartRule, ChartZone } from './chart/annotations';
-export type { ChartAxis } from './chart/axis';
-export type { ChartType } from './chart/catalog';
-export { CHART_TYPES, CIRCULAR_GRID_CHART_TYPES, isChartType } from './chart/catalog';
+export type { ChartRule, ChartZone } from './annotations';
+export type { ChartAxis } from './axis';
+export type { ChartType } from './catalog';
+export { CHART_TYPES, CIRCULAR_GRID_CHART_TYPES, isChartType } from './catalog';
 export type {
   BarChart,
   BoxplotChart,
@@ -20,8 +20,8 @@ export type {
   SankeyChart,
   ScatterChart,
   TreemapChart,
-} from './chart/chart';
-export type { ChartRamp } from './chart/colorScale';
+} from './chart';
+export type { ChartRamp } from './colorScale';
 export type {
   BarChartConfig,
   BoxplotChartConfig,
@@ -37,5 +37,5 @@ export type {
   RadialBarChartConfig,
   SankeyChartConfig,
   TreemapChartConfig,
-} from './chart/configs';
-export type { ChartSeries } from './chart/series';
+} from './configs';
+export type { ChartSeries } from './series';

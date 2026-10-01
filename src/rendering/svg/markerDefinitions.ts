@@ -1,4 +1,4 @@
-import type { MarkerType } from '../../model/links';
+import type { MarkerType } from '../../model/link';
 import { num, safeId, xml } from './format';
 import { markerBody } from './markerBodies';
 

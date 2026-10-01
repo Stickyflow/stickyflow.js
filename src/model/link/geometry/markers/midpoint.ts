@@ -1,4 +1,4 @@
-import type { PathType } from '../../../links';
+import type { PathType } from '../../types';
 import type { MarkerPoint } from './types';
 
 function curvedMidpoint(points: number[]): MarkerPoint {

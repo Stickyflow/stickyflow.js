@@ -1,4 +1,4 @@
-import type { Link, PathType } from '../../links';
+import type { Link, PathType } from '../types';
 import { curvedPath } from './routing/curved';
 import { orthogonalPath } from './routing/orthogonal';
 import { roundedOrthogonalPathData } from './routing/pathData';

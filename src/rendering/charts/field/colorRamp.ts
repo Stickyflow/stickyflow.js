@@ -1,4 +1,4 @@
-import type { ChartRamp } from '../../../model/charts';
+import type { ChartRamp } from '../../../model/chart';
 import { interpolateHexColorStops } from '../../../model/color';
 
 const RAMP_FALLBACK_COLOR = '#94a3b8';

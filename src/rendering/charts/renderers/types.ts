@@ -1,4 +1,4 @@
-import type { RenderableChart } from '../../../model/charts';
+import type { RenderableChart } from '../../../model/chart';
 import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 
 export type StackedMode = 'true' | 'percent' | 'waterfall';

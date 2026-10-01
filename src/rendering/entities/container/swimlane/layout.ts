@@ -1,4 +1,4 @@
-import type { Lane, Swimlane } from '../../../../model/swimlanes';
+import type { Lane, Swimlane } from '../../../../model/swimlane';
 import { boxBounds, orderOf } from '../../../scene';
 import type { PositionedLane, SwimlaneRenderContext } from './types';
 

@@ -1,4 +1,4 @@
-import { CHART_TYPES, type ChartType, CIRCULAR_GRID_CHART_TYPES, isChartType } from '../../model/charts';
+import { CHART_TYPES, type ChartType, CIRCULAR_GRID_CHART_TYPES, isChartType } from '../../model/chart';
 import type { SflBlock, SflDocument } from '../ast';
 import { childBlocks, contentChildren, directProperties, styleProperties } from './blockEntries';
 import type { SflDiagnostic } from './types';

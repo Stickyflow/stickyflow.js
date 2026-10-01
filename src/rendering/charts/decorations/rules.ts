@@ -1,4 +1,4 @@
-import type { Chart, ChartRule } from '../../../model/charts';
+import type { Chart, ChartRule } from '../../../model/chart';
 import type { Bounds, RenderNode } from '../../scene';
 import { finite } from '../../scene';
 import { chartText, mapChartValue } from '../primitives';

@@ -1,4 +1,4 @@
-import type { GradientColor, MeshGradientColor } from '../../model/colors';
+import type { GradientColor, MeshGradientColor } from '../../model/color';
 import type { RenderDiagnostic, ScenePaint } from './types';
 
 export function paint(

@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
 import { chartTicks } from '../primitives';

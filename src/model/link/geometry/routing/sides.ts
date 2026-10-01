@@ -1,5 +1,5 @@
 import type { Side } from '../../../geometry/router';
-import type { Link } from '../../../links';
+import type { Link } from '../../types';
 import type { ConnectionPoint } from './types';
 
 function facingSide(from: ConnectionPoint, to: ConnectionPoint): Side {

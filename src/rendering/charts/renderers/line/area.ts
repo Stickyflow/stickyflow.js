@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import { colorWithAlpha } from '../../../color';
 import type { Bounds, RenderNode } from '../../../scene';
 import { linePathData } from '../../primitives/linePath';

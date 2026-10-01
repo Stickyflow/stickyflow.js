@@ -1,4 +1,4 @@
-import { isChartType } from '../../../../model/charts';
+import { isChartType } from '../../../../model/chart';
 import type { SflBlock } from '../../../ast';
 import { contentChildren, contentProperty } from '../../blockEntries';
 import { asNumber, asString } from '../../valueAccess';

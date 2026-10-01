@@ -1,4 +1,4 @@
-import type { ShapeType } from '../../../../model/shapes';
+import type { ShapeType } from '../../../../model/shape';
 import type { RenderNode } from '../../../scene';
 import type { ShapeGeometryRenderer, ShapeRenderContext } from '../types';
 import { renderBoundedPath, renderEllipse, renderPath, renderRectangle, renderSymbol } from './simple';

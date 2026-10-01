@@ -1,4 +1,4 @@
-import type { PathPoint } from '../../model/paths';
+import type { PathPoint } from '../../model/path';
 
 export interface FreeformPathGeometry {
   points: PathPoint[];

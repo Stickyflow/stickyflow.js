@@ -1,4 +1,4 @@
-import type { Chart, ChartSeries } from '../../../model/charts';
+import type { Chart, ChartSeries } from '../../../model/chart';
 import { mapChartValue } from '../primitives';
 import type { ChartRenderContext } from './types';
 

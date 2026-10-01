@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderCanvas } from '../src/index';
-import type { Shape, ShapeType } from '../src/model/shapes';
+import type { Shape, ShapeType } from '../src/model/shape';
 import type { RenderInput } from '../src/renderInput/types';
 import { ALL_SHAPE_TYPES } from './fixtures';
 

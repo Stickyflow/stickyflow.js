@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import { wrapText } from '../../../../model/geometry/text';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';

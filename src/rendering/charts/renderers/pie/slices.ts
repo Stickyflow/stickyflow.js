@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import type { ResolvedShadow } from '../../primitives';

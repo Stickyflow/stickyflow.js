@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderInput } from '../src/index';
 import { renderCanvas } from '../src/index';
-import type { Shape } from '../src/model/shapes';
+import type { Shape } from '../src/model/shape';
 
 // §1.4 Infographics: inline `**bold**` runs inside a Shape's own
 // `text:` property (buildRenderScene.ts's buildShape + renderSceneToSvg.ts's

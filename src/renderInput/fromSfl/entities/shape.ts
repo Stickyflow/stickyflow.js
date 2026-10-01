@@ -1,4 +1,4 @@
-import type { ShapeType } from '../../../model/shapes';
+import type { ShapeType } from '../../../model/shape';
 import { decodeColor, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import {

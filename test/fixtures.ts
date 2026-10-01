@@ -3,11 +3,11 @@
 // contract: any change in geometry, ordering or serialization shows up as a diff.
 
 import type { RenderInput } from '../src/index';
-import type { Frame } from '../src/model/frames';
-import type { Link } from '../src/model/links';
-import type { Shape, ShapeType } from '../src/model/shapes';
-import type { Swimlane } from '../src/model/swimlanes';
-import type { Table } from '../src/model/tables';
+import type { Frame } from '../src/model/frame';
+import type { Link } from '../src/model/link';
+import type { Shape, ShapeType } from '../src/model/shape';
+import type { Swimlane } from '../src/model/swimlane';
+import type { Table } from '../src/model/table';
 
 const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape> = {}): Shape =>
   ({

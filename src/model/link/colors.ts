@@ -1,5 +1,5 @@
+import type { GradientColor } from '../color';
 import { interpolateHexColorStops } from '../color';
-import type { GradientColor } from '../colors';
 import type { LinkStyle } from './types';
 
 type LinkColor = LinkStyle['color'] | { type: 'solid'; color: string } | null | undefined;

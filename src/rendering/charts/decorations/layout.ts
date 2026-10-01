@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { Bounds } from '../../scene';
 import { boxBounds, finite } from '../../scene';
 import { isStackedLegendPosition, LEGEND_COLUMN_GAP, LEGEND_ROW_HEIGHT, stackedLegendColumnWidth } from './legend';

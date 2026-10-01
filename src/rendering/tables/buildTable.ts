@@ -1,4 +1,4 @@
-import type { Table } from '../../model/tables';
+import type { Table } from '../../model/table';
 import type { RenderNode } from '../scene';
 import { renderTableBorders } from './borders';
 import { renderTableColumns } from './columns';

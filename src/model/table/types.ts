@@ -1,4 +1,4 @@
-import type { ChartRamp } from '../charts';
+import type { ChartRamp } from '../chart';
 
 export interface TableColumn {
   id: string;

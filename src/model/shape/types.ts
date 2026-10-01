@@ -1,5 +1,5 @@
 import type { GradientColor, MeshGradientColor } from '../color/types';
-import type { ShadowStyle } from '../shadows';
+import type { ShadowStyle } from '../shadow';
 import type { ShapeStrokeStyle } from './paint';
 
 export type ShapeType =

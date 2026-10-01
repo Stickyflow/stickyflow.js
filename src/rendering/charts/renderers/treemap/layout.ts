@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import { finite } from '../../../scene';
 import { axisBands, DEFAULT_HEATMAP_ZONES, zoneColorAtValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';

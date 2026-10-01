@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import { mapChartValue } from './axis';
 
 interface StackedSegment {

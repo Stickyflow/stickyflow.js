@@ -1,4 +1,4 @@
-import type { MarkerType } from '../links';
+import type { MarkerType } from '../link';
 
 export interface PathPoint {
   x: number;

@@ -1,4 +1,4 @@
-import type { Table, TableColumn } from '../../model/tables';
+import type { Table, TableColumn } from '../../model/table';
 import type { Bounds, SceneStyle } from '../scene';
 
 export interface PositionedTableColumn extends TableColumn {

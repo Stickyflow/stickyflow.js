@@ -1,4 +1,4 @@
-import type { FreeformPath } from '../../model/paths';
+import type { FreeformPath } from '../../model/path';
 import type { RenderNode } from '../scene';
 import { finite, freeformPathData, orderOf } from '../scene';
 

@@ -1,4 +1,4 @@
-import type { ChartType } from '../../../model/charts';
+import type { ChartType } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';

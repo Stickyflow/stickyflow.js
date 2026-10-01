@@ -1,7 +1,7 @@
 import { edgePointToward, elementCenter } from '../../model/geometry/edgePoint';
 import { namedPortToPoint } from '../../model/geometry/router';
 import type { Point } from '../../model/geometry/types';
-import type { Link } from '../../model/links';
+import type { Link } from '../../model/link';
 import type { PositionedElement } from './types';
 
 type LinkEndpoint = NonNullable<Link['fromPoint']>;

@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { SceneStyle } from '../../scene';
 
 export function gridLineDashStyle(chart: Chart, width: number): Pick<SceneStyle, 'dash' | 'lineCap'> {

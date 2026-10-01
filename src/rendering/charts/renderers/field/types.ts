@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { FieldSample } from '../../field/types';
 
 export interface FieldData {

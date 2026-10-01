@@ -1,4 +1,4 @@
-import type { RenderableChart } from '../../../model/charts';
+import type { RenderableChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
 import type { ChartLayout } from './layout';

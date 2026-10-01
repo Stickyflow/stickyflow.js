@@ -1,5 +1,5 @@
-import type { Shape } from '../../../model/shapes';
-import { SHAPE_DEFAULTS } from '../../../model/shapes';
+import type { Shape } from '../../../model/shape';
+import { SHAPE_DEFAULTS } from '../../../model/shape';
 import type { RenderDiagnostic, SceneStyle } from '../../scene';
 import { finite, paint } from '../../scene';
 

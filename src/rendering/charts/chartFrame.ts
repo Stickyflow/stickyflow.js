@@ -1,4 +1,4 @@
-import type { Chart } from '../../model/charts';
+import type { Chart } from '../../model/chart';
 import type { Bounds, SceneRect } from '../scene';
 import { finite } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';

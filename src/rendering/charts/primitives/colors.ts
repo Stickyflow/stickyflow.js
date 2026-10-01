@@ -1,4 +1,4 @@
-import type { GradientColor, MeshGradientColor } from '../../../model/colors';
+import type { GradientColor, MeshGradientColor } from '../../../model/color';
 
 export { contrastTextColor, isLightColor, sameHueContrastColor, sameHueTint } from '../../color';
 

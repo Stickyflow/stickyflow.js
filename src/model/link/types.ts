@@ -1,5 +1,5 @@
-import type { GradientColor } from '../colors';
-import type { ShadowStyle } from '../shadows';
+import type { GradientColor } from '../color';
+import type { ShadowStyle } from '../shadow';
 
 export type StrokeStyle = 'solid' | 'dashed' | 'dotted';
 

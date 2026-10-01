@@ -1,4 +1,4 @@
-import type { ChartSeries, RenderableChart } from '../../../model/charts';
+import type { ChartSeries, RenderableChart } from '../../../model/chart';
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite, freeformPathData, paint } from '../../scene';
 import { CHART_COLORS, chartText, DEFAULT_ZONE_FILL, mapChartValue } from '../primitives';

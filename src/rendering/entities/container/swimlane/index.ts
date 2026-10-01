@@ -1,5 +1,5 @@
-import { resolveShadow } from '../../../../model/shadows';
-import type { Swimlane } from '../../../../model/swimlanes';
+import { resolveShadow } from '../../../../model/shadow';
+import type { Swimlane } from '../../../../model/swimlane';
 import type { RenderNode } from '../../../scene';
 import { simpleContainerStyle } from '../style';
 import { renderLaneDividers } from './dividers';

@@ -1,5 +1,5 @@
 import type { Rect, Side } from '../../model/geometry/router';
-import type { PathType } from '../../model/links';
+import type { PathType } from '../../model/link';
 
 export interface LiveLink {
   path: SVGPathElement;

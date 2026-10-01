@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { Bounds, SceneText } from '../../scene';
 import { DEFAULT_FONT, finite } from '../../scene';
 

@@ -1,4 +1,4 @@
-import type { Chart } from '../../model/charts';
+import type { Chart } from '../../model/chart';
 import type { RenderDiagnostic, RenderNode } from '../scene';
 import { buildCartesianChart } from './cartesianChart';
 import { createChartFoundation } from './chartFoundation';

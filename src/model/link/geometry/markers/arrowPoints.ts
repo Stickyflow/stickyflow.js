@@ -1,4 +1,4 @@
-import type { PathType } from '../../../links';
+import type { PathType } from '../../types';
 import type { ArrowDirection, MarkerPoint } from './types';
 
 function shortenedArrowSegment(endpoint: MarkerPoint, neighbor: MarkerPoint): number[] {
