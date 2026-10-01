@@ -1,24 +1,5 @@
 import type { GradientColorObject, MeshGradientObject } from '../color/types';
 
-export interface ChartAxis {
-  min: number;
-  max: number;
-  step: number;
-  label?: string;
-  unit?: string;
-  thresholds?: number[];
-}
-
-export interface ChartZone {
-  label: string;
-  color?: string;
-}
-
-export interface ChartRamp {
-  type: 'ramp';
-  stops: Array<{ position: number; color: string }>;
-}
-
 export interface ChartSeries {
   id: string;
   label: string;
@@ -36,13 +17,4 @@ export interface ChartSeries {
   stroke_width?: number;
   labelOffsetX?: number;
   labelOffsetY?: number;
-}
-
-export interface ChartRule {
-  id: string;
-  at: number;
-  text?: string;
-  color?: string;
-  stroke_width?: number;
-  dash?: number[];
 }
