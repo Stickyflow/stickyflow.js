@@ -9,6 +9,7 @@ import { bindWheelZoom } from './interaction/wheel';
 export interface InteractionHandle {
   getSelection(): OwnerRef[];
   select(ids: string[]): void;
+  repaint(): void;
   /** Briefly flash a ring/halo around each given owner id (change-highlighting).
    *  Ids that no longer resolve to a live node are silently skipped. `color`
    *  overrides the default amber — a host passes its own to tell categories of
@@ -30,12 +31,13 @@ export function bindInteraction(
   const selectable = options.selectable ?? true;
   const selection = new SelectionController(display.svg, emitter, diagramId);
   const unbindPointer = bindPointerInteraction({ display, emitter, diagramId, selection, selectable });
-  const unbindWheel = bindWheelZoom(display);
+  const unbindWheel = bindWheelZoom(display, selection);
   const unbindKeyboard = bindKeyboardSelection(display.svg, selection, selectable);
   const changeFlash = createChangeFlash(display.svg);
   return {
     getSelection: () => selection.getOwners(),
     select: ids => selection.selectIds(ids),
+    repaint: () => selection.repaint(),
     flashChanged: (ownerIds, color) => changeFlash.flash(ownerIds, color),
     destroy() {
       unbindPointer();

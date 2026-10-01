@@ -1,9 +1,20 @@
-import { decodeColor, decodeRamp } from '../../../sfl/decodeStyles';
+import { decodeColor, decodeRamp, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { numOf, solidColor } from './values';
 
 export function chartObject(e: SflEntityOut) {
   const p = e.props;
+  const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
+  const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
+    p.gridLineStyle === 'dashed' ? 'dashed' : p.gridLineStyle === 'dotted' ? 'dotted' : 'solid';
+  const legendPosition: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right' =
+    p.legendPosition === 'bottom' ||
+    p.legendPosition === 'bottomLeft' ||
+    p.legendPosition === 'bottomRight' ||
+    p.legendPosition === 'left' ||
+    p.legendPosition === 'right'
+      ? p.legendPosition
+      : 'top';
   return {
     id: e.id,
     type: 'chart',
@@ -25,6 +36,8 @@ export function chartObject(e: SflEntityOut) {
       isolines: e.chart?.isolines,
       zones: e.chart?.zones,
       boxWidth: e.chart?.boxWidth,
+      orientation: e.chart?.orientation,
+      lineTension: e.chart?.lineTension,
       barCornerRadius: e.chart?.barCornerRadius,
       showBoxplotPoints: e.chart?.showBoxplotPoints,
       barBorderColor: e.chart?.barBorderColor,
@@ -32,8 +45,29 @@ export function chartObject(e: SflEntityOut) {
       mekkoVaryHeight: e.chart?.mekkoVaryHeight,
       hexRadius: e.chart?.hexRadius,
       innerRadius: e.chart?.innerRadius,
+      pieCornerRadius: e.chart?.pieCornerRadius,
+      pieSliceGap: e.chart?.pieSliceGap,
+      ringThickness: e.chart?.ringThickness,
+      ringGap: e.chart?.ringGap,
+      cellGap: e.chart?.cellGap,
+      showValues: e.chart?.showValues,
+      squareCells: e.chart?.squareCells,
+      headerColor: e.chart?.headerColor,
+      tileGradient: e.chart?.tileGradient,
+      showColumnBackdrop: e.chart?.showColumnBackdrop,
+      labelPosition: e.chart?.labelPosition,
+      labelOrientation: e.chart?.labelOrientation,
+      labelColor: e.chart?.labelColor,
+      linkGradient: e.chart?.linkGradient,
+      connectPoints: e.chart?.connectPoints,
+      reverseComparison: e.chart?.reverseComparison,
     },
-    series: (e.chart?.series ?? []).map(s => ({ ...s, color: decodeColor(s.color) })),
+    series: (e.chart?.series ?? []).map(s => ({
+      ...s,
+      color: decodeColor(s.color),
+      colors: s.colors?.map(c => (c === null ? null : (decodeColor(c) ?? null))),
+      stroke_width: s.strokeWidth,
+    })),
     rules: (e.chart?.rules ?? []).map(r => ({
       id: r.id,
       at: r.at,
@@ -48,12 +82,17 @@ export function chartObject(e: SflEntityOut) {
     corner_radius: numOf(p.cornerRadius) ?? 12,
     grid_color: p.gridColor ?? '#e2e8f0',
     grid_width: numOf(p.gridWidth) ?? 1,
+    grid_shape: gridShape,
+    grid_line_style: gridLineStyle,
+    grid_rounded_corners: p.gridRoundedCorners === 'true',
     text_color: p.textColor ?? '#0f172a',
     font_size: numOf(p.fontSize) ?? 12,
-    font_family: p.fontFamily ?? 'Inter',
+    font_family: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     show_grid: p.showGrid !== 'false',
     show_axis_labels: p.showAxisLabels !== 'false',
     show_legend: p.showLegend !== 'false',
+    legend_position: legendPosition,
+    shadow_style: decodeShadow(p.shadow),
     order: e.order,
   };
 }

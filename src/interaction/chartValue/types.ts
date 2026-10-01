@@ -15,6 +15,10 @@ export interface ChartValueDragState {
   element: SVGGraphicsElement;
   baseY: number;
   isBar: boolean;
+  barX: number;
+  barWidth: number;
+  barRadius: number;
+  lineTension: number;
   pointerId: number;
   moved: boolean;
 }

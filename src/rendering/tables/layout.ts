@@ -3,18 +3,20 @@ import type { Table, TableColumn } from '../../model/tables';
 import { boxBounds, orderOf } from '../scene';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
-function normalizeColumns(table: Table): TableColumn[] {
+export function columnWidthScale(table: Table): number {
   const total = table.columns.reduce((sum, column) => sum + column.width, 0);
-  if (total <= 0) {
-    return table.columns;
-  }
-  return table.columns.map(column => ({ ...column, width: column.width * (table.width / total) }));
+  return total > 0 ? table.width / total : 1;
+}
+
+function normalizeColumns(table: Table): TableColumn[] {
+  const scale = columnWidthScale(table);
+  return table.columns.map(column => ({ ...column, width: column.width * scale }));
 }
 
 function positionColumns(table: Table): PositionedTableColumn[] {
   let x = table.x;
-  return normalizeColumns(table).map(column => {
-    const positioned = { ...column, x };
+  return normalizeColumns(table).map((column, index) => {
+    const positioned = { ...column, x, declaredWidth: table.columns[index].width };
     x += column.width;
     return positioned;
   });

@@ -1,6 +1,8 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
+import { resolveChartShadow } from '../../primitives';
+import { linePathData } from '../../primitives/linePath';
 import type { CartesianPoint } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
 
@@ -8,21 +10,23 @@ export function createLinePath(
   context: ChartRenderContext,
   series: ChartSeries,
   points: CartesianPoint[],
-  color: NonNullable<ChartSeries['color']>,
+  color: string,
+  tension: number,
 ): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
-  const commands = points.map((point, index) => `${index ? 'L' : ''} ${point.x} ${point.y}`);
   return {
     type: 'path',
     id: `chart-line-${chart.id}-${series.id}`,
     order: nextOrder(),
     bounds,
-    d: `M ${commands.join(' ')}`,
+    detail: { of: 'chartSeries', series: series.id, lineTension: tension || undefined },
+    d: linePathData(points, tension),
     style: {
       fill: { kind: 'none' },
       stroke: paint(color, diagnostics, chart.id),
       strokeWidth: 2,
       lineJoin: 'round',
+      shadow: resolveChartShadow(chart.shadow_style),
     },
   };
 }

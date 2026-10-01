@@ -1,4 +1,4 @@
-import { SHAPE_TYPES, type ShapeType } from '../../../model/shapes';
+import type { ShapeType } from '../../../model/shapes';
 import { decodeColor, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import {
@@ -13,8 +13,8 @@ import {
   VERTICAL_ALIGNS,
 } from './values';
 
-function asShapeType(value: string | undefined): ShapeType {
-  return SHAPE_TYPES.includes(value as ShapeType) ? (value as ShapeType) : 'rectangle';
+function shapeTypeOf(value: string | undefined): ShapeType {
+  return (value || 'rectangle') as ShapeType;
 }
 
 export function shapeObject(e: SflEntityOut) {
@@ -23,7 +23,7 @@ export function shapeObject(e: SflEntityOut) {
     id: e.id,
     type: 'shape',
     text: e.text ?? null,
-    shapeType: asShapeType(e.shapeType),
+    shapeType: shapeTypeOf(e.shapeType),
     symbol: e.symbol,
     x: e.x,
     y: e.y,
@@ -46,8 +46,6 @@ export function shapeObject(e: SflEntityOut) {
     dash: dashArray(p.dash),
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
     shapeStyle: p.opacity !== undefined ? { opacity: numOf(p.opacity) } : undefined,
-    imageUrl: p.src,
-    imageFit: p.fit as 'cover' | 'contain' | undefined,
     parent_frame_id: e.parentFrameId,
     order: e.order,
   };

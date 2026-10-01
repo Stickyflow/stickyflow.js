@@ -1,15 +1,31 @@
 import type { Chart } from '../../../model/charts';
 import type { RenderNode } from '../../scene';
 import { buildAxisLabels } from './axisLabels';
-import { buildCategoricalXAxisTicks } from './categoricalXAxis';
+import { buildBoxplotSeriesYAxisTicks } from './boxplotYAxis';
+import { buildCategoricalXAxisTicks, buildSeriesXAxisTicks } from './categoricalXAxis';
 import { type ChartLayout, hasCartesianDecorations } from './layout';
 import { buildNumericXAxisTicks } from './numericXAxis';
 import { buildNumericYAxisTicks } from './numericYAxis';
 
+function isHorizontalBoxplot(chart: Chart): boolean {
+  return chart.chart_type === 'boxplot' && chart.config?.orientation === 'horizontal';
+}
+
 function buildXAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
-  return chart.chart_type === 'bar'
-    ? buildCategoricalXAxisTicks(chart, layout, order)
-    : buildNumericXAxisTicks(chart, layout, order);
+  if (chart.chart_type === 'bar') {
+    return buildCategoricalXAxisTicks(chart, layout, order);
+  }
+  if (chart.chart_type === 'boxplot' && !isHorizontalBoxplot(chart)) {
+    return buildSeriesXAxisTicks(chart, layout, order);
+  }
+  return buildNumericXAxisTicks(chart, layout, order);
+}
+
+function buildYAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
+  if (isHorizontalBoxplot(chart)) {
+    return buildBoxplotSeriesYAxisTicks(chart, layout, order);
+  }
+  return buildNumericYAxisTicks(chart, layout, order);
 }
 
 export function buildChartAxes(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
@@ -18,7 +34,7 @@ export function buildChartAxes(chart: Chart, layout: ChartLayout, order: number)
   }
 
   const xTicks = buildXAxisTicks(chart, layout, order);
-  const yTicks = buildNumericYAxisTicks(chart, layout, order + xTicks.length);
+  const yTicks = buildYAxisTicks(chart, layout, order + xTicks.length);
   const labels = buildAxisLabels(chart, layout, order + xTicks.length + yTicks.length);
   return [...xTicks, ...yTicks, ...labels];
 }

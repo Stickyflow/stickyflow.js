@@ -34,7 +34,7 @@ export class BlockParser {
     return composition;
   }
 
-  private parseEntries(): SflEntry[] {
+  private parseEntries(bareBlocksAreSeries = false): SflEntry[] {
     this.cursor.skipNewlines();
     this.cursor.expect('lbrace', "'{'");
     const entries: SflEntry[] = [];
@@ -44,7 +44,7 @@ export class BlockParser {
         const token = this.cursor.peek();
         throw new SflParseError('unterminated block (missing "}")', token.line, token.col);
       }
-      entries.push(this.parseEntry());
+      entries.push(this.parseEntry(bareBlocksAreSeries));
       if (this.cursor.at('semi')) {
         this.cursor.next();
       }
@@ -54,7 +54,7 @@ export class BlockParser {
     return entries;
   }
 
-  private parseEntry(): SflEntry {
+  private parseEntry(bareBlocksAreSeries: boolean): SflEntry {
     const token = this.cursor.peek();
     if (token.type !== 'ident') {
       throw new SflParseError(
@@ -72,6 +72,46 @@ export class BlockParser {
     if (token.value === 'style' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'style', style: this.properties.parseStyle() };
     }
+    if (token.value === 'data' && this.cursor.peek(1).type === 'lbrace') {
+      return { type: 'data', data: this.parseDataBlock() };
+    }
+    if (bareBlocksAreSeries && !isBlockKind(token.value) && this.looksLikeBareSeries()) {
+      return { type: 'block', block: this.parseBareSeries() };
+    }
     return { type: 'property', property: this.properties.parseProperty() };
+  }
+
+  private parseDataBlock(): SflBlock {
+    this.cursor.next();
+    return { kind: 'data', name: '', composition: [], entries: this.parseEntries(true) };
+  }
+
+  private looksLikeBareSeries(): boolean {
+    if (this.cursor.peek(1).type === 'lbrace') {
+      return true;
+    }
+    if (this.cursor.peek(1).type !== 'colon') {
+      return false;
+    }
+    let offset = 2;
+    if (this.cursor.peek(offset).type !== 'ident') {
+      return false;
+    }
+    offset++;
+    while (this.cursor.peek(offset).type === 'amp') {
+      offset++;
+      if (this.cursor.peek(offset).type !== 'ident') {
+        return false;
+      }
+      offset++;
+    }
+    return this.cursor.peek(offset).type === 'lbrace';
+  }
+
+  private parseBareSeries(): SflBlock {
+    const name = this.cursor.expect('ident', 'series name');
+    const composition = this.parseComposition();
+    const entries = this.parseEntries();
+    return { kind: 'Series', name: name.value, composition, entries };
   }
 }

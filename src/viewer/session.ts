@@ -39,6 +39,7 @@ export class ViewerSession implements Viewer {
 
   fit(): void {
     this.display.fit();
+    this.interaction?.repaint();
   }
 
   getViewport(): ViewBox {

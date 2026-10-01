@@ -55,7 +55,8 @@ function orderedProperties(kind: BlockKind, properties: SflProperty[]): SflPrope
 
 function usesCompactBlockForm(kind: BlockKind, entries: BlockEntries, propertyCount: number): boolean {
   const supportsCompactForm = kind === 'Layout' || kind === 'Style';
-  const hasNestedContent = entries.blocks.length > 0 || Boolean(entries.layout) || Boolean(entries.style);
+  const hasNestedContent =
+    entries.blocks.length > 0 || Boolean(entries.layout) || Boolean(entries.style) || Boolean(entries.data);
   return supportsCompactForm && !hasNestedContent && propertyCount <= COMPACT_MAX_PROPS;
 }
 
@@ -71,7 +72,7 @@ function emitExpandedBlockBody(
   kinds: Map<string, BlockKind>,
 ): string {
   const primaryEntries = emitPrimaryBlockEntries(entries, properties, depth, kinds);
-  const propertyBlocks = emitAttachedPropertyBlocks(entries, depth);
+  const propertyBlocks = emitAttachedPropertyBlocks(entries, depth, kinds);
   return [primaryEntries, propertyBlocks].filter(Boolean).join('\n');
 }
 
@@ -87,8 +88,11 @@ function emitPrimaryBlockEntries(
   return [propertyLines, nestedBlocks].filter(Boolean).join('\n\n');
 }
 
-function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number): string {
+function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number, kinds: Map<string, BlockKind>): string {
   const blocks: string[] = [];
+  if (entries.data) {
+    blocks.push(emitDataBlock(entries.data, depth + 1, kinds));
+  }
   if (entries.layout) {
     blocks.push(emitPropertyBlock('layout', entries.layout.properties, depth + 1));
   }
@@ -96,6 +100,14 @@ function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number): strin
     blocks.push(emitPropertyBlock('style', entries.style.properties, depth + 1));
   }
   return blocks.join('\n');
+}
+
+function emitDataBlock(data: SflBlock, depth: number, kinds: Map<string, BlockKind>): string {
+  const pad = INDENT.repeat(depth);
+  const entries = collectBlockEntries(data);
+  const properties = orderedProperties(data.kind, entries.properties);
+  const body = emitExpandedBlockBody(entries, properties, depth, kinds);
+  return emitExpandedBlock(pad, 'data {', body);
 }
 
 function emitExpandedBlock(pad: string, header: string, body: string): string {

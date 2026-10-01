@@ -1,19 +1,17 @@
-import { SVG_NAMESPACE } from '../../domContract';
+import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
 import { getPathPoints } from '../../model/geometry/connectionLine';
 import type { Side } from '../../model/geometry/router';
 import type { Link, PathType } from '../../model/links';
 import { previewPathData } from '../linkPreview';
 import type { QuickDuplicateDragState } from './state';
 
-const PREVIEW_STROKE = '#9b42df';
+const PREVIEW_STROKE_PX = 2;
 const NEW_LINK_PATH_TYPE: PathType = 'orthogonal';
 
-export function createDuplicatePreviewPath(): SVGPathElement {
-  const path = document.createElementNS(SVG_NAMESPACE, 'path');
+export function createDuplicatePreviewPath(svg: SVGSVGElement): SVGPathElement {
+  const path = svg.ownerDocument.createElementNS(SVG_NAMESPACE, 'path');
   path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', PREVIEW_STROKE);
-  path.setAttribute('stroke-width', '2');
-  path.setAttribute('stroke-dasharray', '6 4');
+  path.setAttribute('stroke-width', String(PREVIEW_STROKE_PX / pxPerUnit(svg)));
   path.style.pointerEvents = 'none';
   return path;
 }

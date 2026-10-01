@@ -4,14 +4,14 @@ import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
 import { renderCustom } from './custom';
 import { renderField } from './field';
-import { renderGrid } from './grid';
 import { renderHeatmap } from './heatmap';
 import { renderHexbin } from './hexbin';
 import { renderLine } from './line';
-import { renderMatrix } from './matrix';
 import { renderMekko } from './mekko';
 import { renderPie } from './pie';
+import { renderPolarArea } from './polarArea';
 import { renderRadar } from './radar';
+import { renderRadialBar } from './radialBar';
 import { renderSankey } from './sankey';
 import { renderScatter } from './scatter';
 import { renderTreemap } from './treemap';
@@ -24,15 +24,15 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   boxplot: renderBoxplot,
   custom: renderCustom,
   field: renderField,
-  grid: renderGrid,
   heatmap: renderHeatmap,
   hexbin: renderHexbin,
   line: renderLine,
-  matrix: renderMatrix,
   mekko: renderMekko,
   pie: renderPie,
+  polarArea: renderPolarArea,
   radar: renderRadar,
   radial: renderRadar,
+  radialBar: renderRadialBar,
   sankey: renderSankey,
   scatter: renderScatter,
   treemap: renderTreemap,

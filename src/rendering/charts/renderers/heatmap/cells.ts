@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import type { RenderNode } from '../../../scene';
 import { finite } from '../../../scene';
-import { bandIndexForValue, chartText, contrastTextColor, DEFAULT_ZONE_FILL } from '../../primitives';
+import { chartText, contrastTextColor, zoneColorAtValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapLayout } from './types';
 
@@ -45,29 +45,34 @@ function createHeatmapCell(
   columnIndex: number,
 ): HeatmapCell {
   const value = (series.values as number[])[columnIndex] ?? 0;
+  const { cellGap } = layout.grid;
   return {
     seriesId: series.id,
     columnIndex,
     value,
     color: colorForValue(value, layout),
     frame: {
-      x: layout.grid.x + columnIndex * layout.grid.cellWidth,
-      y: layout.grid.y + rowIndex * layout.grid.cellHeight,
-      width: layout.grid.cellWidth,
-      height: layout.grid.cellHeight,
+      x: layout.grid.x + columnIndex * layout.grid.cellWidth + cellGap / 2,
+      y: layout.grid.y + rowIndex * layout.grid.cellHeight + cellGap / 2,
+      width: Math.max(0, layout.grid.cellWidth - cellGap),
+      height: Math.max(0, layout.grid.cellHeight - cellGap),
     },
   };
 }
 
 function colorForValue(value: number, layout: HeatmapLayout): string {
-  return layout.zones[bandIndexForValue(value, layout.bands)]?.color ?? DEFAULT_ZONE_FILL;
+  return zoneColorAtValue(value, layout.bands, layout.zones);
 }
 
 function renderHeatmapCell(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode[] {
-  return [createCellBackground(context, cell), createCellValueLabel(context, layout, cell)];
+  const background = createCellBackground(context, layout, cell);
+  if (context.chart.config?.showValues === false) {
+    return [background];
+  }
+  return [background, createCellValueLabel(context, layout, cell)];
 }
 
-function createCellBackground(context: ChartRenderContext, cell: HeatmapCell): RenderNode {
+function createCellBackground(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode {
   const { chart, bounds, nextOrder } = context;
   return {
     type: 'rect',
@@ -75,6 +80,7 @@ function createCellBackground(context: ChartRenderContext, cell: HeatmapCell): R
     order: nextOrder(),
     bounds,
     ...cell.frame,
+    rx: layout.grid.cellRadius,
     style: {
       fill: { kind: 'solid', color: cell.color },
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },

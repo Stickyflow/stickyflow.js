@@ -1,4 +1,5 @@
 import { hasBoldMarkup, wrapRichText } from '../../../model/geometry/richText';
+import { personLabelArea } from '../../../model/geometry/roundedForms';
 import { heuristicRichMeasure, type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
 import type { SceneText } from '../../scene';
 import { DEFAULT_FONT, finite } from '../../scene';
@@ -16,7 +17,8 @@ export function renderShapeText(
   }
   const fontSize = finite(shape.fontSize, shapeDefaults(shape, []).fontSize);
   const padding = Math.max(8, strokeWidth * 2);
-  const textWidth = Math.max(0, width - padding * 2);
+  const area = shape.shapeType === 'person' ? personLabelArea(x, y, width, height) : { x, y, width, height };
+  const textWidth = Math.max(0, area.width - padding * 2);
   const fontFamily = shape.fontFamily || DEFAULT_FONT;
   const metrics = measureText?.(fontFamily, fontSize);
   const textNode: SceneText = {
@@ -24,10 +26,10 @@ export function renderShapeText(
     id: `shape-text-${shape.id}`,
     order: order + 0.5,
     bounds,
-    x: x + padding,
-    y: y + padding,
+    x: area.x + padding,
+    y: area.y + padding,
     width: textWidth,
-    height: Math.max(0, height - padding * 2),
+    height: Math.max(0, area.height - padding * 2),
     lines: wrapText(shape.text, textWidth, fontSize, metrics),
     fontFamily,
     fontSize,

@@ -31,6 +31,9 @@ export interface SflEntityOut {
     }>;
     rows: Array<{ id: string; cells: Record<string, string | boolean> }>;
     footer?: { id: string; cells: Record<string, string | boolean> };
+    columnsBlockName?: string;
+    rowsBlockName?: string;
+    footerBlockName?: string;
   };
   swimlane?: {
     orientation: 'horizontal' | 'vertical';
@@ -59,8 +62,8 @@ export interface SflEntityOut {
       | 'mekko'
       | 'hexbin'
       | 'pie'
-      | 'matrix'
-      | 'grid'
+      | 'radialBar'
+      | 'polarArea'
       | 'custom';
     categories?: string[];
     areaOpacity?: number;
@@ -71,6 +74,8 @@ export interface SflEntityOut {
     isolines?: number[];
     zones?: Array<{ label: string; color?: string }>;
     boxWidth?: number;
+    orientation?: 'horizontal' | 'vertical';
+    lineTension?: number;
     barCornerRadius?: number;
     showBoxplotPoints?: boolean;
     barBorderColor?: string;
@@ -78,24 +83,65 @@ export interface SflEntityOut {
     mekkoVaryHeight?: boolean;
     hexRadius?: number;
     innerRadius?: number;
+    pieCornerRadius?: number;
+    pieSliceGap?: number;
+    ringThickness?: number;
+    ringGap?: number;
+    cellGap?: number;
+    showValues?: boolean;
+    squareCells?: boolean;
+    headerColor?: string;
+    tileGradient?: boolean;
+    showColumnBackdrop?: boolean;
+    labelPosition?: 'outside' | 'inside';
+    labelOrientation?: 'horizontal' | 'vertical';
+    labelColor?: string;
+    linkGradient?: boolean;
+    connectPoints?: boolean;
+    reverseComparison?: boolean;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{
       id: string;
       label: string;
       color?: string;
+      colors?: Array<string | null>;
       opacity?: number;
+      group?: string;
       values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];
       error?: Array<number | [number, number] | null>;
       source?: string;
       target?: string;
       size?: number;
-      symbol?: { points: Array<[number, number]> };
+      symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
       stroke?: string;
       strokeWidth?: number;
+      labelOffsetX?: number;
+      labelOffsetY?: number;
     }>;
     rules: Array<{ id: string; at: number; text?: string; color?: string; strokeWidth?: number; dash?: number[] }>;
   };
+}
+
+export type SflChartEntity = SflEntityOut & { chart: NonNullable<SflEntityOut['chart']> };
+export type SflTableEntity = SflEntityOut & { table: NonNullable<SflEntityOut['table']> };
+export type SflSwimlaneEntity = SflEntityOut & { swimlane: NonNullable<SflEntityOut['swimlane']> };
+export type SflPathEntity = SflEntityOut & { path: NonNullable<SflEntityOut['path']> };
+
+export function isChartEntity(entity: SflEntityOut): entity is SflChartEntity {
+  return entity.entityType === 'chart' && entity.chart !== undefined;
+}
+
+export function isTableEntity(entity: SflEntityOut): entity is SflTableEntity {
+  return entity.entityType === 'table' && entity.table !== undefined;
+}
+
+export function isSwimlaneEntity(entity: SflEntityOut): entity is SflSwimlaneEntity {
+  return entity.entityType === 'swimlane' && entity.swimlane !== undefined;
+}
+
+export function isPathEntity(entity: SflEntityOut): entity is SflPathEntity {
+  return entity.entityType === 'path' && entity.path !== undefined;
 }
 
 export interface SflLinkOut {

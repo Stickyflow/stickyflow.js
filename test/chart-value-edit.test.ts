@@ -18,6 +18,22 @@ Model M {
 `;
 
 const owner = { role: 'chart' as const, id: 'c', kind: 'bar' };
+
+// A bar is a path (rounded top corners, see barShapePath), not a rect : its
+// top edge is either the M command's own y (no radius) or the y shared by
+// the first Q command's two endpoints (rounded), never a `y="..."` attribute.
+function barTopY(d: string): number {
+  const rounded = d.match(/Q [\d.-]+ ([\d.-]+)/);
+  if (rounded) {
+    return Number(rounded[1]);
+  }
+  const square = d.match(/^M [\d.-]+ ([\d.-]+)/);
+  if (!square) {
+    throw new Error(`Could not read a bar's top edge from its path: ${d}`);
+  }
+  return Number(square[1]);
+}
+
 function seriesLine(sfl: string, id: string): string {
   const line = sfl.split('\n').find(candidate => candidate.includes(`Series ${id}`));
   if (!line) {
@@ -57,16 +73,16 @@ describe('chart mark addressing (DOM contract)', () => {
     expect(min).toBe(0);
     expect(max).toBe(100);
     expect(plotHeight).toBeGreaterThan(0);
-    const barY = svg.match(/<rect id="sf-chart-bar-c-online-0"[^>]*y="([\d.]+)"/)?.[1];
-    if (!barY) {
+    const barD = svg.match(/<path id="sf-chart-bar-c-online-0"[^>]*d="([^"]+)"/)?.[1];
+    if (!barD) {
       throw new Error('Online bar position is missing from the rendered SVG.');
     }
-    const value = min + ((plotY + plotHeight - Number(barY)) / plotHeight) * (max - min);
+    const value = min + ((plotY + plotHeight - barTopY(barD)) / plotHeight) * (max - min);
     expect(value).toBeCloseTo(60, 5);
   });
 
   it('omits the mapping on types whose axis_y is not a linear pixel scale', () => {
-    for (const type of ['heatmap', 'pie', 'treemap', 'sankey', 'matrix', 'mekko']) {
+    for (const type of ['heatmap', 'pie', 'treemap', 'sankey', 'mekko']) {
       expect(render(BAR_SFL.replace('type: bar', `type: ${type}`)).svg).not.toContain('data-sf-value-scale');
     }
   });

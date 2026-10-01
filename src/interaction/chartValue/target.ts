@@ -1,10 +1,14 @@
 import { findOwnerNode, isCameraGesture, isPrimary, resolveOwner } from '../../domContract';
+import { findConnectedLine } from './lineLookup';
 import { parseValueScale } from './scale';
 import type { ChartValueDragState, ValueScale } from './types';
 
 type ChartValueTarget = Pick<ChartValueDragState, 'owner' | 'series' | 'index'>;
 
-type ChartValueGeometry = Pick<ChartValueDragState, 'element' | 'baseY' | 'isBar'>;
+type ChartValueGeometry = Pick<
+  ChartValueDragState,
+  'element' | 'baseY' | 'isBar' | 'barX' | 'barWidth' | 'barRadius' | 'lineTension'
+>;
 
 function chartGeometry(svg: SVGSVGElement, target: ChartValueTarget): SVGGraphicsElement | null {
   const selector =
@@ -14,7 +18,7 @@ function chartGeometry(svg: SVGSVGElement, target: ChartValueTarget): SVGGraphic
   return (
     [...svg.querySelectorAll<SVGGraphicsElement>(selector)].find(element => {
       const tag = element.tagName.toLowerCase();
-      return tag === 'rect' || tag === 'ellipse';
+      return tag === 'rect' || tag === 'ellipse' || tag === 'path';
     }) ?? null
   );
 }
@@ -87,12 +91,20 @@ function resolveChartValueGeometry(
   if (!element) {
     return null;
   }
-  const isBar = element.tagName.toLowerCase() === 'rect';
-  const baseY = isBar
-    ? Number(element.getAttribute('y')) + Number(element.getAttribute('height'))
-    : scale.plotY + scale.plotHeight;
+  const isBar = element.getAttribute('data-sf-mark') === 'bar';
+  const bbox = isBar ? element.getBBox() : null;
+  const baseY = bbox ? bbox.y + bbox.height : scale.plotY + scale.plotHeight;
   if (!Number.isFinite(baseY)) {
     return null;
   }
-  return { element, baseY, isBar };
+  const line = isBar ? null : findConnectedLine(svg, target.owner.id, target.series);
+  return {
+    element,
+    baseY,
+    isBar,
+    barX: bbox?.x ?? 0,
+    barWidth: bbox?.width ?? 0,
+    barRadius: isBar ? Number(element.getAttribute('data-sf-bar-radius')) || 0 : 0,
+    lineTension: Number(line?.getAttribute('data-sf-line-tension')) || 0,
+  };
 }

@@ -3,6 +3,7 @@ import type { Bounds, SceneStyle } from '../scene';
 
 export interface PositionedTableColumn extends TableColumn {
   x: number;
+  declaredWidth: number;
 }
 
 export interface TableRenderContext {

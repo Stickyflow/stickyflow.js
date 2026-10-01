@@ -2,6 +2,7 @@ import { clearAlignmentGuides, isCameraGesture, updateAlignmentGuides } from '..
 import type { Viewer } from '../../viewer';
 import type { Emitter } from '../events';
 import { emitMoveCompletion } from './completion';
+import { clampMoveDelta } from './geometry';
 import { crossedMoveDragThreshold, movePointerDelta, movePointerPosition } from './pointer';
 import { applyMovePreview } from './preview';
 import { snapMove } from './snapping';
@@ -41,7 +42,8 @@ export class MoveSession {
     drag.moved = true;
     const rawDelta = movePointerDelta(this.#svg, drag, event);
     const delta = snapMove(this.#svg, drag, rawDelta.dx, rawDelta.dy);
-    applyMovePreview(drag, delta.dx, delta.dy);
+    const clamped = clampMoveDelta(drag.entities, delta.dx, delta.dy);
+    applyMovePreview(drag, clamped.dx, clamped.dy);
     updateAlignmentGuides(this.#svg, delta.guides, MOVE_GUIDE_COLOR);
   };
 

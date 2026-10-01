@@ -1,6 +1,7 @@
 import type { Emitter } from '../events';
 import { pointerUserY } from './coordinates';
 import { updateChartValuePreview } from './preview';
+import { createValueReadout, markAnchorX, removeValueReadout, updateValueReadout } from './readout';
 import { valueAtPixel } from './scale';
 import { resolveChartValueDrag } from './target';
 import type { ChartValueDragState } from './types';
@@ -9,6 +10,7 @@ export class ChartValueDragSession {
   readonly #svg: SVGSVGElement;
   readonly #emitter: Emitter;
   #drag: ChartValueDragState | null = null;
+  #readout: SVGGElement | null = null;
 
   constructor(svg: SVGSVGElement, emitter: Emitter) {
     this.#svg = svg;
@@ -29,7 +31,18 @@ export class ChartValueDragSession {
     }
     this.#drag.moved = true;
     const value = valueAtPixel(pointerUserY(this.#svg, event), this.#drag.scale);
-    updateChartValuePreview(this.#drag, value);
+    updateChartValuePreview(this.#svg, this.#drag, value);
+
+    if (!this.#readout) {
+      this.#readout = createValueReadout(this.#svg);
+    }
+    updateValueReadout(this.#readout, { centerX: markAnchorX(this.#drag), scale: this.#drag.scale }, value);
+  }
+
+  cancel(): void {
+    this.#drag = null;
+    removeValueReadout(this.#readout);
+    this.#readout = null;
   }
 
   finish(event: PointerEvent): void {
@@ -38,6 +51,8 @@ export class ChartValueDragSession {
     }
     const drag = this.#drag;
     this.#drag = null;
+    removeValueReadout(this.#readout);
+    this.#readout = null;
     (event.target as Element)?.releasePointerCapture?.(drag.pointerId);
     if (!drag.moved) {
       return;

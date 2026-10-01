@@ -1,6 +1,7 @@
 import type { ResizeHandle } from '../../domContract';
 import { findAllOwnerNodes, findOwnerNode, isPrimary, isTextLabel, resolveOwner } from '../../domContract';
 import type { OwnerRef } from '../../viewer';
+import { hasEditableGeometry, isCompositeOwner } from '../geometryRoles';
 
 export interface ResizeSelection {
   captureTarget: SVGGraphicsElement;
@@ -29,12 +30,12 @@ export function selectResizeTarget(svg: SVGSVGElement, event: PointerEvent): Res
 
   const primary = findOwnerNode(svg, ownerId, isPrimary);
   const owner = primary && resolveOwner(primary);
-  if (!primary || owner?.role !== 'entity') {
+  if (!primary || !hasEditableGeometry(owner)) {
     return null;
   }
 
   const nodes = findAllOwnerNodes(svg, ownerId);
-  const geometryNodes = nodes.filter(node => !isTextLabel(node));
+  const geometryNodes = isCompositeOwner(owner) ? nodes : nodes.filter(node => !isTextLabel(node));
   if (!geometryNodes.length) {
     return null;
   }

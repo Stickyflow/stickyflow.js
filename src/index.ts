@@ -16,6 +16,25 @@ export type {
   RenderScene,
   SceneRole,
 } from './rendering/scene';
-export type { SflCanvasState, SflEntityOut, SflGroupOut, SflImportJson, SflLinkOut } from './sfl';
-export { canonicalize, parse, sflToCanvasState, sflToImportJson } from './sfl';
+export type {
+  SflCanvasState,
+  SflChartEntity,
+  SflEntityOut,
+  SflGroupOut,
+  SflImportJson,
+  SflLinkOut,
+  SflPathEntity,
+  SflSwimlaneEntity,
+  SflTableEntity,
+} from './sfl';
+export {
+  canonicalize,
+  isChartEntity,
+  isPathEntity,
+  isSwimlaneEntity,
+  isTableEntity,
+  parse,
+  sflToCanvasState,
+  sflToImportJson,
+} from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';

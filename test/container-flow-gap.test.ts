@@ -21,11 +21,11 @@ Model board {
       gap: 16
     }
 
-    Entity output {
+    Shape output {
       text: "+112%"
       layout { size: 140, 90 }
     }
-    Entity scrap {
+    Shape scrap {
       text: "-4.1%"
       layout { size: 140, 90 }
     }
@@ -44,8 +44,8 @@ Model board {
       gap: 10
     }
 
-    Entity a { layout { size: 100, 50 } }
-    Entity b { layout { size: 100, 30 } }
+    Shape a { layout { size: 100, 50 } }
+    Shape b { layout { size: 100, 30 } }
   }
 }`;
 
@@ -59,11 +59,11 @@ Model board {
       size: 300, 90
     }
 
-    Entity output {
+    Shape output {
       text: "+112%"
       layout { position: 10, 10; size: 140, 90 }
     }
-    Entity scrap {
+    Shape scrap {
       text: "-4.1%"
       layout { position: 160, 10; size: 140, 90 }
     }
@@ -92,8 +92,8 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
     // Same as HORIZONTAL_SFL's children but each also declares an explicit
     // (wrong, if honored) position — flow must win regardless.
     const sfl = HORIZONTAL_SFL.replace(
-      'layout { size: 140, 90 }\n    }\n    Entity scrap',
-      'layout { position: 999, 999; size: 140, 90 }\n    }\n    Entity scrap',
+      'layout { size: 140, 90 }\n    }\n    Shape scrap',
+      'layout { position: 999, 999; size: 140, 90 }\n    }\n    Shape scrap',
     ).replace('layout { size: 140, 90 }\n    }\n  }\n}', 'layout { position: -50, -50; size: 140, 90 }\n    }\n  }\n}');
     const state = sflToCanvasState(sfl);
     const output = state.entities.find(e => e.id === 'output');

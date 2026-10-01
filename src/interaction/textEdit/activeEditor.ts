@@ -1,29 +1,23 @@
-import type { OwnerRef } from '../../viewer';
-import type { Emitter } from '../events';
-
 interface ActiveTextEditorOptions {
   textarea: HTMLTextAreaElement;
-  owner: OwnerRef;
   originalText: string;
-  emitter: Emitter;
+  commit: (text: string) => void;
   unbindAutoGrow: () => void;
   onClose: () => void;
 }
 
 export class ActiveTextEditor {
   readonly #textarea: HTMLTextAreaElement;
-  readonly #owner: OwnerRef;
   readonly #originalText: string;
-  readonly #emitter: Emitter;
+  readonly #commit: (text: string) => void;
   readonly #unbindAutoGrow: () => void;
   readonly #onClose: () => void;
   #closed = false;
 
   constructor(options: ActiveTextEditorOptions) {
     this.#textarea = options.textarea;
-    this.#owner = options.owner;
     this.#originalText = options.originalText;
-    this.#emitter = options.emitter;
+    this.#commit = options.commit;
     this.#unbindAutoGrow = options.unbindAutoGrow;
     this.#onClose = options.onClose;
     options.textarea.addEventListener('keydown', this.keyDown);
@@ -34,7 +28,7 @@ export class ActiveTextEditor {
     const text = this.#textarea.value;
     this.close();
     if (text !== this.#originalText) {
-      this.#emitter.emit('textChange', { owner: this.#owner, text });
+      this.#commit(text);
     }
   };
 

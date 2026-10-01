@@ -1,6 +1,7 @@
 import { clearAlignmentGuides, isCameraGesture, updateAlignmentGuides } from '../../domContract';
 import type { Emitter } from '../events';
 import { emitResizeCompletion } from './completion';
+import { clampResizeToChildren } from './geometry';
 import { resizePointerPosition } from './pointer';
 import { applyResizePreview } from './preview';
 import { snapResize } from './snapping';
@@ -34,7 +35,7 @@ export class ResizeSession {
 
     drag.moved = true;
     const { bounds, guides } = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event));
-    applyResizePreview(drag, bounds);
+    applyResizePreview(drag, clampResizeToChildren(bounds, drag.childrenBounds));
     updateAlignmentGuides(this.#svg, guides, RESIZE_GUIDE_COLOR);
   };
 
@@ -52,7 +53,7 @@ export class ResizeSession {
     }
 
     const { bounds } = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event));
-    emitResizeCompletion(this.#emitter, drag, bounds);
+    emitResizeCompletion(this.#emitter, drag, clampResizeToChildren(bounds, drag.childrenBounds));
   };
 
   cancel(): void {

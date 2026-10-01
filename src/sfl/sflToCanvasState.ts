@@ -1,7 +1,18 @@
 import { parse } from './parser';
 import type { SflCanvasState } from './semantic/types';
 
-export type { SflCanvasState, SflDiagnostic, SflEntityOut, SflGroupOut, SflLinkOut } from './semantic/types';
+export type {
+  SflCanvasState,
+  SflChartEntity,
+  SflDiagnostic,
+  SflEntityOut,
+  SflGroupOut,
+  SflLinkOut,
+  SflPathEntity,
+  SflSwimlaneEntity,
+  SflTableEntity,
+} from './semantic/types';
+export { isChartEntity, isPathEntity, isSwimlaneEntity, isTableEntity } from './semantic/types';
 
 import { readLinks } from './semantic/linkReader';
 import { createCanvasResolution } from './semantic/resolution';

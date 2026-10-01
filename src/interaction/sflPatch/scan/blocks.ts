@@ -1,6 +1,6 @@
 import { braceDelta, maskLines } from './sourceMask';
 
-const OWNER_HEADER = /^\s*(Entity|Container|Table|Chart|Path|Link)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
+const OWNER_HEADER = /^\s*(Shape|Container|Table|Chart|Path|Link)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 export const VALID_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export interface LineRange {
@@ -58,6 +58,25 @@ export function findChildBlock(lines: string[], range: LineRange, headerRe: RegE
     depth += braceDelta(masked[i]);
   }
   return null;
+}
+
+const DATA_BLOCK_HEADER = /^\s*data\s*\{/;
+
+export function findContentChild(
+  lines: string[],
+  range: LineRange,
+  headerRe: RegExp,
+  bareHeaderRe?: RegExp,
+): LineRange | null {
+  const direct = findChildBlock(lines, range, headerRe);
+  if (direct !== null) {
+    return direct;
+  }
+  const data = findChildBlock(lines, range, DATA_BLOCK_HEADER);
+  if (!data) {
+    return null;
+  }
+  return findChildBlock(lines, data, headerRe) ?? (bareHeaderRe ? findChildBlock(lines, data, bareHeaderRe) : null);
 }
 
 export function findFirstBlockOfKind(lines: string[], kind: string): LineRange | null {

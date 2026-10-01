@@ -1,5 +1,5 @@
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
-import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
+import { dashArray, FONT_WEIGHTS, LABEL_POSITIONS, numOf, oneOf } from './values';
 
 export function frameObject(e: SflEntityOut) {
   const p = e.props;
@@ -17,12 +17,14 @@ export function frameObject(e: SflEntityOut) {
     stroke_color: p.stroke ?? '#9b42df',
     stroke_width: numOf(p.strokeWidth) ?? 2,
     corner_radius: numOf(p.cornerRadius) ?? 12,
-    text_color: p.textColor ?? '#9b42df',
+    text_color: p.textColor ?? '#ffffff',
     font_size: numOf(p.fontSize) ?? 14,
     font_weight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
     font_family: p.fontFamily,
     dash: dashArray(p.dash),
     show_label: p.showLabel !== 'false',
+    label_position: oneOf(p.labelPosition, LABEL_POSITIONS, 'top'),
+    shadow: p.shadow !== 'false',
     order: e.order,
   };
 }

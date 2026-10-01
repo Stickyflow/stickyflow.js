@@ -26,6 +26,9 @@ export interface Table {
   columns: TableColumn[];
   rows: TableRow[];
   footer?: TableRow;
+  columns_block_name?: string;
+  rows_block_name?: string;
+  footer_block_name?: string;
   stroke_color: string;
   stroke_width: number;
   dash?: number[];

@@ -13,3 +13,12 @@ export interface InsertEntityOptions {
 export interface RemoveEntityOptions {
   alsoRemoveLinks?: boolean;
 }
+
+export interface InsertPathOptions {
+  id: string;
+  points: Array<{ x: number; y: number }>;
+  closed?: boolean;
+  tension?: number;
+  parentId?: string;
+  body?: string;
+}

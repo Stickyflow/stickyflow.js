@@ -108,10 +108,53 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
     expect(max?.type === 'text' && max.lines).toEqual(['1']);
   });
 
+  it('caps the interpolated grid well below one cell per pixel, so a 400x300 chart stays under a thousand SVG rects', () => {
+    const { svg } = render(FIELD_SFL);
+    const cellCount = (svg.match(/chart-field-cell-/g) ?? []).length;
+    expect(cellCount).toBe(544);
+    expect(cellCount).toBeLessThan(1000);
+  });
+
   it('omits the colorbar (but keeps the surface) when the legend is off', () => {
     const noLegend = FIELD_SFL.replace('text: "WLAN signal"', 'text: "WLAN signal"\n    style { showLegend: false }');
     const { scene } = renderCanvas(sflToRenderInput(noLegend));
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-colorbar-'))).toBe(false);
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-cell-'))).toBe(true);
+  });
+
+  it('clips the surface cells and the grid lines to the same single rounded rect matching cornerRadius, not one clipPath per node', () => {
+    const rounded = FIELD_SFL.replace('type: field', 'type: field\n    style { cornerRadius: 20 }');
+    const { scene } = renderCanvas(sflToRenderInput(rounded));
+    const cells = scene.nodes.filter(node => node.id.startsWith('chart-field-cell-'));
+    const gridLines = scene.nodes.filter(node => node.id.startsWith('chart-grid-'));
+    const isolines = scene.nodes.filter(node => node.id.startsWith('chart-field-isoline-'));
+    expect(cells.length).toBeGreaterThan(0);
+    expect(gridLines.length).toBeGreaterThan(0);
+    expect(isolines.length).toBeGreaterThan(0);
+    expect(
+      cells.every(node => node.type === 'rect' && node.style.clip?.type === 'rect' && node.style.clip.rx === 20),
+    ).toBe(true);
+    expect(
+      gridLines.every(node => node.type === 'path' && node.style.clip?.type === 'rect' && node.style.clip.rx === 20),
+    ).toBe(true);
+    expect(
+      isolines.every(node => node.type === 'path' && node.style.clip?.type === 'rect' && node.style.clip.rx === 20),
+    ).toBe(true);
+
+    const { svg } = render(rounded);
+    expect((svg.match(/<clipPath/g) ?? []).length).toBe(1);
+    expect((svg.match(/clip-path="url\(#/g) ?? []).length).toBe(cells.length + gridLines.length + isolines.length);
+  });
+
+  it('keeps the legend clear of the frame edge: colorbar + labels fit inside the reserved bottom padding', () => {
+    const { scene } = renderCanvas(sflToRenderInput(FIELD_SFL));
+    const chart = scene.nodes.find(node => node.id === 'chart-wlan');
+    const minLabel = scene.nodes.find(node => node.id === 'chart-field-colorbar-min-wlan');
+    if (chart?.type !== 'rect' || minLabel?.type !== 'text') {
+      throw new Error('expected chart frame rect and colorbar min label');
+    }
+    const frameBottom = chart.y + chart.height;
+    const labelBottom = minLabel.y + minLabel.height;
+    expect(labelBottom).toBeLessThan(frameBottom);
   });
 });

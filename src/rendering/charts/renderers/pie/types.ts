@@ -1,17 +1,8 @@
-export interface PiePoint {
-  x: number;
-  y: number;
-}
+import type { PieGeometry as BasePieGeometry } from '../../primitives/pieShape';
 
-export interface PieGeometry {
-  centerX: number;
-  centerY: number;
-  outerRadius: number;
-  innerRadius: number;
+export type { PiePoint, PieSliceAngles } from '../../primitives/pieShape';
+
+export interface PieGeometry extends BasePieGeometry {
   total: number;
-}
-
-export interface PieSliceAngles {
-  start: number;
-  end: number;
+  cornerRadius: number;
 }

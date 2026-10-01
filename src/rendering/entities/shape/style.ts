@@ -3,6 +3,11 @@ import { SHAPE_DEFAULTS } from '../../../model/shapes';
 import type { RenderDiagnostic, SceneStyle } from '../../scene';
 import { finite, paint } from '../../scene';
 
+const REMOVED_SHAPE_HINTS: Record<string, string> = {
+  circle: " (use 'oval', which takes any width and height)",
+  container_rectangle: " (use 'rectangle' with strokeStyle: dashed)",
+};
+
 export function shapeDefaults(
   shape: Shape,
   diagnostics: RenderDiagnostic[],
@@ -15,15 +20,12 @@ export function shapeDefaults(
     severity: 'warning',
     code: 'unknown-shape-type',
     entityId: shape.id,
-    message: `Unknown shapeType '${shape.shapeType}', falling back to rectangle defaults.`,
+    message: `Unknown shapeType '${shape.shapeType}'${REMOVED_SHAPE_HINTS[shape.shapeType] ?? ''}, falling back to rectangle defaults.`,
   });
   return SHAPE_DEFAULTS.rectangle;
 }
 
 function shapeDash(shape: Shape, strokeWidth: number): number[] | undefined {
-  if (shape.shapeType === 'container_rectangle') {
-    return [10, 5];
-  }
   if (shape.strokeStyle === 'dotted') {
     return [0.001, strokeWidth * 2];
   }

@@ -9,7 +9,7 @@ const withBraceInMultiline = [
   'sfl 1.2',
   '',
   'Model M {',
-  '  Entity a {',
+  '  Shape a {',
   '    text: """',
   '      Schritt 1: oeffne {',
   '      Schritt 2: fertig',
@@ -17,7 +17,7 @@ const withBraceInMultiline = [
   '    layout { position: 0, 0 }',
   '  }',
   '',
-  '  Entity b {',
+  '  Shape b {',
   '    text: "B"',
   '    layout { position: 100, 0 }',
   '  }',
@@ -29,14 +29,14 @@ const withHeaderLookalike = [
   'sfl 1.2',
   '',
   'Model M {',
-  '  Entity a {',
+  '  Shape a {',
   '    text: """',
-  '      Entity b {',
+  '      Shape b {',
   '    """',
   '    layout { position: 0, 0 }',
   '  }',
   '',
-  '  Entity b {',
+  '  Shape b {',
   '    layout { position: 100, 0 }',
   '  }',
   '}',
@@ -76,6 +76,6 @@ describe('multiline strings in the patch scanner', () => {
   it('does not treat a block header inside a string as a real block', () => {
     const next = applyMoveChange(withHeaderLookalike, { owner: owner('b'), dx: 10, dy: 10 });
     expect(sflToCanvasState(next).entities.find(e => e.id === 'b')).toMatchObject({ x: 110, y: 10 });
-    expect(next).toContain('      Entity b {');
+    expect(next).toContain('      Shape b {');
   });
 });

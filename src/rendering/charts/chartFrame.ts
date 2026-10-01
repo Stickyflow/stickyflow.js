@@ -2,11 +2,13 @@ import type { Chart } from '../../model/charts';
 import type { Bounds, SceneRect } from '../scene';
 import { finite } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
+import { resolvePieRadii } from './primitives/pieShape';
+import { radarCategoryCount, radarRadius } from './primitives/radarShape';
 
 export function buildChartFrame(
   chart: Chart,
   bounds: Bounds,
-  plot: { y: number; height: number },
+  plot: { x: number; y: number; width: number; height: number },
   order: number,
 ): SceneRect {
   const frame: SceneRect = {
@@ -30,6 +32,43 @@ export function buildChartFrame(
     frame.detail = {
       of: 'chartScale',
       valueScale: `${plot.y},${plot.height},${chart.axis_y.min},${chart.axis_y.max}`,
+    };
+  }
+
+  if (chart.chart_type === 'pie') {
+    const { outerRadius, innerRadius, cornerRadius } = resolvePieRadii(
+      plot.width,
+      plot.height,
+      chart.config?.innerRadius,
+      chart.config?.pieCornerRadius,
+    );
+    frame.detail = {
+      of: 'pieGeometry',
+      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius},${cornerRadius}`,
+    };
+  }
+
+  if (chart.chart_type === 'polarArea') {
+    const maxRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
+    const innerRadius = Math.max(0, Math.min(finite(chart.config?.innerRadius, 0), maxRadius - 1));
+    const cornerRadius = Math.max(0, finite(chart.config?.pieCornerRadius, 0));
+    frame.detail = {
+      of: 'pieGeometry',
+      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${maxRadius},${innerRadius},${cornerRadius}`,
+    };
+  }
+
+  if (chart.chart_type === 'radar' || chart.chart_type === 'radial') {
+    const configuredCount = (chart.config?.categories?.filter(Boolean) ?? []).length;
+    const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));
+    const count = radarCategoryCount(configuredCount, dataCount);
+    const radius = radarRadius(plot.width, plot.height, finite(chart.font_size, 12), chart.show_axis_labels !== false);
+    const centerX = plot.x + plot.width / 2;
+    const centerY = plot.y + plot.height / 2;
+    const curved = chart.chart_type === 'radial' ? 1 : 0;
+    frame.detail = {
+      of: 'radarGeometry',
+      radarGeometry: `${centerX},${centerY},${radius},${chart.axis_y.min},${chart.axis_y.max},${count},${curved}`,
     };
   }
 

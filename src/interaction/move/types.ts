@@ -13,6 +13,7 @@ export interface DraggedEntity extends TransformedNodes {
   overlayBaseTransforms: (string | null)[];
   draggedBounds: Rect;
   liveLinks: LiveLink[];
+  containerBounds?: Rect;
 }
 
 export interface MoveDragState {

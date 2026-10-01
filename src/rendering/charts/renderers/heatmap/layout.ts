@@ -1,3 +1,4 @@
+import { estimateTextWidth } from '../../../../model/geometry/text';
 import { finite } from '../../../scene';
 import { axisBands, DEFAULT_HEATMAP_ZONES } from '../../primitives';
 import type { ChartRenderContext } from '../types';
@@ -27,10 +28,16 @@ function heatmapColumns(context: ChartRenderContext): string[] {
 }
 
 function heatmapReservedSpace(context: ChartRenderContext): HeatmapReservedSpace {
+  const { chart } = context;
+  const fontSize = Math.max(9, finite(chart.font_size, 12));
+  const longestLabel = chart.series.reduce(
+    (max, series) => Math.max(max, estimateTextWidth(series.label ?? '', fontSize, false)),
+    0,
+  );
   return {
-    rowHeaders: context.showLabels ? Math.min(96, Math.max(0, context.plot.width * 0.3)) : 0,
+    rowHeaders: context.showLabels ? Math.min(96, longestLabel + 12) : 0,
     columnHeaders: context.showLabels ? 24 : 0,
-    legend: context.showLegend ? 22 : 0,
+    legend: context.showLegend ? 38 : 0,
   };
 }
 
@@ -39,14 +46,32 @@ function createHeatmapGrid(
   reservedSpace: HeatmapReservedSpace,
   columnCount: number,
 ): HeatmapGrid {
+  const { chart } = context;
   const width = Math.max(1, context.plot.width - reservedSpace.rowHeaders);
   const height = Math.max(1, context.plot.height - reservedSpace.columnHeaders - reservedSpace.legend);
+  const rowCount = chart.series.length;
+  const cellGap = Math.max(0, finite(chart.config?.cellGap, 0));
+
+  let cellWidth = columnCount ? width / columnCount : width;
+  let cellHeight = rowCount ? height / rowCount : height;
+  let gridWidth = width;
+  let gridHeight = height;
+  if (chart.config?.squareCells && columnCount && rowCount) {
+    const cellSize = Math.min(cellWidth, cellHeight);
+    cellWidth = cellSize;
+    cellHeight = cellSize;
+    gridWidth = cellSize * columnCount;
+    gridHeight = cellSize * rowCount;
+  }
+
   return {
     x: context.plot.x + reservedSpace.rowHeaders,
     y: context.plot.y + reservedSpace.columnHeaders,
-    width,
-    height,
-    cellWidth: columnCount ? width / columnCount : width,
-    cellHeight: context.chart.series.length ? height / context.chart.series.length : height,
+    width: gridWidth,
+    height: gridHeight,
+    cellWidth,
+    cellHeight,
+    cellGap,
+    cellRadius: Math.max(0, finite(chart.config?.barCornerRadius, cellGap)),
   };
 }

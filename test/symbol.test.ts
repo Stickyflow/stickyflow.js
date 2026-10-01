@@ -14,7 +14,7 @@ Symbol Triangle {
 }
 
 Model board {
-  Entity tri { shape: Triangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape tri { shape: Triangle; layout { position: 0, 0; size: 100, 60 } }
 }`;
 
 describe('Symbol (§5.5, free-form shape)', () => {
@@ -40,7 +40,7 @@ describe('Symbol (§5.5, free-form shape)', () => {
     const sfl = `sfl 1.4
 
 Model board {
-  Entity a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
 }`;
     const state = sflToCanvasState(sfl);
     expect(state.entities[0].shapeType).toBe('rectangle');
@@ -55,7 +55,7 @@ Symbol Degenerate {
 }
 
 Model board {
-  Entity a { shape: Degenerate; layout { position: 0, 0; size: 100, 60 } }
+  Shape a { shape: Degenerate; layout { position: 0, 0; size: 100, 60 } }
 }`;
     const state = sflToCanvasState(sfl);
     // symbolDefs only registers a Symbol with >= 2 points - an unresolved
@@ -69,6 +69,39 @@ Model board {
     expect(state.entities[0].symbol).toBeUndefined();
   });
 
+  it('tags the rendered path with its points/tension so live resize can rebuild the exact polygon', () => {
+    const { svg } = render(SFL);
+    expect(svg).toContain('data-sf-symbol-points="[[0.5,0],[1,1],[0,1]]"');
+    expect(svg).toContain('data-sf-symbol-tension="0"');
+  });
+
+  it("tags the rendered path with its declared entity box, not the polygon's own tight bbox", () => {
+    // points [[0.5,0],[1,1],[0,1]] only reach y=1 at the base : SVG getBBox()
+    // of the drawn triangle IS the full 60px here (base touches the bottom
+    // edge), so this fixture alone would not expose the bug (see the Blob
+    // fixture below, whose points stop short of every edge).
+    const { svg } = render(SFL);
+    expect(svg).toContain('data-sf-symbol-bounds="0,0,100,60"');
+  });
+
+  it('a Symbol whose points stop short of an edge still tags the full declared box (not the shorter rendered extent)', () => {
+    const sfl = `sfl 1.4
+
+Symbol Kite {
+  points: [[0.5, 0], [1, 0.4], [0.5, 0.8], [0, 0.4]]
+}
+
+Model board {
+  Shape k { shape: Kite; layout { position: 0, 0; size: 100, 100 } }
+}`;
+    const { svg } = render(sfl);
+    // The polygon's own tight bbox tops out at y=80 (0.8 * 100), well short
+    // of the declared 100 : the resize/selection system must use the
+    // declared box, or a live resize snaps the moment it starts (the bug
+    // this attribute exists to prevent).
+    expect(svg).toContain('data-sf-symbol-bounds="0,0,100,100"');
+  });
+
   it('scales tension into a smoothed curve instead of straight polygon segments', () => {
     const sfl = `sfl 1.4
 
@@ -78,7 +111,7 @@ Symbol Blob {
 }
 
 Model board {
-  Entity b { shape: Blob; layout { position: 0, 0; size: 100, 100 } }
+  Shape b { shape: Blob; layout { position: 0, 0; size: 100, 100 } }
 }`;
     const { svg } = render(sfl);
     // Straight-segment rendering would use "L" commands; a positive tension

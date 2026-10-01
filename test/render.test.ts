@@ -12,9 +12,7 @@ describe('render core runs headless through the package (real app source)', () =
       'rectangle',
       'rounded_rectangle',
       'diamond',
-      'circle',
       'oval',
-      'container_rectangle',
       'cylinder',
       'document',
       'pill',
@@ -23,6 +21,9 @@ describe('render core runs headless through the package (real app source)', () =
       'hexagon',
       'parallelogram',
       'trapezoid',
+      'note',
+      'cloud',
+      'predefined_process',
     ];
     const input = {
       shapes: types.map((shapeType, index) => ({
@@ -199,7 +200,7 @@ describe('render core runs headless through the package (real app source)', () =
       shapes: [
         { ...base('gradient', 'rectangle', 0), fillColor: gradient, strokeColor: gradient },
         {
-          ...base('mesh', 'circle', 200),
+          ...base('mesh', 'oval', 200),
           fillColor: {
             type: 'mesh' as const,
             points: [
@@ -341,7 +342,7 @@ Style Flow {
 Model Demo {
   text: "Demo"
 
-  Entity start : Box {
+  Shape start : Box {
     kind: process
     text: "Start"
     layout {
@@ -350,7 +351,7 @@ Model Demo {
     }
   }
 
-  Entity finish : Box {
+  Shape finish : Box {
     kind: process
     text: "Finish"
     layout {
@@ -402,10 +403,10 @@ Model Demo {
     const withoutFraction = `sfl 1.2
 
 Model m {
-  Entity a { text: "A"
+  Shape a { text: "A"
     layout { position: 60, 60
       size: 160, 70 } }
-  Entity b { text: "B"
+  Shape b { text: "B"
     layout { position: 500, 60
       size: 160, 70 } }
   Link l1 { from: a, right
@@ -427,7 +428,7 @@ Model m {
     const withNote = `sfl 1.2
 
 Model m {
-  Entity a {
+  Shape a {
     kind: note
     text: "LB concern"
     layout { position: 0, 0
@@ -464,7 +465,7 @@ Model m {
     stroke: "#0284c7"
   }
 
-  Entity living : LivingRoom {
+  Shape living : LivingRoom {
     text: "Living room"
     layout { position: 80, 100
       size: 360, 270 }
@@ -497,7 +498,7 @@ Style LivingRoom {
 }
 
 Model m {
-  Entity living : LivingRoom {
+  Shape living : LivingRoom {
     text: "Living room"
     layout { position: 80, 100
       size: 360, 270 }
@@ -529,10 +530,10 @@ Model m {
     const linkSfl = (segments?: string) => `sfl 1.2
 
 Model M {
-  Entity a {
+  Shape a {
     layout { position: 0, 0; size: 100, 60 }
   }
-  Entity b {
+  Shape b {
     layout { position: 300, 150; size: 100, 60 }
   }
   Link go {
@@ -566,7 +567,7 @@ ${segments ? `    segments: ${segments}\n` : ''}  }
 
   it('keeps two renders with distinct idPrefix from colliding when embedded on the same page', () => {
     // Two independent render() calls that happen to share entity ids (both
-    // declare `Entity e`) used to emit byte-identical gradient/id strings.
+    // declare `Shape e`) used to emit byte-identical gradient/id strings.
     // Harmless alone, but once both SVGs sit in the same HTML document,
     // url(#id) resolves to whichever element with that id appears first —
     // so the second diagram would silently render with the first one's
@@ -576,7 +577,7 @@ ${segments ? `    segments: ${segments}\n` : ''}  }
     const oneShape = (fill: string) => `sfl 1.2
 
 Model M {
-  Entity e {
+  Shape e {
     text: ""
     style {
       shape: rounded_rectangle
@@ -617,7 +618,7 @@ Model M {
     const SFL_SHAPE = `sfl 1.2
 
 Model M {
-  Entity e {
+  Shape e {
     text: "x"
     style {
       shape: rounded_rectangle
@@ -945,7 +946,7 @@ ${extra}
     const SFL_ORDER = `sfl 1.2
 
 Model OrderDemo {
-  Entity a {
+  Shape a {
     kind: process
     text: "A"
     layout {
@@ -954,7 +955,7 @@ Model OrderDemo {
     }
   }
 
-  Entity b {
+  Shape b {
     kind: process
     text: "B"
     layout {

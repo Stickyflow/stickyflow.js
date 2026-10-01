@@ -8,10 +8,13 @@ export interface PositionedColorStop {
 function mixHexColors(start: string, end: string, ratio: number): string {
   const startRgb = hexToRgb(start);
   const endRgb = hexToRgb(end);
+  const startAlpha = startRgb.a ?? 1;
+  const endAlpha = endRgb.a ?? 1;
   return rgbToHex(
     Math.round(startRgb.r + (endRgb.r - startRgb.r) * ratio),
     Math.round(startRgb.g + (endRgb.g - startRgb.g) * ratio),
     Math.round(startRgb.b + (endRgb.b - startRgb.b) * ratio),
+    startAlpha + (endAlpha - startAlpha) * ratio,
   );
 }
 

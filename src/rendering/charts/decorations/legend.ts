@@ -1,7 +1,8 @@
 import type { Chart, ChartSeries } from '../../../model/charts';
 import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
-import { CHART_COLORS, chartText } from '../primitives';
+import { CHART_COLORS, chartText, representativeColor } from '../primitives';
+import { seriesColorProp, seriesLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 export interface ChartLegendRender {
@@ -16,11 +17,12 @@ interface ChartLegendItem {
   series: ChartSeries;
   seriesIndex: number;
   x: number;
+  y: number;
   width: number;
   order: number;
 }
 
-const CHARTS_WITH_OWN_LEGEND = new Set(['heatmap', 'boxplot', 'sankey', 'treemap', 'mekko', 'matrix']);
+const CHARTS_WITH_OWN_LEGEND = new Set(['heatmap', 'boxplot', 'sankey', 'treemap', 'mekko']);
 
 export function buildLegend(render: ChartLegendRender): RenderNode[] {
   if (!usesStandardLegend(render.chart)) {
@@ -30,7 +32,8 @@ export function buildLegend(render: ChartLegendRender): RenderNode[] {
 }
 
 function usesStandardLegend(chart: Chart): boolean {
-  return chart.show_legend !== false && !CHARTS_WITH_OWN_LEGEND.has(chart.chart_type);
+  const isConnectedCustom = chart.chart_type === 'custom' && Boolean(chart.config?.connectPoints);
+  return chart.show_legend !== false && !CHARTS_WITH_OWN_LEGEND.has(chart.chart_type) && !isConnectedCustom;
 }
 
 function legendSeries(chart: Chart): ChartSeries[] {
@@ -39,16 +42,72 @@ function legendSeries(chart: Chart): ChartSeries[] {
     : chart.series;
 }
 
-function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
+export const LEGEND_ROW_HEIGHT = 22;
+export const LEGEND_COLUMN_GAP = 16;
+
+export function isStackedLegendPosition(position: Chart['legend_position']): boolean {
+  return position === 'bottomLeft' || position === 'bottomRight';
+}
+
+function legendItemWidths(chart: Chart): number[] {
+  return legendSeries(chart).map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+}
+
+export function stackedLegendColumnWidth(chart: Chart): number {
+  const widths = legendItemWidths(chart);
+  return widths.length ? Math.max(...widths) : 0;
+}
+
+function legendStartX(chart: Chart, plot: ChartLegendRender['plot'], totalWidth: number): number {
+  if (chart.legend_position === 'bottom') {
+    return plot.x + (plot.width - totalWidth) / 2;
+  }
+  return plot.x + plot.width - totalWidth;
+}
+
+function legendY(chart: Chart, plot: ChartLegendRender['plot']): number {
+  return (chart.legend_position ?? 'top') === 'top' ? chart.y + 16 : plot.y + plot.height + 16;
+}
+
+function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] {
   const { chart, plot, order } = render;
   const series = legendSeries(chart);
-  let nextX = plot.x + plot.width;
-  return [...series].reverse().map((item, reverseIndex) => {
-    const seriesIndex = series.length - 1 - reverseIndex;
-    const width = Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22);
-    nextX -= width;
-    return { series: item, seriesIndex, x: nextX, width, order: order + reverseIndex * 2 };
+  const widths = legendItemWidths(chart);
+  const maxWidth = Math.max(...widths);
+  const x =
+    chart.legend_position === 'bottomLeft'
+      ? plot.x - LEGEND_COLUMN_GAP - maxWidth
+      : plot.x + plot.width + LEGEND_COLUMN_GAP;
+  const lastY = plot.y + plot.height - 15;
+  return series.map((item, seriesIndex) => ({
+    series: item,
+    seriesIndex,
+    x,
+    y: lastY - (series.length - 1 - seriesIndex) * LEGEND_ROW_HEIGHT,
+    width: widths[seriesIndex],
+    order: order + (series.length - 1 - seriesIndex) * 2,
+  }));
+}
+
+function createRowLegendItems(render: ChartLegendRender): ChartLegendItem[] {
+  const { chart, plot, order } = render;
+  const series = legendSeries(chart);
+  const widths = legendItemWidths(chart);
+  const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+  const y = legendY(chart, plot);
+  let x = legendStartX(chart, plot, totalWidth);
+  return series.map((item, seriesIndex) => {
+    const width = widths[seriesIndex];
+    const itemX = x;
+    x += width;
+    return { series: item, seriesIndex, x: itemX, y, width, order: order + (series.length - 1 - seriesIndex) * 2 };
   });
+}
+
+function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
+  return isStackedLegendPosition(render.chart.legend_position)
+    ? createStackedLegendItems(render)
+    : createRowLegendItems(render);
 }
 
 function renderLegendItem(render: ChartLegendRender, item: ChartLegendItem): RenderNode[] {
@@ -57,29 +116,37 @@ function renderLegendItem(render: ChartLegendRender, item: ChartLegendItem): Ren
 
 function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): RenderNode {
   const { chart, bounds, diagnostics } = render;
-  const color = item.series.color ?? CHART_COLORS[item.seriesIndex % CHART_COLORS.length];
+  const fallback = CHART_COLORS[item.seriesIndex % CHART_COLORS.length];
+  const solidOnly = chart.chart_type === 'line';
+  const color = solidOnly ? representativeColor(item.series.color, fallback) : (item.series.color ?? fallback);
   return {
     type: 'rect',
     id: `chart-legend-swatch-${chart.id}-${item.series.id}`,
     order: item.order,
     bounds,
     x: item.x,
-    y: chart.y + 16,
+    y: item.y,
     width: 10,
     height: 10,
     rx: 3,
+    prop: seriesColorProp(item.series.id),
+    propKind: 'color',
+    propSolidOnly: solidOnly,
     style: { fill: paint(color, diagnostics, chart.id) },
   };
 }
 
 function createLegendLabel(render: ChartLegendRender, item: ChartLegendItem): RenderNode {
   const { chart, bounds } = render;
-  return chartText({
-    id: `chart-legend-${chart.id}-${item.series.id}`,
-    order: item.order + 1,
-    bounds,
-    frame: { x: item.x + 15, y: chart.y + 13, width: item.width - 15, height: 18 },
-    text: item.series.label,
-    chart,
-  });
+  return {
+    ...chartText({
+      id: `chart-legend-${chart.id}-${item.series.id}`,
+      order: item.order + 1,
+      bounds,
+      frame: { x: item.x + 15, y: item.y - 3, width: item.width - 15, height: 18 },
+      text: item.series.label,
+      chart,
+    }),
+    prop: seriesLabelProp(item.series.id),
+  };
 }

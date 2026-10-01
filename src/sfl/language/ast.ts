@@ -6,7 +6,7 @@ export type BlockKind =
   | 'Table'
   | 'Path'
   | 'Chart'
-  | 'Entity'
+  | 'Shape'
   | 'Link'
   | 'Layout'
   | 'Style'
@@ -20,7 +20,8 @@ export type BlockKind =
   | 'Rule'
   | 'Net'
   | 'Symbol'
-  | 'Port';
+  | 'Port'
+  | 'data';
 
 export const BLOCK_KINDS: readonly BlockKind[] = [
   'Project',
@@ -30,7 +31,7 @@ export const BLOCK_KINDS: readonly BlockKind[] = [
   'Table',
   'Path',
   'Chart',
-  'Entity',
+  'Shape',
   'Link',
   'Layout',
   'Style',
@@ -67,7 +68,8 @@ export type SflEntry =
   | { type: 'property'; property: SflProperty }
   | { type: 'block'; block: SflBlock }
   | { type: 'layout'; layout: SflLayout }
-  | { type: 'style'; style: SflStyle };
+  | { type: 'style'; style: SflStyle }
+  | { type: 'data'; data: SflBlock };
 
 export interface SflProperty {
   key: string;

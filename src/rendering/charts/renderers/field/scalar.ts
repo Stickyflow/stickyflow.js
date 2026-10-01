@@ -1,6 +1,6 @@
 import type { RenderNode } from '../../../scene';
 import { colorAtRamp } from '../../field/colorRamp';
-import { computeFieldGrid } from '../../field/grid';
+import { computeFieldGrid, fieldSurfaceClip } from '../../field/grid';
 import { computeIsolineSegments } from '../../field/isolines';
 import type { FieldSample } from '../../field/types';
 import type { ChartRenderContext } from '../types';
@@ -51,7 +51,7 @@ function createFieldCell(context: ChartRenderContext, grid: ScalarFieldGrid, row
     y: centerY - grid.cellHeight / 2,
     width: grid.cellWidth,
     height: grid.cellHeight,
-    style: { fill: { kind: 'solid', color } },
+    style: { fill: { kind: 'solid', color }, clip: fieldSurfaceClip(chart, plot) },
   };
 }
 
@@ -99,6 +99,7 @@ function createIsoline(
       fill: { kind: 'none' },
       stroke: { kind: 'solid', color: 'rgba(15, 23, 42, 0.55)' },
       strokeWidth: 1,
+      clip: fieldSurfaceClip(chart, plot),
     },
   };
 }

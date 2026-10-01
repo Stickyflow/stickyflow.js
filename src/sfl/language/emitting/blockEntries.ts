@@ -5,6 +5,7 @@ export interface BlockEntries {
   blocks: SflBlock[];
   layout?: SflLayout;
   style?: SflStyle;
+  data?: SflBlock;
 }
 
 export function collectBlockEntries(block: SflBlock): BlockEntries {
@@ -17,8 +18,10 @@ export function collectBlockEntries(block: SflBlock): BlockEntries {
       entries.blocks.push(entry.block);
     } else if (entry.type === 'layout') {
       entries.layout = entry.layout;
-    } else {
+    } else if (entry.type === 'style') {
       entries.style = entry.style;
+    } else {
+      entries.data = entry.data;
     }
   }
 

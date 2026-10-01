@@ -1,3 +1,4 @@
+import { decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflLinkOut } from '../../../sfl/sflToCanvasState';
 import { MARKER_TYPES, numOf, optionalOneOf, PATH_TYPES, STROKE_STYLES, strokePaint } from './values';
 
@@ -24,6 +25,7 @@ export function linkObject(l: SflLinkOut) {
       fontFamily: p.fontFamily,
       startLabel: p.startLabel,
       endLabel: p.endLabel,
+      shadow: decodeShadow(p.shadow),
     },
     startMarker: optionalOneOf(p.markerStart, MARKER_TYPES),
     endMarker: optionalOneOf(p.markerEnd, MARKER_TYPES),

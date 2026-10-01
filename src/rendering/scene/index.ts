@@ -15,7 +15,6 @@ export type {
   SceneDetail,
   SceneEllipse,
   SceneIdentity,
-  SceneImage,
   ScenePaint,
   ScenePath,
   SceneRect,

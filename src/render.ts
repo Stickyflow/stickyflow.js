@@ -26,6 +26,32 @@ export function renderCanvas(input: RenderInput, options: RenderOptions = {}): R
   return { svg, width, height, diagnostics, scene };
 }
 
+const SCENE_CACHE_LIMIT = 50;
+const sceneCache = new Map<string, RenderScene>();
+
+function cachedRenderScene(source: string): RenderScene {
+  const cached = sceneCache.get(source);
+  if (cached) {
+    sceneCache.delete(source);
+    sceneCache.set(source, cached);
+    return cached;
+  }
+  const scene = buildRenderScene(sflToRenderInput(source));
+  sceneCache.set(source, scene);
+  if (sceneCache.size > SCENE_CACHE_LIMIT) {
+    const oldest = sceneCache.keys().next().value;
+    if (oldest !== undefined) {
+      sceneCache.delete(oldest);
+    }
+  }
+  return scene;
+}
+
 export function render(source: string, options: RenderOptions = {}): RenderResult {
-  return renderCanvas(sflToRenderInput(source), options);
+  if (options.measureText) {
+    return renderCanvas(sflToRenderInput(source), options);
+  }
+  const scene = cachedRenderScene(source);
+  const { svg, width, height, diagnostics } = renderSceneToSvg(scene, options);
+  return { svg, width, height, diagnostics, scene };
 }

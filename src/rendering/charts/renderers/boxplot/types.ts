@@ -1,4 +1,7 @@
+export type BoxplotOrientation = 'horizontal' | 'vertical';
+
 export interface BoxplotLayout {
+  orientation: BoxplotOrientation;
   slotWidth: number;
   boxWidth: number;
   cornerRadius: number;
@@ -8,12 +11,12 @@ export interface BoxplotLayout {
 }
 
 export interface BoxplotGeometry {
-  centerX: number;
-  minY: number;
-  q1Y: number;
-  medianY: number;
-  q3Y: number;
-  maxY: number;
+  center: number;
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
 }
 
 export interface BoxplotStats {

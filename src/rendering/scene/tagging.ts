@@ -1,6 +1,13 @@
 import type { RenderNode, SceneRole } from './types';
 
-export function tag(nodes: RenderNode[], role: SceneRole, id: string, kind?: string, label?: string): RenderNode[] {
+export function tag(
+  nodes: RenderNode[],
+  role: SceneRole,
+  id: string,
+  kind?: string,
+  label?: string,
+  parentFrameId?: string,
+): RenderNode[] {
   nodes.forEach((node, index) => {
     node.identity = {
       role,
@@ -8,6 +15,7 @@ export function tag(nodes: RenderNode[], role: SceneRole, id: string, kind?: str
       ...(kind ? { kind } : {}),
       ...(index === 0 ? { primary: true } : {}),
       ...(index === 0 && label ? { label } : {}),
+      ...(index === 0 && parentFrameId ? { parentFrameId } : {}),
     };
   });
   return nodes;

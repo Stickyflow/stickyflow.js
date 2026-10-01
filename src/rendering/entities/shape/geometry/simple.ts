@@ -1,4 +1,4 @@
-import { localShapePath } from '../../../../model/geometry/shapes';
+import { localShapePath, pillCornerRadius } from '../../../../model/geometry/shapes';
 import type { RenderNode } from '../../../scene';
 import { finite, freeformPathData } from '../../../scene';
 import type { ShapeRenderContext } from '../types';
@@ -12,10 +12,20 @@ export function renderPath(context: ShapeRenderContext): RenderNode[] {
   return [{ ...shapeNodeBase(context), type: 'path', d: path, rotationCenter: context.rotationCenter }];
 }
 
+export function renderBoundedPath(context: ShapeRenderContext): RenderNode[] {
+  return renderPath(context).map(node => ({
+    ...node,
+    detail: {
+      of: 'declaredBounds',
+      bounds: { x: context.x, y: context.y, width: context.width, height: context.height },
+    },
+  }));
+}
+
 export function renderRectangle(context: ShapeRenderContext): RenderNode[] {
   const rx =
     context.shape.shapeType === 'pill'
-      ? Math.min(context.width, context.height) / 2
+      ? pillCornerRadius(context.width, context.height)
       : context.shape.shapeType === 'rounded_rectangle'
         ? finite(context.shape.cornerRadius, 8)
         : 0;
@@ -49,6 +59,7 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
   if (!context.shape.symbol || context.shape.symbol.points.length < 2) {
     return renderRectangle(context);
   }
+  const tension = finite(context.shape.symbol.tension, 0);
   const points = context.shape.symbol.points.map(([x, y]) => ({
     x: context.x + x * context.width,
     y: context.y + y * context.height,
@@ -57,8 +68,14 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
     {
       ...shapeNodeBase(context),
       type: 'path',
-      d: freeformPathData({ points, tension: finite(context.shape.symbol.tension, 0), closed: true }),
+      d: freeformPathData({ points, tension, closed: true }),
       rotationCenter: context.rotationCenter,
+      detail: {
+        of: 'symbolGeometry',
+        points: context.shape.symbol.points,
+        tension,
+        declaredBounds: { x: context.x, y: context.y, width: context.width, height: context.height },
+      },
     },
   ];
 }

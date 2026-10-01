@@ -1,6 +1,7 @@
 import type { RenderNode } from '../../../scene';
-import { paint } from '../../../scene';
-import { CHART_COLORS, stackedSegment } from '../../primitives';
+import { finite, paint } from '../../../scene';
+import { barShapePath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
+import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
 
 export function renderStackedBars(context: ChartRenderContext, mode: StackedMode): RenderNode[] {
@@ -9,23 +10,53 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
   const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
   const slotWidth = plot.width / valueCount;
   const barWidth = Math.max(1, slotWidth - 8);
+  const cornerRadius = chart.config?.barCornerRadius ?? 2;
+  const outerSeriesIndex = mode === 'waterfall' ? null : chart.series.length - 1;
+  const shadow = resolveChartShadow(chart.shadow_style);
+  const clipPath = shadow
+    ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
+    : undefined;
 
   for (let valueIndex = 0; valueIndex < valueCount; valueIndex++) {
     chart.series.forEach((series, seriesIndex) => {
-      const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+      const color = series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       const segment = stackedSegment(chart, mode, valueIndex, seriesIndex, plot.height);
+      const radius = outerSeriesIndex === null || seriesIndex === outerSeriesIndex ? cornerRadius : 0;
+      const x = plot.x + valueIndex * slotWidth + 4;
+      const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
+      const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
+      const barPath = barShapePath(x, y, barWidth, height, radius);
+      const fill = paint(color, diagnostics, chart.id);
+      const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
+      const strokeWidth = finite(chart.config?.barBorderWidth, 0);
+
+      if (shadow && clipPath) {
+        nodes.push({
+          type: 'path',
+          id: `chart-bar-shadow-${chart.id}-${series.id}-${valueIndex}`,
+          order: nextOrder(),
+          bounds,
+          d: barPath,
+          style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: clipPath } },
+        });
+      }
       nodes.push({
-        type: 'rect',
+        type: 'path',
         id: `chart-bar-${chart.id}-${series.id}-${valueIndex}`,
         order: nextOrder(),
         bounds,
-        x: plot.x + valueIndex * slotWidth + 4,
-        y: plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd),
-        width: barWidth,
-        height: Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart)),
-        rx: 2,
-        detail: { of: 'chartValue', series: series.id, valueIndex },
-        style: { fill: paint(color, diagnostics, chart.id) },
+        d: barPath,
+        detail: {
+          of: 'chartValue',
+          series: series.id,
+          valueIndex,
+          mark: 'bar',
+          radius,
+          colorProp: seriesValueColorProp(series.id, valueIndex),
+          hasColorOverride: series.colors?.[valueIndex] != null,
+        },
+        prop: seriesValueProp(series.id, valueIndex),
+        style: { fill, stroke, strokeWidth, innerShadow: shadow },
       });
     });
   }

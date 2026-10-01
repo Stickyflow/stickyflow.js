@@ -1,7 +1,9 @@
 import { svgElement } from './dom';
+import { screenPx } from './scale';
 import type { OverlayBounds, ResizeHandle } from './types';
 
-const HANDLE_SIZE = 6;
+const HANDLE_SIZE_PX = 6;
+const HANDLE_STROKE_WIDTH_PX = 1;
 const HANDLE_STROKE = '#992dff';
 const HANDLE_CURSORS: Record<ResizeHandle, string> = {
   'top-left': 'nwse-resize',
@@ -29,19 +31,31 @@ export function resizeHandlePositions(bounds: OverlayBounds): Array<[number, num
   ];
 }
 
-export function renderResizeHandles(document: Document, bounds: OverlayBounds): SVGRectElement[] {
-  return resizeHandlePositions(bounds).map(([centerX, centerY, name]) => {
+const LOCKED_HEIGHT_HANDLES: ReadonlySet<ResizeHandle> = new Set(['top', 'bottom']);
+
+export function renderResizeHandles(
+  document: Document,
+  bounds: OverlayBounds,
+  svg: SVGSVGElement,
+  lockHeight = false,
+): SVGRectElement[] {
+  const size = screenPx(svg, HANDLE_SIZE_PX);
+  const strokeWidth = screenPx(svg, HANDLE_STROKE_WIDTH_PX);
+  const positions = lockHeight
+    ? resizeHandlePositions(bounds).filter(([, , name]) => !LOCKED_HEIGHT_HANDLES.has(name))
+    : resizeHandlePositions(bounds);
+  return positions.map(([centerX, centerY, name]) => {
     const handle = svgElement(document, 'rect');
-    handle.setAttribute('x', String(centerX - HANDLE_SIZE / 2));
-    handle.setAttribute('y', String(centerY - HANDLE_SIZE / 2));
-    handle.setAttribute('width', String(HANDLE_SIZE));
-    handle.setAttribute('height', String(HANDLE_SIZE));
+    handle.setAttribute('x', String(centerX - size / 2));
+    handle.setAttribute('y', String(centerY - size / 2));
+    handle.setAttribute('width', String(size));
+    handle.setAttribute('height', String(size));
     handle.setAttribute('fill', 'white');
     handle.setAttribute('stroke', HANDLE_STROKE);
-    handle.setAttribute('stroke-width', '1');
+    handle.setAttribute('stroke-width', String(strokeWidth));
     handle.setAttribute('data-sf-resize-handle', name);
     handle.style.pointerEvents = 'auto';
-    handle.style.cursor = HANDLE_CURSORS[name];
+    handle.style.cursor = lockHeight ? 'ew-resize' : HANDLE_CURSORS[name];
     return handle;
   });
 }

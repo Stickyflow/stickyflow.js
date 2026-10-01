@@ -15,8 +15,11 @@ export {
   type AttrElement,
   isCameraGesture,
   isContractCompatible,
+  type PathGeometry,
   parseContractVersion,
+  pathGeometryOf,
   resolveOwner,
+  symbolDeclaredBounds,
 } from './contract';
 export {
   findAllOwnerNodes,
@@ -24,12 +27,16 @@ export {
   findSnapCandidateBounds,
   isPrimary,
   isTextLabel,
+  pointerUserPoint,
   pxPerUnit,
   screenRectOf,
 } from './domQuery';
+export { DERIVED_HEIGHT_ROLES } from './entityRoles';
 export {
   type LinkEndpoint,
   linkSelectionOverlay,
+  PATH_HALO_ATTR,
+  pathSelectionOverlay,
   type QuickDuplicateDirection,
   quickDuplicateBubbles,
   type ResizeHandle,

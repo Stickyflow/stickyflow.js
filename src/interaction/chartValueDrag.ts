@@ -25,6 +25,7 @@ export function bindChartValueDrag(viewer: Viewer, emitter: Emitter): ChartValue
   viewer.svg.addEventListener('pointercancel', onPointerUp);
   return {
     destroy() {
+      session.cancel();
       viewer.svg.removeEventListener('pointerdown', onPointerDown);
       viewer.svg.removeEventListener('pointermove', onPointerMove);
       viewer.svg.removeEventListener('pointerup', onPointerUp);

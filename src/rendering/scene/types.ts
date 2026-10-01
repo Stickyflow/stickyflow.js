@@ -20,7 +20,12 @@ export interface SceneStyle {
   lineCap?: 'butt' | 'round' | 'square';
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
+  pointerEvents?: 'none';
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
+  innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
+  clip?:
+    | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
+    | { type: 'path'; d: string };
 }
 
 export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
@@ -31,6 +36,7 @@ export interface SceneIdentity {
   kind?: string;
   primary?: boolean;
   label?: string;
+  parentFrameId?: string;
 }
 
 export type SceneDetail =
@@ -43,8 +49,40 @@ export type SceneDetail =
       toSide?: Side;
       labelGap?: boolean;
     }
-  | { of: 'chartValue'; series: string; valueIndex: number }
-  | { of: 'chartScale'; valueScale: string };
+  | {
+      of: 'chartValue';
+      series: string;
+      valueIndex: number;
+      mark?: 'bar' | 'pie-slice' | 'radar-vertex' | 'radial-bar-ring' | 'polar-area-wedge';
+      radius?: number;
+      colorProp?: string;
+      hasColorOverride?: boolean;
+      pieStart?: number;
+      pieEnd?: number;
+      pieValue?: number;
+    }
+  | { of: 'chartScale'; valueScale: string }
+  | { of: 'pieGeometry'; pieGeometry: string }
+  | { of: 'radarGeometry'; radarGeometry: string }
+  | {
+      of: 'chartSeries';
+      series: string;
+      lineTension?: number;
+      mark?: string;
+      pulled?: boolean;
+      midAngle?: number;
+      wedgeRadius?: number;
+    }
+  | { of: 'frameBoundary'; cornerRadius: number; squareCorner: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' }
+  | {
+      of: 'symbolGeometry';
+      points: Array<[number, number]>;
+      tension: number;
+      declaredBounds: { x: number; y: number; width: number; height: number };
+    }
+  | { of: 'declaredBounds'; bounds: { x: number; y: number; width: number; height: number } }
+  | { of: 'tableColumnDivider'; columnId: string; startWidth: number; widthScale: number }
+  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean };
 
 export interface SceneBase {
   id: string;
@@ -52,6 +90,10 @@ export interface SceneBase {
   bounds: Bounds;
   identity?: SceneIdentity;
   detail?: SceneDetail;
+  prop?: string;
+  propKind?: 'value' | 'color';
+  propSolidOnly?: boolean;
+  zoneGradient?: { axis: 'x' | 'y'; min: number; max: number };
 }
 
 export interface SceneRect extends SceneBase {
@@ -104,20 +146,7 @@ export interface SceneText extends SceneBase {
   richLines?: Array<Array<{ text: string; bold: boolean }>>;
 }
 
-export interface SceneImage extends SceneBase {
-  type: 'image';
-  href: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  preserveAspectRatio: string;
-  opacity?: number;
-  rotation?: number;
-  rotationCenter?: Point;
-}
-
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneImage;
+export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText;
 
 export interface RenderScene {
   nodes: RenderNode[];

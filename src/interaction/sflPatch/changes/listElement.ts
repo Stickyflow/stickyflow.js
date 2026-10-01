@@ -3,9 +3,66 @@ interface ListElementSpan {
   end: number;
 }
 
-interface ListElementCursor {
-  start: number;
-  index: number;
+function skipString(text: string, quoteIndex: number): number {
+  for (let cursor = quoteIndex + 1; cursor < text.length; cursor++) {
+    if (text[cursor] === '\\') {
+      cursor++;
+    } else if (text[cursor] === '"') {
+      return cursor;
+    }
+  }
+  return text.length - 1;
+}
+
+function closingBracket(text: string, openIndex: number): number {
+  if (openIndex < 0) {
+    return -1;
+  }
+  let depth = 0;
+  for (let cursor = openIndex; cursor < text.length; cursor++) {
+    if (text[cursor] === '"') {
+      cursor = skipString(text, cursor);
+    } else if (text[cursor] === '[') {
+      depth++;
+    } else if (text[cursor] === ']') {
+      depth--;
+      if (depth === 0) {
+        return cursor;
+      }
+    }
+  }
+  return -1;
+}
+
+function listElementSpans(text: string): { spans: ListElementSpan[]; start: number; end: number } | null {
+  const listStart = text.indexOf('[');
+  const listEnd = closingBracket(text, listStart);
+  if (listStart < 0 || listEnd < 0) {
+    return null;
+  }
+  const body = text.slice(listStart + 1, listEnd);
+  if (!body.trim()) {
+    return { spans: [], start: listStart, end: listEnd };
+  }
+
+  const spans: ListElementSpan[] = [];
+  let depth = 0;
+  let elementStart = 0;
+  for (let cursor = 0; cursor < body.length; cursor++) {
+    const character = body[cursor];
+    if (character === '"') {
+      cursor = skipString(body, cursor);
+    } else if (character === '[') {
+      depth++;
+    } else if (character === ']') {
+      depth--;
+    } else if (character === ',' && depth === 0) {
+      spans.push({ start: listStart + 1 + elementStart, end: listStart + 1 + cursor });
+      elementStart = cursor + 1;
+    }
+  }
+  spans.push({ start: listStart + 1 + elementStart, end: listEnd });
+  return { spans, start: listStart, end: listEnd };
 }
 
 export function replaceListElement(
@@ -13,55 +70,22 @@ export function replaceListElement(
   index: number,
   replacement: (current: string) => string,
 ): string | null {
-  const span = findListElementSpan(text, index);
-  return span ? replaceSpan(text, span, replacement) : null;
-}
-
-function findListElementSpan(text: string, targetIndex: number): ListElementSpan | null {
-  const listStart = text.indexOf('[');
-  if (listStart < 0) {
+  const list = listElementSpans(text);
+  const span = list?.spans[index];
+  if (!span) {
     return null;
   }
-
-  let depth = 1;
-  const element = { start: listStart + 1, index: 0 };
-  for (let cursor = element.start; cursor < text.length; cursor++) {
-    const character = text[cursor];
-    if (character === '[') {
-      depth++;
-      continue;
-    }
-    if (character === ']') {
-      depth--;
-      if (depth === 0) {
-        return finalElementSpan(text, element, cursor, targetIndex);
-      }
-      continue;
-    }
-    if (character === ',' && depth === 1) {
-      if (element.index === targetIndex) {
-        return { start: element.start, end: cursor };
-      }
-      element.index++;
-      element.start = cursor + 1;
-    }
-  }
-  return null;
-}
-
-function finalElementSpan(
-  text: string,
-  element: ListElementCursor,
-  end: number,
-  targetIndex: number,
-): ListElementSpan | null {
-  if (element.index !== targetIndex || !text.slice(element.start, end).trim()) {
-    return null;
-  }
-  return { start: element.start, end };
-}
-
-function replaceSpan(text: string, span: ListElementSpan, replacement: (current: string) => string): string {
   const current = text.slice(span.start, span.end);
   return text.slice(0, span.start) + replacement(current) + text.slice(span.end);
+}
+
+export function growListElement(text: string, index: number, value: string): string | null {
+  const list = listElementSpans(text);
+  if (!list || list.spans.length > index) {
+    return null;
+  }
+  const existing = list.spans.map(span => text.slice(span.start, span.end).trim());
+  const padding = Array.from({ length: index - list.spans.length }, () => 'none');
+  const items = [...existing, ...padding, value];
+  return `${text.slice(0, list.start + 1)}${items.join(', ')}${text.slice(list.end)}`;
 }

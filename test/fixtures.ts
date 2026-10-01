@@ -34,9 +34,7 @@ export const ALL_SHAPE_TYPES: ShapeType[] = [
   'rectangle',
   'rounded_rectangle',
   'diamond',
-  'circle',
   'oval',
-  'container_rectangle',
   'cylinder',
   'document',
   'pill',
@@ -45,6 +43,9 @@ export const ALL_SHAPE_TYPES: ShapeType[] = [
   'hexagon',
   'parallelogram',
   'trapezoid',
+  'note',
+  'cloud',
+  'predefined_process',
 ];
 
 const frame: Frame = {
@@ -211,7 +212,7 @@ export const fixtures: Record<string, RenderInput> = {
           ],
         } as Shape['fillColor'],
       }),
-      shape('mesh', 'circle', 200, {
+      shape('mesh', 'oval', 200, {
         fillColor: {
           type: 'mesh',
           points: [
@@ -252,7 +253,7 @@ Style Flow {
 Model Demo {
   text: "Demo"
 
-  Entity start : Box {
+  Shape start : Box {
     kind: process
     text: "Start"
     layout {
@@ -261,7 +262,7 @@ Model Demo {
     }
   }
 
-  Entity finish : Box {
+  Shape finish : Box {
     kind: process
     text: "Finish"
     layout {

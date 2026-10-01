@@ -33,6 +33,12 @@ export class SelectionController {
     });
   }
 
+  repaint(): void {
+    if (this.#ids.size > 0) {
+      paintSelectionOverlays(this.#svg, this.#ids, this.#owners);
+    }
+  }
+
   selectIds(ids: string[]): void {
     for (const id of ids) {
       const element = this.#svg.querySelector(`[data-sf-id="${CSS.escape(id)}"]`);

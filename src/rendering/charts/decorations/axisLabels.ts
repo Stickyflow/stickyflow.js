@@ -1,42 +1,49 @@
 import type { Chart } from '../../../model/charts';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
+import { axisLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): RenderNode | null {
   if (!chart.axis_x.label) {
     return null;
   }
-  return chartText({
-    id: `chart-x-label-${chart.id}`,
-    order,
-    bounds: layout.bounds,
-    frame: { x: layout.plot.x, y: chart.y + chart.height - 18, width: layout.plot.width, height: 18 },
-    text: chart.axis_x.label,
-    chart,
-    align: 'center',
-  });
+  return {
+    ...chartText({
+      id: `chart-x-label-${chart.id}`,
+      order,
+      bounds: layout.bounds,
+      frame: { x: layout.plot.x, y: chart.y + chart.height - 18, width: layout.plot.width, height: 18 },
+      text: chart.axis_x.label,
+      chart,
+      align: 'center',
+    }),
+    prop: axisLabelProp('x'),
+  };
 }
 
 function buildYAxisLabel(chart: Chart, layout: ChartLayout, order: number): RenderNode | null {
   if (!chart.axis_y.label) {
     return null;
   }
-  return chartText({
-    id: `chart-y-label-${chart.id}`,
-    order,
-    bounds: layout.bounds,
-    frame: {
-      x: chart.x + 12,
-      y: layout.plot.y + layout.plot.height,
-      width: layout.plot.height,
-      height: 18,
-    },
-    text: chart.axis_y.label,
-    chart,
-    align: 'center',
-    rotation: -90,
-  });
+  return {
+    ...chartText({
+      id: `chart-y-label-${chart.id}`,
+      order,
+      bounds: layout.bounds,
+      frame: {
+        x: chart.x + 12,
+        y: layout.plot.y + layout.plot.height,
+        width: layout.plot.height,
+        height: 18,
+      },
+      text: chart.axis_y.label,
+      chart,
+      align: 'center',
+      rotation: -90,
+    }),
+    prop: axisLabelProp('y'),
+  };
 }
 
 export function buildAxisLabels(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {

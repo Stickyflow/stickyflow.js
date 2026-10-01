@@ -57,6 +57,37 @@ export interface ChartValueChangeEvent {
   value: number;
 }
 
+export type PropertyValue = string | number | boolean | readonly number[];
+
+export interface PropertyChangeEvent {
+  owner: OwnerRef;
+  path: string;
+  value: PropertyValue;
+  quote?: boolean;
+}
+
+export interface ColumnResizeChangeEvent {
+  owner: OwnerRef;
+  columnId: string;
+  width: number;
+}
+
+export interface PathPoint {
+  x: number;
+  y: number;
+}
+
+export interface PathPointChangeEvent {
+  owner: OwnerRef;
+  points: PathPoint[];
+}
+
+export interface PathDrawCompleteEvent {
+  points: PathPoint[];
+  closed: boolean;
+  tension: number;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -66,6 +97,10 @@ export interface InteractionEventMap {
   linkTo: LinkToEvent;
   delete: DeleteEvent;
   chartValueChange: ChartValueChangeEvent;
+  propertyChange: PropertyChangeEvent;
+  columnResizeChange: ColumnResizeChangeEvent;
+  pathPointChange: PathPointChangeEvent;
+  pathDrawComplete: PathDrawCompleteEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

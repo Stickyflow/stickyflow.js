@@ -14,15 +14,23 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
     maxX: Math.max(...path.points.map(point => point.x)) + extra,
     maxY: Math.max(...path.points.map(point => point.y)) + extra,
   };
+  const tension = finite(path.tension, 0);
+  const closed = path.closed === true;
   return [
     {
       type: 'path',
       id: `path-${path.id}`,
       order: orderOf(path, 30_000 + index),
       bounds,
-      d: freeformPathData({ points: path.points, tension: finite(path.tension, 0), closed: path.closed === true }),
+      d: freeformPathData({ points: path.points, tension, closed }),
       markerStart: path.start_marker,
       markerEnd: path.end_marker,
+      detail: {
+        of: 'pathGeometry',
+        points: path.points.map(point => [point.x, point.y]),
+        tension,
+        closed,
+      },
       style: {
         fill: path.closed ? { kind: 'solid', color: path.fill_color ?? 'transparent' } : { kind: 'none' },
         stroke: { kind: 'solid', color: path.stroke_color ?? '#7c3aed' },

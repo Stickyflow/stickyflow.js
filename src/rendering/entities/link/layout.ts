@@ -1,6 +1,7 @@
 import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../../../model/geometry/connectionLine';
 import { type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
 import { getLinkStrokeColor } from '../../../model/links';
+import { resolveShadow } from '../../../model/shadows';
 import type { RenderInput } from '../../../renderInput/types';
 import type { SceneStyle } from '../../scene';
 import { DEFAULT_FONT, finite, orderOf } from '../../scene';
@@ -49,6 +50,7 @@ function linkStyle(
     lineCap: 'round',
     lineJoin: 'round',
     opacity: finite(link.style?.opacity, 1),
+    shadow: resolveShadow(link.style?.shadow),
   };
 }
 

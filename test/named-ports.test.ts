@@ -18,8 +18,8 @@ Symbol OpAmp {
 }
 
 Model board {
-  Entity amp1 { shape: OpAmp; layout { position: 0, 0; size: 100, 60 } }
-  Entity amp2 { shape: OpAmp; layout { position: 300, 0; size: 100, 60 } }
+  Shape amp1 { shape: OpAmp; layout { position: 0, 0; size: 100, 60 } }
+  Shape amp2 { shape: OpAmp; layout { position: 300, 0; size: 100, 60 } }
 
   Link rueckkopplung { from: amp1.out; to: amp2.in_minus }
 }`;
@@ -63,8 +63,8 @@ describe('Named Ports (§3.5, entity.portName)', () => {
     const sfl = `sfl 1.4
 
 Model board {
-  Entity amp1 { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
-  Entity amp2 { shape: rectangle; layout { position: 300, 0; size: 100, 60 } }
+  Shape amp1 { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
+  Shape amp2 { shape: rectangle; layout { position: 300, 0; size: 100, 60 } }
 
   Link l { from: amp1; to: amp2.missing }
 }`;

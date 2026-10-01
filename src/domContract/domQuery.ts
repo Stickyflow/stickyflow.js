@@ -20,6 +20,15 @@ export const isPrimary = (el: Element): boolean => el.hasAttribute('data-sf-prim
 export const isTextLabel = (el: Element): boolean =>
   el.tagName.toLowerCase() === 'text' && !el.hasAttribute('data-sf-primary');
 
+export function pointerUserPoint(svg: SVGSVGElement, event: PointerEvent): { x: number; y: number } | null {
+  const ctm = svg.getScreenCTM();
+  if (!ctm) {
+    return null;
+  }
+  const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse());
+  return { x: point.x, y: point.y };
+}
+
 export function screenRectOf(el: SVGGraphicsElement): { left: number; top: number; width: number; height: number } {
   const bbox = el.getBBox();
   const ctm = el.getScreenCTM();

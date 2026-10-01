@@ -2,7 +2,7 @@ import type { SflBlock } from '../ast';
 import { childBlocks, directProperties } from './blockEntries';
 import { asString } from './valueAccess';
 
-const LINKABLE_BLOCK_KINDS = new Set(['Entity', 'Container', 'Table', 'Path', 'Chart']);
+const LINKABLE_BLOCK_KINDS = new Set(['Shape', 'Container', 'Table', 'Path', 'Chart']);
 
 function indexLinkableNames(blocks: SflBlock[], idByName: Map<string, string>): void {
   for (const block of blocks) {
