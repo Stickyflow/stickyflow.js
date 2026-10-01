@@ -1,4 +1,3 @@
-export { getLinkColorAtPoint, getLinkEndpointColor, getLinkStrokeColor } from './colors';
 export type {
   ArrowDirection,
   Link,

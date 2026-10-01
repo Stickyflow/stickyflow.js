@@ -1,13 +1,9 @@
-import { personLabelArea } from '../../../model/shape/geometry';
-import {
-  hasBoldMarkup,
-  heuristicRichMeasure,
-  type MeasureTextFactory,
-  wrapRichText,
-  wrapText,
-} from '../../../model/text';
+import type { MeasureTextFactory } from '../../../model/text';
 import type { SceneText } from '../../scene';
 import { DEFAULT_FONT, finite } from '../../scene';
+import { hasBoldMarkup, wrapRichText } from '../../scene/richTextLayout';
+import { heuristicRichMeasure, wrapText } from '../../scene/textLayout';
+import { personLabelArea } from './geometry/roundedForms';
 import { shapeDefaults } from './style';
 import type { ShapeRenderContext } from './types';
 

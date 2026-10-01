@@ -1,6 +1,6 @@
 import type { Table, TableColumn } from '../../model/table';
-import { computeRowHeight, tableBorderGeometry } from '../../model/table';
 import { boxBounds, orderOf } from '../scene';
+import { computeRowHeight, tableBorderGeometry } from './layoutGeometry';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 export function columnWidthScale(table: Table): number {

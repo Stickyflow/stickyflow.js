@@ -1,7 +1,7 @@
 import type { Frame } from '../../../model/frame';
-import { cornersRoundedRectPath, type RectCornerRadii } from '../../../model/geometry/rectangle';
 import type { RenderNode } from '../../scene';
 import { boxBounds, orderOf } from '../../scene';
+import { cornersRoundedRectPath, type RectCornerRadii } from '../../scene/roundedRectPath';
 import { simpleContainerStyle } from './style';
 import { renderTitleTab, type TitleTabPosition } from './titleTab';
 

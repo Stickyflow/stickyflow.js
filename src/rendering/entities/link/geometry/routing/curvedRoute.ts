@@ -1,4 +1,4 @@
-import { routeCubic, type Side } from '../../../geometry/routing';
+import { routeCubic, type Side } from '../../../../../model/geometry/routing';
 import type { LinkRoute, LinkRoutePoint } from './types';
 
 export function calculateCurvedLinkRoute(

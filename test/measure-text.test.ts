@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { MeasureTextFactory, RenderInput } from '../src/index';
 import { renderCanvas } from '../src/index';
 import type { Shape } from '../src/model/shape';
-import { wrapText } from '../src/model/text';
+import { wrapText } from '../src/rendering/scene/textLayout';
 
 // RenderOptions.measureText: the opt-in escape hatch from this package's
 // character-count wrap estimate to real glyph metrics supplied by the host

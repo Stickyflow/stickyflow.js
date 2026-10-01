@@ -1,4 +1,4 @@
-import type { PathType } from '../../types';
+import type { PathType } from '../../../../../model/link';
 import { getArrowPoints } from './arrowPoints';
 import type { MarkerPoint } from './types';
 

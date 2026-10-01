@@ -1,10 +1,12 @@
-import { getLinkStrokeColor } from '../../../model/link';
-import { calculateLinkRoute, getDashArray, getLineMidpoint, labelGapDash } from '../../../model/link/geometry';
-import { resolveShadow } from '../../../model/shadow';
-import { type MeasureTextFactory, wrapText } from '../../../model/text';
+import type { MeasureTextFactory } from '../../../model/text';
 import type { RenderInput } from '../../../renderInput/types';
 import type { SceneStyle } from '../../scene';
 import { DEFAULT_FONT, finite, orderOf } from '../../scene';
+import { getLinkStrokeColor } from '../../scene/linkPaint';
+import { getDashArray } from '../../scene/linkStroke';
+import { resolveShadow } from '../../scene/shadow';
+import { wrapText } from '../../scene/textLayout';
+import { calculateLinkRoute, getLineMidpoint, labelGapDash } from './geometry';
 import type { LinkLabelLayout, LinkRenderContext } from './types';
 
 function linkBounds(points: number[], padding: number) {

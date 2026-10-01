@@ -1,4 +1,4 @@
-import type { SankeyLayoutLink, SankeyLayoutNode } from '../../../../model/chart/geometry/sankey';
+import type { SankeyLayoutLink, SankeyLayoutNode } from '../../geometry/sankey';
 
 export interface SankeyRenderData {
   nodes: SankeyLayoutNode[];

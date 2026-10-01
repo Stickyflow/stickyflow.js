@@ -1,4 +1,4 @@
-import { estimateTextWidth, wrapText } from '../../model/text';
+import { estimateTextWidth, wrapText } from '../../rendering/scene/textLayout';
 import type { ResizeTextCapture } from './textCapture';
 
 export interface TextFit {

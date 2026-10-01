@@ -1,4 +1,12 @@
-import type { ResolvedShadow, ShadowStyle } from './types';
+import type { ShadowStyle } from '../../model/shadow';
+
+export interface ResolvedShadow {
+  color: string;
+  opacity: number;
+  blur: number;
+  dx: number;
+  dy: number;
+}
 
 export const DEFAULT_SHADOW_STYLE: ShadowStyle = {
   enabled: false,

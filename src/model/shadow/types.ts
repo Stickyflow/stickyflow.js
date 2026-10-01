@@ -6,11 +6,3 @@ export interface ShadowStyle {
   angle?: number;
   distance?: number;
 }
-
-export interface ResolvedShadow {
-  color: string;
-  opacity: number;
-  blur: number;
-  dx: number;
-  dy: number;
-}

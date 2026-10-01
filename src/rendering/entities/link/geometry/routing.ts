@@ -1,4 +1,4 @@
-import type { Link, PathType } from '../types';
+import type { Link, PathType } from '../../../../model/link';
 import { calculateCurvedLinkRoute } from './routing/curvedRoute';
 import { calculateOrthogonalLinkRoute } from './routing/orthogonalRoute';
 import { connectionSides } from './routing/sides';

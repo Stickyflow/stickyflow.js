@@ -1,6 +1,7 @@
-import type { GradientColor } from '../color';
-import { interpolateHexColorStops } from '../color';
-import type { LinkStyle } from './types';
+import type { GradientColor } from '../../model/color';
+import { interpolateHexColorStops } from '../../model/color';
+import { projectedPosition } from '../../model/geometry/projection';
+import type { LinkStyle } from '../../model/link';
 
 type LinkColor = LinkStyle['color'] | { type: 'solid'; color: string } | null | undefined;
 
@@ -49,19 +50,4 @@ function isGradientWithStops(colorValue: LinkColor): colorValue is GradientColor
   return Boolean(
     colorValue && typeof colorValue === 'object' && colorValue.type === 'gradient' && colorValue.stops?.length,
   );
-}
-
-function projectedPosition(
-  axisStart: { x: number; y: number },
-  axisEnd: { x: number; y: number },
-  point: { x: number; y: number },
-): number {
-  const deltaX = axisEnd.x - axisStart.x;
-  const deltaY = axisEnd.y - axisStart.y;
-  const lengthSquared = deltaX * deltaX + deltaY * deltaY;
-  if (lengthSquared === 0) {
-    return 0;
-  }
-  const projection = ((point.x - axisStart.x) * deltaX + (point.y - axisStart.y) * deltaY) / lengthSquared;
-  return Math.max(0, Math.min(1, projection));
 }

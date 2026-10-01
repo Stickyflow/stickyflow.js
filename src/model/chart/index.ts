@@ -1,7 +1,7 @@
 export type { ChartRule, ChartZone } from './annotations';
 export type { ChartAxis } from './axis';
 export type { ChartType } from './catalog';
-export { CHART_TYPES, CIRCULAR_GRID_CHART_TYPES, isChartType } from './catalog';
+export { CHART_TYPES, isChartType } from './catalog';
 export type {
   BarChart,
   BoxplotChart,

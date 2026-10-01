@@ -1,5 +1,5 @@
-import type { Side } from '../../../geometry/routing';
-import type { Link } from '../../types';
+import type { Side } from '../../../../../model/geometry/routing';
+import type { Link } from '../../../../../model/link';
 import type { LinkRoutePoint } from './types';
 
 function facingSide(from: LinkRoutePoint, to: LinkRoutePoint): Side {

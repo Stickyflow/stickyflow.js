@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { hasBoldMarkup, parseRichLine, parseRichText, wrapRichLine, wrapRichText } from '../src/model/text';
+import {
+  hasBoldMarkup,
+  parseRichLine,
+  parseRichText,
+  wrapRichLine,
+  wrapRichText,
+} from '../src/rendering/scene/richTextLayout';
 
 // Ported 1:1 from stickyflow-atlas's frontend/src/entities/shapes/ui/text/richText.test.ts
 // (the reference implementation this file mirrors) - same test cases, same

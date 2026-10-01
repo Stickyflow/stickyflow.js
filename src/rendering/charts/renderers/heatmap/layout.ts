@@ -1,5 +1,5 @@
-import { estimateTextWidth } from '../../../../model/text';
 import { finite } from '../../../scene';
+import { estimateTextWidth } from '../../../scene/textLayout';
 import { axisBands, DEFAULT_HEATMAP_ZONES } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapGrid, HeatmapLayout, HeatmapReservedSpace } from './types';

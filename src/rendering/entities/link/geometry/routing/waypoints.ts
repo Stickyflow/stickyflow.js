@@ -1,4 +1,4 @@
-import { type PathSegment, roundOrthogonalPath } from '../../../geometry/routing';
+import { type PathSegment, roundOrthogonalPath } from '../../../../../model/geometry/routing';
 import type { LinkRoute, LinkRoutePoint } from './types';
 
 const ORTHOGONAL_EPSILON = 0.5;

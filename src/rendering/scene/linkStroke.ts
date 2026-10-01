@@ -1,5 +1,5 @@
-import type { GradientColor } from '../../color';
-import type { StrokeStyle } from '../types';
+import type { GradientColor } from '../../model/color';
+import type { StrokeStyle } from '../../model/link';
 
 export const getLinkGradientStrokeProps = (colorValue: string | GradientColor | null | undefined, points: number[]) => {
   if (!colorValue || typeof colorValue === 'string' || colorValue.type !== 'gradient') {

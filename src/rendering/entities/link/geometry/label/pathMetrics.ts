@@ -1,6 +1,6 @@
-import type { Point } from '../../../geometry/types';
+import type { Point } from '../../../../../model/geometry/types';
 
-export type { Point } from '../../../geometry/types';
+export type { Point } from '../../../../../model/geometry/types';
 
 export const lerpPoint = (a: Point, b: Point, t: number): Point => ({
   x: a.x + (b.x - a.x) * t,

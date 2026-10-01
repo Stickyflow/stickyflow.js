@@ -1,7 +1,8 @@
-import { type Chart, CIRCULAR_GRID_CHART_TYPES } from '../../../model/chart';
+import type { Chart } from '../../../model/chart';
 import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
 import { fieldSurfaceClip } from '../field/grid';
+import { CIRCULAR_GRID_CHART_TYPES } from '../gridSupport';
 import { chartTicks, mapChartValue } from '../primitives';
 import { buildCircularChartGrid } from './gridCircle';
 import { createGridDot } from './gridDots';

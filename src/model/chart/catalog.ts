@@ -22,5 +22,3 @@ export type ChartType = (typeof CHART_TYPES)[number];
 export function isChartType(value: string | undefined): value is ChartType {
   return value !== undefined && (CHART_TYPES as readonly string[]).includes(value);
 }
-
-export const CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'custom', 'hexbin']);

@@ -1,8 +1,8 @@
-import { localShapePath, pillCornerRadius } from '../../../../model/shape/geometry';
 import type { RenderNode } from '../../../scene';
 import { finite, freeformPathData } from '../../../scene';
 import type { ShapeRenderContext } from '../types';
 import { shapeNodeBase } from './base';
+import { localShapePath, pillCornerRadius } from './pathCalculation';
 
 export function renderPath(context: ShapeRenderContext): RenderNode[] {
   const path = localShapePath(context.shape.shapeType, context.x, context.y, context.width, context.height);

@@ -1,4 +1,4 @@
-import type { ShapeType } from '../types';
+import type { ShapeType } from '../../../../model/shape';
 import { cloudPath } from './cloud';
 import { cylinderPath, personPath } from './roundedForms';
 

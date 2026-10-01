@@ -1,4 +1,4 @@
-import type { PathSegment } from '../../../geometry/routing';
+import type { PathSegment } from '../../../../../model/geometry/routing';
 
 export interface LinkRoutePoint {
   x: number;

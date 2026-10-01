@@ -1,12 +1,7 @@
+import type { TextMetrics } from '../../model/text';
+
 const PLAIN_CHAR_FACTOR = 0.58;
 const BOLD_CHAR_FACTOR = 0.64;
-
-export interface TextMetrics {
-  measure: (text: string, bold: boolean) => number;
-  spaceWidth: number;
-}
-
-export type MeasureTextFactory = (fontFamily: string, fontSize: number) => TextMetrics;
 
 export function wrapText(text: string, width: number, fontSize: number, metrics?: TextMetrics): string[] {
   const maxChars = Math.max(1, Math.floor(width / Math.max(1, fontSize * PLAIN_CHAR_FACTOR)));

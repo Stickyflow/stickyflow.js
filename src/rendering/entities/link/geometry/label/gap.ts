@@ -1,4 +1,4 @@
-import type { PathType } from '../../types';
+import type { PathType } from '../../../../../model/link';
 import { splitCurvedPath } from './curvedGap';
 import { bezierArcLength, type Point, polylineLength } from './pathMetrics';
 import { splitPolylinePath } from './polylineGap';
