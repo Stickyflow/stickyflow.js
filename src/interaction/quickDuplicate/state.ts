@@ -1,6 +1,7 @@
 import type { QuickDuplicateDirection } from '../../domContract';
 import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
-import { portToPoint, type Rect, type Side } from '../../model/geometry/routing';
+import { portToPoint } from '../../model/geometry/ports';
+import type { Rect, Side } from '../../model/geometry/types';
 import type { OwnerRef } from '../../viewer';
 import { LinkGhost } from '../linkGhost/ghost';
 

@@ -1,4 +1,4 @@
-import type { Side } from '../../model/geometry/routing';
+import type { Side } from '../../model/geometry/types';
 import { insertDirectProperty, replacePropertyValue } from './edits/propertyValues';
 import { escapeSflString, indentOf, round1 } from './format';
 import { formatLinkEndpoint } from './linkPatch/endpointText';

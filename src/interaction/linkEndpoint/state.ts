@@ -1,5 +1,5 @@
 import type { LinkEndpoint } from '../../domContract';
-import type { Side } from '../../model/geometry/routing';
+import type { Side } from '../../model/geometry/types';
 import type { PathType } from '../../model/link';
 import type { OwnerRef } from '../../viewer';
 import { LinkGhost } from '../linkGhost/ghost';

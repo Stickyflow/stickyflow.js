@@ -5,7 +5,7 @@ export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { RenderOptions, RenderResult } from './render';
 export { render, renderCanvas } from './render';
-export type { RenderInput } from './renderInput/types';
+export type { RenderInput, RenderInputTable, TablePropertyPaths } from './renderInput/types';
 export type {
   Bounds,
   MeasureTextFactory,

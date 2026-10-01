@@ -1,7 +1,9 @@
+import { portToPoint } from '../../model/geometry/ports';
 import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
-import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/routing';
+import type { Rect, Side } from '../../model/geometry/types';
 import type { Link, PathType } from '../../model/link';
 import { calculateLinkRoute, getLineMidpoint } from '../../rendering/entities/link/geometry';
+import type { PathSegment } from '../../rendering/entities/link/geometry/routing/types';
 import { roundedOrthogonalPathData } from '../../rendering/entities/link/roundedOrthogonalPathData';
 
 export function centerOf(bounds: Rect): { x: number; y: number } {

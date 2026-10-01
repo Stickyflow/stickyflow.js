@@ -1,4 +1,4 @@
-import type { Rect } from '../model/geometry/routing';
+import type { Rect } from '../model/geometry/types';
 
 export const CONTAINER_ROLES: ReadonlySet<string> = new Set(['frame', 'swimlane']);
 

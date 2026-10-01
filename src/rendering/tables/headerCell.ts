@@ -7,8 +7,7 @@ export function renderHeaderCell(context: TableRenderContext, column: Positioned
   if (!context.table.showHeader) {
     return [];
   }
-  const columnsBlockName = context.table.columnsBlockName;
-  const prop = columnsBlockName ? `Columns[${columnsBlockName}].Column[${column.id}].text` : undefined;
+  const prop = context.table.propertyPaths?.header[column.id];
   return [
     ...renderCellHitArea(context, `table-header-hit-${context.table.id}-${column.id}`, prop, {
       x: column.x,

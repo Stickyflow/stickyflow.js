@@ -137,4 +137,12 @@ describe('core dependency direction', () => {
       .map(sourcePath);
     expect(offenders).toEqual([]);
   });
+
+  it('keeps source-language metadata out of model contracts', () => {
+    const sourceMetadata = /\b(?:columnsBlockName|rowsBlockName|footerBlockName)\b/;
+    const offenders = tsFiles(join(srcDir, 'model'))
+      .filter(file => sourceMetadata.test(readFileSync(file, 'utf8')))
+      .map(sourcePath);
+    expect(offenders).toEqual([]);
+  });
 });

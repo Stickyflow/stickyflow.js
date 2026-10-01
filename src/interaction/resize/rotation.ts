@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/routing';
+import type { Rect } from '../../model/geometry/types';
 
 export function recenterRotation(element: SVGGraphicsElement, bounds: Rect): void {
   const transform = element.getAttribute('transform');

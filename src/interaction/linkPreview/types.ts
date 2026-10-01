@@ -1,4 +1,4 @@
-import type { Rect, Side } from '../../model/geometry/routing';
+import type { Rect, Side } from '../../model/geometry/types';
 import type { PathType } from '../../model/link';
 
 export interface LiveLink {

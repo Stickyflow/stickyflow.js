@@ -1,5 +1,5 @@
-import { type PathSegment, roundOrthogonalPath } from '../../../../../model/geometry/routing';
-import type { LinkRoute, LinkRoutePoint } from './types';
+import { roundOrthogonalPoints } from './rounding';
+import type { LinkRoute, LinkRoutePoint, PathSegment } from './types';
 
 const ORTHOGONAL_EPSILON = 0.5;
 
@@ -25,7 +25,7 @@ export function pathFromWaypoints(from: LinkRoutePoint, waypoints: LinkRoutePoin
     });
   }
 
-  return { points: roundOrthogonalPath(points, 10), segments };
+  return { points: roundOrthogonalPoints(points, 10), segments };
 }
 
 export function isAxisAligned(segments: PathSegment[]): boolean {

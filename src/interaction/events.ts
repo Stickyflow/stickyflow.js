@@ -1,5 +1,5 @@
 import { Emitter as GenericEmitter } from '../eventing/emitter';
-import type { Side } from '../model/geometry/routing';
+import type { Side } from '../model/geometry/types';
 import type { OwnerRef } from '../viewer';
 
 export interface TextChangeEvent {

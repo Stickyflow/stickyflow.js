@@ -1,5 +1,5 @@
+import { namedPortToPoint } from '../../model/geometry/ports';
 import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
-import { namedPortToPoint } from '../../model/geometry/routing';
 import type { Point } from '../../model/geometry/types';
 import type { Link } from '../../model/link';
 import type { PositionedElement } from './types';

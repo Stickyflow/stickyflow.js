@@ -1,4 +1,5 @@
-import type { Table, TableColumn } from '../../model/table';
+import type { TableColumn } from '../../model/table';
+import type { RenderInputTable } from '../../renderInput/types';
 import type { Bounds, SceneStyle } from '../scene';
 
 export interface PositionedTableColumn extends TableColumn {
@@ -7,7 +8,7 @@ export interface PositionedTableColumn extends TableColumn {
 }
 
 export interface TableRenderContext {
-  table: Table;
+  table: RenderInputTable;
   order: number;
   rowHeight: number;
   headerHeight: number;

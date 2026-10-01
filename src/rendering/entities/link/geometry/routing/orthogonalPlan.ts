@@ -1,7 +1,5 @@
-import type { Point } from '../../types';
-import type { Side } from '../types';
-
-export type RoutePoint = Point;
+import type { Side } from '../../../../../model/geometry/types';
+import type { LinkRoutePoint } from './types';
 
 export interface RouteConnection {
   side: Side;
@@ -10,23 +8,22 @@ export interface RouteConnection {
 }
 
 export interface OrthogonalRouteDraft {
-  from: RoutePoint;
-  to: RoutePoint;
+  from: LinkRoutePoint;
+  to: LinkRoutePoint;
   fromConnection: RouteConnection;
   toConnection: RouteConnection;
   horizontalFirst: boolean;
 }
 
 export function snapAlignedEndpoints(
-  from: RoutePoint,
-  to: RoutePoint,
+  from: LinkRoutePoint,
+  to: LinkRoutePoint,
   fromSide: Side,
   toSide: Side,
-): [RoutePoint, RoutePoint] {
+): [LinkRoutePoint, LinkRoutePoint] {
   const threshold = 6;
   const verticalPair = ['top', 'bottom'].includes(fromSide) && ['top', 'bottom'].includes(toSide);
   const horizontalPair = ['left', 'right'].includes(fromSide) && ['left', 'right'].includes(toSide);
-
   if (verticalPair && Math.abs(to.x - from.x) < threshold) {
     return [from, { ...to, x: from.x }];
   }
@@ -37,8 +34,8 @@ export function snapAlignedEndpoints(
 }
 
 export function chooseInitialOrientation(
-  from: RoutePoint,
-  to: RoutePoint,
+  from: LinkRoutePoint,
+  to: LinkRoutePoint,
   entityEdges?: { fromEdge?: Side; toEdge?: Side },
 ): boolean {
   if (entityEdges?.toEdge) {
@@ -51,8 +48,8 @@ export function chooseInitialOrientation(
 }
 
 export function stepOutDistances(
-  from: RoutePoint,
-  to: RoutePoint,
+  from: LinkRoutePoint,
+  to: LinkRoutePoint,
   fromNormal: [number, number],
   toNormal: [number, number],
   horizontalFirst: boolean,
@@ -61,7 +58,6 @@ export function stepOutDistances(
   let toDistance = 40;
   const axis = horizontalFirst ? 0 : 1;
   const delta = horizontalFirst ? to.x - from.x : to.y - from.y;
-
   if (fromNormal[axis] !== 0 && fromNormal[axis] === -toNormal[axis]) {
     const gap = delta * fromNormal[axis];
     if (gap > 0 && gap < fromDistance + toDistance) {
@@ -74,7 +70,6 @@ export function stepOutDistances(
       toDistance = gap;
     }
   }
-
   return [fromDistance, toDistance];
 }
 
@@ -86,7 +81,6 @@ export function chooseBend(route: OrthogonalRouteDraft): [number, number] {
   let y = (fromStub[1] + toStub[1]) / 2;
   const fromHorizontal = isHorizontalSide(fromConnection.side);
   const toHorizontal = isHorizontalSide(toConnection.side);
-
   if (fromHorizontal !== toHorizontal) {
     if (horizontalFirst) {
       x = (fromStub[0] - to.x) * toConnection.normal[0] >= 0 ? fromStub[0] : toStub[0];
@@ -100,7 +94,6 @@ export function chooseBend(route: OrthogonalRouteDraft): [number, number] {
       y = fromConnection.normal[1] < 0 ? Math.min(fromStub[1], toStub[1]) : Math.max(fromStub[1], toStub[1]);
     }
   }
-
   return [x, y];
 }
 

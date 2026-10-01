@@ -1,4 +1,5 @@
 import type { Table, TableColumn } from '../../model/table';
+import type { RenderInputTable } from '../../renderInput/types';
 import { boxBounds, orderOf } from '../scene';
 import { computeRowHeight, tableBorderGeometry } from './layoutGeometry';
 import type { PositionedTableColumn, TableRenderContext } from './types';
@@ -22,7 +23,7 @@ function positionColumns(table: Table): PositionedTableColumn[] {
   });
 }
 
-export function createTableRenderContext(table: Table, index: number): TableRenderContext {
+export function createTableRenderContext(table: RenderInputTable, index: number): TableRenderContext {
   const rowHeight = table.rowHeight ?? computeRowHeight(table.fontSize);
   const headerHeight = table.showHeader ? rowHeight : 0;
   const footerHeight = table.footer ? rowHeight : 0;

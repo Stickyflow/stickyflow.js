@@ -1,4 +1,21 @@
-import type { Chart, TypedChart } from '../../../model/chart';
+import type {
+  BarChartConfig,
+  BoxplotChartConfig,
+  Chart,
+  ChartBase,
+  CustomChartConfig,
+  FieldChartConfig,
+  HeatmapChartConfig,
+  HexbinChartConfig,
+  LineChartConfig,
+  MekkoChartConfig,
+  PieChartConfig,
+  RadarChartConfig,
+  RadialBarChartConfig,
+  SankeyChartConfig,
+  TreemapChartConfig,
+  TypedChart,
+} from '../../../model/chart';
 import { decodeColor, decodeRamp, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { numOf, solidColor } from './values';
@@ -16,52 +33,15 @@ export function chartObject(e: SflEntityOut): Chart {
     p.legendPosition === 'right'
       ? p.legendPosition
       : 'top';
-  const chart = {
+  const base = {
     id: e.id,
     title: e.text ?? null,
     x: e.x,
     y: e.y,
     width: e.width,
     height: e.height,
-    chartType: e.chart?.chartType ?? 'bar',
     axisX: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
     axisY: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
-    config: {
-      categories: e.chart?.categories,
-      areaOpacity: e.chart?.areaOpacity,
-      stacked: e.chart?.stacked,
-      scale: decodeRamp(e.chart?.scale),
-      interpolate: e.chart?.interpolate,
-      idwPower: e.chart?.idwPower,
-      isolines: e.chart?.isolines,
-      zones: e.chart?.zones,
-      boxWidth: e.chart?.boxWidth,
-      orientation: e.chart?.orientation,
-      lineTension: e.chart?.lineTension,
-      barCornerRadius: e.chart?.barCornerRadius,
-      showBoxplotPoints: e.chart?.showBoxplotPoints,
-      barBorderColor: e.chart?.barBorderColor,
-      barBorderWidth: e.chart?.barBorderWidth,
-      mekkoVaryHeight: e.chart?.mekkoVaryHeight,
-      hexRadius: e.chart?.hexRadius,
-      innerRadius: e.chart?.innerRadius,
-      pieCornerRadius: e.chart?.pieCornerRadius,
-      pieSliceGap: e.chart?.pieSliceGap,
-      ringThickness: e.chart?.ringThickness,
-      ringGap: e.chart?.ringGap,
-      cellGap: e.chart?.cellGap,
-      showValues: e.chart?.showValues,
-      squareCells: e.chart?.squareCells,
-      headerColor: e.chart?.headerColor,
-      tileGradient: e.chart?.tileGradient,
-      showColumnBackdrop: e.chart?.showColumnBackdrop,
-      labelPosition: e.chart?.labelPosition,
-      labelOrientation: e.chart?.labelOrientation,
-      labelColor: e.chart?.labelColor,
-      linkGradient: e.chart?.linkGradient,
-      connectPoints: e.chart?.connectPoints,
-      reverseComparison: e.chart?.reverseComparison,
-    },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,
       color: decodeColor(s.color),
@@ -94,6 +74,112 @@ export function chartObject(e: SflEntityOut): Chart {
     legendPosition,
     shadowStyle: decodeShadow(p.shadow),
     order: e.order,
-  } satisfies TypedChart;
-  return chart as Chart;
+  } satisfies ChartBase;
+
+  const source = e.chart;
+  const chartType = source?.chartType ?? 'bar';
+  switch (chartType) {
+    case 'bar':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        barCornerRadius: source?.barCornerRadius,
+        barBorderColor: source?.barBorderColor,
+        barBorderWidth: source?.barBorderWidth,
+        stacked: source?.stacked,
+      } satisfies BarChartConfig);
+    case 'line':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        areaOpacity: source?.areaOpacity,
+        lineTension: source?.lineTension,
+      } satisfies LineChartConfig);
+    case 'scatter':
+      return typedChart(base, chartType, { categories: source?.categories });
+    case 'boxplot':
+      return typedChart(base, chartType, {
+        boxWidth: source?.boxWidth,
+        orientation: source?.orientation,
+        barCornerRadius: source?.barCornerRadius,
+        showBoxplotPoints: source?.showBoxplotPoints,
+        barBorderColor: source?.barBorderColor,
+        barBorderWidth: source?.barBorderWidth,
+      } satisfies BoxplotChartConfig);
+    case 'field':
+      return typedChart(base, chartType, {
+        scale: decodeRamp(source?.scale),
+        interpolate: source?.interpolate,
+        idwPower: source?.idwPower,
+        isolines: source?.isolines,
+      } satisfies FieldChartConfig);
+    case 'heatmap':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        zones: source?.zones,
+        cellGap: source?.cellGap,
+        showValues: source?.showValues,
+        squareCells: source?.squareCells,
+        barCornerRadius: source?.barCornerRadius,
+      } satisfies HeatmapChartConfig);
+    case 'hexbin':
+      return typedChart(base, chartType, { hexRadius: source?.hexRadius } satisfies HexbinChartConfig);
+    case 'mekko':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        barCornerRadius: source?.barCornerRadius,
+        mekkoVaryHeight: source?.mekkoVaryHeight,
+        tileGradient: source?.tileGradient,
+        showColumnBackdrop: source?.showColumnBackdrop,
+      } satisfies MekkoChartConfig);
+    case 'pie':
+    case 'polarArea':
+      return typedChart(base, chartType, {
+        innerRadius: source?.innerRadius,
+        pieCornerRadius: source?.pieCornerRadius,
+        pieSliceGap: source?.pieSliceGap,
+      } satisfies PieChartConfig);
+    case 'radar':
+    case 'radial':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        areaOpacity: source?.areaOpacity,
+      } satisfies RadarChartConfig);
+    case 'radialBar':
+      return typedChart(base, chartType, {
+        ringThickness: source?.ringThickness,
+        ringGap: source?.ringGap,
+      } satisfies RadialBarChartConfig);
+    case 'sankey':
+      return typedChart(base, chartType, {
+        zones: source?.zones,
+        barCornerRadius: source?.barCornerRadius,
+        labelPosition: source?.labelPosition,
+        labelOrientation: source?.labelOrientation,
+        labelColor: source?.labelColor,
+        linkGradient: source?.linkGradient,
+      } satisfies SankeyChartConfig);
+    case 'treemap':
+      return typedChart(base, chartType, {
+        zones: source?.zones,
+        cellGap: source?.cellGap,
+        barCornerRadius: source?.barCornerRadius,
+        headerColor: source?.headerColor,
+        tileGradient: source?.tileGradient,
+      } satisfies TreemapChartConfig);
+    case 'custom':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        zones: source?.zones,
+        orientation: source?.orientation,
+        connectPoints: source?.connectPoints,
+        reverseComparison: source?.reverseComparison,
+      } satisfies CustomChartConfig);
+  }
+}
+
+function typedChart<TType extends Chart['chartType'], TConfig extends object>(
+  base: ChartBase,
+  chartType: TType,
+  config: TConfig,
+): TypedChart<TType, TConfig> {
+  return { ...base, chartType, config };
 }

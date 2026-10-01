@@ -1,5 +1,5 @@
 import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
-import type { Rect } from '../../model/geometry/routing';
+import type { Rect } from '../../model/geometry/types';
 
 export const GHOST_FREE_STROKE = '#727272';
 export const GHOST_SNAPPED_STROKE = '#992dff';

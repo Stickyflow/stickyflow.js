@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/routing';
+import type { Rect } from '../../model/geometry/types';
 
 function centerDistance(from: Rect, to: Rect): number {
   const fromCenterX = from.x + from.width / 2;

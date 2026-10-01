@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/routing';
+import type { Rect } from '../../model/geometry/types';
 import type { ShapeType } from '../../model/shape';
 import { localShapePath, pillCornerRadius } from '../../rendering/entities/shape/geometry/pathCalculation';
 import { freeformPathData } from '../../rendering/scene/freeformPath';

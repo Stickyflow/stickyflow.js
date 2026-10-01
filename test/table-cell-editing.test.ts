@@ -6,8 +6,7 @@ import { applyPropertyChange } from '../src/interaction';
 // applyPropertyChange all along (Row/Column/Footer blocks resolve like any
 // other named block), but nothing tagged the rendered <text> nodes with the
 // data-sf-prop the double-click property editor looks for, since the
-// resolved path needs the Rows/Columns/Footer block's own declared name -
-// discarded during parsing, never carried through to render time before now.
+// resolved path needs the Rows/Columns/Footer block's own declared name.
 
 const TABLE_SFL = `sfl 1.4
 
@@ -29,12 +28,22 @@ Model M {
 }`;
 
 describe('a table cell, header, and footer are each tagged for property-path editing', () => {
-  it('threads the Columns/Rows/Footer block names through to the render input', () => {
+  it('resolves editable Columns/Rows/Footer property paths in the render input', () => {
     const table = sflToRenderInput(TABLE_SFL).tables?.[0];
     expect(table).toMatchObject({
-      columnsBlockName: 'cols',
-      rowsBlockName: 'rows',
-      footerBlockName: 'total',
+      propertyPaths: {
+        header: {
+          field: 'Columns[cols].Column[field].text',
+        },
+        body: {
+          row1: {
+            field: 'Rows[rows].Row[row1].field',
+          },
+        },
+        footer: {
+          field: 'Footer[total].field',
+        },
+      },
       strokeColor: '#000000',
       strokeWidth: 1,
       fillColor: '#ffffff',

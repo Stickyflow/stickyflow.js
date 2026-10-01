@@ -1,6 +1,6 @@
-import type { PathSegment } from '../../../model/geometry/routing';
 import type { Link, PathType } from '../../../model/link';
 import type { Bounds, Point, SceneStyle } from '../../scene';
+import type { PathSegment } from './geometry/routing/types';
 
 export interface LinkLabelLayout {
   visible: boolean;

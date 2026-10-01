@@ -7,8 +7,7 @@ export function renderFooterCell(context: TableRenderContext, column: Positioned
   if (!context.table.footer) {
     return [];
   }
-  const footerBlockName = context.table.footerBlockName;
-  const prop = footerBlockName ? `Footer[${footerBlockName}].${column.id}` : undefined;
+  const prop = context.table.propertyPaths?.footer[column.id];
   return [
     ...renderCellHitArea(context, `table-footer-hit-${context.table.id}-${column.id}`, prop, {
       x: column.x,

@@ -1,5 +1,5 @@
 import { SVG_NAMESPACE } from '../../domContract';
-import type { Rect } from '../../model/geometry/routing';
+import type { Rect } from '../../model/geometry/types';
 import { wrapText } from '../../rendering/scene/textLayout';
 import { recenterRotation } from './rotation';
 

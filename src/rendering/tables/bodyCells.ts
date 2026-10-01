@@ -35,8 +35,7 @@ function renderCellBackground(
 }
 
 function cellPropPath(context: TableRenderContext, rowId: string, columnId: string): string | undefined {
-  const rowsBlockName = context.table.rowsBlockName;
-  return rowsBlockName ? `Rows[${rowsBlockName}].Row[${rowId}].${columnId}` : undefined;
+  return context.table.propertyPaths?.body[rowId]?.[columnId];
 }
 
 export function renderBodyCells(context: TableRenderContext, column: PositionedTableColumn): RenderNode[] {

@@ -1,5 +1,5 @@
 import { resizeHandlePositions } from '../../domContract';
-import type { Rect } from '../../model/geometry/routing';
+import type { Rect } from '../../model/geometry/types';
 
 function updateSelectionRing(overlay: SVGGElement, bounds: Rect): void {
   const ring = overlay.querySelector('rect:not([data-sf-resize-handle])');

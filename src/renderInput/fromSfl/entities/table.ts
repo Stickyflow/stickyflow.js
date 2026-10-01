@@ -1,9 +1,9 @@
-import type { Table } from '../../../model/table';
 import { decodeRamp } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
+import type { RenderInputTable, TablePropertyPaths } from '../../types';
 import { BORDER_STYLES, dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
-export function tableObject(e: SflEntityOut): Table {
+export function tableObject(e: SflEntityOut): RenderInputTable {
   const p = e.props;
   return {
     id: e.id,
@@ -15,9 +15,7 @@ export function tableObject(e: SflEntityOut): Table {
     columns: (e.table?.columns ?? []).map(column => ({ ...column, scale: decodeRamp(column.scale) })),
     rows: e.table?.rows ?? [],
     footer: e.table?.footer,
-    columnsBlockName: e.table?.columnsBlockName,
-    rowsBlockName: e.table?.rowsBlockName,
-    footerBlockName: e.table?.footerBlockName,
+    propertyPaths: tablePropertyPaths(e),
     showHeader: p.showHeader !== 'false',
     rowHeight: numOf(p.rowHeight),
     headerFillColor: p.headerFill ?? '#f1f5f9',
@@ -38,4 +36,30 @@ export function tableObject(e: SflEntityOut): Table {
     dash: dashArray(p.dash),
     order: e.order,
   };
+}
+
+function tablePropertyPaths(e: SflEntityOut): TablePropertyPaths | undefined {
+  const table = e.table;
+  if (!table) {
+    return undefined;
+  }
+  const header = table.columnsBlockName
+    ? Object.fromEntries(
+        table.columns.map(column => [column.id, `Columns[${table.columnsBlockName}].Column[${column.id}].text`]),
+      )
+    : {};
+  const body = table.rowsBlockName
+    ? Object.fromEntries(
+        table.rows.map(row => [
+          row.id,
+          Object.fromEntries(
+            table.columns.map(column => [column.id, `Rows[${table.rowsBlockName}].Row[${row.id}].${column.id}`]),
+          ),
+        ]),
+      )
+    : {};
+  const footer = table.footerBlockName
+    ? Object.fromEntries(table.columns.map(column => [column.id, `Footer[${table.footerBlockName}].${column.id}`]))
+    : {};
+  return { header, body, footer };
 }

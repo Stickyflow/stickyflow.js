@@ -1,9 +1,8 @@
-import type { PathSegment } from '../types';
-import type { RoutePoint } from './routePlan';
+import type { LinkRoutePoint, PathSegment } from './types';
 
 export function describeSegments(
   points: number[],
-  originalMidpoints: RoutePoint[],
+  originalMidpoints: LinkRoutePoint[],
   canMoveFirstInner: boolean,
   canMoveLastInner: boolean,
 ): PathSegment[] {
@@ -17,7 +16,6 @@ export function describeSegments(
     const isMovableEdge =
       segmentIndex === 1 ? canMoveFirstInner : segmentIndex === totalSegments - 2 ? canMoveLastInner : true;
     const hasLength = Math.hypot(end.x - start.x, end.y - start.y) >= 1;
-
     return {
       start,
       end,
