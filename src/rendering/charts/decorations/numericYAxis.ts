@@ -10,7 +10,7 @@ export function buildNumericYAxisTicks(chart: Chart, layout: ChartLayout, order:
       id: `chart-y-tick-${chart.id}-${tick}`,
       order: order + index,
       bounds: layout.bounds,
-      frame: { x: chart.x, y: y - 6, width: layout.padLeft - 8, height: 18 },
+      frame: { x: chart.x, y: y - 6, width: layout.padLeft - 14, height: 18 },
       text: String(tick),
       chart,
       align: 'right',
