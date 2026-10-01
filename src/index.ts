@@ -1,6 +1,5 @@
 export type { Chart, ChartAxis, ChartRamp, ChartSeries, ChartType } from './model/charts';
 export { CHART_TYPES } from './model/charts';
-export { DOM_CONTRACT_VERSION } from './model/domContractVersion';
 export type { MeasureTextFactory, TextMetrics } from './model/geometry/text';
 export type { FreeformPath, PathPoint } from './model/paths';
 export type { ShapeType } from './model/shapes';
@@ -38,3 +37,4 @@ export {
   sflToImportJson,
 } from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';
+export { DOM_CONTRACT_VERSION } from './svgContract/version';

@@ -1,1 +1,1 @@
-export const DOM_CONTRACT_VERSION = 1;
+export { DOM_CONTRACT_VERSION } from '../svgContract/version';

@@ -10,7 +10,7 @@ import {
   TABLE_COLUMN_DIVIDER_ATTR,
   TABLE_COLUMN_START_WIDTH_ATTR,
   TABLE_COLUMN_WIDTH_SCALE_ATTR,
-} from '../../model/domContractAttributes';
+} from '../../svgContract/attributes';
 import type { RenderNode, SceneDetail, SceneIdentity } from '../scene';
 import { num, xml } from './format';
 

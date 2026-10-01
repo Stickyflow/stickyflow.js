@@ -1,4 +1,4 @@
-import { computeRowHeight, tableBorderGeometry } from '../../model/geometry/tables';
+import { computeRowHeight, tableBorderGeometry } from '../../model/table';
 import type { Table, TableColumn } from '../../model/tables';
 import { boxBounds, orderOf } from '../scene';
 import type { PositionedTableColumn, TableRenderContext } from './types';
