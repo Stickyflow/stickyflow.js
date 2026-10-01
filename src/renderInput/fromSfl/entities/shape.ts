@@ -45,7 +45,7 @@ export function shapeObject(e: SflEntityOut) {
     shadowStyle: decodeShadow(p.shadow),
     dash: dashArray(p.dash),
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
-    shapeStyle: p.opacity !== undefined ? { opacity: numOf(p.opacity) } : undefined,
+    opacity: numOf(p.opacity),
     parent_frame_id: e.parentFrameId,
     order: e.order,
   };

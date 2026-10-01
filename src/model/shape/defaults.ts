@@ -12,21 +12,7 @@ const COMMON_DEFAULTS = {
   textVerticalAlign: 'middle' as const,
   lineHeight: 1.3,
   hasShadow: false,
-  shapeStyle: {
-    stroke: {
-      type: 'solid' as const,
-      color: '#cbd5e1',
-      width: 2,
-      opacity: 1,
-      dash: [],
-    },
-    fill: {
-      type: 'solid' as const,
-      color: '#ffffff',
-      opacity: 1,
-    },
-    opacity: 1,
-  },
+  opacity: 1,
 };
 
 export const SHAPE_DEFAULTS = {

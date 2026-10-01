@@ -1,6 +1,6 @@
 import type { GradientColor, MeshGradientColor } from '../color/types';
 import type { ShadowStyle } from '../shadows';
-import type { ShapeStrokeStyle, ShapeStyle } from './paint';
+import type { ShapeStrokeStyle } from './paint';
 
 export type ShapeType =
   | 'rounded_rectangle'
@@ -46,11 +46,10 @@ export interface Shape {
   cornerRadius?: number | null;
   dash?: number[];
   strokeStyle?: ShapeStrokeStyle;
+  opacity?: number;
 
   hasShadow?: boolean;
   shadowStyle?: ShadowStyle;
-
-  shapeStyle?: ShapeStyle;
 
   layer_group?: string;
   order_key?: string;

@@ -614,7 +614,7 @@ Model M {
   it('applies a gradient stroke and opacity declared on a shape via SFL', () => {
     // Both used to be dropped: shape stroke passed through raw (so a gradient
     // string never became a paint), and SFL `opacity` was never mapped onto the
-    // shapeStyle.opacity field the renderer actually reads.
+    // Shape opacity is applied to the rendered scene style.
     const SFL_SHAPE = `sfl 1.2
 
 Model M {

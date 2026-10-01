@@ -22,9 +22,9 @@ type MutableShapeFields =
   | 'cornerRadius'
   | 'dash'
   | 'strokeStyle'
+  | 'opacity'
   | 'hasShadow'
   | 'shadowStyle'
-  | 'shapeStyle'
   | 'subShapes';
 
 type ShapeChanges = Partial<Pick<Shape, MutableShapeFields>>;
