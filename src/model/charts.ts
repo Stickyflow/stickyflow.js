@@ -1,25 +1,7 @@
+import type { GradientColorObject, MeshGradientObject } from './color/types';
 import type { ShadowStyle } from './shadows';
-import type { GradientColorObject, MeshGradientObject } from './shapes';
 
-export type ChartType =
-  | 'bar'
-  | 'line'
-  | 'scatter'
-  | 'radar'
-  | 'radial'
-  | 'field'
-  | 'heatmap'
-  | 'boxplot'
-  | 'sankey'
-  | 'treemap'
-  | 'mekko'
-  | 'hexbin'
-  | 'pie'
-  | 'radialBar'
-  | 'polarArea'
-  | 'custom';
-
-export const CHART_TYPES: ChartType[] = [
+export const CHART_TYPES = [
   'bar',
   'line',
   'scatter',
@@ -36,10 +18,12 @@ export const CHART_TYPES: ChartType[] = [
   'radialBar',
   'polarArea',
   'custom',
-];
+] as const;
+
+export type ChartType = (typeof CHART_TYPES)[number];
 
 export function isChartType(value: string | undefined): value is ChartType {
-  return value !== undefined && (CHART_TYPES as string[]).includes(value);
+  return value !== undefined && (CHART_TYPES as readonly string[]).includes(value);
 }
 
 export const CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'custom', 'hexbin']);

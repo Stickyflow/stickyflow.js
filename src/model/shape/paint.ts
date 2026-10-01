@@ -1,17 +1,7 @@
 import type { ShadowStyle } from '../shadows';
 
+export type { GradientColorObject, MeshGradientObject } from '../color/types';
 export type { ShadowStyle };
-
-export interface GradientColorObject {
-  type: 'gradient';
-  angle: number;
-  stops: Array<{ position: number; color: string }>;
-}
-
-export interface MeshGradientObject {
-  type: 'mesh';
-  points: Array<{ id: string; x: number; y: number; color: string }>;
-}
 
 export type ShapeStrokeStyle = 'solid' | 'dashed' | 'dotted' | 'double';
 
