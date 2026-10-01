@@ -25,7 +25,6 @@ export type { ChartRamp } from './colorScale';
 export type {
   BarChartConfig,
   BoxplotChartConfig,
-  ChartConfig,
   CustomChartConfig,
   FieldChartConfig,
   HeatmapChartConfig,

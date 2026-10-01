@@ -1,15 +1,15 @@
 import { routeOrthogonal, type Side } from '../../../geometry/routing';
 import type { Link } from '../../types';
-import type { ConnectionPoint, PathPointsResult } from './types';
+import type { LinkRoute, LinkRoutePoint } from './types';
 import { isAxisAligned, pathFromWaypoints } from './waypoints';
 
-export function orthogonalPath(
+export function calculateOrthogonalLinkRoute(
   link: Link,
-  from: ConnectionPoint,
-  to: ConnectionPoint,
+  from: LinkRoutePoint,
+  to: LinkRoutePoint,
   fromSide: Side,
   toSide: Side,
-): PathPointsResult {
+): LinkRoute {
   if (link.waypoints && link.waypoints.length > 0) {
     const waypointResult = pathFromWaypoints(from, link.waypoints, to);
     if (isAxisAligned(waypointResult.segments)) {

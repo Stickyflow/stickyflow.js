@@ -1,6 +1,6 @@
 import type { Side } from '../../model/geometry/routing';
 import type { Link } from '../../model/link';
-import { getPathPoints } from '../../model/link/geometry';
+import { calculateLinkRoute } from '../../model/link/geometry';
 import { previewPathData } from '../linkPreview';
 import type { LinkEndpointDragState } from './state';
 
@@ -27,6 +27,6 @@ export function updateEndpointPreview(
   const toPoint = drag.end === 'to' ? draggedPoint : drag.fixedPoint;
   const fromSide = drag.end === 'from' ? draggedSide : drag.fixedSide;
   const toSide = drag.end === 'to' ? draggedSide : drag.fixedSide;
-  const { points, segments } = getPathPoints(previewLink(fromSide, toSide), fromPoint, toPoint, drag.pathType);
+  const { points, segments } = calculateLinkRoute(previewLink(fromSide, toSide), fromPoint, toPoint, drag.pathType);
   drag.path.setAttribute('d', previewPathData(points, segments, drag.pathType, drag.strokeWidth));
 }

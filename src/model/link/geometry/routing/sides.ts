@@ -1,8 +1,8 @@
 import type { Side } from '../../../geometry/routing';
 import type { Link } from '../../types';
-import type { ConnectionPoint } from './types';
+import type { LinkRoutePoint } from './types';
 
-function facingSide(from: ConnectionPoint, to: ConnectionPoint): Side {
+function facingSide(from: LinkRoutePoint, to: LinkRoutePoint): Side {
   const angle = Math.atan2(to.y - from.y, to.x - from.x);
   if (angle >= -Math.PI / 4 && angle < Math.PI / 4) {
     return 'right';
@@ -18,8 +18,8 @@ function facingSide(from: ConnectionPoint, to: ConnectionPoint): Side {
 
 export function connectionSides(
   link: Link,
-  from: ConnectionPoint,
-  to: ConnectionPoint,
+  from: LinkRoutePoint,
+  to: LinkRoutePoint,
 ): { fromSide: Side; toSide: Side } {
   const fromSide = link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : facingSide(from, to);
   const toSide = link.toPoint && 'side' in link.toPoint ? link.toPoint.side : facingSide(to, from);

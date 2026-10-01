@@ -1,11 +1,11 @@
 import type { PathSegment } from '../../../geometry/routing';
 
-export interface ConnectionPoint {
+export interface LinkRoutePoint {
   x: number;
   y: number;
 }
 
-export interface PathPointsResult {
+export interface LinkRoute {
   points: number[];
   segments: PathSegment[];
 }

@@ -1,7 +1,12 @@
 import { routeCubic, type Side } from '../../../geometry/routing';
-import type { ConnectionPoint, PathPointsResult } from './types';
+import type { LinkRoute, LinkRoutePoint } from './types';
 
-export function curvedPath(from: ConnectionPoint, to: ConnectionPoint, fromSide: Side, toSide: Side): PathPointsResult {
+export function calculateCurvedLinkRoute(
+  from: LinkRoutePoint,
+  to: LinkRoutePoint,
+  fromSide: Side,
+  toSide: Side,
+): LinkRoute {
   const { p0, p1, p2, p3 } = routeCubic(from, to, fromSide, toSide, { min: 35, max: 90, sMult: 0.5 });
   return { points: [...p0, ...p1, ...p2, ...p3], segments: [] };
 }

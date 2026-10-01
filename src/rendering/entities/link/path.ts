@@ -1,8 +1,8 @@
 import type { PathSegment } from '../../../model/geometry/routing';
 import type { PathType } from '../../../model/link';
-import { roundedOrthogonalPathData } from '../../../model/link/geometry';
 import type { ScenePath } from '../../scene';
 import { markerForEnd } from './markers';
+import { roundedOrthogonalPathData } from './roundedOrthogonalPathData';
 import type { LinkRenderContext } from './types';
 
 function polylinePathData(points: number[]): string {

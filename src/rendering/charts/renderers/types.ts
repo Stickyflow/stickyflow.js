@@ -3,8 +3,8 @@ import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 
 export type StackedMode = 'true' | 'percent' | 'waterfall';
 
-export interface ChartRenderContext {
-  chart: RenderableChart;
+export interface ChartRenderContext<TChart extends RenderableChart = RenderableChart> {
+  chart: TChart;
   plot: { x: number; y: number; width: number; height: number };
   bounds: Bounds;
   diagnostics: RenderDiagnostic[];

@@ -1,3 +1,4 @@
+import type { HexbinChart } from '../../../model/chart';
 import { computeHexBins } from '../../../model/chart/geometry';
 import type { RenderNode } from '../../scene';
 import { paint } from '../../scene';
@@ -13,7 +14,7 @@ function hexPath(cx: number, cy: number, radius: number): string {
   return `${points.join(' ')} Z`;
 }
 
-export function renderHexbin(context: ChartRenderContext): RenderNode[] {
+export function renderHexbin(context: ChartRenderContext<HexbinChart>): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const nodes: RenderNode[] = [];
   const hexRadius = Math.max(1, chart.config?.hexRadius ?? DEFAULT_HEX_RADIUS);

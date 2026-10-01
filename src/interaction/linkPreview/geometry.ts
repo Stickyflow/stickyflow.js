@@ -1,7 +1,8 @@
 import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
 import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/routing';
 import type { Link, PathType } from '../../model/link';
-import { getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../../model/link/geometry';
+import { calculateLinkRoute, getLineMidpoint } from '../../model/link/geometry';
+import { roundedOrthogonalPathData } from '../../rendering/entities/link/roundedOrthogonalPathData';
 
 export function centerOf(bounds: Rect): { x: number; y: number } {
   return elementCenter(bounds);
@@ -63,6 +64,6 @@ export function routePreviewLink(
 ) {
   const from = anchorPoint(fromBounds, fromSide, toBounds);
   const to = anchorPoint(toBounds, toSide, fromBounds);
-  const { points, segments } = getPathPoints(previewLink(fromSide, toSide), from, to, pathType);
+  const { points, segments } = calculateLinkRoute(previewLink(fromSide, toSide), from, to, pathType);
   return { points, segments, midpoint: getLineMidpoint(points, pathType, from, to) };
 }

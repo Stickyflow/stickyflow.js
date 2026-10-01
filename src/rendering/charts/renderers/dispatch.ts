@@ -1,4 +1,4 @@
-import type { ChartType } from '../../../model/chart';
+import type { ChartType, HexbinChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
@@ -25,7 +25,7 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   custom: renderCustom,
   field: renderField,
   heatmap: renderHeatmap,
-  hexbin: renderHexbin,
+  hexbin: context => renderHexbin(context as ChartRenderContext<HexbinChart>),
   line: renderLine,
   mekko: renderMekko,
   pie: renderPie,

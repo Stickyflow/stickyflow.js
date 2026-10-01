@@ -1,5 +1,5 @@
 import { getLinkStrokeColor } from '../../../model/link';
-import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../../../model/link/geometry';
+import { calculateLinkRoute, getDashArray, getLineMidpoint, labelGapDash } from '../../../model/link/geometry';
 import { resolveShadow } from '../../../model/shadow';
 import { type MeasureTextFactory, wrapText } from '../../../model/text';
 import type { RenderInput } from '../../../renderInput/types';
@@ -61,7 +61,7 @@ export function createLinkRenderContext(
 ): LinkRenderContext {
   const { link, from, to } = item;
   const pathType = link.style?.pathType ?? 'orthogonal';
-  const { points, segments } = getPathPoints(link, from, to, pathType);
+  const { points, segments } = calculateLinkRoute(link, from, to, pathType);
   const strokeWidth = finite(link.style?.strokeWidth, 2);
   const color = getLinkStrokeColor(link.style?.color) || '#64748b';
   const label = labelLayout(link, measureText);

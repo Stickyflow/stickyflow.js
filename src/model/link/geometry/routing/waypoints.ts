@@ -1,13 +1,9 @@
 import { type PathSegment, roundOrthogonalPath } from '../../../geometry/routing';
-import type { ConnectionPoint, PathPointsResult } from './types';
+import type { LinkRoute, LinkRoutePoint } from './types';
 
 const ORTHOGONAL_EPSILON = 0.5;
 
-export function pathFromWaypoints(
-  from: ConnectionPoint,
-  waypoints: ConnectionPoint[],
-  to: ConnectionPoint,
-): PathPointsResult {
+export function pathFromWaypoints(from: LinkRoutePoint, waypoints: LinkRoutePoint[], to: LinkRoutePoint): LinkRoute {
   const corners = [from, ...waypoints, to];
   const points: number[] = [];
   for (const point of corners) {

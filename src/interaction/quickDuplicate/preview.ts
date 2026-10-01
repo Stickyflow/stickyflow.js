@@ -1,7 +1,7 @@
 import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
 import type { Side } from '../../model/geometry/routing';
 import type { Link, PathType } from '../../model/link';
-import { getPathPoints } from '../../model/link/geometry';
+import { calculateLinkRoute } from '../../model/link/geometry';
 import { previewPathData } from '../linkPreview';
 import type { QuickDuplicateDragState } from './state';
 
@@ -36,6 +36,6 @@ export function updateDuplicatePreview(
   toSide: Side,
 ): void {
   const link = previewLink(drag.direction, toSide);
-  const { points, segments } = getPathPoints(link, drag.fixedPoint, toPoint, NEW_LINK_PATH_TYPE);
+  const { points, segments } = calculateLinkRoute(link, drag.fixedPoint, toPoint, NEW_LINK_PATH_TYPE);
   drag.previewPath.setAttribute('d', previewPathData(points, segments, NEW_LINK_PATH_TYPE, 2));
 }
