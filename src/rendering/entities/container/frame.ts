@@ -16,10 +16,10 @@ function frameBoundaryNode(frame: Frame, order: number, hasTab: boolean): Render
   const shadow = frame.shadow ?? true;
   const bounds = boxBounds(
     { x: frame.x, y: frame.y, width: frame.width, height: frame.height },
-    frame.stroke_width + (shadow ? 20 : 4),
+    frame.strokeWidth + (shadow ? 20 : 4),
   );
   const style = {
-    ...simpleContainerStyle(frame.fill_color, frame.stroke_color, frame.stroke_width, frame.dash),
+    ...simpleContainerStyle(frame.fillColor, frame.strokeColor, frame.strokeWidth, frame.dash),
     shadow: shadow ? { color: '#000000', opacity: 0.2, blur: 12, dx: 0, dy: 4 } : undefined,
   };
   if (!hasTab) {
@@ -32,16 +32,16 @@ function frameBoundaryNode(frame: Frame, order: number, hasTab: boolean): Render
       y: frame.y,
       width: frame.width,
       height: frame.height,
-      rx: frame.corner_radius,
+      rx: frame.cornerRadius,
       style,
     };
   }
-  const squared = SQUARED_CORNER_BY_LABEL_POSITION[frame.label_position ?? 'top'];
+  const squared = SQUARED_CORNER_BY_LABEL_POSITION[frame.labelPosition ?? 'top'];
   const radii: RectCornerRadii = {
-    topLeft: frame.corner_radius,
-    topRight: frame.corner_radius,
-    bottomRight: frame.corner_radius,
-    bottomLeft: frame.corner_radius,
+    topLeft: frame.cornerRadius,
+    topRight: frame.cornerRadius,
+    bottomRight: frame.cornerRadius,
+    bottomLeft: frame.cornerRadius,
     [squared]: 0,
   };
   return {
@@ -50,17 +50,17 @@ function frameBoundaryNode(frame: Frame, order: number, hasTab: boolean): Render
     order,
     bounds,
     d: cornersRoundedRectPath(frame.x, frame.y, frame.width, frame.height, radii),
-    detail: { of: 'frameBoundary', cornerRadius: frame.corner_radius, squareCorner: squared },
+    detail: { of: 'frameBoundary', cornerRadius: frame.cornerRadius, squareCorner: squared },
     style,
   };
 }
 
 export function buildFrame(frame: Frame, index: number): RenderNode[] {
-  if (frame.is_visible === false) {
+  if (frame.isVisible === false) {
     return [];
   }
   const order = orderOf(frame, index);
-  const hasTab = (frame.show_label ?? true) && Boolean(frame.title);
+  const hasTab = (frame.showLabel ?? true) && Boolean(frame.title);
   const nodes: RenderNode[] = [frameBoundaryNode(frame, order, hasTab)];
   if (hasTab && frame.title) {
     nodes.push(
@@ -71,15 +71,15 @@ export function buildFrame(frame: Frame, index: number): RenderNode[] {
         y: frame.y,
         width: frame.width,
         height: frame.height,
-        cornerRadius: frame.corner_radius,
-        strokeWidth: frame.stroke_width,
+        cornerRadius: frame.cornerRadius,
+        strokeWidth: frame.strokeWidth,
         title: frame.title,
-        color: frame.stroke_color,
-        textColor: frame.text_color,
-        fontFamily: frame.font_family,
-        fontSize: frame.font_size,
-        fontWeight: frame.font_weight,
-        labelPosition: frame.label_position ?? 'top',
+        color: frame.strokeColor,
+        textColor: frame.textColor,
+        fontFamily: frame.fontFamily,
+        fontSize: frame.fontSize,
+        fontWeight: frame.fontWeight,
+        labelPosition: frame.labelPosition ?? 'top',
         order,
       }),
     );
