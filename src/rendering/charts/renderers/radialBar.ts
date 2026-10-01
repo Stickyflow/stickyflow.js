@@ -1,3 +1,4 @@
+import type { RadialBarChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
 import type { ResolvedShadow } from '../primitives';
@@ -54,7 +55,7 @@ function ringProgressPath(cx: number, cy: number, r: number, sweep: number): str
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
 }
 
-export function renderRadialBar(context: ChartRenderContext): RenderNode[] {
+export function renderRadialBar(context: ChartRenderContext<RadialBarChart>): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const centerX = plot.x + plot.width / 2;
   const centerY = plot.y + plot.height / 2;

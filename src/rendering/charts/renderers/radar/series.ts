@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/chart';
+import type { ChartSeries, RadarChart } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
 import { CHART_COLORS, resolveChartShadow } from '../../primitives';
@@ -7,7 +7,7 @@ import { seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import type { RadarGeometry, RadarPoint } from './types';
 
-export function renderRadarSeries(context: ChartRenderContext, geometry: RadarGeometry): RenderNode[] {
+export function renderRadarSeries(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
   const nodes: RenderNode[] = [];
   context.chart.series.forEach((series, seriesIndex) => {
     nodes.push(...renderSeries(context, geometry, series, seriesIndex));
@@ -16,7 +16,7 @@ export function renderRadarSeries(context: ChartRenderContext, geometry: RadarGe
 }
 
 function renderSeries(
-  context: ChartRenderContext,
+  context: ChartRenderContext<RadarChart>,
   geometry: RadarGeometry,
   series: ChartSeries,
   seriesIndex: number,
@@ -31,7 +31,11 @@ function renderSeries(
   ];
 }
 
-function seriesPoints(series: ChartSeries, context: ChartRenderContext, geometry: RadarGeometry): RadarPoint[] {
+function seriesPoints(
+  series: ChartSeries,
+  context: ChartRenderContext<RadarChart>,
+  geometry: RadarGeometry,
+): RadarPoint[] {
   const values = series.values as number[];
   return geometry.categories.map((_, categoryIndex) =>
     geometry.pointAt(geometry.radiusForValue(values[categoryIndex] ?? context.chart.axis_y.min), categoryIndex),

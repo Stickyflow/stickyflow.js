@@ -1,3 +1,4 @@
+import type { RadarChart } from '../../../../model/chart';
 import { finite } from '../../../scene';
 import {
   type RadarFrame,
@@ -12,7 +13,7 @@ import type { RadarGeometry, RadarPoint } from './types';
 
 const DEFAULT_CATEGORIES = ['Speed', 'Quality', 'Cost', 'Reliability', 'Usability'];
 
-export function radarFrameFor(context: ChartRenderContext): RadarFrame {
+export function radarFrameFor(context: ChartRenderContext<RadarChart>): RadarFrame {
   const { chart, plot } = context;
   const configuredCount = (chart.config?.categories?.filter(Boolean) ?? []).length;
   const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));
@@ -27,7 +28,7 @@ export function radarFrameFor(context: ChartRenderContext): RadarFrame {
   };
 }
 
-export function createRadarGeometry(context: ChartRenderContext): RadarGeometry {
+export function createRadarGeometry(context: ChartRenderContext<RadarChart>): RadarGeometry {
   const { chart } = context;
   const configuredCategories = chart.config?.categories?.filter(Boolean) ?? [];
   const frame = radarFrameFor(context);

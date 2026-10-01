@@ -1,3 +1,4 @@
+import type { PieChart } from '../../../../model/chart';
 import { finite } from '../../../scene';
 import { pieArcPoint, resolvePieRadii } from '../../primitives/pieShape';
 import type { ChartRenderContext } from '../types';
@@ -5,7 +6,7 @@ import type { PieGeometry } from './types';
 
 export { pieArcPoint };
 
-export function createPieGeometry(context: ChartRenderContext): PieGeometry {
+export function createPieGeometry(context: ChartRenderContext<PieChart>): PieGeometry {
   const { chart, plot } = context;
   const { outerRadius, innerRadius, cornerRadius } = resolvePieRadii(
     plot.width,

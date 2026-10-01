@@ -1,3 +1,4 @@
+import type { RadarChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { createRadarGeometry } from './radar/geometry';
 import { renderRadarGrid } from './radar/grid';
@@ -5,7 +6,7 @@ import { renderRadarLabels } from './radar/labels';
 import { renderRadarSeries } from './radar/series';
 import type { ChartRenderContext } from './types';
 
-export function renderRadar(context: ChartRenderContext): RenderNode[] {
+export function renderRadar(context: ChartRenderContext<RadarChart>): RenderNode[] {
   const geometry = createRadarGeometry(context);
   const nodes: RenderNode[] = [];
 

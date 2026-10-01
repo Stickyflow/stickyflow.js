@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/chart';
+import type { ChartSeries, PieChart } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import type { ResolvedShadow } from '../../primitives';
@@ -33,7 +33,7 @@ interface PieSliceMark {
   labelOffsetY: number;
 }
 
-export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
+export function renderPieSlices(context: ChartRenderContext<PieChart>, geometry: PieGeometry): RenderNode[] {
   const marks = createPieSliceMarks(context.chart.series, geometry.total);
   const gapPx = context.chart.config?.pieSliceGap ?? 0;
   return [
@@ -95,7 +95,7 @@ function pieOuterShadow(shadow: ResolvedShadow, gapPx: number): ResolvedShadow {
 }
 
 function createSliceNodes(
-  context: ChartRenderContext,
+  context: ChartRenderContext<PieChart>,
   geometry: PieGeometry,
   mark: PieSliceMark,
   gapPx: number,

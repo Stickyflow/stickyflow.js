@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/chart';
+import type { ChartSeries, PieChart } from '../../../../model/chart';
 import type { RenderNode, SceneText } from '../../../scene';
 import { DEFAULT_FONT, finite } from '../../../scene';
 import { clipSegmentToRect, representativeColor, sameHueContrastColor, sameHueTint } from '../../primitives';
@@ -27,7 +27,7 @@ export interface PieLabelMark {
 }
 
 export function renderPieLabels(
-  context: ChartRenderContext,
+  context: ChartRenderContext<PieChart>,
   geometry: PieGeometry,
   marks: PieLabelMark[],
 ): RenderNode[] {
@@ -117,7 +117,11 @@ function createTick(
   };
 }
 
-function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark: PieLabelMark): RenderNode[] {
+function createPieLabel(
+  context: ChartRenderContext<PieChart>,
+  geometry: PieGeometry,
+  mark: PieLabelMark,
+): RenderNode[] {
   const mid = (mark.start + mark.end) / 2;
   const fontSize = Math.max(9, finite(context.chart.font_size, 12));
   const percent = Math.round(mark.share * 100);
