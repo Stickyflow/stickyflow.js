@@ -1,5 +1,6 @@
+import type { GradientColor, MeshGradientColor } from '../color/types';
 import type { ShadowStyle } from '../shadows';
-import type { GradientColorObject, MeshGradientObject, ShapeStrokeStyle, ShapeStyle } from './paint';
+import type { ShapeStrokeStyle, ShapeStyle } from './paint';
 
 export type ShapeType =
   | 'rounded_rectangle'
@@ -39,9 +40,9 @@ export interface Shape {
   textVerticalAlign?: 'top' | 'middle' | 'bottom';
   lineHeight?: number;
 
-  strokeColor?: string | GradientColorObject | null;
+  strokeColor?: string | GradientColor | null;
   strokeWidth?: number;
-  fillColor?: string | GradientColorObject | MeshGradientObject | null;
+  fillColor?: string | GradientColor | MeshGradientColor | null;
   cornerRadius?: number | null;
   dash?: number[];
   strokeStyle?: ShapeStrokeStyle;

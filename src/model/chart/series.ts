@@ -1,10 +1,10 @@
-import type { GradientColorObject, MeshGradientObject } from '../color/types';
+import type { GradientColor, MeshGradientColor } from '../color/types';
 
 export interface ChartSeries {
   id: string;
   label: string;
-  color?: string | GradientColorObject | MeshGradientObject;
-  colors?: Array<string | GradientColorObject | MeshGradientObject | null>;
+  color?: string | GradientColor | MeshGradientColor;
+  colors?: Array<string | GradientColor | MeshGradientColor | null>;
   opacity?: number;
   group?: string;
   values: number[] | [number, number][] | [number, number, number][] | [number, number, number, number][];

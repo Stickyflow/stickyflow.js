@@ -1,14 +1,16 @@
+import type { ColorStop } from '../color/types';
 import type { ShadowStyle } from '../shadows';
 
-export type { GradientColorObject, MeshGradientObject } from '../color/types';
+export type {
+  ColorStop,
+  GradientColor,
+  GradientColorObject,
+  MeshGradientColor,
+  MeshGradientObject,
+} from '../color/types';
 export type { ShadowStyle };
 
 export type ShapeStrokeStyle = 'solid' | 'dashed' | 'dotted' | 'double';
-
-export interface ColorStop {
-  position: number;
-  color: string;
-}
 
 export interface FillStyle {
   type: 'none' | 'solid' | 'linear' | 'radial';

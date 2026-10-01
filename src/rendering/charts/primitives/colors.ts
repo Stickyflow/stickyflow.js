@@ -1,9 +1,9 @@
-import type { GradientColorObject, MeshGradientObject } from '../../../model/shapes';
+import type { GradientColor, MeshGradientColor } from '../../../model/colors';
 
 export { contrastTextColor, isLightColor, sameHueContrastColor, sameHueTint } from '../../color';
 
 export function representativeColor(
-  value: string | GradientColorObject | MeshGradientObject | undefined,
+  value: string | GradientColor | MeshGradientColor | undefined,
   fallback: string,
 ): string {
   if (!value) {
