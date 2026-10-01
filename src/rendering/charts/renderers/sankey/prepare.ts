@@ -1,4 +1,4 @@
-import { layoutSankey, type SankeyLinkInput, type SankeyNodeInput } from '../../../../model/geometry/sankey';
+import { layoutSankey, type SankeyLinkInput, type SankeyNodeInput } from '../../../../model/chart/geometry/sankey';
 import { finite } from '../../../scene';
 import { DEFAULT_ZONE_FILL, representativeColor } from '../../primitives';
 import type { ChartRenderContext } from '../types';

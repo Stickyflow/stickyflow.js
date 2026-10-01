@@ -1,4 +1,4 @@
-import { interpolateHexColorStops } from '../colorInterpolation';
+import { interpolateHexColorStops } from '../color';
 import type { GradientColor } from '../colors';
 import type { LinkStyle } from './types';
 

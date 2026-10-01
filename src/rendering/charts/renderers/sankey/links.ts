@@ -1,4 +1,4 @@
-import type { SankeyLayoutLink } from '../../../../model/geometry/sankey';
+import type { SankeyLayoutLink } from '../../../../model/chart/geometry/sankey';
 import type { Bounds, RenderNode, ScenePaint } from '../../../scene';
 import { DEFAULT_ZONE_FILL, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';

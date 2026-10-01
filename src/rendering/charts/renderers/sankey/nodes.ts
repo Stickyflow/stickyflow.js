@@ -1,4 +1,4 @@
-import type { SankeyLayoutNode } from '../../../../model/geometry/sankey';
+import type { SankeyLayoutNode } from '../../../../model/chart/geometry/sankey';
 import { estimateTextWidth } from '../../../../model/geometry/text';
 import { leftRoundedRectPath, rightRoundedRectPath } from '../../../entities/containers';
 import type { RenderNode, SceneText } from '../../../scene';

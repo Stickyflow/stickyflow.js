@@ -1,8 +1,8 @@
-export { layoutSankey } from './sankey/layout';
 export type {
   SankeyLayout,
   SankeyLayoutLink,
   SankeyLayoutNode,
   SankeyLinkInput,
   SankeyNodeInput,
-} from './sankey/types';
+} from '../chart/geometry/sankey';
+export { layoutSankey } from '../chart/geometry/sankey';
