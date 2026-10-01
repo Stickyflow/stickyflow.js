@@ -35,8 +35,7 @@ function renderCellBackground(
 }
 
 function cellPropPath(context: TableRenderContext, rowId: string, columnId: string): string | undefined {
-  const rowsBlockName = context.table.rows_block_name;
-  return rowsBlockName ? `Rows[${rowsBlockName}].Row[${rowId}].${columnId}` : undefined;
+  return context.table.propertyPaths?.body[rowId]?.[columnId];
 }
 
 export function renderBodyCells(context: TableRenderContext, column: PositionedTableColumn): RenderNode[] {
@@ -62,10 +61,10 @@ export function renderBodyCells(context: TableRenderContext, column: PositionedT
         width: Math.max(0, column.width - 12),
         height: context.rowHeight,
         lines: [String(value ?? '')],
-        fontFamily: context.table.font_family ?? DEFAULT_FONT,
-        fontSize: context.table.font_size,
+        fontFamily: context.table.fontFamily ?? DEFAULT_FONT,
+        fontSize: context.table.fontSize,
         fontWeight: 'normal' as const,
-        color: context.table.text_color,
+        color: context.table.textColor,
         align: column.align ?? 'left',
         verticalAlign: 'middle' as const,
         lineHeight: 1.2,

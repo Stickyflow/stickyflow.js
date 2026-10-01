@@ -1,6 +1,6 @@
 import type { LinkEndpoint } from '../../domContract';
-import type { Side } from '../../model/geometry/router';
-import type { PathType } from '../../model/links';
+import type { Side } from '../../model/geometry/types';
+import type { PathType } from '../../model/link';
 import type { OwnerRef } from '../../viewer';
 import { LinkGhost } from '../linkGhost/ghost';
 import { collectEndpointCandidates, type EndpointCandidate } from './candidates';

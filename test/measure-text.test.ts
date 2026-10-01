@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { MeasureTextFactory, RenderInput } from '../src/index';
 import { renderCanvas } from '../src/index';
-import { wrapText } from '../src/model/geometry/text';
-import type { Shape } from '../src/model/shapes';
+import type { Shape } from '../src/model/shape';
+import { wrapText } from '../src/rendering/scene/textLayout';
 
 // RenderOptions.measureText: the opt-in escape hatch from this package's
 // character-count wrap estimate to real glyph metrics supplied by the host
@@ -17,7 +17,6 @@ import type { Shape } from '../src/model/shapes';
 const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
   ({
     id: 'e',
-    boardId: 'board',
     shapeType: 'rectangle',
     x: 0,
     y: 0,
@@ -27,11 +26,10 @@ const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
     fillColor: '#eef2ff',
     strokeColor: '#123456',
     strokeWidth: 2,
-    layer_group: 'default',
-    order_key: 'a',
-    is_visible: true,
-    is_locked: false,
-    createdAt: '',
+    layerGroup: 'default',
+    orderKey: 'a',
+    isVisible: true,
+    isLocked: false,
     ...extra,
   }) as Shape;
 

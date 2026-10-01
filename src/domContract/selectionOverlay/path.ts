@@ -1,4 +1,4 @@
-import { PATH_POINT_INDEX_ATTR } from '../../model/domContractAttributes';
+import { PATH_POINT_INDEX_ATTR } from '../../svgContract/attributes';
 import { pathGeometryOf } from '../contract';
 import { selectionOverlayGroup, svgElement } from './dom';
 import { screenPx } from './scale';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, sflToCanvasState, sflToRenderInput } from '../src/index';
-import { namedPortToPoint } from '../src/model/geometry/router';
+import { pointAtNormalizedPort } from '../src/model/geometry/ports';
 
 // Schematics category (stickyflow-atlas parity, SFL 1.4 §3.5): a Link
 // endpoint can be `entity.portName` - a dot-path whose last segment names a
@@ -49,6 +49,8 @@ describe('Named Ports (§3.5, entity.portName)', () => {
   it('resolves the port to a world point via the bounding box (unrotated)', () => {
     const input = sflToRenderInput(SFL);
     const resolved = input.links.find(link => link.link.id === 'rueckkopplung');
+    expect(resolved?.link.fromPoint).toEqual({ kind: 'port', port: 'out' });
+    expect(resolved?.link.toPoint).toEqual({ kind: 'port', port: 'in_minus' });
     expect(resolved?.from).toEqual({ x: 100, y: 30 });
     expect(resolved?.to).toEqual({ x: 300, y: 45 });
   });
@@ -80,7 +82,7 @@ Model board {
   // symbol, so that branch is unreachable through the pure SFL-text pipeline
   // - it exists for callers of the lower-level Link/Shape API (e.g. the
   // interaction layer) that could otherwise hand pointFor an inconsistent
-  // isPort reference. See the equivalent comment in stickyflow-atlas's
+  // named-port reference. See the equivalent comment in stickyflow-atlas's
   // useResolvedLinks.ts.
 
   it('renders end-to-end without crashing and produces a link path', () => {
@@ -89,13 +91,13 @@ Model board {
     expect(svg).not.toContain('[object Object]');
   });
 
-  it('namedPortToPoint accounts for rotation the same way portToPoint does', () => {
+  it('pointAtNormalizedPort accounts for rectangle rotation', () => {
     // Unrotated: at=(1, 0.5) on a 100x60 box at (0,0) is the right-edge midpoint.
-    expect(namedPortToPoint({ x: 0, y: 0, width: 100, height: 60 }, [1, 0.5])).toEqual({ x: 100, y: 30 });
+    expect(pointAtNormalizedPort({ x: 0, y: 0, width: 100, height: 60 }, [1, 0.5])).toEqual({ x: 100, y: 30 });
     // Rotated 90°: the box's local right edge now points toward +Y in world
     // space (rotateVector(50, 0, 90) ~= (0, 50)), so the port lands below the
     // box's center rather than to its right.
-    const rotated = namedPortToPoint({ x: 0, y: 200, width: 100, height: 60, rotation: 90 }, [1, 0.5]);
+    const rotated = pointAtNormalizedPort({ x: 0, y: 200, width: 100, height: 60, rotation: 90 }, [1, 0.5]);
     expect(rotated.x).toBeCloseTo(50, 9);
     expect(rotated.y).toBeCloseTo(280, 9);
   });

@@ -1,4 +1,4 @@
-import type { ShadowStyle } from '../../../model/shadows';
+import type { ShadowStyle } from '../../../model/shadow';
 import { finite } from '../../scene';
 
 export interface ResolvedShadow {

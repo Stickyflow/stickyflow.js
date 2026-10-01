@@ -1,13 +1,13 @@
-import { resolveShadow } from '../../../../model/shadows';
-import type { Swimlane } from '../../../../model/swimlanes';
+import type { Swimlane } from '../../../../model/swimlane';
 import type { RenderNode } from '../../../scene';
+import { resolveShadow } from '../../../scene/shadow';
 import { simpleContainerStyle } from '../style';
 import { renderLaneDividers } from './dividers';
 import { renderLaneLabels } from './labels';
 import { createSwimlaneRenderContext } from './layout';
 
 export function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
-  if (swimlane.is_visible === false) {
+  if (swimlane.isVisible === false) {
     return [];
   }
   const context = createSwimlaneRenderContext(swimlane, index);
@@ -21,10 +21,10 @@ export function buildSwimlane(swimlane: Swimlane, index: number): RenderNode[] {
       y: swimlane.y,
       width: swimlane.width,
       height: swimlane.height,
-      rx: swimlane.corner_radius,
+      rx: swimlane.cornerRadius,
       style: {
-        ...simpleContainerStyle(swimlane.fill_color, swimlane.stroke_color, swimlane.stroke_width, swimlane.dash),
-        shadow: resolveShadow(swimlane.shadow_style),
+        ...simpleContainerStyle(swimlane.fillColor, swimlane.strokeColor, swimlane.strokeWidth, swimlane.dash),
+        shadow: resolveShadow(swimlane.shadowStyle),
       },
     },
     ...renderLaneDividers(context),

@@ -1,7 +1,7 @@
 import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
-import { getPathPoints } from '../../model/geometry/connectionLine';
-import type { Side } from '../../model/geometry/router';
-import type { Link, PathType } from '../../model/links';
+import type { Side } from '../../model/geometry/types';
+import type { Link, PathType } from '../../model/link';
+import { calculateLinkRoute } from '../../rendering/entities/link/geometry';
 import { previewPathData } from '../linkPreview';
 import type { QuickDuplicateDragState } from './state';
 
@@ -21,12 +21,12 @@ function previewLink(fromSide: Side, toSide: Side): Link {
     id: 'preview',
     fromId: '',
     toId: '',
-    layer_group: '',
-    order_key: '',
-    is_visible: true,
-    is_locked: false,
-    fromPoint: { side: fromSide, offset: 0.5 },
-    toPoint: { side: toSide, offset: 0.5 },
+    layerGroup: '',
+    orderKey: '',
+    isVisible: true,
+    isLocked: false,
+    fromPoint: { kind: 'side', side: fromSide, offset: 0.5 },
+    toPoint: { kind: 'side', side: toSide, offset: 0.5 },
   };
 }
 
@@ -36,6 +36,6 @@ export function updateDuplicatePreview(
   toSide: Side,
 ): void {
   const link = previewLink(drag.direction, toSide);
-  const { points, segments } = getPathPoints(link, drag.fixedPoint, toPoint, NEW_LINK_PATH_TYPE);
+  const { points, segments } = calculateLinkRoute(link, drag.fixedPoint, toPoint, NEW_LINK_PATH_TYPE);
   drag.previewPath.setAttribute('d', previewPathData(points, segments, NEW_LINK_PATH_TYPE, 2));
 }

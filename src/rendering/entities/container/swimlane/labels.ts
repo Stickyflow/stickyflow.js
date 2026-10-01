@@ -8,16 +8,16 @@ function labelBase(context: SwimlaneRenderContext, lane: PositionedLane, index: 
     id: `swimlane-label-${context.swimlane.id}-${lane.id}`,
     order: context.order + 0.5 + index / 100,
     lines: [lane.label],
-    fontFamily: context.swimlane.font_family ?? DEFAULT_FONT,
-    fontSize: context.swimlane.font_size,
-    fontWeight: context.swimlane.font_weight,
-    color: context.swimlane.text_color,
+    fontFamily: context.swimlane.fontFamily ?? DEFAULT_FONT,
+    fontSize: context.swimlane.fontSize,
+    fontWeight: context.swimlane.fontWeight,
+    color: context.swimlane.textColor,
     lineHeight: 1.2,
   };
 }
 
 function horizontalLabel(context: SwimlaneRenderContext, lane: PositionedLane, index: number): SceneText {
-  const thickness = context.swimlane.font_size * 1.4;
+  const thickness = context.swimlane.fontSize * 1.4;
   const centerX = context.swimlane.x + 10 + thickness / 2;
   const centerY = context.swimlane.y + lane.offset + lane.size / 2;
   const width = Math.max(20, lane.size - 16);
@@ -51,7 +51,7 @@ function verticalLabel(context: SwimlaneRenderContext, lane: PositionedLane, ind
 }
 
 export function renderLaneLabels(context: SwimlaneRenderContext): RenderNode[] {
-  if (!context.swimlane.show_lane_labels) {
+  if (!context.swimlane.showLaneLabels) {
     return [];
   }
   const render = context.swimlane.orientation === 'horizontal' ? horizontalLabel : verticalLabel;

@@ -4,6 +4,7 @@ export { finite } from './numbers';
 export { orderOf } from './order';
 export { paint } from './paint';
 export { tag } from './tagging';
+export type { MeasureTextFactory, TextMetrics } from './textMetrics';
 export { DEFAULT_FONT } from './textStyle';
 export type {
   Bounds,

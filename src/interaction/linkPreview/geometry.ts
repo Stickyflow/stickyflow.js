@@ -1,7 +1,10 @@
-import { getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../../model/geometry/connectionLine';
-import { edgePointToward, elementCenter } from '../../model/geometry/edgePoint';
-import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/router';
-import type { Link, PathType } from '../../model/links';
+import { pointAtPort } from '../../model/geometry/ports';
+import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
+import type { Rect, Side } from '../../model/geometry/types';
+import type { Link, PathType } from '../../model/link';
+import { calculateLinkRoute, getLineMidpoint } from '../../rendering/entities/link/geometry';
+import type { PathSegment } from '../../rendering/entities/link/geometry/routing/types';
+import { roundedOrthogonalPathData } from '../../rendering/entities/link/roundedOrthogonalPathData';
 
 export function centerOf(bounds: Rect): { x: number; y: number } {
   return elementCenter(bounds);
@@ -9,7 +12,7 @@ export function centerOf(bounds: Rect): { x: number; y: number } {
 
 export function anchorPoint(bounds: Rect, side: Side | null, other: Rect): { x: number; y: number } {
   if (side) {
-    return portToPoint(bounds, { side, offset: 0.5 });
+    return pointAtPort(bounds, { side, offset: 0.5 });
   }
   return edgePointToward(bounds, other);
 }
@@ -45,12 +48,12 @@ function previewLink(fromSide: Side | null, toSide: Side | null): Link {
     id: 'preview',
     fromId: '',
     toId: '',
-    layer_group: '',
-    order_key: '',
-    is_visible: true,
-    is_locked: false,
-    fromPoint: fromSide ? { side: fromSide, offset: 0.5 } : undefined,
-    toPoint: toSide ? { side: toSide, offset: 0.5 } : undefined,
+    layerGroup: '',
+    orderKey: '',
+    isVisible: true,
+    isLocked: false,
+    fromPoint: fromSide ? { kind: 'side', side: fromSide, offset: 0.5 } : undefined,
+    toPoint: toSide ? { kind: 'side', side: toSide, offset: 0.5 } : undefined,
   };
 }
 
@@ -63,6 +66,6 @@ export function routePreviewLink(
 ) {
   const from = anchorPoint(fromBounds, fromSide, toBounds);
   const to = anchorPoint(toBounds, toSide, fromBounds);
-  const { points, segments } = getPathPoints(previewLink(fromSide, toSide), from, to, pathType);
+  const { points, segments } = calculateLinkRoute(previewLink(fromSide, toSide), from, to, pathType);
   return { points, segments, midpoint: getLineMidpoint(points, pathType, from, to) };
 }

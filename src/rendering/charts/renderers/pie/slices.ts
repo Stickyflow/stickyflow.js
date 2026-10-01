@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries, PieChart } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import type { ResolvedShadow } from '../../primitives';
@@ -33,7 +33,7 @@ interface PieSliceMark {
   labelOffsetY: number;
 }
 
-export function renderPieSlices(context: ChartRenderContext, geometry: PieGeometry): RenderNode[] {
+export function renderPieSlices(context: ChartRenderContext<PieChart>, geometry: PieGeometry): RenderNode[] {
   const marks = createPieSliceMarks(context.chart.series, geometry.total);
   const gapPx = context.chart.config?.pieSliceGap ?? 0;
   return [
@@ -66,7 +66,7 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
       label: series.label,
       color: series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
       stroke: series.stroke,
-      strokeWidth: series.stroke_width,
+      strokeWidth: series.strokeWidth,
       value,
       share: value / total,
       angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
@@ -95,7 +95,7 @@ function pieOuterShadow(shadow: ResolvedShadow, gapPx: number): ResolvedShadow {
 }
 
 function createSliceNodes(
-  context: ChartRenderContext,
+  context: ChartRenderContext<PieChart>,
   geometry: PieGeometry,
   mark: PieSliceMark,
   gapPx: number,
@@ -118,7 +118,7 @@ function createSliceNodes(
         ),
   );
   const slicePath = createPieSlicePath(geometry, mark.angles, cornerRadius, gapPx);
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
   const strokeStyle = mark.stroke
     ? { stroke: { kind: 'solid' as const, color: mark.stroke }, strokeWidth: finite(mark.strokeWidth, 1) }
     : {};

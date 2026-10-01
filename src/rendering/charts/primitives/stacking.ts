@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import { mapChartValue } from './axis';
 
 interface StackedSegment {
@@ -76,7 +76,7 @@ function cumulativeSegment(
 function mappedSegment(value: number, start: number, end: number, chart: Chart, plotHeight: number): StackedSegment {
   return {
     value,
-    pixelStart: mapChartValue(start, chart.axis_y, plotHeight),
-    pixelEnd: mapChartValue(end, chart.axis_y, plotHeight),
+    pixelStart: mapChartValue(start, chart.axisY, plotHeight),
+    pixelEnd: mapChartValue(end, chart.axisY, plotHeight),
   };
 }

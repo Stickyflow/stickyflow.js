@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite } from '../../../scene';
 import { chartText, contrastTextColor, zoneColorAtValue } from '../../primitives';
@@ -83,8 +83,8 @@ function createCellBackground(context: ChartRenderContext, layout: HeatmapLayout
     rx: layout.grid.cellRadius,
     style: {
       fill: { kind: 'solid', color: cell.color },
-      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
-      strokeWidth: finite(chart.grid_width, 1),
+      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
+      strokeWidth: finite(chart.gridWidth, 1),
     },
   };
 }

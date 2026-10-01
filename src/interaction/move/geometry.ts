@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/types';
 import type { DraggedEntity } from './types';
 
 export function offsetBounds(bounds: Rect, dx: number, dy: number): Rect {

@@ -1,4 +1,4 @@
-import type { Lane, Swimlane } from '../../../../model/swimlanes';
+import type { Lane, Swimlane } from '../../../../model/swimlane';
 import { boxBounds, orderOf } from '../../../scene';
 import type { PositionedLane, SwimlaneRenderContext } from './types';
 
@@ -26,7 +26,7 @@ export function createSwimlaneRenderContext(swimlane: Swimlane, index: number): 
     order: orderOf(swimlane, 5_000 + index),
     bounds: boxBounds(
       { x: swimlane.x, y: swimlane.y, width: swimlane.width, height: swimlane.height },
-      swimlane.stroke_width + 4,
+      swimlane.strokeWidth + 4,
     ),
     lanes: positionLanes(swimlane),
   };

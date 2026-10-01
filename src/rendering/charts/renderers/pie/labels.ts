@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries, PieChart } from '../../../../model/chart';
 import type { RenderNode, SceneText } from '../../../scene';
 import { DEFAULT_FONT, finite } from '../../../scene';
 import { clipSegmentToRect, representativeColor, sameHueContrastColor, sameHueTint } from '../../primitives';
@@ -27,11 +27,11 @@ export interface PieLabelMark {
 }
 
 export function renderPieLabels(
-  context: ChartRenderContext,
+  context: ChartRenderContext<PieChart>,
   geometry: PieGeometry,
   marks: PieLabelMark[],
 ): RenderNode[] {
-  if (context.chart.show_axis_labels === false) {
+  if (context.chart.showAxisLabels === false) {
     return [];
   }
   return marks
@@ -56,7 +56,7 @@ function labelTextPair(
     x: point.x - LABEL_WIDTH / 2,
     width: LABEL_WIDTH,
     height: lineHeight,
-    fontFamily: chart.font_family ?? DEFAULT_FONT,
+    fontFamily: chart.fontFamily ?? DEFAULT_FONT,
     fontSize,
     align: 'center' as const,
     verticalAlign: 'middle' as const,
@@ -117,9 +117,13 @@ function createTick(
   };
 }
 
-function createPieLabel(context: ChartRenderContext, geometry: PieGeometry, mark: PieLabelMark): RenderNode[] {
+function createPieLabel(
+  context: ChartRenderContext<PieChart>,
+  geometry: PieGeometry,
+  mark: PieLabelMark,
+): RenderNode[] {
   const mid = (mark.start + mark.end) / 2;
-  const fontSize = Math.max(9, finite(context.chart.font_size, 12));
+  const fontSize = Math.max(9, finite(context.chart.fontSize, 12));
   const percent = Math.round(mark.share * 100);
   const lineHeight = fontSize * 1.2;
   const tickStart = pieArcPoint(geometry, mid, geometry.outerRadius + LEADER_INSET);

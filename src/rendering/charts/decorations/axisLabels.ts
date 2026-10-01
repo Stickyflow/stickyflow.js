@@ -1,11 +1,11 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
 import { axisLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): RenderNode | null {
-  if (!chart.axis_x.label) {
+  if (!chart.axisX.label) {
     return null;
   }
   return {
@@ -14,7 +14,7 @@ function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
       order,
       bounds: layout.bounds,
       frame: { x: layout.plot.x, y: chart.y + chart.height - 18, width: layout.plot.width, height: 18 },
-      text: chart.axis_x.label,
+      text: chart.axisX.label,
       chart,
       align: 'center',
     }),
@@ -23,7 +23,7 @@ function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
 }
 
 function buildYAxisLabel(chart: Chart, layout: ChartLayout, order: number): RenderNode | null {
-  if (!chart.axis_y.label) {
+  if (!chart.axisY.label) {
     return null;
   }
   return {
@@ -37,7 +37,7 @@ function buildYAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
         width: layout.plot.height,
         height: 18,
       },
-      text: chart.axis_y.label,
+      text: chart.axisY.label,
       chart,
       align: 'center',
       rotation: -90,

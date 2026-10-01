@@ -1,4 +1,4 @@
-import type { MarkerType } from '../../model/links';
+import type { MarkerType } from '../../model/link';
 import type { RenderNode, ScenePaint, SceneStyle } from '../scene';
 import { SvgClipDefinitions } from './clipDefinitions';
 import { SvgFilterDefinitions } from './filterDefinitions';

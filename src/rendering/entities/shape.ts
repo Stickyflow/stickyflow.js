@@ -1,6 +1,5 @@
-import type { MeasureTextFactory } from '../../model/geometry/text';
-import type { Shape } from '../../model/shapes';
-import type { RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
+import type { Shape } from '../../model/shape';
+import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
 import { finite, orderOf, rotatedBounds } from '../scene';
 import { renderShapeGeometry } from './shape/geometry';
 import { shapeStyle } from './shape/style';
@@ -75,7 +74,7 @@ export function buildShape(
   diagnostics: RenderDiagnostic[],
   measureText?: MeasureTextFactory,
 ): RenderNode[] {
-  if (shape.is_visible === false) {
+  if (shape.isVisible === false) {
     return [];
   }
   const { context, strokeWidth } = createRenderContext(shape, index, diagnostics);

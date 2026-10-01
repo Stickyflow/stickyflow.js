@@ -1,11 +1,11 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText, chartTicks, mapChartValue } from '../primitives';
 import type { ChartLayout } from './layout';
 
 export function buildNumericXAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
-  return chartTicks(chart.axis_x).map((tick, index) => {
-    const x = layout.plot.x + mapChartValue(tick, chart.axis_x, layout.plot.width);
+  return chartTicks(chart.axisX).map((tick, index) => {
+    const x = layout.plot.x + mapChartValue(tick, chart.axisX, layout.plot.width);
     return chartText({
       id: `chart-x-tick-${chart.id}-${tick}`,
       order: order + index,

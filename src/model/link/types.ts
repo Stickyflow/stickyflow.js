@@ -1,5 +1,5 @@
-import type { GradientColor } from '../colors';
-import type { ShadowStyle } from '../shadows';
+import type { GradientColor } from '../color';
+import type { ShadowStyle } from '../shadow';
 
 export type StrokeStyle = 'solid' | 'dashed' | 'dotted';
 
@@ -23,20 +23,6 @@ export type MarkerType =
   | 'one_many'
   | 'zero_many';
 
-export type RelationPreset =
-  | 'custom'
-  | 'uml_association'
-  | 'uml_directed_association'
-  | 'uml_dependency'
-  | 'uml_aggregation'
-  | 'uml_composition'
-  | 'uml_generalization'
-  | 'uml_realization'
-  | 'er_one_one'
-  | 'er_zero_one'
-  | 'er_one_many'
-  | 'er_zero_many';
-
 export interface LinkStyle {
   color?: string | GradientColor;
   strokeWidth?: number;
@@ -47,15 +33,14 @@ export interface LinkStyle {
   fontSize?: number;
   fontFamily?: string;
   shadow?: ShadowStyle;
-  relationPreset?: RelationPreset;
   startLabel?: string;
   endLabel?: string;
 }
 
 export type LinkEndpoint =
-  | { side: 'top' | 'right' | 'bottom' | 'left'; offset?: number }
-  | { x: number; y: number; isAbsolute: true }
-  | { port: string; isPort: true };
+  | { kind: 'side'; side: 'top' | 'right' | 'bottom' | 'left'; offset?: number }
+  | { kind: 'absolute'; x: number; y: number }
+  | { kind: 'port'; port: string };
 
 export interface Link {
   id: string;
@@ -73,18 +58,12 @@ export interface Link {
   waypoints?: Array<{ x: number; y: number }>;
   startMarker?: MarkerType;
   endMarker?: MarkerType;
-  start_marker?: MarkerType;
-  end_marker?: MarkerType;
-  layer_group?: string;
   layerGroup?: string;
-  order_key?: string;
   orderKey?: string;
-  is_visible?: boolean;
+  order?: number;
   isVisible?: boolean;
-  is_locked?: boolean;
   isLocked?: boolean;
-  parent_frame_id?: string;
   parentFrameId?: string;
-  parent_swimlane_id?: string;
-  lane_id?: string;
+  parentSwimlaneId?: string;
+  laneId?: string;
 }

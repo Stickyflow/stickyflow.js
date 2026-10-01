@@ -1,5 +1,5 @@
-import type { ChartAxis, ChartZone } from '../../../model/charts';
-import { interpolateHexColorStops } from '../../../model/colorInterpolation';
+import type { ChartAxis, ChartZone } from '../../../model/chart';
+import { interpolateHexColorStops } from '../../../model/color';
 import { DEFAULT_ZONE_FILL } from './defaults';
 
 export function mapChartValue(value: number, axis: ChartAxis, extent: number): number {

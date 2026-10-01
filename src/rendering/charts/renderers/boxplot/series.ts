@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { CHART_COLORS, computeBoxplotStats } from '../../primitives';
 import type { ChartRenderContext } from '../types';

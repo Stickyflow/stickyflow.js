@@ -1,10 +1,11 @@
-import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../../../model/geometry/connectionLine';
-import { type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
-import { getLinkStrokeColor } from '../../../model/links';
-import { resolveShadow } from '../../../model/shadows';
 import type { RenderInput } from '../../../renderInput/types';
-import type { SceneStyle } from '../../scene';
+import type { MeasureTextFactory, SceneStyle } from '../../scene';
 import { DEFAULT_FONT, finite, orderOf } from '../../scene';
+import { getLinkStrokeColor } from '../../scene/linkPaint';
+import { getDashArray } from '../../scene/linkStroke';
+import { resolveShadow } from '../../scene/shadow';
+import { wrapText } from '../../scene/textLayout';
+import { calculateLinkRoute, getLineMidpoint, labelGapDash } from './geometry';
 import type { LinkLabelLayout, LinkRenderContext } from './types';
 
 function linkBounds(points: number[], padding: number) {
@@ -61,7 +62,7 @@ export function createLinkRenderContext(
 ): LinkRenderContext {
   const { link, from, to } = item;
   const pathType = link.style?.pathType ?? 'orthogonal';
-  const { points, segments } = getPathPoints(link, from, to, pathType);
+  const { points, segments } = calculateLinkRoute(link, from, to, pathType);
   const strokeWidth = finite(link.style?.strokeWidth, 2);
   const color = getLinkStrokeColor(link.style?.color) || '#64748b';
   const label = labelLayout(link, measureText);

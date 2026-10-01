@@ -1,6 +1,7 @@
-import { computeRowHeight, tableBorderGeometry } from '../../model/geometry/tables';
-import type { Table, TableColumn } from '../../model/tables';
+import type { Table, TableColumn } from '../../model/table';
+import type { RenderInputTable } from '../../renderInput/types';
 import { boxBounds, orderOf } from '../scene';
+import { computeRowHeight, tableBorderGeometry } from './layoutGeometry';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 export function columnWidthScale(table: Table): number {
@@ -22,9 +23,9 @@ function positionColumns(table: Table): PositionedTableColumn[] {
   });
 }
 
-export function createTableRenderContext(table: Table, index: number): TableRenderContext {
-  const rowHeight = table.row_height ?? computeRowHeight(table.font_size);
-  const headerHeight = table.show_header ? rowHeight : 0;
+export function createTableRenderContext(table: RenderInputTable, index: number): TableRenderContext {
+  const rowHeight = table.rowHeight ?? computeRowHeight(table.fontSize);
+  const headerHeight = table.showHeader ? rowHeight : 0;
   const footerHeight = table.footer ? rowHeight : 0;
   const height = headerHeight + table.rows.length * rowHeight + footerHeight;
   const { doubleBorderGap, gridInset } = tableBorderGeometry(table);
@@ -37,7 +38,7 @@ export function createTableRenderContext(table: Table, index: number): TableRend
     footerY: table.y + headerHeight + table.rows.length * rowHeight,
     doubleBorderGap,
     gridInset,
-    bounds: boxBounds({ x: table.x, y: table.y, width: table.width, height }, table.stroke_width + 4),
+    bounds: boxBounds({ x: table.x, y: table.y, width: table.width, height }, table.strokeWidth + 4),
     columns: positionColumns(table),
   };
 }

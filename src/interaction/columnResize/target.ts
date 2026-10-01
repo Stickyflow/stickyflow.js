@@ -3,7 +3,7 @@ import {
   TABLE_COLUMN_DIVIDER_ATTR,
   TABLE_COLUMN_START_WIDTH_ATTR,
   TABLE_COLUMN_WIDTH_SCALE_ATTR,
-} from '../../model/domContractAttributes';
+} from '../../svgContract/attributes';
 import type { OwnerRef } from '../../viewer';
 
 export interface ColumnResizeTarget {

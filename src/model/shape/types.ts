@@ -1,5 +1,7 @@
-import type { ShadowStyle } from '../shadows';
-import type { GradientColorObject, MeshGradientObject, ShapeStrokeStyle, ShapeStyle } from './paint';
+import type { GradientColor, MeshGradientColor } from '../color/types';
+import type { ShadowStyle } from '../shadow';
+
+export type ShapeStrokeStyle = 'solid' | 'dashed' | 'dotted' | 'double';
 
 export type ShapeType =
   | 'rounded_rectangle'
@@ -21,7 +23,6 @@ export type ShapeType =
 
 export interface Shape {
   id: string;
-  boardId?: string;
   name?: string;
   shapeType: ShapeType;
   x: number;
@@ -39,38 +40,28 @@ export interface Shape {
   textVerticalAlign?: 'top' | 'middle' | 'bottom';
   lineHeight?: number;
 
-  strokeColor?: string | GradientColorObject | null;
+  strokeColor?: string | GradientColor | null;
   strokeWidth?: number;
-  fillColor?: string | GradientColorObject | MeshGradientObject | null;
+  fillColor?: string | GradientColor | MeshGradientColor | null;
   cornerRadius?: number | null;
   dash?: number[];
   strokeStyle?: ShapeStrokeStyle;
+  opacity?: number;
 
   hasShadow?: boolean;
   shadowStyle?: ShadowStyle;
 
-  shapeStyle?: ShapeStyle;
+  layerGroup?: string;
+  orderKey?: string;
+  isVisible?: boolean;
+  isLocked?: boolean;
 
-  layer_group?: string;
-  order_key?: string;
-  is_visible?: boolean;
-  is_locked?: boolean;
+  parentFrameId?: string | null;
 
-  parent_frame_id?: string | null;
-
-  parent_swimlane_id?: string | null;
-  lane_id?: string | null;
-
-  subShapes?: SubShape[] | null;
+  parentSwimlaneId?: string | null;
+  laneId?: string | null;
 
   symbol?: SymbolDef | null;
-
-  createdAt?: string;
-}
-
-export interface SubShape {
-  id: string;
-  text: string;
 }
 
 export interface SymbolDef {

@@ -1,4 +1,4 @@
-import type { Chart } from '../../../model/charts';
+import type { Chart } from '../../../model/chart';
 import type { SceneStyle } from '../../scene';
 import { idwInterpolate } from './idw';
 import type { FieldGrid, FieldSample } from './types';
@@ -9,7 +9,7 @@ export function fieldSurfaceClip(
   chart: Chart,
   plot: { x: number; y: number; width: number; height: number },
 ): SceneStyle['clip'] {
-  return { type: 'rect', x: plot.x, y: plot.y, width: plot.width, height: plot.height, rx: chart.corner_radius ?? 12 };
+  return { type: 'rect', x: plot.x, y: plot.y, width: plot.width, height: plot.height, rx: chart.cornerRadius ?? 12 };
 }
 
 export function computeFieldGrid(samples: FieldSample[], width: number, height: number, power: number): FieldGrid {

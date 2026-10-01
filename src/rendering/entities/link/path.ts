@@ -1,8 +1,8 @@
-import { roundedOrthogonalPathData } from '../../../model/geometry/connectionLine';
-import type { PathSegment } from '../../../model/geometry/router';
-import type { PathType } from '../../../model/links';
+import type { PathType } from '../../../model/link';
 import type { ScenePath } from '../../scene';
+import type { PathSegment } from './geometry/routing/types';
 import { markerForEnd } from './markers';
+import { roundedOrthogonalPathData } from './roundedOrthogonalPathData';
 import type { LinkRenderContext } from './types';
 
 function polylinePathData(points: number[]): string {
@@ -42,8 +42,8 @@ export function renderLinkPath(context: LinkRenderContext): ScenePath {
       fromId: link.fromId,
       toId: link.toId,
       route: context.pathType,
-      fromSide: link.fromPoint && 'side' in link.fromPoint ? link.fromPoint.side : undefined,
-      toSide: link.toPoint && 'side' in link.toPoint ? link.toPoint.side : undefined,
+      fromSide: link.fromPoint?.kind === 'side' ? link.fromPoint.side : undefined,
+      toSide: link.toPoint?.kind === 'side' ? link.toPoint.side : undefined,
       labelGap: context.hasLabelGap,
     },
   };

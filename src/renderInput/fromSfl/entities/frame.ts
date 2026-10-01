@@ -1,29 +1,27 @@
+import type { Frame } from '../../../model/frame';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { dashArray, FONT_WEIGHTS, LABEL_POSITIONS, numOf, oneOf } from './values';
 
-export function frameObject(e: SflEntityOut) {
+export function frameObject(e: SflEntityOut): Frame {
   const p = e.props;
   return {
     id: e.id,
-    type: 'frame',
     title: e.text ?? null,
     x: e.x,
     y: e.y,
     width: e.width,
     height: e.height,
-    w: e.width,
-    h: e.height,
-    fill_color: p.fill ?? 'rgba(155, 66, 223, 0.05)',
-    stroke_color: p.stroke ?? '#9b42df',
-    stroke_width: numOf(p.strokeWidth) ?? 2,
-    corner_radius: numOf(p.cornerRadius) ?? 12,
-    text_color: p.textColor ?? '#ffffff',
-    font_size: numOf(p.fontSize) ?? 14,
-    font_weight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
-    font_family: p.fontFamily,
+    fillColor: p.fill ?? 'rgba(155, 66, 223, 0.05)',
+    strokeColor: p.stroke ?? '#9b42df',
+    strokeWidth: numOf(p.strokeWidth) ?? 2,
+    cornerRadius: numOf(p.cornerRadius) ?? 12,
+    textColor: p.textColor ?? '#ffffff',
+    fontSize: numOf(p.fontSize) ?? 14,
+    fontWeight: oneOf(p.fontWeight, FONT_WEIGHTS, 'bold'),
+    fontFamily: p.fontFamily,
     dash: dashArray(p.dash),
-    show_label: p.showLabel !== 'false',
-    label_position: oneOf(p.labelPosition, LABEL_POSITIONS, 'top'),
+    showLabel: p.showLabel !== 'false',
+    labelPosition: oneOf(p.labelPosition, LABEL_POSITIONS, 'top'),
     shadow: p.shadow !== 'false',
     order: e.order,
   };

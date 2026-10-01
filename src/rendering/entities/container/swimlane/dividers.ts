@@ -18,8 +18,8 @@ export function renderLaneDividers(context: SwimlaneRenderContext): RenderNode[]
     d: dividerPath(context, lane.offset),
     style: {
       fill: { kind: 'none' },
-      stroke: { kind: 'solid', color: context.swimlane.stroke_color },
-      strokeWidth: context.swimlane.stroke_width,
+      stroke: { kind: 'solid', color: context.swimlane.strokeColor },
+      strokeWidth: context.swimlane.strokeWidth,
     },
   }));
 }

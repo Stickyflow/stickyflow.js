@@ -1,8 +1,8 @@
-import type { ChartSeries } from '../../../../model/charts';
-import { wrapText } from '../../../../model/geometry/text';
-import { squarifyTreemap } from '../../../../model/geometry/treemap';
+import type { ChartSeries } from '../../../../model/chart';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
+import { wrapText } from '../../../scene/textLayout';
+import { squarifyTreemap } from '../../geometry';
 import { chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import { treemapLeafColor, treemapLeafValue } from './layout';
@@ -104,7 +104,7 @@ function renderTreemapHeader(
   index: number,
 ): RenderNode[] {
   const { chart, plot, bounds, nextOrder } = context;
-  const fill = chart.config?.headerColor ?? chart.grid_color ?? '#e2e8f0';
+  const fill = chart.config?.headerColor ?? chart.gridColor ?? '#e2e8f0';
   const background: RenderNode = {
     type: 'rect',
     id: `chart-treemap-header-${chart.id}-${index}`,
@@ -117,7 +117,7 @@ function renderTreemapHeader(
     rx: layout.cellRadius,
     style: { fill: { kind: 'solid', color: fill } },
   };
-  const smallFontSize = Math.max(8, Math.max(9, chart.font_size ?? 12) - 1);
+  const smallFontSize = Math.max(8, Math.max(9, chart.fontSize ?? 12) - 1);
   const label: RenderNode = {
     ...chartText({
       id: `chart-treemap-header-label-${chart.id}-${index}`,
@@ -163,7 +163,7 @@ function createTileNode(
 ): RenderNode {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const gap = layout.cellGap;
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
@@ -201,8 +201,8 @@ function createTileNode(
     rx: layout.cellRadius,
     style: {
       fill,
-      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
-      strokeWidth: finite(chart.grid_width, 1),
+      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
+      strokeWidth: finite(chart.gridWidth, 1),
       shadow,
       clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },

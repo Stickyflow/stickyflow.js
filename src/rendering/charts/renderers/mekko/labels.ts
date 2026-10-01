@@ -1,5 +1,5 @@
-import { wrapText } from '../../../../model/geometry/text';
 import type { RenderNode } from '../../../scene';
+import { wrapText } from '../../../scene/textLayout';
 import { chartText } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { MekkoColumn, MekkoLayout } from './types';

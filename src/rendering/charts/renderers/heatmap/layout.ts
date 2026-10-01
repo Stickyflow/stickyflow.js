@@ -1,5 +1,5 @@
-import { estimateTextWidth } from '../../../../model/geometry/text';
 import { finite } from '../../../scene';
+import { estimateTextWidth } from '../../../scene/textLayout';
 import { axisBands, DEFAULT_HEATMAP_ZONES } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapGrid, HeatmapLayout, HeatmapReservedSpace } from './types';
@@ -12,9 +12,9 @@ export function createHeatmapLayout(context: ChartRenderContext): HeatmapLayout 
   return {
     rows: chart.series,
     columns,
-    bands: axisBands(chart.axis_y),
+    bands: axisBands(chart.axisY),
     zones: chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES,
-    fontSize: Math.max(9, finite(chart.font_size, 12)),
+    fontSize: Math.max(9, finite(chart.fontSize, 12)),
     reservedSpace,
     grid: createHeatmapGrid(context, reservedSpace, columns.length),
   };
@@ -29,7 +29,7 @@ function heatmapColumns(context: ChartRenderContext): string[] {
 
 function heatmapReservedSpace(context: ChartRenderContext): HeatmapReservedSpace {
   const { chart } = context;
-  const fontSize = Math.max(9, finite(chart.font_size, 12));
+  const fontSize = Math.max(9, finite(chart.fontSize, 12));
   const longestLabel = chart.series.reduce(
     (max, series) => Math.max(max, estimateTextWidth(series.label ?? '', fontSize, false)),
     0,

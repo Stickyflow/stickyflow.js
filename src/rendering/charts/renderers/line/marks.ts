@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
 import { createVerticalErrorWhiskerNode, errorBarRange, mapChartValue } from '../../primitives';
@@ -56,8 +56,8 @@ function createLineError(context: ChartRenderContext, mark: LinePointMark): Rend
     bounds,
     geometry: {
       centerX: mark.position.x,
-      startY: plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
-      endY: plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
+      startY: plot.y + plot.height - mapChartValue(lower, chart.axisY, plot.height),
+      endY: plot.y + plot.height - mapChartValue(upper, chart.axisY, plot.height),
     },
     color: mark.color,
     valueReference: { seriesId: mark.seriesId, valueIndex: mark.valueIndex },

@@ -8,26 +8,26 @@ import {
   radarSeriesPath,
 } from '../../primitives/radarShape';
 import type { ChartRenderContext } from '../types';
-import type { RadarGeometry, RadarPoint } from './types';
+import type { RadarFamilyChart, RadarGeometry, RadarPoint } from './types';
 
 const DEFAULT_CATEGORIES = ['Speed', 'Quality', 'Cost', 'Reliability', 'Usability'];
 
-export function radarFrameFor(context: ChartRenderContext): RadarFrame {
+export function radarFrameFor(context: ChartRenderContext<RadarFamilyChart>): RadarFrame {
   const { chart, plot } = context;
   const configuredCount = (chart.config?.categories?.filter(Boolean) ?? []).length;
   const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));
   return {
     centerX: plot.x + plot.width / 2,
     centerY: plot.y + plot.height / 2,
-    radius: radarRadius(plot.width, plot.height, finite(chart.font_size, 12), context.showLabels),
-    min: chart.axis_y.min,
-    max: chart.axis_y.max,
+    radius: radarRadius(plot.width, plot.height, finite(chart.fontSize, 12), context.showLabels),
+    min: chart.axisY.min,
+    max: chart.axisY.max,
     count: radarCategoryCount(configuredCount, dataCount),
-    curved: chart.chart_type === 'radial',
+    curved: chart.chartType === 'radial',
   };
 }
 
-export function createRadarGeometry(context: ChartRenderContext): RadarGeometry {
+export function createRadarGeometry(context: ChartRenderContext<RadarFamilyChart>): RadarGeometry {
   const { chart } = context;
   const configuredCategories = chart.config?.categories?.filter(Boolean) ?? [];
   const frame = radarFrameFor(context);

@@ -1,7 +1,7 @@
-import { edgePointToward, elementCenter } from '../../model/geometry/edgePoint';
-import { namedPortToPoint } from '../../model/geometry/router';
+import { pointAtNormalizedPort } from '../../model/geometry/ports';
+import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
 import type { Point } from '../../model/geometry/types';
-import type { Link } from '../../model/links';
+import type { Link } from '../../model/link';
 import type { PositionedElement } from './types';
 
 type LinkEndpoint = NonNullable<Link['fromPoint']>;
@@ -27,12 +27,12 @@ function sidePoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, {
   }
 }
 
-function namedPortPoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, { isPort: true }>): Point {
+function namedPortPoint(element: PositionedElement, endpoint: Extract<LinkEndpoint, { kind: 'port' }>): Point {
   const port = element.symbol?.ports?.find(candidate => candidate.name === endpoint.port);
   if (!port) {
     return elementCenter(element);
   }
-  return namedPortToPoint(
+  return pointAtNormalizedPort(
     {
       x: element.x,
       y: element.y,
@@ -68,14 +68,14 @@ function selectLinkEndpoint(link: Link, end: LinkEnd): SelectedLinkEndpoint {
 }
 
 function explicitAbsolutePoint(endpoint: LinkEndpoint | undefined): Point | null {
-  return endpoint && 'isAbsolute' in endpoint ? { x: endpoint.x, y: endpoint.y } : null;
+  return endpoint?.kind === 'absolute' ? { x: endpoint.x, y: endpoint.y } : null;
 }
 
 function explicitAnchorPoint(element: PositionedElement, endpoint: LinkEndpoint | undefined): Point | null {
-  if (endpoint && 'isPort' in endpoint) {
+  if (endpoint?.kind === 'port') {
     return namedPortPoint(element, endpoint);
   }
-  if (endpoint && 'side' in endpoint) {
+  if (endpoint?.kind === 'side') {
     return sidePoint(element, endpoint);
   }
   return null;

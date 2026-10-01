@@ -1,6 +1,6 @@
-import { getPathPoints } from '../../model/geometry/connectionLine';
-import type { Side } from '../../model/geometry/router';
-import type { Link } from '../../model/links';
+import type { Side } from '../../model/geometry/types';
+import type { Link } from '../../model/link';
+import { calculateLinkRoute } from '../../rendering/entities/link/geometry';
 import { previewPathData } from '../linkPreview';
 import type { LinkEndpointDragState } from './state';
 
@@ -9,12 +9,12 @@ function previewLink(fromSide: Side, toSide: Side): Link {
     id: 'preview',
     fromId: '',
     toId: '',
-    layer_group: '',
-    order_key: '',
-    is_visible: true,
-    is_locked: false,
-    fromPoint: { side: fromSide, offset: 0.5 },
-    toPoint: { side: toSide, offset: 0.5 },
+    layerGroup: '',
+    orderKey: '',
+    isVisible: true,
+    isLocked: false,
+    fromPoint: { kind: 'side', side: fromSide, offset: 0.5 },
+    toPoint: { kind: 'side', side: toSide, offset: 0.5 },
   };
 }
 
@@ -27,6 +27,6 @@ export function updateEndpointPreview(
   const toPoint = drag.end === 'to' ? draggedPoint : drag.fixedPoint;
   const fromSide = drag.end === 'from' ? draggedSide : drag.fixedSide;
   const toSide = drag.end === 'to' ? draggedSide : drag.fixedSide;
-  const { points, segments } = getPathPoints(previewLink(fromSide, toSide), fromPoint, toPoint, drag.pathType);
+  const { points, segments } = calculateLinkRoute(previewLink(fromSide, toSide), fromPoint, toPoint, drag.pathType);
   drag.path.setAttribute('d', previewPathData(points, segments, drag.pathType, drag.strokeWidth));
 }

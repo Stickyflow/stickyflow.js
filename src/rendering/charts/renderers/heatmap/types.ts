@@ -1,4 +1,4 @@
-import type { ChartSeries, ChartZone } from '../../../../model/charts';
+import type { ChartSeries, ChartZone } from '../../../../model/chart';
 
 export interface HeatmapGrid {
   x: number;

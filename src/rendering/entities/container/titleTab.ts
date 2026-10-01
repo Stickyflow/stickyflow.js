@@ -1,11 +1,11 @@
+import type { Bounds, RenderNode } from '../../scene';
+import { boxBounds, DEFAULT_FONT } from '../../scene';
 import {
   bottomRoundedRectPath,
   leftRoundedRectPath,
   rightRoundedRectPath,
   topRoundedRectPath,
-} from '../../../model/geometry/roundedRect';
-import type { Bounds, RenderNode } from '../../scene';
-import { boxBounds, DEFAULT_FONT } from '../../scene';
+} from '../../scene/roundedRectPath';
 
 export type TitleTabPosition = 'top' | 'bottom' | 'left' | 'right';
 

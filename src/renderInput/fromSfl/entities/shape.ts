@@ -1,4 +1,4 @@
-import type { ShapeType } from '../../../model/shapes';
+import type { ShapeType } from '../../../model/shape';
 import { decodeColor, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import {
@@ -45,8 +45,8 @@ export function shapeObject(e: SflEntityOut) {
     shadowStyle: decodeShadow(p.shadow),
     dash: dashArray(p.dash),
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
-    shapeStyle: p.opacity !== undefined ? { opacity: numOf(p.opacity) } : undefined,
-    parent_frame_id: e.parentFrameId,
+    opacity: numOf(p.opacity),
+    parentFrameId: e.parentFrameId,
     order: e.order,
   };
 }

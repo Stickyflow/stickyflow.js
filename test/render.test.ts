@@ -7,6 +7,27 @@ import { render, renderCanvas, sflToCanvasState } from '../src/index';
 // import here — so a green run is itself the headless-portability proof.
 
 describe('render core runs headless through the package (real app source)', () => {
+  it('does not render a shape whose canonical visibility flag is false', () => {
+    const input = {
+      shapes: [
+        {
+          id: 'hidden',
+          shapeType: 'rectangle',
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 50,
+          isVisible: false,
+        },
+      ],
+      frames: [],
+      swimlanes: [],
+      links: [],
+    } as unknown as RenderInput;
+
+    expect(renderCanvas(input).svg).not.toContain('sf-shape-hidden');
+  });
+
   it('renders every supported shape type as vector content and escapes text', () => {
     const types = [
       'rectangle',
@@ -28,7 +49,6 @@ describe('render core runs headless through the package (real app source)', () =
     const input = {
       shapes: types.map((shapeType, index) => ({
         id: String(index),
-        boardId: 'board',
         shapeType,
         x: index * 150,
         y: 20,
@@ -38,11 +58,10 @@ describe('render core runs headless through the package (real app source)', () =
         fillColor: '#fff',
         strokeColor: '#123456',
         strokeWidth: 2,
-        layer_group: 'default',
-        order_key: `a${index}`,
-        is_visible: true,
-        is_locked: false,
-        createdAt: '',
+        layerGroup: 'default',
+        orderKey: `a${index}`,
+        isVisible: true,
+        isLocked: false,
       })),
       frames: [],
       swimlanes: [],
@@ -71,18 +90,16 @@ describe('render core runs headless through the package (real app source)', () =
       shapes: [
         {
           id: 'mystery',
-          boardId: 'board',
           shapeType: 'not_a_real_shape',
           x: 0,
           y: 0,
           width: 120,
           height: 60,
           text: 'unknown shape',
-          layer_group: 'default',
-          order_key: 'a',
-          is_visible: true,
-          is_locked: false,
-          createdAt: '',
+          layerGroup: 'default',
+          orderKey: 'a',
+          isVisible: true,
+          isLocked: false,
         },
       ],
       frames: [],
@@ -106,18 +123,16 @@ describe('render core runs headless through the package (real app source)', () =
       shapes: [
         {
           id: 'unfilled',
-          boardId: 'board',
           shapeType: 'pill',
           x: 0,
           y: 0,
           width: 120,
           height: 60,
           text: 'no fill set',
-          layer_group: 'default',
-          order_key: 'a',
-          is_visible: true,
-          is_locked: false,
-          createdAt: '',
+          layerGroup: 'default',
+          orderKey: 'a',
+          isVisible: true,
+          isLocked: false,
         },
       ],
       frames: [],
@@ -152,10 +167,10 @@ describe('render core runs headless through the package (real app source)', () =
           ],
         },
       },
-      layer_group: 'default',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'default',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -182,7 +197,6 @@ describe('render core runs headless through the package (real app source)', () =
     };
     const base = (id: string, shapeType: string, x: number) => ({
       id,
-      boardId: 'board',
       shapeType,
       x,
       y: 20,
@@ -190,11 +204,10 @@ describe('render core runs headless through the package (real app source)', () =
       height: 80,
       strokeColor: '#123456',
       strokeWidth: 2,
-      layer_group: 'default',
-      order_key: `a${x}`,
-      is_visible: true,
-      is_locked: false,
-      createdAt: '',
+      layerGroup: 'default',
+      orderKey: `a${x}`,
+      isVisible: true,
+      isLocked: false,
     });
     const input = {
       shapes: [
@@ -232,10 +245,10 @@ describe('render core runs headless through the package (real app source)', () =
       startMarker: 'triangle',
       endMarker: 'zero_many',
       style: { pathType: 'straight', color: '#334155', startLabel: '1', endLabel: '0..*' },
-      layer_group: 'content',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'content',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -265,10 +278,10 @@ describe('render core runs headless through the package (real app source)', () =
       text: 'HTTP Request',
       showText: true,
       style: { pathType: 'straight', color: '#334155' },
-      layer_group: 'content',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'content',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -304,10 +317,10 @@ describe('render core runs headless through the package (real app source)', () =
       text: 'retry',
       showText: true,
       style: { pathType: 'straight', color: '#334155', strokeStyle: 'dashed' },
-      layer_group: 'content',
-      order_key: 'a',
-      is_visible: true,
-      is_locked: false,
+      layerGroup: 'content',
+      orderKey: 'a',
+      isVisible: true,
+      isLocked: false,
     };
     const input = {
       shapes: [],
@@ -614,7 +627,7 @@ Model M {
   it('applies a gradient stroke and opacity declared on a shape via SFL', () => {
     // Both used to be dropped: shape stroke passed through raw (so a gradient
     // string never became a paint), and SFL `opacity` was never mapped onto the
-    // shapeStyle.opacity field the renderer actually reads.
+    // Shape opacity is applied to the rendered scene style.
     const SFL_SHAPE = `sfl 1.2
 
 Model M {

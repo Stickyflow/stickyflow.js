@@ -12,11 +12,11 @@ function outerBorder(context: TableRenderContext): RenderNode {
     y: context.table.y,
     width: context.table.width,
     height: context.height,
-    rx: context.table.corner_radius,
+    rx: context.table.cornerRadius,
     style: simpleContainerStyle(
       'transparent',
-      context.table.stroke_color,
-      context.table.stroke_width,
+      context.table.strokeColor,
+      context.table.strokeWidth,
       context.table.dash,
     ),
   };
@@ -32,17 +32,17 @@ function innerBorder(context: TableRenderContext): RenderNode {
     y: context.table.y + context.doubleBorderGap,
     width: context.table.width - context.doubleBorderGap * 2,
     height: context.height - context.doubleBorderGap * 2,
-    rx: Math.max(0, context.table.corner_radius - context.doubleBorderGap),
-    style: simpleContainerStyle('transparent', context.table.stroke_color, context.table.stroke_width, []),
+    rx: Math.max(0, context.table.cornerRadius - context.doubleBorderGap),
+    style: simpleContainerStyle('transparent', context.table.strokeColor, context.table.strokeWidth, []),
   };
 }
 
 export function renderTableBorders(context: TableRenderContext): RenderNode[] {
-  if (context.table.border_style === 'none') {
+  if (context.table.borderStyle === 'none') {
     return [];
   }
   const nodes = [outerBorder(context)];
-  if (context.table.border_style === 'double') {
+  if (context.table.borderStyle === 'double') {
     nodes.push(innerBorder(context));
   }
   return nodes;

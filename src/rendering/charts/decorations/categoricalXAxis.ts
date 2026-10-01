@@ -1,16 +1,16 @@
-import type { Chart } from '../../../model/charts';
+import type { TypedChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
 import type { ChartLayout } from './layout';
 
-function categoryLabels(chart: Chart, count: number): string[] {
+function categoryLabels(chart: TypedChart, count: number): string[] {
   if (chart.config?.categories?.length) {
     return chart.config.categories;
   }
   return Array.from({ length: count }, (_value, index) => String(index + 1));
 }
 
-export function buildCategoricalXAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
+export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayout, order: number): RenderNode[] {
   const count = Math.max(1, ...chart.series.map(series => series.values.length));
   const slotWidth = layout.plot.width / count;
   const labels = categoryLabels(chart, count);
@@ -34,7 +34,7 @@ export function buildCategoricalXAxisTicks(chart: Chart, layout: ChartLayout, or
   });
 }
 
-export function buildSeriesXAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
+export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, order: number): RenderNode[] {
   const count = Math.max(1, chart.series.length);
   const slotWidth = layout.plot.width / count;
 

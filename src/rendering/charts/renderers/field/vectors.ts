@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
 import { CHART_COLORS, mapChartValue } from '../../primitives';
@@ -24,10 +24,10 @@ function createVectorNode(
 ): RenderNode {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const [x, y, angle, magnitude] = vector;
-  const startX = plot.x + mapChartValue(x, chart.axis_x, plot.width);
-  const startY = plot.y + plot.height - mapChartValue(y, chart.axis_y, plot.height);
-  const endX = plot.x + mapChartValue(x + Math.cos(angle) * magnitude, chart.axis_x, plot.width);
-  const endY = plot.y + plot.height - mapChartValue(y + Math.sin(angle) * magnitude, chart.axis_y, plot.height);
+  const startX = plot.x + mapChartValue(x, chart.axisX, plot.width);
+  const startY = plot.y + plot.height - mapChartValue(y, chart.axisY, plot.height);
+  const endX = plot.x + mapChartValue(x + Math.cos(angle) * magnitude, chart.axisX, plot.width);
+  const endY = plot.y + plot.height - mapChartValue(y + Math.sin(angle) * magnitude, chart.axisY, plot.height);
   return {
     type: 'path',
     id: `chart-field-vector-${chart.id}-${seriesId}-${vectorIndex}`,

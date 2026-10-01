@@ -1,4 +1,4 @@
-import type { Chart, ChartRule } from '../../../model/charts';
+import type { Chart, ChartRule } from '../../../model/chart';
 import type { Bounds, RenderNode } from '../../scene';
 import { finite } from '../../scene';
 import { chartText, mapChartValue } from '../primitives';
@@ -34,8 +34,8 @@ function createChartRuleMarks(render: ChartRulesRender): ChartRuleMark[] {
     const labelOrder = rule.text ? nextOrder++ : undefined;
     return {
       rule,
-      color: rule.color || render.chart.stroke_color || '#475569',
-      y: render.plot.y + render.plot.height - mapChartValue(rule.at, render.chart.axis_y, render.plot.height),
+      color: rule.color || render.chart.strokeColor || '#475569',
+      y: render.plot.y + render.plot.height - mapChartValue(rule.at, render.chart.axisY, render.plot.height),
       lineOrder,
       labelOrder,
     };
@@ -62,14 +62,14 @@ function createChartRuleLine(render: ChartRulesRender, mark: ChartRuleMark): Ren
     style: {
       fill: { kind: 'none' },
       stroke: { kind: 'solid', color: mark.color },
-      strokeWidth: mark.rule.stroke_width ?? 1,
+      strokeWidth: mark.rule.strokeWidth ?? 1,
       dash: mark.rule.dash,
     },
   };
 }
 
 function createChartRuleLabel(render: ChartRulesRender, mark: ChartRuleMark): RenderNode {
-  const fontSize = Math.max(9, finite(render.chart.font_size, 12) - 2);
+  const fontSize = Math.max(9, finite(render.chart.fontSize, 12) - 2);
   return {
     ...chartText({
       id: `chart-rule-label-${render.chart.id}-${mark.rule.id}`,

@@ -1,7 +1,7 @@
-import type { ChartSeries } from '../../../../model/charts';
-import { wrapText } from '../../../../model/geometry/text';
+import type { ChartSeries } from '../../../../model/chart';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
+import { wrapText } from '../../../scene/textLayout';
 import {
   barShapePath,
   CHART_COLORS,
@@ -55,7 +55,7 @@ function createColumnBackdrop(context: ChartRenderContext, layout: MekkoLayout, 
     order: nextOrder(),
     bounds,
     d: barShapePath(column.x, layout.grid.y, column.width, layout.grid.height, cornerRadius),
-    style: { fill: paint(chart.grid_color ?? '#e2e8f0', diagnostics, chart.id), opacity: BACKDROP_OPACITY },
+    style: { fill: paint(chart.gridColor ?? '#e2e8f0', diagnostics, chart.id), opacity: BACKDROP_OPACITY },
   };
 }
 
@@ -108,7 +108,7 @@ function createSegmentNode(
   nextColor: NonNullable<ChartSeries['color']> | undefined,
 ): RenderNode {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
@@ -140,8 +140,8 @@ function createSegmentNode(
     d: barShapePath(x, y, width, height, radius),
     style: {
       fill,
-      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
-      strokeWidth: finite(chart.grid_width, 1),
+      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
+      strokeWidth: finite(chart.gridWidth, 1),
       shadow,
       clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },

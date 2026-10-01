@@ -12,7 +12,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
   const barWidth = Math.max(1, slotWidth - 8);
   const cornerRadius = chart.config?.barCornerRadius ?? 2;
   const outerSeriesIndex = mode === 'waterfall' ? null : chart.series.length - 1;
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;

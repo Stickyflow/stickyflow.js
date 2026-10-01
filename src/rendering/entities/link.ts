@@ -1,6 +1,5 @@
-import type { MeasureTextFactory } from '../../model/geometry/text';
 import type { RenderInput } from '../../renderInput/types';
-import type { RenderNode } from '../scene';
+import type { MeasureTextFactory, RenderNode } from '../scene';
 import { renderEndpointLabels } from './link/endpointLabels';
 import { renderMainLabel } from './link/label';
 import { createLinkRenderContext } from './link/layout';
@@ -12,7 +11,7 @@ export function buildLink(
   index: number,
   measureText?: MeasureTextFactory,
 ): RenderNode[] {
-  if (item.link.is_visible === false || item.link.isVisible === false) {
+  if (item.link.isVisible === false) {
     return [];
   }
   const context = createLinkRenderContext(item, index, measureText);

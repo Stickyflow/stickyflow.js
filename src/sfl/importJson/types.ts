@@ -1,10 +1,10 @@
-import type { Chart } from '../../model/charts';
-import type { Frame } from '../../model/frames';
-import type { Link } from '../../model/links';
-import type { FreeformPath } from '../../model/paths';
-import type { Shape } from '../../model/shapes';
-import type { Swimlane } from '../../model/swimlanes';
-import type { Table } from '../../model/tables';
+import type { Chart } from '../../model/chart';
+import type { Frame } from '../../model/frame';
+import type { Link } from '../../model/link';
+import type { FreeformPath } from '../../model/path';
+import type { Shape } from '../../model/shape';
+import type { Swimlane } from '../../model/swimlane';
+import type { Table } from '../../model/table';
 import type { SflDiagnostic } from '../sflToCanvasState';
 
 export interface ImportBuckets {

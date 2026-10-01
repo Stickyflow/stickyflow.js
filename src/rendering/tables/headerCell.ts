@@ -4,11 +4,10 @@ import { renderCellHitArea } from './cellHitArea';
 import type { PositionedTableColumn, TableRenderContext } from './types';
 
 export function renderHeaderCell(context: TableRenderContext, column: PositionedTableColumn): RenderNode[] {
-  if (!context.table.show_header) {
+  if (!context.table.showHeader) {
     return [];
   }
-  const columnsBlockName = context.table.columns_block_name;
-  const prop = columnsBlockName ? `Columns[${columnsBlockName}].Column[${column.id}].text` : undefined;
+  const prop = context.table.propertyPaths?.header[column.id];
   return [
     ...renderCellHitArea(context, `table-header-hit-${context.table.id}-${column.id}`, prop, {
       x: column.x,
@@ -26,10 +25,10 @@ export function renderHeaderCell(context: TableRenderContext, column: Positioned
       width: Math.max(0, column.width - 12),
       height: context.rowHeight,
       lines: [column.label],
-      fontFamily: context.table.font_family ?? DEFAULT_FONT,
-      fontSize: context.table.font_size,
-      fontWeight: context.table.font_weight,
-      color: context.table.text_color,
+      fontFamily: context.table.fontFamily ?? DEFAULT_FONT,
+      fontSize: context.table.fontSize,
+      fontWeight: context.table.fontWeight,
+      color: context.table.textColor,
       align: 'left',
       verticalAlign: 'middle',
       lineHeight: 1.2,

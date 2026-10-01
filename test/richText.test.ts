@@ -5,7 +5,7 @@ import {
   parseRichText,
   wrapRichLine,
   wrapRichText,
-} from '../src/model/geometry/richText';
+} from '../src/rendering/scene/richTextLayout';
 
 // Ported 1:1 from stickyflow-atlas's frontend/src/entities/shapes/ui/text/richText.test.ts
 // (the reference implementation this file mirrors) - same test cases, same

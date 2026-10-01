@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
 import { resolveChartShadow } from '../../primitives';
@@ -26,7 +26,7 @@ export function createLinePath(
       stroke: paint(color, diagnostics, chart.id),
       strokeWidth: 2,
       lineJoin: 'round',
-      shadow: resolveChartShadow(chart.shadow_style),
+      shadow: resolveChartShadow(chart.shadowStyle),
     },
   };
 }

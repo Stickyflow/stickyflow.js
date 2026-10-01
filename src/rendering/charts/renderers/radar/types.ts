@@ -1,3 +1,7 @@
+import type { RadarChart, RadialChart } from '../../../../model/chart';
+
+export type RadarFamilyChart = RadarChart | RadialChart;
+
 export interface RadarPoint {
   x: number;
   y: number;

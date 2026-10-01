@@ -1,4 +1,4 @@
-import type { Lane, Swimlane } from '../../../../model/swimlanes';
+import type { Lane, Swimlane } from '../../../../model/swimlane';
 import type { Bounds } from '../../../scene';
 
 export interface PositionedLane extends Lane {

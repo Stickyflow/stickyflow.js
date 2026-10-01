@@ -1,5 +1,5 @@
-import type { ChartRamp } from '../../../model/charts';
-import { interpolateHexColorStops } from '../../../model/colorInterpolation';
+import type { ChartRamp } from '../../../model/chart';
+import { interpolateHexColorStops } from '../../../model/color';
 
 const RAMP_FALLBACK_COLOR = '#94a3b8';
 

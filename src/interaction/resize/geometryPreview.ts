@@ -1,14 +1,14 @@
+import type { Rect } from '../../model/geometry/types';
+import type { ShapeType } from '../../model/shape';
+import { localShapePath, pillCornerRadius } from '../../rendering/entities/shape/geometry/pathCalculation';
+import { freeformPathData } from '../../rendering/scene/freeformPath';
+import { cornersRoundedRectPath, type RectCornerRadii } from '../../rendering/scene/roundedRectPath';
 import {
   CORNER_RADIUS_ATTR,
   SQUARE_CORNER_ATTR,
   SYMBOL_POINTS_ATTR,
   SYMBOL_TENSION_ATTR,
-} from '../../model/domContractAttributes';
-import { cornersRoundedRectPath, type RectCornerRadii } from '../../model/geometry/roundedRect';
-import type { Rect } from '../../model/geometry/router';
-import { localShapePath, pillCornerRadius } from '../../model/geometry/shapes';
-import type { ShapeType } from '../../model/shapes';
-import { freeformPathData } from '../../rendering/scene/freeformPath';
+} from '../../svgContract/attributes';
 import { recenterRotation } from './rotation';
 
 function applyRectBounds(rect: SVGGraphicsElement, kind: string | null, bounds: Rect): void {

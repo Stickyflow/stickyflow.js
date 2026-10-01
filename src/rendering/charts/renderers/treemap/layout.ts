@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import { finite } from '../../../scene';
 import { axisBands, DEFAULT_HEATMAP_ZONES, zoneColorAtValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';
@@ -6,14 +6,14 @@ import type { TreemapLayout } from './types';
 
 export function createTreemapLayout(context: ChartRenderContext): TreemapLayout {
   const { chart, plot, showLegend } = context;
-  const fontSize = Math.max(9, finite(chart.font_size, 12));
+  const fontSize = Math.max(9, finite(chart.fontSize, 12));
   const legendPosition: 'bottom' | 'left' | 'right' =
-    chart.legend_position === 'left' ? 'left' : chart.legend_position === 'right' ? 'right' : 'bottom';
+    chart.legendPosition === 'left' ? 'left' : chart.legendPosition === 'right' ? 'right' : 'bottom';
   const legendHeight = showLegend && legendPosition === 'bottom' ? 48 : 0;
   const cellGap = Math.max(0, finite(chart.config?.cellGap, 0));
   return {
     leaves: chart.series,
-    bands: axisBands(chart.axis_y),
+    bands: axisBands(chart.axisY),
     zones: chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES,
     fontSize,
     smallFontSize: Math.max(8, fontSize - 1),

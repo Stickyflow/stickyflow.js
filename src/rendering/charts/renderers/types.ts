@@ -1,10 +1,10 @@
-import type { Chart } from '../../../model/charts';
+import type { TypedChart } from '../../../model/chart';
 import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 
 export type StackedMode = 'true' | 'percent' | 'waterfall';
 
-export interface ChartRenderContext {
-  chart: Chart;
+export interface ChartRenderContext<TChart extends TypedChart = TypedChart> {
+  chart: TChart;
   plot: { x: number; y: number; width: number; height: number };
   bounds: Bounds;
   diagnostics: RenderDiagnostic[];

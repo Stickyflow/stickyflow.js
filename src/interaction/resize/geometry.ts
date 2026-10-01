@@ -1,5 +1,5 @@
 import type { ResizeHandle } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/types';
 import { minHeightForText, minWidthForText, type TextFit } from './textFit';
 
 export const MIN_SIZE = 10;

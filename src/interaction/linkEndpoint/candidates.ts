@@ -1,5 +1,5 @@
 import { resolveOwner } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/types';
 import type { OwnerRef } from '../../viewer';
 
 export interface EndpointCandidate {

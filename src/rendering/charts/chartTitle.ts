@@ -1,4 +1,4 @@
-import type { Chart } from '../../model/charts';
+import type { Chart } from '../../model/chart';
 import type { Bounds, RenderNode } from '../scene';
 import { finite } from '../scene';
 import type { ChartRenderOrder } from './chartRenderOrder';
@@ -26,7 +26,7 @@ export function buildChartTitle(
         chart,
       }),
       fontWeight: 'bold',
-      fontSize: Math.max(10, finite(chart.font_size, 12)) + 2,
+      fontSize: Math.max(10, finite(chart.fontSize, 12)) + 2,
       prop: CHART_TITLE_PROP,
     },
   ];

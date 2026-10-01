@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderInput } from '../src/index';
 import { renderCanvas } from '../src/index';
-import type { Shape } from '../src/model/shapes';
+import type { Shape } from '../src/model/shape';
 
 // §1.4 Infographics: inline `**bold**` runs inside a Shape's own
 // `text:` property (buildRenderScene.ts's buildShape + renderSceneToSvg.ts's
@@ -11,7 +11,6 @@ import type { Shape } from '../src/model/shapes';
 const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
   ({
     id: 'e',
-    boardId: 'board',
     shapeType: 'rectangle',
     x: 0,
     y: 0,
@@ -21,11 +20,10 @@ const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
     fillColor: '#eef2ff',
     strokeColor: '#123456',
     strokeWidth: 2,
-    layer_group: 'default',
-    order_key: 'a',
-    is_visible: true,
-    is_locked: false,
-    createdAt: '',
+    layerGroup: 'default',
+    orderKey: 'a',
+    isVisible: true,
+    isLocked: false,
     ...extra,
   }) as Shape;
 
@@ -97,10 +95,10 @@ describe('Shape label inline **bold** rendering', () => {
             showText: true,
             text: '**bold** label',
             style: { pathType: 'straight', color: '#334155' },
-            layer_group: 'content',
-            order_key: 'a',
-            is_visible: true,
-            is_locked: false,
+            layerGroup: 'content',
+            orderKey: 'a',
+            isVisible: true,
+            isLocked: false,
           },
           from: { x: 220, y: 40 },
           to: { x: 300, y: 40 },

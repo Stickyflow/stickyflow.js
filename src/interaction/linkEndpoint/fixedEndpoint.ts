@@ -1,6 +1,7 @@
 import type { LinkEndpoint } from '../../domContract';
 import { findOwnerNode, isPrimary } from '../../domContract';
-import { chooseSide, type Side } from '../../model/geometry/router';
+import type { Side } from '../../model/geometry/types';
+import { chooseSide } from './sideSelection';
 
 export interface FixedEndpoint {
   point: { x: number; y: number };

@@ -1,4 +1,4 @@
-import type { Chart, ChartSeries } from '../../../model/charts';
+import type { ChartSeries, TypedChart } from '../../../model/chart';
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite, freeformPathData, paint } from '../../scene';
 import { CHART_COLORS, chartText, DEFAULT_ZONE_FILL, mapChartValue } from '../primitives';
@@ -36,7 +36,7 @@ function renderCustomSeries(context: ChartRenderContext, series: ChartSeries, se
   });
 }
 
-function isHorizontal(chart: Chart): boolean {
+function isHorizontal(chart: TypedChart): boolean {
   return chart.config?.orientation === 'horizontal';
 }
 
@@ -47,19 +47,19 @@ function customSeriesValues(context: ChartRenderContext, series: ChartSeries): A
     return (series.values as number[][]).map(value => [value[0], value[1]]);
   }
   if (isHorizontal(chart)) {
-    return (series.values as number[]).map((value, index) => [value, chart.axis_y.min + index * chart.axis_y.step]);
+    return (series.values as number[]).map((value, index) => [value, chart.axisY.min + index * chart.axisY.step]);
   }
-  return (series.values as number[]).map((value, index) => [chart.axis_x.min + index * chart.axis_x.step, value]);
+  return (series.values as number[]).map((value, index) => [chart.axisX.min + index * chart.axisX.step, value]);
 }
 
-function metricComponent(chart: Chart, point: [number, number]): number {
+function metricComponent(chart: TypedChart, point: [number, number]): number {
   return isHorizontal(chart) ? point[0] : point[1];
 }
 
 function customPointPosition(context: ChartRenderContext, value: [number, number]): CustomChartPoint {
   return {
-    x: context.plot.x + mapChartValue(value[0], context.chart.axis_x, context.plot.width),
-    y: context.plot.y + context.plot.height - mapChartValue(value[1], context.chart.axis_y, context.plot.height),
+    x: context.plot.x + mapChartValue(value[0], context.chart.axisX, context.plot.width),
+    y: context.plot.y + context.plot.height - mapChartValue(value[1], context.chart.axisY, context.plot.height),
   };
 }
 
@@ -68,7 +68,7 @@ function customSeriesStyle(context: ChartRenderContext, series: ChartSeries, ser
   return {
     fill: paint(color, context.diagnostics, context.chart.id),
     stroke: series.stroke ? { kind: 'solid', color: series.stroke } : undefined,
-    strokeWidth: series.stroke ? finite(series.stroke_width, 1) : undefined,
+    strokeWidth: series.stroke ? finite(series.strokeWidth, 1) : undefined,
   };
 }
 
@@ -106,7 +106,7 @@ function createCustomPointMark(context: ChartRenderContext, mark: CustomMark): R
   };
 }
 
-function customMarkId(chart: Chart, series: ChartSeries, valueIndex: number): string {
+function customMarkId(chart: TypedChart, series: ChartSeries, valueIndex: number): string {
   return `chart-custom-mark-${chart.id}-${series.id}-${valueIndex}`;
 }
 
@@ -143,7 +143,7 @@ function renderConnectedPairs(context: ChartRenderContext): RenderNode[] {
         valueIndex: index,
         point: beforePoint,
         style: {
-          fill: paint(chart.grid_color ?? '#e2e8f0', context.diagnostics, chart.id),
+          fill: paint(chart.gridColor ?? '#e2e8f0', context.diagnostics, chart.id),
           stroke: { kind: 'solid', color: HOLLOW_POINT_STROKE },
           strokeWidth: 1.5,
         },
@@ -220,6 +220,6 @@ function createConnectorLabel(
       chart,
       align: horizontal ? 'left' : 'center',
     }),
-    fontSize: Math.max(9, finite(chart.font_size, 12)) - 2,
+    fontSize: Math.max(9, finite(chart.fontSize, 12)) - 2,
   };
 }

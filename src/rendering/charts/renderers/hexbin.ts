@@ -1,6 +1,7 @@
-import { computeHexBins } from '../../../model/geometry/hexbin';
+import type { HexbinChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { paint } from '../../scene';
+import { computeHexBins } from '../geometry';
 import { CHART_COLORS, DEFAULT_HEX_RADIUS, mapChartValue, resolveChartShadow } from '../primitives';
 import type { ChartRenderContext } from './types';
 
@@ -13,11 +14,11 @@ function hexPath(cx: number, cy: number, radius: number): string {
   return `${points.join(' ')} Z`;
 }
 
-export function renderHexbin(context: ChartRenderContext): RenderNode[] {
+export function renderHexbin(context: ChartRenderContext<HexbinChart>): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const nodes: RenderNode[] = [];
   const hexRadius = Math.max(1, chart.config?.hexRadius ?? DEFAULT_HEX_RADIUS);
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
@@ -25,10 +26,10 @@ export function renderHexbin(context: ChartRenderContext): RenderNode[] {
     const explicit = series.values.length > 0 && Array.isArray(series.values[0]);
     const pairs = explicit
       ? (series.values as [number, number][])
-      : (series.values as number[]).map((y, i) => [chart.axis_x.min + i * chart.axis_x.step, y] as [number, number]);
+      : (series.values as number[]).map((y, i) => [chart.axisX.min + i * chart.axisX.step, y] as [number, number]);
     const pixelPoints = pairs.map(([vx, vy]) => ({
-      x: mapChartValue(vx, chart.axis_x, plot.width),
-      y: plot.height - mapChartValue(vy, chart.axis_y, plot.height),
+      x: mapChartValue(vx, chart.axisX, plot.width),
+      y: plot.height - mapChartValue(vy, chart.axisY, plot.height),
     }));
     const bins = computeHexBins(pixelPoints, hexRadius);
     const maxCount = Math.max(1, ...bins.map(bin => bin.count));

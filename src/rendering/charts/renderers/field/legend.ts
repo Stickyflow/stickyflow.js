@@ -1,4 +1,4 @@
-import type { ChartRamp } from '../../../../model/charts';
+import type { ChartRamp } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { chartText, formatFieldValue } from '../../primitives';
 import type { ChartRenderContext } from '../types';

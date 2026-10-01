@@ -1,10 +1,11 @@
-import { CHART_TYPES, type ChartType, CIRCULAR_GRID_CHART_TYPES, isChartType } from '../../model/charts';
+import { CHART_TYPES, type ChartType, isChartType } from '../../model/chart';
 import type { SflBlock, SflDocument } from '../ast';
 import { childBlocks, contentChildren, directProperties, styleProperties } from './blockEntries';
 import type { SflDiagnostic } from './types';
 import { asString } from './valueAccess';
 
 const NATIVE_CIRCULAR_CHART_TYPES: ReadonlySet<ChartType> = new Set(['radar', 'radial']);
+const OPTIONAL_CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'custom', 'hexbin']);
 
 export function collectUnsupportedChartTypes(doc: SflDocument): SflDiagnostic[] {
   const diagnostics: SflDiagnostic[] = [];
@@ -69,14 +70,14 @@ export function collectUnsupportedGridShapes(doc: SflDocument): SflDiagnostic[] 
       const gridShape = asString(styleProperties(block).get('gridShape'));
       if (
         gridShape === 'circle' &&
-        !CIRCULAR_GRID_CHART_TYPES.has(chartType) &&
+        !OPTIONAL_CIRCULAR_GRID_CHART_TYPES.has(chartType) &&
         !NATIVE_CIRCULAR_CHART_TYPES.has(chartType)
       ) {
         diagnostics.push({
           severity: 'warning',
           code: 'unsupported-grid-shape',
           entityId: block.name,
-          message: `gridShape: circle isn't supported on '${chartType}' — drawn with the standard rectangular grid instead. Supported: ${[...CIRCULAR_GRID_CHART_TYPES].join(', ')}.`,
+          message: `gridShape: circle isn't supported on '${chartType}' — drawn with the standard rectangular grid instead. Supported: ${[...OPTIONAL_CIRCULAR_GRID_CHART_TYPES].join(', ')}.`,
         });
       }
     }

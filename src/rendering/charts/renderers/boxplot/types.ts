@@ -35,4 +35,4 @@ export interface BoxplotSeriesMark {
   geometry: BoxplotGeometry;
 }
 
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';

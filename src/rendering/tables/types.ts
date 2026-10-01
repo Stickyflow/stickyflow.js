@@ -1,4 +1,5 @@
-import type { Table, TableColumn } from '../../model/tables';
+import type { TableColumn } from '../../model/table';
+import type { RenderInputTable } from '../../renderInput/types';
 import type { Bounds, SceneStyle } from '../scene';
 
 export interface PositionedTableColumn extends TableColumn {
@@ -7,7 +8,7 @@ export interface PositionedTableColumn extends TableColumn {
 }
 
 export interface TableRenderContext {
-  table: Table;
+  table: RenderInputTable;
   order: number;
   rowHeight: number;
   headerHeight: number;
@@ -22,7 +23,7 @@ export interface TableRenderContext {
 export function tableGridStyle(context: TableRenderContext): SceneStyle {
   return {
     fill: { kind: 'none' },
-    stroke: { kind: 'solid', color: context.table.grid_color ?? context.table.stroke_color },
-    strokeWidth: context.table.grid_width ?? 1,
+    stroke: { kind: 'solid', color: context.table.gridColor ?? context.table.strokeColor },
+    strokeWidth: context.table.gridWidth ?? 1,
   };
 }

@@ -1,5 +1,5 @@
-import type { SankeyLayoutLink } from '../../../../model/geometry/sankey';
 import type { Bounds, RenderNode, ScenePaint } from '../../../scene';
+import type { SankeyLayoutLink } from '../../geometry/sankey';
 import { DEFAULT_ZONE_FILL, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { SankeyRenderData } from './types';
@@ -20,7 +20,7 @@ interface SankeyLinkRibbon {
 }
 
 export function renderSankeyLinks(context: ChartRenderContext, data: SankeyRenderData): RenderNode[] {
-  const shadow = resolveChartShadow(context.chart.shadow_style);
+  const shadow = resolveChartShadow(context.chart.shadowStyle);
   const gradient = Boolean(context.chart.config?.linkGradient);
   const { plot } = context;
   const clipPath = shadow

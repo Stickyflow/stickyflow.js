@@ -8,8 +8,8 @@ export function classifyFieldData(context: ChartRenderContext): FieldData {
   const vectorSeries = chart.series.filter(series => tupleSize(series.values[0]) === 4);
   const scalarSamples = scalarSeries.flatMap(series =>
     (series.values as [number, number, number][]).map(([x, y, value]) => ({
-      x: mapChartValue(x, chart.axis_x, plot.width),
-      y: plot.height - mapChartValue(y, chart.axis_y, plot.height),
+      x: mapChartValue(x, chart.axisX, plot.width),
+      y: plot.height - mapChartValue(y, chart.axisY, plot.height),
       value,
     })),
   );

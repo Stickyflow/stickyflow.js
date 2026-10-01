@@ -8,7 +8,7 @@ export function createMekkoLayout(context: ChartRenderContext): MekkoLayout {
   const labels = mekkoColumnLabels(context);
   const labelGutterWidth = context.showLabels ? 30 : 0;
   const grid = createMekkoGrid(context, labelGutterWidth);
-  const fontSize = Math.max(9, finite(context.chart.font_size, 12));
+  const fontSize = Math.max(9, finite(context.chart.fontSize, 12));
 
   return {
     columns: createMekkoColumns(context, grid, labels),

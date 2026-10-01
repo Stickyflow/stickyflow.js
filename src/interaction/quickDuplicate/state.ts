@@ -1,6 +1,7 @@
 import type { QuickDuplicateDirection } from '../../domContract';
 import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
-import { portToPoint, type Rect, type Side } from '../../model/geometry/router';
+import { pointAtPort } from '../../model/geometry/ports';
+import type { Rect, Side } from '../../model/geometry/types';
 import type { OwnerRef } from '../../viewer';
 import { LinkGhost } from '../linkGhost/ghost';
 
@@ -58,7 +59,7 @@ export function createQuickDuplicateDragState(
   return {
     sourceOwner,
     direction,
-    fixedPoint: portToPoint(primary.getBBox(), { side: direction, offset: 0.5 }),
+    fixedPoint: pointAtPort(primary.getBBox(), { side: direction, offset: 0.5 }),
     previewPath,
     ghost: new LinkGhost(svg, previewPath),
     candidates: duplicateCandidates(svg, sourceId),

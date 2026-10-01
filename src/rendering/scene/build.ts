@@ -1,4 +1,3 @@
-import type { MeasureTextFactory } from '../../model/geometry/text';
 import type { RenderInput } from '../../renderInput/types';
 import { buildChart } from '../charts';
 import { buildFrame, buildSwimlane } from '../entities/containers';
@@ -8,6 +7,7 @@ import { buildShape } from '../entities/shape';
 import { buildTable } from '../tables';
 import { EMPTY_BOUNDS } from './bounds';
 import { tag } from './tagging';
+import type { MeasureTextFactory } from './textMetrics';
 import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
 
 function sceneBounds(nodes: RenderNode[]): Bounds {
@@ -39,7 +39,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ),
     ...(input.paths ?? []).flatMap((path, i) => tag(buildFreeformPath(path, i), 'path', path.id, 'path', 'Path')),
     ...(input.charts ?? []).flatMap((chart, i) =>
-      tag(buildChart(chart, i, diagnostics), 'chart', chart.id, chart.chart_type, chart.title ?? 'Chart'),
+      tag(buildChart(chart, i, diagnostics), 'chart', chart.id, chart.chartType, chart.title ?? 'Chart'),
     ),
     ...input.links.flatMap((item, i) =>
       tag(
@@ -57,7 +57,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
         shape.id,
         shape.shapeType,
         shape.text || shape.shapeType,
-        shape.parent_frame_id ?? undefined,
+        shape.parentFrameId ?? undefined,
       ),
     ),
   ].sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

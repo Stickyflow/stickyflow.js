@@ -1,4 +1,4 @@
-import type { ChartSeries } from '../../../../model/charts';
+import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import {
@@ -59,7 +59,7 @@ function createSeriesBarMarks(
   const seriesColor = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
   return series.values.map((value, valueIndex) => {
     const numericValue = Array.isArray(value) ? value[1] : value;
-    const height = Math.max(0, mapChartValue(numericValue, chart.axis_y, plot.height));
+    const height = Math.max(0, mapChartValue(numericValue, chart.axisY, plot.height));
     return {
       seriesId: series.id,
       valueIndex,
@@ -110,7 +110,7 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
   const fill = paint(mark.color, diagnostics, chart.id);
   const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
   const strokeWidth = finite(chart.config?.barBorderWidth, 0);
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
 
   const shadowCaster: RenderNode | undefined = shadow
     ? {
@@ -157,10 +157,10 @@ function createGroupedBarError(context: ChartRenderContext, mark: GroupedBarMark
     bounds,
     geometry: {
       centerX: mark.frame.x + mark.frame.width / 2,
-      startY: plot.y + plot.height - mapChartValue(lower, chart.axis_y, plot.height),
-      endY: plot.y + plot.height - mapChartValue(upper, chart.axis_y, plot.height),
+      startY: plot.y + plot.height - mapChartValue(lower, chart.axisY, plot.height),
+      endY: plot.y + plot.height - mapChartValue(upper, chart.axisY, plot.height),
     },
-    color: chart.text_color ?? '#0f172a',
+    color: chart.textColor ?? '#0f172a',
     valueReference: { seriesId: mark.seriesId, valueIndex: mark.valueIndex },
   });
 }

@@ -8,7 +8,7 @@ const PERCENT_TICKS = [0, 25, 50, 75, 100];
 
 export function renderMekkoGrid(context: ChartRenderContext, layout: MekkoLayout): RenderNode[] {
   const nodes: RenderNode[] = [];
-  if (context.chart.show_grid !== false) {
+  if (context.chart.showGrid !== false) {
     nodes.push(...renderGridLines(context, layout));
   }
   if (context.showLabels) {
@@ -29,8 +29,8 @@ function renderGridLines(context: ChartRenderContext, layout: MekkoLayout): Rend
       d: `M ${layout.grid.x} ${y} L ${layout.grid.x + layout.grid.width} ${y}`,
       style: {
         fill: { kind: 'none' },
-        stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
-        strokeWidth: finite(chart.grid_width, 1),
+        stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
+        strokeWidth: finite(chart.gridWidth, 1),
       },
     };
   });

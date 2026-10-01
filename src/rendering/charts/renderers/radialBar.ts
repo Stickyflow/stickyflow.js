@@ -1,3 +1,4 @@
+import type { RadialBarChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
 import type { ResolvedShadow } from '../primitives';
@@ -54,16 +55,16 @@ function ringProgressPath(cx: number, cy: number, r: number, sweep: number): str
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
 }
 
-export function renderRadialBar(context: ChartRenderContext): RenderNode[] {
+export function renderRadialBar(context: ChartRenderContext<RadialBarChart>): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const centerX = plot.x + plot.width / 2;
   const centerY = plot.y + plot.height / 2;
   const outerRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
   const ringThickness = Math.max(1, finite(chart.config?.ringThickness, DEFAULT_RING_THICKNESS));
   const ringGap = Math.max(0, finite(chart.config?.ringGap, DEFAULT_RING_GAP));
-  const axisMin = finite(chart.axis_y.min, 0);
-  const range = finite(chart.axis_y.max, 100) - axisMin;
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const axisMin = finite(chart.axisY.min, 0);
+  const range = finite(chart.axisY.max, 100) - axisMin;
+  const shadow = resolveChartShadow(chart.shadowStyle);
 
   return chart.series.flatMap((series, index): RenderNode[] => {
     const radius = outerRadius - index * (ringThickness + ringGap) - ringThickness / 2;

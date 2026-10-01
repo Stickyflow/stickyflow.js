@@ -1,5 +1,5 @@
 import { resolveOwner } from '../../domContract';
-import { TABLE_COLUMN_DIVIDER_ATTR } from '../../model/domContractAttributes';
+import { TABLE_COLUMN_DIVIDER_ATTR } from '../../svgContract/attributes';
 import type { Viewer } from '../../viewer';
 import { hasMovableGeometry } from '../geometryRoles';
 import { captureDraggedEntities } from './entityCapture';

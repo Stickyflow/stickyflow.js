@@ -1,4 +1,12 @@
-import type { ChartType } from '../../../model/charts';
+import type {
+  ChartType,
+  HexbinChart,
+  PieChart,
+  PolarAreaChart,
+  RadarChart,
+  RadialBarChart,
+  RadialChart,
+} from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
@@ -25,14 +33,14 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   custom: renderCustom,
   field: renderField,
   heatmap: renderHeatmap,
-  hexbin: renderHexbin,
+  hexbin: context => renderHexbin(context as ChartRenderContext<HexbinChart>),
   line: renderLine,
   mekko: renderMekko,
-  pie: renderPie,
-  polarArea: renderPolarArea,
-  radar: renderRadar,
-  radial: renderRadar,
-  radialBar: renderRadialBar,
+  pie: context => renderPie(context as ChartRenderContext<PieChart>),
+  polarArea: context => renderPolarArea(context as ChartRenderContext<PolarAreaChart>),
+  radar: context => renderRadar(context as ChartRenderContext<RadarChart>),
+  radial: context => renderRadar(context as ChartRenderContext<RadialChart>),
+  radialBar: context => renderRadialBar(context as ChartRenderContext<RadialBarChart>),
   sankey: renderSankey,
   scatter: renderScatter,
   treemap: renderTreemap,
@@ -45,5 +53,5 @@ export function isPolarChart(chartType: ChartType): boolean {
 }
 
 export function renderChartMarks(context: ChartRenderContext): RenderNode[] {
-  return RENDERERS[context.chart.chart_type](context);
+  return RENDERERS[context.chart.chartType](context);
 }

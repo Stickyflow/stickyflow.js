@@ -1,6 +1,5 @@
-import type { MeasureTextFactory } from './model/geometry/text';
 import type { RenderInput } from './renderInput/types';
-import type { RenderDiagnostic, RenderScene } from './rendering/scene';
+import type { MeasureTextFactory, RenderDiagnostic, RenderScene } from './rendering/scene';
 import { buildRenderScene } from './rendering/scene/build';
 import { renderSceneToSvg } from './rendering/svg';
 import { sflToRenderInput } from './sflToRenderInput';

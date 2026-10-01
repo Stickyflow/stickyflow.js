@@ -3,7 +3,7 @@ export {
   leftRoundedRectPath,
   rightRoundedRectPath,
   topRoundedRectPath,
-} from '../../model/geometry/roundedRect';
+} from '../scene/roundedRectPath';
 export { buildFrame } from './container/frame';
 export { simpleContainerStyle } from './container/style';
 export { buildSwimlane } from './container/swimlane';

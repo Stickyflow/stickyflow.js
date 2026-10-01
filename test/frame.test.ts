@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '../src/index';
+import type { RenderInput } from '../src/index';
+import { render, renderCanvas, sflToRenderInput } from '../src/index';
 
 const frame = (extra: string) => `sfl 1.2
 
@@ -19,6 +20,24 @@ ${extra}
 `;
 
 describe('Frame — SFL style properties', () => {
+  it('maps SFL properties to the canonical camelCase frame contract', () => {
+    expect(sflToRenderInput(frame('    cornerRadius: 24\n    labelPosition: bottom')).frames[0]).toMatchObject({
+      strokeColor: '#9b42df',
+      strokeWidth: 2,
+      cornerRadius: 24,
+      fillColor: '#f5f3ff',
+      showLabel: true,
+      labelPosition: 'bottom',
+    });
+  });
+
+  it('does not render a frame whose canonical visibility flag is false', () => {
+    const hiddenFrame = { ...sflToRenderInput(frame('')).frames[0], isVisible: false };
+    const input = { shapes: [], frames: [hiddenFrame], swimlanes: [], links: [] } as RenderInput;
+
+    expect(renderCanvas(input).svg).not.toContain('sf-frame-f');
+  });
+
   it('defaults the title tab text to white when textColor is unset', () => {
     const { svg } = render(frame(''));
     const title = svg.match(/<text id="[^"]*frame-title-f"[^>]*>/)?.[0];

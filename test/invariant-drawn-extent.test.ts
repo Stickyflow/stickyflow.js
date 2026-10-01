@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderCanvas } from '../src/index';
-import type { Shape, ShapeType } from '../src/model/shapes';
+import type { Shape, ShapeType } from '../src/model/shape';
 import type { RenderInput } from '../src/renderInput/types';
 import { ALL_SHAPE_TYPES } from './fixtures';
 
@@ -78,18 +78,16 @@ function drawnEnvelope(input: RenderInput, id: string): Envelope {
 function shapeInput(shapeType: ShapeType, box: { x: number; y: number; width: number; height: number }): RenderInput {
   const shape: Shape = {
     id: 's',
-    boardId: 'b',
     shapeType,
     ...box,
     text: '',
     fillColor: '#fff',
     strokeColor: '#000',
     strokeWidth: 1,
-    layer_group: 'default',
-    order_key: 'a',
-    is_visible: true,
-    is_locked: false,
-    createdAt: '',
+    layerGroup: 'default',
+    orderKey: 'a',
+    isVisible: true,
+    isLocked: false,
   };
   return { shapes: [shape], frames: [], swimlanes: [], links: [] };
 }

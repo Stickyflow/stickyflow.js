@@ -3,16 +3,15 @@
 // contract: any change in geometry, ordering or serialization shows up as a diff.
 
 import type { RenderInput } from '../src/index';
-import type { Frame } from '../src/model/frames';
-import type { Link } from '../src/model/links';
-import type { Shape, ShapeType } from '../src/model/shapes';
-import type { Swimlane } from '../src/model/swimlanes';
-import type { Table } from '../src/model/tables';
+import type { Frame } from '../src/model/frame';
+import type { Link } from '../src/model/link';
+import type { Shape, ShapeType } from '../src/model/shape';
+import type { Swimlane } from '../src/model/swimlane';
+import type { Table } from '../src/model/table';
 
 const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape> = {}): Shape =>
   ({
     id,
-    boardId: 'board',
     shapeType,
     x,
     y: 20,
@@ -22,11 +21,10 @@ const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape
     fillColor: '#eef2ff',
     strokeColor: '#123456',
     strokeWidth: 2,
-    layer_group: 'default',
-    order_key: `a${x}`,
-    is_visible: true,
-    is_locked: false,
-    createdAt: '',
+    layerGroup: 'default',
+    orderKey: `a${x}`,
+    isVisible: true,
+    isLocked: false,
     ...extra,
   }) as Shape;
 
@@ -50,31 +48,28 @@ export const ALL_SHAPE_TYPES: ShapeType[] = [
 
 const frame: Frame = {
   id: 'frame',
-  board_id: 'board',
   x: -20,
   y: -20,
   width: 500,
   height: 180,
   title: 'Frame',
-  stroke_color: '#8b5cf6',
-  stroke_width: 2,
+  strokeColor: '#8b5cf6',
+  strokeWidth: 2,
   dash: [8, 4],
-  corner_radius: 12,
-  fill_color: 'transparent',
-  text_color: '#111827',
-  font_size: 16,
-  font_weight: 'bold',
-  show_label: true,
-  layer_group: 'background',
-  order_key: 'a',
-  is_visible: true,
-  is_locked: false,
-  created_at: '',
+  cornerRadius: 12,
+  fillColor: 'transparent',
+  textColor: '#111827',
+  fontSize: 16,
+  fontWeight: 'bold',
+  showLabel: true,
+  layerGroup: 'background',
+  orderKey: 'a',
+  isVisible: true,
+  isLocked: false,
 };
 
 const swimlane: Swimlane = {
   id: 'swimlane',
-  board_id: 'board',
   x: 0,
   y: 220,
   width: 400,
@@ -84,25 +79,23 @@ const swimlane: Swimlane = {
     { id: 'one', label: 'One', size: 80 },
     { id: 'two', label: 'Two', size: 80 },
   ],
-  stroke_color: '#64748b',
-  stroke_width: 2,
+  strokeColor: '#64748b',
+  strokeWidth: 2,
   dash: [],
-  corner_radius: 8,
-  fill_color: '#f8fafc',
-  text_color: '#334155',
-  font_size: 14,
-  font_weight: 'bold',
-  show_lane_labels: true,
-  layer_group: 'background',
-  order_key: 'b',
-  is_visible: true,
-  is_locked: false,
-  created_at: '',
+  cornerRadius: 8,
+  fillColor: '#f8fafc',
+  textColor: '#334155',
+  fontSize: 14,
+  fontWeight: 'bold',
+  showLaneLabels: true,
+  layerGroup: 'background',
+  orderKey: 'b',
+  isVisible: true,
+  isLocked: false,
 };
 
 const table: Table = {
   id: 'users',
-  board_id: 'board',
   name: 'users',
   title: 'Users',
   x: 10,
@@ -117,21 +110,20 @@ const table: Table = {
     { id: 'r1', cells: { name: 'id', pk: true } },
     { id: 'r2', cells: { name: 'email', pk: false } },
   ],
-  stroke_color: '#9b42df',
-  stroke_width: 2,
+  strokeColor: '#9b42df',
+  strokeWidth: 2,
   dash: [],
-  corner_radius: 8,
-  fill_color: '#ffffff',
-  text_color: '#111111',
-  font_size: 14,
-  font_weight: 'bold',
-  show_header: true,
-  row_height: 36,
-  layer_group: 'background',
-  order_key: 'a',
-  is_visible: true,
-  is_locked: false,
-  created_at: '',
+  cornerRadius: 8,
+  fillColor: '#ffffff',
+  textColor: '#111111',
+  fontSize: 14,
+  fontWeight: 'bold',
+  showHeader: true,
+  rowHeight: 36,
+  layerGroup: 'background',
+  orderKey: 'a',
+  isVisible: true,
+  isLocked: false,
 } as Table;
 
 const linkStraight: Link = {
@@ -141,10 +133,10 @@ const linkStraight: Link = {
   startMarker: 'triangle',
   endMarker: 'zero_many',
   style: { pathType: 'straight', color: '#334155', startLabel: '1', endLabel: '0..*' },
-  layer_group: 'content',
-  order_key: 'a',
-  is_visible: true,
-  is_locked: false,
+  layerGroup: 'content',
+  orderKey: 'a',
+  isVisible: true,
+  isLocked: false,
 } as Link;
 
 const linkCurved: Link = {
@@ -155,18 +147,18 @@ const linkCurved: Link = {
   showText: true,
   text: 'curved',
   style: { pathType: 'curved', color: '#ef4444', strokeWidth: 3 },
-  layer_group: 'content',
-  order_key: 'b',
-  is_visible: true,
-  is_locked: false,
+  layerGroup: 'content',
+  orderKey: 'b',
+  isVisible: true,
+  isLocked: false,
 } as Link;
 
 const linkOrthogonal: Link = {
   id: 'ortho',
   fromId: 'a',
   toId: 'b',
-  fromPoint: { side: 'right', offset: 0.5 },
-  toPoint: { side: 'left', offset: 0.5 },
+  fromPoint: { kind: 'side', side: 'right', offset: 0.5 },
+  toPoint: { kind: 'side', side: 'left', offset: 0.5 },
   waypoints: [
     { x: 160, y: 60 },
     { x: 160, y: 140 },
@@ -174,10 +166,10 @@ const linkOrthogonal: Link = {
   ],
   endMarker: 'filled_arrow',
   style: { pathType: 'orthogonal', color: '#0369a1', strokeWidth: 3 },
-  layer_group: 'default',
-  order_key: 'c',
-  is_visible: true,
-  is_locked: false,
+  layerGroup: 'default',
+  orderKey: 'c',
+  isVisible: true,
+  isLocked: false,
 } as Link;
 
 export const fixtures: Record<string, RenderInput> = {

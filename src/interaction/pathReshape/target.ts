@@ -1,5 +1,5 @@
 import { findOwnerNode, isPrimary, pathGeometryOf, resolveOwner } from '../../domContract';
-import { PATH_POINT_INDEX_ATTR } from '../../model/domContractAttributes';
+import { PATH_POINT_INDEX_ATTR } from '../../svgContract/attributes';
 import type { OwnerRef } from '../../viewer';
 
 export interface PathReshapeTarget {
