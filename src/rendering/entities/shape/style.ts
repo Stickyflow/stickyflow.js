@@ -1,5 +1,4 @@
-import type { Shape } from '../../../model/shape';
-import { SHAPE_DEFAULTS } from '../../../model/shape';
+import type { Shape, ShapeType } from '../../../model/shape';
 import type { RenderDiagnostic, SceneStyle } from '../../scene';
 import { finite, paint } from '../../scene';
 
@@ -8,11 +7,62 @@ const REMOVED_SHAPE_HINTS: Record<string, string> = {
   container_rectangle: " (use 'rectangle' with strokeStyle: dashed)",
 };
 
+const COMMON_SHAPE_DEFAULTS = {
+  strokeColor: '#cbd5e1',
+  strokeWidth: 2,
+  fillColor: '#ffffff',
+  dash: [],
+  strokeStyle: 'solid' as const,
+  fontSize: 14,
+  fontWeight: 'normal' as const,
+  textAlign: 'center' as const,
+  textVerticalAlign: 'middle' as const,
+  lineHeight: 1.3,
+  hasShadow: false,
+  opacity: 1,
+};
+
+interface ShapeRenderDefaults {
+  strokeColor: string;
+  strokeWidth: number;
+  fillColor: string;
+  dash: readonly number[];
+  strokeStyle: 'solid';
+  fontSize: number;
+  fontWeight: 'normal';
+  textAlign: 'center';
+  textVerticalAlign: 'middle';
+  lineHeight: number;
+  hasShadow: boolean;
+  opacity: number;
+  cornerRadius?: number;
+  rotation?: number;
+}
+
+const SHAPE_RENDER_DEFAULTS = {
+  rectangle: COMMON_SHAPE_DEFAULTS,
+  rounded_rectangle: { ...COMMON_SHAPE_DEFAULTS, cornerRadius: 8 },
+  triangle: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  diamond: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  hexagon: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  oval: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  document: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  parallelogram: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  trapezoid: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  cylinder: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  note: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  cloud: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  predefined_process: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  pill: COMMON_SHAPE_DEFAULTS,
+  person: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  symbol: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+} as const satisfies Record<ShapeType, ShapeRenderDefaults>;
+
 export function shapeDefaults(
   shape: Shape,
   diagnostics: RenderDiagnostic[],
-): (typeof SHAPE_DEFAULTS)[keyof typeof SHAPE_DEFAULTS] {
-  const defaults = SHAPE_DEFAULTS[shape.shapeType as keyof typeof SHAPE_DEFAULTS];
+): (typeof SHAPE_RENDER_DEFAULTS)[keyof typeof SHAPE_RENDER_DEFAULTS] {
+  const defaults = SHAPE_RENDER_DEFAULTS[shape.shapeType as keyof typeof SHAPE_RENDER_DEFAULTS];
   if (defaults) {
     return defaults;
   }
@@ -22,7 +72,7 @@ export function shapeDefaults(
     entityId: shape.id,
     message: `Unknown shapeType '${shape.shapeType}'${REMOVED_SHAPE_HINTS[shape.shapeType] ?? ''}, falling back to rectangle defaults.`,
   });
-  return SHAPE_DEFAULTS.rectangle;
+  return SHAPE_RENDER_DEFAULTS.rectangle;
 }
 
 function shapeDash(shape: Shape, strokeWidth: number): number[] | undefined {

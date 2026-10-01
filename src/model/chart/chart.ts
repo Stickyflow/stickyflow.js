@@ -53,39 +53,39 @@ export interface ChartBase {
   is_visible?: boolean;
 }
 
-export interface RenderableChart<TType extends ChartType = ChartType, TConfig extends object = UnnarrowedChartConfig>
+export interface TypedChart<TType extends ChartType = ChartType, TConfig extends object = UnnarrowedChartConfig>
   extends ChartBase {
   chart_type: TType;
   config?: TConfig;
 }
 
-export interface BarChart extends RenderableChart<'bar', BarChartConfig> {}
+export interface BarChart extends TypedChart<'bar', BarChartConfig> {}
 
-export interface LineChart extends RenderableChart<'line', LineChartConfig> {}
+export interface LineChart extends TypedChart<'line', LineChartConfig> {}
 
-export interface ScatterChart extends RenderableChart<'scatter', CategoryChartConfig> {}
+export interface ScatterChart extends TypedChart<'scatter', CategoryChartConfig> {}
 
-export interface BoxplotChart extends RenderableChart<'boxplot', BoxplotChartConfig> {}
+export interface BoxplotChart extends TypedChart<'boxplot', BoxplotChartConfig> {}
 
-export interface FieldChart extends RenderableChart<'field', FieldChartConfig> {}
+export interface FieldChart extends TypedChart<'field', FieldChartConfig> {}
 
-export interface HeatmapChart extends RenderableChart<'heatmap', HeatmapChartConfig> {}
+export interface HeatmapChart extends TypedChart<'heatmap', HeatmapChartConfig> {}
 
-export interface HexbinChart extends RenderableChart<'hexbin', HexbinChartConfig> {}
+export interface HexbinChart extends TypedChart<'hexbin', HexbinChartConfig> {}
 
-export interface MekkoChart extends RenderableChart<'mekko', MekkoChartConfig> {}
+export interface MekkoChart extends TypedChart<'mekko', MekkoChartConfig> {}
 
-export interface PieChart extends RenderableChart<'pie' | 'polarArea', PieChartConfig> {}
+export interface PieChart extends TypedChart<'pie' | 'polarArea', PieChartConfig> {}
 
-export interface RadarChart extends RenderableChart<'radar' | 'radial', RadarChartConfig> {}
+export interface RadarChart extends TypedChart<'radar' | 'radial', RadarChartConfig> {}
 
-export interface RadialBarChart extends RenderableChart<'radialBar', RadialBarChartConfig> {}
+export interface RadialBarChart extends TypedChart<'radialBar', RadialBarChartConfig> {}
 
-export interface SankeyChart extends RenderableChart<'sankey', SankeyChartConfig> {}
+export interface SankeyChart extends TypedChart<'sankey', SankeyChartConfig> {}
 
-export interface TreemapChart extends RenderableChart<'treemap', TreemapChartConfig> {}
+export interface TreemapChart extends TypedChart<'treemap', TreemapChartConfig> {}
 
-export interface CustomChart extends RenderableChart<'custom', CustomChartConfig> {}
+export interface CustomChart extends TypedChart<'custom', CustomChartConfig> {}
 
 export type Chart =
   | BarChart

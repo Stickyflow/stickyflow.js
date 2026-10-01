@@ -1,4 +1,4 @@
-export * from './defaults';
+export * from './appearance';
+export * from './catalog';
 export * from './mutations';
-export * from './paint';
 export * from './types';

@@ -16,10 +16,10 @@ export type {
   PieChart,
   RadarChart,
   RadialBarChart,
-  RenderableChart,
   SankeyChart,
   ScatterChart,
   TreemapChart,
+  TypedChart,
 } from './chart';
 export type { ChartRamp } from './colorScale';
 export type {
