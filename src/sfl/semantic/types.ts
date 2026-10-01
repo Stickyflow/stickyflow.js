@@ -97,6 +97,8 @@ export interface SflEntityOut {
     labelOrientation?: 'horizontal' | 'vertical';
     labelColor?: string;
     linkGradient?: boolean;
+    connectPoints?: boolean;
+    reverseComparison?: boolean;
     axisX: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     axisY: { min: number; max: number; step: number; label?: string; unit?: string; thresholds?: number[] };
     series: Array<{

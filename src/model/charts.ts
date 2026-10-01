@@ -128,6 +128,8 @@ export interface Chart {
     labelOrientation?: 'horizontal' | 'vertical';
     labelColor?: string;
     linkGradient?: boolean;
+    connectPoints?: boolean;
+    reverseComparison?: boolean;
     scale?: ChartRamp;
     interpolate?: 'idw';
     idwPower?: number;

@@ -59,6 +59,8 @@ export function chartObject(e: SflEntityOut) {
       labelOrientation: e.chart?.labelOrientation,
       labelColor: e.chart?.labelColor,
       linkGradient: e.chart?.linkGradient,
+      connectPoints: e.chart?.connectPoints,
+      reverseComparison: e.chart?.reverseComparison,
     },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,

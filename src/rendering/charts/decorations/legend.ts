@@ -32,7 +32,8 @@ export function buildLegend(render: ChartLegendRender): RenderNode[] {
 }
 
 function usesStandardLegend(chart: Chart): boolean {
-  return chart.show_legend !== false && !CHARTS_WITH_OWN_LEGEND.has(chart.chart_type);
+  const isConnectedCustom = chart.chart_type === 'custom' && Boolean(chart.config?.connectPoints);
+  return chart.show_legend !== false && !CHARTS_WITH_OWN_LEGEND.has(chart.chart_type) && !isConnectedCustom;
 }
 
 function legendSeries(chart: Chart): ChartSeries[] {

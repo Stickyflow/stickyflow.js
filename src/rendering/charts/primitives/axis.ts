@@ -14,8 +14,14 @@ export function chartTicks(axis: ChartAxis): number[] {
     return axis.min === axis.max ? [axis.min] : [axis.min, axis.max];
   }
 
+  const ascending = axis.min <= axis.max;
+  const step = ascending ? axis.step : -axis.step;
   const ticks: number[] = [];
-  for (let value = axis.min; value <= axis.max + 1e-9 && ticks.length < 1000; value += axis.step) {
+  for (
+    let value = axis.min;
+    (ascending ? value <= axis.max + 1e-9 : value >= axis.max - 1e-9) && ticks.length < 1000;
+    value += step
+  ) {
     ticks.push(Math.round(value * 1000) / 1000);
   }
   return ticks;

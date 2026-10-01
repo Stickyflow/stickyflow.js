@@ -64,6 +64,8 @@ export function readChart(
     labelOrientation: asString(properties.get('labelOrientation')) === 'vertical' ? 'vertical' : undefined,
     labelColor: asString(properties.get('labelColor')),
     linkGradient: readBoolean(properties.get('linkGradient')),
+    connectPoints: readBoolean(properties.get('connectPoints')),
+    reverseComparison: readBoolean(properties.get('reverseComparison')),
     axisX: readAxis(axes.find(axis => axis.name === 'x')),
     axisY: readAxis(axes.find(axis => axis.name === 'y' || axis.name === 'value')),
     series: children.filter(child => child.kind === 'Series').map(child => readSeries(child, symbolDefs, mergedProps)),
