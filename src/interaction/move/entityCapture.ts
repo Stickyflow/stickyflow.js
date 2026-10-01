@@ -1,5 +1,5 @@
 import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import type { OwnerRef } from '../../viewer';
 import { findLiveLinks } from '../linkPreview';
 import type { DraggedEntity } from './types';

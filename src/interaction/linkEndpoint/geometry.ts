@@ -1,4 +1,4 @@
-import { portToPoint, projectOffsetOnSide, type Rect, type Side } from '../../model/geometry/router';
+import { portToPoint, projectOffsetOnSide, type Rect, type Side } from '../../model/geometry/routing';
 
 const SIDES: readonly Side[] = ['top', 'right', 'bottom', 'left'];
 

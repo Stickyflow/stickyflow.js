@@ -1,4 +1,4 @@
-import { routeCubic, type Side } from '../../../geometry/router';
+import { routeCubic, type Side } from '../../../geometry/routing';
 import type { ConnectionPoint, PathPointsResult } from './types';
 
 export function curvedPath(from: ConnectionPoint, to: ConnectionPoint, fromSide: Side, toSide: Side): PathPointsResult {

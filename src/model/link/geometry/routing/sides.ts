@@ -1,4 +1,4 @@
-import type { Side } from '../../../geometry/router';
+import type { Side } from '../../../geometry/routing';
 import type { Link } from '../../types';
 import type { ConnectionPoint } from './types';
 

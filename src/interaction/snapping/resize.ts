@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import type { EdgePoint, SnapResult } from './types';
 
 export function resizeActivePoints(axisMove: 'left' | 'right' | 'top' | 'bottom' | 'none'): EdgePoint[] {

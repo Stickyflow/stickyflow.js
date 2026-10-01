@@ -1,4 +1,4 @@
-import type { PathSegment } from '../../../geometry/router';
+import type { PathSegment } from '../../../geometry/routing';
 
 export interface ConnectionPoint {
   x: number;

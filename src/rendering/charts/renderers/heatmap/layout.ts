@@ -1,4 +1,4 @@
-import { estimateTextWidth } from '../../../../model/geometry/text';
+import { estimateTextWidth } from '../../../../model/text';
 import { finite } from '../../../scene';
 import { axisBands, DEFAULT_HEATMAP_ZONES } from '../../primitives';
 import type { ChartRenderContext } from '../types';

@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import type { OwnerRef } from '../../viewer';
 import type { LiveLink } from '../linkPreview';
 

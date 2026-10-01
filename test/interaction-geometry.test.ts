@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseValueScale, pixelForValue, valueAtPixel } from '../src/interaction/chartValue/scale';
 import { offsetBounds } from '../src/interaction/move/geometry';
 import { HANDLE_AXES, MIN_SIZE, resizedBounds } from '../src/interaction/resize/geometry';
-import type { Rect } from '../src/model/geometry/router';
+import type { Rect } from '../src/model/geometry/routing';
 
 const box: Rect = { x: 100, y: 50, width: 200, height: 80 };
 

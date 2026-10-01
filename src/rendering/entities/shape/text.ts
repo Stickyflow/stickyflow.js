@@ -1,6 +1,11 @@
-import { hasBoldMarkup, wrapRichText } from '../../../model/geometry/richText';
-import { heuristicRichMeasure, type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
 import { personLabelArea } from '../../../model/shape/geometry';
+import {
+  hasBoldMarkup,
+  heuristicRichMeasure,
+  type MeasureTextFactory,
+  wrapRichText,
+  wrapText,
+} from '../../../model/text';
 import type { SceneText } from '../../scene';
 import { DEFAULT_FONT, finite } from '../../scene';
 import { shapeDefaults } from './style';

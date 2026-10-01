@@ -1,4 +1,4 @@
-import { wrapText } from '../../../../model/geometry/text';
+import { wrapText } from '../../../../model/text';
 import type { RenderNode } from '../../../scene';
 import { chartText } from '../../primitives';
 import type { ChartRenderContext } from '../types';

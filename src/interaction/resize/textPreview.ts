@@ -1,6 +1,6 @@
 import { SVG_NAMESPACE } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
-import { wrapText } from '../../model/geometry/text';
+import type { Rect } from '../../model/geometry/routing';
+import { wrapText } from '../../model/text';
 import { recenterRotation } from './rotation';
 
 function replaceTextLines(textElement: SVGTextElement, lines: string[], x: number, lineHeight: number): void {

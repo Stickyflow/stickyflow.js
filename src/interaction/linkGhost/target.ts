@@ -1,4 +1,4 @@
-import { portToPoint, type Rect, type Side } from '../../model/geometry/router';
+import { portToPoint, type Rect, type Side } from '../../model/geometry/routing';
 import type { OwnerRef } from '../../viewer';
 import { nearestPort, sideFromDirection } from '../linkEndpoint/geometry';
 

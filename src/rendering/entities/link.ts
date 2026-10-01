@@ -1,4 +1,4 @@
-import type { MeasureTextFactory } from '../../model/geometry/text';
+import type { MeasureTextFactory } from '../../model/text';
 import type { RenderInput } from '../../renderInput/types';
 import type { RenderNode } from '../scene';
 import { renderEndpointLabels } from './link/endpointLabels';

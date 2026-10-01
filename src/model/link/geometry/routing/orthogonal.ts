@@ -1,4 +1,4 @@
-import { routeOrthogonal, type Side } from '../../../geometry/router';
+import { routeOrthogonal, type Side } from '../../../geometry/routing';
 import type { Link } from '../../types';
 import type { ConnectionPoint, PathPointsResult } from './types';
 import { isAxisAligned, pathFromWaypoints } from './waypoints';

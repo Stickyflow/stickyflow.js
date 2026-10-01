@@ -1,4 +1,4 @@
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import type { Emitter } from '../events';
 import type { ResizeDragState } from './state';
 

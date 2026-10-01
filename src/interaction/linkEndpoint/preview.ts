@@ -1,4 +1,4 @@
-import type { Side } from '../../model/geometry/router';
+import type { Side } from '../../model/geometry/routing';
 import type { Link } from '../../model/link';
 import { getPathPoints } from '../../model/link/geometry';
 import { previewPathData } from '../linkPreview';

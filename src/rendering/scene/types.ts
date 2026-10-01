@@ -1,5 +1,5 @@
 import type { RenderDiagnostic } from '../../model/diagnostic';
-import type { Side } from '../../model/geometry/router';
+import type { Side } from '../../model/geometry/routing';
 import type { Bounds, Point } from '../../model/geometry/types';
 import type { MarkerType, PathType } from '../../model/link';
 

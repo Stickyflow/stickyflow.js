@@ -1,5 +1,5 @@
 import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
-import type { Side } from '../../model/geometry/router';
+import type { Side } from '../../model/geometry/routing';
 import type { Link, PathType } from '../../model/link';
 import { getPathPoints } from '../../model/link/geometry';
 import { previewPathData } from '../linkPreview';

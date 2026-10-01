@@ -1,9 +1,9 @@
 export type { Chart, ChartAxis, ChartRamp, ChartSeries, ChartType } from './model/chart';
 export { CHART_TYPES } from './model/chart';
-export type { MeasureTextFactory, TextMetrics } from './model/geometry/text';
 export type { FreeformPath, PathPoint } from './model/path';
 export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
+export type { MeasureTextFactory, TextMetrics } from './model/text';
 export type { RenderOptions, RenderResult } from './render';
 export { render, renderCanvas } from './render';
 export type { RenderInput } from './renderInput/types';

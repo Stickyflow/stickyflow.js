@@ -3,7 +3,7 @@ import {
   leftRoundedRectPath,
   rightRoundedRectPath,
   topRoundedRectPath,
-} from '../../../model/geometry/roundedRect';
+} from '../../../model/geometry/rectangle';
 import type { Bounds, RenderNode } from '../../scene';
 import { boxBounds, DEFAULT_FONT } from '../../scene';
 

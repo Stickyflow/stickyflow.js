@@ -1,5 +1,5 @@
-import { edgePointToward, elementCenter } from '../../model/geometry/edgePoint';
-import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/router';
+import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
+import { type PathSegment, portToPoint, type Rect, type Side } from '../../model/geometry/routing';
 import type { Link, PathType } from '../../model/link';
 import { getLineMidpoint, getPathPoints, roundedOrthogonalPathData } from '../../model/link/geometry';
 

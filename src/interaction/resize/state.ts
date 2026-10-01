@@ -1,5 +1,5 @@
 import { type ResizeHandle, symbolDeclaredBounds } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import type { OwnerRef } from '../../viewer';
 import { CONTAINER_ROLES, childrenUnionBounds } from '../containerGeometry';
 import { isCompositeOwner } from '../geometryRoles';

@@ -1,4 +1,4 @@
-import type { PathSegment } from '../../../geometry/router';
+import type { PathSegment } from '../../../geometry/routing';
 
 export function roundedOrthogonalPathData(segments: PathSegment[], radius: number): string {
   if (segments.length === 0) {

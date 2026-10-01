@@ -1,4 +1,4 @@
-import type { Side } from '../../../model/geometry/router';
+import type { Side } from '../../../model/geometry/routing';
 
 export interface InsertLinkOptions {
   id: string;

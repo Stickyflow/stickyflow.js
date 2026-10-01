@@ -1,5 +1,5 @@
 import type { ChartSeries } from '../../../../model/chart';
-import { wrapText } from '../../../../model/geometry/text';
+import { wrapText } from '../../../../model/text';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import {

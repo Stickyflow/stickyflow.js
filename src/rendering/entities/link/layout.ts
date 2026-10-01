@@ -1,7 +1,7 @@
-import { type MeasureTextFactory, wrapText } from '../../../model/geometry/text';
 import { getLinkStrokeColor } from '../../../model/link';
 import { getDashArray, getLineMidpoint, getPathPoints, labelGapDash } from '../../../model/link/geometry';
 import { resolveShadow } from '../../../model/shadow';
+import { type MeasureTextFactory, wrapText } from '../../../model/text';
 import type { RenderInput } from '../../../renderInput/types';
 import type { SceneStyle } from '../../scene';
 import { DEFAULT_FONT, finite, orderOf } from '../../scene';

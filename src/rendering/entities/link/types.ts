@@ -1,4 +1,4 @@
-import type { PathSegment } from '../../../model/geometry/router';
+import type { PathSegment } from '../../../model/geometry/routing';
 import type { Link, PathType } from '../../../model/link';
 import type { Bounds, Point, SceneStyle } from '../../scene';
 

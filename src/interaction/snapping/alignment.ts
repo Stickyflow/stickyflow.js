@@ -1,5 +1,5 @@
 import type { GuideLine } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import type { AxisSnap, EdgePoint, SnapConfig, SnapResult } from './types';
 
 interface SnapMatch {

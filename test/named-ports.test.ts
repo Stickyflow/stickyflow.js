@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, sflToCanvasState, sflToRenderInput } from '../src/index';
-import { namedPortToPoint } from '../src/model/geometry/router';
+import { namedPortToPoint } from '../src/model/geometry/routing';
 
 // Schematics category (stickyflow-atlas parity, SFL 1.4 §3.5): a Link
 // endpoint can be `entity.portName` - a dot-path whose last segment names a

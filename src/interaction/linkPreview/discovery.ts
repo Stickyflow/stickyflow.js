@@ -1,5 +1,5 @@
 import { findOwnerNode, isPrimary } from '../../domContract';
-import type { Rect, Side } from '../../model/geometry/router';
+import type { Rect, Side } from '../../model/geometry/routing';
 import type { PathType } from '../../model/link';
 import { routePreviewLink } from './geometry';
 import type { LiveLink } from './types';

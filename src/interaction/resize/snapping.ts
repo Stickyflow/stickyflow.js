@@ -1,6 +1,6 @@
 import type { GuideLine } from '../../domContract';
 import { findSnapCandidateBounds, pxPerUnit } from '../../domContract';
-import type { Rect } from '../../model/geometry/router';
+import type { Rect } from '../../model/geometry/routing';
 import { hasDerivedHeight } from '../geometryRoles';
 import { applyAxisSnap, computeSnap, nearestCandidates, resizeActivePoints } from '../snapGeometry';
 import { HANDLE_AXES, keepTextInside, lockDerivedHeight, MIN_SIZE, resizedBounds } from './geometry';
