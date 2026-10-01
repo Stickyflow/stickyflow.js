@@ -124,6 +124,8 @@ export interface Chart {
     showValues?: boolean;
     squareCells?: boolean;
     headerColor?: string;
+    tileGradient?: boolean;
+    showColumnBackdrop?: boolean;
     labelPosition?: 'outside' | 'inside';
     labelOrientation?: 'horizontal' | 'vertical';
     labelColor?: string;

@@ -53,6 +53,8 @@ export function chartObject(e: SflEntityOut) {
       showValues: e.chart?.showValues,
       squareCells: e.chart?.squareCells,
       headerColor: e.chart?.headerColor,
+      tileGradient: e.chart?.tileGradient,
+      showColumnBackdrop: e.chart?.showColumnBackdrop,
       labelPosition: e.chart?.labelPosition,
       labelOrientation: e.chart?.labelOrientation,
       labelColor: e.chart?.labelColor,

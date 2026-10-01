@@ -58,6 +58,8 @@ export function readChart(
     showValues: readBoolean(properties.get('showValues')),
     squareCells: readBoolean(properties.get('squareCells')),
     headerColor: asString(properties.get('headerColor')),
+    tileGradient: readBoolean(properties.get('tileGradient')),
+    showColumnBackdrop: readBoolean(properties.get('showColumnBackdrop')),
     labelPosition: asString(properties.get('labelPosition')) === 'inside' ? 'inside' : undefined,
     labelOrientation: asString(properties.get('labelOrientation')) === 'vertical' ? 'vertical' : undefined,
     labelColor: asString(properties.get('labelColor')),

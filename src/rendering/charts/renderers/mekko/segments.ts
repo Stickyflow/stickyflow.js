@@ -6,6 +6,8 @@ import { CHART_COLORS, chartText, contrastTextColor, representativeColor, resolv
 import type { ChartRenderContext } from '../types';
 import type { MekkoLayout } from './types';
 
+const BACKDROP_OPACITY = 0.15;
+
 interface MekkoSegment {
   columnIndex: number;
   seriesId: string;
@@ -25,9 +27,28 @@ export function renderMekkoColumnSegments(
   layout: MekkoLayout,
   columnIndex: number,
 ): RenderNode[] {
-  return calculateColumnSegments(context.chart.series, layout, columnIndex).flatMap(segment =>
+  const showBackdrop = context.chart.config?.showColumnBackdrop !== false;
+  const backdrop = showBackdrop ? [createColumnBackdrop(context, layout, columnIndex)] : [];
+  const segments = calculateColumnSegments(context.chart.series, layout, columnIndex).flatMap(segment =>
     renderSegment(context, layout, segment),
   );
+  return [...backdrop, ...segments];
+}
+
+function createColumnBackdrop(context: ChartRenderContext, layout: MekkoLayout, columnIndex: number): RenderNode {
+  const { chart, bounds, diagnostics, nextOrder } = context;
+  const column = layout.columns[columnIndex];
+  return {
+    type: 'rect',
+    id: `chart-mekko-column-backdrop-${chart.id}-${columnIndex}`,
+    order: nextOrder(),
+    bounds,
+    x: column.x,
+    y: layout.grid.y,
+    width: column.width,
+    height: layout.grid.height,
+    style: { fill: paint(chart.grid_color ?? '#e2e8f0', diagnostics, chart.id), opacity: BACKDROP_OPACITY },
+  };
 }
 
 function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout, columnIndex: number): MekkoSegment[] {
@@ -60,15 +81,7 @@ function calculateColumnSegments(seriesList: ChartSeries[], layout: MekkoLayout,
 }
 
 function renderSegment(context: ChartRenderContext, layout: MekkoLayout, segment: MekkoSegment): RenderNode[] {
-  const nodes = [createSegmentNode(context, segment)];
-  if (shouldRenderSegmentLabel(context, segment)) {
-    nodes.push(createSegmentLabel(context, layout, segment));
-  }
-  return nodes;
-}
-
-function shouldRenderSegmentLabel(context: ChartRenderContext, segment: MekkoSegment): boolean {
-  return context.showLegend && segment.frame.height >= 16 && segment.frame.width >= 34;
+  return [createSegmentNode(context, segment), ...createSegmentLabel(context, layout, segment)];
 }
 
 function createSegmentNode(context: ChartRenderContext, segment: MekkoSegment): RenderNode {
@@ -93,21 +106,55 @@ function createSegmentNode(context: ChartRenderContext, segment: MekkoSegment): 
   };
 }
 
-function createSegmentLabel(context: ChartRenderContext, layout: MekkoLayout, segment: MekkoSegment): RenderNode {
+function createSegmentLabel(context: ChartRenderContext, layout: MekkoLayout, segment: MekkoSegment): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
   const { x, y, width, height } = segment.frame;
-  const text = `${segment.seriesLabel} ${segment.value}`;
-  return {
+  if (!context.showLegend || width < 34) {
+    return [];
+  }
+  const innerWidth = Math.max(1, width - 8);
+  const innerHeight = Math.max(1, height - 6);
+  const lineHeight = layout.smallFontSize * 1.2;
+  const labelLines = wrapText(segment.seriesLabel, innerWidth, layout.smallFontSize);
+  // Checked against the real wrapped line count, not a fixed height guess, so long labels can't overflow.
+  if ((labelLines.length + 1) * lineHeight > innerHeight) {
+    return [];
+  }
+  const textColor = contrastTextColor(representativeColor(segment.color, '#ffffff'));
+
+  const label: RenderNode = {
     ...chartText({
       id: `chart-mekko-seg-label-${chart.id}-${segment.columnIndex}-${segment.seriesId}`,
       order: nextOrder(),
       bounds,
-      frame: { x: x + 4, y: y + 3, width: Math.max(1, width - 8), height: Math.max(1, height - 6) },
-      text,
+      frame: { x: x + 4, y: y + 3, width: innerWidth, height: innerHeight },
+      text: segment.seriesLabel,
       chart,
     }),
-    lines: wrapText(`${segment.seriesLabel}\n${segment.value}`, Math.max(1, width - 8), layout.smallFontSize),
+    lines: labelLines,
     fontSize: layout.smallFontSize,
-    color: contrastTextColor(representativeColor(segment.color, '#ffffff')),
+    fontWeight: 'bold',
+    color: textColor,
   };
+
+  const valueNode: RenderNode = {
+    ...chartText({
+      id: `chart-mekko-seg-value-${chart.id}-${segment.columnIndex}-${segment.seriesId}`,
+      order: nextOrder(),
+      bounds,
+      frame: {
+        x: x + 4,
+        y: y + 3 + labelLines.length * lineHeight,
+        width: innerWidth,
+        height: Math.max(1, innerHeight - labelLines.length * lineHeight),
+      },
+      text: String(segment.value),
+      chart,
+    }),
+    lines: [String(segment.value)],
+    fontSize: layout.smallFontSize,
+    color: textColor,
+  };
+
+  return [label, valueNode];
 }

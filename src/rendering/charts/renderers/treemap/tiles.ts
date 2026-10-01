@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
 import { squarifyTreemap } from '../../../../model/geometry/treemap';
-import type { RenderNode } from '../../../scene';
+import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
@@ -29,8 +29,12 @@ interface TreemapHeader {
 export function renderTreemapTiles(context: ChartRenderContext, layout: TreemapLayout): RenderNode[] {
   const { tiles, headers } = layoutTreemapTiles(context, layout);
   const nodes: RenderNode[] = [];
-  tiles.forEach(tile => {
-    nodes.push(...renderTile(context, layout, tile));
+  const gradientFlow = Boolean(context.chart.config?.tileGradient);
+  tiles.forEach((tile, index) => {
+    const next = tiles[index + 1];
+    const sameGroup = next && (tile.item.leaf.group ?? '') === (next.item.leaf.group ?? '');
+    const nextTile = gradientFlow && sameGroup ? next : undefined;
+    nodes.push(...renderTile(context, layout, tile, nextTile));
   });
   headers.forEach((header, index) => {
     nodes.push(...renderTreemapHeader(context, layout, header, index));
@@ -135,9 +139,15 @@ function renderTreemapHeader(
   return [background, label];
 }
 
-function renderTile(context: ChartRenderContext, layout: TreemapLayout, tile: TreemapTile): RenderNode[] {
+function renderTile(
+  context: ChartRenderContext,
+  layout: TreemapLayout,
+  tile: TreemapTile,
+  nextTile: TreemapTile | undefined,
+): RenderNode[] {
   const color = treemapLeafColor(tile.item.leaf, layout);
-  const nodes = [createTileNode(context, layout, tile, color)];
+  const nextColor = nextTile ? treemapLeafColor(nextTile.item.leaf, layout) : undefined;
+  const nodes = [createTileNode(context, layout, tile, color, nextColor)];
   if (context.showLabels && tile.width >= 34 && tile.height >= 18) {
     nodes.push(...createTileLabel(context, layout, tile, color));
   }
@@ -148,7 +158,8 @@ function createTileNode(
   context: ChartRenderContext,
   layout: TreemapLayout,
   tile: TreemapTile,
-  color: Parameters<typeof paint>[0],
+  color: Parameters<typeof representativeColor>[0],
+  nextColor: Parameters<typeof representativeColor>[0] | undefined,
 ): RenderNode {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const gap = layout.cellGap;
@@ -156,18 +167,40 @@ function createTileNode(
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
+  const tileX = plot.x + tile.x + gap / 2;
+  const tileY = plot.y + tile.y + gap / 2;
+  const tileWidth = Math.max(0, tile.width - gap);
+  const tileHeight = Math.max(0, tile.height - gap);
+  const fallback = '#94a3b8';
+  // Forced-square bounds (side = tileWidth) so the angle:0 gradient spans exactly this tile, not the shared chart-wide bounds.
+  const gradientBounds: Bounds = {
+    minX: tileX,
+    maxX: tileX + tileWidth,
+    minY: tileY + tileHeight / 2 - tileWidth / 2,
+    maxY: tileY + tileHeight / 2 + tileWidth / 2,
+  };
+  const fill = nextColor
+    ? {
+        kind: 'linear-gradient' as const,
+        angle: 0,
+        stops: [
+          { offset: 0, color: representativeColor(color, fallback) },
+          { offset: 100, color: representativeColor(nextColor, fallback) },
+        ],
+      }
+    : paint(color, diagnostics, chart.id);
   return {
     type: 'rect',
     id: `chart-treemap-tile-${chart.id}-${tile.item.leaf.id}`,
     order: nextOrder(),
-    bounds,
-    x: plot.x + tile.x + gap / 2,
-    y: plot.y + tile.y + gap / 2,
-    width: Math.max(0, tile.width - gap),
-    height: Math.max(0, tile.height - gap),
+    bounds: nextColor ? gradientBounds : bounds,
+    x: tileX,
+    y: tileY,
+    width: tileWidth,
+    height: tileHeight,
     rx: layout.cellRadius,
     style: {
-      fill: paint(color, diagnostics, chart.id),
+      fill,
       stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
       strokeWidth: finite(chart.grid_width, 1),
       shadow,
