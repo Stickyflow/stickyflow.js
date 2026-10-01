@@ -143,6 +143,11 @@ export function sameHueContrastColor(hex: string | undefined, fallback: string):
   return rgbToHex(...hslToRgb(hue, saturation, targetLightness));
 }
 
+export function isLightColor(hex: string | undefined): boolean {
+  const rgb = hexToRgb(hex);
+  return rgb ? rgbToHsl(...rgb)[2] > 0.5 : false;
+}
+
 export function sameHueTint(hex: string | undefined, targetLightness: number): string | undefined {
   const rgb = hexToRgb(hex);
   if (!rgb) {

@@ -58,6 +58,7 @@ export function chartObject(e: SflEntityOut) {
       labelPosition: e.chart?.labelPosition,
       labelOrientation: e.chart?.labelOrientation,
       labelColor: e.chart?.labelColor,
+      linkGradient: e.chart?.linkGradient,
     },
     series: (e.chart?.series ?? []).map(s => ({
       ...s,

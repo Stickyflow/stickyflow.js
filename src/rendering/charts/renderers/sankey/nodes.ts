@@ -1,18 +1,30 @@
 import type { SankeyLayoutNode } from '../../../../model/geometry/sankey';
+import { estimateTextWidth } from '../../../../model/geometry/text';
 import { leftRoundedRectPath, rightRoundedRectPath } from '../../../entities/containers';
 import type { RenderNode, SceneText } from '../../../scene';
 import { finite } from '../../../scene';
-import { chartText, contrastTextColor, DEFAULT_ZONE_FILL, resolveChartShadow } from '../../primitives';
+import {
+  chartText,
+  contrastTextColor,
+  DEFAULT_ZONE_FILL,
+  isLightColor,
+  resolveChartShadow,
+  sameHueTint,
+} from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { SankeyRenderData } from './types';
+
+const OUTSIDE_LABEL_LIGHTNESS_ON_LIGHT_BG = 0.3;
+const OUTSIDE_LABEL_LIGHTNESS_ON_DARK_BG = 0.78;
 
 export function renderSankeyNodes(context: ChartRenderContext, data: SankeyRenderData): RenderNode[] {
   const cornerRadius = Math.max(0, finite(context.chart.config?.barCornerRadius, 0));
   const nodes: RenderNode[] = [];
   data.nodes.forEach(node => {
     nodes.push(createNodeRect(context, data, node, cornerRadius));
-    if (context.showLabels) {
-      nodes.push(createNodeLabel(context, data, node));
+    const label = context.showLabels ? createNodeLabel(context, data, node) : undefined;
+    if (label) {
+      nodes.push(label);
     }
   });
   return nodes;
@@ -80,15 +92,30 @@ function createNodeRect(
   };
 }
 
-function createNodeLabel(context: ChartRenderContext, data: SankeyRenderData, node: SankeyLayoutNode): RenderNode {
+function createNodeLabel(
+  context: ChartRenderContext,
+  data: SankeyRenderData,
+  node: SankeyLayoutNode,
+): RenderNode | undefined {
   const { chart } = context;
   const position = chart.config?.labelPosition ?? 'outside';
   const label =
     position === 'inside'
       ? createInsideLabel(context, data, node, chart.config?.labelOrientation ?? 'horizontal')
       : createOutsideLabel(context, data, node);
-  const color = chart.config?.labelColor ?? (position === 'inside' ? contrastTextColor(node.color) : undefined);
-  return color ? { ...label, color } : label;
+  if (!label) {
+    return undefined;
+  }
+  const fallback = chart.text_color ?? '#0f172a';
+  const defaultColor =
+    position === 'inside'
+      ? contrastTextColor(node.color)
+      : (sameHueTint(
+          node.color,
+          isLightColor(fallback) ? OUTSIDE_LABEL_LIGHTNESS_ON_DARK_BG : OUTSIDE_LABEL_LIGHTNESS_ON_LIGHT_BG,
+        ) ?? fallback);
+  const color = chart.config?.labelColor ?? defaultColor;
+  return { ...label, color };
 }
 
 function createOutsideLabel(context: ChartRenderContext, data: SankeyRenderData, node: SankeyLayoutNode): SceneText {
@@ -108,6 +135,7 @@ function createOutsideLabel(context: ChartRenderContext, data: SankeyRenderData,
       align: isLastColumn ? 'right' : 'left',
     }),
     fontSize: data.fontSize - 2,
+    fontWeight: 'bold',
     verticalAlign: 'middle',
   };
 }
@@ -117,7 +145,7 @@ function createInsideLabel(
   data: SankeyRenderData,
   node: SankeyLayoutNode,
   orientation: 'horizontal' | 'vertical',
-): SceneText {
+): SceneText | undefined {
   const { chart, bounds, nextOrder } = context;
   const x = data.baseX + node.x;
   const y = data.baseY + node.y;
@@ -128,18 +156,22 @@ function createInsideLabel(
   if (orientation === 'vertical') {
     const thickness = fontSize * 1.4;
     const width = Math.max(1, node.height - 8);
+    if (estimateTextWidth(node.label, fontSize, false) > width) {
+      return undefined;
+    }
     return {
       ...chartText({
         id,
         order: nextOrder(),
         bounds,
-        frame: { x: centerX - thickness / 2, y: centerY - width / 2, width, height: thickness },
+        frame: { x: centerX - width / 2, y: centerY - thickness / 2, width, height: thickness },
         text: node.label,
         chart,
         align: 'center',
         rotation: -90,
       }),
       fontSize,
+      fontWeight: 'bold',
       verticalAlign: 'middle',
       rotationCenter: { x: centerX, y: centerY },
     };
@@ -155,6 +187,7 @@ function createInsideLabel(
       align: 'center',
     }),
     fontSize,
+    fontWeight: 'bold',
     verticalAlign: 'middle',
   };
 }

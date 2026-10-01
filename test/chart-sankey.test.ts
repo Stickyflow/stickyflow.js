@@ -152,7 +152,17 @@ describe('Sankey chart', () => {
     if (visits?.type === 'rect' && label?.type === 'text') {
       expect(label.x).toBeGreaterThan(visits.x + visits.width);
       expect(label.rotation).toBeUndefined();
+      expect(label.fontWeight).toBe('bold');
+      expect(label.color).toBe('#432a6f');
+      expect(label.color).not.toBe('#0f172a');
     }
+  });
+
+  it('tints the outside label toward light, not dark, when the chart itself uses a light (dark-theme) textColor', () => {
+    const darkTheme = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    style { textColor: "#e2e8f0" }');
+    const { scene } = render(darkTheme);
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(label?.type === 'text' && label.color).toBe('#c0aee0');
   });
 
   it('moves the label inside the node and centers it when labelPosition is inside', () => {
@@ -185,12 +195,28 @@ describe('Sankey chart', () => {
     }
   });
 
+  it('centers the vertical inside label frame on the node before rotation, so it lands on the bar and not beside it', () => {
+    const rotated = SANKEY_SFL.replace(
+      'type: sankey',
+      'type: sankey\n    labelPosition: inside\n    labelOrientation: vertical',
+    );
+    const { scene } = render(rotated);
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(label?.type === 'text').toBe(true);
+    if (label?.type === 'text') {
+      const frameCenter = { x: label.x + label.width / 2, y: label.y + label.height / 2 };
+      expect(frameCenter.x).toBeCloseTo(label.rotationCenter?.x ?? Number.NaN);
+      expect(frameCenter.y).toBeCloseTo(label.rotationCenter?.y ?? Number.NaN);
+    }
+  });
+
   it('defaults an inside label to a lighter shade of the node color, not a flat white, and lets labelColor override it', () => {
     const inside = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    labelPosition: inside');
     const { scene: autoScene } = render(inside);
     const autoLabel = autoScene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
     expect(autoLabel?.type === 'text' && autoLabel.color).toBe('#c0aee0');
     expect(autoLabel?.type === 'text' && autoLabel.color).not.toBe('#ffffff');
+    expect(autoLabel?.type === 'text' && autoLabel.fontWeight).toBe('bold');
 
     const overridden = inside.replace('labelPosition: inside', 'labelPosition: inside\n    labelColor: "#f59e0b"');
     const { scene: overrideScene } = render(overridden);
@@ -203,5 +229,34 @@ describe('Sankey chart', () => {
     const { scene } = render(colored);
     const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
     expect(label?.type === 'text' && label.color).toBe('#f59e0b');
+  });
+
+  it('blends a link from its source node color to its target node color when linkGradient is set', () => {
+    const gradient = SANKEY_SFL.replace('type: sankey', 'type: sankey\n    linkGradient: true');
+    const { scene } = render(gradient);
+    const link = scene.nodes.find(node => node.id === 'chart-sankey-link-flow-0');
+    expect(link?.type === 'path' && link.style?.fill?.kind).toBe('linear-gradient');
+    if (link?.type === 'path' && link.style?.fill?.kind === 'linear-gradient') {
+      expect(link.style.fill.stops[0]?.color).toBe('#4e3180');
+      expect(link.style.fill.stops[1]?.color).toBe('#0ea5e9');
+    }
+  });
+
+  it('keeps link fills solid when linkGradient is left off', () => {
+    const { scene } = render(SANKEY_SFL);
+    const link = scene.nodes.find(node => node.id === 'chart-sankey-link-flow-0');
+    expect(link?.type === 'path' && link.style?.fill?.kind).toBe('solid');
+  });
+
+  it('suppresses an inside vertical label that would overflow the node instead of letting it spill past the bar', () => {
+    const overflow = SANKEY_SFL.replace(
+      'type: sankey',
+      'type: sankey\n    labelPosition: inside\n    labelOrientation: vertical',
+    ).replaceAll('Churned', 'ChurnedUsersPermanently');
+    const { scene } = render(overflow);
+    const label = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-ChurnedUsersPermanently');
+    expect(label).toBeUndefined();
+    const otherLabel = scene.nodes.find(node => node.id === 'chart-sankey-label-flow-Visits');
+    expect(otherLabel?.type).toBe('text');
   });
 });

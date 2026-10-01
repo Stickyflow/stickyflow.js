@@ -127,6 +127,7 @@ export interface Chart {
     labelPosition?: 'outside' | 'inside';
     labelOrientation?: 'horizontal' | 'vertical';
     labelColor?: string;
+    linkGradient?: boolean;
     scale?: ChartRamp;
     interpolate?: 'idw';
     idwPower?: number;
