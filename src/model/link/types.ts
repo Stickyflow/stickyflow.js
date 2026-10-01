@@ -23,20 +23,6 @@ export type MarkerType =
   | 'one_many'
   | 'zero_many';
 
-export type RelationPreset =
-  | 'custom'
-  | 'uml_association'
-  | 'uml_directed_association'
-  | 'uml_dependency'
-  | 'uml_aggregation'
-  | 'uml_composition'
-  | 'uml_generalization'
-  | 'uml_realization'
-  | 'er_one_one'
-  | 'er_zero_one'
-  | 'er_one_many'
-  | 'er_zero_many';
-
 export interface LinkStyle {
   color?: string | GradientColor;
   strokeWidth?: number;
@@ -47,7 +33,6 @@ export interface LinkStyle {
   fontSize?: number;
   fontFamily?: string;
   shadow?: ShadowStyle;
-  relationPreset?: RelationPreset;
   startLabel?: string;
   endLabel?: string;
 }

@@ -27,9 +27,3 @@ export interface MeshGradientColor {
 }
 
 export type ColorValue = SolidColor | GradientColor | MeshGradientColor;
-
-/** @deprecated Use GradientColor. */
-export type GradientColorObject = GradientColor;
-
-/** @deprecated Use MeshGradientColor. */
-export type MeshGradientObject = MeshGradientColor;

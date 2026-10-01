@@ -5,6 +5,5 @@ export type {
   LinkStyle,
   MarkerType,
   PathType,
-  RelationPreset,
   StrokeStyle,
 } from './types';
