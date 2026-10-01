@@ -1,9 +1,7 @@
+import type { Point } from '../../types';
 import type { Side } from '../types';
 
-export interface RoutePoint {
-  x: number;
-  y: number;
-}
+export type RoutePoint = Point;
 
 export interface RouteConnection {
   side: Side;

@@ -1,9 +1,9 @@
-import type { RenderDiagnostic } from '../../model/diagnostic';
+import type { Diagnostic } from '../../model/diagnostic';
 import type { Side } from '../../model/geometry/routing';
 import type { Bounds, Point } from '../../model/geometry/types';
 import type { MarkerType, PathType } from '../../model/link';
 
-export type { RenderDiagnostic } from '../../model/diagnostic';
+export type RenderDiagnostic = Diagnostic;
 export type { Bounds, Point } from '../../model/geometry/types';
 
 export type ScenePaint =

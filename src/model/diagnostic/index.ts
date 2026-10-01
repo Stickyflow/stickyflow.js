@@ -1,6 +1,1 @@
-export interface RenderDiagnostic {
-  severity: 'warning' | 'error';
-  code: string;
-  message: string;
-  entityId?: string;
-}
+export type { Diagnostic } from './types';

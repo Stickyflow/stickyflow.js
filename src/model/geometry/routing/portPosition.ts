@@ -1,11 +1,12 @@
-import { localToWorld, type RoutingPoint, worldToLocal } from './coordinateSpace';
+import type { Point } from '../types';
+import { localToWorld, worldToLocal } from './coordinateSpace';
 import type { Port, Rect, Side } from './types';
 
 function clampPortOffset(offset: number): number {
   return Math.max(0, Math.min(1, offset));
 }
 
-function sidePoint(bounds: Rect, port: Port): RoutingPoint {
+function sidePoint(bounds: Rect, port: Port): Point {
   const offset = clampPortOffset(port.offset);
   const halfWidth = bounds.width / 2;
   const halfHeight = bounds.height / 2;
@@ -22,18 +23,18 @@ function sidePoint(bounds: Rect, port: Port): RoutingPoint {
   }
 }
 
-export function portToPoint(bounds: Rect, port: Port): RoutingPoint {
+export function portToPoint(bounds: Rect, port: Port): Point {
   return localToWorld(bounds, sidePoint(bounds, port));
 }
 
-export function namedPortToPoint(bounds: Rect, position: [number, number]): RoutingPoint {
+export function namedPortToPoint(bounds: Rect, position: [number, number]): Point {
   return localToWorld(bounds, {
     x: (position[0] - 0.5) * bounds.width,
     y: (position[1] - 0.5) * bounds.height,
   });
 }
 
-export function projectOffsetOnSide(bounds: Rect, side: Side, worldPoint: RoutingPoint): number {
+export function projectOffsetOnSide(bounds: Rect, side: Side, worldPoint: Point): number {
   const localPoint = worldToLocal(bounds, worldPoint);
 
   switch (side) {

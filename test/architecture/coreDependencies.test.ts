@@ -120,4 +120,13 @@ describe('core dependency direction', () => {
       .map(sourcePath);
     expect(offenders).toEqual([]);
   });
+
+  it('keeps higher-layer terminology out of model exports', () => {
+    const higherLayerExport =
+      /^export\s+(?:interface|type|class|const|function)\s+(?:Render|Scene|Svg|Dom)[A-Za-z0-9_]*/m;
+    const offenders = tsFiles(join(srcDir, 'model'))
+      .filter(file => higherLayerExport.test(readFileSync(file, 'utf8')))
+      .map(sourcePath);
+    expect(offenders).toEqual([]);
+  });
 });

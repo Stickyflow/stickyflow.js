@@ -1,3 +1,4 @@
+import type { Diagnostic } from '../../model/diagnostic';
 import type { Side } from '../ast';
 
 export interface SflEntityOut {
@@ -170,12 +171,7 @@ export interface SflGroupOut {
   parentFrameId?: string;
 }
 
-export interface SflDiagnostic {
-  severity: 'warning' | 'error';
-  code: string;
-  message: string;
-  entityId?: string;
-}
+export type SflDiagnostic = Diagnostic;
 
 export interface SflCanvasState {
   entities: SflEntityOut[];

@@ -20,10 +20,10 @@ export interface CubicPoints {
   p3: [number, number];
 }
 export interface PathSegment {
-  start: { x: number; y: number };
-  end: { x: number; y: number };
-  midpoint: { x: number; y: number };
-  originalMidpoint: { x: number; y: number };
+  start: Point;
+  end: Point;
+  midpoint: Point;
+  originalMidpoint: Point;
   isHorizontal: boolean;
   canMove: boolean;
 }
@@ -32,3 +32,5 @@ export interface OrthoPath {
   points: number[];
   segments: PathSegment[];
 }
+
+import type { Point } from '../types';
