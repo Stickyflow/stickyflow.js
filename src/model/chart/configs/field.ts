@@ -6,7 +6,3 @@ export interface FieldChartConfig {
   idwPower?: number;
   isolines?: number[];
 }
-
-export interface HexbinChartConfig {
-  hexRadius?: number;
-}

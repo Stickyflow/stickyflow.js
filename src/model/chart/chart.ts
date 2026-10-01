@@ -1,25 +1,27 @@
 import type { ShadowStyle } from '../shadow';
 import type { ChartRule } from './annotations';
 import type { ChartAxis } from './axis';
-import type { ChartType } from './catalog';
 import type {
   BarChartConfig,
   BoxplotChartConfig,
-  CategoryChartConfig,
+  ChartConfigCapabilities,
   CustomChartConfig,
   FieldChartConfig,
-  GenericChartConfig,
   HeatmapChartConfig,
   HexbinChartConfig,
   LineChartConfig,
   MekkoChartConfig,
   PieChartConfig,
+  PolarAreaChartConfig,
   RadarChartConfig,
   RadialBarChartConfig,
+  RadialChartConfig,
   SankeyChartConfig,
+  ScatterChartConfig,
   TreemapChartConfig,
 } from './configs';
 import type { ChartSeries } from './series';
+import type { ChartType } from './supportedTypes';
 
 export interface ChartBase {
   id: string;
@@ -53,7 +55,7 @@ export interface ChartBase {
   isVisible?: boolean;
 }
 
-export interface TypedChart<TType extends ChartType = ChartType, TConfig extends object = GenericChartConfig>
+export interface TypedChart<TType extends ChartType = ChartType, TConfig extends object = ChartConfigCapabilities>
   extends ChartBase {
   chartType: TType;
   config?: TConfig;
@@ -63,7 +65,7 @@ export interface BarChart extends TypedChart<'bar', BarChartConfig> {}
 
 export interface LineChart extends TypedChart<'line', LineChartConfig> {}
 
-export interface ScatterChart extends TypedChart<'scatter', CategoryChartConfig> {}
+export interface ScatterChart extends TypedChart<'scatter', ScatterChartConfig> {}
 
 export interface BoxplotChart extends TypedChart<'boxplot', BoxplotChartConfig> {}
 
@@ -75,9 +77,13 @@ export interface HexbinChart extends TypedChart<'hexbin', HexbinChartConfig> {}
 
 export interface MekkoChart extends TypedChart<'mekko', MekkoChartConfig> {}
 
-export interface PieChart extends TypedChart<'pie' | 'polarArea', PieChartConfig> {}
+export interface PieChart extends TypedChart<'pie', PieChartConfig> {}
 
-export interface RadarChart extends TypedChart<'radar' | 'radial', RadarChartConfig> {}
+export interface PolarAreaChart extends TypedChart<'polarArea', PolarAreaChartConfig> {}
+
+export interface RadarChart extends TypedChart<'radar', RadarChartConfig> {}
+
+export interface RadialChart extends TypedChart<'radial', RadialChartConfig> {}
 
 export interface RadialBarChart extends TypedChart<'radialBar', RadialBarChartConfig> {}
 
@@ -97,8 +103,10 @@ export type Chart =
   | LineChart
   | MekkoChart
   | PieChart
+  | PolarAreaChart
   | RadarChart
   | RadialBarChart
+  | RadialChart
   | SankeyChart
   | ScatterChart
   | TreemapChart;

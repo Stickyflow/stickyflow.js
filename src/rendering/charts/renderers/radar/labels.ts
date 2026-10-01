@@ -1,10 +1,12 @@
-import type { RadarChart } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { chartText } from '../../primitives';
 import type { ChartRenderContext } from '../types';
-import type { RadarGeometry } from './types';
+import type { RadarFamilyChart, RadarGeometry } from './types';
 
-export function renderRadarLabels(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
+export function renderRadarLabels(
+  context: ChartRenderContext<RadarFamilyChart>,
+  geometry: RadarGeometry,
+): RenderNode[] {
   if (!context.showLabels) {
     return [];
   }
@@ -15,7 +17,7 @@ export function renderRadarLabels(context: ChartRenderContext<RadarChart>, geome
 }
 
 function createCategoryLabel(
-  context: ChartRenderContext<RadarChart>,
+  context: ChartRenderContext<RadarFamilyChart>,
   geometry: RadarGeometry,
   category: string,
   categoryIndex: number,

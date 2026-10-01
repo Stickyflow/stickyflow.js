@@ -1,11 +1,10 @@
-import type { RadarChart } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite } from '../../../scene';
 import { chartTicks } from '../../primitives';
 import type { ChartRenderContext } from '../types';
-import type { RadarGeometry } from './types';
+import type { RadarFamilyChart, RadarGeometry } from './types';
 
-export function renderRadarGrid(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
+export function renderRadarGrid(context: ChartRenderContext<RadarFamilyChart>, geometry: RadarGeometry): RenderNode[] {
   if (context.chart.showGrid === false) {
     return [];
   }
@@ -13,13 +12,17 @@ export function renderRadarGrid(context: ChartRenderContext<RadarChart>, geometr
   return [...renderRings(context, geometry), ...renderSpokes(context, geometry)];
 }
 
-function renderRings(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
+function renderRings(context: ChartRenderContext<RadarFamilyChart>, geometry: RadarGeometry): RenderNode[] {
   return chartTicks(context.chart.axisY)
     .filter(tick => tick > context.chart.axisY.min)
     .map(tick => createRingNode(context, geometry, tick));
 }
 
-function createRingNode(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry, tick: number): RenderNode {
+function createRingNode(
+  context: ChartRenderContext<RadarFamilyChart>,
+  geometry: RadarGeometry,
+  tick: number,
+): RenderNode {
   const { chart, bounds, nextOrder } = context;
   const ringRadius = geometry.radiusForValue(tick);
   const style = {
@@ -51,7 +54,7 @@ function createRingNode(context: ChartRenderContext<RadarChart>, geometry: Radar
   };
 }
 
-function renderSpokes(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
+function renderSpokes(context: ChartRenderContext<RadarFamilyChart>, geometry: RadarGeometry): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
   return geometry.categories.map((_, categoryIndex) => {
     const edge = geometry.pointAt(geometry.radius, categoryIndex);

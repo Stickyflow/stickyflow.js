@@ -10,9 +10,12 @@ import type {
   LineChartConfig,
   MekkoChartConfig,
   PieChartConfig,
+  PolarAreaChartConfig,
   RadarChartConfig,
   RadialBarChartConfig,
+  RadialChartConfig,
   SankeyChartConfig,
+  ScatterChartConfig,
   TreemapChartConfig,
   TypedChart,
 } from '../../../model/chart';
@@ -94,7 +97,7 @@ export function chartObject(e: SflEntityOut): Chart {
         lineTension: source?.lineTension,
       } satisfies LineChartConfig);
     case 'scatter':
-      return typedChart(base, chartType, { categories: source?.categories });
+      return typedChart(base, chartType, { categories: source?.categories } satisfies ScatterChartConfig);
     case 'boxplot':
       return typedChart(base, chartType, {
         boxWidth: source?.boxWidth,
@@ -131,18 +134,27 @@ export function chartObject(e: SflEntityOut): Chart {
         showColumnBackdrop: source?.showColumnBackdrop,
       } satisfies MekkoChartConfig);
     case 'pie':
-    case 'polarArea':
       return typedChart(base, chartType, {
         innerRadius: source?.innerRadius,
         pieCornerRadius: source?.pieCornerRadius,
         pieSliceGap: source?.pieSliceGap,
       } satisfies PieChartConfig);
+    case 'polarArea':
+      return typedChart(base, chartType, {
+        innerRadius: source?.innerRadius,
+        pieCornerRadius: source?.pieCornerRadius,
+        pieSliceGap: source?.pieSliceGap,
+      } satisfies PolarAreaChartConfig);
     case 'radar':
-    case 'radial':
       return typedChart(base, chartType, {
         categories: source?.categories,
         areaOpacity: source?.areaOpacity,
       } satisfies RadarChartConfig);
+    case 'radial':
+      return typedChart(base, chartType, {
+        categories: source?.categories,
+        areaOpacity: source?.areaOpacity,
+      } satisfies RadialChartConfig);
     case 'radialBar':
       return typedChart(base, chartType, {
         ringThickness: source?.ringThickness,

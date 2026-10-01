@@ -1,4 +1,4 @@
-import type { ChartSeries, PieChart } from '../../../model/chart';
+import type { ChartSeries, PolarAreaChart } from '../../../model/chart';
 import type { RenderNode, SceneText } from '../../scene';
 import { DEFAULT_FONT, finite, paint } from '../../scene';
 import {
@@ -30,7 +30,7 @@ const LEADER_INSET = 3;
 const OUTSIDE_TINT_LIGHTNESS = 0.32;
 const OUTSIDE_FALLBACK_COLOR = '#334155';
 
-export function renderPolarArea(context: ChartRenderContext<PieChart>): RenderNode[] {
+export function renderPolarArea(context: ChartRenderContext<PolarAreaChart>): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const centerX = plot.x + plot.width / 2;
   const centerY = plot.y + plot.height / 2;
@@ -130,7 +130,7 @@ export function renderPolarArea(context: ChartRenderContext<PieChart>): RenderNo
 }
 
 function createWedgeLabel(
-  context: ChartRenderContext<PieChart>,
+  context: ChartRenderContext<PolarAreaChart>,
   geometry: { centerX: number; centerY: number; outerRadius: number; innerRadius: number },
   angles: { start: number; end: number },
   series: ChartSeries,

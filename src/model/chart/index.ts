@@ -1,7 +1,5 @@
 export type { ChartRule, ChartZone } from './annotations';
 export type { ChartAxis } from './axis';
-export type { ChartType } from './catalog';
-export { CHART_TYPES, isChartType } from './catalog';
 export type {
   BarChart,
   BoxplotChart,
@@ -14,8 +12,10 @@ export type {
   LineChart,
   MekkoChart,
   PieChart,
+  PolarAreaChart,
   RadarChart,
   RadialBarChart,
+  RadialChart,
   SankeyChart,
   ScatterChart,
   TreemapChart,
@@ -32,9 +32,14 @@ export type {
   LineChartConfig,
   MekkoChartConfig,
   PieChartConfig,
+  PolarAreaChartConfig,
   RadarChartConfig,
   RadialBarChartConfig,
+  RadialChartConfig,
   SankeyChartConfig,
+  ScatterChartConfig,
   TreemapChartConfig,
 } from './configs';
 export type { ChartSeries } from './series';
+export type { ChartType } from './supportedTypes';
+export { CHART_TYPES, isChartType } from './supportedTypes';

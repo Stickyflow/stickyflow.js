@@ -1,4 +1,12 @@
-import type { ChartType, HexbinChart, PieChart, RadarChart, RadialBarChart } from '../../../model/chart';
+import type {
+  ChartType,
+  HexbinChart,
+  PieChart,
+  PolarAreaChart,
+  RadarChart,
+  RadialBarChart,
+  RadialChart,
+} from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { renderBar } from './bar';
 import { renderBoxplot } from './boxplot';
@@ -29,9 +37,9 @@ const RENDERERS: Record<ChartType, ChartRenderer> = {
   line: renderLine,
   mekko: renderMekko,
   pie: context => renderPie(context as ChartRenderContext<PieChart>),
-  polarArea: context => renderPolarArea(context as ChartRenderContext<PieChart>),
+  polarArea: context => renderPolarArea(context as ChartRenderContext<PolarAreaChart>),
   radar: context => renderRadar(context as ChartRenderContext<RadarChart>),
-  radial: context => renderRadar(context as ChartRenderContext<RadarChart>),
+  radial: context => renderRadar(context as ChartRenderContext<RadialChart>),
   radialBar: context => renderRadialBar(context as ChartRenderContext<RadialBarChart>),
   sankey: renderSankey,
   scatter: renderScatter,

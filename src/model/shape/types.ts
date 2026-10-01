@@ -1,6 +1,7 @@
 import type { GradientColor, MeshGradientColor } from '../color/types';
 import type { ShadowStyle } from '../shadow';
-import type { ShapeStrokeStyle } from './appearance';
+
+export type ShapeStrokeStyle = 'solid' | 'dashed' | 'dotted' | 'double';
 
 export type ShapeType =
   | 'rounded_rectangle'

@@ -1,5 +1,5 @@
 import type { ChartZone } from '../annotations';
-import type { CategoryChartConfig } from './cartesian';
+import type { CategoryChartConfig } from './category';
 
 export interface HeatmapChartConfig extends CategoryChartConfig {
   zones?: ChartZone[];
@@ -7,12 +7,4 @@ export interface HeatmapChartConfig extends CategoryChartConfig {
   showValues?: boolean;
   squareCells?: boolean;
   barCornerRadius?: number;
-}
-
-export interface TreemapChartConfig {
-  zones?: ChartZone[];
-  cellGap?: number;
-  barCornerRadius?: number;
-  headerColor?: string;
-  tileGradient?: boolean;
 }
