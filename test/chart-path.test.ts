@@ -51,14 +51,36 @@ describe('Chart and Path parity', () => {
     ]);
 
     const input = sflToRenderInput(CHART_SFL);
-    expect(input.charts?.[0].title).toBe('Dotted Chart');
-    expect(input.charts?.[0].grid_color).toBe('#60a5fa');
+    expect(input.charts?.[0]).toMatchObject({
+      title: 'Dotted Chart',
+      chartType: 'scatter',
+      axisX: { min: 0, max: 4, step: 1 },
+      gridColor: '#60a5fa',
+      showGrid: true,
+      showLegend: true,
+    });
     const { svg } = render(CHART_SFL);
     expect(svg).toContain('data-sf-role="chart"');
     expect(svg).toContain('Dotted Chart');
     expect(svg).toContain('Sekunde pro Minute');
     expect(svg).toContain('2028');
     expect(svg).toContain('#4e3180');
+  });
+
+  it('does not render a chart whose canonical visibility flag is false', () => {
+    const chart = sflToRenderInput(CHART_SFL).charts?.[0];
+    if (!chart) {
+      throw new Error('Expected the SFL fixture to produce a chart.');
+    }
+    const input = {
+      shapes: [],
+      frames: [],
+      swimlanes: [],
+      links: [],
+      charts: [{ ...chart, isVisible: false }],
+    } as RenderInput;
+
+    expect(renderCanvas(input).svg).not.toContain('sf-chart-chart');
   });
 
   it('renders explicit line x coordinates and remains compatible with legacy flat values', () => {
@@ -69,12 +91,12 @@ describe('Chart and Path parity', () => {
       width: 500,
       height: 300,
       title: 'Line',
-      chart_type: 'line' as const,
-      axis_x: { min: 0, max: 4, step: 1 },
-      axis_y: { min: 0, max: 500, step: 100 },
-      fill_color: '#fff',
-      stroke_color: '#000',
-      text_color: '#111',
+      chartType: 'line' as const,
+      axisX: { min: 0, max: 4, step: 1 },
+      axisY: { min: 0, max: 500, step: 100 },
+      fillColor: '#fff',
+      strokeColor: '#000',
+      textColor: '#111',
       series: [
         {
           id: 'explicit',

@@ -26,7 +26,7 @@ export function buildChartTitle(
         chart,
       }),
       fontWeight: 'bold',
-      fontSize: Math.max(10, finite(chart.font_size, 12)) + 2,
+      fontSize: Math.max(10, finite(chart.fontSize, 12)) + 2,
       prop: CHART_TITLE_PROP,
     },
   ];

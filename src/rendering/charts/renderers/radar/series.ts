@@ -38,7 +38,7 @@ function seriesPoints(
 ): RadarPoint[] {
   const values = series.values as number[];
   return geometry.categories.map((_, categoryIndex) =>
-    geometry.pointAt(geometry.radiusForValue(values[categoryIndex] ?? context.chart.axis_y.min), categoryIndex),
+    geometry.pointAt(geometry.radiusForValue(values[categoryIndex] ?? context.chart.axisY.min), categoryIndex),
   );
 }
 
@@ -84,7 +84,7 @@ function createSeriesStroke(
       stroke: paint(color, diagnostics, chart.id),
       strokeWidth: 2,
       lineJoin: 'round',
-      shadow: resolveChartShadow(chart.shadow_style),
+      shadow: resolveChartShadow(chart.shadowStyle),
     },
   };
 }

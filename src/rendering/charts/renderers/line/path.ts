@@ -26,7 +26,7 @@ export function createLinePath(
       stroke: paint(color, diagnostics, chart.id),
       strokeWidth: 2,
       lineJoin: 'round',
-      shadow: resolveChartShadow(chart.shadow_style),
+      shadow: resolveChartShadow(chart.shadowStyle),
     },
   };
 }

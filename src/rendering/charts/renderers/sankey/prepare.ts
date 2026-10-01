@@ -14,7 +14,7 @@ export function createSankeyRenderData(context: ChartRenderContext): SankeyRende
     baseX: plot.x + labelGutter,
     baseY: plot.y,
     labelGutter,
-    fontSize: Math.max(9, finite(chart.font_size, 12)),
+    fontSize: Math.max(9, finite(chart.fontSize, 12)),
     columnCount: Math.max(1, ...layout.nodes.map(node => node.column + 1)),
     nodeColors: new Map(layout.nodes.map(node => [node.id, node.color || DEFAULT_ZONE_FILL])),
   };

@@ -13,8 +13,8 @@ export function renderSamplePoints(
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const valueAt = (value: number): number =>
     layout.orientation === 'horizontal'
-      ? plot.x + mapChartValue(value, chart.axis_x, plot.width)
-      : plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height);
+      ? plot.x + mapChartValue(value, chart.axisX, plot.width)
+      : plot.y + plot.height - mapChartValue(value, chart.axisY, plot.height);
   return (mark.series.values as number[]).map((value, pointIndex) => {
     const center = mark.geometry.center + jitter(mark.seriesIndex * 10_000 + pointIndex) * layout.boxWidth;
     const { x, y } = boxplotPoint(layout.orientation, center, valueAt(value));

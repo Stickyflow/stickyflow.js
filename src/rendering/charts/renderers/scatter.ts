@@ -7,7 +7,7 @@ import type { ChartRenderContext } from './types';
 
 export function renderScatter(context: ChartRenderContext, radius = 4): RenderNode[] {
   const nodes: RenderNode[] = [];
-  const shadow = resolveChartShadow(context.chart.shadow_style);
+  const shadow = resolveChartShadow(context.chart.shadowStyle);
   context.chart.series.forEach((series, seriesIndex) => {
     const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
     const points = pixelPoints(context, seriesValuePairs(context.chart, series));

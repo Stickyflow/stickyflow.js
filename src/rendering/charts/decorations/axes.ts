@@ -8,14 +8,14 @@ import { buildNumericXAxisTicks } from './numericXAxis';
 import { buildNumericYAxisTicks } from './numericYAxis';
 
 function isHorizontalBoxplot(chart: Chart): boolean {
-  return chart.chart_type === 'boxplot' && chart.config?.orientation === 'horizontal';
+  return chart.chartType === 'boxplot' && chart.config?.orientation === 'horizontal';
 }
 
 function buildXAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
-  if (chart.chart_type === 'bar') {
+  if (chart.chartType === 'bar') {
     return buildCategoricalXAxisTicks(chart, layout, order);
   }
-  if (chart.chart_type === 'boxplot' && !isHorizontalBoxplot(chart)) {
+  if (chart.chartType === 'boxplot' && !isHorizontalBoxplot(chart)) {
     return buildSeriesXAxisTicks(chart, layout, order);
   }
   return buildNumericXAxisTicks(chart, layout, order);

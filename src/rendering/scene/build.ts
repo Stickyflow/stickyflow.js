@@ -39,7 +39,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ),
     ...(input.paths ?? []).flatMap((path, i) => tag(buildFreeformPath(path, i), 'path', path.id, 'path', 'Path')),
     ...(input.charts ?? []).flatMap((chart, i) =>
-      tag(buildChart(chart, i, diagnostics), 'chart', chart.id, chart.chart_type, chart.title ?? 'Chart'),
+      tag(buildChart(chart, i, diagnostics), 'chart', chart.id, chart.chartType, chart.title ?? 'Chart'),
     ),
     ...input.links.flatMap((item, i) =>
       tag(

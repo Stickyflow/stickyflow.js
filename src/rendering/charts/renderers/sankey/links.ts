@@ -20,7 +20,7 @@ interface SankeyLinkRibbon {
 }
 
 export function renderSankeyLinks(context: ChartRenderContext, data: SankeyRenderData): RenderNode[] {
-  const shadow = resolveChartShadow(context.chart.shadow_style);
+  const shadow = resolveChartShadow(context.chart.shadowStyle);
   const gradient = Boolean(context.chart.config?.linkGradient);
   const { plot } = context;
   const clipPath = shadow

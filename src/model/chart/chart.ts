@@ -28,34 +28,34 @@ export interface ChartBase {
   width: number;
   height: number;
   title?: string | null;
-  axis_x: ChartAxis;
-  axis_y: ChartAxis;
+  axisX: ChartAxis;
+  axisY: ChartAxis;
   series: ChartSeries[];
   rules?: ChartRule[];
-  stroke_color?: string;
-  stroke_width?: number;
-  corner_radius?: number;
-  fill_color?: string;
-  grid_color?: string;
-  grid_width?: number;
-  grid_shape?: 'rect' | 'circle';
-  grid_line_style?: 'solid' | 'dashed' | 'dotted';
-  grid_rounded_corners?: boolean;
-  text_color?: string;
-  font_family?: string;
-  font_size?: number;
-  show_grid?: boolean;
-  show_axis_labels?: boolean;
-  show_legend?: boolean;
-  legend_position?: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
-  shadow_style?: ShadowStyle;
+  strokeColor?: string;
+  strokeWidth?: number;
+  cornerRadius?: number;
+  fillColor?: string;
+  gridColor?: string;
+  gridWidth?: number;
+  gridShape?: 'rect' | 'circle';
+  gridLineStyle?: 'solid' | 'dashed' | 'dotted';
+  gridRoundedCorners?: boolean;
+  textColor?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  showGrid?: boolean;
+  showAxisLabels?: boolean;
+  showLegend?: boolean;
+  legendPosition?: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
+  shadowStyle?: ShadowStyle;
   order?: number;
-  is_visible?: boolean;
+  isVisible?: boolean;
 }
 
 export interface TypedChart<TType extends ChartType = ChartType, TConfig extends object = UnnarrowedChartConfig>
   extends ChartBase {
-  chart_type: TType;
+  chartType: TType;
   config?: TConfig;
 }
 

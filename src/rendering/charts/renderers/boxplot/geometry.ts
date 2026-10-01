@@ -16,8 +16,8 @@ export function createBoxplotGeometry(
   const { orientation } = layout;
   const valueAt = (value: number): number =>
     orientation === 'horizontal'
-      ? plot.x + mapChartValue(value, chart.axis_x, plot.width)
-      : plot.y + plot.height - mapChartValue(value, chart.axis_y, plot.height);
+      ? plot.x + mapChartValue(value, chart.axisX, plot.width)
+      : plot.y + plot.height - mapChartValue(value, chart.axisY, plot.height);
   const center = plot[orientation === 'horizontal' ? 'y' : 'x'] + seriesIndex * layout.slotWidth + layout.slotWidth / 2;
   return {
     center,

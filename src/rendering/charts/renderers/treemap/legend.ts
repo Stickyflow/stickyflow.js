@@ -51,10 +51,10 @@ function renderBottomLegend(context: ChartRenderContext, layout: TreemapLayout):
     width: barWidth,
     height: BAR_THICKNESS,
     rx: 3,
-    zoneGradient: { axis: 'y', min: chart.axis_y.min, max: chart.axis_y.max },
+    zoneGradient: { axis: 'y', min: chart.axisY.min, max: chart.axisY.max },
     style: {
       fill: stops.length ? { kind: 'linear-gradient', angle: 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
-      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
       strokeWidth: 1,
     },
   };
@@ -69,7 +69,7 @@ function renderBottomLegend(context: ChartRenderContext, layout: TreemapLayout):
       d: `M ${x} ${barY + BAR_THICKNESS} L ${x} ${barY + BAR_THICKNESS + TICK_LENGTH}`,
       style: {
         fill: { kind: 'none' },
-        stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+        stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
         strokeWidth: 1,
       },
     };
@@ -111,10 +111,10 @@ function renderSideLegend(context: ChartRenderContext, layout: TreemapLayout): R
     width: BAR_THICKNESS,
     height: barHeight,
     rx: 3,
-    zoneGradient: { axis: 'y', min: chart.axis_y.min, max: chart.axis_y.max },
+    zoneGradient: { axis: 'y', min: chart.axisY.min, max: chart.axisY.max },
     style: {
       fill: stops.length ? { kind: 'linear-gradient', angle: 270, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
-      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
       strokeWidth: 1,
     },
   };
@@ -133,7 +133,7 @@ function renderSideLegend(context: ChartRenderContext, layout: TreemapLayout): R
       d: `M ${tickX} ${y} L ${tickEndX} ${y}`,
       style: {
         fill: { kind: 'none' },
-        stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+        stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
         strokeWidth: 1,
       },
     };

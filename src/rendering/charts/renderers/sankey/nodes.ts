@@ -41,7 +41,7 @@ function createNodeRect(
   const y = data.baseY + node.y;
   const style = {
     fill: { kind: 'solid' as const, color: node.color || DEFAULT_ZONE_FILL },
-    shadow: resolveChartShadow(chart.shadow_style),
+    shadow: resolveChartShadow(chart.shadowStyle),
   };
   const isFirstColumn = node.column === 0;
   const isLastColumn = node.column === data.columnCount - 1;
@@ -106,7 +106,7 @@ function createNodeLabel(
   if (!label) {
     return undefined;
   }
-  const fallback = chart.text_color ?? '#0f172a';
+  const fallback = chart.textColor ?? '#0f172a';
   const defaultColor =
     position === 'inside'
       ? contrastTextColor(node.color)

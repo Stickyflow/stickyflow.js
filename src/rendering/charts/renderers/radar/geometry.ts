@@ -20,11 +20,11 @@ export function radarFrameFor(context: ChartRenderContext<RadarChart>): RadarFra
   return {
     centerX: plot.x + plot.width / 2,
     centerY: plot.y + plot.height / 2,
-    radius: radarRadius(plot.width, plot.height, finite(chart.font_size, 12), context.showLabels),
-    min: chart.axis_y.min,
-    max: chart.axis_y.max,
+    radius: radarRadius(plot.width, plot.height, finite(chart.fontSize, 12), context.showLabels),
+    min: chart.axisY.min,
+    max: chart.axisY.max,
     count: radarCategoryCount(configuredCount, dataCount),
-    curved: chart.chart_type === 'radial',
+    curved: chart.chartType === 'radial',
   };
 }
 

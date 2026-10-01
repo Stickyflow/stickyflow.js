@@ -32,12 +32,12 @@ export function buildLegend(render: ChartLegendRender): RenderNode[] {
 }
 
 function usesStandardLegend(chart: Chart): boolean {
-  const isConnectedCustom = chart.chart_type === 'custom' && Boolean(chart.config?.connectPoints);
-  return chart.show_legend !== false && !CHARTS_WITH_OWN_LEGEND.has(chart.chart_type) && !isConnectedCustom;
+  const isConnectedCustom = chart.chartType === 'custom' && Boolean(chart.config?.connectPoints);
+  return chart.showLegend !== false && !CHARTS_WITH_OWN_LEGEND.has(chart.chartType) && !isConnectedCustom;
 }
 
 function legendSeries(chart: Chart): ChartSeries[] {
-  return chart.chart_type === 'field'
+  return chart.chartType === 'field'
     ? chart.series.filter(item => (item.values[0] as number[] | undefined)?.length === 4)
     : chart.series;
 }
@@ -45,12 +45,12 @@ function legendSeries(chart: Chart): ChartSeries[] {
 export const LEGEND_ROW_HEIGHT = 22;
 export const LEGEND_COLUMN_GAP = 16;
 
-export function isStackedLegendPosition(position: Chart['legend_position']): boolean {
+export function isStackedLegendPosition(position: Chart['legendPosition']): boolean {
   return position === 'bottomLeft' || position === 'bottomRight';
 }
 
 function legendItemWidths(chart: Chart): number[] {
-  return legendSeries(chart).map(item => Math.max(42, item.label.length * finite(chart.font_size, 12) * 0.58 + 22));
+  return legendSeries(chart).map(item => Math.max(42, item.label.length * finite(chart.fontSize, 12) * 0.58 + 22));
 }
 
 export function stackedLegendColumnWidth(chart: Chart): number {
@@ -59,14 +59,14 @@ export function stackedLegendColumnWidth(chart: Chart): number {
 }
 
 function legendStartX(chart: Chart, plot: ChartLegendRender['plot'], totalWidth: number): number {
-  if (chart.legend_position === 'bottom') {
+  if (chart.legendPosition === 'bottom') {
     return plot.x + (plot.width - totalWidth) / 2;
   }
   return plot.x + plot.width - totalWidth;
 }
 
 function legendY(chart: Chart, plot: ChartLegendRender['plot']): number {
-  return (chart.legend_position ?? 'top') === 'top' ? chart.y + 16 : plot.y + plot.height + 16;
+  return (chart.legendPosition ?? 'top') === 'top' ? chart.y + 16 : plot.y + plot.height + 16;
 }
 
 function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] {
@@ -75,7 +75,7 @@ function createStackedLegendItems(render: ChartLegendRender): ChartLegendItem[] 
   const widths = legendItemWidths(chart);
   const maxWidth = Math.max(...widths);
   const x =
-    chart.legend_position === 'bottomLeft'
+    chart.legendPosition === 'bottomLeft'
       ? plot.x - LEGEND_COLUMN_GAP - maxWidth
       : plot.x + plot.width + LEGEND_COLUMN_GAP;
   const lastY = plot.y + plot.height - 15;
@@ -105,7 +105,7 @@ function createRowLegendItems(render: ChartLegendRender): ChartLegendItem[] {
 }
 
 function createLegendItems(render: ChartLegendRender): ChartLegendItem[] {
-  return isStackedLegendPosition(render.chart.legend_position)
+  return isStackedLegendPosition(render.chart.legendPosition)
     ? createStackedLegendItems(render)
     : createRowLegendItems(render);
 }
@@ -117,7 +117,7 @@ function renderLegendItem(render: ChartLegendRender, item: ChartLegendItem): Ren
 function createLegendSwatch(render: ChartLegendRender, item: ChartLegendItem): RenderNode {
   const { chart, bounds, diagnostics } = render;
   const fallback = CHART_COLORS[item.seriesIndex % CHART_COLORS.length];
-  const solidOnly = chart.chart_type === 'line';
+  const solidOnly = chart.chartType === 'line';
   const color = solidOnly ? representativeColor(item.series.color, fallback) : (item.series.color ?? fallback);
   return {
     type: 'rect',

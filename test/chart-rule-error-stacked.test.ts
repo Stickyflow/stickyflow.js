@@ -72,8 +72,8 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   it('renders stacked bars cumulatively and a Rule reference line', () => {
     const input = sflToRenderInput(STACKED_SFL);
     const chart = input.charts?.[0];
-    expect(chart?.chart_type).toBe('bar');
-    if (chart?.chart_type !== 'bar') {
+    expect(chart?.chartType).toBe('bar');
+    if (chart?.chartType !== 'bar') {
       throw new Error('expected a bar chart');
     }
     expect(chart.config?.stacked).toBe('true');
@@ -130,13 +130,13 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
         y: 0,
         width: 400,
         height: 300,
-        chart_type: 'bar',
-        axis_x: { min: 0, max: 4, step: 1 },
-        axis_y: { min: -20, max: 40, step: 10 },
+        chartType: 'bar',
+        axisX: { min: 0, max: 4, step: 1 },
+        axisY: { min: -20, max: 40, step: 10 },
         config: { stacked: 'waterfall' },
-        fill_color: '#fff',
-        stroke_color: '#000',
-        text_color: '#111',
+        fillColor: '#fff',
+        strokeColor: '#000',
+        textColor: '#111',
         series: [{ id: 's1', label: 'Flow', values: [10, -5, 20] }],
       },
     ];
@@ -165,13 +165,13 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
         y: 0,
         width: 400,
         height: 200,
-        chart_type: 'bar',
-        axis_x: { min: 0, max: 4, step: 1 },
-        axis_y: { min: 0, max: 100, step: 10 },
+        chartType: 'bar',
+        axisX: { min: 0, max: 4, step: 1 },
+        axisY: { min: 0, max: 100, step: 10 },
         config: { stacked: 'percent' },
-        fill_color: '#fff',
-        stroke_color: '#000',
-        text_color: '#111',
+        fillColor: '#fff',
+        strokeColor: '#000',
+        textColor: '#111',
         series: [
           { id: 's1', label: 'A', values: [25] },
           { id: 's2', label: 'B', values: [75] },
@@ -193,12 +193,12 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
         y: 0,
         width: 400,
         height: 300,
-        chart_type: 'line',
-        axis_x: { min: 0, max: 4, step: 1 },
-        axis_y: { min: 0, max: 100, step: 10 },
-        fill_color: '#fff',
-        stroke_color: '#000',
-        text_color: '#111',
+        chartType: 'line',
+        axisX: { min: 0, max: 4, step: 1 },
+        axisY: { min: 0, max: 100, step: 10 },
+        fillColor: '#fff',
+        strokeColor: '#000',
+        textColor: '#111',
         series: [{ id: 's1', label: 'A', values: [50], error: [[10, 5]] }],
       },
     ];

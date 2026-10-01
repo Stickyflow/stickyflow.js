@@ -6,7 +6,7 @@ import type { ChartRenderContext } from '../types';
 import type { RadarGeometry } from './types';
 
 export function renderRadarGrid(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
-  if (context.chart.show_grid === false) {
+  if (context.chart.showGrid === false) {
     return [];
   }
 
@@ -14,8 +14,8 @@ export function renderRadarGrid(context: ChartRenderContext<RadarChart>, geometr
 }
 
 function renderRings(context: ChartRenderContext<RadarChart>, geometry: RadarGeometry): RenderNode[] {
-  return chartTicks(context.chart.axis_y)
-    .filter(tick => tick > context.chart.axis_y.min)
+  return chartTicks(context.chart.axisY)
+    .filter(tick => tick > context.chart.axisY.min)
     .map(tick => createRingNode(context, geometry, tick));
 }
 
@@ -24,8 +24,8 @@ function createRingNode(context: ChartRenderContext<RadarChart>, geometry: Radar
   const ringRadius = geometry.radiusForValue(tick);
   const style = {
     fill: { kind: 'none' } as const,
-    stroke: { kind: 'solid' as const, color: chart.grid_color ?? '#e2e8f0' },
-    strokeWidth: finite(chart.grid_width, 1),
+    stroke: { kind: 'solid' as const, color: chart.gridColor ?? '#e2e8f0' },
+    strokeWidth: finite(chart.gridWidth, 1),
   };
 
   if (geometry.circular) {
@@ -63,8 +63,8 @@ function renderSpokes(context: ChartRenderContext<RadarChart>, geometry: RadarGe
       d: `M ${geometry.centerX} ${geometry.centerY} L ${edge.x} ${edge.y}`,
       style: {
         fill: { kind: 'none' },
-        stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
-        strokeWidth: finite(chart.grid_width, 1),
+        stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
+        strokeWidth: finite(chart.gridWidth, 1),
       },
     };
   });

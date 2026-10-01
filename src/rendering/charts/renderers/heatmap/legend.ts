@@ -56,10 +56,10 @@ function createGradientBar(
     width: barWidth,
     height: BAR_HEIGHT,
     rx: 3,
-    zoneGradient: { axis: 'y', min: chart.axis_y.min, max: chart.axis_y.max },
+    zoneGradient: { axis: 'y', min: chart.axisY.min, max: chart.axisY.max },
     style: {
       fill: stops.length ? { kind: 'linear-gradient', angle: 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
-      stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
       strokeWidth: 1,
     },
   };
@@ -87,7 +87,7 @@ function createBoundaryTicks(
       d: `M ${x} ${barY + BAR_HEIGHT} L ${x} ${barY + BAR_HEIGHT + TICK_HEIGHT}`,
       style: {
         fill: { kind: 'none' },
-        stroke: { kind: 'solid', color: chart.grid_color ?? '#e2e8f0' },
+        stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
         strokeWidth: 1,
       },
     };

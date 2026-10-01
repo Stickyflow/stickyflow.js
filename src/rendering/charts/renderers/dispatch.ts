@@ -45,5 +45,5 @@ export function isPolarChart(chartType: ChartType): boolean {
 }
 
 export function renderChartMarks(context: ChartRenderContext): RenderNode[] {
-  return RENDERERS[context.chart.chart_type](context);
+  return RENDERERS[context.chart.chartType](context);
 }

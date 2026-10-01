@@ -62,9 +62,9 @@ export function renderRadialBar(context: ChartRenderContext<RadialBarChart>): Re
   const outerRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
   const ringThickness = Math.max(1, finite(chart.config?.ringThickness, DEFAULT_RING_THICKNESS));
   const ringGap = Math.max(0, finite(chart.config?.ringGap, DEFAULT_RING_GAP));
-  const axisMin = finite(chart.axis_y.min, 0);
-  const range = finite(chart.axis_y.max, 100) - axisMin;
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const axisMin = finite(chart.axisY.min, 0);
+  const range = finite(chart.axisY.max, 100) - axisMin;
+  const shadow = resolveChartShadow(chart.shadowStyle);
 
   return chart.series.flatMap((series, index): RenderNode[] => {
     const radius = outerRadius - index * (ringThickness + ringGap) - ringThickness / 2;

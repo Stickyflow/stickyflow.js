@@ -1,8 +1,9 @@
+import type { Chart, TypedChart } from '../../../model/chart';
 import { decodeColor, decodeRamp, decodeShadow } from '../../../sfl/decodeStyles';
 import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { numOf, solidColor } from './values';
 
-export function chartObject(e: SflEntityOut) {
+export function chartObject(e: SflEntityOut): Chart {
   const p = e.props;
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
   const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
@@ -15,17 +16,16 @@ export function chartObject(e: SflEntityOut) {
     p.legendPosition === 'right'
       ? p.legendPosition
       : 'top';
-  return {
+  const chart = {
     id: e.id,
-    type: 'chart',
     title: e.text ?? null,
     x: e.x,
     y: e.y,
     width: e.width,
     height: e.height,
-    chart_type: e.chart?.chartType ?? 'bar',
-    axis_x: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
-    axis_y: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
+    chartType: e.chart?.chartType ?? 'bar',
+    axisX: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
+    axisY: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
     config: {
       categories: e.chart?.categories,
       areaOpacity: e.chart?.areaOpacity,
@@ -66,33 +66,34 @@ export function chartObject(e: SflEntityOut) {
       ...s,
       color: decodeColor(s.color),
       colors: s.colors?.map(c => (c === null ? null : (decodeColor(c) ?? null))),
-      stroke_width: s.strokeWidth,
+      strokeWidth: s.strokeWidth,
     })),
     rules: (e.chart?.rules ?? []).map(r => ({
       id: r.id,
       at: r.at,
       text: r.text,
       color: r.color,
-      stroke_width: r.strokeWidth,
+      strokeWidth: r.strokeWidth,
       dash: r.dash,
     })),
-    fill_color: solidColor(p.fill) ?? '#ffffff',
-    stroke_color: solidColor(p.stroke) ?? '#475569',
-    stroke_width: numOf(p.strokeWidth) ?? 1,
-    corner_radius: numOf(p.cornerRadius) ?? 12,
-    grid_color: p.gridColor ?? '#e2e8f0',
-    grid_width: numOf(p.gridWidth) ?? 1,
-    grid_shape: gridShape,
-    grid_line_style: gridLineStyle,
-    grid_rounded_corners: p.gridRoundedCorners === 'true',
-    text_color: p.textColor ?? '#0f172a',
-    font_size: numOf(p.fontSize) ?? 12,
-    font_family: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    show_grid: p.showGrid !== 'false',
-    show_axis_labels: p.showAxisLabels !== 'false',
-    show_legend: p.showLegend !== 'false',
-    legend_position: legendPosition,
-    shadow_style: decodeShadow(p.shadow),
+    fillColor: solidColor(p.fill) ?? '#ffffff',
+    strokeColor: solidColor(p.stroke) ?? '#475569',
+    strokeWidth: numOf(p.strokeWidth) ?? 1,
+    cornerRadius: numOf(p.cornerRadius) ?? 12,
+    gridColor: p.gridColor ?? '#e2e8f0',
+    gridWidth: numOf(p.gridWidth) ?? 1,
+    gridShape,
+    gridLineStyle,
+    gridRoundedCorners: p.gridRoundedCorners === 'true',
+    textColor: p.textColor ?? '#0f172a',
+    fontSize: numOf(p.fontSize) ?? 12,
+    fontFamily: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    showGrid: p.showGrid !== 'false',
+    showAxisLabels: p.showAxisLabels !== 'false',
+    showLegend: p.showLegend !== 'false',
+    legendPosition,
+    shadowStyle: decodeShadow(p.shadow),
     order: e.order,
-  };
+  } satisfies TypedChart;
+  return chart as Chart;
 }

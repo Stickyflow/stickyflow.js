@@ -55,7 +55,7 @@ const chartOf = (sfl: string) => {
 
 const barChartOf = (sfl: string) => {
   const result = chartOf(sfl);
-  if (result.chart_type !== 'bar') {
+  if (result.chartType !== 'bar') {
     throw new Error('expected a bar chart');
   }
   return result;
@@ -66,7 +66,7 @@ describe('applyPropertyChange — direct properties', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'type', value: 'line' });
     expect(next).toContain('type: line');
     expect(next).not.toContain('type: "line"');
-    expect(chartOf(next).chart_type).toBe('line');
+    expect(chartOf(next).chartType).toBe('line');
   });
 
   it('replaces a quoted string and keeps it quoted', () => {
@@ -96,8 +96,8 @@ describe('applyPropertyChange — direct properties', () => {
 describe('applyPropertyChange — named child blocks', () => {
   it('writes into a multiline block', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'Axis[y].max', value: 200 });
-    expect(chartOf(next).axis_y.max).toBe(200);
-    expect(chartOf(next).axis_y.min).toBe(0);
+    expect(chartOf(next).axisY.max).toBe(200);
+    expect(chartOf(next).axisY.min).toBe(0);
   });
 
   it('writes into a compact single-line block', () => {
@@ -123,8 +123,8 @@ describe('applyPropertyChange — unnamed blocks', () => {
   it('writes a boolean into style', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'style.showGrid', value: false });
     expect(next).toContain('showGrid: false');
-    expect(chartOf(next).show_grid).toBe(false);
-    expect(chartOf(next).show_legend).toBe(true);
+    expect(chartOf(next).showGrid).toBe(false);
+    expect(chartOf(next).showLegend).toBe(true);
   });
 
   it('writes a tuple into layout', () => {
@@ -241,7 +241,7 @@ describe('applyPropertyChange — inserting a missing property', () => {
   it('inserts into a multiline block', () => {
     const next = applyPropertyChange(BAR, { owner: chart(), path: 'Axis[y].label', value: 'Umsatz' });
     expect(next).toMatch(/Axis y \{\n\s*label: "Umsatz"/);
-    expect(chartOf(next).axis_y.label).toBe('Umsatz');
+    expect(chartOf(next).axisY.label).toBe('Umsatz');
   });
 
   it('inserts into a compact single-line block without breaking it', () => {

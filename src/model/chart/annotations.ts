@@ -8,6 +8,6 @@ export interface ChartRule {
   at: number;
   text?: string;
   color?: string;
-  stroke_width?: number;
+  strokeWidth?: number;
   dash?: number[];
 }

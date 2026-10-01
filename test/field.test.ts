@@ -59,8 +59,8 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
   it('decodes scale into a ChartRamp object on the render-input config', () => {
     const input = sflToRenderInput(FIELD_SFL);
     const chart = input.charts?.[0];
-    expect(chart?.chart_type).toBe('field');
-    if (chart?.chart_type !== 'field') {
+    expect(chart?.chartType).toBe('field');
+    if (chart?.chartType !== 'field') {
       throw new Error('expected a field chart');
     }
     expect(chart.config?.scale).toEqual({

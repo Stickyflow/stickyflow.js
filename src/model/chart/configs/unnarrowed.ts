@@ -4,7 +4,7 @@ import type { HeatmapChartConfig, TreemapChartConfig } from './matrix';
 import type { PieChartConfig, RadarChartConfig, RadialBarChartConfig } from './polar';
 import type { CustomChartConfig, MekkoChartConfig, SankeyChartConfig } from './specialized';
 
-// Only adapters that have not narrowed chart_type use this transitional contract.
+// Only adapters that have not narrowed chartType use this transitional contract.
 // Concrete chart entities always expose their exact config type.
 export interface UnnarrowedChartConfig
   extends BarChartConfig,

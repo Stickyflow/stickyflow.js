@@ -14,7 +14,7 @@ export interface ChartSeries {
   size?: number;
   symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
   stroke?: string;
-  stroke_width?: number;
+  strokeWidth?: number;
   labelOffsetX?: number;
   labelOffsetY?: number;
 }

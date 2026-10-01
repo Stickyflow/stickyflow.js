@@ -38,13 +38,13 @@ export function renderPolarArea(context: ChartRenderContext<PieChart>): RenderNo
   const innerRadius = Math.max(0, Math.min(finite(chart.config?.innerRadius, 0), maxRadius - 1));
   const cornerRadius = Math.max(0, finite(chart.config?.pieCornerRadius, 0));
   const gapPx = Math.max(0, finite(chart.config?.pieSliceGap, 0));
-  const axisMin = finite(chart.axis_y.min, 0);
-  const range = finite(chart.axis_y.max, 100) - axisMin;
+  const axisMin = finite(chart.axisY.min, 0);
+  const range = finite(chart.axisY.max, 100) - axisMin;
   const seriesList = chart.series;
   const sweep = seriesList.length > 0 ? (Math.PI * 2) / seriesList.length : 0;
-  const trackColor = paint(chart.grid_color ?? TRACK_COLOR_FALLBACK, diagnostics, chart.id);
+  const trackColor = paint(chart.gridColor ?? TRACK_COLOR_FALLBACK, diagnostics, chart.id);
   const showLabels = context.showLabels && sweep >= MIN_LABEL_SWEEP;
-  const shadow = resolveChartShadow(chart.shadow_style);
+  const shadow = resolveChartShadow(chart.shadowStyle);
 
   const clampedCorner = (outerRadius: number, angles: { start: number; end: number }): number => {
     const geometry = { centerX, centerY, outerRadius, innerRadius };
@@ -139,7 +139,7 @@ function createWedgeLabel(
 ): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
   const mid = (angles.start + angles.end) / 2;
-  const fontSize = Math.max(9, finite(chart.font_size, 12));
+  const fontSize = Math.max(9, finite(chart.fontSize, 12));
   const lineHeight = fontSize * 1.2;
   const ringThickness = geometry.outerRadius - geometry.innerRadius;
   const labelOffsetX = finite(series.labelOffsetX, 0);
@@ -189,7 +189,7 @@ function createWedgeLabel(
     x: point.x - LABEL_WIDTH / 2,
     width: LABEL_WIDTH,
     height: lineHeight,
-    fontFamily: chart.font_family ?? DEFAULT_FONT,
+    fontFamily: chart.fontFamily ?? DEFAULT_FONT,
     fontSize,
     align: 'center' as const,
     verticalAlign: 'middle' as const,
