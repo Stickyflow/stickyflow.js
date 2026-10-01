@@ -3,10 +3,10 @@ import type { RenderNode } from '../scene';
 import { finite, freeformPathData, orderOf } from '../scene';
 
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
-  if (path.is_visible === false || path.points.length < 2) {
+  if (path.isVisible === false || path.points.length < 2) {
     return [];
   }
-  const strokeWidth = finite(path.stroke_width, 2);
+  const strokeWidth = finite(path.strokeWidth, 2);
   const extra = strokeWidth + 12;
   const bounds = {
     minX: Math.min(...path.points.map(point => point.x)) - extra,
@@ -23,8 +23,8 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
       order: orderOf(path, 30_000 + index),
       bounds,
       d: freeformPathData({ points: path.points, tension, closed }),
-      markerStart: path.start_marker,
-      markerEnd: path.end_marker,
+      markerStart: path.startMarker,
+      markerEnd: path.endMarker,
       detail: {
         of: 'pathGeometry',
         points: path.points.map(point => [point.x, point.y]),
@@ -32,8 +32,8 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
         closed,
       },
       style: {
-        fill: path.closed ? { kind: 'solid', color: path.fill_color ?? 'transparent' } : { kind: 'none' },
-        stroke: { kind: 'solid', color: path.stroke_color ?? '#7c3aed' },
+        fill: path.closed ? { kind: 'solid', color: path.fillColor ?? 'transparent' } : { kind: 'none' },
+        stroke: { kind: 'solid', color: path.strokeColor ?? '#7c3aed' },
         strokeWidth,
         dash: path.dash?.length ? path.dash : undefined,
         lineCap: 'round',

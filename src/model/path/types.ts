@@ -11,15 +11,15 @@ export interface FreeformPath {
   height: number;
   points: PathPoint[];
   value?: number;
-  stroke_color?: string;
-  stroke_width?: number;
+  strokeColor?: string;
+  strokeWidth?: number;
   dash?: number[];
   opacity?: number;
   tension?: number;
-  start_marker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
-  end_marker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
+  startMarker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
+  endMarker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
   closed?: boolean;
-  fill_color?: string;
+  fillColor?: string;
   order?: number;
-  is_visible?: boolean;
+  isVisible?: boolean;
 }

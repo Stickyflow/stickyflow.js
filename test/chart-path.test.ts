@@ -119,12 +119,37 @@ Model board {
     const state = sflToCanvasState(source);
     expect(state.entities[0].entityType).toBe('path');
     expect(state.entities[0].path?.points).toHaveLength(3);
+    expect(sflToRenderInput(source).paths?.[0]).toMatchObject({
+      strokeColor: '#7c3aed',
+      strokeWidth: 3,
+      fillColor: '#ede9fe',
+      startMarker: 'arrow',
+      endMarker: 'filled_arrow',
+    });
     const { svg } = render(source);
     expect(svg).toContain('data-sf-role="path"');
     expect(svg).toContain('fill="#ede9fe"');
     expect(svg).toContain('marker-start=');
     expect(svg).toContain('marker-end=');
     expect(svg).toMatch(/d="M 10 10 C [^"]+ Z"/);
+  });
+
+  it('does not render a path whose canonical visibility flag is false', () => {
+    const path = {
+      id: 'hidden',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      points: [
+        { x: 0, y: 0 },
+        { x: 10, y: 10 },
+      ],
+      isVisible: false,
+    };
+    const input = { shapes: [], frames: [], swimlanes: [], links: [], paths: [path] } as RenderInput;
+
+    expect(renderCanvas(input).svg).not.toContain('sf-path-hidden');
   });
 
   it('renders radar categories, polygon grid and series', () => {
