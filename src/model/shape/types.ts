@@ -60,14 +60,7 @@ export interface Shape {
   parentSwimlaneId?: string | null;
   laneId?: string | null;
 
-  subShapes?: SubShape[] | null;
-
   symbol?: SymbolDef | null;
-}
-
-export interface SubShape {
-  id: string;
-  text: string;
 }
 
 export interface SymbolDef {
