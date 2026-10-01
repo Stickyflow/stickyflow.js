@@ -1,4 +1,4 @@
-import type { TextMetrics } from '../../model/text';
+import type { TextMetrics } from './textMetrics';
 
 const PLAIN_CHAR_FACTOR = 0.58;
 const BOLD_CHAR_FACTOR = 0.64;

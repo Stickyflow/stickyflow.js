@@ -1,6 +1,5 @@
-import type { MeasureTextFactory } from '../../../model/text';
 import type { RenderInput } from '../../../renderInput/types';
-import type { SceneStyle } from '../../scene';
+import type { MeasureTextFactory, SceneStyle } from '../../scene';
 import { DEFAULT_FONT, finite, orderOf } from '../../scene';
 import { getLinkStrokeColor } from '../../scene/linkPaint';
 import { getDashArray } from '../../scene/linkStroke';

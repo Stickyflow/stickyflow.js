@@ -1,4 +1,3 @@
-import type { MeasureTextFactory } from '../../model/text';
 import type { RenderInput } from '../../renderInput/types';
 import { buildChart } from '../charts';
 import { buildFrame, buildSwimlane } from '../entities/containers';
@@ -8,6 +7,7 @@ import { buildShape } from '../entities/shape';
 import { buildTable } from '../tables';
 import { EMPTY_BOUNDS } from './bounds';
 import { tag } from './tagging';
+import type { MeasureTextFactory } from './textMetrics';
 import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
 
 function sceneBounds(nodes: RenderNode[]): Bounds {

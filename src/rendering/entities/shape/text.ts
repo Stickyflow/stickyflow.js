@@ -1,5 +1,4 @@
-import type { MeasureTextFactory } from '../../../model/text';
-import type { SceneText } from '../../scene';
+import type { MeasureTextFactory, SceneText } from '../../scene';
 import { DEFAULT_FONT, finite } from '../../scene';
 import { hasBoldMarkup, wrapRichText } from '../../scene/richTextLayout';
 import { heuristicRichMeasure, wrapText } from '../../scene/textLayout';

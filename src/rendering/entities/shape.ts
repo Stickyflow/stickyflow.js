@@ -1,6 +1,5 @@
 import type { Shape } from '../../model/shape';
-import type { MeasureTextFactory } from '../../model/text';
-import type { RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
+import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
 import { finite, orderOf, rotatedBounds } from '../scene';
 import { renderShapeGeometry } from './shape/geometry';
 import { shapeStyle } from './shape/style';
