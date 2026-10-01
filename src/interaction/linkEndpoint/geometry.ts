@@ -1,4 +1,4 @@
-import { portToPoint, projectOffsetOnSide } from '../../model/geometry/ports';
+import { pointAtPort, relativeOffsetOnRectangleSide } from '../../model/geometry/ports';
 import type { Rect, Side } from '../../model/geometry/types';
 
 const SIDES: readonly Side[] = ['top', 'right', 'bottom', 'left'];
@@ -8,8 +8,8 @@ export function nearestPort(bounds: Rect, point: { x: number; y: number }): { si
   let nearestDistance = Infinity;
 
   for (const side of SIDES) {
-    const offset = Math.max(0, Math.min(1, projectOffsetOnSide(bounds, side, point)));
-    const candidate = portToPoint(bounds, { side, offset });
+    const offset = Math.max(0, Math.min(1, relativeOffsetOnRectangleSide(bounds, side, point)));
+    const candidate = pointAtPort(bounds, { side, offset });
     const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
     if (distance < nearestDistance) {
       nearestDistance = distance;

@@ -1,4 +1,4 @@
-import { portToPoint } from '../../model/geometry/ports';
+import { pointAtPort } from '../../model/geometry/ports';
 import type { Rect, Side } from '../../model/geometry/types';
 import type { OwnerRef } from '../../viewer';
 import { nearestPort, sideFromDirection } from '../linkEndpoint/geometry';
@@ -73,7 +73,7 @@ export function resolveLinkTarget(
   }
   const port = snapPort(candidate.bounds, point, unitsPerPx);
   return {
-    point: portToPoint(candidate.bounds, port),
+    point: pointAtPort(candidate.bounds, port),
     side: port.side,
     hit: { owner: candidate.owner, side: port.side, offset: port.offset },
     bounds: candidate.bounds,

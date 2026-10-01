@@ -1,6 +1,6 @@
 import type { GradientColor } from '../../model/color';
 import { interpolateHexColorStops } from '../../model/color';
-import { projectedPosition } from '../../model/geometry/projection';
+import { relativePositionOnAxis } from '../../model/geometry/axisPosition';
 import type { LinkStyle } from '../../model/link';
 
 type LinkColor = LinkStyle['color'] | { type: 'solid'; color: string } | null | undefined;
@@ -42,8 +42,8 @@ export function getLinkColorAtPoint(
 
   const axisStart = { x: points[0], y: points[1] };
   const axisEnd = { x: points[points.length - 2], y: points[points.length - 1] };
-  const projection = projectedPosition(axisStart, axisEnd, point);
-  return interpolateHexColorStops(colorValue.stops, projection * 100);
+  const relativePosition = relativePositionOnAxis(axisStart, axisEnd, point);
+  return interpolateHexColorStops(colorValue.stops, relativePosition * 100);
 }
 
 function isGradientWithStops(colorValue: LinkColor): colorValue is GradientColor {

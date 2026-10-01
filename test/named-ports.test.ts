@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, sflToCanvasState, sflToRenderInput } from '../src/index';
-import { namedPortToPoint } from '../src/model/geometry/ports';
+import { pointAtNormalizedPort } from '../src/model/geometry/ports';
 
 // Schematics category (stickyflow-atlas parity, SFL 1.4 §3.5): a Link
 // endpoint can be `entity.portName` - a dot-path whose last segment names a
@@ -91,13 +91,13 @@ Model board {
     expect(svg).not.toContain('[object Object]');
   });
 
-  it('namedPortToPoint accounts for rotation the same way portToPoint does', () => {
+  it('pointAtNormalizedPort accounts for rectangle rotation', () => {
     // Unrotated: at=(1, 0.5) on a 100x60 box at (0,0) is the right-edge midpoint.
-    expect(namedPortToPoint({ x: 0, y: 0, width: 100, height: 60 }, [1, 0.5])).toEqual({ x: 100, y: 30 });
+    expect(pointAtNormalizedPort({ x: 0, y: 0, width: 100, height: 60 }, [1, 0.5])).toEqual({ x: 100, y: 30 });
     // Rotated 90°: the box's local right edge now points toward +Y in world
     // space (rotateVector(50, 0, 90) ~= (0, 50)), so the port lands below the
     // box's center rather than to its right.
-    const rotated = namedPortToPoint({ x: 0, y: 200, width: 100, height: 60, rotation: 90 }, [1, 0.5]);
+    const rotated = pointAtNormalizedPort({ x: 0, y: 200, width: 100, height: 60, rotation: 90 }, [1, 0.5]);
     expect(rotated.x).toBeCloseTo(50, 9);
     expect(rotated.y).toBeCloseTo(280, 9);
   });

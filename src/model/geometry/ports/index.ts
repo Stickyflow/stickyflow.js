@@ -1,2 +1,2 @@
-export { namedPortToPoint, portToPoint, projectOffsetOnSide } from './position';
+export { pointAtNormalizedPort, pointAtPort, relativeOffsetOnRectangleSide } from './coordinates';
 export type { Port } from './types';

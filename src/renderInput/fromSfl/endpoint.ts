@@ -1,4 +1,4 @@
-import { namedPortToPoint } from '../../model/geometry/ports';
+import { pointAtNormalizedPort } from '../../model/geometry/ports';
 import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
 import type { Point } from '../../model/geometry/types';
 import type { Link } from '../../model/link';
@@ -32,7 +32,7 @@ function namedPortPoint(element: PositionedElement, endpoint: Extract<LinkEndpoi
   if (!port) {
     return elementCenter(element);
   }
-  return namedPortToPoint(
+  return pointAtNormalizedPort(
     {
       x: element.x,
       y: element.y,

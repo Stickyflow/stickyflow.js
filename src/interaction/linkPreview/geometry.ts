@@ -1,4 +1,4 @@
-import { portToPoint } from '../../model/geometry/ports';
+import { pointAtPort } from '../../model/geometry/ports';
 import { edgePointToward, elementCenter } from '../../model/geometry/rectangle';
 import type { Rect, Side } from '../../model/geometry/types';
 import type { Link, PathType } from '../../model/link';
@@ -12,7 +12,7 @@ export function centerOf(bounds: Rect): { x: number; y: number } {
 
 export function anchorPoint(bounds: Rect, side: Side | null, other: Rect): { x: number; y: number } {
   if (side) {
-    return portToPoint(bounds, { side, offset: 0.5 });
+    return pointAtPort(bounds, { side, offset: 0.5 });
   }
   return edgePointToward(bounds, other);
 }
