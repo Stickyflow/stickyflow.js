@@ -1,4 +1,4 @@
-import { computeHexBins } from '../../../model/geometry/hexbin';
+import { computeHexBins } from '../../../model/chart/geometry';
 import type { RenderNode } from '../../scene';
 import { paint } from '../../scene';
 import { CHART_COLORS, DEFAULT_HEX_RADIUS, mapChartValue, resolveChartShadow } from '../primitives';

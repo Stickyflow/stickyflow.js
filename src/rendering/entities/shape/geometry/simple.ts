@@ -1,4 +1,4 @@
-import { localShapePath, pillCornerRadius } from '../../../../model/geometry/shapes';
+import { localShapePath, pillCornerRadius } from '../../../../model/shape/geometry';
 import type { RenderNode } from '../../../scene';
 import { finite, freeformPathData } from '../../../scene';
 import type { ShapeRenderContext } from '../types';

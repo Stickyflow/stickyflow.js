@@ -1,6 +1,6 @@
+import { squarifyTreemap } from '../../../../model/chart/geometry';
 import type { ChartSeries } from '../../../../model/charts';
 import { wrapText } from '../../../../model/geometry/text';
-import { squarifyTreemap } from '../../../../model/geometry/treemap';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';

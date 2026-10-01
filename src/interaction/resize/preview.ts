@@ -1,6 +1,6 @@
 import { updateQuickDuplicateBubbles } from '../../domContract';
-import { personLabelArea } from '../../model/geometry/roundedForms';
 import type { Rect } from '../../model/geometry/router';
+import { personLabelArea } from '../../model/shape/geometry';
 import { updateLiveLinks } from '../linkPreview';
 import { applyInset, NO_INSET } from './geometry';
 import { applyCompositeScale, applySingleNodeBounds } from './geometryPreview';
