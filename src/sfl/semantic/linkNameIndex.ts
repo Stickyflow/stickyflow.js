@@ -1,12 +1,11 @@
 import type { SflBlock } from '../ast';
 import { childBlocks, directProperties } from './blockEntries';
+import { isCanvasEntityBlockKind } from './canvasEntityBlocks';
 import { asString } from './valueAccess';
-
-const LINKABLE_BLOCK_KINDS = new Set(['Shape', 'Container', 'Table', 'Path', 'Chart']);
 
 function indexLinkableNames(blocks: SflBlock[], idByName: Map<string, string>): void {
   for (const block of blocks) {
-    if (LINKABLE_BLOCK_KINDS.has(block.kind)) {
+    if (isCanvasEntityBlockKind(block.kind)) {
       idByName.set(block.name, asString(directProperties(block).get('id')) ?? block.name);
     }
 

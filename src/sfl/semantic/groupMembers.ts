@@ -1,11 +1,10 @@
 import type { SflBlock } from '../ast';
 import { childBlocks, directProperties } from './blockEntries';
+import { isCanvasEntityBlockKind } from './canvasEntityBlocks';
 import { asString } from './valueAccess';
-
-const ENTITY_KINDS = new Set(['Shape', 'Container', 'Table', 'Path', 'Chart']);
 
 export function directGroupMemberIds(block: SflBlock): string[] {
   return childBlocks(block)
-    .filter(child => ENTITY_KINDS.has(child.kind))
+    .filter(child => isCanvasEntityBlockKind(child.kind))
     .map(child => asString(directProperties(child).get('id')) ?? child.name);
 }

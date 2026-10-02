@@ -1,5 +1,6 @@
 import type { SflBlock } from '../ast';
 import { childBlocks } from './blockEntries';
+import { isCanvasEntityBlockKind } from './canvasEntityBlocks';
 import { buildEntity, type EntityReaderContext } from './entityReader';
 import { createFlowPositioner, type FlowPositioner } from './flowLayout';
 import { directGroupMemberIds } from './groupMembers';
@@ -44,15 +45,15 @@ class CanvasTreeReader {
   }
 
   #readChild(child: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
+    if (child.kind === 'Container') {
+      return this.#readContainer(child, location, nextFlowPosition);
+    }
+    if (isCanvasEntityBlockKind(child.kind)) {
+      this.#readEntity(child, location, nextFlowPosition);
+      return [];
+    }
+
     switch (child.kind) {
-      case 'Container':
-        return this.#readContainer(child, location, nextFlowPosition);
-      case 'Shape':
-      case 'Table':
-      case 'Path':
-      case 'Chart':
-        this.#readEntity(child, location, nextFlowPosition);
-        return [];
       case 'Group':
         return [this.#readGroup(child, location)];
       case 'Link':
