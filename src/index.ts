@@ -7,6 +7,7 @@ export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { RenderOptions, RenderResult } from './render';
 export { render, renderCanvas } from './render';
+export { sflToRenderInput } from './renderInput/fromSfl';
 export { decodeColor, decodeShadow } from './renderInput/styleDecoding';
 export type { RenderInput, RenderInputTable, TablePropertyPaths } from './renderInput/types';
 export type {
@@ -37,5 +38,4 @@ export {
   isTableEntity,
   sflToCanvasState,
 } from './sflSemantic/sflToCanvasState';
-export { sflToRenderInput } from './sflToRenderInput';
 export { DOM_CONTRACT_VERSION } from './svgContract/version';

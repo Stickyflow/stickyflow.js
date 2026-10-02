@@ -31,11 +31,10 @@ src/
   model/             L0 framework-agnostic diagram model and geometry
   sflLanguage/       L1 SFL Language: AST, lexer, parser and canonical emitter
   sflSemantic/       L2 SFL Semantic: SFL AST → resolved canvas state
-  renderInput/       L3 renderer input and presentation-value decoding
+  renderInput/       L3 renderer contract, SFL adapter and presentation-value decoding
   importJson/        canvas-state → Stickyflow import JSON adapter
   rendering/         renderScene, buildRenderScene, renderSceneToSvg
   render.ts          render(sfl) / renderCanvas(input) — static tier
-  sflToRenderInput.ts  model adapter: SFL v3 JSON → RenderInput
   index.ts           static public API  →  import 'stickyflow'
   viewer/            interaction tier   →  import 'stickyflow/viewer'
   web-component/     <stickyflow-diagram>  →  import 'stickyflow/web-component'

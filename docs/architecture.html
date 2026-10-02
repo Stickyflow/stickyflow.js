@@ -834,7 +834,7 @@ Model Demo {
   text: "Start", x: 40, y: 60, width: 160, height: 80,
   fillColor: "#0f766e", strokeColor: "#5eead4", strokeWidth: 2
 }</code></pre>
-                  <span class="function-path">sflToRenderInput.ts → renderInput/fromSfl/entities/collect.ts → shape.ts</span>
+                  <span class="function-path">renderInput/fromSfl/index.ts → entities/collect.ts → shape.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -1016,7 +1016,7 @@ Model Demo {
                 <tr><td><code>model/geometry/*</code></td><td>Routing-, Text-, Table-, Sankey- und Shape-Geometrie</td><td>Pure fachliche Berechnungen ohne Scene und DOM.</td></tr>
                 <tr><td><code>model/diagnostics.ts</code></td><td><code>RenderDiagnostic</code></td><td>Layerübergreifender Diagnosevertrag.</td></tr>
                 <tr><td><code>renderInput/types.ts</code></td><td><code>RenderInput</code></td><td>Vollständiger Eingang des Scene-Builders.</td></tr>
-                <tr><td><code>sflToRenderInput.ts</code></td><td><code>sflToRenderInput()</code></td><td>Öffentliche Orchestrierung des SFL-Adapters.</td></tr>
+                <tr><td><code>renderInput/fromSfl/index.ts</code></td><td><code>sflToRenderInput()</code></td><td>Öffentliche Orchestrierung des SFL-Adapters.</td></tr>
                 <tr><td><code>fromSfl/entities/collect.ts</code></td><td><code>collectEntities()</code></td><td>Sortiert und dispatcht semantische Entity-Varianten.</td></tr>
                 <tr><td><code>fromSfl/entities/{shape,table,chart,...}.ts</code></td><td>Variantenspezifische Objektkonverter</td><td>Je Variante ein eigener SFL → Model-Workflow.</td></tr>
                 <tr><td><code>fromSfl/endpoint.ts</code></td><td><code>resolveLinkEndpoint()</code></td><td>Absolute, Side-, Port- und automatische Linkpunkte.</td></tr>
