@@ -4,7 +4,7 @@ import { readChart } from '../artifacts/chart/reader';
 import { readPath } from '../artifacts/path/reader';
 import { readSwimlane } from '../artifacts/swimlane/reader';
 import { readTable } from '../artifacts/table/reader';
-import type { SflEntityOut } from '../types';
+import type { SflCanvasObject } from '../types';
 import { classifyCanvasObject } from './classification';
 import { readCanvasObjectGeometry } from './layout/geometry';
 import { readCanvasObjectPresentation } from './presentation';
@@ -12,7 +12,7 @@ import { readCanvasObjectPresentation } from './presentation';
 export interface CanvasObjectResolutionContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
   layoutProp: (block: SflBlock, key: string) => SflValue | undefined;
-  symbolDefs: Map<string, NonNullable<SflEntityOut['symbol']>>;
+  symbolDefs: Map<string, NonNullable<SflCanvasObject['symbol']>>;
 }
 
 export function resolveCanvasObject(
@@ -21,7 +21,7 @@ export function resolveCanvasObject(
   context: CanvasObjectResolutionContext,
   frameId?: string,
   positionOverride?: number[],
-): SflEntityOut {
+): SflCanvasObject {
   const { mergedProps, layoutProp, symbolDefs } = context;
   const properties = mergedProps(block);
   const classification = classifyCanvasObject(block, properties, symbolDefs);
@@ -30,7 +30,7 @@ export function resolveCanvasObject(
 
   return {
     id: asString(properties.get('id')) ?? block.name,
-    entityType: classification.entityType,
+    objectType: classification.objectType,
     kind: classification.kind,
     text: asString(properties.get('text')),
     shapeType: classification.shapeType,

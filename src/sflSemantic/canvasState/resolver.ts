@@ -6,8 +6,8 @@ import { createCanvasResolution } from './resolution';
 
 export function resolveCanvasState(document: SflDocument): SflCanvasState {
   const resolution = createCanvasResolution(document);
-  const { entities, groups, linkBlocks } = resolveCanvasTree(resolution.model, resolution);
-  const links = readLinks(resolution.model, linkBlocks, entities, resolution.canvasObjectResolutionContext);
+  const { canvasObjects, groups, linkBlocks } = resolveCanvasTree(resolution.model, resolution);
+  const links = readLinks(resolution.model, linkBlocks, canvasObjects, resolution.canvasObjectResolutionContext);
 
-  return { entities, groups, links, diagnostics: resolution.diagnostics };
+  return { canvasObjects, groups, links, diagnostics: resolution.diagnostics };
 }

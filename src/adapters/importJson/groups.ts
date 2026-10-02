@@ -10,7 +10,7 @@ export function indexGroupMembership(
   membership = new Map<string, string>(),
 ): Map<string, string> {
   for (const group of groups) {
-    group.entityIds.forEach(id => {
+    group.canvasObjectIds.forEach(id => {
       membership.set(id, group.id);
     });
     indexGroupMembership(group.subGroups, membership);

@@ -19,11 +19,11 @@ import type {
   TreemapChartConfig,
   TypedChart,
 } from '../../../model/chart';
-import type { SflEntityOut } from '../../../sflSemantic/sflToCanvasState';
+import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeRamp, decodeShadow } from '../../styleDecoding';
 import { numOf, solidColor } from './values';
 
-export function chartObject(e: SflEntityOut): Chart {
+export function chartObject(e: SflCanvasObject): Chart {
   const p = e.props;
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
   const gridLineStyle: 'solid' | 'dashed' | 'dotted' =

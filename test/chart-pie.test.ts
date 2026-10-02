@@ -28,7 +28,7 @@ Model board {
 describe('Pie chart', () => {
   it('carries chartType through sflToCanvasState', () => {
     const state = sflToCanvasState(PIE_SFL);
-    const chart = state.entities[0];
+    const chart = state.canvasObjects[0];
     expect(chart.chart?.chartType).toBe('pie');
     expect(chart.chart?.series.map(s => s.values)).toEqual([[30], [70]]);
   });

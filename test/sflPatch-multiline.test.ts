@@ -48,13 +48,13 @@ describe('multiline strings in the patch scanner', () => {
   it('accepts a brace inside a multiline string as valid SFL', () => {
     expect(() => parse(withBraceInMultiline)).not.toThrow();
     const state = sflToCanvasState(withBraceInMultiline);
-    expect(state.entities.map(e => e.id).sort()).toEqual(['a', 'b']);
+    expect(state.canvasObjects.map(e => e.id).sort()).toEqual(['a', 'b']);
   });
 
   it('moves the entity that owns the multiline string', () => {
     const next = applyMoveChange(withBraceInMultiline, { owner: owner('a'), dx: 25, dy: 5 });
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'a')).toMatchObject({ x: 25, y: 5 });
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'b')).toMatchObject({ x: 100, y: 0 });
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'a')).toMatchObject({ x: 25, y: 5 });
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'b')).toMatchObject({ x: 100, y: 0 });
   });
 
   it('leaves the multiline body untouched when moving its owner', () => {
@@ -65,18 +65,18 @@ describe('multiline strings in the patch scanner', () => {
 
   it('moves an entity that follows a multiline string', () => {
     const next = applyMoveChange(withBraceInMultiline, { owner: owner('b'), dx: 40, dy: 10 });
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'b')).toMatchObject({ x: 140, y: 10 });
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'a')).toMatchObject({ x: 0, y: 0 });
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'b')).toMatchObject({ x: 140, y: 10 });
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'a')).toMatchObject({ x: 0, y: 0 });
   });
 
   it('edits text of an entity that owns a multiline string', () => {
     const next = applyTextChange(withBraceInMultiline, { owner: owner('a'), text: 'kurz' });
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'a')?.text).toBe('kurz');
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'a')?.text).toBe('kurz');
   });
 
   it('does not treat a block header inside a string as a real block', () => {
     const next = applyMoveChange(withHeaderLookalike, { owner: owner('b'), dx: 10, dy: 10 });
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'b')).toMatchObject({ x: 110, y: 10 });
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'b')).toMatchObject({ x: 110, y: 10 });
     expect(next).toContain('      Shape b {');
   });
 });

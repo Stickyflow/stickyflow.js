@@ -56,6 +56,6 @@ Model board {
 
   it('does not add a canvas entity for the Net block itself', () => {
     const state = sflToCanvasState(SFL);
-    expect(state.entities.find(e => e.id === 'vcc')).toBeUndefined();
+    expect(state.canvasObjects.find(e => e.id === 'vcc')).toBeUndefined();
   });
 });

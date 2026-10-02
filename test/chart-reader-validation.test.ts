@@ -14,7 +14,7 @@ ${body}
 }
 `;
 
-const chartOf = (sfl: string) => sflToCanvasState(sfl).entities.find(entity => entity.id === 'c')?.chart;
+const chartOf = (sfl: string) => sflToCanvasState(sfl).canvasObjects.find(entity => entity.id === 'c')?.chart;
 
 describe('chart type validation', () => {
   it('keeps a supported type', () => {

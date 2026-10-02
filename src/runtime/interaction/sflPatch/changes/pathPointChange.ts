@@ -5,7 +5,7 @@ import { findOwnerBlock } from '../scanner';
 import { formatPoints, pointsSpan } from './pathPoints';
 
 export function applyPathPointChange(sfl: string, event: PathPointChangeEvent): string {
-  const entities = sflToCanvasState(sfl).entities;
+  const entities = sflToCanvasState(sfl).canvasObjects;
   const entity = entities.find(candidate => candidate.id === event.owner.id);
   if (!entity) {
     return sfl;

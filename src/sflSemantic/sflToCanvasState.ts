@@ -3,21 +3,21 @@ import { resolveCanvasState } from './canvasState/resolver';
 import type { SflCanvasState } from './types';
 
 export type {
+  SflCanvasObject,
   SflCanvasState,
-  SflChartEntity,
+  SflChartObject,
   SflDiagnostic,
-  SflEntityOut,
   SflGroupOut,
   SflLinkOut,
-  SflPathEntity,
-  SflSwimlaneEntity,
-  SflTableEntity,
+  SflPathObject,
+  SflSwimlaneObject,
+  SflTableObject,
 } from './types';
 export {
-  isChartEntity,
-  isPathEntity,
-  isSwimlaneEntity,
-  isTableEntity,
+  isChartObject,
+  isPathObject,
+  isSwimlaneObject,
+  isTableObject,
 } from './types';
 
 export function sflToCanvasState(source: string): SflCanvasState {

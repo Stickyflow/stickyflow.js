@@ -22,13 +22,13 @@ Model canvas {
 `;
 
 describe('SFL semantic Entity blocks', () => {
-  it('resolves legacy Entity blocks into canvas entities', () => {
+  it('resolves legacy Entity blocks into canvas objects', () => {
     const state = sflToCanvasState(SFL);
 
-    expect(state.entities).toEqual(
+    expect(state.canvasObjects).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'source-id', entityType: 'shape', text: 'Source', x: 10, y: 20 }),
-        expect.objectContaining({ id: 'target-id', entityType: 'shape', x: 200, y: 20 }),
+        expect.objectContaining({ id: 'source-id', objectType: 'shape', text: 'Source', x: 10, y: 20 }),
+        expect.objectContaining({ id: 'target-id', objectType: 'shape', x: 200, y: 20 }),
       ]),
     );
   });
@@ -36,7 +36,7 @@ describe('SFL semantic Entity blocks', () => {
   it('includes Entity blocks in groups and resolves links by their SFL names', () => {
     const state = sflToCanvasState(SFL);
 
-    expect(state.groups[0]?.entityIds).toEqual(['target-id']);
+    expect(state.groups[0]?.canvasObjectIds).toEqual(['target-id']);
     expect(state.links[0]).toMatchObject({ fromId: 'source-id', toId: 'target-id' });
   });
 });

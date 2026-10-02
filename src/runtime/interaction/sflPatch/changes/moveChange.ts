@@ -22,7 +22,7 @@ function movePathPoints(lines: string[], range: LineRange, dx: number, dy: numbe
 
 export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
   const state = sflToCanvasState(sfl);
-  const entity = state.entities.find(candidate => candidate.id === event.owner.id);
+  const entity = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
   if (!entity) {
     return sfl;
   }
@@ -35,7 +35,7 @@ export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
   // absolute origin converts back to the coordinate space `position` is
   // actually in; a top-level entity has no parent, so this is a no-op there.
   const parent = entity.parentFrameId
-    ? state.entities.find(candidate => candidate.id === entity.parentFrameId)
+    ? state.canvasObjects.find(candidate => candidate.id === entity.parentFrameId)
     : undefined;
   const originX = parent?.x ?? 0;
   const originY = parent?.y ?? 0;

@@ -40,8 +40,8 @@ Model board {
 describe('Mekko chart', () => {
   it('carries chartType and per-column values through sflToCanvasState', () => {
     const state = sflToCanvasState(MEKKO_SFL);
-    expect(state.entities[0].chart?.chartType).toBe('mekko');
-    expect(state.entities[0].chart?.series.map(s => s.values)).toEqual([
+    expect(state.canvasObjects[0].chart?.chartType).toBe('mekko');
+    expect(state.canvasObjects[0].chart?.series.map(s => s.values)).toEqual([
       [60, 20],
       [40, 40],
     ]);

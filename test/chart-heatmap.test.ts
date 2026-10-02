@@ -41,7 +41,7 @@ Model board {
 describe('Heatmap chart', () => {
   it('carries zones and axis thresholds through sflToCanvasState', () => {
     const state = sflToCanvasState(HEATMAP_SFL);
-    const chart = state.entities[0];
+    const chart = state.canvasObjects[0];
     expect(chart.chart?.chartType).toBe('heatmap');
     expect(chart.chart?.zones).toEqual([
       { label: 'Low', color: '#ddd6fe' },

@@ -1,6 +1,6 @@
-export interface SflEntityOut {
+export interface SflCanvasObject {
   id: string;
-  entityType: 'shape' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
+  objectType: 'shape' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
   kind: string;
   text?: string;
   shapeType?: string;
@@ -121,23 +121,23 @@ export interface SflEntityOut {
   };
 }
 
-export type SflChartEntity = SflEntityOut & { chart: NonNullable<SflEntityOut['chart']> };
-export type SflTableEntity = SflEntityOut & { table: NonNullable<SflEntityOut['table']> };
-export type SflSwimlaneEntity = SflEntityOut & { swimlane: NonNullable<SflEntityOut['swimlane']> };
-export type SflPathEntity = SflEntityOut & { path: NonNullable<SflEntityOut['path']> };
+export type SflChartObject = SflCanvasObject & { chart: NonNullable<SflCanvasObject['chart']> };
+export type SflTableObject = SflCanvasObject & { table: NonNullable<SflCanvasObject['table']> };
+export type SflSwimlaneObject = SflCanvasObject & { swimlane: NonNullable<SflCanvasObject['swimlane']> };
+export type SflPathObject = SflCanvasObject & { path: NonNullable<SflCanvasObject['path']> };
 
-export function isChartEntity(canvasObject: SflEntityOut): canvasObject is SflChartEntity {
-  return canvasObject.entityType === 'chart' && canvasObject.chart !== undefined;
+export function isChartObject(canvasObject: SflCanvasObject): canvasObject is SflChartObject {
+  return canvasObject.objectType === 'chart' && canvasObject.chart !== undefined;
 }
 
-export function isTableEntity(canvasObject: SflEntityOut): canvasObject is SflTableEntity {
-  return canvasObject.entityType === 'table' && canvasObject.table !== undefined;
+export function isTableObject(canvasObject: SflCanvasObject): canvasObject is SflTableObject {
+  return canvasObject.objectType === 'table' && canvasObject.table !== undefined;
 }
 
-export function isSwimlaneEntity(canvasObject: SflEntityOut): canvasObject is SflSwimlaneEntity {
-  return canvasObject.entityType === 'swimlane' && canvasObject.swimlane !== undefined;
+export function isSwimlaneObject(canvasObject: SflCanvasObject): canvasObject is SflSwimlaneObject {
+  return canvasObject.objectType === 'swimlane' && canvasObject.swimlane !== undefined;
 }
 
-export function isPathEntity(canvasObject: SflEntityOut): canvasObject is SflPathEntity {
-  return canvasObject.entityType === 'path' && canvasObject.path !== undefined;
+export function isPathObject(canvasObject: SflCanvasObject): canvasObject is SflPathObject {
+  return canvasObject.objectType === 'path' && canvasObject.path !== undefined;
 }

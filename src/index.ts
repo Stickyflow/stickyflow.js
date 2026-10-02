@@ -22,20 +22,20 @@ export type {
 } from './renderScene/scene';
 export { canonicalize, parse } from './sflLanguage';
 export type {
+  SflCanvasObject,
   SflCanvasState,
-  SflChartEntity,
-  SflEntityOut,
+  SflChartObject,
   SflGroupOut,
   SflLinkOut,
-  SflPathEntity,
-  SflSwimlaneEntity,
-  SflTableEntity,
+  SflPathObject,
+  SflSwimlaneObject,
+  SflTableObject,
 } from './sflSemantic/sflToCanvasState';
 export {
-  isChartEntity,
-  isPathEntity,
-  isSwimlaneEntity,
-  isTableEntity,
+  isChartObject,
+  isPathObject,
+  isSwimlaneObject,
+  isTableObject,
   sflToCanvasState,
 } from './sflSemantic/sflToCanvasState';
 export { DOM_CONTRACT_VERSION } from './svg/domContract/version';

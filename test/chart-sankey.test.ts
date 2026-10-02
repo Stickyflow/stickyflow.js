@@ -27,7 +27,7 @@ Model board {
 describe('Sankey chart', () => {
   it('carries zones and series source/target through sflToCanvasState', () => {
     const state = sflToCanvasState(SANKEY_SFL);
-    const chart = state.entities[0];
+    const chart = state.canvasObjects[0];
     expect(chart.chart?.chartType).toBe('sankey');
     expect(chart.chart?.zones?.map(z => z.label)).toEqual(['Visits', 'Signups', 'Churned', 'Active']);
     expect(chart.chart?.series[0]).toMatchObject({ source: 'Visits', target: 'Signups', values: [80] });

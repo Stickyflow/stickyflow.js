@@ -51,8 +51,8 @@ Model board {
 describe('Treemap chart', () => {
   it('carries per-leaf values through sflToCanvasState', () => {
     const state = sflToCanvasState(TREEMAP_SFL);
-    expect(state.entities[0].chart?.chartType).toBe('treemap');
-    expect(state.entities[0].chart?.series.map(s => s.values)).toEqual([[60], [25], [15]]);
+    expect(state.canvasObjects[0].chart?.chartType).toBe('treemap');
+    expect(state.canvasObjects[0].chart?.series.map(s => s.values)).toEqual([[60], [25], [15]]);
   });
 
   it('renders one tile per series without a diagnostic', () => {

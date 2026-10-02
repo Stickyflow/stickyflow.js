@@ -13,7 +13,7 @@ Model M {
 }
 `;
 
-describe('pie chart — font stack', () => {
+describe('pie chart â€” font stack', () => {
   it('falls back to the full Inter font stack, not a bare family name', () => {
     const { scene } = render(pieOf([60, 40]));
     const label = scene.nodes.find(node => node.id === 'chart-pie-label-c-s0');
@@ -21,7 +21,7 @@ describe('pie chart — font stack', () => {
   });
 });
 
-describe('pie chart — label color ties to the slice hue', () => {
+describe('pie chart â€” label color ties to the slice hue', () => {
   it('picks a lighter shade of the slice color for a dark slice, not a flat white', () => {
     const { scene } = render(pieOf([50, 50]));
     const label = scene.nodes.find(node => node.id === 'chart-pie-label-c-s0');
@@ -39,7 +39,7 @@ describe('pie chart — label color ties to the slice hue', () => {
   });
 });
 
-describe('pie chart — labels on a ring too thin to hold them', () => {
+describe('pie chart â€” labels on a ring too thin to hold them', () => {
   it('moves the label outside the ring with a leader tick instead of hiding it', () => {
     const thin = pieOf([50, 50], 'innerRadius: 145');
     const { scene } = render(thin);
@@ -57,10 +57,10 @@ describe('pie chart — labels on a ring too thin to hold them', () => {
   });
 });
 
-describe('pie chart — pieCornerRadius', () => {
+describe('pie chart â€” pieCornerRadius', () => {
   it('round-trips through sflToCanvasState', () => {
     const state = sflToCanvasState(pieOf([50, 50], 'pieCornerRadius: 8'));
-    expect(state.entities[0].chart?.pieCornerRadius).toBe(8);
+    expect(state.canvasObjects[0].chart?.pieCornerRadius).toBe(8);
   });
 
   it('rounds the outer corners of EVERY slice, not just the last one drawn', () => {

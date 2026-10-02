@@ -33,7 +33,7 @@ Model board {
 describe('Table cellType: number, Column.align, Column.scale, Footer (SFL 1.4, ยง3.6)', () => {
   it('parses cellType/align/scale on Column and reads the Footer block like a Row', () => {
     const state = sflToCanvasState(TABLE_SFL);
-    const table = state.entities[0].table;
+    const table = state.canvasObjects[0].table;
     const scoreCol = table?.columns.find(c => c.id === 'score');
     expect(scoreCol?.type).toBe('number');
     expect(scoreCol?.align).toBe('right');
@@ -50,7 +50,7 @@ describe('Table cellType: number, Column.align, Column.scale, Footer (SFL 1.4, ย
   it('omits footer when no Footer block is present (undefined, not a stray empty object)', () => {
     const sfl = TABLE_SFL.replace('    Footer summe { name: "Gesamt"; score: 58 }\n', '');
     const state = sflToCanvasState(sfl);
-    expect(state.entities[0].table?.footer).toBeUndefined();
+    expect(state.canvasObjects[0].table?.footer).toBeUndefined();
   });
 
   it('decodes Column.scale into a structured ramp on the render-input column, alongside footer', () => {

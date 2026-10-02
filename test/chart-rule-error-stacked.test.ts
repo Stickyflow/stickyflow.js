@@ -61,7 +61,7 @@ Model board {
 describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   it('parses stacked, axis unit, per-point error and Rule blocks', () => {
     const state = sflToCanvasState(STACKED_SFL);
-    const chart = state.entities[0].chart;
+    const chart = state.canvasObjects[0].chart;
     expect(chart?.stacked).toBe('true');
     expect(chart?.axisY.unit).toBe('k€');
     expect(chart?.series[1].error).toEqual([3, null]);
@@ -119,7 +119,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   it('normalizes "none" and an absent stacked to ungrouped/grouped bars (no stacked rects)', () => {
     const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
     const state = sflToCanvasState(sfl);
-    expect(state.entities[0].chart?.stacked).toBeUndefined();
+    expect(state.canvasObjects[0].chart?.stacked).toBeUndefined();
   });
 
   it('computes waterfall segments with a floating per-series baseline', () => {

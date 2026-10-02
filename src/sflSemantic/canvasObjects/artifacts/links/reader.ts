@@ -1,6 +1,6 @@
 import type { SflBlock } from '../../../../sflLanguage/ast';
 import type { CanvasObjectResolutionContext } from '../../processing/resolver';
-import type { SflEntityOut } from '../../types';
+import type { SflCanvasObject } from '../../types';
 import { readLinkBlock } from './blockReader';
 import type { LinkEndpointReaderContext } from './endpointReader';
 import { buildLinkNameIndex } from './nameIndex';
@@ -9,7 +9,7 @@ import type { SflLinkOut } from './types';
 export function readLinks(
   model: SflBlock | undefined,
   linkBlocks: SflBlock[],
-  canvasObjects: SflEntityOut[],
+  canvasObjects: SflCanvasObject[],
   context: CanvasObjectResolutionContext,
 ): SflLinkOut[] {
   const endpointContext: LinkEndpointReaderContext = {

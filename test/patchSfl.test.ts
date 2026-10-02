@@ -85,7 +85,7 @@ describe('applyMoveChange', () => {
     // The shared Layout block itself must stay untouched...
     expect(next).toContain('position: 200, 100');
     // ...while the entity gets its own local override at the resolved+delta position.
-    const entity = sflToCanvasState(next).entities.find(e => e.id === 'a');
+    const entity = sflToCanvasState(next).canvasObjects.find(e => e.id === 'a');
     expect(entity?.x).toBe(210);
     expect(entity?.y).toBe(120);
   });
@@ -117,7 +117,7 @@ describe('applyMoveChange', () => {
     // ...and the container's own layout is untouched.
     expect(next).toContain('position: -200, -900');
     // The child's resolved absolute position actually reflects the drag.
-    const entity = sflToCanvasState(next).entities.find(e => e.id === 'inner');
+    const entity = sflToCanvasState(next).canvasObjects.find(e => e.id === 'inner');
     expect(entity?.x).toBe(290); // -200 + 490, unchanged (no horizontal drag)
     expect(entity?.y).toBe(-730); // -900 + 170, i.e. the pre-drag -760 shifted by +30
   });
@@ -311,8 +311,8 @@ describe('insertEntity', () => {
   it('appends a new shape as an Shape block at the end of the Model', () => {
     const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: 'B', x: 300, y: 0, width: 120, height: 60 });
     expect(() => parse(next)).not.toThrow();
-    const entity = sflToCanvasState(next).entities.find(e => e.id === 'b');
-    expect(entity?.entityType).toBe('shape');
+    const entity = sflToCanvasState(next).canvasObjects.find(e => e.id === 'b');
+    expect(entity?.objectType).toBe('shape');
     expect(entity?.text).toBe('B');
     expect([entity?.x, entity?.y, entity?.width, entity?.height]).toEqual([300, 0, 120, 60]);
     // The existing entities are untouched, still present, in their original form.
@@ -329,7 +329,7 @@ describe('insertEntity', () => {
     const label = 'Kai Havertz\nST · drops "deep"\tfast';
     const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: label, x: 300, y: 0, width: 120, height: 60 });
     expect(() => parse(next)).not.toThrow();
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'b')?.text).toBe(label);
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'b')?.text).toBe(label);
     // The emitted line carries escapes, not an actual break.
     expect(next).toContain('text: "Kai Havertz\\nST · drops \\"deep\\"\\tfast"');
   });
@@ -337,20 +337,20 @@ describe('insertEntity', () => {
   it('round-trips a multi-line label through a rename', () => {
     const renamed = applyTextChange(sfl, { owner: owner('a'), text: 'line one\nline two' });
     expect(() => parse(renamed)).not.toThrow();
-    expect(sflToCanvasState(renamed).entities.find(e => e.id === 'a')?.text).toBe('line one\nline two');
+    expect(sflToCanvasState(renamed).canvasObjects.find(e => e.id === 'a')?.text).toBe('line one\nline two');
   });
 
   it('writes `kind: frame`/`kind: swimlane` for a Container, and neither for a Table', () => {
     const withFrame = insertEntity(sfl, { id: 'g', kind: 'frame', x: 0, y: 500, width: 200, height: 100 });
-    expect(sflToCanvasState(withFrame).entities.find(e => e.id === 'g')?.entityType).toBe('frame');
+    expect(sflToCanvasState(withFrame).canvasObjects.find(e => e.id === 'g')?.objectType).toBe('frame');
 
     const withSwimlane = insertEntity(sfl, { id: 'p', kind: 'swimlane', x: 0, y: 500, width: 200, height: 100 });
-    expect(sflToCanvasState(withSwimlane).entities.find(e => e.id === 'p')?.entityType).toBe('swimlane');
+    expect(sflToCanvasState(withSwimlane).canvasObjects.find(e => e.id === 'p')?.objectType).toBe('swimlane');
 
     const withTable = insertEntity(sfl, { id: 't', kind: 'table', x: 0, y: 500, width: 200, height: 100 });
     expect(withTable).toContain('Table t {');
     expect(withTable).not.toMatch(/Table t \{[^}]*kind:/s);
-    expect(sflToCanvasState(withTable).entities.find(e => e.id === 't')?.entityType).toBe('table');
+    expect(sflToCanvasState(withTable).canvasObjects.find(e => e.id === 't')?.objectType).toBe('table');
   });
 
   it('nests inside parentId with a frame-relative position, given absolute x/y', () => {
@@ -364,7 +364,7 @@ describe('insertEntity', () => {
       parentId: 'f',
     });
     expect(next).toMatch(/Container f \{[\s\S]*Shape child \{[\s\S]*position: 10, 10[\s\S]*\}[\s\S]*\}/);
-    const child = sflToCanvasState(next).entities.find(e => e.id === 'child');
+    const child = sflToCanvasState(next).canvasObjects.find(e => e.id === 'child');
     expect(child?.parentFrameId).toBe('f'); // resolved back to the same absolute position
     expect([child?.x, child?.y]).toEqual([210, 210]);
   });
@@ -380,7 +380,7 @@ describe('insertEntity', () => {
       body: 'style {\n  shape: pill\n  fill: "#fff"\n}',
     });
     expect(next).toContain('shape: pill');
-    expect(sflToCanvasState(next).entities.find(e => e.id === 'styled')?.shapeType).toBe('pill');
+    expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'styled')?.shapeType).toBe('pill');
   });
 
   it('is a no-op when the id already exists, is invalid, or the parentId is unknown', () => {

@@ -451,9 +451,9 @@ Model m {
 }
 `;
     const state = sflToCanvasState(withNote);
-    expect(state.entities.map(e => e.id)).toEqual(['a']);
-    expect(state.entities[0].entityType).toBe('shape');
-    expect(state.entities[0].kind).toBe('note');
+    expect(state.canvasObjects.map(e => e.id)).toEqual(['a']);
+    expect(state.canvasObjects[0].objectType).toBe('shape');
+    expect(state.canvasObjects[0].kind).toBe('note');
 
     const { svg, diagnostics } = render(withNote);
     expect(diagnostics).toEqual([]);
@@ -486,7 +486,7 @@ Model m {
 }
 `;
     const state = sflToCanvasState(stylesInsideModel);
-    expect(state.entities[0].shapeType).toBeUndefined();
+    expect(state.canvasObjects[0].shapeType).toBeUndefined();
     expect(state.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ severity: 'warning', code: 'unresolved-style-or-layout', entityId: 'living' }),
@@ -519,7 +519,7 @@ Model m {
 }
 `;
     const state = sflToCanvasState(stylesAtTopLevel);
-    expect(state.entities[0].shapeType).toBe('rectangle');
+    expect(state.canvasObjects[0].shapeType).toBe('rectangle');
     expect(state.diagnostics).toEqual([]);
 
     const { diagnostics, svg } = render(stylesAtTopLevel);

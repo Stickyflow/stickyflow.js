@@ -27,7 +27,7 @@ Model board {
 describe('Named Ports (§3.5, entity.portName)', () => {
   it('parses Port child blocks into the Symbol definition', () => {
     const state = sflToCanvasState(SFL);
-    const amp1 = state.entities.find(e => e.id === 'amp1');
+    const amp1 = state.canvasObjects.find(e => e.id === 'amp1');
     expect(amp1?.symbol?.ports).toEqual([
       { name: 'in_plus', at: [0, 0.25] },
       { name: 'in_minus', at: [0, 0.75] },

@@ -40,8 +40,8 @@ Model board {
 describe('Chart and Path parity', () => {
   it('keeps chart axes, series and explicit x/y values through the SFL pipeline', () => {
     const state = sflToCanvasState(CHART_SFL);
-    const chart = state.entities[0];
-    expect(chart.entityType).toBe('chart');
+    const chart = state.canvasObjects[0];
+    expect(chart.objectType).toBe('chart');
     expect(chart.chart?.chartType).toBe('scatter');
     expect(chart.chart?.series[0].values).toEqual([
       [0, 24],
@@ -139,8 +139,8 @@ Model board {
   }
 }`;
     const state = sflToCanvasState(source);
-    expect(state.entities[0].entityType).toBe('path');
-    expect(state.entities[0].path?.points).toHaveLength(3);
+    expect(state.canvasObjects[0].objectType).toBe('path');
+    expect(state.canvasObjects[0].path?.points).toHaveLength(3);
     expect(sflToRenderInput(source).paths?.[0]).toMatchObject({
       strokeColor: '#7c3aed',
       strokeWidth: 3,
@@ -228,12 +228,12 @@ Model board {
   }
 }`;
     const state = sflToCanvasState(source);
-    expect(state.entities[0].chart?.chartType).toBe('radial');
-    expect(state.entities[0].chart?.areaOpacity).toBe(0.4);
+    expect(state.canvasObjects[0].chart?.chartType).toBe('radial');
+    expect(state.canvasObjects[0].chart?.areaOpacity).toBe(0.4);
     const { svg } = render(source);
     expect(svg).toContain('data-sf-kind="radial"');
     expect(svg).toContain('sf-chart-radial-ring-radial_chart-1');
-    expect(state.entities[0].chart?.series[0].opacity).toBe(0.55);
+    expect(state.canvasObjects[0].chart?.series[0].opacity).toBe(0.55);
     expect(svg).toContain('opacity="0.55"');
   });
 });

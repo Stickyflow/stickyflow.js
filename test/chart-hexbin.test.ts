@@ -28,7 +28,7 @@ Model board {
 describe('Hexbin chart', () => {
   it('carries chartType and hexRadius through sflToCanvasState', () => {
     const state = sflToCanvasState(HEXBIN_SFL);
-    const chart = state.entities[0];
+    const chart = state.canvasObjects[0];
     expect(chart.chart?.chartType).toBe('hexbin');
     expect(chart.chart?.hexRadius).toBe(10);
     expect(chart.chart?.series[0].values).toEqual([
@@ -82,7 +82,7 @@ describe('Hexbin chart', () => {
   });
 });
 
-describe('Hexbin chart — binning is anchored to the plot, not the canvas', () => {
+describe('Hexbin chart â€” binning is anchored to the plot, not the canvas', () => {
   const at = (x: number, y: number, width = 400, height = 260) => `sfl 1.4
 
 Model M {

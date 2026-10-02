@@ -18,12 +18,12 @@ Model board {
 
   it('parses value off a closed Path', () => {
     const state = sflToCanvasState(SFL);
-    expect(state.entities[0].path?.value).toBe(42.5);
+    expect(state.canvasObjects[0].path?.value).toBe(42.5);
   });
 
   it('leaves value undefined when never mentioned', () => {
     const withoutValue = SFL.replace('    value: 42.5\n', '');
     const state = sflToCanvasState(withoutValue);
-    expect(state.entities[0].path?.value).toBeUndefined();
+    expect(state.canvasObjects[0].path?.value).toBeUndefined();
   });
 });

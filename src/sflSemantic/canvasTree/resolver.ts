@@ -7,10 +7,10 @@ import { createFlowPositioner, type FlowPositioner } from '../canvasObjects/proc
 import { type CanvasObjectResolutionContext, resolveCanvasObject } from '../canvasObjects/processing/resolver';
 import type { CanvasResolution } from '../canvasState/resolution';
 import { directGroupMemberIds } from '../groups/members';
-import type { SflEntityOut, SflGroupOut } from '../types';
+import type { SflCanvasObject, SflGroupOut } from '../types';
 
 export interface CanvasTree {
-  entities: SflEntityOut[];
+  canvasObjects: SflCanvasObject[];
   groups: SflGroupOut[];
   linkBlocks: SflBlock[];
 }
@@ -22,7 +22,7 @@ interface CanvasLocation {
 
 class CanvasTreeResolver {
   readonly #context: CanvasObjectResolutionContext;
-  readonly #entities: SflEntityOut[] = [];
+  readonly #canvasObjects: SflCanvasObject[] = [];
   readonly #linkBlocks: SflBlock[] = [];
 
   constructor(resolution: CanvasResolution) {
@@ -31,7 +31,7 @@ class CanvasTreeResolver {
 
   resolve(model: SflBlock | undefined): CanvasTree {
     const groups = model ? this.#resolveChildren(model, { origin: { x: 0, y: 0 } }) : [];
-    return { entities: this.#entities, groups, linkBlocks: this.#linkBlocks };
+    return { canvasObjects: this.#canvasObjects, groups, linkBlocks: this.#linkBlocks };
   }
 
   #resolveChildren(block: SflBlock, location: CanvasLocation): SflGroupOut[] {
@@ -69,7 +69,7 @@ class CanvasTreeResolver {
 
   #resolveContainer(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
     const canvasObject = this.#resolvePositionedCanvasObject(block, location, nextFlowPosition);
-    this.#entities.push(canvasObject);
+    this.#canvasObjects.push(canvasObject);
     return this.#resolveChildren(block, {
       origin: { x: canvasObject.x, y: canvasObject.y },
       frameId: canvasObject.id,
@@ -77,14 +77,14 @@ class CanvasTreeResolver {
   }
 
   #resolveCanvasObject(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): void {
-    this.#entities.push(this.#resolvePositionedCanvasObject(block, location, nextFlowPosition));
+    this.#canvasObjects.push(this.#resolvePositionedCanvasObject(block, location, nextFlowPosition));
   }
 
   #resolvePositionedCanvasObject(
     block: SflBlock,
     location: CanvasLocation,
     nextFlowPosition: FlowPositioner,
-  ): SflEntityOut {
+  ): SflCanvasObject {
     const size = tupleValues(this.#context.layoutProp(block, 'size')) ?? [0, 0];
     return resolveCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
   }
@@ -96,7 +96,7 @@ class CanvasTreeResolver {
       name: asString(properties.get('text')) ?? block.name,
       color: asString(properties.get('color')),
       icon: asString(properties.get('icon')),
-      entityIds: directGroupMemberIds(block),
+      canvasObjectIds: directGroupMemberIds(block),
       subGroups: this.#resolveChildren(block, location),
       parentFrameId: location.frameId ?? asString(properties.get('parent')),
     };

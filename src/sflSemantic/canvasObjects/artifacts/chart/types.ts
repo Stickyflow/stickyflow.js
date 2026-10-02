@@ -1,6 +1,6 @@
 import type { SflValue } from '../../../../sflLanguage/ast';
-import type { SflEntityOut } from '../../types';
+import type { SflCanvasObject } from '../../types';
 
 export type ChartProperties = Map<string, SflValue>;
-export type ChartData = NonNullable<SflEntityOut['chart']>;
+export type ChartData = NonNullable<SflCanvasObject['chart']>;
 export type ChartSeries = ChartData['series'][number];

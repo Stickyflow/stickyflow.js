@@ -4,7 +4,7 @@ import { applyPropertyChange } from './propertyChange';
 import { applyResizeChange } from './resizeChange';
 
 export function applyColumnResizeChange(sfl: string, event: ColumnResizeChangeEvent): string {
-  const entity = sflToCanvasState(sfl).entities.find(candidate => candidate.id === event.owner.id);
+  const entity = sflToCanvasState(sfl).canvasObjects.find(candidate => candidate.id === event.owner.id);
   const table = entity?.table;
   const column = table?.columns.find(candidate => candidate.id === event.columnId);
   const columnsBlockName = table?.columnsBlockName;

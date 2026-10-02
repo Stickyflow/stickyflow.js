@@ -8,9 +8,9 @@ export function applyResizeChange(sfl: string, event: ResizeChangeEvent): string
   // why), same conversion needed for a resize target nested in a container
   // that isn't itself at the canvas origin.
   const state = sflToCanvasState(sfl);
-  const entity = state.entities.find(candidate => candidate.id === event.owner.id);
+  const entity = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
   const parent = entity?.parentFrameId
-    ? state.entities.find(candidate => candidate.id === entity.parentFrameId)
+    ? state.canvasObjects.find(candidate => candidate.id === entity.parentFrameId)
     : undefined;
   const originX = parent?.x ?? 0;
   const originY = parent?.y ?? 0;

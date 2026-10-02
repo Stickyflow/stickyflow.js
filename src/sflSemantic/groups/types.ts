@@ -3,7 +3,7 @@ export interface SflGroupOut {
   name: string;
   color?: string;
   icon?: string;
-  entityIds: string[];
+  canvasObjectIds: string[];
   subGroups: SflGroupOut[];
   parentFrameId?: string;
 }
