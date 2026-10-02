@@ -81,8 +81,13 @@ describe('Isometric scene builder', () => {
       0,
     );
 
-    expect(nodes).toHaveLength(4);
+    expect(nodes).toHaveLength(5);
     expect(nodes[3]).toMatchObject({
+      type: 'path',
+      id: 'isometric-server-label-guide',
+      d: 'M 90 38 L 90 50',
+    });
+    expect(nodes[4]).toMatchObject({
       type: 'text',
       id: 'isometric-server-label',
       x: 40,
@@ -91,6 +96,36 @@ describe('Isometric scene builder', () => {
       height: 20,
       lines: ['Your Server'],
       align: 'center',
+    });
+  });
+
+  it('places an optional shadow on the ground below the cube', () => {
+    const nodes = buildIsometricObject(
+      {
+        id: 'shadowed',
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 120,
+        depth: 20,
+        hasShadow: true,
+        shadowStyle: { enabled: true, color: '#312e81', opacity: 0.24 },
+      },
+      0,
+    );
+
+    expect(nodes[0]).toMatchObject({
+      type: 'ellipse',
+      id: 'isometric-shadowed-ground-shadow',
+      cx: 60,
+      cy: 140,
+      rx: 35,
+      ry: 7,
+      style: {
+        fill: { kind: 'solid', color: '#312e81' },
+        opacity: 0.24,
+        pointerEvents: 'none',
+      },
     });
   });
 });
