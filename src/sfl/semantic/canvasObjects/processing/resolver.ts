@@ -1,24 +1,24 @@
 import type { SflBlock, SflValue } from '../../../ast';
 import { asString } from '../../ast/valueAccess';
 import { readChart } from '../artifacts/chart/reader';
-import { readPath } from '../artifacts/path';
-import { readSwimlane } from '../artifacts/swimlane';
-import { readTable } from '../artifacts/table';
+import { readPath } from '../artifacts/path/reader';
+import { readSwimlane } from '../artifacts/swimlane/reader';
+import { readTable } from '../artifacts/table/reader';
 import type { SflEntityOut } from '../types';
 import { classifyCanvasObject } from './classification';
 import { readCanvasObjectGeometry } from './layout/geometry';
 import { readCanvasObjectPresentation } from './presentation';
 
-export interface CanvasObjectReaderContext {
+export interface CanvasObjectResolutionContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
   layoutProp: (block: SflBlock, key: string) => SflValue | undefined;
   symbolDefs: Map<string, NonNullable<SflEntityOut['symbol']>>;
 }
 
-export function buildCanvasObject(
+export function resolveCanvasObject(
   block: SflBlock,
   origin: { x: number; y: number },
-  context: CanvasObjectReaderContext,
+  context: CanvasObjectResolutionContext,
   frameId?: string,
   positionOverride?: number[],
 ): SflEntityOut {

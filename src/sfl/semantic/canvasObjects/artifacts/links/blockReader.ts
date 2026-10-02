@@ -1,13 +1,13 @@
 import type { SflBlock } from '../../../../ast';
 import { asNumber, asString, listNumbers } from '../../../ast/valueAccess';
-import type { CanvasObjectReaderContext } from '../../processing/reader';
+import type { CanvasObjectResolutionContext } from '../../processing/resolver';
 import { type LinkEndpointReaderContext, readLinkEndpoint } from './endpointReader';
 import { readLinkPresentation } from './presentation';
 import type { SflLinkOut } from './types';
 
 export function readLinkBlock(
   block: SflBlock,
-  canvasObjectContext: CanvasObjectReaderContext,
+  canvasObjectContext: CanvasObjectResolutionContext,
   endpointContext: LinkEndpointReaderContext,
 ): SflLinkOut {
   const properties = canvasObjectContext.mergedProps(block);

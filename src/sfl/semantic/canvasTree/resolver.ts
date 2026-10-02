@@ -4,9 +4,9 @@ import { asString, tupleValues } from '../ast/valueAccess';
 import { expandNetLinks } from '../canvasObjects/artifacts/links/netExpansion';
 import { isCanvasObjectBlockKind } from '../canvasObjects/processing/blockKinds';
 import { createFlowPositioner, type FlowPositioner } from '../canvasObjects/processing/layout/flow';
-import { buildCanvasObject, type CanvasObjectReaderContext } from '../canvasObjects/processing/reader';
+import { type CanvasObjectResolutionContext, resolveCanvasObject } from '../canvasObjects/processing/resolver';
+import type { CanvasResolution } from '../canvasState/resolution';
 import { directGroupMemberIds } from '../groups/members';
-import type { CanvasResolution } from '../resolution';
 import type { SflEntityOut, SflGroupOut } from '../types';
 
 export interface CanvasTree {
@@ -20,76 +20,76 @@ interface CanvasLocation {
   frameId?: string;
 }
 
-class CanvasTreeReader {
-  readonly #context: CanvasObjectReaderContext;
+class CanvasTreeResolver {
+  readonly #context: CanvasObjectResolutionContext;
   readonly #entities: SflEntityOut[] = [];
   readonly #linkBlocks: SflBlock[] = [];
 
   constructor(resolution: CanvasResolution) {
-    this.#context = resolution.canvasObjectReaderContext;
+    this.#context = resolution.canvasObjectResolutionContext;
   }
 
-  read(model: SflBlock | undefined): CanvasTree {
-    const groups = model ? this.#readChildren(model, { origin: { x: 0, y: 0 } }) : [];
+  resolve(model: SflBlock | undefined): CanvasTree {
+    const groups = model ? this.#resolveChildren(model, { origin: { x: 0, y: 0 } }) : [];
     return { entities: this.#entities, groups, linkBlocks: this.#linkBlocks };
   }
 
-  #readChildren(block: SflBlock, location: CanvasLocation): SflGroupOut[] {
+  #resolveChildren(block: SflBlock, location: CanvasLocation): SflGroupOut[] {
     const groups: SflGroupOut[] = [];
     const nextFlowPosition = createFlowPositioner(block, this.#context);
 
     for (const child of childBlocks(block)) {
-      groups.push(...this.#readChild(child, location, nextFlowPosition));
+      groups.push(...this.#resolveChild(child, location, nextFlowPosition));
     }
     return groups;
   }
 
-  #readChild(child: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
+  #resolveChild(child: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
     if (child.kind === 'Container') {
-      return this.#readContainer(child, location, nextFlowPosition);
+      return this.#resolveContainer(child, location, nextFlowPosition);
     }
     if (isCanvasObjectBlockKind(child.kind)) {
-      this.#readCanvasObject(child, location, nextFlowPosition);
+      this.#resolveCanvasObject(child, location, nextFlowPosition);
       return [];
     }
 
     switch (child.kind) {
       case 'Group':
-        return [this.#readGroup(child, location)];
+        return [this.#resolveGroup(child, location)];
       case 'Link':
-        this.#readLink(child);
+        this.#linkBlocks.push(child);
         return [];
       case 'Net':
-        this.#readNet(child);
+        this.#linkBlocks.push(...expandNetLinks(child, this.#context));
         return [];
       default:
         return [];
     }
   }
 
-  #readContainer(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
-    const canvasObject = this.#buildPositionedCanvasObject(block, location, nextFlowPosition);
+  #resolveContainer(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
+    const canvasObject = this.#resolvePositionedCanvasObject(block, location, nextFlowPosition);
     this.#entities.push(canvasObject);
-    return this.#readChildren(block, {
+    return this.#resolveChildren(block, {
       origin: { x: canvasObject.x, y: canvasObject.y },
       frameId: canvasObject.id,
     });
   }
 
-  #readCanvasObject(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): void {
-    this.#entities.push(this.#buildPositionedCanvasObject(block, location, nextFlowPosition));
+  #resolveCanvasObject(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): void {
+    this.#entities.push(this.#resolvePositionedCanvasObject(block, location, nextFlowPosition));
   }
 
-  #buildPositionedCanvasObject(
+  #resolvePositionedCanvasObject(
     block: SflBlock,
     location: CanvasLocation,
     nextFlowPosition: FlowPositioner,
   ): SflEntityOut {
     const size = tupleValues(this.#context.layoutProp(block, 'size')) ?? [0, 0];
-    return buildCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
+    return resolveCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
   }
 
-  #readGroup(block: SflBlock, location: CanvasLocation): SflGroupOut {
+  #resolveGroup(block: SflBlock, location: CanvasLocation): SflGroupOut {
     const properties = this.#context.mergedProps(block);
     return {
       id: asString(properties.get('id')) ?? block.name,
@@ -97,20 +97,12 @@ class CanvasTreeReader {
       color: asString(properties.get('color')),
       icon: asString(properties.get('icon')),
       entityIds: directGroupMemberIds(block),
-      subGroups: this.#readChildren(block, location),
+      subGroups: this.#resolveChildren(block, location),
       parentFrameId: location.frameId ?? asString(properties.get('parent')),
     };
   }
-
-  #readLink(block: SflBlock): void {
-    this.#linkBlocks.push(block);
-  }
-
-  #readNet(block: SflBlock): void {
-    this.#linkBlocks.push(...expandNetLinks(block, this.#context));
-  }
 }
 
-export function readCanvasTree(model: SflBlock | undefined, resolution: CanvasResolution): CanvasTree {
-  return new CanvasTreeReader(resolution).read(model);
+export function resolveCanvasTree(model: SflBlock | undefined, resolution: CanvasResolution): CanvasTree {
+  return new CanvasTreeResolver(resolution).resolve(model);
 }

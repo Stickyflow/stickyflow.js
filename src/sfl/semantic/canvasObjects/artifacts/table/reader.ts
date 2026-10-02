@@ -1,7 +1,7 @@
-import type { SflBlock, SflValue } from '../../../ast';
-import { childBlocks, directProperties } from '../../ast/blockEntries';
-import { asNumber, asString } from '../../ast/valueAccess';
-import type { SflEntityOut } from '../types';
+import type { SflBlock, SflValue } from '../../../../ast';
+import { childBlocks, directProperties } from '../../../ast/blockEntries';
+import { asNumber, asString } from '../../../ast/valueAccess';
+import type { SflEntityOut } from '../../types';
 
 type Properties = Map<string, SflValue>;
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;

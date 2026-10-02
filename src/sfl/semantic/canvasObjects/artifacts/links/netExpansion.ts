@@ -1,8 +1,8 @@
 import type { SflBlock } from '../../../../ast';
 import { asString } from '../../../ast/valueAccess';
-import type { CanvasObjectReaderContext } from '../../processing/reader';
+import type { CanvasObjectResolutionContext } from '../../processing/resolver';
 
-function netMembers(block: SflBlock, context: CanvasObjectReaderContext): string[][] {
+function netMembers(block: SflBlock, context: CanvasObjectResolutionContext): string[][] {
   const membersValue = context.mergedProps(block).get('members');
   return membersValue?.type === 'list'
     ? membersValue.values.flatMap(value => (value.type === 'ident' ? [value.segments] : []))
@@ -23,7 +23,7 @@ function netLink(block: SflBlock, from: string[], to: string[], index: number, t
   return { kind: 'Link', name: `${block.name}_${index + 1}`, composition: [], entries };
 }
 
-export function expandNetLinks(block: SflBlock, context: CanvasObjectReaderContext): SflBlock[] {
+export function expandNetLinks(block: SflBlock, context: CanvasObjectResolutionContext): SflBlock[] {
   const members = netMembers(block, context);
   if (members.length < 2) {
     return [];

@@ -1,4 +1,5 @@
 import { parse } from './parser';
+import { resolveCanvasState } from './semantic/canvasState/resolver';
 import type { SflCanvasState } from './semantic/types';
 
 export type {
@@ -19,15 +20,6 @@ export {
   isTableEntity,
 } from './semantic/types';
 
-import { readLinks } from './semantic/canvasObjects/artifacts/links/reader';
-import { readCanvasTree } from './semantic/canvasTree/reader';
-import { createCanvasResolution } from './semantic/resolution';
-
 export function sflToCanvasState(source: string): SflCanvasState {
-  const doc = parse(source);
-  const resolution = createCanvasResolution(doc);
-  const { entities, groups, linkBlocks } = readCanvasTree(resolution.model, resolution);
-  const links = readLinks(resolution.model, linkBlocks, entities, resolution.canvasObjectReaderContext);
-
-  return { entities, groups, links, diagnostics: resolution.diagnostics };
+  return resolveCanvasState(parse(source));
 }

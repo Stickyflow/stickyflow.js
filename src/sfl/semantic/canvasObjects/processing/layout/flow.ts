@@ -1,10 +1,10 @@
 import type { SflBlock } from '../../../../ast';
 import { asNumber, asString } from '../../../ast/valueAccess';
-import type { CanvasObjectReaderContext } from '../reader';
+import type { CanvasObjectResolutionContext } from '../resolver';
 
 export type FlowPositioner = (size: number[]) => number[] | undefined;
 
-export function createFlowPositioner(block: SflBlock, context: CanvasObjectReaderContext): FlowPositioner {
+export function createFlowPositioner(block: SflBlock, context: CanvasObjectResolutionContext): FlowPositioner {
   const axis = asString(context.layoutProp(block, 'flow'));
   const gap = asNumber(context.layoutProp(block, 'gap')) ?? 0;
   let cursor = 0;

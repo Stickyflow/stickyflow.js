@@ -1,11 +1,11 @@
 import type { SflBlock, SflValue } from '../../ast';
 import { directProperties, layoutProperties, styleProperties } from '../ast/blockEntries';
-import type { CanvasObjectReaderContext } from '../canvasObjects/processing/reader';
+import type { CanvasObjectResolutionContext } from '../canvasObjects/processing/resolver';
 import type { CanvasDefinitions } from './collection';
 import { classifyCompositionReferences } from './compositionReferences';
 import { resolveDefinitionInheritance } from './inheritance';
 
-export function createCanvasObjectPropertyReaders(definitions: CanvasDefinitions): CanvasObjectReaderContext {
+export function createCanvasObjectPropertyReaders(definitions: CanvasDefinitions): CanvasObjectResolutionContext {
   const { styles, layouts, symbols } = definitions;
   const references = (block: SflBlock) => classifyCompositionReferences(block.composition, styles, layouts);
   const resolvedStyles = resolveDefinitionInheritance(styles, block => references(block).styleRef);
