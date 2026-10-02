@@ -7,6 +7,8 @@ import type { FreeformPath } from '../model/path';
 import type { Shape } from '../model/shape';
 import type { Swimlane } from '../model/swimlane';
 import type { Table } from '../model/table';
+import type { IsometricObject } from '../model/isometricObject';
+
 export interface RenderInputLink {
   link: Link;
   from: Point;
@@ -27,6 +29,7 @@ export interface RenderInput {
   shapes: Shape[];
   frames: Frame[];
   swimlanes: Swimlane[];
+  isometricObjects?: IsometricObject[];
   tables?: RenderInputTable[];
   paths?: FreeformPath[];
   charts?: Chart[];
