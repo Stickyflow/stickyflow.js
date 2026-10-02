@@ -2,7 +2,7 @@ import { TABLE_COLUMN_DIVIDER_ATTR } from '../../../svg/domContract/attributes';
 import { resolveOwner } from '../../dom';
 import type { Viewer } from '../../viewer';
 import { hasMovableGeometry } from '../geometryRoles';
-import { captureDraggedEntities } from './entityCapture';
+import { captureDraggedCanvasObjects } from './canvasObjectCapture';
 import { captureInternalLinks } from './internalLinkCapture';
 import { selectedMoveGroup } from './selection';
 import type { MoveDragState } from './types';
@@ -28,14 +28,14 @@ export function createMoveDragState(
 
   const group = selectedMoveGroup(viewer, owner);
   const groupIds = new Set(group.map(member => member.id));
-  const entities = captureDraggedEntities(viewer.svg, group, groupIds);
-  if (!entities.length) {
+  const canvasObjects = captureDraggedCanvasObjects(viewer.svg, group, groupIds);
+  if (!canvasObjects.length) {
     return null;
   }
 
   (target as SVGGraphicsElement)?.setPointerCapture?.(event.pointerId);
   return {
-    entities,
+    canvasObjects,
     internalLinks: captureInternalLinks(viewer.svg, groupIds),
     pointerId: event.pointerId,
     startScreen: { x: event.clientX, y: event.clientY },
@@ -44,4 +44,4 @@ export function createMoveDragState(
   };
 }
 
-export type { DraggedEntity, MoveDragState } from './types';
+export type { DraggedCanvasObject, MoveDragState } from './types';

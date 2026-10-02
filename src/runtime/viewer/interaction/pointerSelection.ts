@@ -54,7 +54,7 @@ export class OwnerPointerController {
     this.#selection.remember(owner);
     const modifiers = modifiersOf(event);
     this.#selection.dispatch(clickAction(owner.id, modifiers));
-    this.#emitter.emit(owner.role === 'link' ? 'linkClick' : 'entityClick', {
+    this.#emitter.emit(owner.role === 'link' ? 'linkClick' : 'canvasObjectClick', {
       diagramId: this.#diagramId,
       owner,
       modifiers,

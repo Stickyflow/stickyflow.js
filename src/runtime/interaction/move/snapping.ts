@@ -14,8 +14,8 @@ export interface MoveDelta {
 }
 
 export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number, rawDy: number): MoveDelta {
-  const leadBounds = offsetBounds(drag.entities[0].draggedBounds, rawDx, rawDy);
-  const excludedIds = new Set(drag.entities.map(entity => entity.owner.id));
+  const leadBounds = offsetBounds(drag.canvasObjects[0].draggedBounds, rawDx, rawDy);
+  const excludedIds = new Set(drag.canvasObjects.map(canvasObject => canvasObject.owner.id));
   const candidates = nearestCandidates(leadBounds, findSnapCandidateBounds(svg, excludedIds));
   const snap = computeSnap(leadBounds, candidates, {
     threshold: SNAP_THRESHOLD_PX / pxPerUnit(svg),

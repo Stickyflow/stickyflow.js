@@ -229,10 +229,10 @@ pays nothing for viewer JS. The web component sits on top and composes both.
 A third, opt-in tier layered on top of `stickyflow/viewer` (never the other way
 round): double-click to edit text, drag to move (a multi-selection moves
 together), drag a corner handle to resize, drag either endpoint of a selected
-link onto a new anchor — a different spot on the same entity, or a different
-entity entirely — to reconnect it. The dragged endpoint follows the cursor as
+link onto a new anchor — a different spot on the same canvas object, or a different
+canvas object entirely — to reconnect it. The dragged endpoint follows the cursor as
 a free "ghost" over empty canvas and snaps to the nearest point on whichever
-entity's under the pointer, so the gesture reads as continuous rather than
+canvas object's under the pointer, so the gesture reads as continuous rather than
 freezing until you land exactly on a target. All with a live preview (real
 router, real text re-wrap) while the gesture is in progress. The package never mutates its
 own model — it's a **controlled component**: each gesture only emits an event
@@ -261,30 +261,30 @@ They patch only the touched property's own line(s) — via brace-depth block
 location, not a full parse-mutate-emit round trip (there's no reverse
 serializer in this package yet, see *Known gaps*) — so everything else in the
 document (comments, formatting, unrelated blocks) survives untouched, and
-`applyMoveChange` resolves the entity's *current* position through the real
+`applyMoveChange` resolves the canvas object's *current* position through the real
 parser first, so a delta lands correctly even when the position is inherited
 from a composed `Layout` reference rather than set inline. A host is free to
 ignore these and patch its own structured state instead — the events carry
 everything needed either way.
 
-**Structural changes** — `insertEntity`/`removeEntity`/`insertLink`/`removeLink`
+**Structural changes** — `insertCanvasObject`/`removeCanvasObject`/`insertLink`/`removeLink`
 (also from `stickyflow/interaction`, pure/no DOM) cover create/delete, which no
 drag gesture produces on its own. Call them directly — from a host reflecting
 an LLM-authored change, an "add shape" toolbar button, etc. — and pass the
 result to `viewer.update()` the same way:
 
 ```ts
-import { insertEntity, insertLink, removeEntity } from 'stickyflow/interaction'
+import { insertCanvasObject, insertLink, removeCanvasObject } from 'stickyflow/interaction'
 
-currentSource = insertEntity(currentSource, { id: 'n2', kind: 'shape', text: 'New', x: 320, y: 80, width: 160, height: 60 })
+currentSource = insertCanvasObject(currentSource, { id: 'n2', kind: 'shape', text: 'New', x: 320, y: 80, width: 160, height: 60 })
 currentSource = insertLink(currentSource, { id: 'l1', fromId: 'n1', toId: 'n2' })
-currentSource = removeEntity(currentSource, 'n1') // also removes links attached to it by default
+currentSource = removeCanvasObject(currentSource, 'n1') // also removes links attached to it by default
 ```
 
-Same surgical-patch philosophy as the apply\*Change functions: `insertEntity`/
+Same surgical-patch philosophy as the apply\*Change functions: `insertCanvasObject`/
 `insertLink` append a new block (indented to match, id-uniqueness- and
 parent-checked first — a no-op if the id already exists or a referenced
-entity/parent doesn't), `removeEntity`/`removeLink` splice out a block's exact
+canvas object/parent doesn't), `removeCanvasObject`/`removeLink` splice out a block's exact
 line range. Neither attempts a generic value formatter for arbitrary style
 properties — SFL's quoting rules depend on each property's own semantics, not
 just the JS type — so extra properties go through an optional raw `body`

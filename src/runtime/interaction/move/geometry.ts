@@ -1,5 +1,5 @@
 import type { Rect } from '../../../model/geometry/types';
-import type { DraggedEntity } from './types';
+import type { DraggedCanvasObject } from './types';
 
 export function offsetBounds(bounds: Rect, dx: number, dy: number): Rect {
   return {
@@ -10,17 +10,21 @@ export function offsetBounds(bounds: Rect, dx: number, dy: number): Rect {
   };
 }
 
-export function clampMoveDelta(entities: DraggedEntity[], dx: number, dy: number): { dx: number; dy: number } {
+export function clampMoveDelta(
+  canvasObjects: DraggedCanvasObject[],
+  dx: number,
+  dy: number,
+): { dx: number; dy: number } {
   let minDx = Number.NEGATIVE_INFINITY;
   let maxDx = Number.POSITIVE_INFINITY;
   let minDy = Number.NEGATIVE_INFINITY;
   let maxDy = Number.POSITIVE_INFINITY;
-  for (const entity of entities) {
-    const container = entity.containerBounds;
+  for (const canvasObject of canvasObjects) {
+    const container = canvasObject.containerBounds;
     if (!container) {
       continue;
     }
-    const bounds = entity.draggedBounds;
+    const bounds = canvasObject.draggedBounds;
     minDx = Math.max(minDx, container.x - bounds.x);
     maxDx = Math.min(maxDx, container.x + container.width - (bounds.x + bounds.width));
     minDy = Math.max(minDy, container.y - bounds.y);

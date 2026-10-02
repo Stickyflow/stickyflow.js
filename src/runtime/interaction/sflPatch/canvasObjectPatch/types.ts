@@ -1,4 +1,4 @@
-export interface InsertEntityOptions {
+export interface InsertCanvasObjectOptions {
   id: string;
   kind: 'shape' | 'frame' | 'swimlane' | 'table';
   text?: string;
@@ -10,7 +10,7 @@ export interface InsertEntityOptions {
   body?: string;
 }
 
-export interface RemoveEntityOptions {
+export interface RemoveCanvasObjectOptions {
   alsoRemoveLinks?: boolean;
 }
 

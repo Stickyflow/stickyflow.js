@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { captureDraggedEntities } from '../src/runtime/interaction/move/entityCapture';
+import { captureDraggedCanvasObjects } from '../src/runtime/interaction/move/canvasObjectCapture';
 
 (globalThis as { CSS?: { escape(value: string): string } }).CSS ??= { escape: value => value };
 
@@ -51,10 +51,10 @@ const child = fakeNode(
   { x: 20, y: 20, width: 40, height: 20 },
 );
 
-describe('capturing a dragged entity records its parent container bounds, unless the parent is dragged too', () => {
+describe('capturing a dragged canvas object records its parent container bounds, unless the parent is dragged too', () => {
   it('records the parent frame bounds when only the child is being dragged', () => {
     const svg = fakeSvg([frame, child]);
-    const [captured] = captureDraggedEntities(svg, [{ role: 'shape', id: 'child' }], new Set(['child']));
+    const [captured] = captureDraggedCanvasObjects(svg, [{ role: 'shape', id: 'child' }], new Set(['child']));
 
     expect(captured.containerBounds).toEqual({ x: 0, y: 0, width: 200, height: 100 });
   });
@@ -65,19 +65,19 @@ describe('capturing a dragged entity records its parent container bounds, unless
       { role: 'frame' as const, id: 'f' },
       { role: 'shape' as const, id: 'child' },
     ];
-    const captured = captureDraggedEntities(svg, group, new Set(['f', 'child']));
-    const childCapture = captured.find(entity => entity.owner.id === 'child');
+    const captured = captureDraggedCanvasObjects(svg, group, new Set(['f', 'child']));
+    const childCapture = captured.find(canvasObject => canvasObject.owner.id === 'child');
 
     expect(childCapture?.containerBounds).toBeUndefined();
   });
 
-  it('leaves an entity with no parent-frame tag unconstrained', () => {
+  it('leaves a canvas object with no parent-frame tag unconstrained', () => {
     const orphan = fakeNode(
       { 'data-sf-id': 'lone', 'data-sf-role': 'entity', 'data-sf-primary': 'true' },
       { x: 5, y: 5, width: 10, height: 10 },
     );
     const svg = fakeSvg([orphan]);
-    const [captured] = captureDraggedEntities(svg, [{ role: 'shape', id: 'lone' }], new Set(['lone']));
+    const [captured] = captureDraggedCanvasObjects(svg, [{ role: 'shape', id: 'lone' }], new Set(['lone']));
 
     expect(captured.containerBounds).toBeUndefined();
   });

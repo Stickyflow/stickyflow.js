@@ -1,11 +1,11 @@
 import { indentOf } from '../format';
 import { nameExists, VALID_IDENT } from '../scanner';
-import { buildEntityBlock } from './blockText';
-import { resolveEntityInsertionTarget } from './insertionTarget';
+import { buildCanvasObjectBlock } from './blockText';
+import { resolveCanvasObjectInsertionTarget } from './insertionTarget';
 import { buildPathBlock } from './pathBlockText';
-import type { InsertEntityOptions, InsertPathOptions } from './types';
+import type { InsertCanvasObjectOptions, InsertPathOptions } from './types';
 
-export function insertEntity(sfl: string, options: InsertEntityOptions): string {
+export function insertCanvasObject(sfl: string, options: InsertCanvasObjectOptions): string {
   if (!VALID_IDENT.test(options.id)) {
     return sfl;
   }
@@ -15,13 +15,13 @@ export function insertEntity(sfl: string, options: InsertEntityOptions): string 
     return sfl;
   }
 
-  const target = resolveEntityInsertionTarget(sfl, lines, options.parentId);
+  const target = resolveCanvasObjectInsertionTarget(sfl, lines, options.parentId);
   if (!target) {
     return sfl;
   }
 
   const baseIndent = `${indentOf(lines[target.range.start])}    `;
-  const block = buildEntityBlock(options, target.origin, baseIndent);
+  const block = buildCanvasObjectBlock(options, target.origin, baseIndent);
   lines.splice(target.range.end, 0, ...block);
   return lines.join('\n');
 }
@@ -36,7 +36,7 @@ export function insertPath(sfl: string, options: InsertPathOptions): string {
     return sfl;
   }
 
-  const target = resolveEntityInsertionTarget(sfl, lines, options.parentId);
+  const target = resolveCanvasObjectInsertionTarget(sfl, lines, options.parentId);
   if (!target) {
     return sfl;
   }

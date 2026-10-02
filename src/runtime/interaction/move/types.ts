@@ -7,7 +7,7 @@ export interface TransformedNodes {
   baseTransforms: (string | null)[];
 }
 
-export interface DraggedEntity extends TransformedNodes {
+export interface DraggedCanvasObject extends TransformedNodes {
   owner: OwnerRef;
   overlays: SVGGElement[];
   overlayBaseTransforms: (string | null)[];
@@ -17,7 +17,7 @@ export interface DraggedEntity extends TransformedNodes {
 }
 
 export interface MoveDragState {
-  entities: DraggedEntity[];
+  canvasObjects: DraggedCanvasObject[];
   internalLinks: TransformedNodes[];
   pointerId: number;
   startScreen: { x: number; y: number };

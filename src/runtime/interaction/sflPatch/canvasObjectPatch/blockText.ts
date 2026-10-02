@@ -1,7 +1,7 @@
 import { escapeSflString, indentBlock, round1 } from '../format';
-import type { InsertEntityOptions } from './types';
+import type { InsertCanvasObjectOptions } from './types';
 
-function entityBlockKind(kind: InsertEntityOptions['kind']): 'Table' | 'Shape' | 'Container' {
+function canvasObjectBlockKind(kind: InsertCanvasObjectOptions['kind']): 'Table' | 'Shape' | 'Container' {
   if (kind === 'table') {
     return 'Table';
   }
@@ -11,13 +11,13 @@ function entityBlockKind(kind: InsertEntityOptions['kind']): 'Table' | 'Shape' |
   return 'Container';
 }
 
-export function buildEntityBlock(
-  options: InsertEntityOptions,
+export function buildCanvasObjectBlock(
+  options: InsertCanvasObjectOptions,
   origin: { x: number; y: number },
   baseIndent: string,
 ): string[] {
   const bodyIndent = `${baseIndent}    `;
-  const block: string[] = [`${baseIndent}${entityBlockKind(options.kind)} ${options.id} {`];
+  const block: string[] = [`${baseIndent}${canvasObjectBlockKind(options.kind)} ${options.id} {`];
 
   if (options.kind === 'frame' || options.kind === 'swimlane') {
     block.push(`${bodyIndent}kind: ${options.kind}`);

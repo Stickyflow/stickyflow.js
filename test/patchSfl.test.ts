@@ -4,9 +4,9 @@ import {
   applyMoveChange,
   applyResizeChange,
   applyTextChange,
-  insertEntity,
+  insertCanvasObject,
   insertLink,
-  removeEntity,
+  removeCanvasObject,
   removeLink,
 } from '../src/runtime/interaction/patchSfl';
 import type { OwnerRef } from '../src/runtime/viewer';
@@ -305,11 +305,11 @@ describe('applyLinkReconnectChange', () => {
   });
 });
 
-describe('insertEntity', () => {
+describe('insertCanvasObject', () => {
   const sfl = `sfl 1.2\n\nModel M {\n  Shape a {\n    layout { position: 0, 0; size: 100, 60 }\n  }\n  Container f {\n    kind: frame\n    text: "F"\n    layout { position: 200, 200; size: 400, 300 }\n  }\n}\n`;
 
   it('appends a new shape as an Shape block at the end of the Model', () => {
-    const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: 'B', x: 300, y: 0, width: 120, height: 60 });
+    const next = insertCanvasObject(sfl, { id: 'b', kind: 'shape', text: 'B', x: 300, y: 0, width: 120, height: 60 });
     expect(() => parse(next)).not.toThrow();
     const entity = sflToCanvasState(next).canvasObjects.find(e => e.id === 'b');
     expect(entity?.objectType).toBe('shape');
@@ -327,7 +327,7 @@ describe('insertEntity', () => {
     // outright. The patch then silently failed while the caller had already
     // adopted the unparseable text. Tabs and quotes ride along the same path.
     const label = 'Kai Havertz\nST · drops "deep"\tfast';
-    const next = insertEntity(sfl, { id: 'b', kind: 'shape', text: label, x: 300, y: 0, width: 120, height: 60 });
+    const next = insertCanvasObject(sfl, { id: 'b', kind: 'shape', text: label, x: 300, y: 0, width: 120, height: 60 });
     expect(() => parse(next)).not.toThrow();
     expect(sflToCanvasState(next).canvasObjects.find(e => e.id === 'b')?.text).toBe(label);
     // The emitted line carries escapes, not an actual break.
@@ -341,20 +341,20 @@ describe('insertEntity', () => {
   });
 
   it('writes `kind: frame`/`kind: swimlane` for a Container, and neither for a Table', () => {
-    const withFrame = insertEntity(sfl, { id: 'g', kind: 'frame', x: 0, y: 500, width: 200, height: 100 });
+    const withFrame = insertCanvasObject(sfl, { id: 'g', kind: 'frame', x: 0, y: 500, width: 200, height: 100 });
     expect(sflToCanvasState(withFrame).canvasObjects.find(e => e.id === 'g')?.objectType).toBe('frame');
 
-    const withSwimlane = insertEntity(sfl, { id: 'p', kind: 'swimlane', x: 0, y: 500, width: 200, height: 100 });
+    const withSwimlane = insertCanvasObject(sfl, { id: 'p', kind: 'swimlane', x: 0, y: 500, width: 200, height: 100 });
     expect(sflToCanvasState(withSwimlane).canvasObjects.find(e => e.id === 'p')?.objectType).toBe('swimlane');
 
-    const withTable = insertEntity(sfl, { id: 't', kind: 'table', x: 0, y: 500, width: 200, height: 100 });
+    const withTable = insertCanvasObject(sfl, { id: 't', kind: 'table', x: 0, y: 500, width: 200, height: 100 });
     expect(withTable).toContain('Table t {');
     expect(withTable).not.toMatch(/Table t \{[^}]*kind:/s);
     expect(sflToCanvasState(withTable).canvasObjects.find(e => e.id === 't')?.objectType).toBe('table');
   });
 
   it('nests inside parentId with a frame-relative position, given absolute x/y', () => {
-    const next = insertEntity(sfl, {
+    const next = insertCanvasObject(sfl, {
       id: 'child',
       kind: 'shape',
       x: 210,
@@ -370,7 +370,7 @@ describe('insertEntity', () => {
   });
 
   it('injects `body` verbatim, indented, as extra lines in the new block', () => {
-    const next = insertEntity(sfl, {
+    const next = insertCanvasObject(sfl, {
       id: 'styled',
       kind: 'shape',
       x: 0,
@@ -384,26 +384,26 @@ describe('insertEntity', () => {
   });
 
   it('is a no-op when the id already exists, is invalid, or the parentId is unknown', () => {
-    expect(insertEntity(sfl, { id: 'a', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
-    expect(insertEntity(sfl, { id: 'has space', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
-    expect(insertEntity(sfl, { id: 'new', kind: 'shape', x: 0, y: 0, width: 1, height: 1, parentId: 'missing' })).toBe(
-      sfl,
-    );
+    expect(insertCanvasObject(sfl, { id: 'a', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
+    expect(insertCanvasObject(sfl, { id: 'has space', kind: 'shape', x: 0, y: 0, width: 1, height: 1 })).toBe(sfl);
+    expect(
+      insertCanvasObject(sfl, { id: 'new', kind: 'shape', x: 0, y: 0, width: 1, height: 1, parentId: 'missing' }),
+    ).toBe(sfl);
   });
 });
 
-describe('removeEntity', () => {
+describe('removeCanvasObject', () => {
   const sfl = `sfl 1.2\n\nModel M {\n  Shape a { layout { position: 0, 0 } }\n  Shape b { layout { position: 100, 0 } }\n  Shape c { layout { position: 200, 0 } }\n  Link l1 {\n    from: a\n    to: b\n  }\n  Link l2 {\n    from: b\n    to: c\n  }\n}\n`;
 
   it('removes the entity block', () => {
-    const next = removeEntity(sfl, 'b', { alsoRemoveLinks: false });
+    const next = removeCanvasObject(sfl, 'b', { alsoRemoveLinks: false });
     expect(next).not.toContain('Shape b {');
     expect(next).toContain('Shape a {');
     expect(next).toContain('Shape c {');
   });
 
   it('by default also removes links that reference the removed entity', () => {
-    const next = removeEntity(sfl, 'b');
+    const next = removeCanvasObject(sfl, 'b');
     expect(next).not.toContain('Shape b {');
     expect(next).not.toContain('Link l1 {'); // referenced b via to:
     expect(next).not.toContain('Link l2 {'); // referenced b via from:
@@ -411,14 +411,14 @@ describe('removeEntity', () => {
   });
 
   it('leaves links dangling when alsoRemoveLinks is false', () => {
-    const next = removeEntity(sfl, 'b', { alsoRemoveLinks: false });
+    const next = removeCanvasObject(sfl, 'b', { alsoRemoveLinks: false });
     expect(next).toContain('Link l1 {');
     expect(next).toContain('Link l2 {');
   });
 
   it('does not corrupt the document when a referenced link is nested INSIDE the removed entity', () => {
     const nested = `sfl 1.2\n\nModel M {\n  Container f {\n    kind: frame\n    text: "F"\n    Shape x { layout { position: 10, 10 } }\n    Shape y { layout { position: 50, 10 } }\n    Link inner {\n      from: x\n      to: y\n    }\n    layout { position: 0, 0; size: 300, 200 }\n  }\n  Shape outside { layout { position: 500, 0 } }\n}\n`;
-    const next = removeEntity(nested, 'f');
+    const next = removeCanvasObject(nested, 'f');
     expect(next).not.toContain('Container f {');
     expect(next).not.toContain('Link inner {');
     expect(next).toContain('Shape outside {'); // untouched, well past the removed range
@@ -426,7 +426,7 @@ describe('removeEntity', () => {
   });
 
   it('is a no-op for an unknown id', () => {
-    expect(removeEntity(sfl, 'missing')).toBe(sfl);
+    expect(removeCanvasObject(sfl, 'missing')).toBe(sfl);
   });
 });
 

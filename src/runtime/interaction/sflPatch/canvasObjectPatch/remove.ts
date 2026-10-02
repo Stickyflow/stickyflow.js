@@ -1,16 +1,16 @@
 import { findOwnerBlock, type LineRange } from '../scanner';
 import { findReferencingLinkRanges } from './linkReferences';
 import { outermostRemovalRanges } from './removalRanges';
-import type { RemoveEntityOptions } from './types';
+import type { RemoveCanvasObjectOptions } from './types';
 
-export function removeEntity(sfl: string, id: string, options: RemoveEntityOptions = {}): string {
+export function removeCanvasObject(sfl: string, id: string, options: RemoveCanvasObjectOptions = {}): string {
   const lines = sfl.split('\n');
-  const entityRange = findOwnerBlock(lines, id);
-  if (!entityRange) {
+  const canvasObjectRange = findOwnerBlock(lines, id);
+  if (!canvasObjectRange) {
     return sfl;
   }
 
-  const ranges: LineRange[] = [entityRange];
+  const ranges: LineRange[] = [canvasObjectRange];
   if (options.alsoRemoveLinks ?? true) {
     ranges.push(...findReferencingLinkRanges(lines, id));
   }

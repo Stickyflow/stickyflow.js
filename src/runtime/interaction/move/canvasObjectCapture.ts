@@ -2,7 +2,7 @@ import type { Rect } from '../../../model/geometry/types';
 import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../../dom';
 import type { OwnerRef } from '../../viewer';
 import { findLiveLinks } from '../linkPreview';
-import type { DraggedEntity } from './types';
+import type { DraggedCanvasObject } from './types';
 
 function externalLiveLinks(svg: SVGSVGElement, ownerId: string, groupIds: Set<string>, bounds: Rect) {
   return findLiveLinks(svg, ownerId, bounds).filter(link => {
@@ -28,7 +28,7 @@ function parentContainerBounds(
   return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
 }
 
-function captureEntity(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<string>): DraggedEntity | null {
+function captureCanvasObject(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<string>): DraggedCanvasObject | null {
   const nodes = findAllOwnerNodes(svg, owner.id);
   const primary = findOwnerNode(svg, owner.id, isPrimary);
   if (!nodes.length || !primary) {
@@ -49,13 +49,17 @@ function captureEntity(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<string
   };
 }
 
-export function captureDraggedEntities(svg: SVGSVGElement, group: OwnerRef[], groupIds: Set<string>): DraggedEntity[] {
-  const entities: DraggedEntity[] = [];
+export function captureDraggedCanvasObjects(
+  svg: SVGSVGElement,
+  group: OwnerRef[],
+  groupIds: Set<string>,
+): DraggedCanvasObject[] {
+  const canvasObjects: DraggedCanvasObject[] = [];
   for (const owner of group) {
-    const entity = captureEntity(svg, owner, groupIds);
-    if (entity) {
-      entities.push(entity);
+    const canvasObject = captureCanvasObject(svg, owner, groupIds);
+    if (canvasObject) {
+      canvasObjects.push(canvasObject);
     }
   }
-  return entities;
+  return canvasObjects;
 }

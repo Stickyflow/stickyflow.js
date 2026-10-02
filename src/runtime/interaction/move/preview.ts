@@ -10,10 +10,10 @@ function translateNodes(nodes: SVGGraphicsElement[], baseTransforms: (string | n
 }
 
 export function applyMovePreview(drag: MoveDragState, dx: number, dy: number): void {
-  for (const entity of drag.entities) {
-    translateNodes(entity.nodes, entity.baseTransforms, dx, dy);
-    translateNodes(entity.overlays, entity.overlayBaseTransforms, dx, dy);
-    updateLiveLinks(entity.liveLinks, offsetBounds(entity.draggedBounds, dx, dy));
+  for (const canvasObject of drag.canvasObjects) {
+    translateNodes(canvasObject.nodes, canvasObject.baseTransforms, dx, dy);
+    translateNodes(canvasObject.overlays, canvasObject.overlayBaseTransforms, dx, dy);
+    updateLiveLinks(canvasObject.liveLinks, offsetBounds(canvasObject.draggedBounds, dx, dy));
   }
   for (const link of drag.internalLinks) {
     translateNodes(link.nodes, link.baseTransforms, dx, dy);

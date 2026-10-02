@@ -104,7 +104,12 @@ export type {
   ResizeChangeEvent,
   TextChangeEvent,
 } from './events';
-export type { InsertEntityOptions, InsertLinkOptions, InsertPathOptions, RemoveEntityOptions } from './patchSfl';
+export type {
+  InsertCanvasObjectOptions,
+  InsertLinkOptions,
+  InsertPathOptions,
+  RemoveCanvasObjectOptions,
+} from './patchSfl';
 export {
   applyChartValueChange,
   applyColumnResizeChange,
@@ -114,10 +119,10 @@ export {
   applyPropertyChange,
   applyResizeChange,
   applyTextChange,
-  insertEntity,
+  insertCanvasObject,
   insertLink,
   insertPath,
-  removeEntity,
+  removeCanvasObject,
   removeLink,
 } from './patchSfl';
 export type { PathDrawOptions } from './pathDrawDrag';

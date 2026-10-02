@@ -28,18 +28,18 @@ interface LiveLinkLabelCapture {
 function discoverLiveLink(
   svg: SVGSVGElement,
   path: SVGPathElement,
-  entityId: string,
+  canvasObjectId: string,
   draggedBounds: Rect,
 ): LiveLink | null {
-  const draft = createLiveLinkDraft(svg, path, entityId);
+  const draft = createLiveLinkDraft(svg, path, canvasObjectId);
   if (!draft) {
     return null;
   }
   return { ...draft, ...captureLiveLinkLabel(svg, draft, draggedBounds) };
 }
 
-function createLiveLinkDraft(svg: SVGSVGElement, path: SVGPathElement, entityId: string): LiveLinkDraft | null {
-  const oppositeEndpoint = resolveOppositeEndpoint(svg, path, entityId);
+function createLiveLinkDraft(svg: SVGSVGElement, path: SVGPathElement, canvasObjectId: string): LiveLinkDraft | null {
+  const oppositeEndpoint = resolveOppositeEndpoint(svg, path, canvasObjectId);
   if (!oppositeEndpoint) {
     return null;
   }
@@ -54,8 +54,12 @@ function createLiveLinkDraft(svg: SVGSVGElement, path: SVGPathElement, entityId:
   };
 }
 
-function resolveOppositeEndpoint(svg: SVGSVGElement, path: SVGPathElement, entityId: string): OppositeEndpoint | null {
-  const draggedIsFrom = path.getAttribute('data-sf-from') === entityId;
+function resolveOppositeEndpoint(
+  svg: SVGSVGElement,
+  path: SVGPathElement,
+  canvasObjectId: string,
+): OppositeEndpoint | null {
+  const draggedIsFrom = path.getAttribute('data-sf-from') === canvasObjectId;
   const otherId = path.getAttribute(draggedIsFrom ? 'data-sf-to' : 'data-sf-from');
   if (!otherId) {
     return null;
@@ -87,14 +91,14 @@ function initialLinkMidpoint(draft: LiveLinkDraft, draggedBounds: Rect): { x: nu
   return routePreviewLink(fromBounds, toBounds, draft.fromSide, draft.toSide, draft.pathType).midpoint;
 }
 
-export function findLiveLinks(svg: SVGSVGElement, entityId: string, draggedBounds: Rect): LiveLink[] {
-  const escapedId = CSS.escape(entityId);
+export function findLiveLinks(svg: SVGSVGElement, canvasObjectId: string, draggedBounds: Rect): LiveLink[] {
+  const escapedId = CSS.escape(canvasObjectId);
   const candidates = svg.querySelectorAll<SVGPathElement>(
     `path[data-sf-from="${escapedId}"], path[data-sf-to="${escapedId}"]`,
   );
   const links: LiveLink[] = [];
   for (const path of candidates) {
-    const link = discoverLiveLink(svg, path, entityId, draggedBounds);
+    const link = discoverLiveLink(svg, path, canvasObjectId, draggedBounds);
     if (link) {
       links.push(link);
     }
