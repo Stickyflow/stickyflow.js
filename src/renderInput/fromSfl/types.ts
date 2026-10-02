@@ -1,6 +1,6 @@
 import type { SymbolDef } from '../../model/shape';
 
-export interface PositionedElement {
+export interface PositionedCanvasObject {
   id: string;
   x: number;
   y: number;

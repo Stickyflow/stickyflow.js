@@ -7,7 +7,7 @@ import type { FreeformPath } from '../model/path';
 import type { Shape } from '../model/shape';
 import type { Swimlane } from '../model/swimlane';
 import type { Table } from '../model/table';
-export interface ResolvedExportLink {
+export interface RenderInputLink {
   link: Link;
   from: Point;
   to: Point;
@@ -30,6 +30,6 @@ export interface RenderInput {
   tables?: RenderInputTable[];
   paths?: FreeformPath[];
   charts?: Chart[];
-  links: ResolvedExportLink[];
+  links: RenderInputLink[];
   diagnostics?: Diagnostic[];
 }

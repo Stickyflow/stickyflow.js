@@ -14,7 +14,7 @@ import { shapeObject } from './shape';
 import { swimlaneObject } from './swimlane';
 import { tableObject } from './table';
 
-export interface CollectedEntities {
+export interface CollectedCanvasObjects {
   shapes: Shape[];
   frames: Frame[];
   swimlanes: Swimlane[];
@@ -27,15 +27,15 @@ export interface CollectedEntities {
 const byOrder = <T extends { order?: number }>(items: readonly T[]): T[] =>
   [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-export function collectEntities(state: SflCanvasState): CollectedEntities {
-  const entities = byOrder(state.canvasObjects);
+export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObjects {
+  const canvasObjects = byOrder(state.canvasObjects);
   return {
-    shapes: entities.filter(entity => entity.objectType === 'shape').map(shapeObject),
-    frames: entities.filter(entity => entity.objectType === 'frame').map(frameObject),
-    swimlanes: entities.filter(entity => entity.objectType === 'swimlane').map(swimlaneObject),
-    tables: entities.filter(entity => entity.objectType === 'table').map(tableObject),
-    paths: entities.filter(entity => entity.objectType === 'path').map(pathObject),
-    charts: entities.filter(entity => entity.objectType === 'chart').map(chartObject),
+    shapes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'shape').map(shapeObject),
+    frames: canvasObjects.filter(canvasObject => canvasObject.objectType === 'frame').map(frameObject),
+    swimlanes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'swimlane').map(swimlaneObject),
+    tables: canvasObjects.filter(canvasObject => canvasObject.objectType === 'table').map(tableObject),
+    paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
+    charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
     links: byOrder(state.links).map(linkObject),
   };
 }

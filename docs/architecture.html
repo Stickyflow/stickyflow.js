@@ -828,13 +828,13 @@ Model Demo {
                 <span class="timeline-index">05</span>
                 <div>
                   <h3>Übersetzung in das Domain Model</h3>
-                  <p><code>collectEntities()</code> trennt die Entity-Varianten. Für diesen Eintrag ruft es <code>shapeObject()</code> auf. Dort werden SFL-Werte validiert, Farben dekodiert und in den stabilen <code>Shape</code>-Vertrag übersetzt.</p>
+                  <p><code>collectCanvasObjects()</code> trennt die Canvas-Object-Varianten. Für diesen Eintrag ruft es <code>shapeObject()</code> auf. Dort werden SFL-Werte validiert, Farben dekodiert und in den stabilen <code>Shape</code>-Vertrag übersetzt.</p>
                   <pre class="code-block"><code>{
   id: "start", type: "shape", shapeType: "rounded_rectangle",
   text: "Start", x: 40, y: 60, width: 160, height: 80,
   fillColor: "#0f766e", strokeColor: "#5eead4", strokeWidth: 2
 }</code></pre>
-                  <span class="function-path">renderInput/fromSfl/index.ts → entities/collect.ts → shape.ts</span>
+                  <span class="function-path">renderInput/fromSfl/index.ts → canvasObjects/collect.ts → shape.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -1020,10 +1020,10 @@ Model Demo {
                 <tr><td><code>model/diagnostics.ts</code></td><td><code>RenderDiagnostic</code></td><td>Layerübergreifender Diagnosevertrag.</td></tr>
                 <tr><td><code>renderInput/types.ts</code></td><td><code>RenderInput</code></td><td>Vollständiger Eingang des Scene-Builders.</td></tr>
                 <tr><td><code>renderInput/fromSfl/index.ts</code></td><td><code>sflToRenderInput()</code></td><td>Öffentliche Orchestrierung des SFL-Adapters.</td></tr>
-                <tr><td><code>fromSfl/entities/collect.ts</code></td><td><code>collectEntities()</code></td><td>Sortiert und dispatcht semantische Entity-Varianten.</td></tr>
-                <tr><td><code>fromSfl/entities/{shape,table,chart,...}.ts</code></td><td>Variantenspezifische Objektkonverter</td><td>Je Variante ein eigener SFL → Model-Workflow.</td></tr>
+                <tr><td><code>fromSfl/canvasObjects/collect.ts</code></td><td><code>collectCanvasObjects()</code></td><td>Sortiert und dispatcht semantische Canvas-Object-Varianten.</td></tr>
+                <tr><td><code>fromSfl/canvasObjects/{shape,table,chart,...}.ts</code></td><td>Variantenspezifische Objektkonverter</td><td>Je Variante ein eigener SFL → Model-Workflow.</td></tr>
                 <tr><td><code>fromSfl/endpoint.ts</code></td><td><code>resolveLinkEndpoint()</code></td><td>Absolute, Side-, Port- und automatische Linkpunkte.</td></tr>
-                <tr><td><code>fromSfl/links.ts</code></td><td><code>resolveExportLinks()</code></td><td>Verbindet Link-Modelle mit konkreten Endpunktkoordinaten.</td></tr>
+                <tr><td><code>fromSfl/links.ts</code></td><td><code>createRenderInputLinks()</code></td><td>Verbindet Link-Modelle mit konkreten Endpunktkoordinaten.</td></tr>
               </tbody>
             </table>
 

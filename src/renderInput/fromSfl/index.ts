@@ -1,19 +1,19 @@
 import { sflToCanvasState } from '../../sflSemantic/sflToCanvasState';
 import type { RenderInput } from '../types';
-import { collectEntities } from './entities/collect';
-import { resolveExportLinks } from './links';
+import { collectCanvasObjects } from './canvasObjects/collect';
+import { createRenderInputLinks } from './links';
 
 export function sflToRenderInput(sfl: string): RenderInput {
   const state = sflToCanvasState(sfl);
-  const entities = collectEntities(state);
+  const canvasObjects = collectCanvasObjects(state);
   return {
-    shapes: entities.shapes,
-    frames: entities.frames,
-    swimlanes: entities.swimlanes,
-    tables: entities.tables,
-    paths: entities.paths,
-    charts: entities.charts,
-    links: resolveExportLinks(entities),
+    shapes: canvasObjects.shapes,
+    frames: canvasObjects.frames,
+    swimlanes: canvasObjects.swimlanes,
+    tables: canvasObjects.tables,
+    paths: canvasObjects.paths,
+    charts: canvasObjects.charts,
+    links: createRenderInputLinks(canvasObjects),
     diagnostics: state.diagnostics,
   };
 }

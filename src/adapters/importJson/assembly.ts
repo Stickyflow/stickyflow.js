@@ -1,11 +1,11 @@
-import { collectEntities } from '../../renderInput/fromSfl/entities/collect';
+import { collectCanvasObjects } from '../../renderInput/fromSfl/canvasObjects/collect';
 import { sflToCanvasState } from '../../sflSemantic/sflToCanvasState';
 import { createBucketResolver, emptyBuckets, flattenGroups, indexGroupMembership } from './groups';
 import type { SflImportJson } from './types';
 
 export function sflToImportJson(sfl: string): SflImportJson {
   const state = sflToCanvasState(sfl);
-  const collected = collectEntities(state);
+  const collected = collectCanvasObjects(state);
   const canvas = emptyBuckets();
   const { groupBuckets, bucketFor } = createBucketResolver(indexGroupMembership(state.groups), canvas);
 
