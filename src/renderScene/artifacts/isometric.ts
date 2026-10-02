@@ -1,6 +1,6 @@
 import { isometricFaces, type IsometricObject } from '../../model/isometricObject';
-import type { RenderNode, ScenePath } from '../scene';
-import { finite, orderOf, rotatedBounds } from '../scene';
+import type { RenderNode, ScenePath, SceneText } from '../scene';
+import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
 import { roundedPolygonPath } from '../scene/roundedPolygonPath';
 import { tag } from '../scene/tagging';
 
@@ -27,7 +27,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   };
 
-  const nodes: ScenePath[] = [
+  const facesNodes: ScenePath[] = [
     {
       ...common,
       id: `isometric-${object.id}-top`,
@@ -51,7 +51,39 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   ];
 
-  return nodes;
+  if (!object.text) {
+    return facesNodes;
+  }
+
+  const labelHeight = 20;
+  const labelGap = 12;
+  const label: SceneText = {
+    type: 'text',
+    id: `isometric-${object.id}-label`,
+    order: order + 0.3,
+    bounds: {
+      minX: object.x,
+      minY: object.y - labelGap - labelHeight,
+      maxX: object.x + object.width,
+      maxY: object.y - labelGap,
+    },
+    x: object.x,
+    y: object.y - labelGap - labelHeight,
+    width: object.width,
+    height: labelHeight,
+    lines: [object.text],
+    fontFamily: DEFAULT_FONT,
+    fontSize: 12,
+    fontWeight: 'normal',
+    color: '#111827',
+    align: 'center',
+    verticalAlign: 'middle',
+    lineHeight: 1.2,
+    rotation,
+    rotationCenter,
+  };
+
+  return [...facesNodes, label];
 }
 
 export function buildIsometricObjects(objects: readonly IsometricObject[]): RenderNode[] {

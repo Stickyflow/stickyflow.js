@@ -66,4 +66,31 @@ describe('Isometric scene builder', () => {
       d: expect.stringContaining('L 50 40 Q 50 40 50 40'),
     });
   });
+
+  it('places the object label above the cube', () => {
+    const nodes = buildIsometricObject(
+      {
+        id: 'server',
+        x: 40,
+        y: 50,
+        width: 100,
+        height: 120,
+        depth: 20,
+        text: 'Your Server',
+      },
+      0,
+    );
+
+    expect(nodes).toHaveLength(4);
+    expect(nodes[3]).toMatchObject({
+      type: 'text',
+      id: 'isometric-server-label',
+      x: 40,
+      y: 18,
+      width: 100,
+      height: 20,
+      lines: ['Your Server'],
+      align: 'center',
+    });
+  });
 });
