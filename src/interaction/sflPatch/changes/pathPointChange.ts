@@ -1,4 +1,4 @@
-import { sflToCanvasState } from '../../../semantic/sflToCanvasState';
+import { sflToCanvasState } from '../../../sflSemantic/sflToCanvasState';
 import type { PathPointChangeEvent } from '../../events';
 import { replacePropertyValue } from '../edits/propertyValues';
 import { findOwnerBlock } from '../scanner';

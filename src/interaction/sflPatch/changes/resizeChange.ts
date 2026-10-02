@@ -1,4 +1,4 @@
-import { sflToCanvasState } from '../../../semantic/sflToCanvasState';
+import { sflToCanvasState } from '../../../sflSemantic/sflToCanvasState';
 import type { ResizeChangeEvent } from '../../events';
 import { setOrInsertLayoutTuples } from '../properties';
 import { findOwnerBlock } from '../scanner';

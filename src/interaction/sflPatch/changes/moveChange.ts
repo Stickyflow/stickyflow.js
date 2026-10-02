@@ -1,4 +1,4 @@
-import { sflToCanvasState } from '../../../semantic/sflToCanvasState';
+import { sflToCanvasState } from '../../../sflSemantic/sflToCanvasState';
 import type { MoveChangeEvent } from '../../events';
 import { replacePropertyValue } from '../edits/propertyValues';
 import { round1 } from '../format';
@@ -27,7 +27,7 @@ export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
     return sfl;
   }
   // `entity.x`/`entity.y` are absolute canvas coordinates (the parent chain's
-  // origin already folded in â€” see entityGeometry.ts), but `layout.position`
+  // origin already folded in â€” see sflSemantic/canvasObjects/processing/layout/geometry.ts), but `layout.position`
   // is an offset from the immediate parent's own origin, not an absolute
   // coordinate. Writing the absolute value straight back for a child nested
   // in a container that itself sits away from (0, 0) double-counts that

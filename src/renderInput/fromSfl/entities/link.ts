@@ -1,6 +1,6 @@
 import type { Link } from '../../../model/link';
-import type { SflLinkOut } from '../../../semantic/sflToCanvasState';
-import { decodeShadow } from '../../../styleDecoding';
+import type { SflLinkOut } from '../../../sflSemantic/sflToCanvasState';
+import { decodeShadow } from '../../styleDecoding';
 import { MARKER_TYPES, numOf, optionalOneOf, PATH_TYPES, STROKE_STYLES, strokePaint } from './values';
 
 export function linkObject(l: SflLinkOut): Link {

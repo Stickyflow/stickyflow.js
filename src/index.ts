@@ -7,6 +7,7 @@ export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { RenderOptions, RenderResult } from './render';
 export { render, renderCanvas } from './render';
+export { decodeColor, decodeShadow } from './renderInput/styleDecoding';
 export type { RenderInput, RenderInputTable, TablePropertyPaths } from './renderInput/types';
 export type {
   Bounds,
@@ -18,6 +19,7 @@ export type {
   SceneRole,
   TextMetrics,
 } from './rendering/scene';
+export { canonicalize, parse } from './sflLanguage';
 export type {
   SflCanvasState,
   SflChartEntity,
@@ -27,15 +29,13 @@ export type {
   SflPathEntity,
   SflSwimlaneEntity,
   SflTableEntity,
-} from './semantic/sflToCanvasState';
+} from './sflSemantic/sflToCanvasState';
 export {
   isChartEntity,
   isPathEntity,
   isSwimlaneEntity,
   isTableEntity,
   sflToCanvasState,
-} from './semantic/sflToCanvasState';
-export { canonicalize, parse } from './sfl';
+} from './sflSemantic/sflToCanvasState';
 export { sflToRenderInput } from './sflToRenderInput';
-export { decodeColor, decodeShadow } from './styleDecoding';
 export { DOM_CONTRACT_VERSION } from './svgContract/version';

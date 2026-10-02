@@ -1,5 +1,5 @@
-import type { SflEntityOut } from '../../../semantic/sflToCanvasState';
-import { decodeRamp } from '../../../styleDecoding';
+import type { SflEntityOut } from '../../../sflSemantic/sflToCanvasState';
+import { decodeRamp } from '../../styleDecoding';
 import type { RenderInputTable, TablePropertyPaths } from '../../types';
 import { BORDER_STYLES, dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 

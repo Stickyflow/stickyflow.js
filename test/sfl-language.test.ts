@@ -8,7 +8,7 @@ import {
   SflLexError,
   SflParseError,
   tokenize,
-} from '../src/sfl/language';
+} from '../src/sflLanguage';
 
 const SOURCE = `sfl 1
 

@@ -5,7 +5,7 @@ import type { FreeformPath } from '../model/path';
 import type { Shape } from '../model/shape';
 import type { Swimlane } from '../model/swimlane';
 import type { Table } from '../model/table';
-import type { SflDiagnostic } from '../semantic/sflToCanvasState';
+import type { SflDiagnostic } from '../sflSemantic/sflToCanvasState';
 
 export interface ImportBuckets {
   notes: never[];

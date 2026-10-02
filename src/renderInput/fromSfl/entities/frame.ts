@@ -1,5 +1,5 @@
 import type { Frame } from '../../../model/frame';
-import type { SflEntityOut } from '../../../semantic/sflToCanvasState';
+import type { SflEntityOut } from '../../../sflSemantic/sflToCanvasState';
 import { dashArray, FONT_WEIGHTS, LABEL_POSITIONS, numOf, oneOf } from './values';
 
 export function frameObject(e: SflEntityOut): Frame {

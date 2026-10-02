@@ -5,7 +5,7 @@ import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
 import type { Table } from '../../../model/table';
-import type { SflCanvasState } from '../../../semantic/sflToCanvasState';
+import type { SflCanvasState } from '../../../sflSemantic/sflToCanvasState';
 import { chartObject } from './chart';
 import { frameObject } from './frame';
 import { linkObject } from './link';

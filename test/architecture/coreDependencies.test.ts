@@ -48,10 +48,10 @@ function sflLayer(path: string): CoreLayer | null {
   if (path.startsWith('importJson/')) {
     return 'import-json';
   }
-  if (path.startsWith('sfl/')) {
+  if (path.startsWith('sflLanguage/')) {
     return 'sfl-language';
   }
-  if (path.startsWith('semantic/') || path.startsWith('styleDecoding/')) {
+  if (path.startsWith('sflSemantic/')) {
     return 'sfl-semantic';
   }
   return null;
@@ -102,7 +102,7 @@ describe('core dependency direction', () => {
   });
 
   it('keeps the complete SFL language layer self-contained', () => {
-    const languageDir = join(srcDir, 'sfl');
+    const languageDir = join(srcDir, 'sflLanguage');
     const offenders: string[] = [];
     for (const file of tsFiles(languageDir)) {
       for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
