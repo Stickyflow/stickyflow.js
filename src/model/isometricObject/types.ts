@@ -16,10 +16,11 @@ export interface IsometricObject {
   topFill?: string;
   frontFill?: string;
   sideFill?: string;
-  stroke?: string;
+  strokeColor?: string;
   strokeWidth?: number;
   cornerRadius?: number;
-  shadow?: ShadowStyle;
+  hasShadow?: boolean;
+  shadowStyle?: ShadowStyle;
 
   parentFrameId?: string;
 }

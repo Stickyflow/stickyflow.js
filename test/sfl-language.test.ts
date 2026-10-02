@@ -86,4 +86,31 @@ Shape card {
 
     expect(document.blocks[0]).toMatchObject({ kind: 'Entity', name: 'item' });
   });
+
+  it('parses and emits Isometric blocks without semantic resolution', () => {
+  const source = `sfl 1
+
+Isometric relay {
+  text: "Relay"
+  depth: 28
+  layout {
+    position: 320, 180
+    size: 120, 130
+  }
+  style {
+    topFill: "#7c3aed"
+    frontFill: "#5b21e8"
+    sideFill: "#4c1dca"
+  }
+}
+`;
+
+  const document = parse(source);
+
+  expect(document.blocks[0]).toMatchObject({
+    kind: 'Isometric',
+    name: 'relay',
+  });
+  expect(parse(emit(document))).toEqual(document);
+ });
 });

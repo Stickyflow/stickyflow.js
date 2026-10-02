@@ -8,6 +8,7 @@ export const NAMED_BLOCK_KINDS = [
   'Path',
   'Chart',
   'Shape',
+  'Isometric',
   'Link',
   'Layout',
   'Style',
