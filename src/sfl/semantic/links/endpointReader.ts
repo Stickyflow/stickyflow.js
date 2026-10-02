@@ -1,5 +1,5 @@
-import type { SflValue, Side } from '../ast';
-import type { SflEntityOut } from './types';
+import type { SflValue, Side } from '../../ast';
+import type { ResolvedCanvasObject } from '../types';
 
 export interface LinkEndpointReference {
   id?: string;
@@ -10,7 +10,7 @@ export interface LinkEndpointReference {
 
 export interface LinkEndpointReaderContext {
   idByName: Map<string, string>;
-  entityById: Map<string, SflEntityOut>;
+  canvasObjectById: Map<string, ResolvedCanvasObject>;
 }
 
 function namedPortReference(segments: string[], context: LinkEndpointReaderContext): LinkEndpointReference | null {
@@ -19,14 +19,14 @@ function namedPortReference(segments: string[], context: LinkEndpointReaderConte
   }
 
   const portName = segments[segments.length - 1];
-  const entityName = segments[segments.length - 2];
-  const entityId = context.idByName.get(entityName);
-  const entity = entityId ? context.entityById.get(entityId) : undefined;
-  if (!entity?.symbol?.ports?.some(port => port.name === portName)) {
+  const canvasObjectName = segments[segments.length - 2];
+  const canvasObjectId = context.idByName.get(canvasObjectName);
+  const canvasObject = canvasObjectId ? context.canvasObjectById.get(canvasObjectId) : undefined;
+  if (!canvasObject?.symbol?.ports?.some(port => port.name === portName)) {
     return null;
   }
 
-  return { id: entityId, port: portName };
+  return { id: canvasObjectId, port: portName };
 }
 
 export function readLinkEndpoint(

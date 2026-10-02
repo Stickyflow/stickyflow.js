@@ -1,32 +1,32 @@
-import type { SflBlock, SflValue } from '../ast';
-import { classifyEntity } from './entityClassification';
-import { readEntityGeometry } from './entityGeometry';
-import { readEntityPresentation } from './entityPresentation';
-import { readChart } from './entityReaders/chart';
-import { readPath } from './entityReaders/path';
-import { readSwimlane } from './entityReaders/swimlane';
-import { readTable } from './entityReaders/table';
-import type { SflEntityOut } from './types';
-import { asString } from './valueAccess';
+import type { SflBlock, SflValue } from '../../ast';
+import type { ResolvedCanvasObject } from '../types';
+import { asString } from '../valueAccess';
+import { readChart } from './chart';
+import { classifyCanvasObject } from './classification';
+import { readCanvasObjectGeometry } from './geometry';
+import { readPath } from './path';
+import { readCanvasObjectPresentation } from './presentation';
+import { readSwimlane } from './swimlane';
+import { readTable } from './table';
 
-export interface EntityReaderContext {
+export interface CanvasObjectReaderContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
   layoutProp: (block: SflBlock, key: string) => SflValue | undefined;
-  symbolDefs: Map<string, NonNullable<SflEntityOut['symbol']>>;
+  symbolDefs: Map<string, NonNullable<ResolvedCanvasObject['symbol']>>;
 }
 
-export function buildEntity(
+export function buildCanvasObject(
   block: SflBlock,
   origin: { x: number; y: number },
-  context: EntityReaderContext,
+  context: CanvasObjectReaderContext,
   frameId?: string,
   positionOverride?: number[],
-): SflEntityOut {
+): ResolvedCanvasObject {
   const { mergedProps, layoutProp, symbolDefs } = context;
   const properties = mergedProps(block);
-  const classification = classifyEntity(block, properties, symbolDefs);
-  const geometry = readEntityGeometry(block, origin, layoutProp, positionOverride);
-  const presentation = readEntityPresentation(properties);
+  const classification = classifyCanvasObject(block, properties, symbolDefs);
+  const geometry = readCanvasObjectGeometry(block, origin, layoutProp, positionOverride);
+  const presentation = readCanvasObjectPresentation(properties);
 
   return {
     id: asString(properties.get('id')) ?? block.name,

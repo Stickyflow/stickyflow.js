@@ -1,9 +1,9 @@
-import type { SflValue } from '../ast';
-import { asString } from './valueAccess';
+import type { SflValue } from '../../ast';
+import { asString } from '../valueAccess';
 
 const STRUCTURAL_PROPERTIES = new Set(['id', 'kind', 'text', 'shape', 'parent', 'order', 'orientation', 'lanes']);
 
-export function readEntityPresentation(properties: Map<string, SflValue>): Record<string, string> {
+export function readCanvasObjectPresentation(properties: Map<string, SflValue>): Record<string, string> {
   const presentation: Record<string, string> = {};
 
   for (const [key, value] of properties) {

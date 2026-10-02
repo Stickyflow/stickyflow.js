@@ -1,11 +1,11 @@
 import type { SflBlock, SflValue } from '../../ast';
 import { childBlocks, directProperties } from '../blockEntries';
-import type { SflEntityOut } from '../types';
+import type { ResolvedCanvasObject } from '../types';
 import { asNumber, asString } from '../valueAccess';
 
 type Properties = Map<string, SflValue>;
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
-type TableData = NonNullable<SflEntityOut['table']>;
+type TableData = NonNullable<ResolvedCanvasObject['table']>;
 type Columns = TableData['columns'];
 type Column = Columns[number];
 type Cells = TableData['rows'][number]['cells'];
@@ -116,7 +116,7 @@ export function readTable(
   props: Properties,
   layoutProp: LayoutProp,
   presentation: Record<string, string>,
-): SflEntityOut['table'] {
+): ResolvedCanvasObject['table'] {
   const rowHeight = asNumber(layoutProp(block, 'rowHeight'));
   if (rowHeight !== undefined) {
     presentation.rowHeight = String(rowHeight);

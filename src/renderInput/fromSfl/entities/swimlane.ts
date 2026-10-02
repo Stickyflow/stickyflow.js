@@ -1,9 +1,9 @@
 import type { Swimlane } from '../../../model/swimlane';
 import { decodeShadow } from '../../../sfl/decodeStyles';
-import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
+import type { ResolvedCanvasObject } from '../../../sfl/sflToCanvasState';
 import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
-export function swimlaneObject(e: SflEntityOut): Swimlane {
+export function swimlaneObject(e: ResolvedCanvasObject): Swimlane {
   const p = e.props;
   return {
     id: e.id,

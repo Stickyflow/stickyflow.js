@@ -1,6 +1,6 @@
-import type { SflBlock, SflDocument } from '../ast';
-import { childBlocks } from './blockEntries';
-import type { SflDiagnostic } from './types';
+import type { SflBlock, SflDocument } from '../../ast';
+import { childBlocks } from '../blockEntries';
+import type { SflDiagnostic } from '../types';
 
 export interface CompositionReferences {
   styleRef?: string;

@@ -17,6 +17,11 @@ export type {
   TextMetrics,
 } from './rendering/scene';
 export type {
+  ResolvedCanvasObject,
+  ResolvedChartObject,
+  ResolvedPathObject,
+  ResolvedSwimlaneObject,
+  ResolvedTableObject,
   SflCanvasState,
   SflChartEntity,
   SflEntityOut,
@@ -30,9 +35,13 @@ export type {
 export {
   canonicalize,
   isChartEntity,
+  isChartObject,
   isPathEntity,
+  isPathObject,
   isSwimlaneEntity,
+  isSwimlaneObject,
   isTableEntity,
+  isTableObject,
   parse,
   sflToCanvasState,
   sflToImportJson,

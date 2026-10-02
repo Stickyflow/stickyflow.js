@@ -1,8 +1,8 @@
-import { CHART_TYPES, type ChartType, isChartType } from '../../model/chart';
-import type { SflBlock, SflDocument } from '../ast';
-import { childBlocks, contentChildren, directProperties, styleProperties } from './blockEntries';
-import type { SflDiagnostic } from './types';
-import { asString } from './valueAccess';
+import { CHART_TYPES, type ChartType, isChartType } from '../../../model/chart';
+import type { SflBlock, SflDocument } from '../../ast';
+import { childBlocks, contentChildren, directProperties, styleProperties } from '../blockEntries';
+import type { SflDiagnostic } from '../types';
+import { asString } from '../valueAccess';
 
 const NATIVE_CIRCULAR_CHART_TYPES: ReadonlySet<ChartType> = new Set(['radar', 'radial']);
 const OPTIONAL_CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'custom', 'hexbin']);

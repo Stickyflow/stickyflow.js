@@ -1,15 +1,15 @@
 import type { SflBlock, SflDocument } from '../ast';
-import { collectEmptySeries, collectUnsupportedChartTypes, collectUnsupportedGridShapes } from './chartDiagnostics';
-import { collectUnresolvedCompositionReferences } from './compositionReferences';
-import { collectCanvasDefinitions } from './definitions';
-import type { EntityReaderContext } from './entityReader';
-import { createEntityPropertyReaders } from './propertyReaders';
+import type { CanvasObjectReaderContext } from './canvasObjects/reader';
+import { collectCanvasDefinitions } from './definitions/collection';
+import { collectUnresolvedCompositionReferences } from './definitions/compositionReferences';
+import { createCanvasObjectPropertyReaders } from './definitions/propertyReaders';
+import { collectEmptySeries, collectUnsupportedChartTypes, collectUnsupportedGridShapes } from './diagnostics/charts';
 import type { SflDiagnostic } from './types';
 
 export interface CanvasResolution {
   model?: SflBlock;
   diagnostics: SflDiagnostic[];
-  entityReaderContext: EntityReaderContext;
+  canvasObjectReaderContext: CanvasObjectReaderContext;
 }
 
 export function createCanvasResolution(doc: SflDocument): CanvasResolution {
@@ -23,6 +23,6 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectUnsupportedGridShapes(doc),
       ...collectEmptySeries(doc),
     ],
-    entityReaderContext: createEntityPropertyReaders(definitions),
+    canvasObjectReaderContext: createCanvasObjectPropertyReaders(definitions),
   };
 }

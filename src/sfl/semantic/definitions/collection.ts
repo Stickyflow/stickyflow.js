@@ -1,6 +1,6 @@
-import type { SflBlock, SflDocument } from '../ast';
-import { childBlocks } from './blockEntries';
-import type { EntityReaderContext } from './entityReader';
+import type { SflBlock, SflDocument } from '../../ast';
+import { childBlocks } from '../blockEntries';
+import type { CanvasObjectReaderContext } from '../canvasObjects/reader';
 import { readSymbolDefinition } from './symbols';
 
 export type BlockDefinitions = Map<string, SflBlock>;
@@ -8,7 +8,7 @@ export type BlockDefinitions = Map<string, SflBlock>;
 export interface CanvasDefinitions {
   styles: BlockDefinitions;
   layouts: BlockDefinitions;
-  symbols: EntityReaderContext['symbolDefs'];
+  symbols: CanvasObjectReaderContext['symbolDefs'];
   model?: SflBlock;
 }
 
@@ -45,8 +45,8 @@ function collectLayoutDefinitions(sflDocument: SflDocument): BlockDefinitions {
   return layouts;
 }
 
-function collectSymbolDefinitions(sflDocument: SflDocument): EntityReaderContext['symbolDefs'] {
-  const symbols: EntityReaderContext['symbolDefs'] = new Map();
+function collectSymbolDefinitions(sflDocument: SflDocument): CanvasObjectReaderContext['symbolDefs'] {
+  const symbols: CanvasObjectReaderContext['symbolDefs'] = new Map();
   for (const block of sflDocument.blocks) {
     if (block.kind !== 'Symbol') {
       continue;

@@ -1,10 +1,10 @@
 import type { SflValue } from '../../ast';
-import type { SflEntityOut } from '../types';
+import type { ResolvedCanvasObject } from '../types';
 import { asNumber, asString } from '../valueAccess';
 
 type Properties = Map<string, SflValue>;
 
-export function readSwimlane(p: Properties): SflEntityOut['swimlane'] {
+export function readSwimlane(p: Properties): ResolvedCanvasObject['swimlane'] {
   const orientation = asString(p.get('orientation')) === 'vertical' ? 'vertical' : 'horizontal';
   const lanesValue = p.get('lanes');
   const lanes =
@@ -22,7 +22,7 @@ export function readSwimlane(p: Properties): SflEntityOut['swimlane'] {
           return [{ id: `lane-${index + 1}`, label, size, ...(color ? { color } : {}) }];
         })
       : [];
-  const swimlaneData: SflEntityOut['swimlane'] = { orientation, lanes };
+  const swimlaneData: ResolvedCanvasObject['swimlane'] = { orientation, lanes };
 
   return swimlaneData;
 }

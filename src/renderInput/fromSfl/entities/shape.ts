@@ -1,6 +1,6 @@
 import type { ShapeType } from '../../../model/shape';
 import { decodeColor, decodeShadow } from '../../../sfl/decodeStyles';
-import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
+import type { ResolvedCanvasObject } from '../../../sfl/sflToCanvasState';
 import {
   dashArray,
   FONT_WEIGHTS,
@@ -17,7 +17,7 @@ function shapeTypeOf(value: string | undefined): ShapeType {
   return (value || 'rectangle') as ShapeType;
 }
 
-export function shapeObject(e: SflEntityOut) {
+export function shapeObject(e: ResolvedCanvasObject) {
   const p = e.props;
   return {
     id: e.id,

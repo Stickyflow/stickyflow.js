@@ -1,16 +1,16 @@
 import type { SflBlock } from '../ast';
 import { childBlocks } from './blockEntries';
-import { isCanvasEntityBlockKind } from './canvasEntityBlocks';
-import { buildEntity, type EntityReaderContext } from './entityReader';
-import { createFlowPositioner, type FlowPositioner } from './flowLayout';
-import { directGroupMemberIds } from './groupMembers';
-import { expandNetLinks } from './netLinks';
+import { isCanvasObjectBlockKind } from './canvasObjects/blockKinds';
+import { createFlowPositioner, type FlowPositioner } from './canvasObjects/flowLayout';
+import { buildCanvasObject, type CanvasObjectReaderContext } from './canvasObjects/reader';
+import { directGroupMemberIds } from './groups/members';
+import { expandNetLinks } from './links/netExpansion';
 import type { CanvasResolution } from './resolution';
-import type { SflEntityOut, SflGroupOut } from './types';
+import type { ResolvedCanvasObject, SflGroupOut } from './types';
 import { asString, tupleValues } from './valueAccess';
 
 export interface CanvasTree {
-  entities: SflEntityOut[];
+  entities: ResolvedCanvasObject[];
   groups: SflGroupOut[];
   linkBlocks: SflBlock[];
 }
@@ -21,12 +21,12 @@ interface CanvasLocation {
 }
 
 class CanvasTreeReader {
-  readonly #context: EntityReaderContext;
-  readonly #entities: SflEntityOut[] = [];
+  readonly #context: CanvasObjectReaderContext;
+  readonly #entities: ResolvedCanvasObject[] = [];
   readonly #linkBlocks: SflBlock[] = [];
 
   constructor(resolution: CanvasResolution) {
-    this.#context = resolution.entityReaderContext;
+    this.#context = resolution.canvasObjectReaderContext;
   }
 
   read(model: SflBlock | undefined): CanvasTree {
@@ -48,8 +48,8 @@ class CanvasTreeReader {
     if (child.kind === 'Container') {
       return this.#readContainer(child, location, nextFlowPosition);
     }
-    if (isCanvasEntityBlockKind(child.kind)) {
-      this.#readEntity(child, location, nextFlowPosition);
+    if (isCanvasObjectBlockKind(child.kind)) {
+      this.#readCanvasObject(child, location, nextFlowPosition);
       return [];
     }
 
@@ -68,18 +68,25 @@ class CanvasTreeReader {
   }
 
   #readContainer(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
-    const entity = this.#buildPositionedEntity(block, location, nextFlowPosition);
-    this.#entities.push(entity);
-    return this.#readChildren(block, { origin: { x: entity.x, y: entity.y }, frameId: entity.id });
+    const canvasObject = this.#buildPositionedCanvasObject(block, location, nextFlowPosition);
+    this.#entities.push(canvasObject);
+    return this.#readChildren(block, {
+      origin: { x: canvasObject.x, y: canvasObject.y },
+      frameId: canvasObject.id,
+    });
   }
 
-  #readEntity(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): void {
-    this.#entities.push(this.#buildPositionedEntity(block, location, nextFlowPosition));
+  #readCanvasObject(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): void {
+    this.#entities.push(this.#buildPositionedCanvasObject(block, location, nextFlowPosition));
   }
 
-  #buildPositionedEntity(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflEntityOut {
+  #buildPositionedCanvasObject(
+    block: SflBlock,
+    location: CanvasLocation,
+    nextFlowPosition: FlowPositioner,
+  ): ResolvedCanvasObject {
     const size = tupleValues(this.#context.layoutProp(block, 'size')) ?? [0, 0];
-    return buildEntity(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
+    return buildCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
   }
 
   #readGroup(block: SflBlock, location: CanvasLocation): SflGroupOut {

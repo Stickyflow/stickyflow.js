@@ -1,15 +1,15 @@
-import type { SflBlock, SflValue } from '../ast';
-import type { SflEntityOut } from './types';
-import { asString } from './valueAccess';
+import type { SflBlock, SflValue } from '../../ast';
+import type { ResolvedCanvasObject } from '../types';
+import { asString } from '../valueAccess';
 
-export interface EntityClassification {
-  entityType: SflEntityOut['entityType'];
+export interface CanvasObjectClassification {
+  entityType: ResolvedCanvasObject['entityType'];
   kind: string;
   shapeType: string | undefined;
-  symbol: SflEntityOut['symbol'];
+  symbol: ResolvedCanvasObject['symbol'];
 }
 
-function declaredEntityKind(block: SflBlock, properties: Map<string, SflValue>): string {
+function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflValue>): string {
   if (block.kind === 'Table') {
     return 'table';
   }
@@ -23,7 +23,7 @@ function declaredEntityKind(block: SflBlock, properties: Map<string, SflValue>):
   return asString(properties.get('kind')) ?? '';
 }
 
-function entityTypeForKind(kind: string): SflEntityOut['entityType'] {
+function canvasObjectTypeForKind(kind: string): ResolvedCanvasObject['entityType'] {
   if (kind === 'frame') {
     return 'frame';
   }
@@ -43,17 +43,17 @@ function entityTypeForKind(kind: string): SflEntityOut['entityType'] {
   return 'shape';
 }
 
-export function classifyEntity(
+export function classifyCanvasObject(
   block: SflBlock,
   properties: Map<string, SflValue>,
-  symbolDefinitions: Map<string, NonNullable<SflEntityOut['symbol']>>,
-): EntityClassification {
-  const kind = declaredEntityKind(block, properties);
+  symbolDefinitions: Map<string, NonNullable<ResolvedCanvasObject['symbol']>>,
+): CanvasObjectClassification {
+  const kind = declaredCanvasObjectKind(block, properties);
   const shapeReference = asString(properties.get('shape'));
   const symbol = shapeReference ? symbolDefinitions.get(shapeReference) : undefined;
 
   return {
-    entityType: entityTypeForKind(kind),
+    entityType: canvasObjectTypeForKind(kind),
     kind,
     shapeType: symbol ? 'symbol' : shapeReference,
     symbol,

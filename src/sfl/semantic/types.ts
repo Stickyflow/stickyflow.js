@@ -1,7 +1,7 @@
 import type { Diagnostic } from '../../model/diagnostic';
 import type { Side } from '../ast';
 
-export interface SflEntityOut {
+export interface ResolvedCanvasObject {
   id: string;
   entityType: 'shape' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
   kind: string;
@@ -124,26 +124,46 @@ export interface SflEntityOut {
   };
 }
 
-export type SflChartEntity = SflEntityOut & { chart: NonNullable<SflEntityOut['chart']> };
-export type SflTableEntity = SflEntityOut & { table: NonNullable<SflEntityOut['table']> };
-export type SflSwimlaneEntity = SflEntityOut & { swimlane: NonNullable<SflEntityOut['swimlane']> };
-export type SflPathEntity = SflEntityOut & { path: NonNullable<SflEntityOut['path']> };
+export type ResolvedChartObject = ResolvedCanvasObject & { chart: NonNullable<ResolvedCanvasObject['chart']> };
+export type ResolvedTableObject = ResolvedCanvasObject & { table: NonNullable<ResolvedCanvasObject['table']> };
+export type ResolvedSwimlaneObject = ResolvedCanvasObject & { swimlane: NonNullable<ResolvedCanvasObject['swimlane']> };
+export type ResolvedPathObject = ResolvedCanvasObject & { path: NonNullable<ResolvedCanvasObject['path']> };
 
-export function isChartEntity(entity: SflEntityOut): entity is SflChartEntity {
-  return entity.entityType === 'chart' && entity.chart !== undefined;
+/** @deprecated Use `ResolvedCanvasObject`. */
+export type SflEntityOut = ResolvedCanvasObject;
+/** @deprecated Use `ResolvedChartObject`. */
+export type SflChartEntity = ResolvedChartObject;
+/** @deprecated Use `ResolvedTableObject`. */
+export type SflTableEntity = ResolvedTableObject;
+/** @deprecated Use `ResolvedSwimlaneObject`. */
+export type SflSwimlaneEntity = ResolvedSwimlaneObject;
+/** @deprecated Use `ResolvedPathObject`. */
+export type SflPathEntity = ResolvedPathObject;
+
+export function isChartObject(canvasObject: ResolvedCanvasObject): canvasObject is ResolvedChartObject {
+  return canvasObject.entityType === 'chart' && canvasObject.chart !== undefined;
 }
 
-export function isTableEntity(entity: SflEntityOut): entity is SflTableEntity {
-  return entity.entityType === 'table' && entity.table !== undefined;
+export function isTableObject(canvasObject: ResolvedCanvasObject): canvasObject is ResolvedTableObject {
+  return canvasObject.entityType === 'table' && canvasObject.table !== undefined;
 }
 
-export function isSwimlaneEntity(entity: SflEntityOut): entity is SflSwimlaneEntity {
-  return entity.entityType === 'swimlane' && entity.swimlane !== undefined;
+export function isSwimlaneObject(canvasObject: ResolvedCanvasObject): canvasObject is ResolvedSwimlaneObject {
+  return canvasObject.entityType === 'swimlane' && canvasObject.swimlane !== undefined;
 }
 
-export function isPathEntity(entity: SflEntityOut): entity is SflPathEntity {
-  return entity.entityType === 'path' && entity.path !== undefined;
+export function isPathObject(canvasObject: ResolvedCanvasObject): canvasObject is ResolvedPathObject {
+  return canvasObject.entityType === 'path' && canvasObject.path !== undefined;
 }
+
+/** @deprecated Use `isChartObject`. */
+export const isChartEntity = isChartObject;
+/** @deprecated Use `isTableObject`. */
+export const isTableEntity = isTableObject;
+/** @deprecated Use `isSwimlaneObject`. */
+export const isSwimlaneEntity = isSwimlaneObject;
+/** @deprecated Use `isPathObject`. */
+export const isPathEntity = isPathObject;
 
 export interface SflLinkOut {
   id: string;
@@ -174,7 +194,7 @@ export interface SflGroupOut {
 export type SflDiagnostic = Diagnostic;
 
 export interface SflCanvasState {
-  entities: SflEntityOut[];
+  entities: ResolvedCanvasObject[];
   links: SflLinkOut[];
   groups: SflGroupOut[];
   diagnostics: SflDiagnostic[];

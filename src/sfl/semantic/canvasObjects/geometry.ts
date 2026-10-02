@@ -1,9 +1,9 @@
-import type { SflBlock, SflValue } from '../ast';
-import { asNumber, tupleValues } from './valueAccess';
+import type { SflBlock, SflValue } from '../../ast';
+import { asNumber, tupleValues } from '../valueAccess';
 
 type LayoutProperty = (block: SflBlock, key: string) => SflValue | undefined;
 
-export interface EntityGeometry {
+export interface CanvasObjectGeometry {
   x: number;
   y: number;
   width: number;
@@ -12,12 +12,12 @@ export interface EntityGeometry {
   order: number | undefined;
 }
 
-export function readEntityGeometry(
+export function readCanvasObjectGeometry(
   block: SflBlock,
   origin: { x: number; y: number },
   layoutProperty: LayoutProperty,
   positionOverride?: number[],
-): EntityGeometry {
+): CanvasObjectGeometry {
   const position = positionOverride ?? tupleValues(layoutProperty(block, 'position')) ?? [0, 0];
   const size = tupleValues(layoutProperty(block, 'size')) ?? [0, 0];
 

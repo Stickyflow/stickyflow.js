@@ -1,5 +1,5 @@
-import type { SflValue } from '../ast';
-import { asString } from './valueAccess';
+import type { SflValue } from '../../ast';
+import { asString } from '../valueAccess';
 
 const STRUCTURAL_LINK_PROPERTIES = new Set(['id', 'from', 'to', 'text', 'order', 'segments']);
 

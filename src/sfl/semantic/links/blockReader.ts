@@ -1,16 +1,16 @@
-import type { SflBlock } from '../ast';
-import type { EntityReaderContext } from './entityReader';
-import { type LinkEndpointReaderContext, readLinkEndpoint } from './linkEndpointReader';
-import { readLinkPresentation } from './linkPresentation';
-import type { SflLinkOut } from './types';
-import { asNumber, asString, listNumbers } from './valueAccess';
+import type { SflBlock } from '../../ast';
+import type { CanvasObjectReaderContext } from '../canvasObjects/reader';
+import type { SflLinkOut } from '../types';
+import { asNumber, asString, listNumbers } from '../valueAccess';
+import { type LinkEndpointReaderContext, readLinkEndpoint } from './endpointReader';
+import { readLinkPresentation } from './presentation';
 
 export function readLinkBlock(
   block: SflBlock,
-  entityContext: EntityReaderContext,
+  canvasObjectContext: CanvasObjectReaderContext,
   endpointContext: LinkEndpointReaderContext,
 ): SflLinkOut {
-  const properties = entityContext.mergedProps(block);
+  const properties = canvasObjectContext.mergedProps(block);
   const from = readLinkEndpoint(properties.get('from'), endpointContext);
   const to = readLinkEndpoint(properties.get('to'), endpointContext);
 
