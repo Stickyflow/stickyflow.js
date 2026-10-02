@@ -9,7 +9,7 @@ import {
 import { DOM_CONTRACT_VERSION, render } from '../src/index';
 import { classifySceneDiff } from '../src/viewer/display';
 import { Emitter } from '../src/viewer/events';
-import { clickAction, selectionReducer } from '../src/viewer/selection';
+import { clickAction, selectionReducer } from '../src/viewer/interaction/selection';
 import { SFL_SAMPLE } from './fixtures';
 
 // The interaction tier's PURE core — no DOM. These run under environment:'node'.

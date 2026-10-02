@@ -1,10 +1,10 @@
-import type { DisplayHandle } from './display';
-import type { Emitter, OwnerRef } from './events';
-import { createChangeFlash } from './interaction/changeFlash';
-import { bindKeyboardSelection } from './interaction/keyboard';
-import { bindPointerInteraction } from './interaction/pointer';
-import { SelectionController } from './interaction/selectionController';
-import { bindWheelZoom } from './interaction/wheel';
+import type { DisplayHandle } from '../display';
+import type { Emitter, OwnerRef } from '../events';
+import { createChangeFlash } from './changeFlash';
+import { bindKeyboardSelection } from './keyboard';
+import { bindPointerInteraction } from './pointer';
+import { SelectionController } from './selectionController';
+import { bindWheelZoom } from './wheel';
 
 export interface InteractionHandle {
   getSelection(): OwnerRef[];

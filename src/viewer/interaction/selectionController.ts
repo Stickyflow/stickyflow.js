@@ -1,7 +1,7 @@
 import { resolveOwner } from '../../domContract';
 import type { Emitter, OwnerRef } from '../events';
-import { type SelectionAction, selectionReducer } from '../selection';
 import { paintSelectionOverlays } from './overlayPainter';
+import { type SelectionAction, selectionReducer } from './selection';
 
 export class SelectionController {
   readonly #svg: SVGSVGElement;

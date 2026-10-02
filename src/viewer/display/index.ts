@@ -1,10 +1,10 @@
-import { patchDisplayContent } from './display/scenePatch';
-import { parseSvg, readViewBox } from './display/svgDocument';
-import type { DisplayHandle, ViewBox } from './display/types';
-import { ViewportController } from './display/viewport';
+import { patchDisplayContent } from './scenePatch';
+import { parseSvg, readViewBox } from './svgDocument';
+import type { DisplayHandle, ViewBox } from './types';
+import { ViewportController } from './viewport';
 
-export { classifySceneDiff } from './display/classifySceneDiff';
-export type { DisplayHandle, SceneDiff, ViewBox } from './display/types';
+export { classifySceneDiff } from './classifySceneDiff';
+export type { DisplayHandle, SceneDiff, ViewBox } from './types';
 
 export function mountDisplay(container: HTMLElement, svgString: string): DisplayHandle {
   const svg = parseSvg(svgString);

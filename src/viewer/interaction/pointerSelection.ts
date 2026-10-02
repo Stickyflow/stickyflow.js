@@ -1,7 +1,7 @@
 import { findOwnerNode, isPrimary, resolveOwner } from '../../domContract';
 import type { Emitter, OwnerRef } from '../events';
-import { clickAction } from '../selection';
 import { modifiersOf } from './modifiers';
+import { clickAction } from './selection';
 import type { SelectionController } from './selectionController';
 
 const SELECTION_OVERLAY_CONTROL_SELECTOR =
