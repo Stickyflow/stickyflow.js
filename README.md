@@ -21,8 +21,9 @@ const { svg, width, height, diagnostics } = render(sflSourceText);
 // A complete, deterministic SVG string. render() never touches the DOM.
 ```
 
-Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflToRenderInput
-→ buildRenderScene → renderSceneToSvg`.
+Render pipeline: `SFL text → parse → sflToCanvasState → sflToRenderInput
+→ buildRenderScene → renderSceneToSvg`. `sflToImportJson` is a separate
+adapter and is not part of rendering.
 
 ## Structure
 
@@ -30,7 +31,7 @@ Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflTo
 src/
   model/             L0 framework-agnostic diagram model and geometry
   sflLanguage/       L1 SFL Language: AST, lexer, parser and canonical emitter
-  sflSemantic/       L2 SFL Semantic: SFL AST → resolved canvas state
+  sflSemantic/       L2 SFL Semantic: SFL AST → semantic canvas state
   renderInput/       L3 renderer contract, SFL adapter and presentation-value decoding
   renderScene/       L4 scene contract and deterministic scene construction
   svg/               L5 SVG serialization and versioned DOM contract
@@ -76,7 +77,7 @@ below and enforced by `test/boundary.test.ts`.
   DOM write is incremental (`patchSceneNodes`, only what differs), but the
   geometry it diffs against is recomputed for the whole scene graph every
   time — text measurement, link routing, everything — not just the changed
-  entity. Fine at the hundreds-of-shapes scale this package targets; a
+  canvas object. Fine at the hundreds-of-shapes scale this package targets; a
   many-thousand-node board would need incremental geometry, which doesn't
   exist yet.
 - **No conflict handling for concurrent writers**: `applyMoveChange` and
@@ -89,7 +90,7 @@ below and enforced by `test/boundary.test.ts`.
   node a role, an id, and a focusable/labelled primary (`tabindex`,
   `aria-label`) — enough for a screen reader to enumerate what's on the board
   and read each label. It does not yet describe *relationships* (which link
-  connects which entities, table semantics beyond a labelled grid, a
+  connects which canvas objects, table semantics beyond a labelled grid, a
   meaningful reading order for a non-trivial layout) — a sighted user reads
   those from position; a screen reader user currently can't.
 
@@ -165,7 +166,7 @@ break at different points under each.
 
 `render()`'s output is meant to be inserted via `innerHTML` (that's how the
 docs examples and `stickyflow/viewer` use it), so everything user-supplied —
-entity/link text, ids — is escaped before it reaches the SVG string
+canvas-object/link text, ids — is escaped before it reaches the SVG string
 (`renderSceneToSvg.ts`'s `xml()`: `& < > " '`), and ids are additionally
 restricted to a safe character set (`safeId`). There is no `<script>`,
 `<foreignObject>`, or event-handler attribute anywhere in the renderer's own
@@ -179,7 +180,7 @@ actively hostile payload (an attribute break-out plus an inline
 
 The SVG is the binding surface for a viewer. Every node carries its owner's
 identity so a click on any sub-node (a cylinder cap, a table cell, link text)
-resolves to the entity via `closest('[data-sf-id]')`:
+resolves to the owning canvas object via `closest('[data-sf-id]')`:
 
 ```html
 <svg … role="img" data-sf-contract="1">
@@ -191,8 +192,9 @@ resolves to the entity via `closest('[data-sf-id]')`:
 
 - `data-sf-contract` on the root is the versioned handshake (`DOM_CONTRACT_VERSION`):
   a viewer checks it on mount and refuses a mismatch instead of binding blindly.
-- `data-sf-role` ∈ `entity | link | frame | swimlane | table`; `data-sf-id` is the
-  stable owner id; `data-sf-kind` is the shape type for entities.
+- `data-sf-role` ∈ `entity | link | frame | swimlane | table`; `entity` is the
+  version-1 serialized compatibility value for an internal `shape` role.
+  `data-sf-id` is the stable owner id; `data-sf-kind` is the concrete kind.
 - The **primary** node of each owner is focusable (`tabindex="0"`) and labelled
   (`aria-label`, whitespace-collapsed to one line). Ids and labels are XML-escaped.
 

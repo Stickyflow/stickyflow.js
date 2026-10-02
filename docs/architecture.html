@@ -725,7 +725,7 @@
                 <ul>
                   <li>Definiert in <code>sflSemantic/types.ts</code>.</li>
                   <li>Erzeugt von <code>sflToCanvasState()</code>.</li>
-                  <li>Enthält <code>SflEntityOut</code> und Diagnosen.</li>
+                  <li>Enthält <code>SflCanvasObject</code> und Diagnosen.</li>
                 </ul>
               </article>
               <article class="card representation">
@@ -760,14 +760,14 @@
             <div class="section-head">
               <h2>Ein Shape von SFL bis SVG</h2>
               <p>
-                Dieses Beispiel verfolgt eine einzelne Entity durch jede relevante Funktion. Die Zwischendarstellungen
+                Dieses Beispiel verfolgt ein einzelnes Shape durch jede relevante Funktion. Die Zwischendarstellungen
                 sind gekürzt, zeigen aber die tatsächlichen Verträge und Zuständigkeitswechsel.
               </p>
             </div>
             <pre class="code-block"><code>sfl 1.2
 
 Model Demo {
-  Entity start {
+  Shape start {
     shape: rounded_rectangle
     text: "Start"
     layout {
@@ -787,7 +787,7 @@ Model Demo {
                 <span class="timeline-index">01</span>
                 <div>
                   <h3>Öffentliche Orchestrierung</h3>
-                  <p><code>render(source)</code> delegiert an <code>sflToRenderInput(source)</code> und danach an <code>renderCanvas(input)</code>. Die Funktion kennt keine Parser- oder Shape-Details.</p>
+                  <p><code>render(source)</code> erzeugt über <code>sflToRenderInput(source)</code> die Renderer-Eingabe, baut daraus die Scene und serialisiert sie anschließend als SVG. Die Funktion kennt keine Parser- oder Shape-Details.</p>
                   <span class="function-path">src/render.ts → render() / renderCanvas()</span>
                 </div>
               </article>
@@ -796,7 +796,7 @@ Model Demo {
                 <div>
                   <h3>Tokenisierung</h3>
                   <p><code>tokenize()</code> liest Zeichen über <code>SourceCursor</code>. <code>readNextToken()</code> delegiert an spezialisierte Leser für Identifier, Zahlen, Strings, Zeilenumbrüche und Satzzeichen.</p>
-                  <span class="function-path">sfl/lexer.ts → language/lexing/tokenizer.ts → nextToken.ts</span>
+                  <span class="function-path">sflLanguage/lexing/tokenizer.ts → nextToken.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -806,7 +806,7 @@ Model Demo {
                   <p><code>DocumentParser.parseDocument()</code> prüft Header und Version. <code>BlockParser</code> erzeugt anschließend verschachtelte <code>SflBlock</code>- und <code>SflEntry</code>-Objekte.</p>
                   <pre class="code-block"><code>{
   version: "1.2",
-  blocks: [{ kind: "Model", name: "Demo", entries: [/* Entity start */] }]
+  blocks: [{ kind: "Model", name: "Demo", entries: [/* Shape start */] }]
 }</code></pre>
                   <span class="function-path">sflLanguage/parsing/parser.ts → document.ts → blocks.ts → properties.ts → values.ts</span>
                 </div>
@@ -815,9 +815,9 @@ Model Demo {
                 <span class="timeline-index">04</span>
                 <div>
                   <h3>Semantische Auflösung</h3>
-                  <p><code>createCanvasResolution()</code> indexiert Definitionen und baut die Property-Auflösung. <code>CanvasTreeReader</code> traversiert das Model. <code>buildEntity()</code> vereinigt Klassifikation, Geometrie und Präsentation.</p>
+                  <p><code>createCanvasResolution()</code> indexiert Definitionen und baut die Property-Auflösung. <code>CanvasTreeResolver</code> traversiert das Model. <code>resolveCanvasObject()</code> vereinigt Klassifikation, Geometrie und Präsentation.</p>
                   <pre class="code-block"><code>{
-  id: "start", entityType: "shape", shapeType: "rounded_rectangle",
+  id: "start", objectType: "shape", shapeType: "rounded_rectangle",
   text: "Start", x: 40, y: 60, width: 160, height: 80,
   props: { fill: "#0f766e", stroke: "#5eead4", strokeWidth: 2 }
 }</code></pre>
@@ -935,7 +935,7 @@ Model Demo {
               <article class="card">
                 <span class="card-number">L2</span>
                 <h3>SFL Semantic</h3>
-                <p>Löst Definitionen, Kompositionen, Vererbung, Gruppen, Entities und Links fachlich auf.</p>
+                <p>Löst Definitionen, Kompositionen, Vererbung, Gruppen, Canvas Objects und Links fachlich auf.</p>
                 <ul><li>AST → <code>SflCanvasState</code>.</li><li>Sammelt SFL-Diagnosen.</li><li>Keine Render-Nodes.</li></ul>
                 <span class="path">src/sflSemantic</span>
               </article>
@@ -976,10 +976,10 @@ Model Demo {
             <table>
               <thead><tr><th>Modul</th><th>Kernfunktion oder Typ</th><th>Exakte Verantwortung</th></tr></thead>
               <tbody>
-                <tr><td><code>language/ast.ts</code></td><td><code>SflDocument</code>, <code>SflBlock</code>, <code>SflValue</code></td><td>Vollständiger Syntaxvertrag und Value-Varianten.</td></tr>
+                <tr><td><code>sflLanguage/ast.ts</code></td><td><code>SflDocument</code>, <code>SflBlock</code>, <code>SflValue</code></td><td>Vollständiger Syntaxvertrag und Value-Varianten.</td></tr>
                 <tr><td><code>lexer.ts</code></td><td><code>tokenize()</code></td><td>Stabile öffentliche Fassade der Tokenisierung.</td></tr>
-                <tr><td><code>language/lexing/tokenizer.ts</code></td><td><code>tokenizeSource()</code></td><td>Token-Loop, EOF und Quellpositionen.</td></tr>
-                <tr><td><code>language/lexing/nextToken.ts</code></td><td><code>readNextToken()</code></td><td>Dispatcht zur passenden lexikalischen Regel.</td></tr>
+                <tr><td><code>sflLanguage/lexing/tokenizer.ts</code></td><td><code>tokenizeSource()</code></td><td>Token-Loop, EOF und Quellpositionen.</td></tr>
+                <tr><td><code>sflLanguage/lexing/nextToken.ts</code></td><td><code>readNextToken()</code></td><td>Dispatcht zur passenden lexikalischen Regel.</td></tr>
                 <tr><td><code>identifiers.ts</code>, <code>numbers.ts</code>, <code>stringToken.ts</code></td><td>Je ein Token-Leser</td><td>Unterschiedliche Tokenarten bleiben getrennte Workflows.</td></tr>
                 <tr><td><code>parser.ts</code></td><td><code>parse()</code></td><td>Komponiert TokenCursor und DocumentParser.</td></tr>
                 <tr><td><code>parsing/document.ts</code></td><td><code>DocumentParser</code></td><td>Header, Version und Top-Level-Blöcke.</td></tr>
@@ -1005,7 +1005,7 @@ Model Demo {
                 <tr><td><code>sflSemantic/canvasObjects/processing/layout/geometry.ts</code></td><td>Geometrieauflösung</td><td>Position, Größe, Rotation und Order.</td></tr>
                 <tr><td><code>sflSemantic/canvasObjects/processing/presentation.ts</code></td><td>Präsentationsauflösung</td><td>Semantische Style- und Textwerte.</td></tr>
                 <tr><td><code>sflSemantic/canvasObjects/artifacts/*</code></td><td>Table-, Swimlane-, Path-, Chart- und Link-Reader</td><td>Artefaktspezifische verschachtelte Daten.</td></tr>
-                <tr><td><code>sflSemantic/types.ts</code></td><td><code>SflCanvasState</code>, <code>SflEntityOut</code></td><td>Vertrag der gesamten semantischen Ausgabe.</td></tr>
+                <tr><td><code>sflSemantic/types.ts</code></td><td><code>SflCanvasState</code>, <code>SflCanvasObject</code></td><td>Vertrag der gesamten semantischen Ausgabe.</td></tr>
               </tbody>
             </table>
 
@@ -1014,10 +1014,10 @@ Model Demo {
               <thead><tr><th>Modul</th><th>Kernfunktion oder Typ</th><th>Exakte Verantwortung</th></tr></thead>
               <tbody>
                 <tr><td><code>model/shape/types.ts</code></td><td><code>Shape</code>, <code>ShapeType</code></td><td>Stabiler fachlicher Shape-Vertrag.</td></tr>
-                <tr><td><code>model/charts.ts</code></td><td><code>Chart</code> und Chart-Varianten</td><td>Chart-Eingabemodell unabhängig vom Renderer.</td></tr>
-                <tr><td><code>model/links.ts</code></td><td><code>Link</code></td><td>Link-Daten, Endpunkte, Marker und Stroke.</td></tr>
-                <tr><td><code>model/geometry/*</code></td><td>Routing-, Text-, Table-, Sankey- und Shape-Geometrie</td><td>Pure fachliche Berechnungen ohne Scene und DOM.</td></tr>
-                <tr><td><code>model/diagnostics.ts</code></td><td><code>RenderDiagnostic</code></td><td>Layerübergreifender Diagnosevertrag.</td></tr>
+                <tr><td><code>model/chart/chart.ts</code></td><td><code>Chart</code> und Chart-Varianten</td><td>Chart-Eingabemodell unabhängig vom Renderer.</td></tr>
+                <tr><td><code>model/link/types.ts</code></td><td><code>Link</code></td><td>Link-Daten, Endpunkte, Marker und Stroke.</td></tr>
+                <tr><td><code>model/geometry/*</code></td><td>Points, Bounds, Ports und Rectangle-Geometrie</td><td>Pure fachliche Berechnungen ohne Scene und DOM.</td></tr>
+                <tr><td><code>model/diagnostic/types.ts</code></td><td><code>Diagnostic</code></td><td>Layerübergreifender Diagnosevertrag.</td></tr>
                 <tr><td><code>renderInput/types.ts</code></td><td><code>RenderInput</code></td><td>Vollständiger Eingang des Scene-Builders.</td></tr>
                 <tr><td><code>renderInput/fromSfl/index.ts</code></td><td><code>sflToRenderInput()</code></td><td>Öffentliche Orchestrierung des SFL-Adapters.</td></tr>
                 <tr><td><code>fromSfl/canvasObjects/collect.ts</code></td><td><code>collectCanvasObjects()</code></td><td>Sortiert und dispatcht semantische Canvas-Object-Varianten.</td></tr>
@@ -1027,7 +1027,7 @@ Model Demo {
               </tbody>
             </table>
 
-            <h3 style="margin-top: 34px">Scene, Entity, Table und Chart</h3>
+            <h3 style="margin-top: 34px">Scene, Artefakte, Table und Chart</h3>
             <table>
               <thead><tr><th>Modul</th><th>Kernfunktion oder Typ</th><th>Exakte Verantwortung</th></tr></thead>
               <tbody>
@@ -1075,7 +1075,7 @@ Model Demo {
             <div class="section-head">
               <h2>Rendering-Navigation</h2>
               <p>
-                Scene ist die technische Zwischenrepräsentation. Entities, Tabellen und Charts sind getrennte
+                Scene ist die technische Zwischenrepräsentation. Artefakte, Tabellen und Charts sind getrennte
                 fachliche Erzeuger dieser Scene-Nodes.
               </p>
             </div>

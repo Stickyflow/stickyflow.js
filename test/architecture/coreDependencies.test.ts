@@ -29,6 +29,8 @@ const ALLOWED_TOP_LEVEL_DIRECTORIES = new Set([
   'svg',
 ]);
 const ALLOWED_TOP_LEVEL_FILES = new Set(['index.ts', 'render.ts']);
+const OBSOLETE_ENTITY_IDENTIFIERS =
+  /\b(?:SflEntityOut|SflChartEntity|SflTableEntity|SflSwimlaneEntity|SflPathEntity|entityType|entityId|entityClick|DraggedEntity|InsertEntityOptions|RemoveEntityOptions|insertEntity|removeEntity)\b/;
 
 function tsFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -151,6 +153,14 @@ describe('core dependency direction', () => {
 
   it('contains no unspecific collection directories', () => {
     const offenders = directoryNames(srcDir).filter(name => FORBIDDEN_COLLECTION_DIRECTORIES.has(name));
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps obsolete generic Entity identifiers out of current APIs', () => {
+    const offenders = tsFiles(srcDir)
+      .filter(file => OBSOLETE_ENTITY_IDENTIFIERS.test(readFileSync(file, 'utf8')))
+      .map(sourcePath);
+
     expect(offenders).toEqual([]);
   });
 
