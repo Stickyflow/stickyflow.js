@@ -1,8 +1,8 @@
 import type { Rect } from '../../model/geometry/types';
 import type { ShapeType } from '../../model/shape';
-import { localShapePath, pillCornerRadius } from '../../rendering/entities/shape/geometry/pathCalculation';
-import { freeformPathData } from '../../rendering/scene/freeformPath';
-import { cornersRoundedRectPath, type RectCornerRadii } from '../../rendering/scene/roundedRectPath';
+import { localShapePath, pillCornerRadius } from '../../renderScene/entities/shape/geometry/pathCalculation';
+import { freeformPathData } from '../../renderScene/scene/freeformPath';
+import { cornersRoundedRectPath, type RectCornerRadii } from '../../renderScene/scene/roundedRectPath';
 import {
   CORNER_RADIUS_ATTR,
   SQUARE_CORNER_ATTR,

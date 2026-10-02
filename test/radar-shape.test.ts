@@ -6,7 +6,7 @@ import {
   radarSeriesPath,
   radarValueAtPoint,
   radarVertexPoint,
-} from '../src/rendering/charts/primitives/radarShape';
+} from '../src/renderScene/charts/primitives/radarShape';
 
 const frame: RadarFrame = { centerX: 100, centerY: 100, radius: 50, min: 0, max: 10, count: 4, curved: false };
 

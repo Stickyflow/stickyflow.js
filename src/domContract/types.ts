@@ -1,4 +1,4 @@
-import type { SceneRole } from '../rendering/scene';
+import type { SceneRole } from '../renderScene/scene';
 
 export interface OwnerRef {
   role: SceneRole;

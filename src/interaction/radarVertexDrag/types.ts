@@ -1,4 +1,4 @@
-import type { RadarFrame } from '../../rendering/charts/primitives/radarShape';
+import type { RadarFrame } from '../../renderScene/charts/primitives/radarShape';
 import type { OwnerRef } from '../../viewer';
 
 export interface RadarVertexDragState {

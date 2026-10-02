@@ -1,5 +1,5 @@
 import { findOwnerNode, isCameraGesture, isPrimary, resolveOwner } from '../../domContract';
-import type { RadarFrame } from '../../rendering/charts/primitives/radarShape';
+import type { RadarFrame } from '../../renderScene/charts/primitives/radarShape';
 import type { RadarVertexDragState } from './types';
 
 function parseRadarFrame(node: SVGGraphicsElement | null): RadarFrame | null {

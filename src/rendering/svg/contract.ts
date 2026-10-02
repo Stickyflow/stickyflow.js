@@ -1,3 +1,4 @@
+import type { RenderNode, SceneDetail, SceneIdentity } from '../../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
   PATH_CLOSED_ATTR,
@@ -11,7 +12,6 @@ import {
   TABLE_COLUMN_START_WIDTH_ATTR,
   TABLE_COLUMN_WIDTH_SCALE_ATTR,
 } from '../../svgContract/attributes';
-import type { RenderNode, SceneDetail, SceneIdentity } from '../scene';
 import { num, xml } from './format';
 
 function identityAttrs(identity: SceneIdentity): Array<string | undefined> {

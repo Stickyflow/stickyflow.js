@@ -33,7 +33,8 @@ src/
   sflSemantic/       L2 SFL Semantic: SFL AST → resolved canvas state
   renderInput/       L3 renderer contract, SFL adapter and presentation-value decoding
   importJson/        canvas-state → Stickyflow import JSON adapter
-  rendering/         renderScene, buildRenderScene, renderSceneToSvg
+  renderScene/       L4 scene contract and deterministic scene construction
+  rendering/svg/     L5 SVG serialization
   render.ts          render(sfl) / renderCanvas(input) — static tier
   index.ts           static public API  →  import 'stickyflow'
   viewer/            interaction tier   →  import 'stickyflow/viewer'

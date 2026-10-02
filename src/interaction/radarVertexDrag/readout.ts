@@ -1,4 +1,4 @@
-import type { RadarPoint } from '../../rendering/charts/primitives/radarShape';
+import type { RadarPoint } from '../../renderScene/charts/primitives/radarShape';
 import { createValueReadout, formatReadoutValue, removeValueReadout } from '../chartValue/readout';
 
 const GAP = 10;

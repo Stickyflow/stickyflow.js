@@ -1,5 +1,5 @@
 import { pointerUserPoint } from '../../domContract';
-import { seriesLabelOffsetXProp, seriesLabelOffsetYProp } from '../../rendering/charts/propPath';
+import { seriesLabelOffsetXProp, seriesLabelOffsetYProp } from '../../renderScene/charts/propPath';
 import type { Emitter } from '../events';
 import { clearPieLabelDragPreview, updatePieLabelDragPreview } from './preview';
 import { resolvePieLabelDrag } from './target';

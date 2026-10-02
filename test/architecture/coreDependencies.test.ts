@@ -61,7 +61,7 @@ function renderingLayer(path: string): CoreLayer | null {
   if (path.startsWith('rendering/svg/')) {
     return 'svg';
   }
-  if (path.startsWith('rendering/')) {
+  if (path.startsWith('renderScene/')) {
     return 'render-scene';
   }
   return null;
@@ -122,7 +122,7 @@ describe('core dependency direction', () => {
 
   it('keeps architectural index files free of implementation logic', () => {
     const implementationPattern = /^(?:export\s+)?(?:async\s+)?function\s+|^export\s+(?:class|const|let)\s+/m;
-    const architecturalRoots = ['rendering/charts', 'rendering/scene', 'rendering/tables'];
+    const architecturalRoots = ['renderScene/charts', 'renderScene/scene', 'renderScene/tables'];
     const offenders = architecturalRoots
       .map(root => join(srcDir, root, 'index.ts'))
       .filter(file => implementationPattern.test(readFileSync(file, 'utf8')))

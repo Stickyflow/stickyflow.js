@@ -1,8 +1,8 @@
 import { sflToRenderInput } from './renderInput/fromSfl';
 import type { RenderInput } from './renderInput/types';
-import type { MeasureTextFactory, RenderDiagnostic, RenderScene } from './rendering/scene';
-import { buildRenderScene } from './rendering/scene/build';
 import { renderSceneToSvg } from './rendering/svg';
+import type { MeasureTextFactory, RenderDiagnostic, RenderScene } from './renderScene/scene';
+import { buildRenderScene } from './renderScene/scene/build';
 
 export interface RenderResult {
   svg: string;

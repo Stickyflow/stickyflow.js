@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getLinkColorAtPoint, getLinkEndpointColor, getLinkStrokeColor } from '../src/rendering/scene/linkPaint';
-import { getDashArray } from '../src/rendering/scene/linkStroke';
+import { getLinkColorAtPoint, getLinkEndpointColor, getLinkStrokeColor } from '../src/renderScene/scene/linkPaint';
+import { getDashArray } from '../src/renderScene/scene/linkStroke';
 
 const gradient = {
   type: 'gradient' as const,

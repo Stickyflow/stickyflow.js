@@ -1,5 +1,5 @@
 import { isCameraGesture, pointerUserPoint, resolveOwner } from '../../domContract';
-import { LABEL_WIDTH, LEADER_INSET } from '../../rendering/charts/renderers/pie/labels';
+import { LABEL_WIDTH, LEADER_INSET } from '../../renderScene/charts/renderers/pie/labels';
 import { readPieGeometry } from '../pieGeometry';
 import type { PieLabelDragState } from './types';
 

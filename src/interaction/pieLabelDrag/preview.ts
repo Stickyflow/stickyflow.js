@@ -1,4 +1,4 @@
-import { clipSegmentToRect } from '../../rendering/charts/primitives';
+import { clipSegmentToRect } from '../../renderScene/charts/primitives';
 import type { PieLabelDragState } from './types';
 
 const PREVIEW_TICK_COLOR = '#334155';

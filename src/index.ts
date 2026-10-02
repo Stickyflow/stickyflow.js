@@ -19,7 +19,7 @@ export type {
   RenderScene,
   SceneRole,
   TextMetrics,
-} from './rendering/scene';
+} from './renderScene/scene';
 export { canonicalize, parse } from './sflLanguage';
 export type {
   SflCanvasState,

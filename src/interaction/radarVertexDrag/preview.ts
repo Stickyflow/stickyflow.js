@@ -1,4 +1,4 @@
-import { radarSeriesPath, radarVertexPoint } from '../../rendering/charts/primitives/radarShape';
+import { radarSeriesPath, radarVertexPoint } from '../../renderScene/charts/primitives/radarShape';
 import type { RadarVertexDragState } from './types';
 
 function seriesVertices(svg: SVGSVGElement, ownerId: string, series: string): SVGGraphicsElement[] {

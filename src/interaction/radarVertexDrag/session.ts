@@ -1,5 +1,5 @@
 import { pointerUserPoint } from '../../domContract';
-import { radarValueAtPoint, radarVertexPoint } from '../../rendering/charts/primitives/radarShape';
+import { radarValueAtPoint, radarVertexPoint } from '../../renderScene/charts/primitives/radarShape';
 import type { Emitter } from '../events';
 import { updateRadarVertexDragPreview } from './preview';
 import { createValueReadout, positionRadarReadout, removeValueReadout } from './readout';

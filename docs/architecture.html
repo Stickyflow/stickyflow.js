@@ -743,7 +743,7 @@
                 <h3>RenderScene</h3>
                 <p>Zeichenmodell: Welche Rects, Paths, Ellipsen, Bilder und Texte werden in welcher Reihenfolge ausgegeben?</p>
                 <ul>
-                  <li>Definiert in <code>rendering/scene/types.ts</code>.</li>
+                  <li>Definiert in <code>renderScene/scene/types.ts</code>.</li>
                   <li>Erzeugt von <code>buildRenderScene()</code>.</li>
                   <li>Ist unabhängig von SFL und vom DOM.</li>
                 </ul>
@@ -846,7 +846,7 @@ Model Demo {
   { type: "rect", id: "shape-start", x: 40, y: 60, width: 160, height: 80, rx: 8, ... },
   { type: "text", id: "shape-text-start", lines: ["Start"], ... }
 ]</code></pre>
-                  <span class="function-path">rendering/scene/build.ts → entities/shape.ts → shape/geometry/index.ts → simple.ts</span>
+                  <span class="function-path">renderScene/scene/build.ts → entities/shape.ts → shape/geometry/index.ts → simple.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -854,7 +854,7 @@ Model Demo {
                 <div>
                   <h3>Identität, Reihenfolge und Bounds</h3>
                   <p><code>tag()</code> ergänzt <code>SceneIdentity</code> mit Rolle, ID, Kind und Primary-Flag. Danach sortiert der Scene-Builder stabil nach <code>order</code> und ID und berechnet die Gesamtgrenzen.</p>
-                  <span class="function-path">rendering/scene/tagging.ts → scene/build.ts → scene/bounds.ts</span>
+                  <span class="function-path">renderScene/scene/tagging.ts → scene/build.ts → scene/bounds.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -896,11 +896,12 @@ Model Demo {
 ├─ renderInput/
 │  ├─ fromSfl/             SFL-Zustand → RenderInput
 │  └─ styleDecoding/       Farb-, Rampen- und Schattenwerte → RenderInput
-├─ rendering/
+├─ renderScene/
 │  ├─ scene/              Scene-Vertrag, Aufbau, Bounds, Paint, Reihenfolge
 │  ├─ entities/           Shape, Link, Path, Frame und Swimlane
 │  ├─ tables/             Eigenständiger Tabellenrenderer
-│  ├─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
+│  └─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
+├─ rendering/
 │  └─ svg/                Definitionen, Nodes, Attribute, Dokument
 ├─ domContract/           Versioniertes SVG/DOM-Bindingschema
 ├─ viewer/                Anzeige, Kamera, Selektion
@@ -948,7 +949,7 @@ Model Demo {
                 <h3>Render Scene</h3>
                 <p>Baut aus RenderInput eine deterministische, geordnete Liste abstrakter Zeichenknoten.</p>
                 <ul><li>Berechnet Bounds und Paint.</li><li>Taggt fachliche Besitzer.</li><li>Berührt kein DOM.</li></ul>
-                <span class="path">src/rendering/scene</span>
+                <span class="path">src/renderScene</span>
               </article>
               <article class="card">
                 <span class="card-number">L5</span>

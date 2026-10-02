@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Emitter } from '../src/interaction/events';
 import { bindRadarVertexDrag } from '../src/interaction/radarVertexDrag/binding';
-import { radarSeriesPath, radarVertexPoint } from '../src/rendering/charts/primitives/radarShape';
+import { radarSeriesPath, radarVertexPoint } from '../src/renderScene/charts/primitives/radarShape';
 import { createFakeViewer } from './fakeViewer';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

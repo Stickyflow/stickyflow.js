@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createPieSlicePath, type PieGeometry } from '../src/rendering/charts/primitives';
+import { createPieSlicePath, type PieGeometry } from '../src/renderScene/charts/primitives';
 
 interface ArcCommand {
   rx: number;

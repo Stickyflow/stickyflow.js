@@ -1,5 +1,5 @@
 import { PATH_HALO_ATTR } from '../../domContract';
-import { freeformPathData } from '../../rendering/scene/freeformPath';
+import { freeformPathData } from '../../renderScene/scene/freeformPath';
 import type { PathReshapeDragState } from './state';
 
 export function applyPathReshapePreview(

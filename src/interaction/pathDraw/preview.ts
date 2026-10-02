@@ -1,5 +1,5 @@
 import { pxPerUnit, SVG_NAMESPACE } from '../../domContract';
-import { freeformPathData } from '../../rendering/scene/freeformPath';
+import { freeformPathData } from '../../renderScene/scene/freeformPath';
 import type { PathDrawState } from './state';
 
 const PREVIEW_COLOR = '#9b42df';

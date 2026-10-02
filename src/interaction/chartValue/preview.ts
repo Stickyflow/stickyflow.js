@@ -1,5 +1,5 @@
-import { barShapePath } from '../../rendering/charts/primitives/barShape';
-import { linePathData } from '../../rendering/charts/primitives/linePath';
+import { barShapePath } from '../../renderScene/charts/primitives/barShape';
+import { linePathData } from '../../renderScene/charts/primitives/linePath';
 import { findConnectedLine, findConnectedLineArea, findSeriesPoints } from './lineLookup';
 import { pixelForValue } from './scale';
 import type { ChartValueDragState } from './types';

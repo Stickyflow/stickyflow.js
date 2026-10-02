@@ -1,4 +1,4 @@
-import type { SceneRole } from '../rendering/scene';
+import type { SceneRole } from '../renderScene/scene';
 import { PATH_CLOSED_ATTR, PATH_POINTS_ATTR, PATH_TENSION_ATTR, SYMBOL_BOUNDS_ATTR } from '../svgContract/attributes';
 import { DOM_CONTRACT_VERSION } from '../svgContract/version';
 import type { OwnerRef } from './types';
