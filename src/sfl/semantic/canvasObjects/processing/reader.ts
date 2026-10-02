@@ -1,6 +1,6 @@
 import type { SflBlock, SflValue } from '../../../ast';
 import { asString } from '../../ast/valueAccess';
-import { readChart } from '../artifacts/chart';
+import { readChart } from '../artifacts/chart/reader';
 import { readPath } from '../artifacts/path';
 import { readSwimlane } from '../artifacts/swimlane';
 import { readTable } from '../artifacts/table';

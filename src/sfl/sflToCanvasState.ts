@@ -20,8 +20,8 @@ export {
 } from './semantic/types';
 
 import { readLinks } from './semantic/canvasObjects/artifacts/links/reader';
+import { readCanvasTree } from './semantic/canvasTree/reader';
 import { createCanvasResolution } from './semantic/resolution';
-import { readCanvasTree } from './semantic/traversal';
 
 export function sflToCanvasState(source: string): SflCanvasState {
   const doc = parse(source);
