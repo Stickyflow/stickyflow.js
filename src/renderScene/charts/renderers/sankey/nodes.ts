@@ -1,4 +1,4 @@
-import { leftRoundedRectPath, rightRoundedRectPath } from '../../../entities/containers';
+import { leftRoundedRectPath, rightRoundedRectPath } from '../../../artifacts/containers';
 import type { RenderNode, SceneText } from '../../../scene';
 import { finite } from '../../../scene';
 import { estimateTextWidth } from '../../../scene/textLayout';

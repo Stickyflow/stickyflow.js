@@ -1,4 +1,4 @@
-import { bottomRoundedRectPath, simpleContainerStyle, topRoundedRectPath } from '../entities/containers';
+import { bottomRoundedRectPath, simpleContainerStyle, topRoundedRectPath } from '../artifacts/containers';
 import type { RenderNode } from '../scene';
 import type { TableRenderContext } from './types';
 

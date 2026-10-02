@@ -1,5 +1,5 @@
 import type { Rect } from '../../../model/geometry/types';
-import { personLabelArea } from '../../../renderScene/entities/shape/geometry/roundedForms';
+import { personLabelArea } from '../../../renderScene/artifacts/shape/geometry/roundedForms';
 import { updateQuickDuplicateBubbles } from '../../dom';
 import { updateLiveLinks } from '../linkPreview';
 import { applyInset, NO_INSET } from './geometry';

@@ -1,5 +1,5 @@
 import type { Rect } from '../../../model/geometry/types';
-import { labelGapDash } from '../../../renderScene/entities/link/geometry';
+import { labelGapDash } from '../../../renderScene/artifacts/link/geometry';
 import { previewPathData, routePreviewLink } from './geometry';
 import type { LiveLink } from './types';
 

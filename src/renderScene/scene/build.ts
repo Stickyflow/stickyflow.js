@@ -1,9 +1,9 @@
 import type { RenderInput } from '../../renderInput/types';
+import { buildFrame, buildSwimlane } from '../artifacts/containers';
+import { buildLink } from '../artifacts/link';
+import { buildFreeformPath } from '../artifacts/path';
+import { buildShape } from '../artifacts/shape';
 import { buildChart } from '../charts';
-import { buildFrame, buildSwimlane } from '../entities/containers';
-import { buildLink } from '../entities/link';
-import { buildFreeformPath } from '../entities/path';
-import { buildShape } from '../entities/shape';
 import { buildTable } from '../tables';
 import { EMPTY_BOUNDS } from './bounds';
 import { tag } from './tagging';

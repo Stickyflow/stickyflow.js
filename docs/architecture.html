@@ -846,7 +846,7 @@ Model Demo {
   { type: "rect", id: "shape-start", x: 40, y: 60, width: 160, height: 80, rx: 8, ... },
   { type: "text", id: "shape-text-start", lines: ["Start"], ... }
 ]</code></pre>
-                  <span class="function-path">renderScene/scene/build.ts → entities/shape.ts → shape/geometry/index.ts → simple.ts</span>
+                  <span class="function-path">renderScene/scene/build.ts → artifacts/shape.ts → shape/geometry/index.ts → simple.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -897,7 +897,7 @@ Model Demo {
 │  └─ styleDecoding/       Farb-, Rampen- und Schattenwerte → RenderInput
 ├─ renderScene/
 │  ├─ scene/              Scene-Vertrag, Aufbau, Bounds, Paint, Reihenfolge
-│  ├─ entities/           Shape, Link, Path, Frame und Swimlane
+│  ├─ artifacts/          Shape, Link, Path, Frame und Swimlane
 │  ├─ tables/             Eigenständiger Tabellenrenderer
 │  └─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
 ├─ svg/                    Definitionen, Nodes, Attribute, Dokument
@@ -1036,10 +1036,10 @@ Model Demo {
                 <tr><td><code>scene/bounds.ts</code></td><td><code>boxBounds()</code>, <code>rotatedBounds()</code></td><td>Achsenparallele Bounds einschließlich Rotation.</td></tr>
                 <tr><td><code>scene/paint.ts</code></td><td><code>paint()</code></td><td>Model-Farben und Gradienten → ScenePaint.</td></tr>
                 <tr><td><code>scene/tagging.ts</code></td><td><code>tag()</code></td><td>Owner-Identität und Primary-Knoten.</td></tr>
-                <tr><td><code>entities/shape.ts</code></td><td><code>buildShape()</code></td><td>Shape-Kontext, Geometry, Double Stroke und Text.</td></tr>
-                <tr><td><code>entities/shape/geometry/index.ts</code></td><td><code>GEOMETRY_RENDERERS</code></td><td>Explizites ShapeType → Renderer-Mapping.</td></tr>
-                <tr><td><code>entities/link/*</code></td><td>Layout, Path, Marker, Label</td><td>Getrennte Phasen des Link-Renderings.</td></tr>
-                <tr><td><code>entities/container/*</code></td><td>Frame- und Swimlane-Renderer</td><td>Containerrahmen, Titel, Lanes und Divider.</td></tr>
+                <tr><td><code>artifacts/shape.ts</code></td><td><code>buildShape()</code></td><td>Shape-Kontext, Geometry, Double Stroke und Text.</td></tr>
+                <tr><td><code>artifacts/shape/geometry/index.ts</code></td><td><code>GEOMETRY_RENDERERS</code></td><td>Explizites ShapeType → Renderer-Mapping.</td></tr>
+                <tr><td><code>artifacts/link/*</code></td><td>Layout, Path, Marker, Label</td><td>Getrennte Phasen des Link-Renderings.</td></tr>
+                <tr><td><code>artifacts/container/*</code></td><td>Frame- und Swimlane-Renderer</td><td>Containerrahmen, Titel, Lanes und Divider.</td></tr>
                 <tr><td><code>tables/buildTable.ts</code></td><td><code>buildTable()</code></td><td>Sequenziert Fills, Columns, Rules und Borders.</td></tr>
                 <tr><td><code>tables/{headerCell,bodyCells,footerCell}.ts</code></td><td>Zellrenderer</td><td>Je Tabellenbereich ein eigener Rendering-Workflow.</td></tr>
                 <tr><td><code>charts/buildChart.ts</code></td><td><code>buildChart()</code></td><td>Wählt Polar, Cartesian oder Undecorated.</td></tr>
@@ -1083,7 +1083,7 @@ Model Demo {
               <thead><tr><th>Bereich</th><th>Verantwortung</th><th>Wichtige Unterteilung</th></tr></thead>
               <tbody>
                 <tr><td><code>scene</code></td><td>Vertrag, Aufbau und gemeinsame Scene-Operationen</td><td><code>build</code>, <code>bounds</code>, <code>paint</code>, <code>tagging</code></td></tr>
-                <tr><td><code>entities</code></td><td>Shape, Link, Freeform Path, Frame und Swimlane</td><td>Je Entity eigene Renderer und Geometrie</td></tr>
+                <tr><td><code>artifacts</code></td><td>Shape, Link, Freeform Path, Frame und Swimlane</td><td>Je Artefakt eigene Renderer und Geometrie</td></tr>
                 <tr><td><code>tables</code></td><td>Tabellenlayout und Zellen als eigenständige Domäne</td><td>Header, Body, Footer, Rules, Borders</td></tr>
                 <tr><td><code>charts</code></td><td>Chart-Orchestrierung und alle Chartvarianten</td><td>Decorations, Field, Primitives, Renderers</td></tr>
                 <tr><td><code>svg</code></td><td>Scene → XML-sicheres SVG</td><td>Nodes, Attribute, Definitionen, Dokument</td></tr>
