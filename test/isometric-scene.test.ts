@@ -16,6 +16,7 @@ describe('Isometric scene builder', () => {
         sideFill: '#4c1dca',
         strokeColor: '#111827',
         strokeWidth: 2,
+        cornerRadius: 0,
       },
       0,
     );
@@ -43,6 +44,26 @@ describe('Isometric scene builder', () => {
     expect(nodes[2]).toMatchObject({
       type: 'path',
       d: 'M 50 40 L 100 20 L 100 100 L 50 120 Z',
+    });
+  });
+
+  it('rounds exterior corners while keeping the shared center sharp', () => {
+    const nodes = buildIsometricObject(
+      {
+        id: 'rounded',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 120,
+        depth: 20,
+        cornerRadius: 8,
+      },
+      0,
+    );
+
+    expect(nodes.every(node => node.type === 'path' && node.d.includes(' Q '))).toBe(true);
+    expect(nodes[0]).toMatchObject({
+      d: expect.stringContaining('L 50 40 Q 50 40 50 40'),
     });
   });
 });

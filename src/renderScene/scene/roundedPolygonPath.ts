@@ -49,13 +49,16 @@ function roundedCorner(
 
 export function roundedPolygonPath(
   points: readonly Point[],
-  radius: number,
+  radius: number | readonly number[],
 ): string {
   if (points.length < 3) {
     return '';
   }
 
-  if (radius <= 0) {
+  const radiusAt = (index: number) =>
+    typeof radius === 'number' ? radius : (radius[index] ?? 0);
+
+  if (points.every((_, index) => radiusAt(index) <= 0)) {
     const [first, ...rest] = points;
     return `M ${first.x} ${first.y} ${rest
       .map(point => `L ${point.x} ${point.y}`)
@@ -67,7 +70,7 @@ export function roundedPolygonPath(
       points[(index - 1 + points.length) % points.length],
       vertex,
       points[(index + 1) % points.length],
-      radius,
+      radiusAt(index),
     ),
   );
 

@@ -1,13 +1,8 @@
 import { isometricFaces, type IsometricObject } from '../../model/isometricObject';
-import type { Point } from '../../model/geometry/types';
 import type { RenderNode, ScenePath } from '../scene';
 import { finite, orderOf, rotatedBounds } from '../scene';
+import { roundedPolygonPath } from '../scene/roundedPolygonPath';
 import { tag } from '../scene/tagging';
-
-function polygonPath(points: readonly Point[]): string {
-  const [first, ...rest] = points;
-  return `M ${first.x} ${first.y} ${rest.map(point => `L ${point.x} ${point.y}`).join(' ')} Z`;
-}
 
 export function buildIsometricObject(object: IsometricObject, index: number): RenderNode[] {
   const strokeWidth = Math.max(0, finite(object.strokeWidth, 1));
@@ -19,6 +14,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
   const bounds = rotatedBounds(object, rotation, strokeWidth + 2);
   const order = orderOf(object, 15_000 + index);
   const faces = isometricFaces(object);
+  const cornerRadius = Math.max(0, finite(object.cornerRadius, 8));
   const common = {
     type: 'path' as const,
     bounds,
@@ -36,21 +32,21 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       ...common,
       id: `isometric-${object.id}-top`,
       order,
-      d: polygonPath(faces.top),
+      d: roundedPolygonPath(faces.top, [cornerRadius, cornerRadius, 0, cornerRadius]),
       style: { ...common.style, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' } },
     },
     {
       ...common,
       id: `isometric-${object.id}-front`,
       order: order + 0.1,
-      d: polygonPath(faces.front),
+      d: roundedPolygonPath(faces.front, [cornerRadius, 0, cornerRadius, cornerRadius]),
       style: { ...common.style, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' } },
     },
     {
       ...common,
       id: `isometric-${object.id}-side`,
       order: order + 0.2,
-      d: polygonPath(faces.side),
+      d: roundedPolygonPath(faces.side, [0, cornerRadius, cornerRadius, cornerRadius]),
       style: { ...common.style, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' } },
     },
   ];
