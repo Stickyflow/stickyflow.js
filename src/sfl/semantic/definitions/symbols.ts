@@ -1,9 +1,9 @@
 import type { SflBlock } from '../../ast';
 import { childBlocks, directProperties } from '../blockEntries';
-import type { ResolvedCanvasObject } from '../types';
+import type { SflEntityOut } from '../types';
 import { asNumber, tupleValues } from '../valueAccess';
 
-type SymbolDefinition = NonNullable<ResolvedCanvasObject['symbol']>;
+type SymbolDefinition = NonNullable<SflEntityOut['symbol']>;
 
 function readSymbolPoints(block: SflBlock): Array<[number, number]> {
   const value = directProperties(block).get('points');

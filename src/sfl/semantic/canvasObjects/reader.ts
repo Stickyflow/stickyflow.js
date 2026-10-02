@@ -1,5 +1,5 @@
 import type { SflBlock, SflValue } from '../../ast';
-import type { ResolvedCanvasObject } from '../types';
+import type { SflEntityOut } from '../types';
 import { asString } from '../valueAccess';
 import { readChart } from './chart';
 import { classifyCanvasObject } from './classification';
@@ -12,7 +12,7 @@ import { readTable } from './table';
 export interface CanvasObjectReaderContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
   layoutProp: (block: SflBlock, key: string) => SflValue | undefined;
-  symbolDefs: Map<string, NonNullable<ResolvedCanvasObject['symbol']>>;
+  symbolDefs: Map<string, NonNullable<SflEntityOut['symbol']>>;
 }
 
 export function buildCanvasObject(
@@ -21,7 +21,7 @@ export function buildCanvasObject(
   context: CanvasObjectReaderContext,
   frameId?: string,
   positionOverride?: number[],
-): ResolvedCanvasObject {
+): SflEntityOut {
   const { mergedProps, layoutProp, symbolDefs } = context;
   const properties = mergedProps(block);
   const classification = classifyCanvasObject(block, properties, symbolDefs);

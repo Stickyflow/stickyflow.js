@@ -1,10 +1,10 @@
 import type { SflValue } from '../../ast';
-import type { ResolvedCanvasObject } from '../types';
+import type { SflEntityOut } from '../types';
 import { asNumber, asString } from '../valueAccess';
 
 type Properties = Map<string, SflValue>;
 
-export function readPath(p: Properties, origin: { x: number; y: number }): ResolvedCanvasObject['path'] {
+export function readPath(p: Properties, origin: { x: number; y: number }): SflEntityOut['path'] {
   const pointsValue = p.get('points');
   const points =
     pointsValue?.type === 'list'

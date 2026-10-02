@@ -1,9 +1,9 @@
 import { decodeRamp } from '../../../sfl/decodeStyles';
-import type { ResolvedCanvasObject } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import type { RenderInputTable, TablePropertyPaths } from '../../types';
 import { BORDER_STYLES, dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
-export function tableObject(e: ResolvedCanvasObject): RenderInputTable {
+export function tableObject(e: SflEntityOut): RenderInputTable {
   const p = e.props;
   return {
     id: e.id,
@@ -38,7 +38,7 @@ export function tableObject(e: ResolvedCanvasObject): RenderInputTable {
   };
 }
 
-function tablePropertyPaths(e: ResolvedCanvasObject): TablePropertyPaths | undefined {
+function tablePropertyPaths(e: SflEntityOut): TablePropertyPaths | undefined {
   const table = e.table;
   if (!table) {
     return undefined;

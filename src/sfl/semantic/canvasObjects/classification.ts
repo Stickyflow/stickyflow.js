@@ -1,12 +1,12 @@
 import type { SflBlock, SflValue } from '../../ast';
-import type { ResolvedCanvasObject } from '../types';
+import type { SflEntityOut } from '../types';
 import { asString } from '../valueAccess';
 
 export interface CanvasObjectClassification {
-  entityType: ResolvedCanvasObject['entityType'];
+  entityType: SflEntityOut['entityType'];
   kind: string;
   shapeType: string | undefined;
-  symbol: ResolvedCanvasObject['symbol'];
+  symbol: SflEntityOut['symbol'];
 }
 
 function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflValue>): string {
@@ -23,7 +23,7 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   return asString(properties.get('kind')) ?? '';
 }
 
-function canvasObjectTypeForKind(kind: string): ResolvedCanvasObject['entityType'] {
+function canvasObjectTypeForKind(kind: string): SflEntityOut['entityType'] {
   if (kind === 'frame') {
     return 'frame';
   }
@@ -46,7 +46,7 @@ function canvasObjectTypeForKind(kind: string): ResolvedCanvasObject['entityType
 export function classifyCanvasObject(
   block: SflBlock,
   properties: Map<string, SflValue>,
-  symbolDefinitions: Map<string, NonNullable<ResolvedCanvasObject['symbol']>>,
+  symbolDefinitions: Map<string, NonNullable<SflEntityOut['symbol']>>,
 ): CanvasObjectClassification {
   const kind = declaredCanvasObjectKind(block, properties);
   const shapeReference = asString(properties.get('shape'));

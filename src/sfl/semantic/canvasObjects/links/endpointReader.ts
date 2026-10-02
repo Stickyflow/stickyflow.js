@@ -1,5 +1,5 @@
-import type { SflValue, Side } from '../../ast';
-import type { ResolvedCanvasObject } from '../types';
+import type { SflValue, Side } from '../../../ast';
+import type { SflEntityOut } from '../../types';
 
 export interface LinkEndpointReference {
   id?: string;
@@ -10,7 +10,7 @@ export interface LinkEndpointReference {
 
 export interface LinkEndpointReaderContext {
   idByName: Map<string, string>;
-  canvasObjectById: Map<string, ResolvedCanvasObject>;
+  canvasObjectById: Map<string, SflEntityOut>;
 }
 
 function namedPortReference(segments: string[], context: LinkEndpointReaderContext): LinkEndpointReference | null {

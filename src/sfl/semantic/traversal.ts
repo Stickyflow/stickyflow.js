@@ -2,15 +2,15 @@ import type { SflBlock } from '../ast';
 import { childBlocks } from './blockEntries';
 import { isCanvasObjectBlockKind } from './canvasObjects/blockKinds';
 import { createFlowPositioner, type FlowPositioner } from './canvasObjects/flowLayout';
+import { expandNetLinks } from './canvasObjects/links/netExpansion';
 import { buildCanvasObject, type CanvasObjectReaderContext } from './canvasObjects/reader';
 import { directGroupMemberIds } from './groups/members';
-import { expandNetLinks } from './links/netExpansion';
 import type { CanvasResolution } from './resolution';
-import type { ResolvedCanvasObject, SflGroupOut } from './types';
+import type { SflEntityOut, SflGroupOut } from './types';
 import { asString, tupleValues } from './valueAccess';
 
 export interface CanvasTree {
-  entities: ResolvedCanvasObject[];
+  entities: SflEntityOut[];
   groups: SflGroupOut[];
   linkBlocks: SflBlock[];
 }
@@ -22,7 +22,7 @@ interface CanvasLocation {
 
 class CanvasTreeReader {
   readonly #context: CanvasObjectReaderContext;
-  readonly #entities: ResolvedCanvasObject[] = [];
+  readonly #entities: SflEntityOut[] = [];
   readonly #linkBlocks: SflBlock[] = [];
 
   constructor(resolution: CanvasResolution) {
@@ -84,7 +84,7 @@ class CanvasTreeReader {
     block: SflBlock,
     location: CanvasLocation,
     nextFlowPosition: FlowPositioner,
-  ): ResolvedCanvasObject {
+  ): SflEntityOut {
     const size = tupleValues(this.#context.layoutProp(block, 'size')) ?? [0, 0];
     return buildCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
   }

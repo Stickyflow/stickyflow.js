@@ -1,6 +1,6 @@
-import type { SflBlock } from '../../ast';
-import type { CanvasObjectReaderContext } from '../canvasObjects/reader';
-import { asString } from '../valueAccess';
+import type { SflBlock } from '../../../ast';
+import { asString } from '../../valueAccess';
+import type { CanvasObjectReaderContext } from '../reader';
 
 function netMembers(block: SflBlock, context: CanvasObjectReaderContext): string[][] {
   const membersValue = context.mergedProps(block).get('members');

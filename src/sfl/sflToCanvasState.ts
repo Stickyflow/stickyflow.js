@@ -2,11 +2,6 @@ import { parse } from './parser';
 import type { SflCanvasState } from './semantic/types';
 
 export type {
-  ResolvedCanvasObject,
-  ResolvedChartObject,
-  ResolvedPathObject,
-  ResolvedSwimlaneObject,
-  ResolvedTableObject,
   SflCanvasState,
   SflChartEntity,
   SflDiagnostic,
@@ -19,16 +14,12 @@ export type {
 } from './semantic/types';
 export {
   isChartEntity,
-  isChartObject,
   isPathEntity,
-  isPathObject,
   isSwimlaneEntity,
-  isSwimlaneObject,
   isTableEntity,
-  isTableObject,
 } from './semantic/types';
 
-import { readLinks } from './semantic/links/reader';
+import { readLinks } from './semantic/canvasObjects/links/reader';
 import { createCanvasResolution } from './semantic/resolution';
 import { readCanvasTree } from './semantic/traversal';
 

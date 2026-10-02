@@ -1,8 +1,8 @@
 import type { Frame } from '../../../model/frame';
-import type { ResolvedCanvasObject } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { dashArray, FONT_WEIGHTS, LABEL_POSITIONS, numOf, oneOf } from './values';
 
-export function frameObject(e: ResolvedCanvasObject): Frame {
+export function frameObject(e: SflEntityOut): Frame {
   const p = e.props;
   return {
     id: e.id,

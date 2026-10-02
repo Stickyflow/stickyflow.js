@@ -1,7 +1,7 @@
-import type { SflBlock } from '../../ast';
-import type { CanvasObjectReaderContext } from '../canvasObjects/reader';
-import type { SflLinkOut } from '../types';
-import { asNumber, asString, listNumbers } from '../valueAccess';
+import type { SflBlock } from '../../../ast';
+import type { SflLinkOut } from '../../types';
+import { asNumber, asString, listNumbers } from '../../valueAccess';
+import type { CanvasObjectReaderContext } from '../reader';
 import { type LinkEndpointReaderContext, readLinkEndpoint } from './endpointReader';
 import { readLinkPresentation } from './presentation';
 

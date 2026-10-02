@@ -1,8 +1,8 @@
 import type { FreeformPath } from '../../../model/path';
-import type { ResolvedCanvasObject } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { dashArray, numOf, oneOf, PATH_MARKERS, solidColor } from './values';
 
-export function pathObject(e: ResolvedCanvasObject): FreeformPath {
+export function pathObject(e: SflEntityOut): FreeformPath {
   const p = e.props;
   return {
     id: e.id,

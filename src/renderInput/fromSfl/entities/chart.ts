@@ -20,10 +20,10 @@ import type {
   TypedChart,
 } from '../../../model/chart';
 import { decodeColor, decodeRamp, decodeShadow } from '../../../sfl/decodeStyles';
-import type { ResolvedCanvasObject } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
 import { numOf, solidColor } from './values';
 
-export function chartObject(e: ResolvedCanvasObject): Chart {
+export function chartObject(e: SflEntityOut): Chart {
   const p = e.props;
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
   const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
