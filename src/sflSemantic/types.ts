@@ -6,11 +6,13 @@ import type { SflGroupOut } from './groups/types';
 export type { SflLinkOut } from './canvasObjects/artifacts/links/types';
 export {
   isChartObject,
+  isIsometricObject,
   isPathObject,
   isSwimlaneObject,
   isTableObject,
   type SflCanvasObject,
   type SflChartObject,
+  type SflIsometricObject,
   type SflPathObject,
   type SflSwimlaneObject,
   type SflTableObject,
