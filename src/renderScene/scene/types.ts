@@ -27,7 +27,7 @@ export interface SceneStyle {
     | { type: 'path'; d: string };
 }
 
-export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
+export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart' | 'isometric';
 
 export interface SceneIdentity {
   role: SceneRole;

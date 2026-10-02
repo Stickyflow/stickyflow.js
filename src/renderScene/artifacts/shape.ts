@@ -1,6 +1,7 @@
 import type { Shape } from '../../model/shape';
 import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
 import { finite, orderOf, rotatedBounds } from '../scene';
+import { tag } from '../scene/tagging';
 import { renderShapeGeometry } from './shape/geometry';
 import { shapeStyle } from './shape/style';
 import { renderShapeText } from './shape/text';
@@ -85,4 +86,21 @@ export function buildShape(
     nodes.push(text);
   }
   return nodes;
+}
+
+export function buildShapes(
+  shapes: readonly Shape[],
+  diagnostics: RenderDiagnostic[],
+  measureText?: MeasureTextFactory,
+): RenderNode[] {
+  return shapes.flatMap((shape, index) =>
+    tag(
+      buildShape(shape, index, diagnostics, measureText),
+      'shape',
+      shape.id,
+      shape.shapeType,
+      shape.text || shape.shapeType,
+      shape.parentFrameId ?? undefined,
+    ),
+  );
 }

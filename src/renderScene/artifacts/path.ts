@@ -1,6 +1,7 @@
 import type { FreeformPath } from '../../model/path';
 import type { RenderNode } from '../scene';
 import { finite, freeformPathData, orderOf } from '../scene';
+import { tag } from '../scene/tagging';
 
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
   if (path.isVisible === false || path.points.length < 2) {
@@ -42,4 +43,8 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
       },
     },
   ];
+}
+
+export function buildFreeformPaths(paths: readonly FreeformPath[]): RenderNode[] {
+  return paths.flatMap((path, index) => tag(buildFreeformPath(path, index), 'path', path.id, 'path', 'Path'));
 }

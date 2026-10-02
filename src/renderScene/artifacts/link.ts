@@ -1,5 +1,6 @@
 import type { RenderInput } from '../../renderInput/types';
 import type { MeasureTextFactory, RenderNode } from '../scene';
+import { tag } from '../scene/tagging';
 import { renderEndpointLabels } from './link/endpointLabels';
 import { renderMainLabel } from './link/label';
 import { createLinkRenderContext } from './link/layout';
@@ -21,4 +22,16 @@ export function buildLink(
     ...renderWeightBadge(context),
     ...renderEndpointLabels(context),
   ];
+}
+
+export function buildLinks(links: RenderInput['links'], measureText?: MeasureTextFactory): RenderNode[] {
+  return links.flatMap((item, index) =>
+    tag(
+      buildLink(item, index, measureText),
+      'link',
+      item.link.id,
+      undefined,
+      item.link.text || `${item.link.fromId} → ${item.link.toId}`,
+    ),
+  );
 }
