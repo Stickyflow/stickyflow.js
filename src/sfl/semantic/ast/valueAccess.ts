@@ -1,4 +1,4 @@
-import type { SflValue } from '../ast';
+import type { SflValue } from '../../ast';
 
 export function asString(value?: SflValue): string | undefined {
   if (!value) {

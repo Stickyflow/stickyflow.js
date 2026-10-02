@@ -1,5 +1,5 @@
-import type { SflValue } from '../../../ast';
-import { asString } from '../../valueAccess';
+import type { SflValue } from '../../../../ast';
+import { asString } from '../../../ast/valueAccess';
 import type { ChartData } from './types';
 
 export function readChartZones(value?: SflValue): ChartData['zones'] {

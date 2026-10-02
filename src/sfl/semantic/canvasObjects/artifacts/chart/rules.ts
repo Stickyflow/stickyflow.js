@@ -1,6 +1,6 @@
-import type { SflBlock } from '../../../ast';
-import { contentChildren, directProperties } from '../../blockEntries';
-import { asNumber, asString } from '../../valueAccess';
+import type { SflBlock } from '../../../../ast';
+import { contentChildren, directProperties } from '../../../ast/blockEntries';
+import { asNumber, asString } from '../../../ast/valueAccess';
 import type { ChartData } from './types';
 import { numberList } from './values';
 

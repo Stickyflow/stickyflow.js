@@ -1,8 +1,8 @@
 import { CHART_TYPES, type ChartType, isChartType } from '../../../model/chart';
 import type { SflBlock, SflDocument } from '../../ast';
-import { childBlocks, contentChildren, directProperties, styleProperties } from '../blockEntries';
+import { childBlocks, contentChildren, directProperties, styleProperties } from '../ast/blockEntries';
+import { asString } from '../ast/valueAccess';
 import type { SflDiagnostic } from '../types';
-import { asString } from '../valueAccess';
 
 const NATIVE_CIRCULAR_CHART_TYPES: ReadonlySet<ChartType> = new Set(['radar', 'radial']);
 const OPTIONAL_CIRCULAR_GRID_CHART_TYPES: ReadonlySet<ChartType> = new Set(['scatter', 'custom', 'hexbin']);
@@ -18,7 +18,7 @@ export function collectUnsupportedChartTypes(doc: SflDocument): SflDiagnostic[] 
           severity: 'warning',
           code: 'unsupported-chart-type',
           entityId: block.name,
-          message: `Unsupported chart type '${declared}' — drawn as a plain series plot. Supported: ${CHART_TYPES.join(', ')}.`,
+          message: `Unsupported chart type '${declared}' â€” drawn as a plain series plot. Supported: ${CHART_TYPES.join(', ')}.`,
         });
       }
     }
@@ -44,7 +44,7 @@ export function collectEmptySeries(doc: SflDocument): SflDiagnostic[] {
             severity: 'warning',
             code: 'series-without-values',
             entityId: series.name,
-            message: `Series '${series.name}' has no values. If this was meant to be an Axis or Rule, it needs that keyword in front of the name — inside data{}, a bare name is read as a Series.`,
+            message: `Series '${series.name}' has no values. If this was meant to be an Axis or Rule, it needs that keyword in front of the name â€” inside data{}, a bare name is read as a Series.`,
           });
         }
       }
@@ -77,7 +77,7 @@ export function collectUnsupportedGridShapes(doc: SflDocument): SflDiagnostic[] 
           severity: 'warning',
           code: 'unsupported-grid-shape',
           entityId: block.name,
-          message: `gridShape: circle isn't supported on '${chartType}' — drawn with the standard rectangular grid instead. Supported: ${[...OPTIONAL_CIRCULAR_GRID_CHART_TYPES].join(', ')}.`,
+          message: `gridShape: circle isn't supported on '${chartType}' â€” drawn with the standard rectangular grid instead. Supported: ${[...OPTIONAL_CIRCULAR_GRID_CHART_TYPES].join(', ')}.`,
         });
       }
     }

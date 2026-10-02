@@ -1,6 +1,6 @@
 import type { SflBlock, SflValue } from '../../ast';
-import { directProperties, layoutProperties, styleProperties } from '../blockEntries';
-import type { CanvasObjectReaderContext } from '../canvasObjects/reader';
+import { directProperties, layoutProperties, styleProperties } from '../ast/blockEntries';
+import type { CanvasObjectReaderContext } from '../canvasObjects/processing/reader';
 import type { CanvasDefinitions } from './collection';
 import { classifyCompositionReferences } from './compositionReferences';
 import { resolveDefinitionInheritance } from './inheritance';

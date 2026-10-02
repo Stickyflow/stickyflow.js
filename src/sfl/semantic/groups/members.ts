@@ -1,7 +1,7 @@
 import type { SflBlock } from '../../ast';
-import { childBlocks, directProperties } from '../blockEntries';
-import { isCanvasObjectBlockKind } from '../canvasObjects/blockKinds';
-import { asString } from '../valueAccess';
+import { childBlocks, directProperties } from '../ast/blockEntries';
+import { asString } from '../ast/valueAccess';
+import { isCanvasObjectBlockKind } from '../canvasObjects/processing/blockKinds';
 
 export function directGroupMemberIds(block: SflBlock): string[] {
   return childBlocks(block)

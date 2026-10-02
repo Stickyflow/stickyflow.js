@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument } from '../../ast';
-import { childBlocks } from '../blockEntries';
+import { childBlocks } from '../ast/blockEntries';
 import type { SflDiagnostic } from '../types';
 
 export interface CompositionReferences {
@@ -36,7 +36,7 @@ function collectBlockDiagnostics(
         severity: 'warning',
         code: 'unresolved-style-or-layout',
         entityId: block.name,
-        message: `"${reference}" is not a Style or Layout defined at the top level of the document — "${block.name}" gets no shape, fill, or stroke from it.`,
+        message: `"${reference}" is not a Style or Layout defined at the top level of the document â€” "${block.name}" gets no shape, fill, or stroke from it.`,
       });
     }
   }

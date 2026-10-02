@@ -1,13 +1,13 @@
 import type { SflBlock } from '../ast';
-import { childBlocks } from './blockEntries';
-import { isCanvasObjectBlockKind } from './canvasObjects/blockKinds';
-import { createFlowPositioner, type FlowPositioner } from './canvasObjects/flowLayout';
-import { expandNetLinks } from './canvasObjects/links/netExpansion';
-import { buildCanvasObject, type CanvasObjectReaderContext } from './canvasObjects/reader';
+import { childBlocks } from './ast/blockEntries';
+import { asString, tupleValues } from './ast/valueAccess';
+import { expandNetLinks } from './canvasObjects/artifacts/links/netExpansion';
+import { isCanvasObjectBlockKind } from './canvasObjects/processing/blockKinds';
+import { createFlowPositioner, type FlowPositioner } from './canvasObjects/processing/layout/flow';
+import { buildCanvasObject, type CanvasObjectReaderContext } from './canvasObjects/processing/reader';
 import { directGroupMemberIds } from './groups/members';
 import type { CanvasResolution } from './resolution';
 import type { SflEntityOut, SflGroupOut } from './types';
-import { asString, tupleValues } from './valueAccess';
 
 export interface CanvasTree {
   entities: SflEntityOut[];

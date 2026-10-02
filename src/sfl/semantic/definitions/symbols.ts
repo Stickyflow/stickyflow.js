@@ -1,7 +1,7 @@
 import type { SflBlock } from '../../ast';
-import { childBlocks, directProperties } from '../blockEntries';
-import type { SflEntityOut } from '../types';
-import { asNumber, tupleValues } from '../valueAccess';
+import { childBlocks, directProperties } from '../ast/blockEntries';
+import { asNumber, tupleValues } from '../ast/valueAccess';
+import type { SflEntityOut } from '../canvasObjects/types';
 
 type SymbolDefinition = NonNullable<SflEntityOut['symbol']>;
 

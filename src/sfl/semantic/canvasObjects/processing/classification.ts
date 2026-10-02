@@ -1,6 +1,6 @@
-import type { SflBlock, SflValue } from '../../ast';
+import type { SflBlock, SflValue } from '../../../ast';
+import { asString } from '../../ast/valueAccess';
 import type { SflEntityOut } from '../types';
-import { asString } from '../valueAccess';
 
 export interface CanvasObjectClassification {
   entityType: SflEntityOut['entityType'];

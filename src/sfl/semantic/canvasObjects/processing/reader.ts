@@ -1,13 +1,13 @@
-import type { SflBlock, SflValue } from '../../ast';
+import type { SflBlock, SflValue } from '../../../ast';
+import { asString } from '../../ast/valueAccess';
+import { readChart } from '../artifacts/chart';
+import { readPath } from '../artifacts/path';
+import { readSwimlane } from '../artifacts/swimlane';
+import { readTable } from '../artifacts/table';
 import type { SflEntityOut } from '../types';
-import { asString } from '../valueAccess';
-import { readChart } from './chart';
 import { classifyCanvasObject } from './classification';
-import { readCanvasObjectGeometry } from './geometry';
-import { readPath } from './path';
+import { readCanvasObjectGeometry } from './layout/geometry';
 import { readCanvasObjectPresentation } from './presentation';
-import { readSwimlane } from './swimlane';
-import { readTable } from './table';
 
 export interface CanvasObjectReaderContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;

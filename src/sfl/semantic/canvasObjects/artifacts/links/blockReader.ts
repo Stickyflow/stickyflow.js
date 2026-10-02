@@ -1,9 +1,9 @@
-import type { SflBlock } from '../../../ast';
-import type { SflLinkOut } from '../../types';
-import { asNumber, asString, listNumbers } from '../../valueAccess';
-import type { CanvasObjectReaderContext } from '../reader';
+import type { SflBlock } from '../../../../ast';
+import { asNumber, asString, listNumbers } from '../../../ast/valueAccess';
+import type { CanvasObjectReaderContext } from '../../processing/reader';
 import { type LinkEndpointReaderContext, readLinkEndpoint } from './endpointReader';
 import { readLinkPresentation } from './presentation';
+import type { SflLinkOut } from './types';
 
 export function readLinkBlock(
   block: SflBlock,

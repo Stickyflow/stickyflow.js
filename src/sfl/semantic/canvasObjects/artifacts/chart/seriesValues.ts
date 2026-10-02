@@ -1,5 +1,5 @@
-import type { SflValue } from '../../../ast';
-import { asNumber, asString } from '../../valueAccess';
+import type { SflValue } from '../../../../ast';
+import { asNumber, asString } from '../../../ast/valueAccess';
 import type { ChartSeries } from './types';
 
 type SeriesValueShape = 'scalar' | 'tuple';

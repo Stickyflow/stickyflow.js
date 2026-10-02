@@ -1,6 +1,6 @@
-import type { SflBlock } from '../../ast';
-import { asNumber, asString } from '../valueAccess';
-import type { CanvasObjectReaderContext } from './reader';
+import type { SflBlock } from '../../../../ast';
+import { asNumber, asString } from '../../../ast/valueAccess';
+import type { CanvasObjectReaderContext } from '../reader';
 
 export type FlowPositioner = (size: number[]) => number[] | undefined;
 

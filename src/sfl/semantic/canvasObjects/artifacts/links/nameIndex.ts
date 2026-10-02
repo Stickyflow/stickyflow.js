@@ -1,7 +1,7 @@
-import type { SflBlock } from '../../../ast';
-import { childBlocks, directProperties } from '../../blockEntries';
-import { asString } from '../../valueAccess';
-import { isCanvasObjectBlockKind } from '../blockKinds';
+import type { SflBlock } from '../../../../ast';
+import { childBlocks, directProperties } from '../../../ast/blockEntries';
+import { asString } from '../../../ast/valueAccess';
+import { isCanvasObjectBlockKind } from '../../processing/blockKinds';
 
 function indexLinkableNames(blocks: SflBlock[], idByName: Map<string, string>): void {
   for (const block of blocks) {

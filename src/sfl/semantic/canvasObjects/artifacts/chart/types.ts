@@ -1,4 +1,4 @@
-import type { SflValue } from '../../../ast';
+import type { SflValue } from '../../../../ast';
 import type { SflEntityOut } from '../../types';
 
 export type ChartProperties = Map<string, SflValue>;

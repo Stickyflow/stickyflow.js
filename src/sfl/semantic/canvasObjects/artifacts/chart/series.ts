@@ -1,5 +1,5 @@
-import type { SflBlock } from '../../../ast';
-import { asNumber, asString } from '../../valueAccess';
+import type { SflBlock } from '../../../../ast';
+import { asNumber, asString } from '../../../ast/valueAccess';
 import { readSeriesColors, readSeriesErrors, readSeriesSymbol, readSeriesValues } from './seriesValues';
 import type { ChartProperties, ChartSeries } from './types';
 

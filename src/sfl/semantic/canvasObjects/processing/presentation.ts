@@ -1,5 +1,5 @@
-import type { SflValue } from '../../ast';
-import { asString } from '../valueAccess';
+import type { SflValue } from '../../../ast';
+import { asString } from '../../ast/valueAccess';
 
 const STRUCTURAL_PROPERTIES = new Set(['id', 'kind', 'text', 'shape', 'parent', 'order', 'orientation', 'lanes']);
 

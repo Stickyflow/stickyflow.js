@@ -1,9 +1,10 @@
-import type { SflBlock } from '../../../ast';
-import type { SflEntityOut, SflLinkOut } from '../../types';
-import type { CanvasObjectReaderContext } from '../reader';
+import type { SflBlock } from '../../../../ast';
+import type { CanvasObjectReaderContext } from '../../processing/reader';
+import type { SflEntityOut } from '../../types';
 import { readLinkBlock } from './blockReader';
 import type { LinkEndpointReaderContext } from './endpointReader';
 import { buildLinkNameIndex } from './nameIndex';
+import type { SflLinkOut } from './types';
 
 export function readLinks(
   model: SflBlock | undefined,

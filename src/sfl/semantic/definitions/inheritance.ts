@@ -1,5 +1,5 @@
 import type { SflBlock, SflValue } from '../../ast';
-import { directProperties } from '../blockEntries';
+import { directProperties } from '../ast/blockEntries';
 import type { BlockDefinitions } from './collection';
 
 export type ResolvedDefinitions = Map<string, Map<string, SflValue>>;

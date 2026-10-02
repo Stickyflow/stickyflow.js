@@ -1,5 +1,5 @@
-import type { SflBlock, SflValue } from '../../ast';
-import { asNumber, tupleValues } from '../valueAccess';
+import type { SflBlock, SflValue } from '../../../../ast';
+import { asNumber, tupleValues } from '../../../ast/valueAccess';
 
 type LayoutProperty = (block: SflBlock, key: string) => SflValue | undefined;
 

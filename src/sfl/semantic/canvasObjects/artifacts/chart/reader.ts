@@ -1,7 +1,7 @@
-import { isChartType } from '../../../../model/chart';
-import type { SflBlock } from '../../../ast';
-import { contentChildren, contentProperty } from '../../blockEntries';
-import { asNumber, asString } from '../../valueAccess';
+import { isChartType } from '../../../../../model/chart';
+import type { SflBlock } from '../../../../ast';
+import { contentChildren, contentProperty } from '../../../ast/blockEntries';
+import { asNumber, asString } from '../../../ast/valueAccess';
 import { readAxis } from './axis';
 import { readChartRules } from './rules';
 import { readSeries } from './series';

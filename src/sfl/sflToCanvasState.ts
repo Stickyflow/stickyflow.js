@@ -19,7 +19,7 @@ export {
   isTableEntity,
 } from './semantic/types';
 
-import { readLinks } from './semantic/canvasObjects/links/reader';
+import { readLinks } from './semantic/canvasObjects/artifacts/links/reader';
 import { createCanvasResolution } from './semantic/resolution';
 import { readCanvasTree } from './semantic/traversal';
 

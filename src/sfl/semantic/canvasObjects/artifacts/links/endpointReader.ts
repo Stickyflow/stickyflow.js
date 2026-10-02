@@ -1,4 +1,4 @@
-import type { SflValue, Side } from '../../../ast';
+import type { SflValue, Side } from '../../../../ast';
 import type { SflEntityOut } from '../../types';
 
 export interface LinkEndpointReference {

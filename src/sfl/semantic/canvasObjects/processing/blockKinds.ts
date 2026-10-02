@@ -1,4 +1,4 @@
-import type { BlockKind } from '../../ast';
+import type { BlockKind } from '../../../ast';
 
 export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Entity',

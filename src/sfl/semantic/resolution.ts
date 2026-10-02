@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument } from '../ast';
-import type { CanvasObjectReaderContext } from './canvasObjects/reader';
+import type { CanvasObjectReaderContext } from './canvasObjects/processing/reader';
 import { collectCanvasDefinitions } from './definitions/collection';
 import { collectUnresolvedCompositionReferences } from './definitions/compositionReferences';
 import { createCanvasObjectPropertyReaders } from './definitions/propertyReaders';

@@ -1,4 +1,4 @@
-import type { SflBlock, SflValue } from '../ast';
+import type { SflBlock, SflValue } from '../../ast';
 
 export function directProperties(block: SflBlock): Map<string, SflValue> {
   const properties = new Map<string, SflValue>();
