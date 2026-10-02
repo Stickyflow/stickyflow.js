@@ -9,7 +9,8 @@ import {
   removeEntity,
   removeLink,
 } from '../src/interaction/patchSfl';
-import { parse, sflToCanvasState } from '../src/sfl';
+import { sflToCanvasState } from '../src/semantic/sflToCanvasState';
+import { parse } from '../src/sfl';
 import type { OwnerRef } from '../src/viewer';
 
 const owner = (id: string, role: OwnerRef['role'] = 'entity'): OwnerRef => ({ role, id });

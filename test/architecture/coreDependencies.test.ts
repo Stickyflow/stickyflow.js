@@ -45,18 +45,13 @@ function sourcePath(file: string): string {
 }
 
 function sflLayer(path: string): CoreLayer | null {
-  if (path === 'sfl/sflToImportJson.ts' || path.startsWith('sfl/importJson/')) {
+  if (path.startsWith('importJson/')) {
     return 'import-json';
   }
-  if (/^sfl\/(ast|lexer|parser|emitter)\.ts$/.test(path) || path.startsWith('sfl/language/')) {
+  if (path.startsWith('sfl/')) {
     return 'sfl-language';
   }
-  if (
-    path === 'sfl/sflToCanvasState.ts' ||
-    path === 'sfl/decodeStyles.ts' ||
-    path.startsWith('sfl/semantic/') ||
-    path.startsWith('sfl/styleDecoding/')
-  ) {
+  if (path.startsWith('semantic/') || path.startsWith('styleDecoding/')) {
     return 'sfl-semantic';
   }
   return null;
@@ -106,8 +101,8 @@ describe('core dependency direction', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('keeps the SFL language implementation self-contained', () => {
-    const languageDir = join(srcDir, 'sfl/language');
+  it('keeps the complete SFL language layer self-contained', () => {
+    const languageDir = join(srcDir, 'sfl');
     const offenders: string[] = [];
     for (const file of tsFiles(languageDir)) {
       for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {

@@ -1,4 +1,4 @@
-import { sflToCanvasState } from '../../../sfl';
+import { sflToCanvasState } from '../../../semantic/sflToCanvasState';
 import type { ColumnResizeChangeEvent } from '../../events';
 import { applyPropertyChange } from './propertyChange';
 import { applyResizeChange } from './resizeChange';

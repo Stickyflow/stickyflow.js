@@ -28,8 +28,10 @@ Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflTo
 
 ```
 src/
-  sfl/               SFL core: ast, lexer, parser, emitter, sflToCanvasState,
-                     adapters/{sflToImportJson,decodeStyles} — pure, no DOM
+  sfl/               L1 SFL language: AST, lexer, parser and canonical emitter
+  semantic/          SFL AST → resolved canvas state
+  styleDecoding/     semantic decoding of colors, ramps and shadows
+  importJson/        canvas-state → Stickyflow import JSON adapter
   model/             framework-agnostic document model:
                        shapes/frames/links/swimlanes/tables + colors/shadows
                        geometry/{connectionLine,router,tables}

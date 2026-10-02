@@ -19,8 +19,8 @@ import type {
   TreemapChartConfig,
   TypedChart,
 } from '../../../model/chart';
-import { decodeColor, decodeRamp, decodeShadow } from '../../../sfl/decodeStyles';
-import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../semantic/sflToCanvasState';
+import { decodeColor, decodeRamp, decodeShadow } from '../../../styleDecoding';
 import { numOf, solidColor } from './values';
 
 export function chartObject(e: SflEntityOut): Chart {

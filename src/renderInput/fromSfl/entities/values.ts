@@ -1,4 +1,4 @@
-import { decodeColor, type GradientFill } from '../../../sfl/decodeStyles';
+import { decodeColor, type GradientFill } from '../../../styleDecoding';
 
 export const numOf = (value?: string): number | undefined => (value === undefined ? undefined : Number(value));
 

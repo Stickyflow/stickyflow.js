@@ -1,6 +1,6 @@
 import type { ShapeType } from '../../../model/shape';
-import { decodeColor, decodeShadow } from '../../../sfl/decodeStyles';
-import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../semantic/sflToCanvasState';
+import { decodeColor, decodeShadow } from '../../../styleDecoding';
 import {
   dashArray,
   FONT_WEIGHTS,

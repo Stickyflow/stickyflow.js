@@ -1,6 +1,6 @@
 import type { Swimlane } from '../../../model/swimlane';
-import { decodeShadow } from '../../../sfl/decodeStyles';
-import type { SflEntityOut } from '../../../sfl/sflToCanvasState';
+import type { SflEntityOut } from '../../../semantic/sflToCanvasState';
+import { decodeShadow } from '../../../styleDecoding';
 import { dashArray, FONT_WEIGHTS, numOf, oneOf } from './values';
 
 export function swimlaneObject(e: SflEntityOut): Swimlane {

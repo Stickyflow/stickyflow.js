@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyMoveChange, applyTextChange } from '../src/interaction/patchSfl';
-import { parse, sflToCanvasState } from '../src/sfl';
+import { sflToCanvasState } from '../src/semantic/sflToCanvasState';
+import { parse } from '../src/sfl';
 import type { OwnerRef } from '../src/viewer';
 
 const owner = (id: string): OwnerRef => ({ role: 'entity', id });

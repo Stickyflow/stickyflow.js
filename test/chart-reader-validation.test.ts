@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src';
-import { sflToCanvasState } from '../src/sfl';
+import { sflToCanvasState } from '../src/semantic/sflToCanvasState';
 
 const chart = (body: string) => `sfl 1.2
 

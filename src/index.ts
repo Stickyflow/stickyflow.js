@@ -1,3 +1,5 @@
+export type { SflImportJson } from './importJson';
+export { sflToImportJson } from './importJson';
 export type { Chart, ChartAxis, ChartRamp, ChartSeries, ChartType } from './model/chart';
 export { CHART_TYPES } from './model/chart';
 export type { FreeformPath, PathPoint } from './model/path';
@@ -21,21 +23,19 @@ export type {
   SflChartEntity,
   SflEntityOut,
   SflGroupOut,
-  SflImportJson,
   SflLinkOut,
   SflPathEntity,
   SflSwimlaneEntity,
   SflTableEntity,
-} from './sfl';
+} from './semantic/sflToCanvasState';
 export {
-  canonicalize,
   isChartEntity,
   isPathEntity,
   isSwimlaneEntity,
   isTableEntity,
-  parse,
   sflToCanvasState,
-  sflToImportJson,
-} from './sfl';
+} from './semantic/sflToCanvasState';
+export { canonicalize, parse } from './sfl';
 export { sflToRenderInput } from './sflToRenderInput';
+export { decodeColor, decodeShadow } from './styleDecoding';
 export { DOM_CONTRACT_VERSION } from './svgContract/version';

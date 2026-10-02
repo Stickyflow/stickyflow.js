@@ -1,4 +1,4 @@
-import { sflToCanvasState } from '../../../sfl';
+import { sflToCanvasState } from '../../../semantic/sflToCanvasState';
 import { findFirstBlockOfKind, type LineRange, nameExists, VALID_IDENT } from '../scanner';
 import type { InsertLinkOptions } from './types';
 

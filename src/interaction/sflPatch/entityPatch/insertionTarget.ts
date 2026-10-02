@@ -1,4 +1,4 @@
-import { sflToCanvasState } from '../../../sfl';
+import { sflToCanvasState } from '../../../semantic/sflToCanvasState';
 import { findFirstBlockOfKind, findOwnerBlock, type LineRange } from '../scanner';
 
 export interface EntityInsertionTarget {
