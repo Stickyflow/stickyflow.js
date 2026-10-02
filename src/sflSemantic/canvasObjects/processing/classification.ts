@@ -1,12 +1,12 @@
 import type { SflBlock, SflValue } from '../../../sflLanguage/ast';
 import { asString } from '../../ast/valueAccess';
-import type { SflCanvasObject } from '../types';
+import type { SflCanvasObjectType, SflSymbolDefinition } from '../types';
 
 export interface CanvasObjectClassification {
-  objectType: SflCanvasObject['objectType'];
+  objectType: SflCanvasObjectType;
   kind: string;
   shapeType: string | undefined;
-  symbol: SflCanvasObject['symbol'];
+  symbol: SflSymbolDefinition | undefined;
 }
 
 function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflValue>): string {
@@ -19,11 +19,14 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Chart') {
     return 'chart';
   }
+  if (block.kind === 'Isometric') {
+    return 'isometric';
+  }
 
   return asString(properties.get('kind')) ?? '';
 }
 
-function canvasObjectTypeForKind(kind: string): SflCanvasObject['objectType'] {
+function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   if (kind === 'frame') {
     return 'frame';
   }
@@ -39,6 +42,9 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObject['objectType'] {
   if (kind === 'chart') {
     return 'chart';
   }
+  if (kind === 'isometric') {
+    return 'isometric';
+  }
 
   return 'shape';
 }
@@ -46,7 +52,7 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObject['objectType'] {
 export function classifyCanvasObject(
   block: SflBlock,
   properties: Map<string, SflValue>,
-  symbolDefinitions: Map<string, NonNullable<SflCanvasObject['symbol']>>,
+  symbolDefinitions: Map<string, SflSymbolDefinition>,
 ): CanvasObjectClassification {
   const kind = declaredCanvasObjectKind(block, properties);
   const shapeReference = asString(properties.get('shape'));

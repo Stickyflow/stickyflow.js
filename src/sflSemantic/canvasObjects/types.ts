@@ -20,13 +20,10 @@ export interface SflSymbolDefinition {
   ports?: Array<{ name: string; at: [number, number] }>;
 }
 
-export interface SflCanvasObject {
+export interface SflCanvasObjectBase {
   id: string;
-  objectType: SflCanvasObjectType;
   kind: string;
   text?: string;
-  shapeType?: string;
-  symbol?: SflSymbolDefinition;
   x: number;
   y: number;
   width: number;
@@ -35,12 +32,21 @@ export interface SflCanvasObject {
   order?: number;
   parentFrameId?: string;
   props: Record<string, string>;
+}
+
+export interface SflCanvasObject extends SflCanvasObjectBase {
+  objectType: SflCanvasObjectType;
+  shapeType?: string;
+  symbol?: SflSymbolDefinition;
   table?: SflTableData;
   swimlane?: SflSwimlaneData;
   path?: SflPathData;
   chart?: SflChartData;
   isometric?: SflIsometricData;
 }
+
+export type SflShapeObject = SflCanvasObject & { objectType: 'shape' };
+export type SflFrameObject = SflCanvasObject & { objectType: 'frame' };
 
 export { isChartObject } from './artifacts/chart/types';
 export { isIsometricObject } from './artifacts/isometric/types';
