@@ -11,7 +11,7 @@ import {
   TABLE_COLUMN_DIVIDER_ATTR,
   TABLE_COLUMN_START_WIDTH_ATTR,
   TABLE_COLUMN_WIDTH_SCALE_ATTR,
-} from '../svgContract/attributes';
+} from './domContract/attributes';
 import { num, xml } from './format';
 
 function identityAttrs(identity: SceneIdentity): Array<string | undefined> {

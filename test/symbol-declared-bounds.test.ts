@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { symbolDeclaredBounds } from '../src/domContract';
+import { symbolDeclaredBounds } from '../src/runtime/dom';
 
 function fakeElement(attrs: Record<string, string>) {
   return { getAttribute: (name: string) => attrs[name] ?? null };

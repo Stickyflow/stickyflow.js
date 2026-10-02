@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { sflToRenderInput } from '../src/index';
-import { applyColumnResizeChange } from '../src/interaction/patchSfl';
-import type { OwnerRef } from '../src/viewer';
+import { applyColumnResizeChange } from '../src/runtime/interaction/patchSfl';
+import type { OwnerRef } from '../src/runtime/viewer';
 
 const OWNER: OwnerRef = { role: 'table', id: 't' };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderNode } from '../src/index';
 import { render, sflToCanvasState } from '../src/index';
-import { applyPropertyChange } from '../src/interaction';
+import { applyPropertyChange } from '../src/runtime/interaction';
 
 const solidFill = (node: RenderNode): string | undefined =>
   'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;

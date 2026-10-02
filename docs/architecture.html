@@ -873,7 +873,7 @@ Model Demo {
                 <div>
                   <h3>Optionale Browser-Nutzung</h3>
                   <p>Der Viewer setzt das fertige SVG in den Container und prüft den DOM-Contract. Interaction kann anschließend Auswahl und Editing binden, ohne Parser oder Renderer umzubauen.</p>
-                  <span class="function-path">viewer/display → viewer/interaction → interaction/*</span>
+                  <span class="function-path">runtime/viewer/display → runtime/viewer/interaction → runtime/interaction/*</span>
                 </div>
               </article>
             </div>
@@ -892,7 +892,6 @@ Model Demo {
 ├─ model/                  Domänenmodelle, Geometrie, Diagnosen, Vertragsversion
 ├─ sflLanguage/            AST, Lexer, Parser, Emitter
 ├─ sflSemantic/            Definitionen, Vererbung, Canvas-Object- und Link-Auflösung
-├─ importJson/             Export in das Stickyflow-Importformat
 ├─ renderInput/
 │  ├─ fromSfl/             SFL-Zustand → RenderInput
 │  └─ styleDecoding/       Farb-, Rampen- und Schattenwerte → RenderInput
@@ -902,11 +901,15 @@ Model Demo {
 │  ├─ tables/             Eigenständiger Tabellenrenderer
 │  └─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
 ├─ svg/                    Definitionen, Nodes, Attribute, Dokument
-├─ domContract/           Versioniertes SVG/DOM-Bindingschema
-├─ viewer/                Anzeige, Kamera, Selektion
-├─ interaction/           Editiergesten und SFL-Patches
-├─ web-component/         &lt;stickyflow-diagram&gt;
-└─ eventing/              Typisierte Ereignisverteilung</code></pre>
+│  └─ domContract/        Versioniertes SVG/DOM-Bindingschema
+├─ adapters/
+│  └─ importJson/         Export in das Stickyflow-Importformat
+└─ runtime/
+   ├─ dom/                DOM-Abfragen und Overlays
+   ├─ eventing/           Typisierte Ereignisverteilung
+   ├─ viewer/             Anzeige, Kamera, Selektion
+   ├─ interaction/        Editiergesten und SFL-Patches
+   └─ webComponent/       &lt;stickyflow-diagram&gt;</code></pre>
           </section>
 
           <section id="layers">
@@ -1058,12 +1061,12 @@ Model Demo {
                 <tr><td><code>svg/contract.ts</code></td><td><code>contractAttrs()</code></td><td>Versionierte <code>data-sf-*</code>-Attribute.</td></tr>
                 <tr><td><code>svg/definitions.ts</code></td><td><code>SvgDefinitionRegistry</code></td><td>Dedupliziert Marker, Paints und Filter.</td></tr>
                 <tr><td><code>svg/format.ts</code></td><td><code>num()</code>, <code>xml()</code></td><td>Deterministische Zahlen und XML-Escaping.</td></tr>
-                <tr><td><code>domContract/*</code></td><td>Owner-Auflösung und Overlays</td><td>Einzige gemeinsame Bindungsoberfläche zwischen SVG und Browser.</td></tr>
-                <tr><td><code>viewer/display/*</code></td><td>Document-, Scene- und Element-Patches</td><td>Inkrementelle DOM-Anzeige und Viewport.</td></tr>
-                <tr><td><code>viewer/interaction/*</code></td><td>Pointer, Keyboard, Selection</td><td>Viewer-nahe Interaktion ohne SFL-Mutation.</td></tr>
-                <tr><td><code>interaction/*</code></td><td>Feature-Workflows</td><td>Move, Resize, Text, ChartValue, LinkEndpoint und QuickDuplicate.</td></tr>
-                <tr><td><code>interaction/sflPatch/*</code></td><td>Gezielte Source-Patches</td><td>Ändert ausschließlich betroffene SFL-Bereiche.</td></tr>
-                <tr><td><code>web-component/*</code></td><td>Custom Element Lifecycle</td><td>Komponiert Viewer und optionale Interaction als Browser-API.</td></tr>
+                <tr><td><code>runtime/dom/*</code></td><td>Owner-Auflösung und Overlays</td><td>Browserseitige Bindung an den SVG-DOM-Contract.</td></tr>
+                <tr><td><code>runtime/viewer/display/*</code></td><td>Document-, Scene- und Element-Patches</td><td>Inkrementelle DOM-Anzeige und Viewport.</td></tr>
+                <tr><td><code>runtime/viewer/interaction/*</code></td><td>Pointer, Keyboard, Selection</td><td>Viewer-nahe Interaktion ohne SFL-Mutation.</td></tr>
+                <tr><td><code>runtime/interaction/*</code></td><td>Feature-Workflows</td><td>Move, Resize, Text, ChartValue, LinkEndpoint und QuickDuplicate.</td></tr>
+                <tr><td><code>runtime/interaction/sflPatch/*</code></td><td>Gezielte Source-Patches</td><td>Ändert ausschließlich betroffene SFL-Bereiche.</td></tr>
+                <tr><td><code>runtime/webComponent/*</code></td><td>Custom Element Lifecycle</td><td>Komponiert Viewer und optionale Interaction als Browser-API.</td></tr>
               </tbody>
             </table>
           </section>

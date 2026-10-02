@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { childrenUnionBounds } from '../src/interaction/containerGeometry';
-import { clampResizeToChildren } from '../src/interaction/resize/geometry';
+import { childrenUnionBounds } from '../src/runtime/interaction/containerGeometry';
+import { clampResizeToChildren } from '../src/runtime/interaction/resize/geometry';
 
 (globalThis as { CSS?: { escape(value: string): string } }).CSS ??= { escape: value => value };
 

@@ -1,5 +1,5 @@
-export type { SflImportJson } from './importJson';
-export { sflToImportJson } from './importJson';
+export type { SflImportJson } from './adapters/importJson';
+export { sflToImportJson } from './adapters/importJson';
 export type { Chart, ChartAxis, ChartRamp, ChartSeries, ChartType } from './model/chart';
 export { CHART_TYPES } from './model/chart';
 export type { FreeformPath, PathPoint } from './model/path';
@@ -38,4 +38,4 @@ export {
   isTableEntity,
   sflToCanvasState,
 } from './sflSemantic/sflToCanvasState';
-export { DOM_CONTRACT_VERSION } from './svgContract/version';
+export { DOM_CONTRACT_VERSION } from './svg/domContract/version';

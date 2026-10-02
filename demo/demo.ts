@@ -1,7 +1,7 @@
 // Browser demo for the INTERACTION tier. Run with a TS-aware dev server, e.g.
 // from packages/stickyflow.js:  npx vite demo
 // (The static tier needs no browser — see the node tests.)
-import { createViewer } from '../src/viewer';
+import { createViewer } from '../src/runtime/viewer';
 
 function requireDemoElement(id: string): HTMLElement {
   const element = document.getElementById(id);

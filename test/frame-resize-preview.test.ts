@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applySingleNodeBounds } from '../src/interaction/resize/geometryPreview';
+import { applySingleNodeBounds } from '../src/runtime/interaction/resize/geometryPreview';
 
 function fakePathNode(attrs: Record<string, string>) {
   const values = { ...attrs };

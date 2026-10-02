@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, sflToRenderInput } from '../src/index';
-import { applyPropertyChange } from '../src/interaction/patchSfl';
-import type { OwnerRef } from '../src/viewer';
+import { applyPropertyChange } from '../src/runtime/interaction/patchSfl';
+import type { OwnerRef } from '../src/runtime/viewer';
 
 const chart = (id = 'c'): OwnerRef => ({ role: 'chart', id });
 

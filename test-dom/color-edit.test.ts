@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { PropertyChangeEvent } from '../src/interaction/events';
-import { bindEditing } from '../src/interaction/index';
+import type { PropertyChangeEvent } from '../src/runtime/interaction/events';
+import { bindEditing } from '../src/runtime/interaction/index';
 import { createFakeViewer } from './fakeViewer';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

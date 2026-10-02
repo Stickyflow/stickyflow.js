@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderCanvas, sflToRenderInput } from '../src/index';
-import { applyPropertyChange } from '../src/interaction/patchSfl';
+import { applyPropertyChange } from '../src/runtime/interaction/patchSfl';
 
 const BAR = `sfl 1.4
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createValueReadout, updateValueReadout } from '../src/interaction/chartValue/readout';
-import type { ValueScale } from '../src/interaction/chartValue/types';
+import { createValueReadout, updateValueReadout } from '../src/runtime/interaction/chartValue/readout';
+import type { ValueScale } from '../src/runtime/interaction/chartValue/types';
 
 const scale: ValueScale = { plotY: 40, plotHeight: 200, min: 0, max: 140 };
 

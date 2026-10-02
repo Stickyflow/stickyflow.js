@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { selectedMoveGroup } from '../src/interaction/move/selection';
-import type { OwnerRef, Viewer } from '../src/viewer';
+import { selectedMoveGroup } from '../src/runtime/interaction/move/selection';
+import type { OwnerRef, Viewer } from '../src/runtime/viewer';
 
 // selection.ts calls the browser's CSS.escape, absent in this suite's node
 // test environment — a minimal stand-in, good enough for the plain ids used here.

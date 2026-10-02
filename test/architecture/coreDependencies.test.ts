@@ -6,14 +6,13 @@ import { describe, expect, it } from 'vitest';
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = resolve(here, '../../src');
 
-type CoreLayer = 'model' | 'sfl-language' | 'sfl-semantic' | 'render-input' | 'import-json' | 'render-scene' | 'svg';
+type CoreLayer = 'model' | 'sfl-language' | 'sfl-semantic' | 'render-input' | 'render-scene' | 'svg';
 
 const ALLOWED_DEPENDENCIES: Record<CoreLayer, readonly CoreLayer[]> = {
   model: ['model'],
   'sfl-language': ['sfl-language'],
   'sfl-semantic': ['model', 'sfl-language', 'sfl-semantic'],
   'render-input': ['model', 'sfl-language', 'sfl-semantic', 'render-input'],
-  'import-json': ['model', 'sfl-language', 'sfl-semantic', 'render-input', 'import-json'],
   'render-scene': ['model', 'render-input', 'render-scene'],
   svg: ['model', 'render-scene', 'svg'],
 };
@@ -45,9 +44,6 @@ function sourcePath(file: string): string {
 }
 
 function sflLayer(path: string): CoreLayer | null {
-  if (path.startsWith('importJson/')) {
-    return 'import-json';
-  }
   if (path.startsWith('sflLanguage/')) {
     return 'sfl-language';
   }
@@ -95,6 +91,22 @@ describe('core dependency direction', () => {
         const targetLayer = coreLayer(target);
         if (targetLayer && !ALLOWED_DEPENDENCIES[sourceLayer].includes(targetLayer)) {
           offenders.push(`${sourceLayer}: ${from} -> ${targetLayer}: ${target}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps adapters outside the core layer registry and dependent only on core', () => {
+    const adaptersDir = join(srcDir, 'adapters');
+    const offenders: string[] = [];
+    for (const file of tsFiles(adaptersDir)) {
+      const from = sourcePath(file);
+      expect(coreLayer(from)).toBeNull();
+      for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
+        const target = sourcePath(resolve(dirname(file), specifier));
+        if (!target.startsWith('adapters/') && coreLayer(target) === null) {
+          offenders.push(`${from} -> ${target}`);
         }
       }
     }

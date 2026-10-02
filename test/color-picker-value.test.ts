@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { hexToHsv, hexToRgb, hsvToHex, normalizeHex, rgbToHex } from '../src/interaction/colorEdit/color';
-import { formatGradient, gradientCss, parseGradient } from '../src/interaction/colorEdit/gradientValue';
-import { formatPickerValue, seedFrom, toGradient, toSolid } from '../src/interaction/colorEdit/value';
+import { hexToHsv, hexToRgb, hsvToHex, normalizeHex, rgbToHex } from '../src/runtime/interaction/colorEdit/color';
+import { formatGradient, gradientCss, parseGradient } from '../src/runtime/interaction/colorEdit/gradientValue';
+import { formatPickerValue, seedFrom, toGradient, toSolid } from '../src/runtime/interaction/colorEdit/value';
 
 describe('normalizeHex', () => {
   it('expands shorthand and lowercases', () => {

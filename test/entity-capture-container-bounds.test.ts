@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { captureDraggedEntities } from '../src/interaction/move/entityCapture';
+import { captureDraggedEntities } from '../src/runtime/interaction/move/entityCapture';
 
 (globalThis as { CSS?: { escape(value: string): string } }).CSS ??= { escape: value => value };
 

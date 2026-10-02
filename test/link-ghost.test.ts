@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bindEditing } from '../src/interaction';
-import { resolveLinkTarget } from '../src/interaction/linkGhost/target';
-import { createViewer } from '../src/viewer';
+import { bindEditing } from '../src/runtime/interaction';
+import { resolveLinkTarget } from '../src/runtime/interaction/linkGhost/target';
+import { createViewer } from '../src/runtime/viewer';
 
 const numbers = (d: string) => (d.match(/-?[\d.]+/g) ?? []).map(Number);
 const xsOf = (d: string) => numbers(d).filter((_, index) => index % 2 === 0);

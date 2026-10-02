@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderCanvas, sflToRenderInput } from '../src/index';
-import { applyPropertyChange } from '../src/interaction';
+import { applyPropertyChange } from '../src/runtime/interaction';
 
 // Table cells, header labels, and the Footer row were addressable by
 // applyPropertyChange all along (Row/Column/Footer blocks resolve like any

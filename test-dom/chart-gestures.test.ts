@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { bindEditing } from '../src/interaction/index';
-import { applyCompositeScale } from '../src/interaction/resize/geometryPreview';
+import { bindEditing } from '../src/runtime/interaction/index';
+import { applyCompositeScale } from '../src/runtime/interaction/resize/geometryPreview';
 import { createFakeViewer } from './fakeViewer';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

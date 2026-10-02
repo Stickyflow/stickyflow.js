@@ -5,7 +5,7 @@ import {
   MIN_POINTS_TO_CLOSE,
   snapTo45Degrees,
   snapToSessionGuides,
-} from '../src/interaction/pathDraw/geometry';
+} from '../src/runtime/interaction/pathDraw/geometry';
 
 describe('isCloseToStart', () => {
   it('never offers to close before the minimum point count', () => {

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { DOM_CONTRACT_VERSION, render } from '../src/index';
 import {
   type AttrElement,
   isCameraGesture,
   isContractCompatible,
   parseContractVersion,
   resolveOwner,
-} from '../src/domContract';
-import { DOM_CONTRACT_VERSION, render } from '../src/index';
-import { classifySceneDiff } from '../src/viewer/display';
-import { Emitter } from '../src/viewer/events';
-import { clickAction, selectionReducer } from '../src/viewer/interaction/selection';
+} from '../src/runtime/dom';
+import { classifySceneDiff } from '../src/runtime/viewer/display';
+import { Emitter } from '../src/runtime/viewer/events';
+import { clickAction, selectionReducer } from '../src/runtime/viewer/interaction/selection';
 import { SFL_SAMPLE } from './fixtures';
 
 // The interaction tier's PURE core — no DOM. These run under environment:'node'.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, sflToCanvasState } from '../src/index';
-import { applyPathPointChange, insertPath } from '../src/interaction/patchSfl';
-import type { OwnerRef } from '../src/viewer';
+import { applyPathPointChange, insertPath } from '../src/runtime/interaction/patchSfl';
+import type { OwnerRef } from '../src/runtime/viewer';
 
 const owner = (id: string): OwnerRef => ({ role: 'path', id });
 

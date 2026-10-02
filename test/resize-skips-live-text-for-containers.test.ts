@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createResizeDragState } from '../src/interaction/resize/state';
+import { createResizeDragState } from '../src/runtime/interaction/resize/state';
 
 (globalThis as { CSS?: { escape(value: string): string } }).CSS ??= { escape: value => value };
 

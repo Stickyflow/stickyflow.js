@@ -1,6 +1,6 @@
 // Browser demo for the web-component tier. Run from packages/stickyflow.js:
 //   npx vite demo   → open web-component.html
-import { defineStickyflowDiagram, type StickyflowDiagram } from '../src/web-component';
+import { defineStickyflowDiagram, type StickyflowDiagram } from '../src/runtime/webComponent';
 
 defineStickyflowDiagram();
 

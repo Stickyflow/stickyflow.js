@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { openColorPopover } from '../src/interaction/colorEdit/popover';
-import type { PickerValue } from '../src/interaction/colorEdit/value';
+import { openColorPopover } from '../src/runtime/interaction/colorEdit/popover';
+import type { PickerValue } from '../src/runtime/interaction/colorEdit/value';
 
 const solidSeed: PickerValue = { mode: 'solid', color: '#6d5ef0' };
 const gradientSeed: PickerValue = {

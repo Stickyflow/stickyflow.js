@@ -7,9 +7,9 @@ export default defineConfig([
   {
     entry: {
       index: 'src/index.ts',
-      'viewer/index': 'src/viewer/index.ts',
-      'interaction/index': 'src/interaction/index.ts',
-      'web-component/index': 'src/web-component/index.ts',
+      'viewer/index': 'src/runtime/viewer/index.ts',
+      'interaction/index': 'src/runtime/interaction/index.ts',
+      'web-component/index': 'src/runtime/webComponent/index.ts',
     },
     format: ['esm', 'cjs'],
     dts: true,
@@ -20,7 +20,7 @@ export default defineConfig([
     outDir: 'dist',
   },
   {
-    entry: { 'stickyflow-diagram': 'src/web-component/iife.ts' },
+    entry: { 'stickyflow-diagram': 'src/runtime/webComponent/iife.ts' },
     format: ['iife'],
     globalName: 'Stickyflow',
     minify: true,

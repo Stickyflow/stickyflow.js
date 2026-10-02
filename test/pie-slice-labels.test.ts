@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
-import { applyChartValueChange } from '../src/interaction';
+import { applyChartValueChange } from '../src/runtime/interaction';
 
 const pieOf = (values: number[], showAxisLabels?: boolean) => `sfl 1.4
 

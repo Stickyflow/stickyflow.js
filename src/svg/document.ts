@@ -1,6 +1,6 @@
 import type { RenderScene } from '../renderScene/scene';
-import { DOM_CONTRACT_VERSION } from '../svgContract/version';
 import { SvgDefinitionRegistry } from './definitions';
+import { DOM_CONTRACT_VERSION } from './domContract/version';
 import { num } from './format';
 import { nodeSvg } from './nodes';
 import type { SvgRenderOptions, SvgRenderResult } from './types';
