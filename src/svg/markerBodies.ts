@@ -1,4 +1,4 @@
-import type { MarkerType } from '../../model/link';
+import type { MarkerType } from '../model/link';
 import { num } from './format';
 
 export function markerBody(

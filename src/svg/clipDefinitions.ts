@@ -1,4 +1,4 @@
-import type { SceneStyle } from '../../renderScene/scene';
+import type { SceneStyle } from '../renderScene/scene';
 import { num, safeId, xml } from './format';
 
 export class SvgClipDefinitions {

@@ -1,4 +1,4 @@
-import type { SceneText } from '../../renderScene/scene';
+import type { SceneText } from '../renderScene/scene';
 import { transform } from './attributes';
 import { contractAttrs } from './contract';
 import type { SvgDefinitionRegistry } from './definitions';

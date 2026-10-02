@@ -58,7 +58,7 @@ function sflLayer(path: string): CoreLayer | null {
 }
 
 function renderingLayer(path: string): CoreLayer | null {
-  if (path.startsWith('rendering/svg/')) {
+  if (path.startsWith('svg/')) {
     return 'svg';
   }
   if (path.startsWith('renderScene/')) {

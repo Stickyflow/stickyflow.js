@@ -1,4 +1,4 @@
-import type { RenderNode, SceneStyle, SceneText } from '../../renderScene/scene';
+import type { RenderNode, SceneStyle, SceneText } from '../renderScene/scene';
 import type { SvgDefinitionRegistry } from './definitions';
 import { num, xml } from './format';
 

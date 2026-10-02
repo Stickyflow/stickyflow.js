@@ -1,4 +1,4 @@
-import type { RenderNode, ScenePaint } from '../../renderScene/scene';
+import type { RenderNode, ScenePaint } from '../renderScene/scene';
 import { num, safeId, xml } from './format';
 
 type GradientPaint = Exclude<ScenePaint, { kind: 'none' } | { kind: 'solid' }>;

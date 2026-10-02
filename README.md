@@ -34,7 +34,7 @@ src/
   renderInput/       L3 renderer contract, SFL adapter and presentation-value decoding
   importJson/        canvas-state → Stickyflow import JSON adapter
   renderScene/       L4 scene contract and deterministic scene construction
-  rendering/svg/     L5 SVG serialization
+  svg/               L5 SVG serialization
   render.ts          render(sfl) / renderCanvas(input) — static tier
   index.ts           static public API  →  import 'stickyflow'
   viewer/            interaction tier   →  import 'stickyflow/viewer'

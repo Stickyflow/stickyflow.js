@@ -865,7 +865,7 @@ Model Demo {
                   <pre class="code-block"><code>&lt;rect id="..." data-sf-role="entity" data-sf-id="start"
   data-sf-kind="rounded_rectangle" data-sf-primary="true"
   x="40" y="60" width="160" height="80" rx="8" .../&gt;</code></pre>
-                  <span class="function-path">rendering/svg/renderScene.ts → document.ts → nodes.ts → attributes.ts / contract.ts</span>
+                  <span class="function-path">svg/renderScene.ts → document.ts → nodes.ts → attributes.ts / contract.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -901,8 +901,7 @@ Model Demo {
 │  ├─ entities/           Shape, Link, Path, Frame und Swimlane
 │  ├─ tables/             Eigenständiger Tabellenrenderer
 │  └─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
-├─ rendering/
-│  └─ svg/                Definitionen, Nodes, Attribute, Dokument
+├─ svg/                    Definitionen, Nodes, Attribute, Dokument
 ├─ domContract/           Versioniertes SVG/DOM-Bindingschema
 ├─ viewer/                Anzeige, Kamera, Selektion
 ├─ interaction/           Editiergesten und SFL-Patches
@@ -956,7 +955,7 @@ Model Demo {
                 <h3>SVG</h3>
                 <p>Serialisiert Scene-Nodes, Paints, Marker, Filter und den DOM-Vertrag in ein SVG-Dokument.</p>
                 <ul><li>Escaped nutzergesteuerte Werte.</li><li>Erzeugt Definitionen deterministisch.</li><li>Gibt String, Größe und Diagnosen zurück.</li></ul>
-                <span class="path">src/rendering/svg</span>
+                <span class="path">src/svg</span>
               </article>
             </div>
           </section>

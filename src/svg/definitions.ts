@@ -1,5 +1,5 @@
-import type { MarkerType } from '../../model/link';
-import type { RenderNode, ScenePaint, SceneStyle } from '../../renderScene/scene';
+import type { MarkerType } from '../model/link';
+import type { RenderNode, ScenePaint, SceneStyle } from '../renderScene/scene';
 import { SvgClipDefinitions } from './clipDefinitions';
 import { SvgFilterDefinitions } from './filterDefinitions';
 import { safeId } from './format';
