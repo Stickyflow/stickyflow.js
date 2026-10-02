@@ -24,7 +24,7 @@ interface OrthogonalRouteRequest {
   fromSide: Side;
   toSide: Side;
   segmentOffsets?: number[];
-  entityEdges?: { fromEdge?: Side; toEdge?: Side };
+  endpointEdges?: { fromEdge?: Side; toEdge?: Side };
 }
 
 export function routeOrthogonal(request: OrthogonalRouteRequest): LinkRoute {
@@ -42,7 +42,7 @@ function createOrthogonalRouteDraft(request: OrthogonalRouteRequest): Orthogonal
   const [alignedFrom, alignedTo] = snapAlignedEndpoints(request.from, request.to, request.fromSide, request.toSide);
   const fromNormal = sideNormal(request.fromSide);
   const toNormal = sideNormal(request.toSide);
-  const horizontalFirst = chooseInitialOrientation(alignedFrom, alignedTo, request.entityEdges);
+  const horizontalFirst = chooseInitialOrientation(alignedFrom, alignedTo, request.endpointEdges);
   const [fromDistance, toDistance] = stepOutDistances(alignedFrom, alignedTo, fromNormal, toNormal, horizontalFirst);
   return {
     from: alignedFrom,

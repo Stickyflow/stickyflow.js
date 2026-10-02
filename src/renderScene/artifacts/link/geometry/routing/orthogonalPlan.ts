@@ -36,13 +36,13 @@ export function snapAlignedEndpoints(
 export function chooseInitialOrientation(
   from: LinkRoutePoint,
   to: LinkRoutePoint,
-  entityEdges?: { fromEdge?: Side; toEdge?: Side },
+  endpointEdges?: { fromEdge?: Side; toEdge?: Side },
 ): boolean {
-  if (entityEdges?.toEdge) {
-    return entityEdges.toEdge === 'left' || entityEdges.toEdge === 'right';
+  if (endpointEdges?.toEdge) {
+    return endpointEdges.toEdge === 'left' || endpointEdges.toEdge === 'right';
   }
-  if (entityEdges?.fromEdge) {
-    return entityEdges.fromEdge === 'left' || entityEdges.fromEdge === 'right';
+  if (endpointEdges?.fromEdge) {
+    return endpointEdges.fromEdge === 'left' || endpointEdges.fromEdge === 'right';
   }
   return Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
 }

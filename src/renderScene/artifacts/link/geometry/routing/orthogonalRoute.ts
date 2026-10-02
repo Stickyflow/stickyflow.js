@@ -18,8 +18,8 @@ export function calculateOrthogonalLinkRoute(
     }
   }
 
-  const entityEdges = { fromEdge: fromSide, toEdge: toSide };
-  const request = { from, to, fromSide, toSide, segmentOffsets: link.segmentOffsets, entityEdges };
+  const endpointEdges = { fromEdge: fromSide, toEdge: toSide };
+  const request = { from, to, fromSide, toSide, segmentOffsets: link.segmentOffsets, endpointEdges };
   const route = routeOrthogonal(request);
   if (isAxisAligned(route.segments)) {
     return route;

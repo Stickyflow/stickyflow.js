@@ -69,7 +69,7 @@ export function shapeDefaults(
   diagnostics.push({
     severity: 'warning',
     code: 'unknown-shape-type',
-    entityId: shape.id,
+    ownerId: shape.id,
     message: `Unknown shapeType '${shape.shapeType}'${REMOVED_SHAPE_HINTS[shape.shapeType] ?? ''}, falling back to rectangle defaults.`,
   });
   return SHAPE_RENDER_DEFAULTS.rectangle;

@@ -77,7 +77,7 @@ describe('gridShape: circle', () => {
       const { diagnostics, svg } = render(chart(type, 'gridShape: circle'));
       const warnings = diagnostics.filter(d => d.code === 'unsupported-grid-shape');
       expect(warnings).toHaveLength(1);
-      expect(warnings[0].entityId).toBe('c');
+      expect(warnings[0].ownerId).toBe('c');
       expect(warnings[0].message).toContain(type);
       expect(svg).not.toContain('chart-grid-ring-');
     },

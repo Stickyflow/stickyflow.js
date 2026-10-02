@@ -110,7 +110,7 @@ describe('render core runs headless through the package (real app source)', () =
     expect(() => renderCanvas(input)).not.toThrow();
     const { svg, diagnostics } = renderCanvas(input);
     expect(svg).toMatch(/<rect id="sf-shape-mystery"/);
-    expect(diagnostics?.some(d => d.code === 'unknown-shape-type' && d.entityId === 'mystery')).toBe(true);
+    expect(diagnostics?.some(d => d.code === 'unknown-shape-type' && d.ownerId === 'mystery')).toBe(true);
   });
 
   it('renders no fill/stroke (not a default color) when none is set, matching the interactive canvas', () => {
@@ -234,7 +234,7 @@ describe('render core runs headless through the package (real app source)', () =
     expect(svg).toContain('<pattern');
     expect(svg).toContain('<radialGradient');
     expect(svg).toContain('stop-color="#e0c3fc"');
-    expect(diagnostics).not.toEqual(expect.arrayContaining([expect.objectContaining({ entityId: 'mesh' })]));
+    expect(diagnostics).not.toEqual(expect.arrayContaining([expect.objectContaining({ ownerId: 'mesh' })]));
   });
 
   it('renders link markers and endpoint labels', () => {
@@ -489,13 +489,13 @@ Model m {
     expect(state.canvasObjects[0].shapeType).toBeUndefined();
     expect(state.diagnostics).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ severity: 'warning', code: 'unresolved-style-or-layout', entityId: 'living' }),
+        expect.objectContaining({ severity: 'warning', code: 'unresolved-style-or-layout', ownerId: 'living' }),
       ]),
     );
 
     const { diagnostics, svg } = render(stylesInsideModel);
     expect(diagnostics).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: 'unresolved-style-or-layout', entityId: 'living' })]),
+      expect.arrayContaining([expect.objectContaining({ code: 'unresolved-style-or-layout', ownerId: 'living' })]),
     );
     // The actual visible symptom: no fill/stroke ever reaches the SVG.
     expect(svg).toMatch(/data-sf-id="living"[^>]*fill="none"/);

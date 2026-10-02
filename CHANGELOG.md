@@ -44,7 +44,8 @@ Two things count as breaking here that are easy to overlook:
 - **Breaking (terminology).** Runtime and interaction APIs now use the current
   canvas-object vocabulary: `entityClick` is `canvasObjectClick`, and the pure
   patch helpers are `insertCanvasObject` / `removeCanvasObject` with matching
-  option types. The legacy SFL `Entity` block and the version-1 serialized
+  option types. Diagnostic ownership is now exposed as `ownerId` instead of
+  `entityId`. The legacy SFL `Entity` block and the version-1 serialized
   `data-sf-role="entity"` value remain supported.
 - **Breaking (internal module layout).** `rendering/renderScene` is split into
   `rendering/scene` (scene vocabulary), `rendering/renderInput` (pipeline input)

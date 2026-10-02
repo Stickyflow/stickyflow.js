@@ -17,7 +17,7 @@ export function collectUnsupportedChartTypes(doc: SflDocument): SflDiagnostic[] 
         diagnostics.push({
           severity: 'warning',
           code: 'unsupported-chart-type',
-          entityId: block.name,
+          ownerId: block.name,
           message: `Unsupported chart type '${declared}' ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â drawn as a plain series plot. Supported: ${CHART_TYPES.join(', ')}.`,
         });
       }
@@ -43,7 +43,7 @@ export function collectEmptySeries(doc: SflDocument): SflDiagnostic[] {
           diagnostics.push({
             severity: 'warning',
             code: 'series-without-values',
-            entityId: series.name,
+            ownerId: series.name,
             message: `Series '${series.name}' has no values. If this was meant to be an Axis or Rule, it needs that keyword in front of the name ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â inside data{}, a bare name is read as a Series.`,
           });
         }
@@ -76,7 +76,7 @@ export function collectUnsupportedGridShapes(doc: SflDocument): SflDiagnostic[] 
         diagnostics.push({
           severity: 'warning',
           code: 'unsupported-grid-shape',
-          entityId: block.name,
+          ownerId: block.name,
           message: `gridShape: circle isn't supported on '${chartType}' ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â drawn with the standard rectangular grid instead. Supported: ${[...OPTIONAL_CIRCULAR_GRID_CHART_TYPES].join(', ')}.`,
         });
       }

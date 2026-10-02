@@ -4,7 +4,7 @@ import type { RenderDiagnostic, ScenePaint } from './types';
 export function paint(
   value: string | GradientColor | MeshGradientColor | null | undefined,
   diagnostics: RenderDiagnostic[],
-  entityId: string,
+  ownerId: string,
 ): ScenePaint {
   if (!value) {
     return { kind: 'none' };
@@ -23,7 +23,7 @@ export function paint(
     diagnostics.push({
       severity: 'warning',
       code: 'empty-mesh-gradient',
-      entityId,
+      ownerId,
       message: 'Mesh gradient has no color points.',
     });
     return { kind: 'none' };
