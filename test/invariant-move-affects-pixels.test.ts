@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sflToRenderInput } from '../src/index';
-import { applyMoveChange, applyResizeChange } from '../src/interaction';
+import { applyMoveChange, applyResizeChange } from '../src/runtime/interaction';
 
 // The Path move bug (fixed this session) was a diff applier writing a
 // textually valid change that had zero visual effect: layout.position

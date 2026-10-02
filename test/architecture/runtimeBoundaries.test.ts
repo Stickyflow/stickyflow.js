@@ -6,13 +6,20 @@ import { describe, expect, it } from 'vitest';
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = resolve(here, '../../src');
 
-const TIERS = ['domContract', 'viewer', 'interaction', 'web-component'] as const;
+const TIERS = [
+  'runtime/dom',
+  'runtime/eventing',
+  'runtime/viewer',
+  'runtime/interaction',
+  'runtime/webComponent',
+] as const;
 const TIER_RANK: Record<string, number> = {
   core: 0,
-  domContract: 1,
-  viewer: 2,
-  interaction: 3,
-  'web-component': 4,
+  'runtime/dom': 1,
+  'runtime/eventing': 1,
+  'runtime/viewer': 2,
+  'runtime/interaction': 3,
+  'runtime/webComponent': 4,
 };
 
 function tsFiles(dir: string): string[] {
@@ -59,10 +66,10 @@ describe('tier layering', () => {
 
   it('interaction reaches the viewer only through its public entry', () => {
     const offenders: string[] = [];
-    for (const file of allFiles.filter(f => tierOfPath(posixRelative(f)) === 'interaction')) {
+    for (const file of allFiles.filter(f => tierOfPath(posixRelative(f)) === 'runtime/interaction')) {
       for (const specifier of relativeImports(readFileSync(file, 'utf8'))) {
         const target = posixRelative(resolve(dirname(file), specifier));
-        if (target !== 'viewer' && target.startsWith('viewer/')) {
+        if (target !== 'runtime/viewer' && target.startsWith('runtime/viewer/')) {
           offenders.push(`${posixRelative(file)} -> ${target}`);
         }
       }

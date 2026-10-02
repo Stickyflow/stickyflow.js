@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
-import { previewPathData, routePreviewLink } from '../src/interaction/linkPreview/geometry';
-import { applySingleNodeBounds } from '../src/interaction/resize/geometryPreview';
+import { previewPathData, routePreviewLink } from '../src/runtime/interaction/linkPreview/geometry';
+import { applySingleNodeBounds } from '../src/runtime/interaction/resize/geometryPreview';
 
 // Verifies the claim behind this session's Symbol resize-snap fix, empirically
 // rather than by reading imports: does the hand-rolled live-preview path

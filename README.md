@@ -28,17 +28,22 @@ Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflTo
 
 ```
 src/
-  sfl/               SFL core: ast, lexer, parser, emitter, sflToCanvasState,
-                     adapters/{sflToImportJson,decodeStyles} — pure, no DOM
-  model/             framework-agnostic document model:
-                       shapes/frames/links/swimlanes/tables + colors/shadows
-                       geometry/{connectionLine,router,tables}
-  rendering/         renderScene, buildRenderScene, renderSceneToSvg
+  model/             L0 framework-agnostic diagram model and geometry
+  sflLanguage/       L1 SFL Language: AST, lexer, parser and canonical emitter
+  sflSemantic/       L2 SFL Semantic: SFL AST → resolved canvas state
+  renderInput/       L3 renderer contract, SFL adapter and presentation-value decoding
+  renderScene/       L4 scene contract and deterministic scene construction
+  svg/               L5 SVG serialization and versioned DOM contract
+  adapters/
+    importJson/      canvas-state → Stickyflow import JSON adapter
+  runtime/
+    dom/             DOM queries and overlays
+    eventing/        typed event distribution
+    viewer/          display, camera and selection
+    interaction/     editing gestures and SFL patches
+    webComponent/    <stickyflow-diagram> browser adapter
   render.ts          render(sfl) / renderCanvas(input) — static tier
-  sflToRenderInput.ts  model adapter: SFL v3 JSON → RenderInput
   index.ts           static public API  →  import 'stickyflow'
-  viewer/            interaction tier   →  import 'stickyflow/viewer'
-  web-component/     <stickyflow-diagram>  →  import 'stickyflow/web-component'
 ```
 
 The three tiers and their one-way dependency are described under *Two tiers*
@@ -206,7 +211,7 @@ The package deliberately splits into two tiers, with a **one-way dependency**
 | **Web component** (drop-in embed) | `stickyflow/web-component` | browser | `<stickyflow-diagram>`, static by default, `interactive` opts in |
 
 The separation is **enforced by `test/boundary.test.ts`**: the static core must
-not import from a browser tier (`viewer/`, `web-component/`) and must use no DOM
+not import from the browser runtime (`runtime/`) and must use no DOM
 globals, so it always stays headless. A docs site pulls only the static tier and
 pays nothing for viewer JS. The web component sits on top and composes both.
 
@@ -317,13 +322,13 @@ viewer.update({ source: incomingSource, highlightChanges: { color: '#2563eb' } }
 Inside the viewer the split continues:
 
 ```
-src/viewer/
-  display.ts      STATIC display — mount SVG + camera (fit/zoom/pan). No events.
-  interaction.ts  INTERACTION — the only place with event listeners: select,
-                  hover, click → serializable events. Model mutation (tier 2b)
-                  attaches here later as applyOp(), without touching display.
-  contract.ts / selection.ts / events.ts   PURE, node-tested logic (no DOM)
-  index.ts        createViewer() — composes display + optional interaction
+src/runtime/viewer/
+  display/       mount SVG, patch the scene and manage the viewport
+  interaction/   viewer-local pointer, keyboard and selection behaviour
+  events.ts      serializable viewer events
+  source.ts      source normalization
+  session.ts     viewer lifecycle
+  index.ts       createViewer() — composes display + optional interaction
 ```
 
 `createViewer` verifies the SVG's `data-sf-contract` on mount and refuses a
@@ -413,5 +418,5 @@ left behind by a file split fails the typecheck instead of accumulating.
 Two rules stay at warning level on purpose and do not fail the build:
 `noNonNullAssertion` (the lexer, parser and sankey layout lean on `!` in places
 where the surrounding invariant is local and obvious) and `noExplicitAny` (the
-`sfl/adapters/importJson` boundary is untyped JSON by design).
+`adapters/importJson` boundary is untyped JSON by design).
 `.github/workflows/ci.yml` runs `npm run ci` on Node 18, 20 and 22.

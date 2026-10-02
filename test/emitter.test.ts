@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Emitter } from '../src/eventing/emitter';
+import { Emitter } from '../src/runtime/eventing/emitter';
 
 interface TestEvents {
   ping: { value: number };

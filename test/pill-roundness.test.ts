@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
-import { applySingleNodeBounds } from '../src/interaction/resize/geometryPreview';
+import { applySingleNodeBounds } from '../src/runtime/interaction/resize/geometryPreview';
 
 const SIZES: Array<[number, number]> = [
   [200, 80],
@@ -67,8 +67,8 @@ describe('a pill keeps perfectly round end caps at every size', () => {
 
 describe('a double-stroked pill keeps its inner ring inset and round while it is dragged', () => {
   it('previews every ring at the same radius a real render lands on', async () => {
-    const { applyResizePreview } = await import('../src/interaction/resize/preview');
-    const { insetWithin } = await import('../src/interaction/resize/geometry');
+    const { applyResizePreview } = await import('../src/runtime/interaction/resize/preview');
+    const { insetWithin } = await import('../src/runtime/interaction/resize/geometry');
     const doubleSfl = (width: number, height: number) => `sfl 1.4
 
 Model M {

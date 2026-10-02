@@ -1,24 +1,24 @@
-import type { ResolvedExportLink } from '../types';
+import type { RenderInputLink } from '../types';
+import type { CollectedCanvasObjects } from './canvasObjects/collect';
 import { resolveLinkEndpoint } from './endpoint';
-import type { CollectedEntities } from './entities/collect';
-import type { PositionedElement } from './types';
+import type { PositionedCanvasObject } from './types';
 
-function positionedElements(entities: CollectedEntities): PositionedElement[] {
+function positionedCanvasObjects(canvasObjects: CollectedCanvasObjects): PositionedCanvasObject[] {
   return [
-    ...entities.shapes,
-    ...entities.frames,
-    ...entities.swimlanes,
-    ...entities.tables,
-    ...entities.paths,
-    ...entities.charts,
+    ...canvasObjects.shapes,
+    ...canvasObjects.frames,
+    ...canvasObjects.swimlanes,
+    ...canvasObjects.tables,
+    ...canvasObjects.paths,
+    ...canvasObjects.charts,
   ];
 }
 
-export function resolveExportLinks(entities: CollectedEntities): ResolvedExportLink[] {
-  const elements = positionedElements(entities);
-  return entities.links.map(link => ({
+export function createRenderInputLinks(canvasObjects: CollectedCanvasObjects): RenderInputLink[] {
+  const positionedObjects = positionedCanvasObjects(canvasObjects);
+  return canvasObjects.links.map(link => ({
     link,
-    from: resolveLinkEndpoint(link, 'from', elements),
-    to: resolveLinkEndpoint(link, 'to', elements),
+    from: resolveLinkEndpoint(link, 'from', positionedObjects),
+    to: resolveLinkEndpoint(link, 'to', positionedObjects),
   }));
 }

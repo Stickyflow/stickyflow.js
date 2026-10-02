@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src';
-import { sflToCanvasState } from '../src/sfl';
+import { sflToCanvasState } from '../src/sflSemantic/sflToCanvasState';
 
 const chart = (body: string) => `sfl 1.2
 
@@ -14,7 +14,7 @@ ${body}
 }
 `;
 
-const chartOf = (sfl: string) => sflToCanvasState(sfl).entities.find(entity => entity.id === 'c')?.chart;
+const chartOf = (sfl: string) => sflToCanvasState(sfl).canvasObjects.find(entity => entity.id === 'c')?.chart;
 
 describe('chart type validation', () => {
   it('keeps a supported type', () => {

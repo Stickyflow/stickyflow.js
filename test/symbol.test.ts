@@ -20,7 +20,7 @@ Model board {
 describe('Symbol (§5.5, free-form shape)', () => {
   it('parses a Symbol block and attaches it to an entity referencing it via shape:', () => {
     const state = sflToCanvasState(SFL);
-    const tri = state.entities.find(e => e.id === 'tri');
+    const tri = state.canvasObjects.find(e => e.id === 'tri');
     expect(tri?.shapeType).toBe('symbol');
     expect(tri?.symbol?.points).toEqual([
       [0.5, 0],
@@ -43,8 +43,8 @@ Model board {
   Shape a { shape: rectangle; layout { position: 0, 0; size: 100, 60 } }
 }`;
     const state = sflToCanvasState(sfl);
-    expect(state.entities[0].shapeType).toBe('rectangle');
-    expect(state.entities[0].symbol).toBeUndefined();
+    expect(state.canvasObjects[0].shapeType).toBe('rectangle');
+    expect(state.canvasObjects[0].symbol).toBeUndefined();
   });
 
   it('does not register a Symbol with fewer than 2 points (no area)', () => {
@@ -65,8 +65,8 @@ Model board {
     // always one of the built-in types or 'symbol', so rendering an entity
     // whose `shape:` matches neither is already broken before this feature -
     // out of scope here, not exercised by this test).
-    expect(state.entities[0].shapeType).toBe('Degenerate');
-    expect(state.entities[0].symbol).toBeUndefined();
+    expect(state.canvasObjects[0].shapeType).toBe('Degenerate');
+    expect(state.canvasObjects[0].symbol).toBeUndefined();
   });
 
   it('tags the rendered path with its points/tension so live resize can rebuild the exact polygon', () => {

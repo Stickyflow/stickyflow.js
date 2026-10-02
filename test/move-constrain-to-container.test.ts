@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { clampMoveDelta } from '../src/interaction/move/geometry';
-import type { DraggedEntity } from '../src/interaction/move/types';
+import { clampMoveDelta } from '../src/runtime/interaction/move/geometry';
+import type { DraggedEntity } from '../src/runtime/interaction/move/types';
 
 function entity(
   bounds: { x: number; y: number; width: number; height: number },

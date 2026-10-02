@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { keepTextInside } from '../src/interaction/resize/geometry';
-import { captureTextFit, minHeightForText, minWidthForText } from '../src/interaction/resize/textFit';
+import { keepTextInside } from '../src/runtime/interaction/resize/geometry';
+import { captureTextFit, minHeightForText, minWidthForText } from '../src/runtime/interaction/resize/textFit';
 
 function labelFit(rawText: string, attrs: Record<string, string> = {}) {
   const values: Record<string, string> = { 'font-size': '14', 'data-sf-line-height': '1.3', ...attrs };

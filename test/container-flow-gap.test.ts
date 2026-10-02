@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
 // Container `flow`/`gap` (SFL 1.4, §12.1): auto-positions a Container's
-// DIRECT children (Container or positioned-leaf kinds) along one axis — the
+// DIRECT children (Container or positioned-leaf kinds) along one axis â€” the
 // generalized, minimal version of what buildSwimlane's lane-offset loop
 // already does for lane bands specifically. Mirrors stickyflow-atlas's own
 // sflToCanvasState.ts implementation of the same feature (Container-only,
@@ -73,8 +73,8 @@ Model board {
 describe('Container flow/gap (SFL 1.4, §12.1)', () => {
   it('horizontal flow places direct children left-to-right, cursor advancing by size+gap', () => {
     const state = sflToCanvasState(HORIZONTAL_SFL);
-    const output = state.entities.find(e => e.id === 'output');
-    const scrap = state.entities.find(e => e.id === 'scrap');
+    const output = state.canvasObjects.find(e => e.id === 'output');
+    const scrap = state.canvasObjects.find(e => e.id === 'scrap');
     // Relative to the parent Container's own absolute origin (40, 420).
     expect(output).toMatchObject({ x: 40, y: 420, width: 140, height: 90 });
     expect(scrap).toMatchObject({ x: 40 + 140 + 16, y: 420, width: 140, height: 90 });
@@ -82,22 +82,22 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
 
   it('vertical flow places direct children top-to-bottom, cursor advancing by size+gap', () => {
     const state = sflToCanvasState(VERTICAL_SFL);
-    const a = state.entities.find(e => e.id === 'a');
-    const b = state.entities.find(e => e.id === 'b');
+    const a = state.canvasObjects.find(e => e.id === 'a');
+    const b = state.canvasObjects.find(e => e.id === 'b');
     expect(a).toMatchObject({ x: 10, y: 20, width: 100, height: 50 });
     expect(b).toMatchObject({ x: 10, y: 20 + 50 + 10, width: 100, height: 30 });
   });
 
   it("a child's own layout.position is ignored (overridden) when the parent has flow set", () => {
     // Same as HORIZONTAL_SFL's children but each also declares an explicit
-    // (wrong, if honored) position — flow must win regardless.
+    // (wrong, if honored) position â€” flow must win regardless.
     const sfl = HORIZONTAL_SFL.replace(
       'layout { size: 140, 90 }\n    }\n    Shape scrap',
       'layout { position: 999, 999; size: 140, 90 }\n    }\n    Shape scrap',
     ).replace('layout { size: 140, 90 }\n    }\n  }\n}', 'layout { position: -50, -50; size: 140, 90 }\n    }\n  }\n}');
     const state = sflToCanvasState(sfl);
-    const output = state.entities.find(e => e.id === 'output');
-    const scrap = state.entities.find(e => e.id === 'scrap');
+    const output = state.canvasObjects.find(e => e.id === 'output');
+    const scrap = state.canvasObjects.find(e => e.id === 'scrap');
     expect(output).toMatchObject({ x: 40, y: 420 });
     expect(scrap).toMatchObject({ x: 40 + 140 + 16, y: 420 });
   });
@@ -105,16 +105,16 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
   it('gap defaults to 0 when flow is set but gap is omitted', () => {
     const sfl = HORIZONTAL_SFL.replace('      flow: horizontal\n      gap: 16\n', '      flow: horizontal\n');
     const state = sflToCanvasState(sfl);
-    const output = state.entities.find(e => e.id === 'output');
-    const scrap = state.entities.find(e => e.id === 'scrap');
+    const output = state.canvasObjects.find(e => e.id === 'output');
+    const scrap = state.canvasObjects.find(e => e.id === 'scrap');
     expect(output).toMatchObject({ x: 40 });
     expect(scrap).toMatchObject({ x: 40 + 140 }); // no gap added
   });
 
   it('regression: absent flow leaves explicit positions fully untouched', () => {
     const state = sflToCanvasState(EXPLICIT_SFL);
-    const output = state.entities.find(e => e.id === 'output');
-    const scrap = state.entities.find(e => e.id === 'scrap');
+    const output = state.canvasObjects.find(e => e.id === 'output');
+    const scrap = state.canvasObjects.find(e => e.id === 'scrap');
     expect(output).toMatchObject({ x: 40 + 10, y: 420 + 10, width: 140, height: 90 });
     expect(scrap).toMatchObject({ x: 40 + 160, y: 420 + 10, width: 140, height: 90 });
   });
@@ -128,8 +128,8 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
   });
 
   it('is stable across repeated parses (determinism)', () => {
-    const a = sflToCanvasState(HORIZONTAL_SFL).entities.find(e => e.id === 'scrap');
-    const b = sflToCanvasState(HORIZONTAL_SFL).entities.find(e => e.id === 'scrap');
+    const a = sflToCanvasState(HORIZONTAL_SFL).canvasObjects.find(e => e.id === 'scrap');
+    const b = sflToCanvasState(HORIZONTAL_SFL).canvasObjects.find(e => e.id === 'scrap');
     expect(a).toEqual(b);
   });
 });

@@ -29,7 +29,7 @@ Model board {
 describe('Boxplot chart', () => {
   it('carries chartType and per-series raw values through sflToCanvasState', () => {
     const state = sflToCanvasState(BOXPLOT_SFL);
-    const chart = state.entities[0];
+    const chart = state.canvasObjects[0];
     expect(chart.chart?.chartType).toBe('boxplot');
     expect(chart.chart?.showBoxplotPoints).toBe(false);
     expect(chart.chart?.series.map(s => s.values)).toEqual([

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
-import { applyChartValueChange, applyMoveChange } from '../src/interaction';
+import { applyChartValueChange, applyMoveChange } from '../src/runtime/interaction';
 
 const BAR_SFL = `sfl 1.4
 

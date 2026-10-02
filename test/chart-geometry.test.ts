@@ -5,9 +5,9 @@ import {
   hasEditableGeometry,
   hasMovableGeometry,
   isCompositeOwner,
-} from '../src/interaction/geometryRoles';
-import { applyMoveChange, applyResizeChange } from '../src/interaction/patchSfl';
-import type { OwnerRef } from '../src/viewer';
+} from '../src/runtime/interaction/geometryRoles';
+import { applyMoveChange, applyResizeChange } from '../src/runtime/interaction/patchSfl';
+import type { OwnerRef } from '../src/runtime/viewer';
 
 const CHART = `sfl 1.4
 

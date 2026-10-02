@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { bindDeleteSelection } from '../src/interaction/deleteSelection';
-import { Emitter } from '../src/interaction/events';
-import { bindEditing } from '../src/interaction/index';
+import { bindDeleteSelection } from '../src/runtime/interaction/deleteSelection';
+import { Emitter } from '../src/runtime/interaction/events';
+import { bindEditing } from '../src/runtime/interaction/index';
 import { createFakeViewer } from './fakeViewer';
 
 function counted(types: string[]): Record<string, number> {

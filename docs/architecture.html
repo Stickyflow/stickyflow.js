@@ -713,7 +713,7 @@
                 <h3>SflDocument</h3>
                 <p>Syntaxmodell: Welche Blöcke, Properties und Werte stehen im Quelltext?</p>
                 <ul>
-                  <li>Definiert in <code>sfl/language/ast.ts</code>.</li>
+                  <li>Definiert in <code>sflLanguage/ast.ts</code>.</li>
                   <li>Erzeugt von <code>parse()</code>.</li>
                   <li>Bewahrt Sprachstruktur, nicht Rendersemantik.</li>
                 </ul>
@@ -723,7 +723,7 @@
                 <h3>SflCanvasState</h3>
                 <p>Semantikmodell: Was bedeuten Definitionen, Vererbung, Gruppen, Positionen und Links?</p>
                 <ul>
-                  <li>Definiert in <code>sfl/semantic/types.ts</code>.</li>
+                  <li>Definiert in <code>sflSemantic/types.ts</code>.</li>
                   <li>Erzeugt von <code>sflToCanvasState()</code>.</li>
                   <li>Enthält <code>SflEntityOut</code> und Diagnosen.</li>
                 </ul>
@@ -743,7 +743,7 @@
                 <h3>RenderScene</h3>
                 <p>Zeichenmodell: Welche Rects, Paths, Ellipsen, Bilder und Texte werden in welcher Reihenfolge ausgegeben?</p>
                 <ul>
-                  <li>Definiert in <code>rendering/scene/types.ts</code>.</li>
+                  <li>Definiert in <code>renderScene/scene/types.ts</code>.</li>
                   <li>Erzeugt von <code>buildRenderScene()</code>.</li>
                   <li>Ist unabhängig von SFL und vom DOM.</li>
                 </ul>
@@ -808,7 +808,7 @@ Model Demo {
   version: "1.2",
   blocks: [{ kind: "Model", name: "Demo", entries: [/* Entity start */] }]
 }</code></pre>
-                  <span class="function-path">sfl/parser.ts → language/parsing/document.ts → blocks.ts → properties.ts → values.ts</span>
+                  <span class="function-path">sflLanguage/parsing/parser.ts → document.ts → blocks.ts → properties.ts → values.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -821,20 +821,20 @@ Model Demo {
   text: "Start", x: 40, y: 60, width: 160, height: 80,
   props: { fill: "#0f766e", stroke: "#5eead4", strokeWidth: 2 }
 }</code></pre>
-                  <span class="function-path">sflToCanvasState.ts → semantic/resolution.ts → traversal.ts → entityReader.ts</span>
+                  <span class="function-path">sflSemantic/sflToCanvasState.ts → canvasState/resolution.ts → canvasTree/resolver.ts → canvasObjects/processing/resolver.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
                 <span class="timeline-index">05</span>
                 <div>
                   <h3>Übersetzung in das Domain Model</h3>
-                  <p><code>collectEntities()</code> trennt die Entity-Varianten. Für diesen Eintrag ruft es <code>shapeObject()</code> auf. Dort werden SFL-Werte validiert, Farben dekodiert und in den stabilen <code>Shape</code>-Vertrag übersetzt.</p>
+                  <p><code>collectCanvasObjects()</code> trennt die Canvas-Object-Varianten. Für diesen Eintrag ruft es <code>shapeObject()</code> auf. Dort werden SFL-Werte validiert, Farben dekodiert und in den stabilen <code>Shape</code>-Vertrag übersetzt.</p>
                   <pre class="code-block"><code>{
   id: "start", type: "shape", shapeType: "rounded_rectangle",
   text: "Start", x: 40, y: 60, width: 160, height: 80,
   fillColor: "#0f766e", strokeColor: "#5eead4", strokeWidth: 2
 }</code></pre>
-                  <span class="function-path">sflToRenderInput.ts → renderInput/fromSfl/entities/collect.ts → shape.ts</span>
+                  <span class="function-path">renderInput/fromSfl/index.ts → canvasObjects/collect.ts → shape.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -846,7 +846,7 @@ Model Demo {
   { type: "rect", id: "shape-start", x: 40, y: 60, width: 160, height: 80, rx: 8, ... },
   { type: "text", id: "shape-text-start", lines: ["Start"], ... }
 ]</code></pre>
-                  <span class="function-path">rendering/scene/build.ts → entities/shape.ts → shape/geometry/index.ts → simple.ts</span>
+                  <span class="function-path">renderScene/scene/build.ts → entities/shape.ts → shape/geometry/index.ts → simple.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -854,7 +854,7 @@ Model Demo {
                 <div>
                   <h3>Identität, Reihenfolge und Bounds</h3>
                   <p><code>tag()</code> ergänzt <code>SceneIdentity</code> mit Rolle, ID, Kind und Primary-Flag. Danach sortiert der Scene-Builder stabil nach <code>order</code> und ID und berechnet die Gesamtgrenzen.</p>
-                  <span class="function-path">rendering/scene/tagging.ts → scene/build.ts → scene/bounds.ts</span>
+                  <span class="function-path">renderScene/scene/tagging.ts → scene/build.ts → scene/bounds.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -865,7 +865,7 @@ Model Demo {
                   <pre class="code-block"><code>&lt;rect id="..." data-sf-role="entity" data-sf-id="start"
   data-sf-kind="rounded_rectangle" data-sf-primary="true"
   x="40" y="60" width="160" height="80" rx="8" .../&gt;</code></pre>
-                  <span class="function-path">rendering/svg/renderScene.ts → document.ts → nodes.ts → attributes.ts / contract.ts</span>
+                  <span class="function-path">svg/renderScene.ts → document.ts → nodes.ts → attributes.ts / contract.ts</span>
                 </div>
               </article>
               <article class="timeline-step">
@@ -873,7 +873,7 @@ Model Demo {
                 <div>
                   <h3>Optionale Browser-Nutzung</h3>
                   <p>Der Viewer setzt das fertige SVG in den Container und prüft den DOM-Contract. Interaction kann anschließend Auswahl und Editing binden, ohne Parser oder Renderer umzubauen.</p>
-                  <span class="function-path">viewer/display → viewer/interaction → interaction/*</span>
+                  <span class="function-path">runtime/viewer/display → runtime/viewer/interaction → runtime/interaction/*</span>
                 </div>
               </article>
             </div>
@@ -890,24 +890,26 @@ Model Demo {
             </div>
             <pre class="tree" aria-label="Quellordnerstruktur"><code>src/
 ├─ model/                  Domänenmodelle, Geometrie, Diagnosen, Vertragsversion
-├─ sfl/
-│  ├─ language/           AST, Lexer, Parser, Emitter
-│  ├─ semantic/           Definitionen, Vererbung, Entity- und Link-Auflösung
-│  ├─ importJson/         Export in das Stickyflow-Importformat
-│  └─ styleDecoding/      SFL-Farb-, Rampen- und Schattenwerte
+├─ sflLanguage/            AST, Lexer, Parser, Emitter
+├─ sflSemantic/            Definitionen, Vererbung, Canvas-Object- und Link-Auflösung
 ├─ renderInput/
-│  └─ fromSfl/            SFL-Zustand → RenderInput
-├─ rendering/
+│  ├─ fromSfl/             SFL-Zustand → RenderInput
+│  └─ styleDecoding/       Farb-, Rampen- und Schattenwerte → RenderInput
+├─ renderScene/
 │  ├─ scene/              Scene-Vertrag, Aufbau, Bounds, Paint, Reihenfolge
 │  ├─ entities/           Shape, Link, Path, Frame und Swimlane
 │  ├─ tables/             Eigenständiger Tabellenrenderer
-│  ├─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
-│  └─ svg/                Definitionen, Nodes, Attribute, Dokument
-├─ domContract/           Versioniertes SVG/DOM-Bindingschema
-├─ viewer/                Anzeige, Kamera, Selektion
-├─ interaction/           Editiergesten und SFL-Patches
-├─ web-component/         &lt;stickyflow-diagram&gt;
-└─ eventing/              Typisierte Ereignisverteilung</code></pre>
+│  └─ charts/             Aufbau, Decorations, Field, Primitives, Renderer
+├─ svg/                    Definitionen, Nodes, Attribute, Dokument
+│  └─ domContract/        Versioniertes SVG/DOM-Bindingschema
+├─ adapters/
+│  └─ importJson/         Export in das Stickyflow-Importformat
+└─ runtime/
+   ├─ dom/                DOM-Abfragen und Overlays
+   ├─ eventing/           Typisierte Ereignisverteilung
+   ├─ viewer/             Anzeige, Kamera, Selektion
+   ├─ interaction/        Editiergesten und SFL-Patches
+   └─ webComponent/       &lt;stickyflow-diagram&gt;</code></pre>
           </section>
 
           <section id="layers">
@@ -928,14 +930,14 @@ Model Demo {
                 <h3>SFL Language</h3>
                 <p>Lexikalische und syntaktische Verarbeitung der Sprache sowie kanonische Ausgabe.</p>
                 <ul><li>Text → Tokens → AST.</li><li>AST → kanonischer SFL-Text.</li><li>Keine Diagrammauflösung.</li></ul>
-                <span class="path">src/sfl/language</span>
+                <span class="path">src/sflLanguage</span>
               </article>
               <article class="card">
                 <span class="card-number">L2</span>
                 <h3>SFL Semantic</h3>
                 <p>Löst Definitionen, Kompositionen, Vererbung, Gruppen, Entities und Links fachlich auf.</p>
                 <ul><li>AST → <code>SflCanvasState</code>.</li><li>Sammelt SFL-Diagnosen.</li><li>Keine Render-Nodes.</li></ul>
-                <span class="path">src/sfl/semantic</span>
+                <span class="path">src/sflSemantic</span>
               </article>
               <article class="card">
                 <span class="card-number">L3</span>
@@ -949,14 +951,14 @@ Model Demo {
                 <h3>Render Scene</h3>
                 <p>Baut aus RenderInput eine deterministische, geordnete Liste abstrakter Zeichenknoten.</p>
                 <ul><li>Berechnet Bounds und Paint.</li><li>Taggt fachliche Besitzer.</li><li>Berührt kein DOM.</li></ul>
-                <span class="path">src/rendering/scene</span>
+                <span class="path">src/renderScene</span>
               </article>
               <article class="card">
                 <span class="card-number">L5</span>
                 <h3>SVG</h3>
                 <p>Serialisiert Scene-Nodes, Paints, Marker, Filter und den DOM-Vertrag in ein SVG-Dokument.</p>
                 <ul><li>Escaped nutzergesteuerte Werte.</li><li>Erzeugt Definitionen deterministisch.</li><li>Gibt String, Größe und Diagnosen zurück.</li></ul>
-                <span class="path">src/rendering/svg</span>
+                <span class="path">src/svg</span>
               </article>
             </div>
           </section>
@@ -985,7 +987,7 @@ Model Demo {
                 <tr><td><code>parsing/properties.ts</code></td><td><code>PropertyParser</code></td><td>Property-, Layout- und Style-Blöcke.</td></tr>
                 <tr><td><code>parsing/values.ts</code></td><td><code>parseValue()</code></td><td>String-, Number-, Tuple-, List-, Ident- und Endpoint-Werte.</td></tr>
                 <tr><td><code>emitter.ts</code></td><td><code>emit()</code></td><td>Öffentliche Fassade für kanonische SFL-Ausgabe.</td></tr>
-                <tr><td><code>language/emitting/*</code></td><td>Dokument-, Block- und Value-Emitter</td><td>Reihenfolge und Formatierung je Syntaxebene.</td></tr>
+                <tr><td><code>sflLanguage/emitting/*</code></td><td>Dokument-, Block- und Value-Emitter</td><td>Reihenfolge und Formatierung je Syntaxebene.</td></tr>
               </tbody>
             </table>
 
@@ -994,17 +996,16 @@ Model Demo {
               <thead><tr><th>Modul</th><th>Kernfunktion oder Typ</th><th>Exakte Verantwortung</th></tr></thead>
               <tbody>
                 <tr><td><code>sflToCanvasState.ts</code></td><td><code>sflToCanvasState()</code></td><td>Orchestriert Parse, Resolution, Tree und Links.</td></tr>
-                <tr><td><code>semantic/resolution.ts</code></td><td><code>createCanvasResolution()</code></td><td>Baut Definitionsindex, Inheritance-Resolver und Reader-Kontext.</td></tr>
-                <tr><td><code>semantic/definitions.ts</code></td><td>Definitionsindex</td><td>Findet benannte Layout-, Style- und Symboldefinitionen.</td></tr>
-                <tr><td><code>semantic/definitionInheritance.ts</code></td><td><code>DefinitionInheritanceResolver</code></td><td>Löst Komposition und verhindert rekursive Zyklen.</td></tr>
-                <tr><td><code>semantic/traversal.ts</code></td><td><code>CanvasTreeReader</code></td><td>Traversiert Container, Entities, Groups, Links und Nets.</td></tr>
-                <tr><td><code>semantic/entityReader.ts</code></td><td><code>buildEntity()</code></td><td>Montiert Klassifikation, Geometrie und Präsentation.</td></tr>
-                <tr><td><code>entityClassification.ts</code></td><td><code>classifyEntity()</code></td><td>Bestimmt Entity- und Shape-Variante.</td></tr>
-                <tr><td><code>entityGeometry.ts</code></td><td><code>readEntityGeometry()</code></td><td>Position, Größe, Rotation und Order.</td></tr>
-                <tr><td><code>entityPresentation.ts</code></td><td><code>readEntityPresentation()</code></td><td>Semantische Style- und Textwerte.</td></tr>
-                <tr><td><code>entityReaders/*</code></td><td>Table-, Swimlane-, Path- und Chart-Reader</td><td>Variantenspezifische verschachtelte Daten.</td></tr>
-                <tr><td><code>linkReader.ts</code></td><td><code>readLinks()</code></td><td>Löst Link-Blöcke nach der Entity-Traversierung.</td></tr>
-                <tr><td><code>types.ts</code></td><td><code>SflCanvasState</code>, <code>SflEntityOut</code></td><td>Vertrag der gesamten semantischen Ausgabe.</td></tr>
+                <tr><td><code>sflSemantic/canvasState/resolution.ts</code></td><td><code>createCanvasResolution()</code></td><td>Baut Definitionsindex, Inheritance-Resolver und Reader-Kontext.</td></tr>
+                <tr><td><code>sflSemantic/definitions/collection.ts</code></td><td>Definitionsindex</td><td>Findet benannte Layout-, Style- und Symboldefinitionen.</td></tr>
+                <tr><td><code>sflSemantic/definitions/inheritance.ts</code></td><td><code>DefinitionInheritanceResolver</code></td><td>Löst Komposition und verhindert rekursive Zyklen.</td></tr>
+                <tr><td><code>sflSemantic/canvasTree/resolver.ts</code></td><td>Canvas-Tree-Auflösung</td><td>Traversiert Container, Canvas Objects, Groups, Links und Nets.</td></tr>
+                <tr><td><code>sflSemantic/canvasObjects/processing/resolver.ts</code></td><td>Canvas-Object-Auflösung</td><td>Montiert Klassifikation, Geometrie und Präsentation.</td></tr>
+                <tr><td><code>sflSemantic/canvasObjects/processing/classification.ts</code></td><td>Canvas-Object-Klassifikation</td><td>Bestimmt Artefakt- und Shape-Variante.</td></tr>
+                <tr><td><code>sflSemantic/canvasObjects/processing/layout/geometry.ts</code></td><td>Geometrieauflösung</td><td>Position, Größe, Rotation und Order.</td></tr>
+                <tr><td><code>sflSemantic/canvasObjects/processing/presentation.ts</code></td><td>Präsentationsauflösung</td><td>Semantische Style- und Textwerte.</td></tr>
+                <tr><td><code>sflSemantic/canvasObjects/artifacts/*</code></td><td>Table-, Swimlane-, Path-, Chart- und Link-Reader</td><td>Artefaktspezifische verschachtelte Daten.</td></tr>
+                <tr><td><code>sflSemantic/types.ts</code></td><td><code>SflCanvasState</code>, <code>SflEntityOut</code></td><td>Vertrag der gesamten semantischen Ausgabe.</td></tr>
               </tbody>
             </table>
 
@@ -1018,11 +1019,11 @@ Model Demo {
                 <tr><td><code>model/geometry/*</code></td><td>Routing-, Text-, Table-, Sankey- und Shape-Geometrie</td><td>Pure fachliche Berechnungen ohne Scene und DOM.</td></tr>
                 <tr><td><code>model/diagnostics.ts</code></td><td><code>RenderDiagnostic</code></td><td>Layerübergreifender Diagnosevertrag.</td></tr>
                 <tr><td><code>renderInput/types.ts</code></td><td><code>RenderInput</code></td><td>Vollständiger Eingang des Scene-Builders.</td></tr>
-                <tr><td><code>sflToRenderInput.ts</code></td><td><code>sflToRenderInput()</code></td><td>Öffentliche Orchestrierung des SFL-Adapters.</td></tr>
-                <tr><td><code>fromSfl/entities/collect.ts</code></td><td><code>collectEntities()</code></td><td>Sortiert und dispatcht semantische Entity-Varianten.</td></tr>
-                <tr><td><code>fromSfl/entities/{shape,table,chart,...}.ts</code></td><td>Variantenspezifische Objektkonverter</td><td>Je Variante ein eigener SFL → Model-Workflow.</td></tr>
+                <tr><td><code>renderInput/fromSfl/index.ts</code></td><td><code>sflToRenderInput()</code></td><td>Öffentliche Orchestrierung des SFL-Adapters.</td></tr>
+                <tr><td><code>fromSfl/canvasObjects/collect.ts</code></td><td><code>collectCanvasObjects()</code></td><td>Sortiert und dispatcht semantische Canvas-Object-Varianten.</td></tr>
+                <tr><td><code>fromSfl/canvasObjects/{shape,table,chart,...}.ts</code></td><td>Variantenspezifische Objektkonverter</td><td>Je Variante ein eigener SFL → Model-Workflow.</td></tr>
                 <tr><td><code>fromSfl/endpoint.ts</code></td><td><code>resolveLinkEndpoint()</code></td><td>Absolute, Side-, Port- und automatische Linkpunkte.</td></tr>
-                <tr><td><code>fromSfl/links.ts</code></td><td><code>resolveExportLinks()</code></td><td>Verbindet Link-Modelle mit konkreten Endpunktkoordinaten.</td></tr>
+                <tr><td><code>fromSfl/links.ts</code></td><td><code>createRenderInputLinks()</code></td><td>Verbindet Link-Modelle mit konkreten Endpunktkoordinaten.</td></tr>
               </tbody>
             </table>
 
@@ -1060,12 +1061,12 @@ Model Demo {
                 <tr><td><code>svg/contract.ts</code></td><td><code>contractAttrs()</code></td><td>Versionierte <code>data-sf-*</code>-Attribute.</td></tr>
                 <tr><td><code>svg/definitions.ts</code></td><td><code>SvgDefinitionRegistry</code></td><td>Dedupliziert Marker, Paints und Filter.</td></tr>
                 <tr><td><code>svg/format.ts</code></td><td><code>num()</code>, <code>xml()</code></td><td>Deterministische Zahlen und XML-Escaping.</td></tr>
-                <tr><td><code>domContract/*</code></td><td>Owner-Auflösung und Overlays</td><td>Einzige gemeinsame Bindungsoberfläche zwischen SVG und Browser.</td></tr>
-                <tr><td><code>viewer/display/*</code></td><td>Document-, Scene- und Element-Patches</td><td>Inkrementelle DOM-Anzeige und Viewport.</td></tr>
-                <tr><td><code>viewer/interaction/*</code></td><td>Pointer, Keyboard, Selection</td><td>Viewer-nahe Interaktion ohne SFL-Mutation.</td></tr>
-                <tr><td><code>interaction/*</code></td><td>Feature-Workflows</td><td>Move, Resize, Text, ChartValue, LinkEndpoint und QuickDuplicate.</td></tr>
-                <tr><td><code>interaction/sflPatch/*</code></td><td>Gezielte Source-Patches</td><td>Ändert ausschließlich betroffene SFL-Bereiche.</td></tr>
-                <tr><td><code>web-component/*</code></td><td>Custom Element Lifecycle</td><td>Komponiert Viewer und optionale Interaction als Browser-API.</td></tr>
+                <tr><td><code>runtime/dom/*</code></td><td>Owner-Auflösung und Overlays</td><td>Browserseitige Bindung an den SVG-DOM-Contract.</td></tr>
+                <tr><td><code>runtime/viewer/display/*</code></td><td>Document-, Scene- und Element-Patches</td><td>Inkrementelle DOM-Anzeige und Viewport.</td></tr>
+                <tr><td><code>runtime/viewer/interaction/*</code></td><td>Pointer, Keyboard, Selection</td><td>Viewer-nahe Interaktion ohne SFL-Mutation.</td></tr>
+                <tr><td><code>runtime/interaction/*</code></td><td>Feature-Workflows</td><td>Move, Resize, Text, ChartValue, LinkEndpoint und QuickDuplicate.</td></tr>
+                <tr><td><code>runtime/interaction/sflPatch/*</code></td><td>Gezielte Source-Patches</td><td>Ändert ausschließlich betroffene SFL-Bereiche.</td></tr>
+                <tr><td><code>runtime/webComponent/*</code></td><td>Custom Element Lifecycle</td><td>Komponiert Viewer und optionale Interaction als Browser-API.</td></tr>
               </tbody>
             </table>
           </section>

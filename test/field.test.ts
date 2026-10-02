@@ -42,7 +42,7 @@ Model board {
 describe('Chart type field (SFL 1.4, §3.4)', () => {
   it('parses scale/interpolate/idwPower/isolines and scalar+vector series generically', () => {
     const state = sflToCanvasState(FIELD_SFL);
-    const chart = state.entities[0].chart;
+    const chart = state.canvasObjects[0].chart;
     expect(chart?.chartType).toBe('field');
     expect(chart?.scale).toBe('ramp(#0b1d51 0, #22d3ee 0.5, #f5d90a 1)');
     expect(chart?.interpolate).toBe('idw');

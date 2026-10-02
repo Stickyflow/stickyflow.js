@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Rect } from '../src/model/geometry/types';
 import {
   applyAxisSnap,
   computeSnap,
@@ -6,8 +7,7 @@ import {
   nearestCandidates,
   resizeActivePoints,
   type SnapConfig,
-} from '../src/interaction/snapGeometry';
-import type { Rect } from '../src/model/geometry/types';
+} from '../src/runtime/interaction/snapGeometry';
 
 const bounds = (x: number, y: number, width: number, height: number): Rect => ({ x, y, width, height });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCompositeScale } from '../src/interaction/resize/geometryPreview';
+import { applyCompositeScale } from '../src/runtime/interaction/resize/geometryPreview';
 
 function fakeNode(tagName: string, attrs: Record<string, string>) {
   const values = { ...attrs };

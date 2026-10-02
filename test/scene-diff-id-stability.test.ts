@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '../src/index';
 import { SFL_SAMPLE } from './fixtures';
 
-// patchSceneNodes (src/viewer/display/sceneNodesPatch.ts) is a KEYED diff: on
+// patchSceneNodes (src/runtime/viewer/display/sceneNodesPatch.ts) is a KEYED diff: on
 // every viewer.update() it maps each live top-level <svg> child by its `id`,
 // looks that same `id` up in the freshly rendered SVG, and patches in place —
 // reporting the owner (data-sf-id) as `changed`, not removed+added. The whole

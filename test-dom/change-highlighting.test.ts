@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '../src/index';
-import type { SceneDiffEvent } from '../src/viewer';
-import { createViewer } from '../src/viewer';
+import type { SceneDiffEvent } from '../src/runtime/viewer';
+import { createViewer } from '../src/runtime/viewer';
 
 // jsdom has no layout engine, no Web Animations API, and no matchMedia — stub
 // exactly what the change-flash path reaches for. getBBox: shapeChangeOverlay's

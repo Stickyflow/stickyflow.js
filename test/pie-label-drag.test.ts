@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bindEditing } from '../src/interaction';
-import { createViewer } from '../src/viewer';
+import { bindEditing } from '../src/runtime/interaction';
+import { createViewer } from '../src/runtime/viewer';
 
 const IDENTITY = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 

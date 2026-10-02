@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { quickDuplicateBubbles } from '../src/domContract/selectionOverlay/quickDuplicate';
-import { renderResizeHandles } from '../src/domContract/selectionOverlay/resizeHandles';
-import { screenPx } from '../src/domContract/selectionOverlay/scale';
-import { shapeSelectionOverlay } from '../src/domContract/selectionOverlay/shape';
+import { quickDuplicateBubbles } from '../src/runtime/dom/selectionOverlay/quickDuplicate';
+import { renderResizeHandles } from '../src/runtime/dom/selectionOverlay/resizeHandles';
+import { screenPx } from '../src/runtime/dom/selectionOverlay/scale';
+import { shapeSelectionOverlay } from '../src/runtime/dom/selectionOverlay/shape';
 
 function fakeSvg(rectWidth: number, viewBoxWidth: number): SVGSVGElement {
   return {

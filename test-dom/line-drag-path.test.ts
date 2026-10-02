@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { bindChartValueDrag } from '../src/interaction/chartValueDrag';
-import { Emitter } from '../src/interaction/events';
+import { bindChartValueDrag } from '../src/runtime/interaction/chartValueDrag';
+import { Emitter } from '../src/runtime/interaction/events';
 import { createFakeViewer } from './fakeViewer';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';

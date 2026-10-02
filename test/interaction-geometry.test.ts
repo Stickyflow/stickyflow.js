@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseValueScale, pixelForValue, valueAtPixel } from '../src/interaction/chartValue/scale';
-import { offsetBounds } from '../src/interaction/move/geometry';
-import { HANDLE_AXES, MIN_SIZE, resizedBounds } from '../src/interaction/resize/geometry';
 import type { Rect } from '../src/model/geometry/types';
+import { parseValueScale, pixelForValue, valueAtPixel } from '../src/runtime/interaction/chartValue/scale';
+import { offsetBounds } from '../src/runtime/interaction/move/geometry';
+import { HANDLE_AXES, MIN_SIZE, resizedBounds } from '../src/runtime/interaction/resize/geometry';
 
 const box: Rect = { x: 100, y: 50, width: 200, height: 80 };
 

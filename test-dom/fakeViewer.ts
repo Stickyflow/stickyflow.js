@@ -1,5 +1,5 @@
-import type { OwnerRef } from '../src/domContract';
-import type { Viewer, ViewerSource } from '../src/viewer';
+import type { OwnerRef } from '../src/runtime/dom';
+import type { Viewer, ViewerSource } from '../src/runtime/viewer';
 
 export interface ListenerLog {
   added: string[];
