@@ -26,7 +26,7 @@ export function resolveTextEditRect(
   textNode: SVGGraphicsElement | null,
   primaryNode: SVGGraphicsElement | null,
 ): TextEditRect | null {
-  if (owner.role === 'entity') {
+  if (owner.role === 'shape') {
     return primaryNode ? screenRectOf(primaryNode) : null;
   }
   if (textNode) {

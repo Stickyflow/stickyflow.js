@@ -18,7 +18,7 @@ interface Box {
   height: number;
 }
 
-function boxOf(sfl: string, role: 'entity' | 'frame' | 'chart', id: string): Box {
+function boxOf(sfl: string, role: 'shape' | 'frame' | 'chart', id: string): Box {
   const input = sflToRenderInput(sfl);
   const found =
     role === 'frame'
@@ -32,10 +32,10 @@ function boxOf(sfl: string, role: 'entity' | 'frame' | 'chart', id: string): Box
   return { x: found.x, y: found.y, width: found.width, height: found.height };
 }
 
-const CASES: Array<{ label: string; owner: { role: 'entity' | 'frame' | 'chart'; id: string }; sfl: string }> = [
+const CASES: Array<{ label: string; owner: { role: 'shape' | 'frame' | 'chart'; id: string }; sfl: string }> = [
   {
     label: 'entity',
-    owner: { role: 'entity', id: 'e' },
+    owner: { role: 'shape', id: 'e' },
     sfl: `sfl 1.4
 
 Model M {

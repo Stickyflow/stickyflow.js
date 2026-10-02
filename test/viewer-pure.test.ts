@@ -45,7 +45,7 @@ describe('owner resolution (DOM-agnostic)', () => {
         'aria-label': 'Start',
       }),
     );
-    expect(owner).toEqual({ role: 'entity', id: 'start', kind: 'rounded_rectangle', label: 'Start' });
+    expect(owner).toEqual({ role: 'shape', id: 'start', kind: 'rounded_rectangle', label: 'Start' });
   });
 
   it('returns null for chrome with no owner', () => {

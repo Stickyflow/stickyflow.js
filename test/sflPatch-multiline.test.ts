@@ -4,7 +4,7 @@ import type { OwnerRef } from '../src/runtime/viewer';
 import { parse } from '../src/sflLanguage';
 import { sflToCanvasState } from '../src/sflSemantic/sflToCanvasState';
 
-const owner = (id: string): OwnerRef => ({ role: 'entity', id });
+const owner = (id: string): OwnerRef => ({ role: 'shape', id });
 
 const withBraceInMultiline = [
   'sfl 1.2',

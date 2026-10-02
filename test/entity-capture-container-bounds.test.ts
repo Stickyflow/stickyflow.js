@@ -54,7 +54,7 @@ const child = fakeNode(
 describe('capturing a dragged entity records its parent container bounds, unless the parent is dragged too', () => {
   it('records the parent frame bounds when only the child is being dragged', () => {
     const svg = fakeSvg([frame, child]);
-    const [captured] = captureDraggedEntities(svg, [{ role: 'entity', id: 'child' }], new Set(['child']));
+    const [captured] = captureDraggedEntities(svg, [{ role: 'shape', id: 'child' }], new Set(['child']));
 
     expect(captured.containerBounds).toEqual({ x: 0, y: 0, width: 200, height: 100 });
   });
@@ -63,7 +63,7 @@ describe('capturing a dragged entity records its parent container bounds, unless
     const svg = fakeSvg([frame, child]);
     const group = [
       { role: 'frame' as const, id: 'f' },
-      { role: 'entity' as const, id: 'child' },
+      { role: 'shape' as const, id: 'child' },
     ];
     const captured = captureDraggedEntities(svg, group, new Set(['f', 'child']));
     const childCapture = captured.find(entity => entity.owner.id === 'child');
@@ -77,7 +77,7 @@ describe('capturing a dragged entity records its parent container bounds, unless
       { x: 5, y: 5, width: 10, height: 10 },
     );
     const svg = fakeSvg([orphan]);
-    const [captured] = captureDraggedEntities(svg, [{ role: 'entity', id: 'lone' }], new Set(['lone']));
+    const [captured] = captureDraggedEntities(svg, [{ role: 'shape', id: 'lone' }], new Set(['lone']));
 
     expect(captured.containerBounds).toBeUndefined();
   });

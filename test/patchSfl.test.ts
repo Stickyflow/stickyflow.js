@@ -13,7 +13,7 @@ import type { OwnerRef } from '../src/runtime/viewer';
 import { parse } from '../src/sflLanguage';
 import { sflToCanvasState } from '../src/sflSemantic/sflToCanvasState';
 
-const owner = (id: string, role: OwnerRef['role'] = 'entity'): OwnerRef => ({ role, id });
+const owner = (id: string, role: OwnerRef['role'] = 'shape'): OwnerRef => ({ role, id });
 
 describe('applyTextChange', () => {
   it('replaces an existing text value', () => {

@@ -14,9 +14,14 @@ import {
 } from './domContract/attributes';
 import { num, xml } from './format';
 
+function domRole(identity: SceneIdentity): string {
+  // `entity` is retained only as the serialized v1 DOM-contract value.
+  return identity.role === 'shape' ? 'entity' : identity.role;
+}
+
 function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
   return [
-    `data-sf-role="${identity.role}"`,
+    `data-sf-role="${domRole(identity)}"`,
     `data-sf-id="${xml(identity.id)}"`,
     identity.kind ? `data-sf-kind="${xml(identity.kind)}"` : undefined,
     identity.primary ? 'data-sf-primary="true"' : undefined,

@@ -27,7 +27,7 @@ describe('";" after a nested block', () => {
       '  Shape a { layout { position: 0, 0; size: 10, 10 } }; Shape b { layout { position: 20, 0; size: 10, 10 } }',
     );
     const { scene } = render(source);
-    expect(scene.nodes.filter(node => node.identity?.role === 'entity').map(node => node.identity?.id)).toEqual([
+    expect(scene.nodes.filter(node => node.identity?.role === 'shape').map(node => node.identity?.id)).toEqual([
       'a',
       'b',
     ]);

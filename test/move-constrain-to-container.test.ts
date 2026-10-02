@@ -7,7 +7,7 @@ function entity(
   containerBounds?: typeof bounds,
 ): DraggedEntity {
   return {
-    owner: { role: 'entity', id: 'e' },
+    owner: { role: 'shape', id: 'e' },
     nodes: [],
     baseTransforms: [],
     overlays: [],

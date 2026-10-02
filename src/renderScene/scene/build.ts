@@ -53,7 +53,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ...input.shapes.flatMap((shape, index) =>
       tag(
         buildShape(shape, index, diagnostics, measureText),
-        'entity',
+        'shape',
         shape.id,
         shape.shapeType,
         shape.text || shape.shapeType,

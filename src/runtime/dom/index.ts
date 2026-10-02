@@ -3,6 +3,7 @@ export {
   type GuideLine,
   updateAlignmentGuides,
 } from './alignmentGuideOverlay';
+export { DERIVED_HEIGHT_ROLES } from './canvasObjectRoles';
 export {
   CHANGE_COLOR,
   FLASH_DURATION_MS,
@@ -31,7 +32,6 @@ export {
   pxPerUnit,
   screenRectOf,
 } from './domQuery';
-export { DERIVED_HEIGHT_ROLES } from './entityRoles';
 export {
   type LinkEndpoint,
   linkSelectionOverlay,

@@ -1,7 +1,7 @@
 import { resolveOwner } from '../../dom';
 import type { OwnerRef } from '../../viewer';
 
-const EDITABLE_ROLES = new Set(['entity', 'link']);
+const EDITABLE_ROLES = new Set(['shape', 'link']);
 
 export function resolveEditableTextOwner(event: MouseEvent): OwnerRef | null {
   const owner = resolveOwner(event.target as Element | null);

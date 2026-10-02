@@ -56,7 +56,7 @@ describe('moving a Path rewrites its points, not layout.position', () => {
 Model M {
   Shape e { text: "E"; layout { position: 10, 20; size: 100, 60 } }
 }`;
-    const next = applyMoveChange(entitySfl, { owner: { role: 'entity', id: 'e' }, dx: 15, dy: 5 });
+    const next = applyMoveChange(entitySfl, { owner: { role: 'shape', id: 'e' }, dx: 15, dy: 5 });
     expect(next).toContain('position: 25, 25');
   });
 

@@ -36,7 +36,7 @@ const geometryOf = (sfl: string) => {
 describe('charts take part in move and resize', () => {
   it('accepts a chart owner', () => {
     expect(hasEditableGeometry(chart)).toBe(true);
-    expect(hasEditableGeometry({ role: 'entity', id: 'e' })).toBe(true);
+    expect(hasEditableGeometry({ role: 'shape', id: 'e' })).toBe(true);
   });
 
   it('still refuses the roles that have no editable geometry', () => {
@@ -55,7 +55,7 @@ describe('charts take part in move and resize', () => {
     expect(hasEditableGeometry({ role: 'table', id: 't' })).toBe(true);
     expect(isCompositeOwner({ role: 'table', id: 't' })).toBe(true);
     expect(hasDerivedHeight({ role: 'table', id: 't' })).toBe(true);
-    expect(hasDerivedHeight({ role: 'entity', id: 'e' })).toBe(false);
+    expect(hasDerivedHeight({ role: 'shape', id: 'e' })).toBe(false);
   });
 
   it('lets a path move by dragging its stroke, but keeps it off box-resize (its points are the geometry)', () => {
@@ -66,7 +66,7 @@ describe('charts take part in move and resize', () => {
   });
 
   it('carries every hasEditableGeometry role forward into hasMovableGeometry too', () => {
-    for (const role of ['entity', 'chart', 'frame', 'swimlane', 'table'] as const) {
+    for (const role of ['shape', 'chart', 'frame', 'swimlane', 'table'] as const) {
       expect(hasMovableGeometry({ role, id: 'x' })).toBe(true);
     }
   });

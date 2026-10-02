@@ -59,6 +59,6 @@ export function createResizeDragState(svg: SVGSVGElement, event: PointerEvent): 
     pointerId: event.pointerId,
     moved: false,
     text,
-    textFit: text && selection.owner.role === 'entity' && kind !== 'person' ? captureTextFit(text) : null,
+    textFit: text && selection.owner.role === 'shape' && kind !== 'person' ? captureTextFit(text) : null,
   };
 }

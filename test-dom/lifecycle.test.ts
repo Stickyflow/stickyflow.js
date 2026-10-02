@@ -31,7 +31,7 @@ describe('interaction lifecycle', () => {
 
   it('a destroyed interaction stops emitting', () => {
     const { viewer, svg, setSelection } = createFakeViewer();
-    setSelection([{ role: 'entity', id: 'a' }]);
+    setSelection([{ role: 'shape', id: 'a' }]);
     const interaction = bindEditing(viewer);
 
     const seen: unknown[] = [];
@@ -46,7 +46,7 @@ describe('interaction lifecycle', () => {
 describe('bindDeleteSelection', () => {
   it('emits the current selection on Delete and Backspace', () => {
     const { viewer, svg, setSelection } = createFakeViewer();
-    setSelection([{ role: 'entity', id: 'a' }]);
+    setSelection([{ role: 'shape', id: 'a' }]);
     const emitter = new Emitter();
     const seen: Array<{ owners: unknown[] }> = [];
     emitter.on('delete', event => seen.push(event));
@@ -57,7 +57,7 @@ describe('bindDeleteSelection', () => {
     handle.destroy();
 
     expect(seen).toHaveLength(2);
-    expect(seen[0].owners).toEqual([{ role: 'entity', id: 'a' }]);
+    expect(seen[0].owners).toEqual([{ role: 'shape', id: 'a' }]);
   });
 
   it('ignores other keys and an empty selection', () => {

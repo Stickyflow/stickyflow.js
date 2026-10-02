@@ -28,6 +28,10 @@ export function isContractCompatible(version: number | null): boolean {
 
 const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane', 'table', 'chart', 'path']);
 
+function sceneRole(domRole: string): SceneRole {
+  return domRole === 'entity' ? 'shape' : (domRole as SceneRole);
+}
+
 export function symbolDeclaredBounds(el: {
   getAttribute(name: string): string | null;
 }): { x: number; y: number; width: number; height: number } | null {
@@ -79,7 +83,7 @@ export function resolveOwner(target: AttrElement | null): OwnerRef | null {
     return null;
   }
   return {
-    role: role as SceneRole,
+    role: sceneRole(role),
     id,
     kind: el.getAttribute('data-sf-kind') ?? undefined,
     label: el.getAttribute('aria-label') ?? undefined,
