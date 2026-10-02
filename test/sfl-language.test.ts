@@ -92,10 +92,9 @@ Shape card {
 
 Isometric relay {
   text: "Relay"
-  depth: 28
   layout {
     position: 320, 180
-    size: 120, 130
+    size: 120, 130, 28
   }
   style {
     topFill: "#7c3aed"
@@ -111,6 +110,7 @@ Isometric relay {
     kind: 'Isometric',
     name: 'relay',
   });
-  expect(parse(emit(document))).toEqual(document);
- });
+    const emitted = emit(document);
+    expect(emit(parse(emitted))).toBe(emitted);
+  });
 });

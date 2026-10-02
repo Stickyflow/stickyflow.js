@@ -1,12 +1,12 @@
 import type { SflValue } from '../../../../sflLanguage/ast';
-import { asNumber, asString } from '../../../ast/valueAccess';
+import { asString } from '../../../ast/valueAccess';
 import type { SflIsometricData } from './types';
 
 type Properties = Map<string, SflValue>;
 
-export function readIsometric(properties: Properties): SflIsometricData {
+export function readIsometric(properties: Properties, depth: number): SflIsometricData {
   return {
-    depth: asNumber(properties.get('depth')) ?? 24,
+    depth,
     icon: asString(properties.get('icon')),
   };
 }

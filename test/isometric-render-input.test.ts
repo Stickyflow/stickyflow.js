@@ -8,12 +8,11 @@ describe('Isometric RenderInput', () => {
 Model example {
   Isometric relay {
     text: "Relay"
-    depth: 28
     icon: "server"
 
     layout {
       position: 320, 180
-      size: 120, 130
+      size: 120, 130, 28
     }
 
     style {
