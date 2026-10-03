@@ -21,6 +21,9 @@ export interface IsometricObject {
   cornerRadius?: number;
   hasShadow?: boolean;
   shadowStyle?: ShadowStyle;
+  labelOffsetX?: number;
+  labelOffsetY?: number;
+  labelBackground?: string;
 
   parentFrameId?: string;
 }

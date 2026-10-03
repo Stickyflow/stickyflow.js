@@ -4,7 +4,7 @@ import {
   isometricFaces,
   isometricTopFaceCenter,
 } from '../../model/isometricObject';
-import type { RenderNode, SceneEllipse, ScenePath, SceneText } from '../scene';
+import type { RenderNode, ScenePath, SceneRect, SceneText } from '../scene';
 import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
 import { roundedPolygonPath } from '../scene/roundedPolygonPath';
 import { tag } from '../scene/tagging';
@@ -12,9 +12,6 @@ import { tag } from '../scene/tagging';
 export function buildIsometricObject(object: IsometricObject, index: number): RenderNode[] {
   const strokeWidth = Math.max(0, finite(object.strokeWidth, 1));
   const rotation = finite(object.rotation, 0);
-  // The on-screen box, derived from the true width/height/depth edge
-  // lengths (see isometricBounds) - NOT the same numbers as object.width/
-  // object.height, which are true axis lengths, not pixel extents.
   const box = isometricBounds(object);
   const rotationCenter = {
     x: box.x + box.width / 2,
@@ -25,6 +22,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
   const faces = isometricFaces(object);
   const cornerRadius = Math.max(0, finite(object.cornerRadius, 8));
   const depth = Math.max(0, object.depth);
+  const height = Math.max(0, object.height);
   const common = {
     type: 'path' as const,
     bounds,
@@ -37,26 +35,50 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   };
 
-  const groundShadow: SceneEllipse | undefined = object.hasShadow
+  const heightFactor = 0.6 + Math.min(1, height / 150) * 0.7;
+  // The footprint on the ground is the same rhombus as the top face, just
+  // carried straight down by the object's own height - that keeps it
+  // following the true 30deg/150deg isometric axes (independently stretched
+  // by width and depth) instead of a fixed-orientation ellipse that only
+  // ever grows horizontally.
+  const contactFootprint = faces.top.map(point => ({ x: point.x, y: point.y + height }));
+  // The exact contact footprint is pixel-for-pixel the same quad as the
+  // bottom edge of the object's own opaque front/side faces, so it's fully
+  // hidden behind them - scaled outward from its own centroid so it pokes
+  // out past the silhouette the way a cast shadow actually would.
+  const footprintCenter = {
+    x: contactFootprint.reduce((sum, point) => sum + point.x, 0) / contactFootprint.length,
+    y: contactFootprint.reduce((sum, point) => sum + point.y, 0) / contactFootprint.length,
+  };
+  const shadowSpread = 1.3;
+  const footprint = contactFootprint.map(point => ({
+    x: footprintCenter.x + (point.x - footprintCenter.x) * shadowSpread,
+    y: footprintCenter.y + (point.y - footprintCenter.y) * shadowSpread,
+  }));
+  const footprintXs = footprint.map(point => point.x);
+  const footprintYs = footprint.map(point => point.y);
+  const groundShadow: ScenePath | undefined = object.hasShadow
     ? {
-        type: 'ellipse',
+        type: 'path',
         id: `isometric-${object.id}-ground-shadow`,
-        order: order - 0.1,
+        // A dedicated layer strictly below every isometric object's own
+        // hull/faces (which start at 15_000+i) - a shadow must never paint
+        // in front of another object's body, regardless of declaration
+        // order or how far its footprint stretches.
+        order: 14_000 + index,
         bounds: {
-          minX: box.x + box.width * 0.15,
-          minY: box.y + box.height - depth * 0.35,
-          maxX: box.x + box.width * 0.85,
-          maxY: box.y + box.height + depth * 0.35,
+          minX: Math.min(...footprintXs),
+          minY: Math.min(...footprintYs),
+          maxX: Math.max(...footprintXs),
+          maxY: Math.max(...footprintYs),
         },
-        cx: box.x + box.width / 2,
-        cy: box.y + box.height,
-        rx: box.width * 0.35,
-        ry: Math.max(3, depth * 0.35),
+        d: roundedPolygonPath(footprint, 0),
         rotation,
+        rotationCenter,
         style: {
           fill: { kind: 'solid', color: object.shadowStyle?.color ?? '#000000' },
           stroke: { kind: 'none' },
-          opacity: object.shadowStyle?.opacity ?? 0.18,
+          opacity: Math.min(1, (object.shadowStyle?.opacity ?? 0.18) * heightFactor),
           blur: finite(object.shadowStyle?.blur, 8),
           pointerEvents: 'none',
         },
@@ -64,13 +86,6 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     : undefined;
 
   const noStroke = { ...common.style, stroke: { kind: 'none' as const } };
-
-  // Rounding each face's own corners independently (its own two adjacent
-  // edges) never lines up with the hull's rounding below (computed from the
-  // hull's own, different, adjacent edges) - the mismatch left slivers of
-  // background showing through at the exterior corners. Faces are drawn
-  // sharp-cornered instead and clipped to the hull path, so the fill and the
-  // outline are trimmed by the exact same curve and always coincide.
   const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
   const hullPath = roundedPolygonPath(silhouette, cornerRadius);
   const hullClip = { type: 'path' as const, d: hullPath };
@@ -99,11 +114,6 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   ];
 
-  // The three interior seams (where top meets front, front meets side, side
-  // meets top) all converge on the near corner shared by all three faces -
-  // drawn faint since the bold stroke belongs to the silhouette alone. Also
-  // clipped to the hull so they stop exactly at the rounded corners instead
-  // of poking past them toward the original sharp vertex.
   const seams: ScenePath = {
     ...common,
     id: `isometric-${object.id}-seams`,
@@ -123,29 +133,19 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     id: `isometric-${object.id}-hull`,
     order: order + 0.24,
     d: hullPath,
-    // Exposed on the hull node (DOM contract) so the runtime's axis-handle
-    // overlay and live-resize preview can read the true width/height/depth
-    // and the derived on-screen box without re-deriving either from a
-    // parsed `d` string.
     detail: {
       of: 'isometricGeometry',
       width: Math.max(0, object.width),
-      height: Math.max(0, object.height),
+      height,
       depth,
       cornerRadius,
       bounds: box,
+      labelOffsetX: finite(object.labelOffsetX, 0),
+      labelOffsetY: finite(object.labelOffsetY, 0),
     },
     style: { ...common.style, fill: { kind: 'none' } },
   };
 
-  // hull must stay first: tag() below marks whichever node is at index 0 as
-  // "primary", and the interaction runtime measures that node's own rendered
-  // SVG bbox (not its declared `bounds` field) for selection, resize
-  // handles, and focus. Only the hull's path geometry actually spans the
-  // full object - each face's own `d` only draws that one face. Final paint
-  // order doesn't depend on this array order - buildRenderScene sorts the
-  // whole scene by `order` afterward - so the shadow can safely sit anywhere
-  // here despite needing to paint behind the faces.
   const objectNodes: RenderNode[] = groundShadow
     ? [hull, ...facesNodes, groundShadow, seams]
     : [hull, ...facesNodes, seams];
@@ -156,25 +156,24 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
 
   const labelHeight = 20;
   const labelGap = 12;
-  // Anchored to the top face's own centroid, not just its x - that point
-  // moves diagonally (at the same fixed axis angle as the edges) when width
-  // or depth changes, since it's built from exactly the same apex+toRight+
-  // toLeft vectors. Anchoring only x and pinning y to the box's top (the
-  // apex, which never moves) made the label snap horizontally while the
-  // corner it's meant to track actually slides along the axis.
+  const labelPaddingX = 6;
+  const labelPaddingY = 3;
   const anchor = isometricTopFaceCenter(object);
+  const labelCenterX = anchor.x + finite(object.labelOffsetX, 0);
+  const labelBottomY = anchor.y - labelGap + finite(object.labelOffsetY, 0);
+  const labelTopY = labelBottomY - labelHeight;
   const label: SceneText = {
     type: 'text',
     id: `isometric-${object.id}-label`,
     order: order + 0.3,
     bounds: {
-      minX: anchor.x - box.width / 2,
-      minY: anchor.y - labelGap - labelHeight,
-      maxX: anchor.x + box.width / 2,
-      maxY: anchor.y - labelGap,
+      minX: labelCenterX - box.width / 2,
+      minY: labelTopY,
+      maxX: labelCenterX + box.width / 2,
+      maxY: labelBottomY,
     },
-    x: anchor.x - box.width / 2,
-    y: anchor.y - labelGap - labelHeight,
+    x: labelCenterX - box.width / 2,
+    y: labelTopY,
     width: box.width,
     height: labelHeight,
     lines: [object.text],
@@ -187,6 +186,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     lineHeight: 1.2,
     rotation,
     rotationCenter,
+    mark: 'isometric-label',
   };
 
   const labelGuide: ScenePath = {
@@ -194,12 +194,12 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     id: `isometric-${object.id}-label-guide`,
     order: order + 0.25,
     bounds: {
-      minX: anchor.x,
-      minY: anchor.y - labelGap,
-      maxX: anchor.x,
-      maxY: anchor.y,
+      minX: Math.min(anchor.x, labelCenterX),
+      minY: Math.min(anchor.y, labelBottomY),
+      maxX: Math.max(anchor.x, labelCenterX),
+      maxY: Math.max(anchor.y, labelBottomY),
     },
-    d: `M ${anchor.x} ${anchor.y - labelGap} L ${anchor.x} ${anchor.y}`,
+    d: `M ${anchor.x} ${anchor.y} L ${labelCenterX} ${labelBottomY}`,
     rotation,
     rotationCenter,
     style: {
@@ -211,7 +211,36 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   };
 
-  return [...objectNodes, labelGuide, label];
+  if (!object.labelBackground) {
+    return [...objectNodes, labelGuide, label];
+  }
+
+  const labelCharWidth = 6.5;
+  const backgroundWidth = Math.max(24, object.text.length * labelCharWidth + labelPaddingX * 2);
+  const labelBackground: SceneRect = {
+    type: 'rect',
+    id: `isometric-${object.id}-label-background`,
+    order: order + 0.28,
+    x: labelCenterX - backgroundWidth / 2,
+    y: labelTopY - labelPaddingY,
+    width: backgroundWidth,
+    height: labelHeight + labelPaddingY * 2,
+    rx: 4,
+    bounds: {
+      minX: labelCenterX - backgroundWidth / 2,
+      minY: labelTopY - labelPaddingY,
+      maxX: labelCenterX + backgroundWidth / 2,
+      maxY: labelBottomY + labelPaddingY,
+    },
+    rotation,
+    mark: 'isometric-label',
+    style: {
+      fill: { kind: 'solid', color: object.labelBackground },
+      stroke: { kind: 'none' },
+    },
+  };
+
+  return [...objectNodes, labelGuide, labelBackground, label];
 }
 
 export function buildIsometricObjects(objects: readonly IsometricObject[]): RenderNode[] {

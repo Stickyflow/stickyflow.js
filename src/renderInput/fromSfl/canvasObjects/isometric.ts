@@ -26,6 +26,9 @@ export function isometricObject(canvasObject: SflIsometricObject): IsometricObje
     cornerRadius: numOf(presentation.cornerRadius) ?? 8,
     hasShadow: shadowStyle?.enabled ?? false,
     shadowStyle,
+    labelOffsetX: numOf(presentation.labelOffsetX) ?? 0,
+    labelOffsetY: numOf(presentation.labelOffsetY) ?? 0,
+    labelBackground: solidColor(presentation.labelBackground),
     parentFrameId: canvasObject.parentFrameId,
   };
 }

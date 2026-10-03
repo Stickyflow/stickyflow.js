@@ -6,6 +6,7 @@ import { bindColumnResize, type ColumnResizeDragHandle } from './columnResizeDra
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './isometricAxisResizeDrag';
+import { bindIsometricLabelDrag, type IsometricLabelDragHandle } from './isometricLabelDrag/binding';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
@@ -43,6 +44,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
   const pieLabels: PieLabelDragHandle = bindPieLabelDrag(viewer, emitter);
+  const isometricLabels: IsometricLabelDragHandle = bindIsometricLabelDrag(viewer, emitter);
   const radarVertices: RadarVertexDragHandle = bindRadarVertexDrag(viewer, emitter);
   const properties: PropertyEditingHandle | null = options.properties
     ? bindPropertyEditing(viewer, emitter, options.properties)
@@ -71,6 +73,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       deleteSelection.destroy();
       chartValues.destroy();
       pieLabels.destroy();
+      isometricLabels.destroy();
       radarVertices.destroy();
       properties?.destroy();
       propertyDrag?.destroy();

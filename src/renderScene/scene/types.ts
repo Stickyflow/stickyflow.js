@@ -90,6 +90,8 @@ export type SceneDetail =
       depth: number;
       cornerRadius: number;
       bounds: { x: number; y: number; width: number; height: number };
+      labelOffsetX: number;
+      labelOffsetY: number;
     };
 
 export interface SceneBase {
@@ -102,6 +104,10 @@ export interface SceneBase {
   propKind?: 'value' | 'color';
   propSolidOnly?: boolean;
   zoneGradient?: { axis: 'x' | 'y'; min: number; max: number };
+  // Generic drag-target marker, read by interaction code that needs to tell
+  // a node apart from its owner's default move/resize geometry (e.g. a
+  // freely-draggable label) without a dedicated SceneDetail variant.
+  mark?: string;
 }
 
 export interface SceneRect extends SceneBase {

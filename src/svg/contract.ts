@@ -1,6 +1,7 @@
 import type { RenderNode, SceneDetail, SceneIdentity } from '../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
+  ISOMETRIC_LABEL_OFFSET_ATTR,
   ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
   PATH_POINTS_ATTR,
@@ -16,7 +17,6 @@ import {
 import { num, xml } from './format';
 
 function domRole(identity: SceneIdentity): string {
-  // `entity` is retained only as the serialized v1 DOM-contract value.
   return identity.role === 'shape' ? 'entity' : identity.role;
 }
 
@@ -121,16 +121,11 @@ function pathGeometryAttrs(detail: Extract<SceneDetail, { of: 'pathGeometry' }>)
 }
 
 function isometricGeometryAttrs(detail: Extract<SceneDetail, { of: 'isometricGeometry' }>): string[] {
-  // The hull's own rendered bbox is a few units off its declared bounds
-  // once cornerRadius rounds its corners (the Bezier curves don't land
-  // exactly on the sharp-corner bounding box) - declaredBoundsAttr gives
-  // the interaction runtime the exact, un-rounded on-screen box. The true
-  // width/height/depth (ISOMETRIC_SIZE_ATTR) are separate from that box -
-  // see isometricBounds - and are what the axis handles actually edit.
   return [
     `${ISOMETRIC_SIZE_ATTR}="${num(detail.width)},${num(detail.height)},${num(detail.depth)}"`,
     `${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`,
     declaredBoundsAttr(detail.bounds),
+    `${ISOMETRIC_LABEL_OFFSET_ATTR}="${num(detail.labelOffsetX)},${num(detail.labelOffsetY)}"`,
   ];
 }
 
@@ -161,6 +156,7 @@ export function contractAttrs(node: RenderNode): string {
     node.prop ? `data-sf-prop="${xml(node.prop)}"` : undefined,
     node.propKind ? `data-sf-prop-kind="${node.propKind}"` : undefined,
     node.propSolidOnly ? 'data-sf-prop-solid-only="true"' : undefined,
+    node.mark ? `data-sf-mark="${xml(node.mark)}"` : undefined,
     node.zoneGradient ? 'data-sf-zone-gradient="true"' : undefined,
     node.zoneGradient ? `data-sf-zone-axis-min="${num(node.zoneGradient.min)}"` : undefined,
     node.zoneGradient ? `data-sf-zone-axis-max="${num(node.zoneGradient.max)}"` : undefined,
