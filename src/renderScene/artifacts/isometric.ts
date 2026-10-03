@@ -36,12 +36,10 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
   };
 
   const heightFactor = 0.6 + Math.min(1, height / 150) * 0.7;
-  // Unset, the shadow tracks the object's own base (drops by `height`, same
-  // as before - moves with it when scaling up/down). An explicit
-  // shadow(distance:…) instead anchors it a fixed drop below the top face,
-  // independent of height, for a shadow that stays put while the object
-  // grows or shrinks - the user's call via that one parameter.
-  const shadowDrop = object.shadowStyle?.distance ?? height;
+  // Always drops at least to the object's own base (height), plus an
+  // optional extra gap - positive distance always pushes the shadow further
+  // away from the object, never closer, regardless of how tall it is.
+  const shadowDrop = height + finite(object.shadowStyle?.distance, 0);
   // The footprint on the ground is the same rhombus as the top face, just
   // carried straight down by shadowDrop - that keeps it following the true
   // 30deg/150deg isometric axes (independently stretched by width and
