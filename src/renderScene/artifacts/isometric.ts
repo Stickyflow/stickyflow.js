@@ -52,31 +52,61 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       }
     : undefined;
 
+  const noStroke = { ...common.style, stroke: { kind: 'none' as const } };
+
   const facesNodes: ScenePath[] = [
     {
       ...common,
       id: `isometric-${object.id}-top`,
       order,
       d: roundedPolygonPath(faces.top, [cornerRadius, cornerRadius, 0, cornerRadius]),
-      style: { ...common.style, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' } },
+      style: { ...noStroke, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' } },
     },
     {
       ...common,
       id: `isometric-${object.id}-front`,
       order: order + 0.1,
       d: roundedPolygonPath(faces.front, [cornerRadius, 0, cornerRadius, cornerRadius]),
-      style: { ...common.style, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' } },
+      style: { ...noStroke, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' } },
     },
     {
       ...common,
       id: `isometric-${object.id}-side`,
       order: order + 0.2,
       d: roundedPolygonPath(faces.side, [0, cornerRadius, cornerRadius, cornerRadius]),
-      style: { ...common.style, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' } },
+      style: { ...noStroke, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' } },
     },
   ];
 
-  const objectNodes: RenderNode[] = groundShadow ? [groundShadow, ...facesNodes] : facesNodes;
+  // The three interior seams (where top meets front, front meets side, side
+  // meets top) all converge on the near corner shared by all three faces -
+  // drawn faint since the bold stroke belongs to the silhouette alone.
+  const seams: ScenePath = {
+    ...common,
+    id: `isometric-${object.id}-seams`,
+    order: order + 0.22,
+    d: `M ${faces.top[3].x} ${faces.top[3].y} L ${faces.top[2].x} ${faces.top[2].y} L ${faces.top[1].x} ${faces.top[1].y} M ${faces.top[2].x} ${faces.top[2].y} L ${faces.front[2].x} ${faces.front[2].y}`,
+    style: {
+      ...common.style,
+      fill: { kind: 'none' },
+      stroke: { kind: 'solid', color: '#cbd5e1' },
+      strokeWidth: Math.min(strokeWidth, 1),
+    },
+  };
+
+  const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
+
+  const hull: ScenePath = {
+    ...common,
+    id: `isometric-${object.id}-hull`,
+    order: order + 0.24,
+    d: roundedPolygonPath(silhouette, cornerRadius),
+    style: { ...common.style, fill: { kind: 'none' } },
+  };
+
+  const objectNodes: RenderNode[] = groundShadow
+    ? [groundShadow, ...facesNodes, seams, hull]
+    : [...facesNodes, seams, hull];
 
   if (!object.text) {
     return objectNodes;
