@@ -1,3 +1,4 @@
+import { AXIS_COS, AXIS_SIN } from '../../../model/isometricObject';
 import { isCameraGesture, pointerUserPoint } from '../../dom';
 import type { Emitter } from '../events';
 import { applyIsometricAxisPreview } from './preview';
@@ -5,19 +6,34 @@ import { createIsometricAxisDragState, type IsometricAxisDragState, type Isometr
 
 const MIN_SIZE = 10;
 
+// Width and depth now point diagonally (the true isometric angle, not
+// horizontal/vertical), so the pointer's raw dx/dy isn't the right delta
+// to feed into either one - only the component of pointer movement that
+// actually lies along that axis's direction should count, via a dot
+// product projection. A drag perpendicular to the arrow should barely move
+// it at all, exactly like dragging a 3D tool's axis gizmo.
 function nextGeometry(drag: IsometricAxisDragState, point: { x: number; y: number }): IsometricObjectSize {
   const { start, axis } = drag;
   const dx = point.x - drag.startUser.x;
   const dy = point.y - drag.startUser.y;
 
   if (axis === 'width') {
-    return { ...start, width: Math.max(MIN_SIZE, start.width + dx) };
+    const delta = dx * AXIS_COS + dy * AXIS_SIN;
+    return { ...start, width: Math.max(MIN_SIZE, start.width + delta) };
   }
   if (axis === 'height') {
     return { ...start, height: Math.max(MIN_SIZE, start.height + dy) };
   }
-  const maxDepth = Math.min(start.width / 2, start.height / 2);
-  return { ...start, depth: Math.min(maxDepth, Math.max(0, start.depth + dy)) };
+  // The apex sits at x + depth*cos (see isometricFaces) so that `left`
+  // lands exactly on x - meaning depth alone, with x held still, silently
+  // drags the apex (and everything right of it: right, top) sideways along
+  // with it. Compensating x by the same amount depth moves keeps the apex -
+  // and the whole right side - exactly where it was, so only the left
+  // portion visibly slides, same as width does to the right side for free.
+  const delta = -dx * AXIS_COS + dy * AXIS_SIN;
+  const depth = Math.max(0, start.depth + delta);
+  const x = start.x + (start.depth - depth) * AXIS_COS;
+  return { ...start, x, depth };
 }
 
 export class IsometricAxisResizeSession {

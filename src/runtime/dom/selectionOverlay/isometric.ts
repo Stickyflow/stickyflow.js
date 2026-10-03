@@ -1,3 +1,4 @@
+import { isometricFaces } from '../../../model/isometricObject';
 import { isometricGeometryOf, symbolDeclaredBounds } from '../contract';
 import { selectionOverlayGroup, svgElement } from './dom';
 import { screenPx } from './scale';
@@ -26,6 +27,11 @@ export interface Vec {
 export function normalizeVec(v: Vec): Vec {
   const length = Math.hypot(v.x, v.y) || 1;
   return { x: v.x / length, y: v.y / length };
+}
+
+function centroid(points: readonly Vec[]): Vec {
+  const sum = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+  return { x: sum.x / points.length, y: sum.y / points.length };
 }
 
 export const ISO_HALO_ATTR = 'data-sf-iso-halo';
@@ -126,37 +132,37 @@ export function updateHalo(halo: SVGPathElement, d: string): void {
   halo.setAttribute('d', d);
 }
 
-function vertices(bounds: { x: number; y: number; width: number; height: number }, depth: number) {
-  return {
-    apex: { x: bounds.x + bounds.width / 2, y: bounds.y } as Vec,
-    right: { x: bounds.x + bounds.width, y: bounds.y + depth } as Vec,
-    left: { x: bounds.x, y: bounds.y + depth } as Vec,
-    bottom: { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height } as Vec,
-  };
+export interface IsometricSize {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  depth: number;
 }
 
 /** The origin/direction for each axis arrow, shared between the initial
- *  overlay build and the live-drag reposition in isometricAxisResize. */
-export function axisArrowPlacements(
-  bounds: { x: number; y: number; width: number; height: number },
-  depth: number,
-): Record<IsometricAxis, { origin: Vec; direction: Vec }> {
-  const { apex, right, left, bottom } = vertices(bounds, depth);
+ *  overlay build and the live-drag reposition in isometricAxisResize.
+ *  Width and depth originate at the center of the face they alone resize
+ *  (side, front) rather than at a corner - "grab the face, slide it along
+ *  its own axis" reads more directly than a corner handle does. Height has
+ *  no dedicated third face to center on, so it keeps the bottom vertex. */
+export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis, { origin: Vec; direction: Vec }> {
+  const faces = isometricFaces(object);
+  const apex = faces.top[0];
+  const right = faces.top[1];
+  const left = faces.top[3];
+  const bottom = faces.front[2];
   return {
-    width: { origin: right, direction: normalizeVec({ x: right.x - apex.x, y: right.y - apex.y }) },
+    width: { origin: centroid(faces.side), direction: normalizeVec({ x: right.x - apex.x, y: right.y - apex.y }) },
     height: { origin: bottom, direction: { x: 0, y: 1 } },
-    depth: { origin: left, direction: normalizeVec({ x: left.x - apex.x, y: left.y - apex.y }) },
+    depth: { origin: centroid(faces.front), direction: normalizeVec({ x: left.x - apex.x, y: left.y - apex.y }) },
   };
 }
 
 // Three vector handles instead of the generic rectangle's eight square
 // resize handles - dragging one changes exactly one of width/height/depth,
 // so the box always keeps its isometric angles instead of the generic
-// resize's free (and angle-breaking) two-axis stretch. Each arrow starts at
-// the outer vertex that one dimension alone controls (`right` for width,
-// `bottom` for height, `left` for depth - see isometricFaces) and points
-// outward along that same vertex's own edge direction, i.e. the true
-// isometric angle for that axis.
+// resize's free (and angle-breaking) two-axis stretch.
 export function isometricSelectionOverlay(
   document: Document,
   primary: SVGGraphicsElement,
@@ -164,7 +170,7 @@ export function isometricSelectionOverlay(
   svg: SVGSVGElement,
 ): SVGGElement {
   const bounds = symbolDeclaredBounds(primary) ?? primary.getBBox();
-  const depth = isometricGeometryOf(primary)?.depth ?? 0;
+  const geometry = isometricGeometryOf(primary);
   const group = selectionOverlayGroup(document, id, primary);
 
   const halo = svgElement(document, 'path');
@@ -178,7 +184,13 @@ export function isometricSelectionOverlay(
   halo.style.pointerEvents = 'none';
   group.appendChild(halo);
 
-  const placements = axisArrowPlacements(bounds, depth);
+  const placements = axisArrowPlacements({
+    x: bounds.x,
+    y: bounds.y,
+    width: geometry?.width ?? bounds.width,
+    height: geometry?.height ?? bounds.height,
+    depth: geometry?.depth ?? 0,
+  });
   group.appendChild(axisArrow(document, placements.width.origin, placements.width.direction, 'width', svg));
   group.appendChild(axisArrow(document, placements.height.origin, placements.height.direction, 'height', svg));
   group.appendChild(axisArrow(document, placements.depth.origin, placements.depth.direction, 'depth', svg));

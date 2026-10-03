@@ -85,6 +85,8 @@ export type SceneDetail =
   | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean }
   | {
       of: 'isometricGeometry';
+      width: number;
+      height: number;
       depth: number;
       cornerRadius: number;
       bounds: { x: number; y: number; width: number; height: number };

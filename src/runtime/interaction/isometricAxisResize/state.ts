@@ -109,11 +109,16 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
     ]),
   ) as Record<IsometricAxis, SVGGElement | null>;
 
+  // bounds (declaredBounds) is the on-screen box - only x/y double as the
+  // true object position (they're identical by construction, see
+  // isometricBounds). width/height/depth must come from the true-size
+  // attribute instead: the box's width/height are DERIVED from them, not
+  // interchangeable with them.
   const start: IsometricObjectSize = {
     x: bounds.x,
     y: bounds.y,
-    width: bounds.width,
-    height: bounds.height,
+    width: geometry?.width ?? bounds.width,
+    height: geometry?.height ?? bounds.height,
     depth: geometry?.depth ?? 0,
   };
 

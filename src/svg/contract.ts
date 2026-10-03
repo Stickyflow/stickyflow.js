@@ -1,7 +1,7 @@
 import type { RenderNode, SceneDetail, SceneIdentity } from '../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
-  ISOMETRIC_DEPTH_ATTR,
+  ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
@@ -124,10 +124,11 @@ function isometricGeometryAttrs(detail: Extract<SceneDetail, { of: 'isometricGeo
   // The hull's own rendered bbox is a few units off its declared bounds
   // once cornerRadius rounds its corners (the Bezier curves don't land
   // exactly on the sharp-corner bounding box) - declaredBoundsAttr gives
-  // the interaction runtime (axis-handle placement, resize drag start) the
-  // exact, un-rounded size instead of that rendering artifact.
+  // the interaction runtime the exact, un-rounded on-screen box. The true
+  // width/height/depth (ISOMETRIC_SIZE_ATTR) are separate from that box -
+  // see isometricBounds - and are what the axis handles actually edit.
   return [
-    `${ISOMETRIC_DEPTH_ATTR}="${num(detail.depth)}"`,
+    `${ISOMETRIC_SIZE_ATTR}="${num(detail.width)},${num(detail.height)},${num(detail.depth)}"`,
     `${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`,
     declaredBoundsAttr(detail.bounds),
   ];

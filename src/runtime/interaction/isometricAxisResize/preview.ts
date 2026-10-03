@@ -1,4 +1,4 @@
-import { isometricFaces } from '../../../model/isometricObject';
+import { isometricBounds, isometricFaces } from '../../../model/isometricObject';
 import { roundedPolygonPath } from '../../../renderScene/scene/roundedPolygonPath';
 import { axisArrowPlacements, updateAxisArrowGroup, updateHalo } from '../../dom';
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
@@ -18,6 +18,10 @@ export function applyIsometricAxisPreview(
   svg: SVGSVGElement,
 ): void {
   const faces = isometricFaces(object);
+  // object.width/height are true axis edge lengths, not the on-screen box -
+  // see isometricBounds. groundShadow/label/labelGuide are sized off the
+  // box, same as the renderer.
+  const box = isometricBounds(object);
 
   nodes.top?.setAttribute('d', roundedPolygonPath(faces.top, 0));
   nodes.front?.setAttribute('d', roundedPolygonPath(faces.front, 0));
@@ -30,7 +34,7 @@ export function applyIsometricAxisPreview(
     updateHalo(overlay.halo, hullPath);
   }
 
-  const placements = axisArrowPlacements(object, object.depth);
+  const placements = axisArrowPlacements(object);
   (Object.keys(placements) as IsometricAxis[]).forEach(axis => {
     const group = overlay.arrows[axis];
     if (group) {
@@ -44,15 +48,15 @@ export function applyIsometricAxisPreview(
   );
 
   if (nodes.groundShadow) {
-    nodes.groundShadow.setAttribute('cx', String(object.x + object.width / 2));
-    nodes.groundShadow.setAttribute('cy', String(object.y + object.height));
-    nodes.groundShadow.setAttribute('rx', String(object.width * 0.35));
+    nodes.groundShadow.setAttribute('cx', String(box.x + box.width / 2));
+    nodes.groundShadow.setAttribute('cy', String(box.y + box.height));
+    nodes.groundShadow.setAttribute('rx', String(box.width * 0.35));
     nodes.groundShadow.setAttribute('ry', String(Math.max(3, object.depth * 0.35)));
   }
 
-  const centerX = object.x + object.width / 2;
+  const centerX = box.x + box.width / 2;
   if (nodes.labelGuide) {
-    nodes.labelGuide.setAttribute('d', `M ${centerX} ${object.y - LABEL_GAP} L ${centerX} ${object.y}`);
+    nodes.labelGuide.setAttribute('d', `M ${centerX} ${box.y - LABEL_GAP} L ${centerX} ${box.y}`);
   }
   if (nodes.label) {
     nodes.label.setAttribute('x', String(centerX));

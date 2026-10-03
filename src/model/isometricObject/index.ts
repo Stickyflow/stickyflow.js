@@ -1,2 +1,9 @@
-export { type IsometricFaces, isometricFaces } from './geometry';
+export {
+  AXIS_COS,
+  AXIS_SIN,
+  type IsometricBoundsFrame,
+  type IsometricFaces,
+  isometricBounds,
+  isometricFaces,
+} from './geometry';
 export type { IsometricObject } from './types';

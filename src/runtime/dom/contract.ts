@@ -1,7 +1,7 @@
 import type { SceneRole } from '../../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
-  ISOMETRIC_DEPTH_ATTR,
+  ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
@@ -84,22 +84,24 @@ export function pathGeometryOf(el: { getAttribute(name: string): string | null }
 }
 
 export interface IsometricGeometry {
+  width: number;
+  height: number;
   depth: number;
   cornerRadius: number;
   bounds: { x: number; y: number; width: number; height: number } | null;
 }
 
 export function isometricGeometryOf(el: { getAttribute(name: string): string | null }): IsometricGeometry | null {
-  const raw = el.getAttribute(ISOMETRIC_DEPTH_ATTR);
+  const raw = el.getAttribute(ISOMETRIC_SIZE_ATTR);
   if (raw === null) {
     return null;
   }
-  const depth = Number(raw);
-  if (!Number.isFinite(depth)) {
+  const [width, height, depth] = raw.split(',').map(Number);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isFinite(depth)) {
     return null;
   }
   const cornerRadius = Number(el.getAttribute(CORNER_RADIUS_ATTR)) || 0;
-  return { depth, cornerRadius, bounds: symbolDeclaredBounds(el) };
+  return { width, height, depth, cornerRadius, bounds: symbolDeclaredBounds(el) };
 }
 
 export function resolveOwner(target: AttrElement | null): OwnerRef | null {

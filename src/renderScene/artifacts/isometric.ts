@@ -1,4 +1,4 @@
-import { type IsometricObject, isometricFaces } from '../../model/isometricObject';
+import { type IsometricObject, isometricBounds, isometricFaces } from '../../model/isometricObject';
 import type { RenderNode, SceneEllipse, ScenePath, SceneText } from '../scene';
 import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
 import { roundedPolygonPath } from '../scene/roundedPolygonPath';
@@ -7,14 +7,19 @@ import { tag } from '../scene/tagging';
 export function buildIsometricObject(object: IsometricObject, index: number): RenderNode[] {
   const strokeWidth = Math.max(0, finite(object.strokeWidth, 1));
   const rotation = finite(object.rotation, 0);
+  // The on-screen box, derived from the true width/height/depth edge
+  // lengths (see isometricBounds) - NOT the same numbers as object.width/
+  // object.height, which are true axis lengths, not pixel extents.
+  const box = isometricBounds(object);
   const rotationCenter = {
-    x: object.x + object.width / 2,
-    y: object.y + object.height / 2,
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
   };
-  const bounds = rotatedBounds(object, rotation, strokeWidth + 2);
+  const bounds = rotatedBounds(box, rotation, strokeWidth + 2);
   const order = orderOf(object, 15_000 + index);
   const faces = isometricFaces(object);
   const cornerRadius = Math.max(0, finite(object.cornerRadius, 8));
+  const depth = Math.max(0, object.depth);
   const common = {
     type: 'path' as const,
     bounds,
@@ -33,15 +38,15 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
         id: `isometric-${object.id}-ground-shadow`,
         order: order - 0.1,
         bounds: {
-          minX: object.x + object.width * 0.15,
-          minY: object.y + object.height - object.depth * 0.35,
-          maxX: object.x + object.width * 0.85,
-          maxY: object.y + object.height + object.depth * 0.35,
+          minX: box.x + box.width * 0.15,
+          minY: box.y + box.height - depth * 0.35,
+          maxX: box.x + box.width * 0.85,
+          maxY: box.y + box.height + depth * 0.35,
         },
-        cx: object.x + object.width / 2,
-        cy: object.y + object.height,
-        rx: object.width * 0.35,
-        ry: Math.max(3, object.depth * 0.35),
+        cx: box.x + box.width / 2,
+        cy: box.y + box.height,
+        rx: box.width * 0.35,
+        ry: Math.max(3, depth * 0.35),
         rotation,
         style: {
           fill: { kind: 'solid', color: object.shadowStyle?.color ?? '#000000' },
@@ -108,22 +113,22 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   };
 
-  // Mirrors isometricFaces' own clamp - exposed on the hull node (DOM
-  // contract) so the runtime's axis-handle overlay and live-resize preview
-  // can read the depth actually in effect without re-deriving it from a
-  // parsed `d` string.
-  const clampedDepth = Math.max(0, Math.min(object.depth, object.width / 2, object.height / 2));
-
   const hull: ScenePath = {
     ...common,
     id: `isometric-${object.id}-hull`,
     order: order + 0.24,
     d: hullPath,
+    // Exposed on the hull node (DOM contract) so the runtime's axis-handle
+    // overlay and live-resize preview can read the true width/height/depth
+    // and the derived on-screen box without re-deriving either from a
+    // parsed `d` string.
     detail: {
       of: 'isometricGeometry',
-      depth: clampedDepth,
+      width: Math.max(0, object.width),
+      height: Math.max(0, object.height),
+      depth,
       cornerRadius,
-      bounds: { x: object.x, y: object.y, width: object.width, height: object.height },
+      bounds: box,
     },
     style: { ...common.style, fill: { kind: 'none' } },
   };
@@ -151,14 +156,14 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     id: `isometric-${object.id}-label`,
     order: order + 0.3,
     bounds: {
-      minX: object.x,
-      minY: object.y - labelGap - labelHeight,
-      maxX: object.x + object.width,
-      maxY: object.y - labelGap,
+      minX: box.x,
+      minY: box.y - labelGap - labelHeight,
+      maxX: box.x + box.width,
+      maxY: box.y - labelGap,
     },
-    x: object.x,
-    y: object.y - labelGap - labelHeight,
-    width: object.width,
+    x: box.x,
+    y: box.y - labelGap - labelHeight,
+    width: box.width,
     height: labelHeight,
     lines: [object.text],
     fontFamily: DEFAULT_FONT,
@@ -177,12 +182,12 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     id: `isometric-${object.id}-label-guide`,
     order: order + 0.25,
     bounds: {
-      minX: object.x + object.width / 2,
-      minY: object.y - labelGap,
-      maxX: object.x + object.width / 2,
-      maxY: object.y,
+      minX: box.x + box.width / 2,
+      minY: box.y - labelGap,
+      maxX: box.x + box.width / 2,
+      maxY: box.y,
     },
-    d: `M ${object.x + object.width / 2} ${object.y - labelGap} L ${object.x + object.width / 2} ${object.y}`,
+    d: `M ${box.x + box.width / 2} ${box.y - labelGap} L ${box.x + box.width / 2} ${box.y}`,
     rotation,
     rotationCenter,
     style: {
