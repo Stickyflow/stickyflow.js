@@ -178,7 +178,11 @@ export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis
   };
 }
 
-const DUPLICATE_MARGIN_PX = 18;
+// Clears the axis-resize arrow tips (ARROW_LENGTH_PX=34 out from the same
+// origin, for the two directions that share an arrow) plus the bubble's
+// own radius and a visible gap - otherwise the bubble sits mid-shaft and
+// overlaps the arrow it shares an origin with.
+const DUPLICATE_MARGIN_PX = ARROW_LENGTH_PX + BUBBLE_RADIUS_PX + 10;
 
 export type IsometricQuickDuplicateDirection =
   | 'iso-width-pos'
@@ -234,6 +238,17 @@ export function quickDuplicatePlacements(
 
 export const ISO_DUPLICATE_BUBBLES_ATTR = 'data-sf-iso-duplicate-bubbles';
 
+// Only the three visible faces get a bubble - top (push a copy up, stacking
+// a "floor" on top), front (push left/down, the face toward the viewer),
+// side (push right/down). The three hidden/reflected directions
+// (iso-width-neg, iso-depth-neg, iso-height-pos) are still valid
+// quickDuplicatePlacements entries - just not ones worth a bubble for.
+const VISIBLE_FACE_DIRECTIONS: readonly IsometricQuickDuplicateDirection[] = [
+  'iso-height-neg',
+  'iso-depth-pos',
+  'iso-width-pos',
+];
+
 export function isometricQuickDuplicateBubbles(
   document: Document,
   object: IsometricSize,
@@ -245,9 +260,9 @@ export function isometricQuickDuplicateBubbles(
   const margin = screenPx(svg, DUPLICATE_MARGIN_PX);
   const halfSize = screenPx(svg, PLUS_HALF_SIZE_PX);
   const strokeWidth = screenPx(svg, BUBBLE_STROKE_WIDTH_PX);
-  for (const [direction, { origin, direction: dir }] of Object.entries(quickDuplicatePlacements(object)) as Array<
-    [IsometricQuickDuplicateDirection, { origin: Vec; direction: Vec }]
-  >) {
+  const placements = quickDuplicatePlacements(object);
+  for (const direction of VISIBLE_FACE_DIRECTIONS) {
+    const { origin, direction: dir } = placements[direction];
     const x = origin.x + dir.x * margin;
     const y = origin.y + dir.y * margin;
     group.append(

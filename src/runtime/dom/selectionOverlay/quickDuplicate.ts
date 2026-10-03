@@ -26,6 +26,12 @@ export function plusPath(x: number, y: number, halfSize: number): string {
   return `M ${x - halfSize} ${y} L ${x + halfSize} ${y} M ${x} ${y - halfSize} L ${x} ${y + halfSize}`;
 }
 
+const BUBBLE_FILL = '#e8e8e8';
+const BUBBLE_STROKE = '#ccc';
+const BUBBLE_HOVER_FILL = '#9b42df';
+const BUBBLE_HOVER_STROKE = '#7c2fb5';
+const BUBBLE_HOVER_SCALE = 1.2;
+
 export function duplicateBubble(
   document: Document,
   x: number,
@@ -38,12 +44,27 @@ export function duplicateBubble(
   bubble.setAttribute('cx', String(x));
   bubble.setAttribute('cy', String(y));
   bubble.setAttribute('r', String(radius));
-  bubble.setAttribute('fill', '#e8e8e8');
-  bubble.setAttribute('stroke', '#ccc');
+  bubble.setAttribute('fill', BUBBLE_FILL);
+  bubble.setAttribute('stroke', BUBBLE_STROKE);
   bubble.setAttribute('stroke-width', String(strokeWidth));
   bubble.setAttribute('data-sf-quick-duplicate', direction);
   bubble.style.pointerEvents = 'auto';
   bubble.style.cursor = 'pointer';
+  bubble.style.transition = 'r 120ms ease, fill 120ms ease, stroke 120ms ease';
+  bubble.addEventListener('pointerenter', () => {
+    bubble.setAttribute('r', String(radius * BUBBLE_HOVER_SCALE));
+    bubble.setAttribute('fill', BUBBLE_HOVER_FILL);
+    bubble.setAttribute('stroke', BUBBLE_HOVER_STROKE);
+    const plus = bubble.nextElementSibling;
+    plus?.setAttribute('stroke', '#ffffff');
+  });
+  bubble.addEventListener('pointerleave', () => {
+    bubble.setAttribute('r', String(radius));
+    bubble.setAttribute('fill', BUBBLE_FILL);
+    bubble.setAttribute('stroke', BUBBLE_STROKE);
+    const plus = bubble.nextElementSibling;
+    plus?.setAttribute('stroke', '#999');
+  });
   return bubble;
 }
 
