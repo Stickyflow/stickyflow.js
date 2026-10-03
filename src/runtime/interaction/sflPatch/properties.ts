@@ -4,7 +4,7 @@ import { escapeSflString, indentOf, round1 } from './format';
 import { formatLinkEndpoint } from './linkPatch/endpointText';
 import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';
 
-type LayoutTuple = readonly [key: string, first: number, second: number];
+type LayoutTuple = readonly [key: string, first: number, second: number, third?: number];
 
 export interface LinkEndpointPatch {
   end: 'from' | 'to';
@@ -92,7 +92,8 @@ function setLayoutTuple(lines: string[], layout: LineRange, tuple: LayoutTuple):
 }
 
 function layoutTupleValue(tuple: LayoutTuple): string {
-  return `${round1(tuple[1])}, ${round1(tuple[2])}`;
+  const base = `${round1(tuple[1])}, ${round1(tuple[2])}`;
+  return tuple[3] === undefined ? base : `${base}, ${round1(tuple[3])}`;
 }
 
 export function setEndpoint(lines: string[], range: LineRange, patch: LinkEndpointPatch): void {

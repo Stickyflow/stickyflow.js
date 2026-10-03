@@ -55,33 +55,45 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
 
   const noStroke = { ...common.style, stroke: { kind: 'none' as const } };
 
+  // Rounding each face's own corners independently (its own two adjacent
+  // edges) never lines up with the hull's rounding below (computed from the
+  // hull's own, different, adjacent edges) - the mismatch left slivers of
+  // background showing through at the exterior corners. Faces are drawn
+  // sharp-cornered instead and clipped to the hull path, so the fill and the
+  // outline are trimmed by the exact same curve and always coincide.
+  const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
+  const hullPath = roundedPolygonPath(silhouette, cornerRadius);
+  const hullClip = { type: 'path' as const, d: hullPath };
+
   const facesNodes: ScenePath[] = [
     {
       ...common,
       id: `isometric-${object.id}-top`,
       order,
-      d: roundedPolygonPath(faces.top, [cornerRadius, cornerRadius, 0, cornerRadius]),
-      style: { ...noStroke, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' } },
+      d: roundedPolygonPath(faces.top, 0),
+      style: { ...noStroke, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' }, clip: hullClip },
     },
     {
       ...common,
       id: `isometric-${object.id}-front`,
       order: order + 0.1,
-      d: roundedPolygonPath(faces.front, [cornerRadius, 0, cornerRadius, cornerRadius]),
-      style: { ...noStroke, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' } },
+      d: roundedPolygonPath(faces.front, 0),
+      style: { ...noStroke, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' }, clip: hullClip },
     },
     {
       ...common,
       id: `isometric-${object.id}-side`,
       order: order + 0.2,
-      d: roundedPolygonPath(faces.side, [0, cornerRadius, cornerRadius, cornerRadius]),
-      style: { ...noStroke, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' } },
+      d: roundedPolygonPath(faces.side, 0),
+      style: { ...noStroke, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' }, clip: hullClip },
     },
   ];
 
   // The three interior seams (where top meets front, front meets side, side
   // meets top) all converge on the near corner shared by all three faces -
-  // drawn faint since the bold stroke belongs to the silhouette alone.
+  // drawn faint since the bold stroke belongs to the silhouette alone. Also
+  // clipped to the hull so they stop exactly at the rounded corners instead
+  // of poking past them toward the original sharp vertex.
   const seams: ScenePath = {
     ...common,
     id: `isometric-${object.id}-seams`,
@@ -92,22 +104,29 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       fill: { kind: 'none' },
       stroke: { kind: 'solid', color: '#cbd5e1' },
       strokeWidth: Math.min(strokeWidth, 1),
+      clip: hullClip,
     },
   };
-
-  const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
 
   const hull: ScenePath = {
     ...common,
     id: `isometric-${object.id}-hull`,
     order: order + 0.24,
-    d: roundedPolygonPath(silhouette, cornerRadius),
+    d: hullPath,
     style: { ...common.style, fill: { kind: 'none' } },
   };
 
+  // hull must stay first: tag() below marks whichever node is at index 0 as
+  // "primary", and the interaction runtime measures that node's own rendered
+  // SVG bbox (not its declared `bounds` field) for selection, resize
+  // handles, and focus. Only the hull's path geometry actually spans the
+  // full object - each face's own `d` only draws that one face. Final paint
+  // order doesn't depend on this array order - buildRenderScene sorts the
+  // whole scene by `order` afterward - so the shadow can safely sit anywhere
+  // here despite needing to paint behind the faces.
   const objectNodes: RenderNode[] = groundShadow
-    ? [groundShadow, ...facesNodes, seams, hull]
-    : [...facesNodes, seams, hull];
+    ? [hull, ...facesNodes, groundShadow, seams]
+    : [hull, ...facesNodes, seams];
 
   if (!object.text) {
     return objectNodes;
