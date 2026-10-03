@@ -1,4 +1,4 @@
-import { isometricBounds, isometricFaces } from '../../../model/isometricObject';
+import { isometricBounds, isometricFaces, isometricTopFaceCenterX } from '../../../model/isometricObject';
 import { roundedPolygonPath } from '../../../renderScene/scene/roundedPolygonPath';
 import { axisArrowPlacements, updateAxisArrowGroup, updateHalo } from '../../dom';
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
@@ -54,7 +54,7 @@ export function applyIsometricAxisPreview(
     nodes.groundShadow.setAttribute('ry', String(Math.max(3, object.depth * 0.35)));
   }
 
-  const centerX = box.x + box.width / 2;
+  const centerX = isometricTopFaceCenterX(object);
   if (nodes.labelGuide) {
     nodes.labelGuide.setAttribute('d', `M ${centerX} ${box.y - LABEL_GAP} L ${centerX} ${box.y}`);
   }

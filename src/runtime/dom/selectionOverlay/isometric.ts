@@ -5,18 +5,22 @@ import { screenPx } from './scale';
 
 const RING_COLOR = '#9b42df';
 const HALO_EXTRA_WIDTH_PX = 2;
-const SHAFT_WIDTH_PX = 2.5;
+const SHAFT_WIDTH_PX = 3.25;
 const HIT_WIDTH_PX = 14;
-const ARROW_LENGTH_PX = 30;
-const ARROWHEAD_LENGTH_PX = 9;
-const ARROWHEAD_WIDTH_PX = 7;
+const ARROW_LENGTH_PX = 34;
+const ARROWHEAD_LENGTH_PX = 10.5;
+const ARROWHEAD_WIDTH_PX = 8.5;
 
 export type IsometricAxis = 'width' | 'height' | 'depth';
 
+// width/depth point at the fixed 30deg axis angle, not a true 45 - there's
+// no native CSS cursor for that exact angle, so nwse/nesw (the closest
+// diagonal) reads far better than the horizontal/vertical ew/ns cursors
+// those axes never actually move along.
 const AXIS_CURSORS: Record<IsometricAxis, string> = {
-  width: 'ew-resize',
+  width: 'nwse-resize',
   height: 'ns-resize',
-  depth: 'ns-resize',
+  depth: 'nesw-resize',
 };
 
 export interface Vec {

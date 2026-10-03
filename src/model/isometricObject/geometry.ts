@@ -45,6 +45,20 @@ export function isometricBounds(
   };
 }
 
+/** The horizontal center of the top face - apex, right, center and left all
+ *  average to the same x as the derived bounding box's own center, so this
+ *  is also exactly where the label and its guide line are horizontally
+ *  placed; kept as a named, explicit computation (not just bounds.x +
+ *  bounds.width / 2) so a label's horizontal position reads as "centered on
+ *  the top face" rather than as an unexplained bounds arithmetic result. */
+export function isometricTopFaceCenterX(
+  object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>,
+): number {
+  const width = Math.max(0, object.width);
+  const depth = Math.max(0, object.depth);
+  return object.x + ((width + depth) * AXIS_COS) / 2;
+}
+
 export function isometricFaces(
   object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>,
 ): IsometricFaces {

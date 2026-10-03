@@ -5,5 +5,6 @@ export {
   type IsometricFaces,
   isometricBounds,
   isometricFaces,
+  isometricTopFaceCenterX,
 } from './geometry';
 export type { IsometricObject } from './types';

@@ -1,4 +1,9 @@
-import { type IsometricObject, isometricBounds, isometricFaces } from '../../model/isometricObject';
+import {
+  type IsometricObject,
+  isometricBounds,
+  isometricFaces,
+  isometricTopFaceCenterX,
+} from '../../model/isometricObject';
 import type { RenderNode, SceneEllipse, ScenePath, SceneText } from '../scene';
 import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
 import { roundedPolygonPath } from '../scene/roundedPolygonPath';
@@ -151,6 +156,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
 
   const labelHeight = 20;
   const labelGap = 12;
+  const labelCenterX = isometricTopFaceCenterX(object);
   const label: SceneText = {
     type: 'text',
     id: `isometric-${object.id}-label`,
@@ -182,12 +188,12 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     id: `isometric-${object.id}-label-guide`,
     order: order + 0.25,
     bounds: {
-      minX: box.x + box.width / 2,
+      minX: labelCenterX,
       minY: box.y - labelGap,
-      maxX: box.x + box.width / 2,
+      maxX: labelCenterX,
       maxY: box.y,
     },
-    d: `M ${box.x + box.width / 2} ${box.y - labelGap} L ${box.x + box.width / 2} ${box.y}`,
+    d: `M ${labelCenterX} ${box.y - labelGap} L ${labelCenterX} ${box.y}`,
     rotation,
     rotationCenter,
     style: {
