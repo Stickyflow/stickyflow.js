@@ -82,7 +82,13 @@ export type SceneDetail =
     }
   | { of: 'declaredBounds'; bounds: { x: number; y: number; width: number; height: number } }
   | { of: 'tableColumnDivider'; columnId: string; startWidth: number; widthScale: number }
-  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean };
+  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean }
+  | {
+      of: 'isometricGeometry';
+      depth: number;
+      cornerRadius: number;
+      bounds: { x: number; y: number; width: number; height: number };
+    };
 
 export interface SceneBase {
   id: string;

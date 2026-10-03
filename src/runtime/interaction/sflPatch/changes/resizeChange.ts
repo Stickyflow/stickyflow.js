@@ -23,7 +23,7 @@ export function applyResizeChange(sfl: string, event: ResizeChangeEvent): string
   setOrInsertLayoutTuples(lines, range, [
     ['position', event.x - originX, event.y - originY],
     canvasObject?.isometric
-      ? ['size', event.width, event.height, canvasObject.isometric.depth]
+      ? ['size', event.width, event.height, event.depth ?? canvasObject.isometric.depth]
       : ['size', event.width, event.height],
   ]);
   return lines.join('\n');

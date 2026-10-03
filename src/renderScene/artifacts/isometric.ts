@@ -108,11 +108,23 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     },
   };
 
+  // Mirrors isometricFaces' own clamp - exposed on the hull node (DOM
+  // contract) so the runtime's axis-handle overlay and live-resize preview
+  // can read the depth actually in effect without re-deriving it from a
+  // parsed `d` string.
+  const clampedDepth = Math.max(0, Math.min(object.depth, object.width / 2, object.height / 2));
+
   const hull: ScenePath = {
     ...common,
     id: `isometric-${object.id}-hull`,
     order: order + 0.24,
     d: hullPath,
+    detail: {
+      of: 'isometricGeometry',
+      depth: clampedDepth,
+      cornerRadius,
+      bounds: { x: object.x, y: object.y, width: object.width, height: object.height },
+    },
     style: { ...common.style, fill: { kind: 'none' } },
   };
 

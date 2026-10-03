@@ -23,6 +23,9 @@ export interface ResizeChangeEvent {
   y: number;
   width: number;
   height: number;
+  /** Isometric axis-handle resize only - the new depth, when that's the
+   *  dimension being dragged. Unset for every other resize gesture. */
+  depth?: number;
 }
 
 export interface LinkReconnectEvent {

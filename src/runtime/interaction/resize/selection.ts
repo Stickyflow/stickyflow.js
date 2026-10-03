@@ -21,6 +21,13 @@ export function selectResizeTarget(svg: SVGSVGElement, event: PointerEvent): Res
   if (!captureTarget) {
     return null;
   }
+  // The isometric axis handles share this same attribute (so they inherit
+  // the "clicking a handle doesn't clear the selection" behaviour below) but
+  // use their own session - see isometricAxisResize/session.ts - since this
+  // generic rect-resize math doesn't apply to a 3-axis, angle-preserving drag.
+  if (captureTarget.getAttribute('data-sf-resize-handle')?.startsWith('iso-')) {
+    return null;
+  }
 
   const overlay = captureTarget.closest('[data-sf-selection-overlay]') as SVGGElement | null;
   const ownerId = overlay?.getAttribute('data-sf-selection-overlay');

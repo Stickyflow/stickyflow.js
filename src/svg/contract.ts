@@ -1,6 +1,7 @@
 import type { RenderNode, SceneDetail, SceneIdentity } from '../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
+  ISOMETRIC_DEPTH_ATTR,
   PATH_CLOSED_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
@@ -53,6 +54,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return tableColumnDividerAttrs(detail);
     case 'pathGeometry':
       return pathGeometryAttrs(detail);
+    case 'isometricGeometry':
+      return isometricGeometryAttrs(detail);
   }
 }
 
@@ -114,6 +117,19 @@ function pathGeometryAttrs(detail: Extract<SceneDetail, { of: 'pathGeometry' }>)
     `${PATH_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
     `${PATH_TENSION_ATTR}="${num(detail.tension)}"`,
     `${PATH_CLOSED_ATTR}="${detail.closed}"`,
+  ];
+}
+
+function isometricGeometryAttrs(detail: Extract<SceneDetail, { of: 'isometricGeometry' }>): string[] {
+  // The hull's own rendered bbox is a few units off its declared bounds
+  // once cornerRadius rounds its corners (the Bezier curves don't land
+  // exactly on the sharp-corner bounding box) - declaredBoundsAttr gives
+  // the interaction runtime (axis-handle placement, resize drag start) the
+  // exact, un-rounded size instead of that rendering artifact.
+  return [
+    `${ISOMETRIC_DEPTH_ATTR}="${num(detail.depth)}"`,
+    `${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`,
+    declaredBoundsAttr(detail.bounds),
   ];
 }
 

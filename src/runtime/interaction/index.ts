@@ -5,6 +5,7 @@ import { bindColorEdit, type ColorEditHandle } from './colorEdit/binding';
 import { bindColumnResize, type ColumnResizeDragHandle } from './columnResizeDrag';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
+import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './isometricAxisResizeDrag';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
@@ -34,6 +35,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const textEditing: TextEditingHandle = bindTextEditing(viewer, emitter);
   const movement: MoveDragHandle = bindShapeMovement(viewer, emitter);
   const resize: ResizeDragHandle = bindShapeResize(viewer, emitter);
+  const isometricAxisResize: IsometricAxisResizeDragHandle = bindIsometricAxisResize(viewer, emitter);
   const columnResize: ColumnResizeDragHandle = bindColumnResize(viewer, emitter);
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
@@ -61,6 +63,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       textEditing.destroy();
       movement.destroy();
       resize.destroy();
+      isometricAxisResize.destroy();
       columnResize.destroy();
       pathReshape.destroy();
       linkEndpoints.destroy();

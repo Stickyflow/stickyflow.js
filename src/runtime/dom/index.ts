@@ -14,8 +14,10 @@ export {
 } from './changeOverlay';
 export {
   type AttrElement,
+  type IsometricGeometry,
   isCameraGesture,
   isContractCompatible,
+  isometricGeometryOf,
   type PathGeometry,
   parseContractVersion,
   pathGeometryOf,
@@ -33,6 +35,8 @@ export {
   screenRectOf,
 } from './domQuery';
 export {
+  type IsometricAxis,
+  isometricSelectionOverlay,
   type LinkEndpoint,
   linkSelectionOverlay,
   PATH_HALO_ATTR,
