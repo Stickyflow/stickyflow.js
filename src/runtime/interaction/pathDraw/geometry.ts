@@ -1,4 +1,4 @@
-import type { GuideLine } from '../../dom';
+import type { RectGuideLine } from '../snapGeometry';
 
 export interface DrawPoint {
   x: number;
@@ -31,7 +31,7 @@ export function snapTo45Degrees(reference: DrawPoint, point: DrawPoint): DrawPoi
 
 export interface SessionGuideSnap {
   point: DrawPoint;
-  guide: GuideLine | null;
+  guide: RectGuideLine | null;
 }
 
 export function snapToSessionGuides(
@@ -50,7 +50,7 @@ export function snapToSessionGuides(
   const ux = rayX / length;
   const uy = rayY / length;
 
-  let best: { point: DrawPoint; guide: GuideLine; distance: number } | null = null;
+  let best: { point: DrawPoint; guide: RectGuideLine; distance: number } | null = null;
   for (const prior of priorPoints) {
     if (Math.abs(ux) > 1e-8) {
       const t = (prior.x - last.x) / ux;

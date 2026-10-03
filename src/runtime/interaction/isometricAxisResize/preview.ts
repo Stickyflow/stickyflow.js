@@ -1,10 +1,20 @@
-import { isometricBounds, isometricFaces, isometricTopFaceCenterX } from '../../../model/isometricObject';
+import { isometricBounds, isometricFaces, isometricTopFaceCenter } from '../../../model/isometricObject';
 import { roundedPolygonPath } from '../../../renderScene/scene/roundedPolygonPath';
 import { axisArrowPlacements, updateAxisArrowGroup, updateHalo } from '../../dom';
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
 import type { IsometricGeometryNodes, IsometricObjectSize } from './state';
 
+// Mirrors renderScene/artifacts/isometric.ts's label constants exactly -
+// the live preview has to reproduce the same single-line middle-aligned
+// baseline math svg/text.ts uses at render time, not just the label's
+// container box, since it's the <text> element's own y (its baseline)
+// being written here.
 const LABEL_GAP = 12;
+const LABEL_HEIGHT = 20;
+const LABEL_FONT_SIZE = 12;
+const LABEL_LINE_HEIGHT = 1.2;
+const LABEL_BASELINE_OFFSET =
+  -LABEL_GAP - LABEL_HEIGHT + (LABEL_HEIGHT - LABEL_FONT_SIZE * LABEL_LINE_HEIGHT) / 2 + LABEL_FONT_SIZE;
 
 // Mirrors renderScene/artifacts/isometric.ts's own geometry build, applied
 // directly to the live DOM nodes instead of producing new RenderNodes - the
@@ -54,14 +64,15 @@ export function applyIsometricAxisPreview(
     nodes.groundShadow.setAttribute('ry', String(Math.max(3, object.depth * 0.35)));
   }
 
-  const centerX = isometricTopFaceCenterX(object);
+  const anchor = isometricTopFaceCenter(object);
   if (nodes.labelGuide) {
-    nodes.labelGuide.setAttribute('d', `M ${centerX} ${box.y - LABEL_GAP} L ${centerX} ${box.y}`);
+    nodes.labelGuide.setAttribute('d', `M ${anchor.x} ${anchor.y - LABEL_GAP} L ${anchor.x} ${anchor.y}`);
   }
   if (nodes.label) {
-    nodes.label.setAttribute('x', String(centerX));
+    nodes.label.setAttribute('x', String(anchor.x));
+    nodes.label.setAttribute('y', String(anchor.y + LABEL_BASELINE_OFFSET));
     nodes.label.querySelectorAll('tspan').forEach(tspan => {
-      tspan.setAttribute('x', String(centerX));
+      tspan.setAttribute('x', String(anchor.x));
     });
   }
 }

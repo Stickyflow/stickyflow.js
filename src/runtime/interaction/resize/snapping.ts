@@ -32,6 +32,6 @@ export function snapResize(
       drag.handle,
       drag.textFit,
     ),
-    guides: [snap.x.guide, snap.y.guide].filter((guide): guide is GuideLine => guide !== null),
+    guides: [snap.x.guide, snap.y.guide].filter(guide => guide !== null),
   };
 }

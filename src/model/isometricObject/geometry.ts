@@ -45,18 +45,21 @@ export function isometricBounds(
   };
 }
 
-/** The horizontal center of the top face - apex, right, center and left all
- *  average to the same x as the derived bounding box's own center, so this
- *  is also exactly where the label and its guide line are horizontally
- *  placed; kept as a named, explicit computation (not just bounds.x +
- *  bounds.width / 2) so a label's horizontal position reads as "centered on
- *  the top face" rather than as an unexplained bounds arithmetic result. */
-export function isometricTopFaceCenterX(
-  object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>,
-): number {
+/** The center of the top face (average of apex/right/center/left). The
+ *  label and its guide line anchor here, in both x AND y: moving only the
+ *  x the way a plain "centered label" would reduces to a horizontal-only
+ *  motion that doesn't match how the top face itself moves when width or
+ *  depth changes - that corner's own displacement is diagonal, at the same
+ *  fixed axis angle as the edges, not purely horizontal. Anchoring to the
+ *  real centroid means the label rides that same diagonal instead of
+ *  visibly lagging/leading it. */
+export function isometricTopFaceCenter(object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>): Point {
   const width = Math.max(0, object.width);
   const depth = Math.max(0, object.depth);
-  return object.x + ((width + depth) * AXIS_COS) / 2;
+  return {
+    x: object.x + ((width + depth) * AXIS_COS) / 2,
+    y: object.y + ((width + depth) * AXIS_SIN) / 2,
+  };
 }
 
 export function isometricFaces(

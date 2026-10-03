@@ -26,6 +26,7 @@ export {
 } from './contract';
 export {
   findAllOwnerNodes,
+  findIsometricApexCandidates,
   findOwnerNode,
   findSnapCandidateBounds,
   isPrimary,

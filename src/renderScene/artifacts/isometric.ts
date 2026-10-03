@@ -2,7 +2,7 @@ import {
   type IsometricObject,
   isometricBounds,
   isometricFaces,
-  isometricTopFaceCenterX,
+  isometricTopFaceCenter,
 } from '../../model/isometricObject';
 import type { RenderNode, SceneEllipse, ScenePath, SceneText } from '../scene';
 import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
@@ -156,19 +156,25 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
 
   const labelHeight = 20;
   const labelGap = 12;
-  const labelCenterX = isometricTopFaceCenterX(object);
+  // Anchored to the top face's own centroid, not just its x - that point
+  // moves diagonally (at the same fixed axis angle as the edges) when width
+  // or depth changes, since it's built from exactly the same apex+toRight+
+  // toLeft vectors. Anchoring only x and pinning y to the box's top (the
+  // apex, which never moves) made the label snap horizontally while the
+  // corner it's meant to track actually slides along the axis.
+  const anchor = isometricTopFaceCenter(object);
   const label: SceneText = {
     type: 'text',
     id: `isometric-${object.id}-label`,
     order: order + 0.3,
     bounds: {
-      minX: box.x,
-      minY: box.y - labelGap - labelHeight,
-      maxX: box.x + box.width,
-      maxY: box.y - labelGap,
+      minX: anchor.x - box.width / 2,
+      minY: anchor.y - labelGap - labelHeight,
+      maxX: anchor.x + box.width / 2,
+      maxY: anchor.y - labelGap,
     },
-    x: box.x,
-    y: box.y - labelGap - labelHeight,
+    x: anchor.x - box.width / 2,
+    y: anchor.y - labelGap - labelHeight,
     width: box.width,
     height: labelHeight,
     lines: [object.text],
@@ -188,12 +194,12 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     id: `isometric-${object.id}-label-guide`,
     order: order + 0.25,
     bounds: {
-      minX: labelCenterX,
-      minY: box.y - labelGap,
-      maxX: labelCenterX,
-      maxY: box.y,
+      minX: anchor.x,
+      minY: anchor.y - labelGap,
+      maxX: anchor.x,
+      maxY: anchor.y,
     },
-    d: `M ${labelCenterX} ${box.y - labelGap} L ${labelCenterX} ${box.y}`,
+    d: `M ${anchor.x} ${anchor.y - labelGap} L ${anchor.x} ${anchor.y}`,
     rotation,
     rotationCenter,
     style: {

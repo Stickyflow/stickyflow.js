@@ -13,16 +13,6 @@ const ARROWHEAD_WIDTH_PX = 8.5;
 
 export type IsometricAxis = 'width' | 'height' | 'depth';
 
-// width/depth point at the fixed 30deg axis angle, not a true 45 - there's
-// no native CSS cursor for that exact angle, so nwse/nesw (the closest
-// diagonal) reads far better than the horizontal/vertical ew/ns cursors
-// those axes never actually move along.
-const AXIS_CURSORS: Record<IsometricAxis, string> = {
-  width: 'nwse-resize',
-  height: 'ns-resize',
-  depth: 'nesw-resize',
-};
-
 export interface Vec {
   x: number;
   y: number;
@@ -31,6 +21,24 @@ export interface Vec {
 export function normalizeVec(v: Vec): Vec {
   const length = Math.hypot(v.x, v.y) || 1;
   return { x: v.x / length, y: v.y / length };
+}
+
+// width/depth point at the fixed 30deg axis angle - no native CSS cursor
+// (nwse/nesw-resize are 45) matches that, so the cursor is a tiny inline
+// double-headed-arrow SVG rotated to the arrow's own exact direction
+// instead, built from the same `direction` vector the arrow itself is
+// drawn with, so the two can never drift out of sync with each other.
+function axisCursorUrl(direction: Vec): string {
+  const angleDeg = (Math.atan2(direction.y, direction.x) * 180) / Math.PI;
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">` +
+    `<g transform="rotate(${angleDeg} 13 13)" stroke-linejoin="round" stroke-linecap="round">` +
+    `<line x1="4" y1="13" x2="22" y2="13" stroke="white" stroke-width="4.5"/>` +
+    `<line x1="4" y1="13" x2="22" y2="13" stroke="black" stroke-width="1.6"/>` +
+    `<path d="M4 13 L9.5 8.5 L9.5 17.5 Z" fill="black" stroke="white" stroke-width="1.5"/>` +
+    `<path d="M22 13 L16.5 8.5 L16.5 17.5 Z" fill="black" stroke="white" stroke-width="1.5"/>` +
+    `</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 13 13, pointer`;
 }
 
 function centroid(points: readonly Vec[]): Vec {
@@ -55,10 +63,10 @@ interface ArrowElements {
 // a wider transparent line underneath is the actual (and easier-to-grab)
 // hit target. updateAxisArrow (below) repositions these same elements
 // during a live drag instead of rebuilding them from scratch.
-function createAxisArrow(document: Document, axis: IsometricAxis, svg: SVGSVGElement): ArrowElements {
+function createAxisArrow(document: Document, axis: IsometricAxis, direction: Vec, svg: SVGSVGElement): ArrowElements {
   const group = svgElement(document, 'g');
   group.setAttribute('data-sf-resize-handle', `iso-${axis}`);
-  group.style.cursor = AXIS_CURSORS[axis];
+  group.style.cursor = axisCursorUrl(direction);
 
   const hit = svgElement(document, 'line');
   hit.setAttribute('stroke', 'transparent');
@@ -115,7 +123,7 @@ function axisArrow(
   axis: IsometricAxis,
   svg: SVGSVGElement,
 ): SVGGElement {
-  const elements = createAxisArrow(document, axis, svg);
+  const elements = createAxisArrow(document, axis, direction, svg);
   positionAxisArrow(elements, origin, direction, svg);
   return elements.group;
 }
