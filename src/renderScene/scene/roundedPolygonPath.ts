@@ -25,20 +25,8 @@ function toward(from: Point, to: Point, distanceFromStart: number): Point {
   };
 }
 
-function roundedCorner(
-  previous: Point,
-  vertex: Point,
-  next: Point,
-  requestedRadius: number,
-): RoundedCorner {
-  const radius = Math.max(
-    0,
-    Math.min(
-      requestedRadius,
-      distance(vertex, previous) / 2,
-      distance(vertex, next) / 2,
-    ),
-  );
+function roundedCorner(previous: Point, vertex: Point, next: Point, requestedRadius: number): RoundedCorner {
+  const radius = Math.max(0, Math.min(requestedRadius, distance(vertex, previous) / 2, distance(vertex, next) / 2));
 
   return {
     vertex,
@@ -47,22 +35,16 @@ function roundedCorner(
   };
 }
 
-export function roundedPolygonPath(
-  points: readonly Point[],
-  radius: number | readonly number[],
-): string {
+export function roundedPolygonPath(points: readonly Point[], radius: number | readonly number[]): string {
   if (points.length < 3) {
     return '';
   }
 
-  const radiusAt = (index: number) =>
-    typeof radius === 'number' ? radius : (radius[index] ?? 0);
+  const radiusAt = (index: number) => (typeof radius === 'number' ? radius : (radius[index] ?? 0));
 
   if (points.every((_, index) => radiusAt(index) <= 0)) {
     const [first, ...rest] = points;
-    return `M ${first.x} ${first.y} ${rest
-      .map(point => `L ${point.x} ${point.y}`)
-      .join(' ')} Z`;
+    return `M ${first.x} ${first.y} ${rest.map(point => `L ${point.x} ${point.y}`).join(' ')} Z`;
   }
 
   const corners = points.map((vertex, index) =>

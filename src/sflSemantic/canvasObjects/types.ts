@@ -4,14 +4,7 @@ import type { SflPathData } from './artifacts/path/types';
 import type { SflSwimlaneData } from './artifacts/swimlane/types';
 import type { SflTableData } from './artifacts/table/types';
 
-export type SflCanvasObjectType =
-  | 'shape'
-  | 'frame'
-  | 'swimlane'
-  | 'table'
-  | 'path'
-  | 'chart'
-  | 'isometric';
+export type SflCanvasObjectType = 'shape' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart' | 'isometric';
 
 export interface SflSymbolDefinition {
   name: string;
@@ -48,13 +41,13 @@ export interface SflCanvasObject extends SflCanvasObjectBase {
 export type SflShapeObject = SflCanvasObject & { objectType: 'shape' };
 export type SflFrameObject = SflCanvasObject & { objectType: 'frame' };
 
-export { isChartObject } from './artifacts/chart/types';
-export { isIsometricObject } from './artifacts/isometric/types';
-export { isPathObject } from './artifacts/path/types';
-export { isSwimlaneObject } from './artifacts/swimlane/types';
-export { isTableObject } from './artifacts/table/types';
 export type { SflChartObject } from './artifacts/chart/types';
+export { isChartObject } from './artifacts/chart/types';
 export type { SflIsometricObject } from './artifacts/isometric/types';
+export { isIsometricObject } from './artifacts/isometric/types';
 export type { SflPathObject } from './artifacts/path/types';
+export { isPathObject } from './artifacts/path/types';
 export type { SflSwimlaneObject } from './artifacts/swimlane/types';
+export { isSwimlaneObject } from './artifacts/swimlane/types';
 export type { SflTableObject } from './artifacts/table/types';
+export { isTableObject } from './artifacts/table/types';

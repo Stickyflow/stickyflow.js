@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isIsometricObject,
-  sflToCanvasState,
-} from '../src';
+import { isIsometricObject, sflToCanvasState } from '../src';
 
 describe('Isometric semantic resolution', () => {
   it('resolves an Isometric block as a typed canvas object', () => {

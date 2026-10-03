@@ -1,3 +1,4 @@
+// biome-ignore-all assist/source/organizeImports: Public exports follow the documented L0-L5 architecture.
 // L0 — Model
 export type { Chart, ChartAxis, ChartRamp, ChartSeries, ChartType } from './model/chart';
 export { CHART_TYPES } from './model/chart';

@@ -8,16 +8,10 @@ export interface IsometricFaces {
 }
 
 export function isometricFaces(
-  object: Pick<
-    IsometricObject,
-    'x' | 'y' | 'width' | 'height' | 'depth'
-  >,
+  object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>,
 ): IsometricFaces {
   const { x, y, width, height } = object;
-  const depth = Math.max(
-    0,
-    Math.min(object.depth, width / 2, height / 2),
-  );
+  const depth = Math.max(0, Math.min(object.depth, width / 2, height / 2));
 
   const top = { x: x + width / 2, y };
   const left = { x, y: y + depth };

@@ -1,4 +1,4 @@
-import { isometricFaces, type IsometricObject } from '../../model/isometricObject';
+import { type IsometricObject, isometricFaces } from '../../model/isometricObject';
 import type { RenderNode, SceneEllipse, ScenePath, SceneText } from '../scene';
 import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
 import { roundedPolygonPath } from '../scene/roundedPolygonPath';

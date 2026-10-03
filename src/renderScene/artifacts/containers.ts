@@ -19,8 +19,6 @@ export function buildContainers(input: Pick<RenderInput, 'frames' | 'swimlanes'>
     ...input.frames.flatMap((frame, index) =>
       tag(buildFrame(frame, index), 'frame', frame.id, undefined, frame.title ?? undefined),
     ),
-    ...input.swimlanes.flatMap((swimlane, index) =>
-      tag(buildSwimlane(swimlane, index), 'swimlane', swimlane.id),
-    ),
+    ...input.swimlanes.flatMap((swimlane, index) => tag(buildSwimlane(swimlane, index), 'swimlane', swimlane.id)),
   ];
 }

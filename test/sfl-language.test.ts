@@ -88,7 +88,7 @@ Shape card {
   });
 
   it('parses and emits Isometric blocks without semantic resolution', () => {
-  const source = `sfl 1
+    const source = `sfl 1
 
 Isometric relay {
   text: "Relay"
@@ -104,12 +104,12 @@ Isometric relay {
 }
 `;
 
-  const document = parse(source);
+    const document = parse(source);
 
-  expect(document.blocks[0]).toMatchObject({
-    kind: 'Isometric',
-    name: 'relay',
-  });
+    expect(document.blocks[0]).toMatchObject({
+      kind: 'Isometric',
+      name: 'relay',
+    });
     const emitted = emit(document);
     expect(emit(parse(emitted))).toBe(emitted);
   });
