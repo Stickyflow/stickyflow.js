@@ -16,21 +16,20 @@ export class SvgFilterDefinitions {
     if (style.shadow) {
       return this.define(nodeId, style.shadow, outerShadowPrimitives);
     }
+    if (style.blur) {
+      return this.define(nodeId, { blur: style.blur }, blurPrimitives);
+    }
     return undefined;
   }
 
-  private define(
-    nodeId: string,
-    shadow: NonNullable<SceneStyle['shadow']>,
-    primitives: (shadow: NonNullable<SceneStyle['shadow']>) => string,
-  ): string {
-    const key = JSON.stringify(shadow) + primitives.name;
+  private define<T>(nodeId: string, value: T, primitives: (value: T) => string): string {
+    const key = JSON.stringify(value) + primitives.name;
     let id = this.ids.get(key);
     if (!id) {
       id = safeId(`${this.prefix}shadow-${nodeId}-${this.ids.size}`);
       this.ids.set(key, id);
       this.addDefinition(
-        `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%">${primitives(shadow)}</filter>`,
+        `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%">${primitives(value)}</filter>`,
       );
     }
     return id;
@@ -39,6 +38,10 @@ export class SvgFilterDefinitions {
 
 function outerShadowPrimitives(shadow: NonNullable<SceneStyle['shadow']>): string {
   return `<feDropShadow dx="${num(shadow.dx)}" dy="${num(shadow.dy)}" stdDeviation="${num(shadow.blur / 2)}" flood-color="${xml(shadow.color)}" flood-opacity="${num(shadow.opacity)}"/>`;
+}
+
+function blurPrimitives(blur: { blur: number }): string {
+  return `<feGaussianBlur stdDeviation="${num(blur.blur / 2)}"/>`;
 }
 
 function innerShadowPrimitives(shadow: NonNullable<SceneStyle['shadow']>): string {

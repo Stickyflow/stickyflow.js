@@ -47,6 +47,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
           fill: { kind: 'solid', color: object.shadowStyle?.color ?? '#000000' },
           stroke: { kind: 'none' },
           opacity: object.shadowStyle?.opacity ?? 0.18,
+          blur: finite(object.shadowStyle?.blur, 8),
           pointerEvents: 'none',
         },
       }
