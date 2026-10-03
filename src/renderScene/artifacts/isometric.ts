@@ -101,6 +101,9 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       order,
       d: roundedPolygonPath(faces.top, 0),
       style: { ...noStroke, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' }, clip: hullClip },
+      prop: 'style.topFill',
+      propKind: 'color',
+      propSolidOnly: true,
     },
     {
       ...common,
@@ -108,6 +111,9 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       order: order + 0.1,
       d: roundedPolygonPath(faces.front, 0),
       style: { ...noStroke, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' }, clip: hullClip },
+      prop: 'style.frontFill',
+      propKind: 'color',
+      propSolidOnly: true,
     },
     {
       ...common,
@@ -115,6 +121,9 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       order: order + 0.2,
       d: roundedPolygonPath(faces.side, 0),
       style: { ...noStroke, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' }, clip: hullClip },
+      prop: 'style.sideFill',
+      propKind: 'color',
+      propSolidOnly: true,
     },
   ];
 
