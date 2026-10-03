@@ -1,5 +1,7 @@
 import { isometricFaces } from '../../../model/isometricObject';
 import { roundedPolygonPath } from '../../../renderScene/scene/roundedPolygonPath';
+import { axisArrowPlacements, updateAxisArrowGroup, updateHalo } from '../../dom';
+import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
 import type { IsometricGeometryNodes, IsometricObjectSize } from './state';
 
 const LABEL_GAP = 12;
@@ -12,6 +14,8 @@ export function applyIsometricAxisPreview(
   nodes: IsometricGeometryNodes,
   object: IsometricObjectSize,
   cornerRadius: number,
+  overlay: { halo: SVGPathElement | null; arrows: Record<IsometricAxis, SVGGElement | null> },
+  svg: SVGSVGElement,
 ): void {
   const faces = isometricFaces(object);
 
@@ -20,7 +24,19 @@ export function applyIsometricAxisPreview(
   nodes.side?.setAttribute('d', roundedPolygonPath(faces.side, 0));
 
   const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
-  nodes.hull?.setAttribute('d', roundedPolygonPath(silhouette, cornerRadius));
+  const hullPath = roundedPolygonPath(silhouette, cornerRadius);
+  nodes.hull?.setAttribute('d', hullPath);
+  if (overlay.halo) {
+    updateHalo(overlay.halo, hullPath);
+  }
+
+  const placements = axisArrowPlacements(object, object.depth);
+  (Object.keys(placements) as IsometricAxis[]).forEach(axis => {
+    const group = overlay.arrows[axis];
+    if (group) {
+      updateAxisArrowGroup(group, placements[axis].origin, placements[axis].direction, svg);
+    }
+  });
 
   nodes.seams?.setAttribute(
     'd',

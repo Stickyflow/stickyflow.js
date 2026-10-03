@@ -35,6 +35,8 @@ export {
   screenRectOf,
 } from './domQuery';
 export {
+  axisArrowPlacements,
+  ISO_HALO_ATTR,
   type IsometricAxis,
   isometricSelectionOverlay,
   type LinkEndpoint,
@@ -46,7 +48,10 @@ export {
   type ResizeHandle,
   resizeHandlePositions,
   shapeSelectionOverlay,
+  updateAxisArrowGroup,
+  updateHalo,
   updateQuickDuplicateBubbles,
+  type Vec,
 } from './selectionOverlay';
 export { SVG_NAMESPACE } from './svgNamespace';
 export type { Modifiers, OwnerRef } from './types';

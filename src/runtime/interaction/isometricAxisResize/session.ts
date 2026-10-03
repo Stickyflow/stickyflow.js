@@ -48,7 +48,13 @@ export class IsometricAxisResizeSession {
     }
     drag.moved = true;
     drag.current = nextGeometry(drag, point);
-    applyIsometricAxisPreview(drag.nodes, drag.current, drag.cornerRadius);
+    applyIsometricAxisPreview(
+      drag.nodes,
+      drag.current,
+      drag.cornerRadius,
+      { halo: drag.overlayHalo, arrows: drag.overlayArrows },
+      this.#svg,
+    );
   };
 
   readonly pointerUp = (event: PointerEvent): void => {

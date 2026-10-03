@@ -2,6 +2,7 @@ import { CORNER_RADIUS_ATTR } from '../../../svg/domContract/attributes';
 import {
   findAllOwnerNodes,
   findOwnerNode,
+  ISO_HALO_ATTR,
   isometricGeometryOf,
   isPrimary,
   pointerUserPoint,
@@ -9,6 +10,8 @@ import {
 } from '../../dom';
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
 import type { OwnerRef } from '../../viewer';
+
+const AXES: readonly IsometricAxis[] = ['width', 'height', 'depth'];
 
 export interface IsometricGeometryNodes {
   top: SVGGraphicsElement | null;
@@ -37,6 +40,8 @@ export interface IsometricAxisDragState {
   start: IsometricObjectSize;
   cornerRadius: number;
   nodes: IsometricGeometryNodes;
+  overlayHalo: SVGPathElement | null;
+  overlayArrows: Record<IsometricAxis, SVGGElement | null>;
   moved: boolean;
   current: IsometricObjectSize;
 }
@@ -96,6 +101,14 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
 
   captureTarget.setPointerCapture?.(event.pointerId);
 
+  const overlayHalo = (overlay?.querySelector(`[${ISO_HALO_ATTR}]`) as SVGPathElement | null) ?? null;
+  const overlayArrows = Object.fromEntries(
+    AXES.map(axis => [
+      axis,
+      (overlay?.querySelector(`[data-sf-resize-handle="iso-${axis}"]`) as SVGGElement | null) ?? null,
+    ]),
+  ) as Record<IsometricAxis, SVGGElement | null>;
+
   const start: IsometricObjectSize = {
     x: bounds.x,
     y: bounds.y,
@@ -112,6 +125,8 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
     start,
     cornerRadius: geometry?.cornerRadius ?? Number(primary.getAttribute(CORNER_RADIUS_ATTR)) ?? 0,
     nodes,
+    overlayHalo,
+    overlayArrows,
     moved: false,
     current: start,
   };
