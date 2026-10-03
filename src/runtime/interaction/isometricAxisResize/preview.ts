@@ -1,4 +1,4 @@
-import { isometricBounds, isometricFaces, isometricTopFaceCenter } from '../../../model/isometricObject';
+import { isometricFaces, isometricTopFaceCenter } from '../../../model/isometricObject';
 import { roundedPolygonPath } from '../../../renderScene/scene/roundedPolygonPath';
 import { axisArrowPlacements, updateAxisArrowGroup, updateHalo } from '../../dom';
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
@@ -28,10 +28,6 @@ export function applyIsometricAxisPreview(
   svg: SVGSVGElement,
 ): void {
   const faces = isometricFaces(object);
-  // object.width/height are true axis edge lengths, not the on-screen box -
-  // see isometricBounds. groundShadow/label/labelGuide are sized off the
-  // box, same as the renderer.
-  const box = isometricBounds(object);
 
   nodes.top?.setAttribute('d', roundedPolygonPath(faces.top, 0));
   nodes.front?.setAttribute('d', roundedPolygonPath(faces.front, 0));
@@ -58,10 +54,22 @@ export function applyIsometricAxisPreview(
   );
 
   if (nodes.groundShadow) {
-    nodes.groundShadow.setAttribute('cx', String(box.x + box.width / 2));
-    nodes.groundShadow.setAttribute('cy', String(box.y + box.height));
-    nodes.groundShadow.setAttribute('rx', String(box.width * 0.35));
-    nodes.groundShadow.setAttribute('ry', String(Math.max(3, object.depth * 0.35)));
+    // Mirrors renderScene/artifacts/isometric.ts's own footprint math - the
+    // live drag doesn't know a configured shadow(distance:…), so this
+    // reproduces the no-distance case (shadowDrop = height) exactly; an
+    // object with an explicit distance just lags by that fixed amount for
+    // the duration of the drag, snapping correct once it's released.
+    const contactFootprint = faces.top.map(point => ({ x: point.x, y: point.y + object.height }));
+    const footprintCenter = {
+      x: contactFootprint.reduce((sum, point) => sum + point.x, 0) / contactFootprint.length,
+      y: contactFootprint.reduce((sum, point) => sum + point.y, 0) / contactFootprint.length,
+    };
+    const shadowSpread = 1.3;
+    const footprint = contactFootprint.map(point => ({
+      x: footprintCenter.x + (point.x - footprintCenter.x) * shadowSpread,
+      y: footprintCenter.y + (point.y - footprintCenter.y) * shadowSpread,
+    }));
+    nodes.groundShadow.setAttribute('d', roundedPolygonPath(footprint, 0));
   }
 
   const anchor = isometricTopFaceCenter(object);

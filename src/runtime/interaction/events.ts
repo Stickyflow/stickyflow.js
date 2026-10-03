@@ -36,9 +36,17 @@ export interface LinkReconnectEvent {
   fraction: number;
 }
 
+export type IsometricQuickDuplicateDirection =
+  | 'iso-width-pos'
+  | 'iso-width-neg'
+  | 'iso-depth-pos'
+  | 'iso-depth-neg'
+  | 'iso-height-pos'
+  | 'iso-height-neg';
+
 export interface QuickDuplicateEvent {
   owner: OwnerRef;
-  direction: 'top' | 'right' | 'bottom' | 'left';
+  direction: 'top' | 'right' | 'bottom' | 'left' | IsometricQuickDuplicateDirection;
 }
 
 export interface DeleteEvent {

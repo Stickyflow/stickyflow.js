@@ -1,11 +1,13 @@
 export interface InsertCanvasObjectOptions {
   id: string;
-  kind: 'shape' | 'frame' | 'swimlane' | 'table';
+  kind: 'shape' | 'frame' | 'swimlane' | 'table' | 'isometric';
   text?: string;
   x: number;
   y: number;
   width: number;
   height: number;
+  /** Isometric objects only - the third `layout.size` value. */
+  depth?: number;
   parentId?: string;
   body?: string;
 }

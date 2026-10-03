@@ -1,6 +1,13 @@
 import { isometricFaces } from '../../../model/isometricObject';
 import { isometricGeometryOf, symbolDeclaredBounds } from '../contract';
 import { selectionOverlayGroup, svgElement } from './dom';
+import {
+  BUBBLE_RADIUS_PX,
+  BUBBLE_STROKE_WIDTH_PX,
+  duplicateBubble,
+  duplicatePlus,
+  PLUS_HALF_SIZE_PX,
+} from './quickDuplicate';
 import { screenPx } from './scale';
 
 const RING_COLOR = '#9b42df';
@@ -171,6 +178,86 @@ export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis
   };
 }
 
+const DUPLICATE_MARGIN_PX = 18;
+
+export type IsometricQuickDuplicateDirection =
+  | 'iso-width-pos'
+  | 'iso-width-neg'
+  | 'iso-depth-pos'
+  | 'iso-depth-neg'
+  | 'iso-height-pos'
+  | 'iso-height-neg';
+
+function reflect(point: Vec, through: Vec): Vec {
+  return { x: through.x * 2 - point.x, y: through.y * 2 - point.y };
+}
+
+/** One bubble per cube face (all 6, not just the 3 that happen to be
+ *  visible) so a copy can be spun off in any direction, each offset exactly
+ *  along that axis's own true isometric vector. The 3 hidden faces (the
+ *  ones axisArrowPlacements has no dedicated geometry for, since nothing is
+ *  drawn there) get their origin by reflecting the opposite, visible face's
+ *  origin through the object's own visual center - same distance out, exact
+ *  opposite direction. */
+export function quickDuplicatePlacements(
+  object: IsometricSize,
+): Record<IsometricQuickDuplicateDirection, { origin: Vec; direction: Vec }> {
+  const faces = isometricFaces(object);
+  const placements = axisArrowPlacements(object);
+  const visualCenter = centroid([
+    faces.top[0],
+    faces.top[1],
+    faces.top[2],
+    faces.top[3],
+    faces.front[2],
+    faces.front[3],
+    faces.side[2],
+  ]);
+  return {
+    'iso-width-pos': placements.width,
+    'iso-width-neg': {
+      origin: reflect(placements.width.origin, visualCenter),
+      direction: { x: -placements.width.direction.x, y: -placements.width.direction.y },
+    },
+    'iso-depth-pos': placements.depth,
+    'iso-depth-neg': {
+      origin: reflect(placements.depth.origin, visualCenter),
+      direction: { x: -placements.depth.direction.x, y: -placements.depth.direction.y },
+    },
+    'iso-height-pos': placements.height,
+    'iso-height-neg': {
+      origin: reflect(placements.height.origin, visualCenter),
+      direction: { x: -placements.height.direction.x, y: -placements.height.direction.y },
+    },
+  };
+}
+
+export const ISO_DUPLICATE_BUBBLES_ATTR = 'data-sf-iso-duplicate-bubbles';
+
+export function isometricQuickDuplicateBubbles(
+  document: Document,
+  object: IsometricSize,
+  svg: SVGSVGElement,
+): SVGGElement {
+  const group = svgElement(document, 'g');
+  group.setAttribute(ISO_DUPLICATE_BUBBLES_ATTR, '');
+  const radius = screenPx(svg, BUBBLE_RADIUS_PX);
+  const margin = screenPx(svg, DUPLICATE_MARGIN_PX);
+  const halfSize = screenPx(svg, PLUS_HALF_SIZE_PX);
+  const strokeWidth = screenPx(svg, BUBBLE_STROKE_WIDTH_PX);
+  for (const [direction, { origin, direction: dir }] of Object.entries(quickDuplicatePlacements(object)) as Array<
+    [IsometricQuickDuplicateDirection, { origin: Vec; direction: Vec }]
+  >) {
+    const x = origin.x + dir.x * margin;
+    const y = origin.y + dir.y * margin;
+    group.append(
+      duplicateBubble(document, x, y, radius, strokeWidth, direction),
+      duplicatePlus(document, x, y, halfSize, strokeWidth),
+    );
+  }
+  return group;
+}
+
 // Three vector handles instead of the generic rectangle's eight square
 // resize handles - dragging one changes exactly one of width/height/depth,
 // so the box always keeps its isometric angles instead of the generic
@@ -206,5 +293,18 @@ export function isometricSelectionOverlay(
   group.appendChild(axisArrow(document, placements.width.origin, placements.width.direction, 'width', svg));
   group.appendChild(axisArrow(document, placements.height.origin, placements.height.direction, 'height', svg));
   group.appendChild(axisArrow(document, placements.depth.origin, placements.depth.direction, 'depth', svg));
+  group.appendChild(
+    isometricQuickDuplicateBubbles(
+      document,
+      {
+        x: bounds.x,
+        y: bounds.y,
+        width: geometry?.width ?? bounds.width,
+        height: geometry?.height ?? bounds.height,
+        depth: geometry?.depth ?? 0,
+      },
+      svg,
+    ),
+  );
   return group;
 }

@@ -37,8 +37,11 @@ export {
 } from './domQuery';
 export {
   axisArrowPlacements,
+  ISO_DUPLICATE_BUBBLES_ATTR,
   ISO_HALO_ATTR,
   type IsometricAxis,
+  type IsometricQuickDuplicateDirection,
+  isometricQuickDuplicateBubbles,
   isometricSelectionOverlay,
   type LinkEndpoint,
   linkSelectionOverlay,
@@ -46,6 +49,7 @@ export {
   pathSelectionOverlay,
   type QuickDuplicateDirection,
   quickDuplicateBubbles,
+  quickDuplicatePlacements,
   type ResizeHandle,
   resizeHandlePositions,
   shapeSelectionOverlay,

@@ -2,6 +2,7 @@ import { CORNER_RADIUS_ATTR } from '../../../svg/domContract/attributes';
 import {
   findAllOwnerNodes,
   findOwnerNode,
+  ISO_DUPLICATE_BUBBLES_ATTR,
   ISO_HALO_ATTR,
   isometricGeometryOf,
   isPrimary,
@@ -42,6 +43,7 @@ export interface IsometricAxisDragState {
   nodes: IsometricGeometryNodes;
   overlayHalo: SVGPathElement | null;
   overlayArrows: Record<IsometricAxis, SVGGElement | null>;
+  overlayDuplicateBubbles: SVGGElement | null;
   moved: boolean;
   current: IsometricObjectSize;
 }
@@ -108,6 +110,14 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
       (overlay?.querySelector(`[data-sf-resize-handle="iso-${axis}"]`) as SVGGElement | null) ?? null,
     ]),
   ) as Record<IsometricAxis, SVGGElement | null>;
+  // Hidden for the duration of the drag instead of kept live-positioned -
+  // they'd otherwise sit stale (wrong face centers) until the drag ends,
+  // and they're not meaningful to click mid-drag anyway.
+  const overlayDuplicateBubbles =
+    (overlay?.querySelector(`[${ISO_DUPLICATE_BUBBLES_ATTR}]`) as SVGGElement | null) ?? null;
+  if (overlayDuplicateBubbles) {
+    overlayDuplicateBubbles.style.display = 'none';
+  }
 
   // bounds (declaredBounds) is the on-screen box - only x/y double as the
   // true object position (they're identical by construction, see
@@ -132,6 +142,7 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
     nodes,
     overlayHalo,
     overlayArrows,
+    overlayDuplicateBubbles,
     moved: false,
     current: start,
   };

@@ -45,7 +45,10 @@ export function createQuickDuplicateDragState(
   const bubble = (event.target as Element | null)?.closest('[data-sf-quick-duplicate]');
   const direction = bubble?.getAttribute('data-sf-quick-duplicate') as QuickDuplicateDirection | null;
   const sourceId = bubble?.closest('[data-sf-selection-overlay]')?.getAttribute('data-sf-selection-overlay');
-  if (!bubble || !direction || !sourceId) {
+  // Isometric bubbles share the same attribute but carry iso-prefixed
+  // directions (see isometricQuickDuplicate) that aren't a Side - this
+  // top/right/bottom/left drag-to-link session doesn't apply to them.
+  if (!bubble || !direction || direction.startsWith('iso-') || !sourceId) {
     return null;
   }
 

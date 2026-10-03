@@ -3,10 +3,10 @@ import { selectionOverlayGroup, svgElement } from './dom';
 import { screenPx } from './scale';
 import type { OverlayBounds, QuickDuplicateDirection } from './types';
 
-const BUBBLE_RADIUS_PX = 8;
+export const BUBBLE_RADIUS_PX = 8;
 const BUBBLE_MARGIN_PX = 15;
-const PLUS_HALF_SIZE_PX = 4;
-const BUBBLE_STROKE_WIDTH_PX = 1.5;
+export const PLUS_HALF_SIZE_PX = 4;
+export const BUBBLE_STROKE_WIDTH_PX = 1.5;
 
 function quickDuplicatePositions(
   bounds: OverlayBounds,
@@ -22,17 +22,17 @@ function quickDuplicatePositions(
   ];
 }
 
-function plusPath(x: number, y: number, halfSize: number): string {
+export function plusPath(x: number, y: number, halfSize: number): string {
   return `M ${x - halfSize} ${y} L ${x + halfSize} ${y} M ${x} ${y - halfSize} L ${x} ${y + halfSize}`;
 }
 
-function duplicateBubble(
+export function duplicateBubble(
   document: Document,
   x: number,
   y: number,
   radius: number,
   strokeWidth: number,
-  direction: QuickDuplicateDirection,
+  direction: string,
 ): SVGCircleElement {
   const bubble = svgElement(document, 'circle');
   bubble.setAttribute('cx', String(x));
@@ -47,7 +47,7 @@ function duplicateBubble(
   return bubble;
 }
 
-function duplicatePlus(
+export function duplicatePlus(
   document: Document,
   x: number,
   y: number,

@@ -1,8 +1,12 @@
 export {
   axisArrowPlacements,
+  ISO_DUPLICATE_BUBBLES_ATTR,
   ISO_HALO_ATTR,
   type IsometricAxis,
+  type IsometricQuickDuplicateDirection,
+  isometricQuickDuplicateBubbles,
   isometricSelectionOverlay,
+  quickDuplicatePlacements,
   updateAxisArrowGroup,
   updateHalo,
   type Vec,

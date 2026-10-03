@@ -7,6 +7,7 @@ import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelecti
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './isometricAxisResizeDrag';
 import { bindIsometricLabelDrag, type IsometricLabelDragHandle } from './isometricLabelDrag/binding';
+import { bindIsometricQuickDuplicate, type IsometricQuickDuplicateHandle } from './isometricQuickDuplicate/binding';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
@@ -41,6 +42,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
+  const isometricQuickDuplicate: IsometricQuickDuplicateHandle = bindIsometricQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
   const pieLabels: PieLabelDragHandle = bindPieLabelDrag(viewer, emitter);
@@ -70,6 +72,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       pathReshape.destroy();
       linkEndpoints.destroy();
       quickDuplicate.destroy();
+      isometricQuickDuplicate.destroy();
       deleteSelection.destroy();
       chartValues.destroy();
       pieLabels.destroy();
@@ -98,6 +101,7 @@ export type {
   DeleteEvent,
   InteractionEventMap,
   InteractionEventName,
+  IsometricQuickDuplicateDirection,
   LinkReconnectEvent,
   LinkToEvent,
   MoveChangeEvent,

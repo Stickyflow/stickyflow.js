@@ -80,6 +80,9 @@ export class IsometricAxisResizeSession {
     }
     this.#drag = null;
     (event.target as Element | null)?.releasePointerCapture?.(drag.pointerId);
+    if (drag.overlayDuplicateBubbles) {
+      drag.overlayDuplicateBubbles.style.display = '';
+    }
     if (!drag.moved) {
       return;
     }
@@ -99,6 +102,9 @@ export class IsometricAxisResizeSession {
   };
 
   cancel(): void {
+    if (this.#drag?.overlayDuplicateBubbles) {
+      this.#drag.overlayDuplicateBubbles.style.display = '';
+    }
     this.#drag = null;
   }
 }
