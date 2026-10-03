@@ -7,4 +7,5 @@ export {
   isometricFaces,
   isometricTopFaceCenter,
 } from './geometry';
+export { deriveFaceFills, type IsometricFaceFills } from './shading';
 export type { IsometricObject } from './types';

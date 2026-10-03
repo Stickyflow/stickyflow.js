@@ -1,4 +1,5 @@
 import {
+  deriveFaceFills,
   type IsometricObject,
   isometricBounds,
   isometricFaces,
@@ -94,36 +95,36 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
   const hullPath = roundedPolygonPath(silhouette, cornerRadius);
   const hullClip = { type: 'path' as const, d: hullPath };
 
+  // One color in, a consistent three-face cube out - front/side are always
+  // derived shades of the same fill, never independently chosen, so they
+  // can't drift out of sync with each other.
+  const faceFills = deriveFaceFills(object.fill ?? '#f8fafc');
+  const colorProp = { prop: 'style.fill', propKind: 'color' as const, propSolidOnly: true };
+
   const facesNodes: ScenePath[] = [
     {
       ...common,
       id: `isometric-${object.id}-top`,
       order,
       d: roundedPolygonPath(faces.top, 0),
-      style: { ...noStroke, fill: { kind: 'solid', color: object.topFill ?? '#f8fafc' }, clip: hullClip },
-      prop: 'style.topFill',
-      propKind: 'color',
-      propSolidOnly: true,
+      style: { ...noStroke, fill: { kind: 'solid', color: faceFills.topFill }, clip: hullClip },
+      ...colorProp,
     },
     {
       ...common,
       id: `isometric-${object.id}-front`,
       order: order + 0.1,
       d: roundedPolygonPath(faces.front, 0),
-      style: { ...noStroke, fill: { kind: 'solid', color: object.frontFill ?? '#ffffff' }, clip: hullClip },
-      prop: 'style.frontFill',
-      propKind: 'color',
-      propSolidOnly: true,
+      style: { ...noStroke, fill: { kind: 'solid', color: faceFills.frontFill }, clip: hullClip },
+      ...colorProp,
     },
     {
       ...common,
       id: `isometric-${object.id}-side`,
       order: order + 0.2,
       d: roundedPolygonPath(faces.side, 0),
-      style: { ...noStroke, fill: { kind: 'solid', color: object.sideFill ?? '#f1f5f9' }, clip: hullClip },
-      prop: 'style.sideFill',
-      propKind: 'color',
-      propSolidOnly: true,
+      style: { ...noStroke, fill: { kind: 'solid', color: faceFills.sideFill }, clip: hullClip },
+      ...colorProp,
     },
   ];
 

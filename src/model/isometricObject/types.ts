@@ -13,9 +13,9 @@ export interface IsometricObject {
   text?: string;
   icon?: string;
 
-  topFill?: string;
-  frontFill?: string;
-  sideFill?: string;
+  /** The top face's own color - front/side are derived shades of it (see
+   *  deriveFaceFills), not independently settable. */
+  fill?: string;
   strokeColor?: string;
   strokeWidth?: number;
   cornerRadius?: number;
