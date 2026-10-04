@@ -26,13 +26,79 @@ interface IsolineCell {
   bottomLeft: IsolineSample;
 }
 
-type IsolinePoint = [number, number];
+export type IsolinePoint = [number, number];
 
 interface CellEdgeIntersections {
   top: IsolinePoint;
   right: IsolinePoint;
   bottom: IsolinePoint;
   left: IsolinePoint;
+}
+
+// Marching squares hands back one independent segment per grid cell - each
+// one individually correct, but drawn as its own "M ... L ..." command the
+// whole isoline is dozens of disconnected straight dashes rather than a
+// single curve, visibly kinked at every cell boundary instead of flowing.
+// This stitches same-threshold segments that share an endpoint (adjacent
+// cells compute that shared edge intersection identically, so the
+// coordinates match exactly) into ordered point chains - one per
+// contiguous strand or closed loop - ready to hand to a Catmull-Rom
+// smoother the same way line/path charts already smooth their own points.
+export function stitchIsolineSegments(segments: readonly IsolineSegment[]): IsolinePoint[][] {
+  if (segments.length === 0) {
+    return [];
+  }
+  const pointKey = (point: IsolinePoint): string => `${Math.round(point[0] * 1000)}:${Math.round(point[1] * 1000)}`;
+  const adjacency = new Map<string, Array<{ point: IsolinePoint; segment: number }>>();
+  const addEdge = (from: IsolinePoint, to: IsolinePoint, segment: number): void => {
+    const key = pointKey(from);
+    const list = adjacency.get(key);
+    const entry = { point: to, segment };
+    if (list) {
+      list.push(entry);
+    } else {
+      adjacency.set(key, [entry]);
+    }
+  };
+  segments.forEach((segment, index) => {
+    const a: IsolinePoint = [segment.x1, segment.y1];
+    const b: IsolinePoint = [segment.x2, segment.y2];
+    addEdge(a, b, index);
+    addEdge(b, a, index);
+  });
+
+  const usedSegments = new Array(segments.length).fill(false);
+  const extend = (chain: IsolinePoint[], from: IsolinePoint): void => {
+    let current = from;
+    for (;;) {
+      const candidates = adjacency.get(pointKey(current));
+      const next = candidates?.find(candidate => !usedSegments[candidate.segment]);
+      if (!next) {
+        return;
+      }
+      usedSegments[next.segment] = true;
+      chain.push(next.point);
+      current = next.point;
+    }
+  };
+
+  const chains: IsolinePoint[][] = [];
+  segments.forEach((segment, index) => {
+    if (usedSegments[index]) {
+      return;
+    }
+    usedSegments[index] = true;
+    const forward: IsolinePoint[] = [
+      [segment.x1, segment.y1],
+      [segment.x2, segment.y2],
+    ];
+    extend(forward, forward[forward.length - 1]);
+    const backward: IsolinePoint[] = [];
+    extend(backward, forward[0]);
+    backward.reverse();
+    chains.push([...backward, ...forward]);
+  });
+  return chains;
 }
 
 export function computeIsolineSegments(field: IsolineField, threshold: number): IsolineSegment[] {
