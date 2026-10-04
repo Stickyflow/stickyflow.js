@@ -3,8 +3,9 @@
 // of one relative to its parent). Run with a TS-aware dev server, e.g.
 // from packages/stickyflow.js:  npx vite demo
 // then open nested-container-editing.html.
-import { createViewer } from '../src/viewer';
-import { applyMoveChange, applyResizeChange, bindEditing } from '../src/interaction';
+
+import { applyMoveChange, applyResizeChange, bindEditing } from '../src/runtime/interaction';
+import { createViewer } from '../src/runtime/viewer';
 
 function requireDemoElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -54,7 +55,9 @@ const container = requireDemoElement('diagram');
 const sflOut = requireDemoElement('sfl');
 
 let source = SFL;
-const render = () => { sflOut.textContent = source; };
+const render = () => {
+  sflOut.textContent = source;
+};
 render();
 
 const viewer = createViewer({ container, source, interactive: true, diagramId: 'nested-container-demo' });
