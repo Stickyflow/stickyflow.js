@@ -115,8 +115,8 @@ export type {
   PropertyValue,
   QuickDuplicateEvent,
   ResizeChangeEvent,
+  SankeyNodeMoveEvent,
   SankeyNodeRenameEvent,
-  SankeyNodeReorderEvent,
   TextChangeEvent,
 } from './events';
 export type {
@@ -133,8 +133,8 @@ export {
   applyPathPointChange,
   applyPropertyChange,
   applyResizeChange,
+  applySankeyNodeMoveChange,
   applySankeyNodeRenameChange,
-  applySankeyNodeReorderChange,
   applyTextChange,
   insertCanvasObject,
   insertLink,

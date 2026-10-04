@@ -99,10 +99,15 @@ export interface PathDrawCompleteEvent {
   tension: number;
 }
 
-export interface SankeyNodeReorderEvent {
+// A free-form drag of a Sankey node, released. dx/dy are deltas from this
+// gesture alone (in the chart's own user-space units) - the patch function
+// adds them to whatever offset the node already carries, so repeated drags
+// accumulate rather than overwrite.
+export interface SankeyNodeMoveEvent {
   owner: OwnerRef;
   nodeId: string;
-  beforeId: string | null;
+  dx: number;
+  dy: number;
 }
 
 export interface SankeyNodeRenameEvent {
@@ -124,7 +129,7 @@ export interface InteractionEventMap {
   columnResizeChange: ColumnResizeChangeEvent;
   pathPointChange: PathPointChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;
-  sankeyNodeReorder: SankeyNodeReorderEvent;
+  sankeyNodeMove: SankeyNodeMoveEvent;
   sankeyNodeRename: SankeyNodeRenameEvent;
 }
 

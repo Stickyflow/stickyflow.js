@@ -1,11 +1,5 @@
 import type { OwnerRef } from '../../viewer';
 
-export interface SankeyNodeDragSibling {
-  nodeId: string;
-  element: SVGGraphicsElement;
-  centerY: number;
-}
-
 // One ribbon touching the dragged node, captured once at drag start so the
 // live preview can redraw it every pointermove without re-reading the DOM -
 // only the end attached to the dragged node moves; the other end (and the
@@ -30,15 +24,8 @@ export interface SankeyNodeDragState {
   label: SVGGraphicsElement | null;
   startX: number;
   startY: number;
-  startCenterY: number;
-  // Siblings sharing the dragged node's column, in their current `zones`
-  // order, captured once at drag start - reorder decisions during the drag
-  // compare the pointer against these fixed centers rather than re-querying
-  // the DOM every move.
-  siblings: SankeyNodeDragSibling[];
   links: SankeyNodeDragLink[];
   moved: boolean;
   lastDx: number;
   lastDy: number;
-  highlighted: SVGGraphicsElement | null;
 }

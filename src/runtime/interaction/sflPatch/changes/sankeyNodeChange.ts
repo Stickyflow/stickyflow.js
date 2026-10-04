@@ -1,6 +1,7 @@
-import type { SankeyNodeRenameEvent, SankeyNodeReorderEvent } from '../../events';
+import type { SankeyNodeMoveEvent, SankeyNodeRenameEvent } from '../../events';
+import { round1 } from '../format';
 import { findChildBlocks, findDirectProperty, findOwnerBlock, type LineRange } from '../scanner';
-import { reorderListElements, replaceListElementAt } from './listElement';
+import { listElementSpans, replaceListElementAt } from './listElement';
 
 const ZONE_LABEL = /^\s*\[\s*"((?:[^"\\]|\\.)*)"/;
 
@@ -12,7 +13,27 @@ function escapeSflString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-export function applySankeyNodeReorderChange(sfl: string, event: SankeyNodeReorderEvent): string {
+// zones[*] holds [label, color, offsetX, offsetY] - offsetX/offsetY are
+// omitted until a node is first dragged. Reads whatever is there (0 if the
+// tuple doesn't reach that far yet), adds this gesture's delta, and grows
+// the tuple to 4 elements so later drags keep accumulating onto it.
+function applyTupleOffset(tuple: string, dx: number, dy: number): string {
+  const list = listElementSpans(tuple);
+  if (!list) {
+    return tuple;
+  }
+  const items = list.spans.map(span => tuple.slice(span.start, span.end).trim());
+  while (items.length < 4) {
+    items.push('0');
+  }
+  const currentX = Number(items[2]) || 0;
+  const currentY = Number(items[3]) || 0;
+  items[2] = String(round1(currentX + dx));
+  items[3] = String(round1(currentY + dy));
+  return `${tuple.slice(0, list.start + 1)}${items.join(', ')}${tuple.slice(list.end)}`;
+}
+
+export function applySankeyNodeMoveChange(sfl: string, event: SankeyNodeMoveEvent): string {
   const lines = sfl.split('\n');
   const chart = findOwnerBlock(lines, event.owner.id);
   if (!chart) {
@@ -23,15 +44,15 @@ export function applySankeyNodeReorderChange(sfl: string, event: SankeyNodeReord
     return sfl;
   }
   const line = lines[span.line];
-  const reordered = reorderListElements(
+  const moved = replaceListElementAt(
     line.slice(span.start, span.end),
     element => zoneLabel(element) === event.nodeId,
-    event.beforeId ? element => zoneLabel(element) === event.beforeId : null,
+    current => applyTupleOffset(current, event.dx, event.dy),
   );
-  if (reordered === null) {
+  if (moved === null) {
     return sfl;
   }
-  lines[span.line] = line.slice(0, span.start) + reordered + line.slice(span.end);
+  lines[span.line] = line.slice(0, span.start) + moved + line.slice(span.end);
   return lines.join('\n');
 }
 
@@ -56,7 +77,7 @@ export function applySankeyNodeRenameChange(sfl: string, event: SankeyNodeRename
     current =>
       current.replace(
         ZONE_LABEL,
-        match => match.slice(0, match.length - event.nodeId.length - 1) + escapeSflString(label) + '"',
+        (match, group: string) => `${match.slice(0, match.length - group.length - 1)}${escapeSflString(label)}"`,
       ),
   );
   if (renamedZones === null) {

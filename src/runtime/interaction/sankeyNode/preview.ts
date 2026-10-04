@@ -1,14 +1,10 @@
-import type { SankeyNodeDragState } from './types';
+import type { SankeyNodeDragLink, SankeyNodeDragState } from './types';
 
-const HIGHLIGHT_COLOR = '#9b42df';
-const HIGHLIGHT_WIDTH = '2.5';
-
-export function candidateBeforeId(drag: SankeyNodeDragState, pointerY: number): string | null {
-  const next = drag.siblings.find(sibling => sibling.centerY > pointerY);
-  return next?.nodeId ?? null;
-}
-
-function redrawLink(link: SankeyNodeDragLinkLike, dx: number, dy: number): void {
+// Mirrors sankeyRibbonPath() in renderScene/charts/renderers/sankey/links.ts -
+// only the end attached to the dragged node shifts by (dx, dy); the other end
+// stays put, and the control-point x is recomputed from both current ends so
+// the curve keeps reading correctly as the node moves horizontally too.
+function redrawLink(link: SankeyNodeDragLink, dx: number, dy: number): void {
   const sx = link.endsAtSource ? link.sx + dx : link.sx;
   const sTop = link.endsAtSource ? link.sTop + dy : link.sTop;
   const sBottom = link.endsAtSource ? link.sBottom + dy : link.sBottom;
@@ -26,29 +22,12 @@ function redrawLink(link: SankeyNodeDragLinkLike, dx: number, dy: number): void 
   link.element.setAttribute('d', d);
 }
 
-type SankeyNodeDragLinkLike = SankeyNodeDragState['links'][number];
-
-export function updateSankeyNodeDragPreview(drag: SankeyNodeDragState, dx: number, dy: number, pointerY: number): void {
+export function updateSankeyNodeDragPreview(drag: SankeyNodeDragState, dx: number, dy: number): void {
   drag.rect.setAttribute('transform', `translate(${dx}, ${dy})`);
   drag.label?.setAttribute('transform', `translate(${dx}, ${dy})`);
   for (const link of drag.links) {
     redrawLink(link, dx, dy);
   }
-
-  const beforeId = candidateBeforeId(drag, pointerY);
-  const target = drag.siblings.find(sibling => sibling.nodeId === beforeId)?.element ?? null;
-  if (target === drag.highlighted) {
-    return;
-  }
-  if (drag.highlighted) {
-    drag.highlighted.removeAttribute('stroke');
-    drag.highlighted.removeAttribute('stroke-width');
-  }
-  if (target) {
-    target.setAttribute('stroke', HIGHLIGHT_COLOR);
-    target.setAttribute('stroke-width', HIGHLIGHT_WIDTH);
-  }
-  drag.highlighted = target;
 }
 
 export function clearSankeyNodeDragPreview(drag: SankeyNodeDragState): void {
@@ -56,10 +35,5 @@ export function clearSankeyNodeDragPreview(drag: SankeyNodeDragState): void {
   drag.label?.removeAttribute('transform');
   for (const link of drag.links) {
     link.element.setAttribute('d', link.originalD);
-  }
-  if (drag.highlighted) {
-    drag.highlighted.removeAttribute('stroke');
-    drag.highlighted.removeAttribute('stroke-width');
-    drag.highlighted = null;
   }
 }

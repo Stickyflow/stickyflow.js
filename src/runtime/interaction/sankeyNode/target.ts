@@ -1,7 +1,5 @@
 import { isCameraGesture, pointerUserPoint, resolveOwner } from '../../dom';
-import type { SankeyNodeDragLink, SankeyNodeDragSibling, SankeyNodeDragState } from './types';
-
-const COLUMN_TOLERANCE = 1;
+import type { SankeyNodeDragLink, SankeyNodeDragState } from './types';
 
 // Mirrors sankeyRibbonPath() in renderScene/charts/renderers/sankey/links.ts
 // exactly - see the comment there. Captures just the 6 numbers a drag needs
@@ -20,13 +18,6 @@ function findNodeRect(event: PointerEvent): SVGGraphicsElement | null {
 function findNodeLabel(svg: SVGSVGElement, ownerId: string, nodeId: string): SVGGraphicsElement | null {
   const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-mark="sankey-node-label"][data-sf-series="${CSS.escape(nodeId)}"]`;
   return svg.querySelector<SVGGraphicsElement>(selector);
-}
-
-function columnSiblings(svg: SVGSVGElement, ownerId: string, draggedRect: SVGGraphicsElement): SVGGraphicsElement[] {
-  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-mark="sankey-node"]`;
-  const all = [...svg.querySelectorAll<SVGGraphicsElement>(selector)];
-  const draggedX = draggedRect.getBBox().x;
-  return all.filter(element => Math.abs(element.getBBox().x - draggedX) <= COLUMN_TOLERANCE);
 }
 
 function parseRibbonLink(element: SVGGraphicsElement, endsAtSource: boolean): SankeyNodeDragLink | null {
@@ -92,16 +83,7 @@ export function resolveSankeyNodeDrag(svg: SVGSVGElement, event: PointerEvent): 
   if (!start) {
     return null;
   }
-  const siblings: SankeyNodeDragSibling[] = columnSiblings(svg, owner.id, rect)
-    .filter(element => element !== rect)
-    .map(element => {
-      const box = element.getBBox();
-      return { nodeId: element.getAttribute('data-sf-series') ?? '', element, centerY: box.y + box.height / 2 };
-    })
-    .filter(sibling => sibling.nodeId)
-    .sort((a, b) => a.centerY - b.centerY);
 
-  const rectBox = rect.getBBox();
   rect.setPointerCapture?.(event.pointerId);
   return {
     owner,
@@ -111,12 +93,9 @@ export function resolveSankeyNodeDrag(svg: SVGSVGElement, event: PointerEvent): 
     label: findNodeLabel(svg, owner.id, nodeId),
     startX: start.x,
     startY: start.y,
-    startCenterY: rectBox.y + rectBox.height / 2,
-    siblings,
     links: connectedLinks(svg, owner.id, nodeId),
     moved: false,
     lastDx: 0,
     lastDy: 0,
-    highlighted: null,
   };
 }

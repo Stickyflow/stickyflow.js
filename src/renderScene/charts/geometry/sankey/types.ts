@@ -2,6 +2,8 @@ export interface SankeyNodeInput {
   id: string;
   label: string;
   color?: string;
+  offsetX?: number;
+  offsetY?: number;
 }
 
 export interface SankeyLinkInput {
@@ -45,6 +47,11 @@ export interface SankeyGraph {
   links: SankeyLinkInput[];
   incoming: Map<string, SankeyLinkInput[]>;
   outgoing: Map<string, SankeyLinkInput[]>;
+}
+
+export interface SankeyNodeOffset {
+  x: number;
+  y: number;
 }
 
 export interface SankeyNodeGeometry {

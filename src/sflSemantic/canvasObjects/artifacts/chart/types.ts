@@ -28,7 +28,7 @@ export interface SflChartData {
   interpolate?: 'idw';
   idwPower?: number;
   isolines?: number[];
-  zones?: Array<{ label: string; color?: string }>;
+  zones?: Array<{ label: string; color?: string; offsetX?: number; offsetY?: number }>;
   boxWidth?: number;
   orientation?: 'horizontal' | 'vertical';
   lineTension?: number;

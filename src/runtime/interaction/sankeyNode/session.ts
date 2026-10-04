@@ -1,6 +1,6 @@
 import { pointerUserPoint } from '../../dom';
 import type { Emitter } from '../events';
-import { candidateBeforeId, clearSankeyNodeDragPreview, updateSankeyNodeDragPreview } from './preview';
+import { clearSankeyNodeDragPreview, updateSankeyNodeDragPreview } from './preview';
 import { resolveSankeyNodeDrag } from './target';
 import type { SankeyNodeDragState } from './types';
 
@@ -41,7 +41,7 @@ export class SankeyNodeDragSession {
     drag.moved = true;
     drag.lastDx = dx;
     drag.lastDy = dy;
-    updateSankeyNodeDragPreview(drag, dx, dy, drag.startCenterY + dy);
+    updateSankeyNodeDragPreview(drag, dx, dy);
   }
 
   cancel(): void {
@@ -62,11 +62,6 @@ export class SankeyNodeDragSession {
     if (!drag.moved) {
       return;
     }
-    const originalBeforeId = candidateBeforeId(drag, drag.startCenterY);
-    const finalBeforeId = candidateBeforeId(drag, drag.startCenterY + drag.lastDy);
-    if (finalBeforeId === originalBeforeId) {
-      return;
-    }
-    this.#emitter.emit('sankeyNodeReorder', { owner: drag.owner, nodeId: drag.nodeId, beforeId: finalBeforeId });
+    this.#emitter.emit('sankeyNodeMove', { owner: drag.owner, nodeId: drag.nodeId, dx: drag.lastDx, dy: drag.lastDy });
   }
 }
