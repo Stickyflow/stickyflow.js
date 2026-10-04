@@ -34,7 +34,7 @@ function closingBracket(text: string, openIndex: number): number {
   return -1;
 }
 
-function listElementSpans(text: string): { spans: ListElementSpan[]; start: number; end: number } | null {
+export function listElementSpans(text: string): { spans: ListElementSpan[]; start: number; end: number } | null {
   const listStart = text.indexOf('[');
   const listEnd = closingBracket(text, listStart);
   if (listStart < 0 || listEnd < 0) {
@@ -72,6 +72,51 @@ export function replaceListElement(
 ): string | null {
   const list = listElementSpans(text);
   const span = list?.spans[index];
+  if (!span) {
+    return null;
+  }
+  const current = text.slice(span.start, span.end);
+  return text.slice(0, span.start) + replacement(current) + text.slice(span.end);
+}
+
+// Reorders one top-level element within a `[...]` list by matching element
+// text rather than a numeric index - the zones list and the dragged node's
+// siblings are both resolved from live DOM state, so the patch layer only
+// needs to know "this one" and "goes before that one", never an index that
+// could already be stale by the time this runs against the source text.
+export function reorderListElements(
+  text: string,
+  matchElement: (element: string) => boolean,
+  beforeElement: ((element: string) => boolean) | null,
+): string | null {
+  const list = listElementSpans(text);
+  if (!list) {
+    return null;
+  }
+  const items = list.spans.map(span => text.slice(span.start, span.end).trim());
+  const fromIndex = items.findIndex(matchElement);
+  if (fromIndex < 0) {
+    return null;
+  }
+  const [item] = items.splice(fromIndex, 1);
+  let insertAt = items.length;
+  if (beforeElement) {
+    insertAt = items.findIndex(beforeElement);
+    if (insertAt < 0) {
+      return null;
+    }
+  }
+  items.splice(insertAt, 0, item);
+  return `${text.slice(0, list.start + 1)}${items.join(', ')}${text.slice(list.end)}`;
+}
+
+export function replaceListElementAt(
+  text: string,
+  matchElement: (element: string) => boolean,
+  replacement: (current: string) => string,
+): string | null {
+  const list = listElementSpans(text);
+  const span = list?.spans.find(candidate => matchElement(text.slice(candidate.start, candidate.end)));
   if (!span) {
     return null;
   }

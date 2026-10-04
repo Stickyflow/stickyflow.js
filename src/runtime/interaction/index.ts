@@ -18,6 +18,7 @@ import { bindPropertyEditing, type PropertyEditingHandle, type PropertyEditingOp
 import { bindQuickDuplicate, type QuickDuplicateHandle } from './quickDuplicate';
 import { bindRadarVertexDrag, type RadarVertexDragHandle } from './radarVertexDrag/binding';
 import { bindShapeResize, type ResizeDragHandle } from './resizeDrag';
+import { bindSankeyNode, type SankeyNodeHandle } from './sankeyNode/binding';
 import { bindTextEditing, type TextEditingHandle } from './textEdit';
 
 export interface Interaction {
@@ -48,6 +49,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const pieLabels: PieLabelDragHandle = bindPieLabelDrag(viewer, emitter);
   const isometricLabels: IsometricLabelDragHandle = bindIsometricLabelDrag(viewer, emitter);
   const radarVertices: RadarVertexDragHandle = bindRadarVertexDrag(viewer, emitter);
+  const sankeyNodes: SankeyNodeHandle = bindSankeyNode(viewer, emitter);
   const properties: PropertyEditingHandle | null = options.properties
     ? bindPropertyEditing(viewer, emitter, options.properties)
     : null;
@@ -78,6 +80,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       pieLabels.destroy();
       isometricLabels.destroy();
       radarVertices.destroy();
+      sankeyNodes.destroy();
       properties?.destroy();
       propertyDrag?.destroy();
       colorEdit?.destroy();
@@ -112,6 +115,8 @@ export type {
   PropertyValue,
   QuickDuplicateEvent,
   ResizeChangeEvent,
+  SankeyNodeRenameEvent,
+  SankeyNodeReorderEvent,
   TextChangeEvent,
 } from './events';
 export type {
@@ -128,6 +133,8 @@ export {
   applyPathPointChange,
   applyPropertyChange,
   applyResizeChange,
+  applySankeyNodeRenameChange,
+  applySankeyNodeReorderChange,
   applyTextChange,
   insertCanvasObject,
   insertLink,

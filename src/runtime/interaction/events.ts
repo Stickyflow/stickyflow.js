@@ -99,6 +99,18 @@ export interface PathDrawCompleteEvent {
   tension: number;
 }
 
+export interface SankeyNodeReorderEvent {
+  owner: OwnerRef;
+  nodeId: string;
+  beforeId: string | null;
+}
+
+export interface SankeyNodeRenameEvent {
+  owner: OwnerRef;
+  nodeId: string;
+  label: string;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -112,6 +124,8 @@ export interface InteractionEventMap {
   columnResizeChange: ColumnResizeChangeEvent;
   pathPointChange: PathPointChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;
+  sankeyNodeReorder: SankeyNodeReorderEvent;
+  sankeyNodeRename: SankeyNodeRenameEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

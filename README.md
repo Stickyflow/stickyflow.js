@@ -50,6 +50,9 @@ src/
 The three tiers and their one-way dependency are described under *Two tiers*
 below and enforced by `test/boundary.test.ts`.
 
+When adding a new placeable artifact, follow the layer-by-layer
+[Canvas Object integration checklist](docs/ADDING_CANVAS_OBJECT.md).
+
 ## Known gaps (documented, not hidden)
 
 - **Absolute link waypoints have no SFL representation.** A manually-adjusted
