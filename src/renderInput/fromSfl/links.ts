@@ -57,6 +57,8 @@ function createRenderInputConnections(canvasObjects: CollectedCanvasObjects): Re
       id: connection.id,
       fromId: connection.fromId,
       toId: connection.toId,
+      fromPoint: { kind: 'face', face: connection.fromFace },
+      toPoint: { kind: 'face', face: connection.toFace },
       style: connection.style,
       order: connectionOrder(canvasObjects.isometricObjects, connection),
     };

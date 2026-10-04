@@ -1,4 +1,4 @@
-import { updateLiveLinks } from '../linkPreview';
+import { updateLiveFaceLinks, updateLiveLinks } from '../linkPreview';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
 
@@ -13,7 +13,11 @@ export function applyMovePreview(drag: MoveDragState, dx: number, dy: number): v
   for (const canvasObject of drag.canvasObjects) {
     translateNodes(canvasObject.nodes, canvasObject.baseTransforms, dx, dy);
     translateNodes(canvasObject.overlays, canvasObject.overlayBaseTransforms, dx, dy);
-    updateLiveLinks(canvasObject.liveLinks, offsetBounds(canvasObject.draggedBounds, dx, dy));
+    const bounds = offsetBounds(canvasObject.draggedBounds, dx, dy);
+    updateLiveLinks(canvasObject.liveLinks, bounds);
+    if (canvasObject.isometricSize) {
+      updateLiveFaceLinks(canvasObject.liveFaceLinks, { x: bounds.x, y: bounds.y, ...canvasObject.isometricSize });
+    }
   }
   for (const link of drag.internalLinks) {
     translateNodes(link.nodes, link.baseTransforms, dx, dy);

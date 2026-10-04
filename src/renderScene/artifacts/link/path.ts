@@ -44,6 +44,8 @@ export function renderLinkPath(context: LinkRenderContext): ScenePath {
       route: context.pathType,
       fromSide: link.fromPoint?.kind === 'side' ? link.fromPoint.side : undefined,
       toSide: link.toPoint?.kind === 'side' ? link.toPoint.side : undefined,
+      fromFace: link.fromPoint?.kind === 'face' ? link.fromPoint.face : undefined,
+      toFace: link.toPoint?.kind === 'face' ? link.toPoint.face : undefined,
       labelGap: context.hasLabelGap,
     },
   };

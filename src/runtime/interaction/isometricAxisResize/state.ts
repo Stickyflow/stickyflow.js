@@ -11,6 +11,7 @@ import {
 } from '../../dom';
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
 import type { OwnerRef } from '../../viewer';
+import { findLiveFaceLinks, type LiveFaceLink } from '../linkPreview';
 
 const AXES: readonly IsometricAxis[] = ['width', 'height', 'depth'];
 
@@ -44,6 +45,7 @@ export interface IsometricAxisDragState {
   overlayHalo: SVGPathElement | null;
   overlayArrows: Record<IsometricAxis, SVGGElement | null>;
   overlayDuplicateBubbles: SVGGElement | null;
+  liveFaceLinks: LiveFaceLink[];
   moved: boolean;
   current: IsometricObjectSize;
 }
@@ -143,6 +145,7 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
     overlayHalo,
     overlayArrows,
     overlayDuplicateBubbles,
+    liveFaceLinks: findLiveFaceLinks(svg, ownerId),
     moved: false,
     current: start,
   };

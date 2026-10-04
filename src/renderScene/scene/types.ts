@@ -1,5 +1,6 @@
 import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
+import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
 
 export type RenderDiagnostic = Diagnostic;
@@ -47,6 +48,8 @@ export type SceneDetail =
       route?: PathType;
       fromSide?: Side;
       toSide?: Side;
+      fromFace?: IsometricFace;
+      toFace?: IsometricFace;
       labelGap?: boolean;
     }
   | {

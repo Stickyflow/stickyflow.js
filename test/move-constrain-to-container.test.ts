@@ -14,6 +14,7 @@ function canvasObject(
     overlayBaseTransforms: [],
     draggedBounds: bounds,
     liveLinks: [],
+    liveFaceLinks: [],
     containerBounds,
   };
 }

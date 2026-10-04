@@ -1,11 +1,18 @@
 import type { Rect } from '../../../model/geometry/types';
-import { findAllOwnerNodes, findOwnerNode, isPrimary } from '../../dom';
+import { findAllOwnerNodes, findOwnerNode, isometricGeometryOf, isPrimary } from '../../dom';
 import type { OwnerRef } from '../../viewer';
-import { findLiveLinks } from '../linkPreview';
-import type { DraggedCanvasObject } from './types';
+import { findLiveFaceLinks, findLiveLinks } from '../linkPreview';
+import type { DraggedCanvasObject, IsometricLiveSize } from './types';
 
 function externalLiveLinks(svg: SVGSVGElement, ownerId: string, groupIds: Set<string>, bounds: Rect) {
   return findLiveLinks(svg, ownerId, bounds).filter(link => {
+    const otherId = link.path.getAttribute(link.draggedIsFrom ? 'data-sf-to' : 'data-sf-from');
+    return !otherId || !groupIds.has(otherId);
+  });
+}
+
+function externalLiveFaceLinks(svg: SVGSVGElement, ownerId: string, groupIds: Set<string>) {
+  return findLiveFaceLinks(svg, ownerId).filter(link => {
     const otherId = link.path.getAttribute(link.draggedIsFrom ? 'data-sf-to' : 'data-sf-from');
     return !otherId || !groupIds.has(otherId);
   });
@@ -37,6 +44,10 @@ function captureCanvasObject(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<
 
   const overlays = [...svg.querySelectorAll<SVGGElement>(`[data-sf-selection-overlay="${CSS.escape(owner.id)}"]`)];
   const draggedBounds = primary.getBBox();
+  const isometricGeometry = owner.role === 'isometric' ? isometricGeometryOf(primary) : null;
+  const isometricSize: IsometricLiveSize | undefined = isometricGeometry
+    ? { width: isometricGeometry.width, height: isometricGeometry.height, depth: isometricGeometry.depth }
+    : undefined;
   return {
     owner,
     nodes,
@@ -45,6 +56,8 @@ function captureCanvasObject(svg: SVGSVGElement, owner: OwnerRef, groupIds: Set<
     overlayBaseTransforms: overlays.map(overlay => overlay.getAttribute('transform')),
     draggedBounds,
     liveLinks: externalLiveLinks(svg, owner.id, groupIds, draggedBounds),
+    liveFaceLinks: isometricSize ? externalLiveFaceLinks(svg, owner.id, groupIds) : [],
+    isometricSize,
     containerBounds: parentContainerBounds(svg, primary, groupIds),
   };
 }

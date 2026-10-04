@@ -12,7 +12,7 @@ export function connectionObject(c: SflConnectionOut): Connection {
     toFace: c.toFace,
     order: c.order,
     style: {
-      pathType: optionalOneOf(p.route, PATH_TYPES),
+      pathType: optionalOneOf(p.route, PATH_TYPES) ?? 'straight',
       color: strokePaint(p.stroke),
       strokeWidth: numOf(p.strokeWidth),
       strokeStyle: optionalOneOf(p.strokeStyle, STROKE_STYLES),

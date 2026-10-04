@@ -1,4 +1,5 @@
 import type { GradientColor } from '../color';
+import type { IsometricFace } from '../isometricObject';
 import type { ShadowStyle } from '../shadow';
 
 export type StrokeStyle = 'solid' | 'dashed' | 'dotted';
@@ -40,7 +41,8 @@ export interface LinkStyle {
 export type LinkEndpoint =
   | { kind: 'side'; side: 'top' | 'right' | 'bottom' | 'left'; offset?: number }
   | { kind: 'absolute'; x: number; y: number }
-  | { kind: 'port'; port: string };
+  | { kind: 'port'; port: string }
+  | { kind: 'face'; face: IsometricFace };
 
 export interface Link {
   id: string;

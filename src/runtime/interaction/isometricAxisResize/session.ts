@@ -1,6 +1,7 @@
 import { AXIS_COS, AXIS_SIN } from '../../../model/isometricObject';
 import { isCameraGesture, pointerUserPoint } from '../../dom';
 import type { Emitter } from '../events';
+import { updateLiveFaceLinks } from '../linkPreview';
 import { applyIsometricAxisPreview } from './preview';
 import { createIsometricAxisDragState, type IsometricAxisDragState, type IsometricObjectSize } from './state';
 
@@ -64,6 +65,7 @@ export class IsometricAxisResizeSession {
     }
     drag.moved = true;
     drag.current = nextGeometry(drag, point);
+    updateLiveFaceLinks(drag.liveFaceLinks, drag.current);
     applyIsometricAxisPreview(
       drag.nodes,
       drag.current,

@@ -1,4 +1,5 @@
-import type { Rect, Side } from '../../../model/geometry/types';
+import type { Point, Rect, Side } from '../../../model/geometry/types';
+import type { IsometricFace } from '../../../model/isometricObject';
 import type { PathType } from '../../../model/link';
 
 export interface LiveLink {
@@ -12,4 +13,11 @@ export interface LiveLink {
   labelText: SVGTextElement | null;
   initialMidpoint: { x: number; y: number } | null;
   labelGapSize: { width: number; height: number } | null;
+}
+
+export interface LiveFaceLink {
+  path: SVGPathElement;
+  face: IsometricFace;
+  otherPoint: Point;
+  draggedIsFrom: boolean;
 }
