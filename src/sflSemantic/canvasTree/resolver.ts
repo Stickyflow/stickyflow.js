@@ -13,6 +13,7 @@ export interface CanvasTree {
   canvasObjects: SflCanvasObject[];
   groups: SflGroupOut[];
   linkBlocks: SflBlock[];
+  connectionBlocks: SflBlock[];
 }
 
 interface CanvasLocation {
@@ -24,6 +25,7 @@ class CanvasTreeResolver {
   readonly #context: CanvasObjectResolutionContext;
   readonly #canvasObjects: SflCanvasObject[] = [];
   readonly #linkBlocks: SflBlock[] = [];
+  readonly #connectionBlocks: SflBlock[] = [];
 
   constructor(resolution: CanvasResolution) {
     this.#context = resolution.canvasObjectResolutionContext;
@@ -31,7 +33,12 @@ class CanvasTreeResolver {
 
   resolve(model: SflBlock | undefined): CanvasTree {
     const groups = model ? this.#resolveChildren(model, { origin: { x: 0, y: 0 } }) : [];
-    return { canvasObjects: this.#canvasObjects, groups, linkBlocks: this.#linkBlocks };
+    return {
+      canvasObjects: this.#canvasObjects,
+      groups,
+      linkBlocks: this.#linkBlocks,
+      connectionBlocks: this.#connectionBlocks,
+    };
   }
 
   #resolveChildren(block: SflBlock, location: CanvasLocation): SflGroupOut[] {
@@ -58,6 +65,9 @@ class CanvasTreeResolver {
         return [this.#resolveGroup(child, location)];
       case 'Link':
         this.#linkBlocks.push(child);
+        return [];
+      case 'Connection':
+        this.#connectionBlocks.push(child);
         return [];
       case 'Net':
         this.#linkBlocks.push(...expandNetLinks(child, this.#context));

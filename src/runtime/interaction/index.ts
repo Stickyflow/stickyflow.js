@@ -121,6 +121,7 @@ export type {
 } from './events';
 export type {
   InsertCanvasObjectOptions,
+  InsertConnectionOptions,
   InsertLinkOptions,
   InsertPathOptions,
   RemoveCanvasObjectOptions,
@@ -137,6 +138,7 @@ export {
   applySankeyNodeRenameChange,
   applyTextChange,
   insertCanvasObject,
+  insertConnection,
   insertLink,
   insertPath,
   removeCanvasObject,

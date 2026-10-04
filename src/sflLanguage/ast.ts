@@ -10,6 +10,7 @@ export const NAMED_BLOCK_KINDS = [
   'Shape',
   'Isometric',
   'Link',
+  'Connection',
   'Layout',
   'Style',
   'Columns',

@@ -6,6 +6,7 @@ export type {
   SflCanvasObject,
   SflCanvasState,
   SflChartObject,
+  SflConnectionOut,
   SflDiagnostic,
   SflGroupOut,
   SflIsometricObject,

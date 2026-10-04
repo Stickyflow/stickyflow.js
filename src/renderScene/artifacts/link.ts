@@ -30,7 +30,7 @@ export function buildLinks(links: RenderInput['links'], measureText?: MeasureTex
       buildLink(item, index, measureText),
       'link',
       item.link.id,
-      undefined,
+      item.kind,
       item.link.text || `${item.link.fromId} → ${item.link.toId}`,
     ),
   );

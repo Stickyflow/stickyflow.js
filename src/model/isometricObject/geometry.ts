@@ -1,5 +1,5 @@
 import type { Point } from '../geometry/types';
-import type { IsometricObject } from './types';
+import type { IsometricFace, IsometricObject } from './types';
 
 export interface IsometricFaces {
   top: [Point, Point, Point, Point];
@@ -39,6 +39,26 @@ export function isometricTopFaceCenter(object: Pick<IsometricObject, 'x' | 'y' |
     x: object.x + ((width + depth) * AXIS_COS) / 2,
     y: object.y + ((width + depth) * AXIS_SIN) / 2,
   };
+}
+
+function faceCenter(corners: readonly [Point, Point, Point, Point]): Point {
+  return {
+    x: (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4,
+    y: (corners[0].y + corners[1].y + corners[2].y + corners[3].y) / 4,
+  };
+}
+
+// A Connection anchors to the center of whichever of the 3 visible faces it
+// names - same "average the 4 corners" math isometricTopFaceCenter already
+// used for the top face alone, generalized to front/side too.
+export function isometricFaceCenter(
+  object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>,
+  face: IsometricFace,
+): Point {
+  if (face === 'top') {
+    return isometricTopFaceCenter(object);
+  }
+  return faceCenter(isometricFaces(object)[face]);
 }
 
 export function isometricFaces(

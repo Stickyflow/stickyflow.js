@@ -1,4 +1,5 @@
 import type { Chart } from '../../../model/chart';
+import type { Connection } from '../../../model/connection';
 import type { Frame } from '../../../model/frame';
 import type { IsometricObject } from '../../../model/isometricObject';
 import type { Link } from '../../../model/link';
@@ -8,6 +9,7 @@ import type { Swimlane } from '../../../model/swimlane';
 import type { Table } from '../../../model/table';
 import { isIsometricObject, type SflCanvasState } from '../../../sflSemantic/sflToCanvasState';
 import { chartObject } from './chart';
+import { connectionObject } from './connection';
 import { frameObject } from './frame';
 import { isometricObject } from './isometric';
 import { linkObject } from './link';
@@ -25,6 +27,7 @@ export interface CollectedCanvasObjects {
   paths: FreeformPath[];
   charts: Chart[];
   links: Link[];
+  connections: Connection[];
 }
 
 const byOrder = <T extends { order?: number }>(items: readonly T[]): T[] =>
@@ -41,5 +44,6 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
     charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
     links: byOrder(state.links).map(linkObject),
+    connections: byOrder(state.connections).map(connectionObject),
   };
 }

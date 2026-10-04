@@ -13,6 +13,10 @@ export interface RenderInputLink {
   link: Link;
   from: Point;
   to: Point;
+  // Set for a Connection rendered through the link pipeline (see
+  // renderInput/fromSfl/links.ts) - lets buildLink tag the resulting
+  // RenderNodes with data-sf-kind="connection" without a parallel renderer.
+  kind?: string;
 }
 
 export interface TablePropertyPaths {

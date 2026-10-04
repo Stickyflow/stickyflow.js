@@ -4,8 +4,9 @@ export {
   type IsometricBoundsFrame,
   type IsometricFaces,
   isometricBounds,
+  isometricFaceCenter,
   isometricFaces,
   isometricTopFaceCenter,
 } from './geometry';
 export { deriveFaceFills, type IsometricFaceFills } from './shading';
-export type { IsometricObject } from './types';
+export type { IsometricFace, IsometricObject } from './types';
