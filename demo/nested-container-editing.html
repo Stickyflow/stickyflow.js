@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>stickyflow.js — nested-container move/resize regression demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; display: grid; grid-template-columns: 1fr 380px; height: 100vh; }
+    #diagram { border-right: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; }
+    aside { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
+    h1 { font-size: 15px; margin: 0; }
+    p { font-size: 13px; color: #475569; margin: 0; line-height: 1.4; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 6px; font-size: 11px; white-space: pre-wrap; flex: 1; overflow: auto; }
+
+    [data-sf-selected] { outline: none; stroke: #2563eb !important; stroke-width: 4 !important; }
+    [data-sf-role]:focus { outline: none; }
+    [data-sf-role="entity"], [data-sf-role="link"] { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="diagram"></div>
+  <aside>
+    <h1>Nested-container move/resize regression demo</h1>
+    <p>
+      <code>outside</code> sits directly in the Model (parent origin 0,0).
+      <code>inside_a</code> / <code>inside_b</code> sit inside <code>box</code>,
+      a Container placed well away from the canvas origin — the exact shape
+      of the bug in stickyflow.js#9 (an entity's absolute canvas position was
+      written straight into its parent-relative <code>layout.position</code>).
+    </p>
+    <p>
+      Drag or resize <code>inside_a</code> / <code>inside_b</code> a little.
+      They should stay roughly where you dropped them, inside <code>box</code>,
+      and the SFL below should show a small delta on their existing
+      <code>position</code> — not a huge jump. Drag <code>box</code> itself
+      too: its children should ride along and stay correctly placed inside it.
+    </p>
+    <pre id="sfl"></pre>
+  </aside>
+  <script type="module" src="./nested-container-editing.ts"></script>
+</body>
+</html>
