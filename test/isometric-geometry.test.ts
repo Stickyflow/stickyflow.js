@@ -10,14 +10,18 @@ describe('isometricFaces', () => {
     const right = { x: apex.x + object.width * AXIS_COS, y: apex.y + object.width * AXIS_SIN };
     const left = { x: apex.x - object.depth * AXIS_COS, y: apex.y + object.depth * AXIS_SIN };
     const center = { x: right.x - object.depth * AXIS_COS, y: right.y + object.depth * AXIS_SIN };
+    const apexDown = { x: apex.x, y: apex.y + object.height };
     const bottom = { x: center.x, y: center.y + object.height };
     const bottomLeft = { x: left.x, y: left.y + object.height };
     const bottomRight = { x: right.x, y: right.y + object.height };
 
     expect(faces).toEqual({
       top: [apex, right, center, left],
+      bottom: [apexDown, bottomRight, bottom, bottomLeft],
       front: [left, center, bottom, bottomLeft],
-      side: [center, right, bottomRight, bottom],
+      back: [apex, right, bottomRight, apexDown],
+      right: [center, right, bottomRight, bottom],
+      left: [apex, left, bottomLeft, apexDown],
     });
   });
 
