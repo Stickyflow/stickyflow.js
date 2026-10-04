@@ -1,11 +1,14 @@
 import type { Connection } from '../../model/connection';
 import type { Point } from '../../model/geometry/types';
-import { type IsometricObject, isometricFaceCenter } from '../../model/isometricObject';
+import { type IsometricObject, isometricFaceCenter, VISIBLE_ISOMETRIC_FACES } from '../../model/isometricObject';
 import type { Link } from '../../model/link';
 import type { RenderInputLink } from '../types';
 import type { CollectedCanvasObjects } from './canvasObjects/collect';
 import { resolveLinkEndpoint } from './endpoint';
 import type { PositionedCanvasObject } from './types';
+
+// Must match the isometric object's own order fallback in renderScene/artifacts/isometric.ts.
+const ISOMETRIC_ORDER_BASE = 15_000;
 
 function positionedCanvasObjects(canvasObjects: CollectedCanvasObjects): PositionedCanvasObject[] {
   return [
@@ -18,13 +21,33 @@ function positionedCanvasObjects(canvasObjects: CollectedCanvasObjects): Positio
   ];
 }
 
-// A Connection always names an exact face, so - unlike a Link - its endpoint
-// resolution never needs the generic rect-bbox/side machinery: it's just a
-// lookup of the two isometric objects plus isometricFaceCenter(). Once both
-// points are known, a Connection renders through the exact same link
-// pipeline as a real Link (see RenderInputLink.kind / renderScene/artifacts/link.ts).
 function connectionEndpointPoint(object: IsometricObject | undefined, face: Connection['fromFace']): Point {
   return object ? isometricFaceCenter(object, face) : { x: 0, y: 0 };
+}
+
+function effectiveIsometricOrder(isometricObjects: IsometricObject[], id: string | undefined): number | undefined {
+  const index = isometricObjects.findIndex(object => object.id === id);
+  if (index < 0) {
+    return undefined;
+  }
+  const object = isometricObjects[index];
+  return typeof object.order === 'number' ? object.order : ISOMETRIC_ORDER_BASE + index;
+}
+
+// A hidden-face endpoint must render behind the object it's attached to.
+function connectionOrder(isometricObjects: IsometricObject[], connection: Connection): number | undefined {
+  if (typeof connection.order === 'number') {
+    return connection.order;
+  }
+  const behindOrders = [
+    VISIBLE_ISOMETRIC_FACES.has(connection.fromFace)
+      ? undefined
+      : effectiveIsometricOrder(isometricObjects, connection.fromId),
+    VISIBLE_ISOMETRIC_FACES.has(connection.toFace)
+      ? undefined
+      : effectiveIsometricOrder(isometricObjects, connection.toId),
+  ].filter((order): order is number => order !== undefined);
+  return behindOrders.length ? Math.min(...behindOrders) - 0.5 : undefined;
 }
 
 function createRenderInputConnections(canvasObjects: CollectedCanvasObjects): RenderInputLink[] {
@@ -35,7 +58,7 @@ function createRenderInputConnections(canvasObjects: CollectedCanvasObjects): Re
       fromId: connection.fromId,
       toId: connection.toId,
       style: connection.style,
-      order: connection.order,
+      order: connectionOrder(canvasObjects.isometricObjects, connection),
     };
     return {
       link,

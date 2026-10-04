@@ -172,7 +172,7 @@ export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis
   const left = faces.top[3];
   const bottom = faces.front[2];
   return {
-    width: { origin: centroid(faces.side), direction: normalizeVec({ x: right.x - apex.x, y: right.y - apex.y }) },
+    width: { origin: centroid(faces.right), direction: normalizeVec({ x: right.x - apex.x, y: right.y - apex.y }) },
     height: { origin: bottom, direction: { x: 0, y: 1 } },
     depth: { origin: centroid(faces.front), direction: normalizeVec({ x: left.x - apex.x, y: left.y - apex.y }) },
   };
@@ -215,7 +215,7 @@ export function quickDuplicatePlacements(
     faces.top[3],
     faces.front[2],
     faces.front[3],
-    faces.side[2],
+    faces.right[2],
   ]);
   return {
     'iso-width-pos': placements.width,

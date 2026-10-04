@@ -91,7 +91,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     : undefined;
 
   const noStroke = { ...common.style, stroke: { kind: 'none' as const } };
-  const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
+  const silhouette = [faces.top[0], faces.top[1], faces.right[2], faces.front[2], faces.front[3], faces.top[3]];
   const hullPath = roundedPolygonPath(silhouette, cornerRadius);
   const hullClip = { type: 'path' as const, d: hullPath };
 
@@ -122,7 +122,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
       ...common,
       id: `isometric-${object.id}-side`,
       order: order + 0.2,
-      d: roundedPolygonPath(faces.side, 0),
+      d: roundedPolygonPath(faces.right, 0),
       style: { ...noStroke, fill: { kind: 'solid', color: faceFills.sideFill }, clip: hullClip },
       ...colorProp,
     },

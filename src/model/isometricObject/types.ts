@@ -1,6 +1,6 @@
 import type { ShadowStyle } from '../shadow';
 
-export type IsometricFace = 'top' | 'front' | 'side';
+export type IsometricFace = 'top' | 'bottom' | 'front' | 'back' | 'left' | 'right';
 
 export interface IsometricObject {
   id: string;

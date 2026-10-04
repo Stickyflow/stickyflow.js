@@ -3,9 +3,14 @@ import type { IsometricFace, IsometricObject } from './types';
 
 export interface IsometricFaces {
   top: [Point, Point, Point, Point];
+  bottom: [Point, Point, Point, Point];
   front: [Point, Point, Point, Point];
-  side: [Point, Point, Point, Point];
+  back: [Point, Point, Point, Point];
+  left: [Point, Point, Point, Point];
+  right: [Point, Point, Point, Point];
 }
+
+export const VISIBLE_ISOMETRIC_FACES: ReadonlySet<IsometricFace> = new Set(['top', 'front', 'right']);
 
 const AXIS_ANGLE = Math.PI / 6; // 30°
 export const AXIS_COS = Math.cos(AXIS_ANGLE);
@@ -48,16 +53,10 @@ function faceCenter(corners: readonly [Point, Point, Point, Point]): Point {
   };
 }
 
-// A Connection anchors to the center of whichever of the 3 visible faces it
-// names - same "average the 4 corners" math isometricTopFaceCenter already
-// used for the top face alone, generalized to front/side too.
 export function isometricFaceCenter(
   object: Pick<IsometricObject, 'x' | 'y' | 'width' | 'height' | 'depth'>,
   face: IsometricFace,
 ): Point {
-  if (face === 'top') {
-    return isometricTopFaceCenter(object);
-  }
   return faceCenter(isometricFaces(object)[face]);
 }
 
@@ -77,13 +76,17 @@ export function isometricFaces(
   const right = { x: apex.x + toRight.x, y: apex.y + toRight.y };
   const left = { x: apex.x + toLeft.x, y: apex.y + toLeft.y };
   const center = { x: apex.x + toRight.x + toLeft.x, y: apex.y + toRight.y + toLeft.y };
+  const apexDown = { x: apex.x + down.x, y: apex.y + down.y };
   const bottom = { x: center.x + down.x, y: center.y + down.y };
   const bottomLeft = { x: left.x + down.x, y: left.y + down.y };
   const bottomRight = { x: right.x + down.x, y: right.y + down.y };
 
   return {
     top: [apex, right, center, left],
+    bottom: [apexDown, bottomRight, bottom, bottomLeft],
     front: [left, center, bottom, bottomLeft],
-    side: [center, right, bottomRight, bottom],
+    back: [apex, right, bottomRight, apexDown],
+    right: [center, right, bottomRight, bottom],
+    left: [apex, left, bottomLeft, apexDown],
   };
 }

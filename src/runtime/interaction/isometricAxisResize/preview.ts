@@ -31,9 +31,9 @@ export function applyIsometricAxisPreview(
 
   nodes.top?.setAttribute('d', roundedPolygonPath(faces.top, 0));
   nodes.front?.setAttribute('d', roundedPolygonPath(faces.front, 0));
-  nodes.side?.setAttribute('d', roundedPolygonPath(faces.side, 0));
+  nodes.side?.setAttribute('d', roundedPolygonPath(faces.right, 0));
 
-  const silhouette = [faces.top[0], faces.top[1], faces.side[2], faces.front[2], faces.front[3], faces.top[3]];
+  const silhouette = [faces.top[0], faces.top[1], faces.right[2], faces.front[2], faces.front[3], faces.top[3]];
   const hullPath = roundedPolygonPath(silhouette, cornerRadius);
   nodes.hull?.setAttribute('d', hullPath);
   if (overlay.halo) {

@@ -8,7 +8,7 @@ import { buildLinkNameIndex } from '../links/nameIndex';
 import { readLinkPresentation } from '../links/presentation';
 import type { SflConnectionOut } from './types';
 
-const FACES: ReadonlySet<string> = new Set(['top', 'front', 'side']);
+const FACES: ReadonlySet<string> = new Set(['top', 'bottom', 'front', 'back', 'left', 'right']);
 
 function readFace(value: string | undefined): IsometricFace {
   return value !== undefined && FACES.has(value) ? (value as IsometricFace) : 'front';
