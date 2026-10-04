@@ -1,6 +1,6 @@
 import { blockEndLine, type LineRange } from '../scanner';
 
-const LINK_HEADER = /^\s*Link\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
+const LINK_HEADER = /^\s*(?:Link|Connection)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 
 export function findReferencingLinkRanges(lines: string[], canvasObjectId: string): LineRange[] {
   const endpointReference = new RegExp(`\\b(from|to)\\s*:\\s*${canvasObjectId}\\b`);
