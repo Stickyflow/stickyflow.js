@@ -1,5 +1,6 @@
 import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
+import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
 
 export type RenderDiagnostic = Diagnostic;
@@ -22,12 +23,13 @@ export interface SceneStyle {
   pointerEvents?: 'none';
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
+  blur?: number;
   clip?:
     | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
     | { type: 'path'; d: string };
 }
 
-export type SceneRole = 'entity' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart';
+export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'table' | 'path' | 'chart' | 'isometric';
 
 export interface SceneIdentity {
   role: SceneRole;
@@ -46,6 +48,8 @@ export type SceneDetail =
       route?: PathType;
       fromSide?: Side;
       toSide?: Side;
+      fromFace?: IsometricFace;
+      toFace?: IsometricFace;
       labelGap?: boolean;
     }
   | {
@@ -81,7 +85,17 @@ export type SceneDetail =
     }
   | { of: 'declaredBounds'; bounds: { x: number; y: number; width: number; height: number } }
   | { of: 'tableColumnDivider'; columnId: string; startWidth: number; widthScale: number }
-  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean };
+  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean }
+  | {
+      of: 'isometricGeometry';
+      width: number;
+      height: number;
+      depth: number;
+      cornerRadius: number;
+      bounds: { x: number; y: number; width: number; height: number };
+      labelOffsetX: number;
+      labelOffsetY: number;
+    };
 
 export interface SceneBase {
   id: string;
@@ -93,6 +107,10 @@ export interface SceneBase {
   propKind?: 'value' | 'color';
   propSolidOnly?: boolean;
   zoneGradient?: { axis: 'x' | 'y'; min: number; max: number };
+  // Generic drag-target marker, read by interaction code that needs to tell
+  // a node apart from its owner's default move/resize geometry (e.g. a
+  // freely-draggable label) without a dedicated SceneDetail variant.
+  mark?: string;
 }
 
 export interface SceneRect extends SceneBase {

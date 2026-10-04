@@ -1,6 +1,8 @@
 import type { RenderNode, SceneDetail, SceneIdentity } from '../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
+  ISOMETRIC_LABEL_OFFSET_ATTR,
+  ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
@@ -14,9 +16,13 @@ import {
 } from './domContract/attributes';
 import { num, xml } from './format';
 
+function domRole(identity: SceneIdentity): string {
+  return identity.role === 'shape' ? 'entity' : identity.role;
+}
+
 function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
   return [
-    `data-sf-role="${identity.role}"`,
+    `data-sf-role="${domRole(identity)}"`,
     `data-sf-id="${xml(identity.id)}"`,
     identity.kind ? `data-sf-kind="${xml(identity.kind)}"` : undefined,
     identity.primary ? 'data-sf-primary="true"' : undefined,
@@ -48,6 +54,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return tableColumnDividerAttrs(detail);
     case 'pathGeometry':
       return pathGeometryAttrs(detail);
+    case 'isometricGeometry':
+      return isometricGeometryAttrs(detail);
   }
 }
 
@@ -112,6 +120,15 @@ function pathGeometryAttrs(detail: Extract<SceneDetail, { of: 'pathGeometry' }>)
   ];
 }
 
+function isometricGeometryAttrs(detail: Extract<SceneDetail, { of: 'isometricGeometry' }>): string[] {
+  return [
+    `${ISOMETRIC_SIZE_ATTR}="${num(detail.width)},${num(detail.height)},${num(detail.depth)}"`,
+    `${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`,
+    declaredBoundsAttr(detail.bounds),
+    `${ISOMETRIC_LABEL_OFFSET_ATTR}="${num(detail.labelOffsetX)},${num(detail.labelOffsetY)}"`,
+  ];
+}
+
 function tableColumnDividerAttrs(detail: Extract<SceneDetail, { of: 'tableColumnDivider' }>): string[] {
   return [
     `${TABLE_COLUMN_DIVIDER_ATTR}="${xml(detail.columnId)}"`,
@@ -127,6 +144,8 @@ function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<st
     detail.route ? `data-sf-route="${detail.route}"` : undefined,
     detail.fromSide ? `data-sf-from-side="${detail.fromSide}"` : undefined,
     detail.toSide ? `data-sf-to-side="${detail.toSide}"` : undefined,
+    detail.fromFace ? `data-sf-from-face="${detail.fromFace}"` : undefined,
+    detail.toFace ? `data-sf-to-face="${detail.toFace}"` : undefined,
     detail.labelGap ? 'data-sf-label-gap="true"' : undefined,
   ];
 }
@@ -139,6 +158,7 @@ export function contractAttrs(node: RenderNode): string {
     node.prop ? `data-sf-prop="${xml(node.prop)}"` : undefined,
     node.propKind ? `data-sf-prop-kind="${node.propKind}"` : undefined,
     node.propSolidOnly ? 'data-sf-prop-solid-only="true"' : undefined,
+    node.mark ? `data-sf-mark="${xml(node.mark)}"` : undefined,
     node.zoneGradient ? 'data-sf-zone-gradient="true"' : undefined,
     node.zoneGradient ? `data-sf-zone-axis-min="${num(node.zoneGradient.min)}"` : undefined,
     node.zoneGradient ? `data-sf-zone-axis-max="${num(node.zoneGradient.max)}"` : undefined,

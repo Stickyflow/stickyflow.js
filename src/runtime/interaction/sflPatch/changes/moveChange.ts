@@ -22,20 +22,20 @@ function movePathPoints(lines: string[], range: LineRange, dx: number, dy: numbe
 
 export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
   const state = sflToCanvasState(sfl);
-  const entity = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
-  if (!entity) {
+  const canvasObject = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
+  if (!canvasObject) {
     return sfl;
   }
-  // `entity.x`/`entity.y` are absolute canvas coordinates (the parent chain's
+  // `canvasObject.x`/`canvasObject.y` are absolute canvas coordinates (the parent chain's
   // origin already folded in â€” see sflSemantic/canvasObjects/processing/layout/geometry.ts), but `layout.position`
   // is an offset from the immediate parent's own origin, not an absolute
   // coordinate. Writing the absolute value straight back for a child nested
   // in a container that itself sits away from (0, 0) double-counts that
   // container's own offset on the next render. Subtracting the parent's
   // absolute origin converts back to the coordinate space `position` is
-  // actually in; a top-level entity has no parent, so this is a no-op there.
-  const parent = entity.parentFrameId
-    ? state.canvasObjects.find(candidate => candidate.id === entity.parentFrameId)
+  // actually in; a top-level canvasObject has no parent, so this is a no-op there.
+  const parent = canvasObject.parentFrameId
+    ? state.canvasObjects.find(candidate => candidate.id === canvasObject.parentFrameId)
     : undefined;
   const originX = parent?.x ?? 0;
   const originY = parent?.y ?? 0;
@@ -48,6 +48,8 @@ export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
     movePathPoints(lines, range, event.dx, event.dy);
     return lines.join('\n');
   }
-  setOrInsertLayoutTuples(lines, range, [['position', entity.x - originX + event.dx, entity.y - originY + event.dy]]);
+  setOrInsertLayoutTuples(lines, range, [
+    ['position', canvasObject.x - originX + event.dx, canvasObject.y - originY + event.dy],
+  ]);
   return lines.join('\n');
 }

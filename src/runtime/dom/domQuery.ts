@@ -1,3 +1,6 @@
+import { AXIS_COS } from '../../model/isometricObject';
+import { isometricGeometryOf } from './contract';
+
 export function findOwnerNode(
   svg: SVGSVGElement,
   id: string,
@@ -44,6 +47,26 @@ export function pxPerUnit(svg: SVGSVGElement): number {
   const rect = svg.getBoundingClientRect();
   const viewBoxWidth = svg.viewBox.baseVal.width;
   return rect.width > 0 && viewBoxWidth > 0 ? rect.width / viewBoxWidth : 1;
+}
+
+// The dragged-object's own apex is computed the same way by the caller
+// (move/snapping.ts), from its own primary node - duplicated rather than
+// shared because that one also needs the raw pre-snap delta folded in.
+export function findIsometricApexCandidates(
+  svg: SVGSVGElement,
+  excludeIds: Set<string>,
+): Array<{ id: string; apex: { x: number; y: number } }> {
+  const results: Array<{ id: string; apex: { x: number; y: number } }> = [];
+  svg.querySelectorAll('[data-sf-primary][data-sf-id][data-sf-role="isometric"]').forEach(node => {
+    const id = node.getAttribute('data-sf-id');
+    if (!id || excludeIds.has(id)) {
+      return;
+    }
+    const geometry = isometricGeometryOf(node);
+    const bounds = geometry?.bounds ?? (node as unknown as SVGGraphicsElement).getBBox();
+    results.push({ id, apex: { x: bounds.x + (geometry?.depth ?? 0) * AXIS_COS, y: bounds.y } });
+  });
+  return results;
 }
 
 export function findSnapCandidateBounds(

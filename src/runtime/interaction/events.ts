@@ -23,6 +23,9 @@ export interface ResizeChangeEvent {
   y: number;
   width: number;
   height: number;
+  /** Isometric axis-handle resize only - the new depth, when that's the
+   *  dimension being dragged. Unset for every other resize gesture. */
+  depth?: number;
 }
 
 export interface LinkReconnectEvent {
@@ -33,9 +36,17 @@ export interface LinkReconnectEvent {
   fraction: number;
 }
 
+export type IsometricQuickDuplicateDirection =
+  | 'iso-width-pos'
+  | 'iso-width-neg'
+  | 'iso-depth-pos'
+  | 'iso-depth-neg'
+  | 'iso-height-pos'
+  | 'iso-height-neg';
+
 export interface QuickDuplicateEvent {
   owner: OwnerRef;
-  direction: 'top' | 'right' | 'bottom' | 'left';
+  direction: 'top' | 'right' | 'bottom' | 'left' | IsometricQuickDuplicateDirection;
 }
 
 export interface DeleteEvent {
@@ -88,6 +99,23 @@ export interface PathDrawCompleteEvent {
   tension: number;
 }
 
+// A free-form drag of a Sankey node, released. dx/dy are deltas from this
+// gesture alone (in the chart's own user-space units) - the patch function
+// adds them to whatever offset the node already carries, so repeated drags
+// accumulate rather than overwrite.
+export interface SankeyNodeMoveEvent {
+  owner: OwnerRef;
+  nodeId: string;
+  dx: number;
+  dy: number;
+}
+
+export interface SankeyNodeRenameEvent {
+  owner: OwnerRef;
+  nodeId: string;
+  label: string;
+}
+
 export interface InteractionEventMap {
   textChange: TextChangeEvent;
   moveChange: MoveChangeEvent;
@@ -101,6 +129,8 @@ export interface InteractionEventMap {
   columnResizeChange: ColumnResizeChangeEvent;
   pathPointChange: PathPointChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;
+  sankeyNodeMove: SankeyNodeMoveEvent;
+  sankeyNodeRename: SankeyNodeRenameEvent;
 }
 
 export type InteractionEventName = keyof InteractionEventMap;

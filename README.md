@@ -21,8 +21,9 @@ const { svg, width, height, diagnostics } = render(sflSourceText);
 // A complete, deterministic SVG string. render() never touches the DOM.
 ```
 
-Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflToRenderInput
-→ buildRenderScene → renderSceneToSvg`.
+Render pipeline: `SFL text → parse → sflToCanvasState → sflToRenderInput
+→ buildRenderScene → renderSceneToSvg`. `sflToImportJson` is a separate
+adapter and is not part of rendering.
 
 ## Structure
 
@@ -30,7 +31,7 @@ Pipeline: `SFL text → parse → sflToCanvasState → sflToImportJson → sflTo
 src/
   model/             L0 framework-agnostic diagram model and geometry
   sflLanguage/       L1 SFL Language: AST, lexer, parser and canonical emitter
-  sflSemantic/       L2 SFL Semantic: SFL AST → resolved canvas state
+  sflSemantic/       L2 SFL Semantic: SFL AST → semantic canvas state
   renderInput/       L3 renderer contract, SFL adapter and presentation-value decoding
   renderScene/       L4 scene contract and deterministic scene construction
   svg/               L5 SVG serialization and versioned DOM contract
@@ -48,6 +49,9 @@ src/
 
 The three tiers and their one-way dependency are described under *Two tiers*
 below and enforced by `test/boundary.test.ts`.
+
+When adding a new placeable artifact, follow the layer-by-layer
+[Canvas Object integration checklist](docs/ADDING_CANVAS_OBJECT.md).
 
 ## Known gaps (documented, not hidden)
 
@@ -76,7 +80,7 @@ below and enforced by `test/boundary.test.ts`.
   DOM write is incremental (`patchSceneNodes`, only what differs), but the
   geometry it diffs against is recomputed for the whole scene graph every
   time — text measurement, link routing, everything — not just the changed
-  entity. Fine at the hundreds-of-shapes scale this package targets; a
+  canvas object. Fine at the hundreds-of-shapes scale this package targets; a
   many-thousand-node board would need incremental geometry, which doesn't
   exist yet.
 - **No conflict handling for concurrent writers**: `applyMoveChange` and
@@ -89,7 +93,7 @@ below and enforced by `test/boundary.test.ts`.
   node a role, an id, and a focusable/labelled primary (`tabindex`,
   `aria-label`) — enough for a screen reader to enumerate what's on the board
   and read each label. It does not yet describe *relationships* (which link
-  connects which entities, table semantics beyond a labelled grid, a
+  connects which canvas objects, table semantics beyond a labelled grid, a
   meaningful reading order for a non-trivial layout) — a sighted user reads
   those from position; a screen reader user currently can't.
 
@@ -165,7 +169,7 @@ break at different points under each.
 
 `render()`'s output is meant to be inserted via `innerHTML` (that's how the
 docs examples and `stickyflow/viewer` use it), so everything user-supplied —
-entity/link text, ids — is escaped before it reaches the SVG string
+canvas-object/link text, ids — is escaped before it reaches the SVG string
 (`renderSceneToSvg.ts`'s `xml()`: `& < > " '`), and ids are additionally
 restricted to a safe character set (`safeId`). There is no `<script>`,
 `<foreignObject>`, or event-handler attribute anywhere in the renderer's own
@@ -179,7 +183,7 @@ actively hostile payload (an attribute break-out plus an inline
 
 The SVG is the binding surface for a viewer. Every node carries its owner's
 identity so a click on any sub-node (a cylinder cap, a table cell, link text)
-resolves to the entity via `closest('[data-sf-id]')`:
+resolves to the owning canvas object via `closest('[data-sf-id]')`:
 
 ```html
 <svg … role="img" data-sf-contract="1">
@@ -191,8 +195,9 @@ resolves to the entity via `closest('[data-sf-id]')`:
 
 - `data-sf-contract` on the root is the versioned handshake (`DOM_CONTRACT_VERSION`):
   a viewer checks it on mount and refuses a mismatch instead of binding blindly.
-- `data-sf-role` ∈ `entity | link | frame | swimlane | table`; `data-sf-id` is the
-  stable owner id; `data-sf-kind` is the shape type for entities.
+- `data-sf-role` ∈ `entity | link | frame | swimlane | table`; `entity` is the
+  version-1 serialized compatibility value for an internal `shape` role.
+  `data-sf-id` is the stable owner id; `data-sf-kind` is the concrete kind.
 - The **primary** node of each owner is focusable (`tabindex="0"`) and labelled
   (`aria-label`, whitespace-collapsed to one line). Ids and labels are XML-escaped.
 
@@ -229,10 +234,10 @@ pays nothing for viewer JS. The web component sits on top and composes both.
 A third, opt-in tier layered on top of `stickyflow/viewer` (never the other way
 round): double-click to edit text, drag to move (a multi-selection moves
 together), drag a corner handle to resize, drag either endpoint of a selected
-link onto a new anchor — a different spot on the same entity, or a different
-entity entirely — to reconnect it. The dragged endpoint follows the cursor as
+link onto a new anchor — a different spot on the same canvas object, or a different
+canvas object entirely — to reconnect it. The dragged endpoint follows the cursor as
 a free "ghost" over empty canvas and snaps to the nearest point on whichever
-entity's under the pointer, so the gesture reads as continuous rather than
+canvas object's under the pointer, so the gesture reads as continuous rather than
 freezing until you land exactly on a target. All with a live preview (real
 router, real text re-wrap) while the gesture is in progress. The package never mutates its
 own model — it's a **controlled component**: each gesture only emits an event
@@ -261,30 +266,30 @@ They patch only the touched property's own line(s) — via brace-depth block
 location, not a full parse-mutate-emit round trip (there's no reverse
 serializer in this package yet, see *Known gaps*) — so everything else in the
 document (comments, formatting, unrelated blocks) survives untouched, and
-`applyMoveChange` resolves the entity's *current* position through the real
+`applyMoveChange` resolves the canvas object's *current* position through the real
 parser first, so a delta lands correctly even when the position is inherited
 from a composed `Layout` reference rather than set inline. A host is free to
 ignore these and patch its own structured state instead — the events carry
 everything needed either way.
 
-**Structural changes** — `insertEntity`/`removeEntity`/`insertLink`/`removeLink`
+**Structural changes** — `insertCanvasObject`/`removeCanvasObject`/`insertLink`/`removeLink`
 (also from `stickyflow/interaction`, pure/no DOM) cover create/delete, which no
 drag gesture produces on its own. Call them directly — from a host reflecting
 an LLM-authored change, an "add shape" toolbar button, etc. — and pass the
 result to `viewer.update()` the same way:
 
 ```ts
-import { insertEntity, insertLink, removeEntity } from 'stickyflow/interaction'
+import { insertCanvasObject, insertLink, removeCanvasObject } from 'stickyflow/interaction'
 
-currentSource = insertEntity(currentSource, { id: 'n2', kind: 'shape', text: 'New', x: 320, y: 80, width: 160, height: 60 })
+currentSource = insertCanvasObject(currentSource, { id: 'n2', kind: 'shape', text: 'New', x: 320, y: 80, width: 160, height: 60 })
 currentSource = insertLink(currentSource, { id: 'l1', fromId: 'n1', toId: 'n2' })
-currentSource = removeEntity(currentSource, 'n1') // also removes links attached to it by default
+currentSource = removeCanvasObject(currentSource, 'n1') // also removes links attached to it by default
 ```
 
-Same surgical-patch philosophy as the apply\*Change functions: `insertEntity`/
+Same surgical-patch philosophy as the apply\*Change functions: `insertCanvasObject`/
 `insertLink` append a new block (indented to match, id-uniqueness- and
 parent-checked first — a no-op if the id already exists or a referenced
-entity/parent doesn't), `removeEntity`/`removeLink` splice out a block's exact
+canvas object/parent doesn't), `removeCanvasObject`/`removeLink` splice out a block's exact
 line range. Neither attempts a generic value formatter for arbitrary style
 properties — SFL's quoting rules depend on each property's own semantics, not
 just the JS type — so extra properties go through an optional raw `body`

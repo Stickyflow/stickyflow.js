@@ -188,7 +188,7 @@ describe('the quick-duplicate bubble drags a ghost too', () => {
 
 describe('resolving where a dragged link end lands', () => {
   const box = (id: string, x: number, y: number) => ({
-    owner: { role: 'entity' as const, id },
+    owner: { role: 'shape' as const, id },
     bounds: { x, y, width: 100, height: 60 },
   });
 

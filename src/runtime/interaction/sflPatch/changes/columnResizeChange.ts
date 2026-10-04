@@ -4,11 +4,11 @@ import { applyPropertyChange } from './propertyChange';
 import { applyResizeChange } from './resizeChange';
 
 export function applyColumnResizeChange(sfl: string, event: ColumnResizeChangeEvent): string {
-  const entity = sflToCanvasState(sfl).canvasObjects.find(candidate => candidate.id === event.owner.id);
-  const table = entity?.table;
+  const canvasObject = sflToCanvasState(sfl).canvasObjects.find(candidate => candidate.id === event.owner.id);
+  const table = canvasObject?.table;
   const column = table?.columns.find(candidate => candidate.id === event.columnId);
   const columnsBlockName = table?.columnsBlockName;
-  if (!entity || !table || !column || !columnsBlockName) {
+  if (!canvasObject || !table || !column || !columnsBlockName) {
     return sfl;
   }
 
@@ -19,7 +19,7 @@ export function applyColumnResizeChange(sfl: string, event: ColumnResizeChangeEv
   });
 
   const declaredTotal = table.columns.reduce((sum, candidate) => sum + candidate.width, 0);
-  const widthScale = declaredTotal > 0 ? entity.width / declaredTotal : 1;
+  const widthScale = declaredTotal > 0 ? canvasObject.width / declaredTotal : 1;
   const deltaWidth = (event.width - column.width) * widthScale;
   if (deltaWidth === 0) {
     return withColumnWidth;
@@ -27,10 +27,10 @@ export function applyColumnResizeChange(sfl: string, event: ColumnResizeChangeEv
 
   return applyResizeChange(withColumnWidth, {
     owner: event.owner,
-    x: entity.x,
-    y: entity.y,
-    width: entity.width + deltaWidth,
-    height: entity.height,
+    x: canvasObject.x,
+    y: canvasObject.y,
+    width: canvasObject.width + deltaWidth,
+    height: canvasObject.height,
     dx: 0,
     dy: 0,
     dWidth: deltaWidth,

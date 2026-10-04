@@ -1,11 +1,10 @@
 import type { Rect } from '../../../model/geometry/types';
-import type { GuideLine } from '../../dom';
-import type { AxisSnap, EdgePoint, SnapConfig, SnapResult } from './types';
+import type { AxisSnap, EdgePoint, RectGuideLine, SnapConfig, SnapResult } from './types';
 
 interface SnapMatch {
   distance: number;
   delta: number;
-  guide: GuideLine;
+  guide: RectGuideLine;
 }
 
 const TARGET_POINTS: EdgePoint[] = ['min', 'center', 'max'];

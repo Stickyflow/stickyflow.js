@@ -111,7 +111,7 @@ const write = (line: string): void => {
 const viewer = createViewer({ container, source: SFL, interactive: true, diagramId: 'checkout' });
 
 viewer.on('ready', () => write('ready'));
-viewer.on('entityClick', e => write(`entityClick → ${e.owner.kind} "${e.owner.label}" (${e.owner.id})`));
+viewer.on('canvasObjectClick', e => write(`canvasObjectClick → ${e.owner.kind} "${e.owner.label}" (${e.owner.id})`));
 viewer.on('linkClick', e => write(`linkClick → ${e.owner.id}`));
 viewer.on('selectionChange', e => write(`selection: [${e.selection.map(o => o.id).join(', ')}]`));
 viewer.on('sceneDiff', e => write(`sceneDiff → added:[${e.added}] removed:[${e.removed}] changed:[${e.changed}]`));

@@ -42,7 +42,7 @@ export class MoveSession {
     drag.moved = true;
     const rawDelta = movePointerDelta(this.#svg, drag, event);
     const delta = snapMove(this.#svg, drag, rawDelta.dx, rawDelta.dy);
-    const clamped = clampMoveDelta(drag.entities, delta.dx, delta.dy);
+    const clamped = clampMoveDelta(drag.canvasObjects, delta.dx, delta.dy);
     applyMovePreview(drag, clamped.dx, clamped.dy);
     updateAlignmentGuides(this.#svg, delta.guides, MOVE_GUIDE_COLOR);
   };

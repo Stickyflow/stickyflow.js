@@ -8,9 +8,9 @@ export function applyResizeChange(sfl: string, event: ResizeChangeEvent): string
   // why), same conversion needed for a resize target nested in a container
   // that isn't itself at the canvas origin.
   const state = sflToCanvasState(sfl);
-  const entity = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
-  const parent = entity?.parentFrameId
-    ? state.canvasObjects.find(candidate => candidate.id === entity.parentFrameId)
+  const canvasObject = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
+  const parent = canvasObject?.parentFrameId
+    ? state.canvasObjects.find(candidate => candidate.id === canvasObject.parentFrameId)
     : undefined;
   const originX = parent?.x ?? 0;
   const originY = parent?.y ?? 0;
@@ -22,7 +22,9 @@ export function applyResizeChange(sfl: string, event: ResizeChangeEvent): string
   }
   setOrInsertLayoutTuples(lines, range, [
     ['position', event.x - originX, event.y - originY],
-    ['size', event.width, event.height],
+    canvasObject?.isometric
+      ? ['size', event.width, event.height, event.depth ?? canvasObject.isometric.depth]
+      : ['size', event.width, event.height],
   ]);
   return lines.join('\n');
 }

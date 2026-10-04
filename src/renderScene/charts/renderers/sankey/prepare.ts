@@ -25,6 +25,8 @@ function createNodeInputs(context: ChartRenderContext): SankeyNodeInput[] {
     id: zone.label,
     label: zone.label,
     color: zone.color,
+    offsetX: zone.offsetX,
+    offsetY: zone.offsetY,
   }));
 }
 

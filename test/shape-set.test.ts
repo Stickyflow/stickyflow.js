@@ -69,7 +69,7 @@ Model M {
 }
 `;
     const { diagnostics } = render(sfl);
-    expect(diagnostics?.some(d => d.code === 'unknown-shape-type' && d.entityId === 'e')).toBe(true);
+    expect(diagnostics?.some(d => d.code === 'unknown-shape-type' && d.ownerId === 'e')).toBe(true);
   });
 });
 

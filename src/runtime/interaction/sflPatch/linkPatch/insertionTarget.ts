@@ -7,9 +7,9 @@ export function resolveLinkInsertionTarget(sfl: string, lines: string[], options
     return null;
   }
 
-  const entities = sflToCanvasState(sfl).canvasObjects;
-  const hasSource = entities.some(entity => entity.id === options.fromId);
-  const hasTarget = entities.some(entity => entity.id === options.toId);
+  const canvasObjects = sflToCanvasState(sfl).canvasObjects;
+  const hasSource = canvasObjects.some(canvasObject => canvasObject.id === options.fromId);
+  const hasTarget = canvasObjects.some(canvasObject => canvasObject.id === options.toId);
   if (!hasSource || !hasTarget) {
     return null;
   }

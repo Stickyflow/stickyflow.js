@@ -1,5 +1,8 @@
 import type { SceneRole } from '../../renderScene/scene';
 import {
+  CORNER_RADIUS_ATTR,
+  ISOMETRIC_LABEL_OFFSET_ATTR,
+  ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
@@ -26,7 +29,20 @@ export function isContractCompatible(version: number | null): boolean {
   return version === DOM_CONTRACT_VERSION;
 }
 
-const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane', 'table', 'chart', 'path']);
+const ROLES: ReadonlySet<string> = new Set([
+  'entity',
+  'link',
+  'frame',
+  'swimlane',
+  'table',
+  'chart',
+  'path',
+  'isometric',
+]);
+
+function sceneRole(domRole: string): SceneRole {
+  return domRole === 'entity' ? 'shape' : (domRole as SceneRole);
+}
 
 export function symbolDeclaredBounds(el: {
   getAttribute(name: string): string | null;
@@ -68,6 +84,38 @@ export function pathGeometryOf(el: { getAttribute(name: string): string | null }
   };
 }
 
+export interface IsometricGeometry {
+  width: number;
+  height: number;
+  depth: number;
+  cornerRadius: number;
+  bounds: { x: number; y: number; width: number; height: number } | null;
+  labelOffsetX: number;
+  labelOffsetY: number;
+}
+
+export function isometricGeometryOf(el: { getAttribute(name: string): string | null }): IsometricGeometry | null {
+  const raw = el.getAttribute(ISOMETRIC_SIZE_ATTR);
+  if (raw === null) {
+    return null;
+  }
+  const [width, height, depth] = raw.split(',').map(Number);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isFinite(depth)) {
+    return null;
+  }
+  const cornerRadius = Number(el.getAttribute(CORNER_RADIUS_ATTR)) || 0;
+  const [labelOffsetX, labelOffsetY] = (el.getAttribute(ISOMETRIC_LABEL_OFFSET_ATTR) ?? '0,0').split(',').map(Number);
+  return {
+    width,
+    height,
+    depth,
+    cornerRadius,
+    bounds: symbolDeclaredBounds(el),
+    labelOffsetX: Number.isFinite(labelOffsetX) ? labelOffsetX : 0,
+    labelOffsetY: Number.isFinite(labelOffsetY) ? labelOffsetY : 0,
+  };
+}
+
 export function resolveOwner(target: AttrElement | null): OwnerRef | null {
   const el = target?.closest('[data-sf-id]');
   if (!el) {
@@ -79,7 +127,7 @@ export function resolveOwner(target: AttrElement | null): OwnerRef | null {
     return null;
   }
   return {
-    role: role as SceneRole,
+    role: sceneRole(role),
     id,
     kind: el.getAttribute('data-sf-kind') ?? undefined,
     label: el.getAttribute('aria-label') ?? undefined,

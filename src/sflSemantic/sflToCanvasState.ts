@@ -6,8 +6,10 @@ export type {
   SflCanvasObject,
   SflCanvasState,
   SflChartObject,
+  SflConnectionOut,
   SflDiagnostic,
   SflGroupOut,
+  SflIsometricObject,
   SflLinkOut,
   SflPathObject,
   SflSwimlaneObject,
@@ -15,6 +17,7 @@ export type {
 } from './types';
 export {
   isChartObject,
+  isIsometricObject,
   isPathObject,
   isSwimlaneObject,
   isTableObject,

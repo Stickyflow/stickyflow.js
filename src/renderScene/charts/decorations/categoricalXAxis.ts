@@ -1,6 +1,7 @@
 import type { TypedChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
+import { seriesLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 function categoryLabels(chart: TypedChart, count: number): string[] {
@@ -40,19 +41,22 @@ export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, or
 
   return chart.series.map((series, index) => {
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
-    return chartText({
-      id: `chart-x-tick-${chart.id}-${index}`,
-      order: order + index,
-      bounds: layout.bounds,
-      frame: {
-        x: centerX - slotWidth / 2,
-        y: layout.plot.y + layout.plot.height + 4,
-        width: slotWidth,
-        height: 18,
-      },
-      text: series.label || series.id,
-      chart,
-      align: 'center',
-    });
+    return {
+      ...chartText({
+        id: `chart-x-tick-${chart.id}-${index}`,
+        order: order + index,
+        bounds: layout.bounds,
+        frame: {
+          x: centerX - slotWidth / 2,
+          y: layout.plot.y + layout.plot.height + 4,
+          width: slotWidth,
+          height: 18,
+        },
+        text: series.label || series.id,
+        chart,
+        align: 'center',
+      }),
+      prop: seriesLabelProp(series.id),
+    };
   });
 }

@@ -1,13 +1,13 @@
-interface OrderedEntity {
+interface OrderedCanvasObject {
   order_key?: string;
   orderKey?: string;
   order?: number;
 }
 
-export function orderOf(entity: OrderedEntity, fallback: number): number {
-  const key = entity.order_key ?? entity.orderKey;
-  if (!key && typeof entity.order === 'number') {
-    return entity.order;
+export function orderOf(canvasObject: OrderedCanvasObject, fallback: number): number {
+  const key = canvasObject.order_key ?? canvasObject.orderKey;
+  if (!key && typeof canvasObject.order === 'number') {
+    return canvasObject.order;
   }
   if (!key) {
     return fallback;

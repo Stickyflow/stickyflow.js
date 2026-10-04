@@ -34,25 +34,25 @@ describe('selecting a frame or swimlane and dragging it moves its contained enti
 
     const group = selectedMoveGroup(viewer, frame);
 
-    expect(group).toEqual([frame, { role: 'entity', id: 'a' }, { role: 'entity', id: 'b' }]);
+    expect(group).toEqual([frame, { role: 'shape', id: 'a' }, { role: 'shape', id: 'b' }]);
   });
 
   it('still cascades when the frame is already the sole selection (select-then-drag, not just click-and-drag)', () => {
     const child = fakeNode({ 'data-sf-id': 'a', 'data-sf-role': 'entity', 'data-sf-parent-frame': 'f' });
     const viewer = fakeViewer([child], [frame]);
 
-    expect(selectedMoveGroup(viewer, frame)).toEqual([frame, { role: 'entity', id: 'a' }]);
+    expect(selectedMoveGroup(viewer, frame)).toEqual([frame, { role: 'shape', id: 'a' }]);
   });
 
   it('does not expand a plain entity owner', () => {
     const viewer = fakeViewer([]);
-    const owner: OwnerRef = { role: 'entity', id: 'e' };
+    const owner: OwnerRef = { role: 'shape', id: 'e' };
 
     expect(selectedMoveGroup(viewer, owner)).toEqual([owner]);
   });
 
   it("leaves an existing multi-select alone instead of also pulling in the frame's children", () => {
-    const selection: OwnerRef[] = [frame, { role: 'entity', id: 'x' }];
+    const selection: OwnerRef[] = [frame, { role: 'shape', id: 'x' }];
     const viewer = fakeViewer(
       [fakeNode({ 'data-sf-id': 'a', 'data-sf-role': 'entity', 'data-sf-parent-frame': 'f' })],
       selection,
@@ -66,6 +66,6 @@ describe('selecting a frame or swimlane and dragging it moves its contained enti
     const child = fakeNode({ 'data-sf-id': 'c', 'data-sf-role': 'entity', 'data-sf-parent-frame': 's' });
     const viewer = fakeViewer([child]);
 
-    expect(selectedMoveGroup(viewer, lane)).toEqual([lane, { role: 'entity', id: 'c' }]);
+    expect(selectedMoveGroup(viewer, lane)).toEqual([lane, { role: 'shape', id: 'c' }]);
   });
 });

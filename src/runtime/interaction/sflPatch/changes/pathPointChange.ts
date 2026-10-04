@@ -5,12 +5,14 @@ import { findOwnerBlock } from '../scanner';
 import { formatPoints, pointsSpan } from './pathPoints';
 
 export function applyPathPointChange(sfl: string, event: PathPointChangeEvent): string {
-  const entities = sflToCanvasState(sfl).canvasObjects;
-  const entity = entities.find(candidate => candidate.id === event.owner.id);
-  if (!entity) {
+  const canvasObjects = sflToCanvasState(sfl).canvasObjects;
+  const canvasObject = canvasObjects.find(candidate => candidate.id === event.owner.id);
+  if (!canvasObject) {
     return sfl;
   }
-  const parent = entity.parentFrameId ? entities.find(candidate => candidate.id === entity.parentFrameId) : undefined;
+  const parent = canvasObject.parentFrameId
+    ? canvasObjects.find(candidate => candidate.id === canvasObject.parentFrameId)
+    : undefined;
   const origin = parent ? { x: parent.x, y: parent.y } : { x: 0, y: 0 };
 
   const lines = sfl.split('\n');

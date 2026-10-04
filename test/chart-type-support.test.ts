@@ -55,7 +55,7 @@ describe('unsupported chart types', () => {
     const warning = diagnostics.find(d => d.code === 'unsupported-chart-type');
     expect(warning).toBeDefined();
     expect(warning?.severity).toBe('warning');
-    expect(warning?.entityId).toBe('c');
+    expect(warning?.ownerId).toBe('c');
     expect(warning?.message).toContain(type);
   });
 
@@ -90,7 +90,7 @@ Model M {
 }`;
     const ids = render(two)
       .diagnostics.filter(d => d.code === 'unsupported-chart-type')
-      .map(d => d.entityId);
+      .map(d => d.ownerId);
     expect(ids).toEqual(['a', 'b']);
   });
 });

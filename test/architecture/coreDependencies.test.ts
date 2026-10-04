@@ -18,6 +18,19 @@ const ALLOWED_DEPENDENCIES: Record<CoreLayer, readonly CoreLayer[]> = {
 };
 
 const FORBIDDEN_COLLECTION_DIRECTORIES = new Set(['common', 'helpers', 'misc', 'shared', 'utils']);
+const ALLOWED_TOP_LEVEL_DIRECTORIES = new Set([
+  'adapters',
+  'model',
+  'renderInput',
+  'renderScene',
+  'runtime',
+  'sflLanguage',
+  'sflSemantic',
+  'svg',
+]);
+const ALLOWED_TOP_LEVEL_FILES = new Set(['index.ts', 'render.ts']);
+const OBSOLETE_ENTITY_IDENTIFIERS =
+  /\b(?:SflEntityOut|SflChartEntity|SflTableEntity|SflSwimlaneEntity|SflPathEntity|entityType|entityId|entityClick|DraggedEntity|InsertEntityOptions|RemoveEntityOptions|insertEntity|removeEntity)\b/;
 
 function tsFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -78,6 +91,17 @@ function relativeImports(source: string): string[] {
 }
 
 describe('core dependency direction', () => {
+  it('keeps the src root aligned with the six layers and their explicit integration areas', () => {
+    const unexpected = readdirSync(srcDir, { withFileTypes: true })
+      .filter(entry =>
+        entry.isDirectory() ? !ALLOWED_TOP_LEVEL_DIRECTORIES.has(entry.name) : !ALLOWED_TOP_LEVEL_FILES.has(entry.name),
+      )
+      .map(entry => entry.name)
+      .sort();
+
+    expect(unexpected).toEqual([]);
+  });
+
   it('only imports explicitly allowed lower-level core layers', () => {
     const offenders: string[] = [];
     for (const file of tsFiles(srcDir)) {
@@ -129,6 +153,14 @@ describe('core dependency direction', () => {
 
   it('contains no unspecific collection directories', () => {
     const offenders = directoryNames(srcDir).filter(name => FORBIDDEN_COLLECTION_DIRECTORIES.has(name));
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps obsolete generic Entity identifiers out of current APIs', () => {
+    const offenders = tsFiles(srcDir)
+      .filter(file => OBSOLETE_ENTITY_IDENTIFIERS.test(readFileSync(file, 'utf8')))
+      .map(sourcePath);
+
     expect(offenders).toEqual([]);
   });
 

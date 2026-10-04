@@ -34,7 +34,7 @@ function closingBracket(text: string, openIndex: number): number {
   return -1;
 }
 
-function listElementSpans(text: string): { spans: ListElementSpan[]; start: number; end: number } | null {
+export function listElementSpans(text: string): { spans: ListElementSpan[]; start: number; end: number } | null {
   const listStart = text.indexOf('[');
   const listEnd = closingBracket(text, listStart);
   if (listStart < 0 || listEnd < 0) {
@@ -72,6 +72,20 @@ export function replaceListElement(
 ): string | null {
   const list = listElementSpans(text);
   const span = list?.spans[index];
+  if (!span) {
+    return null;
+  }
+  const current = text.slice(span.start, span.end);
+  return text.slice(0, span.start) + replacement(current) + text.slice(span.end);
+}
+
+export function replaceListElementAt(
+  text: string,
+  matchElement: (element: string) => boolean,
+  replacement: (current: string) => string,
+): string | null {
+  const list = listElementSpans(text);
+  const span = list?.spans.find(candidate => matchElement(text.slice(candidate.start, candidate.end)));
   if (!span) {
     return null;
   }

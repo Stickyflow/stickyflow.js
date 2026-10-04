@@ -5,6 +5,9 @@ import { bindColorEdit, type ColorEditHandle } from './colorEdit/binding';
 import { bindColumnResize, type ColumnResizeDragHandle } from './columnResizeDrag';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
+import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './isometricAxisResizeDrag';
+import { bindIsometricLabelDrag, type IsometricLabelDragHandle } from './isometricLabelDrag/binding';
+import { bindIsometricQuickDuplicate, type IsometricQuickDuplicateHandle } from './isometricQuickDuplicate/binding';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
@@ -15,6 +18,7 @@ import { bindPropertyEditing, type PropertyEditingHandle, type PropertyEditingOp
 import { bindQuickDuplicate, type QuickDuplicateHandle } from './quickDuplicate';
 import { bindRadarVertexDrag, type RadarVertexDragHandle } from './radarVertexDrag/binding';
 import { bindShapeResize, type ResizeDragHandle } from './resizeDrag';
+import { bindSankeyNode, type SankeyNodeHandle } from './sankeyNode/binding';
 import { bindTextEditing, type TextEditingHandle } from './textEdit';
 
 export interface Interaction {
@@ -34,14 +38,18 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const textEditing: TextEditingHandle = bindTextEditing(viewer, emitter);
   const movement: MoveDragHandle = bindShapeMovement(viewer, emitter);
   const resize: ResizeDragHandle = bindShapeResize(viewer, emitter);
+  const isometricAxisResize: IsometricAxisResizeDragHandle = bindIsometricAxisResize(viewer, emitter);
   const columnResize: ColumnResizeDragHandle = bindColumnResize(viewer, emitter);
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
+  const isometricQuickDuplicate: IsometricQuickDuplicateHandle = bindIsometricQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
   const pieLabels: PieLabelDragHandle = bindPieLabelDrag(viewer, emitter);
+  const isometricLabels: IsometricLabelDragHandle = bindIsometricLabelDrag(viewer, emitter);
   const radarVertices: RadarVertexDragHandle = bindRadarVertexDrag(viewer, emitter);
+  const sankeyNodes: SankeyNodeHandle = bindSankeyNode(viewer, emitter);
   const properties: PropertyEditingHandle | null = options.properties
     ? bindPropertyEditing(viewer, emitter, options.properties)
     : null;
@@ -61,14 +69,18 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       textEditing.destroy();
       movement.destroy();
       resize.destroy();
+      isometricAxisResize.destroy();
       columnResize.destroy();
       pathReshape.destroy();
       linkEndpoints.destroy();
       quickDuplicate.destroy();
+      isometricQuickDuplicate.destroy();
       deleteSelection.destroy();
       chartValues.destroy();
       pieLabels.destroy();
+      isometricLabels.destroy();
       radarVertices.destroy();
+      sankeyNodes.destroy();
       properties?.destroy();
       propertyDrag?.destroy();
       colorEdit?.destroy();
@@ -92,6 +104,7 @@ export type {
   DeleteEvent,
   InteractionEventMap,
   InteractionEventName,
+  IsometricQuickDuplicateDirection,
   LinkReconnectEvent,
   LinkToEvent,
   MoveChangeEvent,
@@ -102,9 +115,17 @@ export type {
   PropertyValue,
   QuickDuplicateEvent,
   ResizeChangeEvent,
+  SankeyNodeMoveEvent,
+  SankeyNodeRenameEvent,
   TextChangeEvent,
 } from './events';
-export type { InsertEntityOptions, InsertLinkOptions, InsertPathOptions, RemoveEntityOptions } from './patchSfl';
+export type {
+  InsertCanvasObjectOptions,
+  InsertConnectionOptions,
+  InsertLinkOptions,
+  InsertPathOptions,
+  RemoveCanvasObjectOptions,
+} from './patchSfl';
 export {
   applyChartValueChange,
   applyColumnResizeChange,
@@ -113,11 +134,14 @@ export {
   applyPathPointChange,
   applyPropertyChange,
   applyResizeChange,
+  applySankeyNodeMoveChange,
+  applySankeyNodeRenameChange,
   applyTextChange,
-  insertEntity,
+  insertCanvasObject,
+  insertConnection,
   insertLink,
   insertPath,
-  removeEntity,
+  removeCanvasObject,
   removeLink,
 } from './patchSfl';
 export type { PathDrawOptions } from './pathDrawDrag';

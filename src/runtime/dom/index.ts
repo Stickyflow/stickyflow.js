@@ -3,6 +3,7 @@ export {
   type GuideLine,
   updateAlignmentGuides,
 } from './alignmentGuideOverlay';
+export { DERIVED_HEIGHT_ROLES } from './canvasObjectRoles';
 export {
   CHANGE_COLOR,
   FLASH_DURATION_MS,
@@ -13,8 +14,10 @@ export {
 } from './changeOverlay';
 export {
   type AttrElement,
+  type IsometricGeometry,
   isCameraGesture,
   isContractCompatible,
+  isometricGeometryOf,
   type PathGeometry,
   parseContractVersion,
   pathGeometryOf,
@@ -23,6 +26,7 @@ export {
 } from './contract';
 export {
   findAllOwnerNodes,
+  findIsometricApexCandidates,
   findOwnerNode,
   findSnapCandidateBounds,
   isPrimary,
@@ -31,18 +35,28 @@ export {
   pxPerUnit,
   screenRectOf,
 } from './domQuery';
-export { DERIVED_HEIGHT_ROLES } from './entityRoles';
 export {
+  axisArrowPlacements,
+  ISO_DUPLICATE_BUBBLES_ATTR,
+  ISO_HALO_ATTR,
+  type IsometricAxis,
+  type IsometricQuickDuplicateDirection,
+  isometricQuickDuplicateBubbles,
+  isometricSelectionOverlay,
   type LinkEndpoint,
   linkSelectionOverlay,
   PATH_HALO_ATTR,
   pathSelectionOverlay,
   type QuickDuplicateDirection,
   quickDuplicateBubbles,
+  quickDuplicatePlacements,
   type ResizeHandle,
   resizeHandlePositions,
   shapeSelectionOverlay,
+  updateAxisArrowGroup,
+  updateHalo,
   updateQuickDuplicateBubbles,
+  type Vec,
 } from './selectionOverlay';
 export { SVG_NAMESPACE } from './svgNamespace';
 export type { Modifiers, OwnerRef } from './types';

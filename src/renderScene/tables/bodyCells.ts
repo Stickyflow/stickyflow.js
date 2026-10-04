@@ -1,5 +1,5 @@
+import { simpleContainerStyle } from '../artifacts/containers';
 import { colorAtRamp } from '../charts/field/colorRamp';
-import { simpleContainerStyle } from '../entities/containers';
 import type { RenderNode } from '../scene';
 import { DEFAULT_FONT } from '../scene';
 import { renderCellHitArea } from './cellHitArea';

@@ -1,10 +1,16 @@
 import type { RenderNode } from '../../../scene';
 import { colorAtRamp } from '../../field/colorRamp';
 import { computeFieldGrid, fieldSurfaceClip } from '../../field/grid';
-import { computeIsolineSegments } from '../../field/isolines';
+import { computeIsolineSegments, stitchIsolineSegments } from '../../field/isolines';
 import type { FieldSample } from '../../field/types';
+import { linePathData } from '../../primitives/linePath';
 import type { ChartRenderContext } from '../types';
 import type { ScalarFieldGrid } from './types';
+
+// Smooths the stitched marching-squares strand the same way a line/path
+// chart smooths its own points (freeformPathData under the hood) - below
+// 3 points a Catmull-Rom curve is undefined anyway, so those stay straight.
+const ISOLINE_TENSION = 0.5;
 
 export function renderScalarField(context: ChartRenderContext, samples: FieldSample[]): RenderNode[] {
   if (!samples.length || context.plot.width <= 0 || context.plot.height <= 0) {
@@ -86,8 +92,14 @@ function createIsoline(
   if (!segments.length) {
     return null;
   }
-  const path = segments
-    .map(segment => `M ${plot.x + segment.x1} ${plot.y + segment.y1} L ${plot.x + segment.x2} ${plot.y + segment.y2}`)
+  const chains = stitchIsolineSegments(segments);
+  const path = chains
+    .map(chain =>
+      linePathData(
+        chain.map(([x, y]) => ({ x: plot.x + x, y: plot.y + y })),
+        ISOLINE_TENSION,
+      ),
+    )
     .join(' ');
   return {
     type: 'path',

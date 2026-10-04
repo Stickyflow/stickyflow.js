@@ -3,7 +3,17 @@ import { createSankeyGraph } from './graph';
 import { layoutSankeyLinks } from './links';
 import { calculateNodeGeometry } from './nodeGeometry';
 import { layoutSankeyNodes } from './nodes';
-import type { SankeyLayout, SankeyLinkInput, SankeyNodeInput } from './types';
+import type { SankeyLayout, SankeyLinkInput, SankeyNodeInput, SankeyNodeOffset } from './types';
+
+function collectOffsets(inputs: SankeyNodeInput[]): Map<string, SankeyNodeOffset> {
+  const offsets = new Map<string, SankeyNodeOffset>();
+  for (const input of inputs) {
+    if (input.offsetX || input.offsetY) {
+      offsets.set(input.id, { x: input.offsetX ?? 0, y: input.offsetY ?? 0 });
+    }
+  }
+  return offsets;
+}
 
 export function layoutSankey(
   nodeInputs: SankeyNodeInput[],
@@ -17,8 +27,9 @@ export function layoutSankey(
   }
   const columns = assignSankeyColumns(graph);
   const geometry = calculateNodeGeometry(graph, columns, height);
+  const offsets = collectOffsets(nodeInputs);
   return {
-    nodes: layoutSankeyNodes(nodeInputs, graph, geometry, width),
-    links: layoutSankeyLinks(graph, geometry, width),
+    nodes: layoutSankeyNodes(nodeInputs, graph, geometry, width, offsets),
+    links: layoutSankeyLinks(graph, geometry, width, offsets),
   };
 }

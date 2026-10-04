@@ -1,4 +1,4 @@
-import { simpleContainerStyle } from '../entities/containers';
+import { simpleContainerStyle } from '../artifacts/containers';
 import type { RenderNode } from '../scene';
 import type { TableRenderContext } from './types';
 

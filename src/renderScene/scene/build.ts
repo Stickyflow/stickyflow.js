@@ -1,12 +1,12 @@
 import type { RenderInput } from '../../renderInput/types';
-import { buildChart } from '../charts';
-import { buildFrame, buildSwimlane } from '../entities/containers';
-import { buildLink } from '../entities/link';
-import { buildFreeformPath } from '../entities/path';
-import { buildShape } from '../entities/shape';
-import { buildTable } from '../tables';
+import { buildContainers } from '../artifacts/containers';
+import { buildIsometricObjects } from '../artifacts/isometric';
+import { buildLinks } from '../artifacts/link';
+import { buildFreeformPaths } from '../artifacts/path';
+import { buildShapes } from '../artifacts/shape';
+import { buildCharts } from '../charts';
+import { buildTables } from '../tables';
 import { EMPTY_BOUNDS } from './bounds';
-import { tag } from './tagging';
 import type { MeasureTextFactory } from './textMetrics';
 import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
 
@@ -30,36 +30,13 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
   const { measureText } = options;
   const diagnostics: RenderDiagnostic[] = [...(input.diagnostics ?? [])];
   const nodes = [
-    ...input.frames.flatMap((frame, i) =>
-      tag(buildFrame(frame, i), 'frame', frame.id, undefined, frame.title ?? undefined),
-    ),
-    ...input.swimlanes.flatMap((swimlane, i) => tag(buildSwimlane(swimlane, i), 'swimlane', swimlane.id)),
-    ...(input.tables ?? []).flatMap((table, i) =>
-      tag(buildTable(table, i), 'table', table.id, undefined, table.title ?? undefined),
-    ),
-    ...(input.paths ?? []).flatMap((path, i) => tag(buildFreeformPath(path, i), 'path', path.id, 'path', 'Path')),
-    ...(input.charts ?? []).flatMap((chart, i) =>
-      tag(buildChart(chart, i, diagnostics), 'chart', chart.id, chart.chartType, chart.title ?? 'Chart'),
-    ),
-    ...input.links.flatMap((item, i) =>
-      tag(
-        buildLink(item, i, measureText),
-        'link',
-        item.link.id,
-        undefined,
-        item.link.text || `${item.link.fromId} → ${item.link.toId}`,
-      ),
-    ),
-    ...input.shapes.flatMap((shape, index) =>
-      tag(
-        buildShape(shape, index, diagnostics, measureText),
-        'entity',
-        shape.id,
-        shape.shapeType,
-        shape.text || shape.shapeType,
-        shape.parentFrameId ?? undefined,
-      ),
-    ),
+    ...buildContainers(input),
+    ...buildTables(input.tables ?? []),
+    ...buildFreeformPaths(input.paths ?? []),
+    ...buildCharts(input.charts ?? [], diagnostics),
+    ...buildLinks(input.links, measureText),
+    ...buildShapes(input.shapes, diagnostics, measureText),
+    ...buildIsometricObjects(input.isometricObjects ?? []),
   ].sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return { nodes, bounds: sceneBounds(nodes), diagnostics };
 }

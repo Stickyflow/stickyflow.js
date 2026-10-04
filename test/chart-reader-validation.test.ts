@@ -30,7 +30,7 @@ describe('chart type validation', () => {
       diagnostic => diagnostic.code === 'unsupported-chart-type',
     );
     expect(warnings).toHaveLength(1);
-    expect(warnings[0].entityId).toBe('c');
+    expect(warnings[0].ownerId).toBe('c');
     expect(warnings[0].message).toContain('pyramid');
   });
 

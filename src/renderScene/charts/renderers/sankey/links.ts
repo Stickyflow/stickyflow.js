@@ -12,6 +12,8 @@ interface SankeyRibbonEdge {
 
 interface SankeyLinkRibbon {
   linkIndex: number;
+  fromId: string;
+  toId: string;
   source: SankeyRibbonEdge;
   target: SankeyRibbonEdge;
   controlX: number;
@@ -62,6 +64,8 @@ function createSankeyLinkRibbon(
     : { kind: 'solid', color: link.color || toColor };
   return {
     linkIndex,
+    fromId: link.source,
+    toId: link.target,
     source,
     target,
     controlX: (source.x + target.x) / 2,
@@ -90,6 +94,7 @@ function createSankeyRibbonNode(
     order: nextOrder(),
     bounds: gradient ? gradientBounds : bounds,
     d: sankeyRibbonPath(ribbon),
+    detail: { of: 'link', fromId: ribbon.fromId, toId: ribbon.toId },
     style: {
       fill: ribbon.fill,
       opacity: ribbon.opacity,
@@ -99,6 +104,10 @@ function createSankeyRibbonNode(
   };
 }
 
+// The exact "M sx,sTop C cx,sTop cx,tTop tx,tTop L tx,tBottom C cx,tBottom
+// cx,sBottom sx,sBottom Z" shape below is re-parsed, as-is, by the sankeyNode
+// drag preview (stickyflow.js's interaction tier) to live-redraw a ribbon
+// while its node is being dragged - keep both in sync if this ever changes.
 function sankeyRibbonPath(ribbon: SankeyLinkRibbon): string {
   const { source, target, controlX } = ribbon;
   return [

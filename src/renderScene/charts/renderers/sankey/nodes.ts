@@ -1,4 +1,4 @@
-import { leftRoundedRectPath, rightRoundedRectPath } from '../../../entities/containers';
+import { leftRoundedRectPath, rightRoundedRectPath } from '../../../artifacts/containers';
 import type { RenderNode, SceneText } from '../../../scene';
 import { finite } from '../../../scene';
 import { estimateTextWidth } from '../../../scene/textLayout';
@@ -45,6 +45,7 @@ function createNodeRect(
   };
   const isFirstColumn = node.column === 0;
   const isLastColumn = node.column === data.columnCount - 1;
+  const detail = { of: 'chartSeries' as const, series: node.id, mark: 'sankey-node' };
   if (cornerRadius > 0 && isFirstColumn && isLastColumn) {
     return {
       type: 'rect',
@@ -57,6 +58,7 @@ function createNodeRect(
       height: node.height,
       rx: cornerRadius,
       style,
+      detail,
     };
   }
   if (cornerRadius > 0 && isFirstColumn) {
@@ -67,6 +69,7 @@ function createNodeRect(
       bounds,
       d: leftRoundedRectPath(x, y, node.width, node.height, cornerRadius),
       style,
+      detail,
     };
   }
   if (cornerRadius > 0 && isLastColumn) {
@@ -77,6 +80,7 @@ function createNodeRect(
       bounds,
       d: rightRoundedRectPath(x, y, node.width, node.height, cornerRadius),
       style,
+      detail,
     };
   }
   return {
@@ -89,6 +93,7 @@ function createNodeRect(
     width: node.width,
     height: node.height,
     style,
+    detail,
   };
 }
 
@@ -115,7 +120,7 @@ function createNodeLabel(
           isLightColor(fallback) ? OUTSIDE_LABEL_LIGHTNESS_ON_DARK_BG : OUTSIDE_LABEL_LIGHTNESS_ON_LIGHT_BG,
         ) ?? fallback);
   const color = chart.config?.labelColor ?? defaultColor;
-  return { ...label, color };
+  return { ...label, color, detail: { of: 'chartSeries', series: node.id, mark: 'sankey-node-label' } };
 }
 
 function createOutsideLabel(context: ChartRenderContext, data: SankeyRenderData, node: SankeyLayoutNode): SceneText {

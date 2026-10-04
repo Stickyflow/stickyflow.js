@@ -36,7 +36,7 @@ export interface SceneDiffEvent {
 
 export interface ViewerEventMap {
   ready: { diagramId: string };
-  entityClick: OwnerPointerEvent;
+  canvasObjectClick: OwnerPointerEvent;
   linkClick: OwnerPointerEvent;
   ownerHover: OwnerPointerEvent | { diagramId: string; owner: null };
   selectionChange: SelectionChangeEvent;

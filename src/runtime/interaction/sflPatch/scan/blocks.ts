@@ -1,6 +1,7 @@
 import { braceDelta, maskLines } from './sourceMask';
 
-const OWNER_HEADER = /^\s*(Entity|Shape|Container|Table|Chart|Path|Link)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
+const OWNER_HEADER =
+  /^\s*(Entity|Shape|Container|Table|Chart|Path|Link|Isometric|Connection)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 export const VALID_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export interface LineRange {
@@ -77,6 +78,22 @@ export function findContentChild(
     return null;
   }
   return findChildBlock(lines, data, headerRe) ?? (bareHeaderRe ? findChildBlock(lines, data, bareHeaderRe) : null);
+}
+
+export function findChildBlocks(lines: string[], range: LineRange, headerRe: RegExp): LineRange[] {
+  const masked = maskLines(lines);
+  if (masked === null) {
+    return [];
+  }
+  const blocks: LineRange[] = [];
+  let depth = 0;
+  for (let i = range.start; i <= range.end; i++) {
+    if (depth === 1 && i > range.start && headerRe.test(masked[i])) {
+      blocks.push({ start: i, end: blockEndIn(masked, i) });
+    }
+    depth += braceDelta(masked[i]);
+  }
+  return blocks;
 }
 
 export function findFirstBlockOfKind(lines: string[], kind: string): LineRange | null {

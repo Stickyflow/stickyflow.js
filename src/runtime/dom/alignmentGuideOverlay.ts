@@ -3,12 +3,12 @@ import { SVG_NAMESPACE } from './svgNamespace';
 const NS = SVG_NAMESPACE;
 const DASH = '8 4';
 
-export interface GuideLine {
-  orientation: 'vertical' | 'horizontal';
-  position: number;
-  from: number;
-  to: number;
-}
+export type GuideLine =
+  | { orientation: 'vertical' | 'horizontal'; position: number; from: number; to: number }
+  // An arbitrary-angle guide - the isometric "Flucht" snap draws its line at
+  // the fixed 30/150deg axis angle, which a position+from/to pair (always
+  // either purely horizontal or vertical) can't express.
+  | { orientation: 'segment'; x1: number; y1: number; x2: number; y2: number };
 
 function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {
   return doc.createElementNS(NS, tag) as SVGElementTagNameMap[K];
@@ -27,7 +27,12 @@ export function updateAlignmentGuides(svg: SVGSVGElement, guides: GuideLine[], c
   g.setAttribute('pointer-events', 'none');
   guides.forEach(guide => {
     const line = el(doc, 'line');
-    if (guide.orientation === 'vertical') {
+    if (guide.orientation === 'segment') {
+      line.setAttribute('x1', String(guide.x1));
+      line.setAttribute('y1', String(guide.y1));
+      line.setAttribute('x2', String(guide.x2));
+      line.setAttribute('y2', String(guide.y2));
+    } else if (guide.orientation === 'vertical') {
       line.setAttribute('x1', String(guide.position));
       line.setAttribute('x2', String(guide.position));
       line.setAttribute('y1', String(guide.from));

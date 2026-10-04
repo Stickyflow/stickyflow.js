@@ -16,8 +16,8 @@ export function emitMoveCompletion(
 
   const rawDelta = movePointerDelta(svg, drag, event);
   const snapped = snapMove(svg, drag, rawDelta.dx, rawDelta.dy);
-  const { dx, dy } = clampMoveDelta(drag.entities, snapped.dx, snapped.dy);
-  for (const entity of drag.entities) {
-    emitter.emit('moveChange', { owner: entity.owner, dx, dy });
+  const { dx, dy } = clampMoveDelta(drag.canvasObjects, snapped.dx, snapped.dy);
+  for (const canvasObject of drag.canvasObjects) {
+    emitter.emit('moveChange', { owner: canvasObject.owner, dx, dy });
   }
 }
