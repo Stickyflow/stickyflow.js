@@ -1,3 +1,4 @@
+import type { Rect } from '../../../model/geometry/types';
 import { isCameraGesture, pointerUserPoint, resolveOwner } from '../../dom';
 import type { SankeyNodeDragLink, SankeyNodeDragState } from './types';
 
@@ -36,6 +37,16 @@ function parseRibbonLink(element: SVGGraphicsElement, endsAtSource: boolean): Sa
     number,
   ];
   return { element, originalD: d, endsAtSource, sx, sTop, sBottom, tx, tTop, tBottom };
+}
+
+function rectOf(element: SVGGraphicsElement): Rect {
+  const box = element.getBBox();
+  return { x: box.x, y: box.y, width: box.width, height: box.height };
+}
+
+function siblingNodeBounds(svg: SVGSVGElement, ownerId: string, rect: SVGGraphicsElement): Rect[] {
+  const selector = `[data-sf-id="${CSS.escape(ownerId)}"][data-sf-mark="sankey-node"]`;
+  return [...svg.querySelectorAll<SVGGraphicsElement>(selector)].filter(element => element !== rect).map(rectOf);
 }
 
 function connectedLinks(svg: SVGSVGElement, ownerId: string, nodeId: string): SankeyNodeDragLink[] {
@@ -93,6 +104,8 @@ export function resolveSankeyNodeDrag(svg: SVGSVGElement, event: PointerEvent): 
     label: findNodeLabel(svg, owner.id, nodeId),
     startX: start.x,
     startY: start.y,
+    originalBounds: rectOf(rect),
+    siblingBounds: siblingNodeBounds(svg, owner.id, rect),
     links: connectedLinks(svg, owner.id, nodeId),
     moved: false,
     lastDx: 0,

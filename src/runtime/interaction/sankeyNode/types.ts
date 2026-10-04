@@ -1,3 +1,4 @@
+import type { Rect } from '../../../model/geometry/types';
 import type { OwnerRef } from '../../viewer';
 
 // One ribbon touching the dragged node, captured once at drag start so the
@@ -24,6 +25,11 @@ export interface SankeyNodeDragState {
   label: SVGGraphicsElement | null;
   startX: number;
   startY: number;
+  originalBounds: Rect;
+  // Other nodes in the same chart (any column) - alignment guides snap the
+  // dragged node's edges/center against theirs, same mechanism a shape drag
+  // already uses against its canvas siblings.
+  siblingBounds: Rect[];
   links: SankeyNodeDragLink[];
   moved: boolean;
   lastDx: number;
