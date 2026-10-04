@@ -1,6 +1,7 @@
 import type { Chart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
+import { seriesLabelProp } from '../propPath';
 import type { ChartLayout } from './layout';
 
 export function buildBoxplotSeriesYAxisTicks(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
@@ -9,14 +10,17 @@ export function buildBoxplotSeriesYAxisTicks(chart: Chart, layout: ChartLayout, 
 
   return chart.series.map((series, index) => {
     const centerY = layout.plot.y + (index + 0.5) * slotWidth;
-    return chartText({
-      id: `chart-y-tick-${chart.id}-${index}`,
-      order: order + index,
-      bounds: layout.bounds,
-      frame: { x: chart.x, y: centerY - 9, width: layout.padLeft - 8, height: 18 },
-      text: series.label || series.id,
-      chart,
-      align: 'right',
-    });
+    return {
+      ...chartText({
+        id: `chart-y-tick-${chart.id}-${index}`,
+        order: order + index,
+        bounds: layout.bounds,
+        frame: { x: chart.x, y: centerY - 9, width: layout.padLeft - 8, height: 18 },
+        text: series.label || series.id,
+        chart,
+        align: 'right',
+      }),
+      prop: seriesLabelProp(series.id),
+    };
   });
 }
