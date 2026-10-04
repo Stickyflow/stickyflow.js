@@ -5,9 +5,12 @@ interface TextareaOptions {
   rect: TextEditRect;
   fontSize: number;
   fontFamily: string;
+  /** Overlay a single-line floating label exactly (isometric labels): no
+   *  minimum size, centered text, the label's own background and corners. */
+  label?: { background: string };
 }
 
-export function createTextEditor({ text, rect, fontSize, fontFamily }: TextareaOptions): HTMLTextAreaElement {
+export function createTextEditor({ text, rect, fontSize, fontFamily, label }: TextareaOptions): HTMLTextAreaElement {
   const textarea = document.createElement('textarea');
   textarea.value = text;
 
@@ -28,6 +31,16 @@ export function createTextEditor({ text, rect, fontSize, fontFamily }: TextareaO
   style.boxSizing = 'border-box';
   style.zIndex = '1000';
   style.overflow = 'hidden';
+  if (label) {
+    style.width = `${rect.width}px`;
+    style.height = `${rect.height}px`;
+    style.lineHeight = `${rect.height - 2}px`;
+    style.padding = '0 4px';
+    style.textAlign = 'center';
+    style.whiteSpace = 'nowrap';
+    style.background = label.background;
+    style.borderRadius = '4px';
+  }
 
   document.body.appendChild(textarea);
   textarea.focus();
