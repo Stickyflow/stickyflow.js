@@ -1,4 +1,3 @@
-import { TABLE_COLUMN_DIVIDER_ATTR } from '../../../svg/domContract/attributes';
 import { resolveOwner } from '../../dom';
 import type { Viewer } from '../../viewer';
 import { hasMovableGeometry } from '../geometryRoles';
@@ -11,10 +10,6 @@ function isChartInteractiveMark(target: Element | null): boolean {
   return target?.closest?.('[data-sf-value-index], [data-sf-prop-kind="value"], [data-sf-mark]') != null;
 }
 
-function isColumnDividerTarget(target: Element | null): boolean {
-  return target?.closest?.(`[${TABLE_COLUMN_DIVIDER_ATTR}]`) != null;
-}
-
 export function createMoveDragState(
   viewer: Viewer,
   event: PointerEvent,
@@ -22,7 +17,7 @@ export function createMoveDragState(
 ): MoveDragState | null {
   const target = event.target as Element | null;
   const owner = resolveOwner(target);
-  if (!hasMovableGeometry(owner) || isChartInteractiveMark(target) || isColumnDividerTarget(target)) {
+  if (!hasMovableGeometry(owner) || isChartInteractiveMark(target)) {
     return null;
   }
 

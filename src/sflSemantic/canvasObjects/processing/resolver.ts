@@ -4,7 +4,6 @@ import { resolveChartObject } from '../artifacts/chart/resolver';
 import { resolveIsometricObject } from '../artifacts/isometric/resolver';
 import { resolvePathObject } from '../artifacts/path/resolver';
 import { resolveSwimlaneObject } from '../artifacts/swimlane/resolver';
-import { resolveTableObject } from '../artifacts/table/resolver';
 import type {
   SflCanvasObject,
   SflCanvasObjectBase,
@@ -51,8 +50,6 @@ export function resolveCanvasObject(
       return resolvePathObject(base, properties, origin);
     case 'swimlane':
       return resolveSwimlaneObject(base, properties);
-    case 'table':
-      return resolveTableObject(base, block, properties, layoutProp);
     case 'frame':
       return { ...base, objectType: 'frame' } satisfies SflFrameObject;
     case 'shape':

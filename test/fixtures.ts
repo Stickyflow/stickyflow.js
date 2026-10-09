@@ -7,7 +7,6 @@ import type { Frame } from '../src/model/frame';
 import type { Link } from '../src/model/link';
 import type { Shape, ShapeType } from '../src/model/shape';
 import type { Swimlane } from '../src/model/swimlane';
-import type { Table } from '../src/model/table';
 
 const shape = (id: string, shapeType: ShapeType, x: number, extra: Partial<Shape> = {}): Shape =>
   ({
@@ -94,38 +93,6 @@ const swimlane: Swimlane = {
   isLocked: false,
 };
 
-const table: Table = {
-  id: 'users',
-  name: 'users',
-  title: 'Users',
-  x: 10,
-  y: 20,
-  width: 220,
-  height: 60,
-  columns: [
-    { id: 'name', label: 'Name', width: 160, type: 'text' },
-    { id: 'pk', label: 'PK', width: 60, type: 'boolean' },
-  ],
-  rows: [
-    { id: 'r1', cells: { name: 'id', pk: true } },
-    { id: 'r2', cells: { name: 'email', pk: false } },
-  ],
-  strokeColor: '#9b42df',
-  strokeWidth: 2,
-  dash: [],
-  cornerRadius: 8,
-  fillColor: '#ffffff',
-  textColor: '#111111',
-  fontSize: 14,
-  fontWeight: 'bold',
-  showHeader: true,
-  rowHeight: 36,
-  layerGroup: 'background',
-  orderKey: 'a',
-  isVisible: true,
-  isLocked: false,
-} as Table;
-
 const linkStraight: Link = {
   id: 'straight',
   fromId: 'a',
@@ -181,7 +148,6 @@ export const fixtures: Record<string, RenderInput> = {
   },
   'frame-titled': { shapes: [], frames: [frame], swimlanes: [], links: [] },
   swimlane: { shapes: [], frames: [], swimlanes: [swimlane], links: [] },
-  table: { shapes: [], frames: [], swimlanes: [], tables: [table], links: [] },
   'links-variety': {
     shapes: [shape('a', 'rectangle', 0), shape('b', 'rectangle', 300)],
     frames: [],

@@ -1,10 +1,11 @@
 import type { Chart } from '../../model/chart';
+import type { Connection } from '../../model/connection';
 import type { Frame } from '../../model/frame';
+import type { IsometricObject } from '../../model/isometricObject';
 import type { Link } from '../../model/link';
 import type { FreeformPath } from '../../model/path';
 import type { Shape } from '../../model/shape';
 import type { Swimlane } from '../../model/swimlane';
-import type { Table } from '../../model/table';
 import type { SflDiagnostic } from '../../sflSemantic/sflToCanvasState';
 
 export interface ImportBuckets {
@@ -26,9 +27,10 @@ export interface ImportGroup {
 export interface SflImportCanvasEntities extends ImportBuckets {
   frames: Frame[];
   swimlanes: Swimlane[];
-  tables: Table[];
+  isometricObjects: IsometricObject[];
   paths: FreeformPath[];
   charts: Chart[];
+  connections: Connection[];
 }
 
 export interface SflImportJson {

@@ -5,8 +5,8 @@ import type { OwnerRef } from '../viewer';
 // the body to move it) - its resize handles are a separate, dedicated
 // session (see isometricAxisResize/) that bypasses the generic resize
 // pipeline entirely, so it was deliberately left out of COMPOSITE_ROLES.
-const GEOMETRY_ROLES: ReadonlySet<string> = new Set(['shape', 'chart', 'frame', 'swimlane', 'table', 'isometric']);
-const COMPOSITE_ROLES: ReadonlySet<string> = new Set(['chart', 'table']);
+const GEOMETRY_ROLES: ReadonlySet<string> = new Set(['shape', 'chart', 'frame', 'swimlane', 'isometric']);
+const COMPOSITE_ROLES: ReadonlySet<string> = new Set(['chart']);
 const MOVABLE_ROLES: ReadonlySet<string> = new Set([...GEOMETRY_ROLES, 'path']);
 
 export function hasEditableGeometry(owner: OwnerRef | null | undefined): owner is OwnerRef {

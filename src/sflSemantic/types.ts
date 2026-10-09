@@ -11,13 +11,11 @@ export {
   isIsometricObject,
   isPathObject,
   isSwimlaneObject,
-  isTableObject,
   type SflCanvasObject,
   type SflChartObject,
   type SflIsometricObject,
   type SflPathObject,
   type SflSwimlaneObject,
-  type SflTableObject,
 } from './canvasObjects/types';
 export type { SflGroupOut } from './groups/types';
 

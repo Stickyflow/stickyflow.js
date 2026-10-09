@@ -7,7 +7,6 @@ import type { Link } from '../model/link';
 import type { FreeformPath } from '../model/path';
 import type { Shape } from '../model/shape';
 import type { Swimlane } from '../model/swimlane';
-import type { Table } from '../model/table';
 
 export interface RenderInputLink {
   link: Link;
@@ -16,22 +15,11 @@ export interface RenderInputLink {
   kind?: string;
 }
 
-export interface TablePropertyPaths {
-  header: Record<string, string>;
-  body: Record<string, Record<string, string>>;
-  footer: Record<string, string>;
-}
-
-export interface RenderInputTable extends Table {
-  propertyPaths?: TablePropertyPaths;
-}
-
 export interface RenderInput {
   shapes: Shape[];
   frames: Frame[];
   swimlanes: Swimlane[];
   isometricObjects?: IsometricObject[];
-  tables?: RenderInputTable[];
   paths?: FreeformPath[];
   charts?: Chart[];
   links: RenderInputLink[];

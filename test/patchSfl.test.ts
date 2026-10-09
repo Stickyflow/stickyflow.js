@@ -340,17 +340,12 @@ describe('insertCanvasObject', () => {
     expect(sflToCanvasState(renamed).canvasObjects.find(e => e.id === 'a')?.text).toBe('line one\nline two');
   });
 
-  it('writes `kind: frame`/`kind: swimlane` for a Container, and neither for a Table', () => {
+  it('writes `kind: frame`/`kind: swimlane` for a Container', () => {
     const withFrame = insertCanvasObject(sfl, { id: 'g', kind: 'frame', x: 0, y: 500, width: 200, height: 100 });
     expect(sflToCanvasState(withFrame).canvasObjects.find(e => e.id === 'g')?.objectType).toBe('frame');
 
     const withSwimlane = insertCanvasObject(sfl, { id: 'p', kind: 'swimlane', x: 0, y: 500, width: 200, height: 100 });
     expect(sflToCanvasState(withSwimlane).canvasObjects.find(e => e.id === 'p')?.objectType).toBe('swimlane');
-
-    const withTable = insertCanvasObject(sfl, { id: 't', kind: 'table', x: 0, y: 500, width: 200, height: 100 });
-    expect(withTable).toContain('Table t {');
-    expect(withTable).not.toMatch(/Table t \{[^}]*kind:/s);
-    expect(sflToCanvasState(withTable).canvasObjects.find(e => e.id === 't')?.objectType).toBe('table');
   });
 
   it('nests inside parentId with a frame-relative position, given absolute x/y', () => {

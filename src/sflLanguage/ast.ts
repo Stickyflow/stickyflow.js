@@ -4,7 +4,6 @@ export const NAMED_BLOCK_KINDS = [
   'Group',
   'Entity',
   'Container',
-  'Table',
   'Path',
   'Chart',
   'Shape',
@@ -13,17 +12,12 @@ export const NAMED_BLOCK_KINDS = [
   'Connection',
   'Layout',
   'Style',
-  'Columns',
-  'Column',
-  'Rows',
-  'Row',
   'Axis',
   'Series',
   'Rule',
   'Net',
   'Symbol',
   'Port',
-  'Footer',
 ] as const;
 
 export type NamedBlockKind = (typeof NAMED_BLOCK_KINDS)[number];

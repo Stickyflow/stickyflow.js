@@ -21,21 +21,19 @@ export type {
   SflLinkOut,
   SflPathObject,
   SflSwimlaneObject,
-  SflTableObject,
 } from './sflSemantic/sflToCanvasState';
 export {
   isChartObject,
   isIsometricObject,
   isPathObject,
   isSwimlaneObject,
-  isTableObject,
   sflToCanvasState,
 } from './sflSemantic/sflToCanvasState';
 
 // L3 — RenderInput
 export { sflToRenderInput } from './renderInput/fromSfl';
 export { decodeColor, decodeShadow } from './renderInput/styleDecoding';
-export type { RenderInput, RenderInputTable, TablePropertyPaths } from './renderInput/types';
+export type { RenderInput } from './renderInput/types';
 
 // L4 — Render Scene
 export type {
