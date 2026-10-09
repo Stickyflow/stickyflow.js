@@ -25,7 +25,6 @@ export function sflToImportJson(sfl: string): SflImportJson {
         links: canvas.links,
         frames: collected.frames,
         swimlanes: collected.swimlanes,
-        tables: collected.tables,
         paths: collected.paths,
         charts: collected.charts,
       },

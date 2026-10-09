@@ -10,9 +10,6 @@ import {
   SYMBOL_BOUNDS_ATTR,
   SYMBOL_POINTS_ATTR,
   SYMBOL_TENSION_ATTR,
-  TABLE_COLUMN_DIVIDER_ATTR,
-  TABLE_COLUMN_START_WIDTH_ATTR,
-  TABLE_COLUMN_WIDTH_SCALE_ATTR,
 } from './domContract/attributes';
 import { num, xml } from './format';
 
@@ -50,8 +47,6 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return symbolGeometryAttrs(detail);
     case 'declaredBounds':
       return [declaredBoundsAttr(detail.bounds)];
-    case 'tableColumnDivider':
-      return tableColumnDividerAttrs(detail);
     case 'pathGeometry':
       return pathGeometryAttrs(detail);
     case 'isometricGeometry':
@@ -126,14 +121,6 @@ function isometricGeometryAttrs(detail: Extract<SceneDetail, { of: 'isometricGeo
     `${CORNER_RADIUS_ATTR}="${num(detail.cornerRadius)}"`,
     declaredBoundsAttr(detail.bounds),
     `${ISOMETRIC_LABEL_OFFSET_ATTR}="${num(detail.labelOffsetX)},${num(detail.labelOffsetY)}"`,
-  ];
-}
-
-function tableColumnDividerAttrs(detail: Extract<SceneDetail, { of: 'tableColumnDivider' }>): string[] {
-  return [
-    `${TABLE_COLUMN_DIVIDER_ATTR}="${xml(detail.columnId)}"`,
-    `${TABLE_COLUMN_START_WIDTH_ATTR}="${num(detail.startWidth)}"`,
-    `${TABLE_COLUMN_WIDTH_SCALE_ATTR}="${num(detail.widthScale)}"`,
   ];
 }
 

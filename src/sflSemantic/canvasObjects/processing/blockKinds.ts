@@ -4,7 +4,6 @@ export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Entity',
   'Shape',
   'Container',
-  'Table',
   'Path',
   'Chart',
   'Isometric',

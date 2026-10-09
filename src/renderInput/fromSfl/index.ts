@@ -11,7 +11,6 @@ export function sflToRenderInput(sfl: string): RenderInput {
     frames: canvasObjects.frames,
     swimlanes: canvasObjects.swimlanes,
     isometricObjects: canvasObjects.isometricObjects,
-    tables: canvasObjects.tables,
     paths: canvasObjects.paths,
     charts: canvasObjects.charts,
     links: createRenderInputLinks(canvasObjects),

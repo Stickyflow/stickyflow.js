@@ -15,7 +15,6 @@ function positionedCanvasObjects(canvasObjects: CollectedCanvasObjects): Positio
     ...canvasObjects.shapes,
     ...canvasObjects.frames,
     ...canvasObjects.swimlanes,
-    ...canvasObjects.tables,
     ...canvasObjects.paths,
     ...canvasObjects.charts,
   ];

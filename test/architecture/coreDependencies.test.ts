@@ -166,7 +166,7 @@ describe('core dependency direction', () => {
 
   it('keeps architectural index files free of implementation logic', () => {
     const implementationPattern = /^(?:export\s+)?(?:async\s+)?function\s+|^export\s+(?:class|const|let)\s+/m;
-    const architecturalRoots = ['renderScene/charts', 'renderScene/scene', 'renderScene/tables'];
+    const architecturalRoots = ['renderScene/charts', 'renderScene/scene'];
     const offenders = architecturalRoots
       .map(root => join(srcDir, root, 'index.ts'))
       .filter(file => implementationPattern.test(readFileSync(file, 'utf8')))

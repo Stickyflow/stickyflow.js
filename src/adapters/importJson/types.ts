@@ -4,7 +4,6 @@ import type { Link } from '../../model/link';
 import type { FreeformPath } from '../../model/path';
 import type { Shape } from '../../model/shape';
 import type { Swimlane } from '../../model/swimlane';
-import type { Table } from '../../model/table';
 import type { SflDiagnostic } from '../../sflSemantic/sflToCanvasState';
 
 export interface ImportBuckets {
@@ -26,7 +25,6 @@ export interface ImportGroup {
 export interface SflImportCanvasEntities extends ImportBuckets {
   frames: Frame[];
   swimlanes: Swimlane[];
-  tables: Table[];
   paths: FreeformPath[];
   charts: Chart[];
 }

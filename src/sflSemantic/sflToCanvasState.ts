@@ -13,14 +13,12 @@ export type {
   SflLinkOut,
   SflPathObject,
   SflSwimlaneObject,
-  SflTableObject,
 } from './types';
 export {
   isChartObject,
   isIsometricObject,
   isPathObject,
   isSwimlaneObject,
-  isTableObject,
 } from './types';
 
 export function sflToCanvasState(source: string): SflCanvasState {

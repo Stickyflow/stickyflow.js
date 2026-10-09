@@ -2,7 +2,6 @@ import type { Unsubscribe } from '../eventing/emitter';
 import type { Viewer } from '../viewer';
 import { bindChartValueDrag, type ChartValueDragHandle } from './chartValueDrag';
 import { bindColorEdit, type ColorEditHandle } from './colorEdit/binding';
-import { bindColumnResize, type ColumnResizeDragHandle } from './columnResizeDrag';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './isometricAxisResizeDrag';
@@ -39,7 +38,6 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const movement: MoveDragHandle = bindShapeMovement(viewer, emitter);
   const resize: ResizeDragHandle = bindShapeResize(viewer, emitter);
   const isometricAxisResize: IsometricAxisResizeDragHandle = bindIsometricAxisResize(viewer, emitter);
-  const columnResize: ColumnResizeDragHandle = bindColumnResize(viewer, emitter);
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
@@ -70,7 +68,6 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       movement.destroy();
       resize.destroy();
       isometricAxisResize.destroy();
-      columnResize.destroy();
       pathReshape.destroy();
       linkEndpoints.destroy();
       quickDuplicate.destroy();
@@ -100,7 +97,6 @@ export type { PickerValue } from './colorEdit/value';
 export { cssBackground, formatPickerValue, seedFrom } from './colorEdit/value';
 export type {
   ChartValueChangeEvent,
-  ColumnResizeChangeEvent,
   DeleteEvent,
   InteractionEventMap,
   InteractionEventName,
@@ -128,7 +124,6 @@ export type {
 } from './patchSfl';
 export {
   applyChartValueChange,
-  applyColumnResizeChange,
   applyLinkReconnectChange,
   applyMoveChange,
   applyPathPointChange,

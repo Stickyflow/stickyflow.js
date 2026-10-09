@@ -5,7 +5,6 @@ import { buildLinks } from '../artifacts/link';
 import { buildFreeformPaths } from '../artifacts/path';
 import { buildShapes } from '../artifacts/shape';
 import { buildCharts } from '../charts';
-import { buildTables } from '../tables';
 import { EMPTY_BOUNDS } from './bounds';
 import type { MeasureTextFactory } from './textMetrics';
 import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
@@ -31,7 +30,6 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
   const diagnostics: RenderDiagnostic[] = [...(input.diagnostics ?? [])];
   const nodes = [
     ...buildContainers(input),
-    ...buildTables(input.tables ?? []),
     ...buildFreeformPaths(input.paths ?? []),
     ...buildCharts(input.charts ?? [], diagnostics),
     ...buildLinks(input.links, measureText),
