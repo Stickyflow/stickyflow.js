@@ -1,5 +1,7 @@
 import type { Chart } from '../../model/chart';
+import type { Connection } from '../../model/connection';
 import type { Frame } from '../../model/frame';
+import type { IsometricObject } from '../../model/isometricObject';
 import type { Link } from '../../model/link';
 import type { FreeformPath } from '../../model/path';
 import type { Shape } from '../../model/shape';
@@ -25,8 +27,10 @@ export interface ImportGroup {
 export interface SflImportCanvasEntities extends ImportBuckets {
   frames: Frame[];
   swimlanes: Swimlane[];
+  isometricObjects: IsometricObject[];
   paths: FreeformPath[];
   charts: Chart[];
+  connections: Connection[];
 }
 
 export interface SflImportJson {
