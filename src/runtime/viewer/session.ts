@@ -2,6 +2,7 @@ import type { DisplayHandle, ViewBox } from './display';
 import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
 import { bindInteraction, type InteractionHandle } from './interaction';
+import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
 import type { Viewer, ViewerOptions, ViewerSource } from './types';
 
@@ -9,6 +10,7 @@ export class ViewerSession implements Viewer {
   private readonly emitter = new Emitter();
   private readonly display: DisplayHandle;
   private readonly interaction: InteractionHandle | null;
+  private readonly shaderSurfaces: ShaderSurfaceHandle;
 
   constructor(
     private readonly options: ViewerOptions,
@@ -16,6 +18,7 @@ export class ViewerSession implements Viewer {
     private readonly diagramId: string,
   ) {
     this.display = mountDisplay(options.container, initialSvg);
+    this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
     this.interaction = options.interactive
       ? bindInteraction(this.display, this.emitter, diagramId, { selectable: options.selectable })
       : null;
@@ -50,6 +53,7 @@ export class ViewerSession implements Viewer {
     const svg = renderViewerSource(next, this.options.renderOptions);
     assertViewerUpdateContract(svg);
     const diff = this.display.updateContent(svg);
+    this.shaderSurfaces.refresh();
     if (next.resetView) {
       this.display.fit();
     }
@@ -70,6 +74,7 @@ export class ViewerSession implements Viewer {
 
   destroy(): void {
     this.interaction?.destroy();
+    this.shaderSurfaces.destroy();
     this.display.destroy();
     this.emitter.clear();
   }

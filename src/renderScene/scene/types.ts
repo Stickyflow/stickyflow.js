@@ -2,6 +2,7 @@ import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
+import type { Shader } from '../../model/shader';
 
 export type RenderDiagnostic = Diagnostic;
 export type { Bounds, Point } from '../../model/geometry/types';
@@ -162,7 +163,18 @@ export interface SceneText extends SceneBase {
   richLines?: Array<Array<{ text: string; bold: boolean }>>;
 }
 
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText;
+export interface SceneShaderSurface extends SceneBase {
+  type: 'shader-surface';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  shader: Shader;
+  mask: 'ellipse';
+}
+
+export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneShaderSurface;
 
 export interface RenderScene {
   nodes: RenderNode[];

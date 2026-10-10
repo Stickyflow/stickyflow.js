@@ -7,6 +7,7 @@ export const SHAPE_TYPES = [
   'diamond',
   'hexagon',
   'oval',
+  'circle',
   'document',
   'parallelogram',
   'trapezoid',

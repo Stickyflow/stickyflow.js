@@ -69,6 +69,25 @@ function createRenderContext(
   };
 }
 
+function renderShaderSurface(context: ShapeRenderContext): RenderNode | undefined {
+  if (!context.shape.shader || (context.shape.shapeType !== 'circle' && context.shape.shapeType !== 'oval')) {
+    return undefined;
+  }
+  return {
+    id: `${context.id}-shader`,
+    type: 'shader-surface',
+    order: context.order,
+    bounds: context.bounds,
+    x: context.x,
+    y: context.y,
+    width: context.width,
+    height: context.height,
+    rotation: context.rotation,
+    shader: context.shape.shader,
+    mask: 'ellipse',
+  };
+}
+
 export function buildShape(
   shape: Shape,
   index: number,
@@ -81,6 +100,10 @@ export function buildShape(
   const { context, strokeWidth } = createRenderContext(shape, index, diagnostics);
   const nodes =
     shape.strokeStyle === 'double' ? renderDoubleStroke(context, strokeWidth || 1) : renderShapeGeometry(context);
+  const shader = renderShaderSurface(context);
+  if (shader) {
+    nodes.push(shader);
+  }
   const text = renderShapeText(context, strokeWidth, measureText);
   if (text) {
     nodes.push(text);

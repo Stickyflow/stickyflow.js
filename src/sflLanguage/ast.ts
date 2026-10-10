@@ -12,6 +12,7 @@ export const NAMED_BLOCK_KINDS = [
   'Connection',
   'Layout',
   'Style',
+  'Shader',
   'Axis',
   'Series',
   'Rule',

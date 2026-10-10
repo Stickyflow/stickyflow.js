@@ -1,3 +1,4 @@
+import type { Shader } from '../../../model/shader';
 import type { ShapeType } from '../../../model/shape';
 import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeShadow } from '../../styleDecoding';
@@ -17,7 +18,7 @@ function shapeTypeOf(value: string | undefined): ShapeType {
   return (value || 'rectangle') as ShapeType;
 }
 
-export function shapeObject(e: SflCanvasObject) {
+export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Shader>) {
   const p = e.props;
   return {
     id: e.id,
@@ -48,5 +49,6 @@ export function shapeObject(e: SflCanvasObject) {
     opacity: numOf(p.opacity),
     parentFrameId: e.parentFrameId,
     order: e.order,
+    shader: p.shader ? shaders.get(p.shader) : undefined,
   };
 }

@@ -1,3 +1,4 @@
+import type { Shader } from '../../../model/shader';
 import type { SflBlock, SflValue } from '../../../sflLanguage/ast';
 import { asString } from '../../ast/valueAccess';
 import { resolveChartObject } from '../artifacts/chart/resolver';
@@ -19,6 +20,7 @@ export interface CanvasObjectResolutionContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
   layoutProp: (block: SflBlock, key: string) => SflValue | undefined;
   symbolDefs: Map<string, SflSymbolDefinition>;
+  shaderDefs: Map<string, Shader>;
 }
 
 export function resolveCanvasObject(

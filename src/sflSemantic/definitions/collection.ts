@@ -1,6 +1,8 @@
+import type { Shader } from '../../model/shader';
 import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
 import { childBlocks } from '../ast/blockEntries';
 import type { CanvasObjectResolutionContext } from '../canvasObjects/processing/resolver';
+import { readShaderDefinition } from './shaders';
 import { readSymbolDefinition } from './symbols';
 
 export type BlockDefinitions = Map<string, SflBlock>;
@@ -9,6 +11,7 @@ export interface CanvasDefinitions {
   styles: BlockDefinitions;
   layouts: BlockDefinitions;
   symbols: CanvasObjectResolutionContext['symbolDefs'];
+  shaders: Map<string, Shader>;
   model?: SflBlock;
 }
 
@@ -21,8 +24,23 @@ export function collectCanvasDefinitions(sflDocument: SflDocument): CanvasDefini
     styles: collectStyleDefinitions(sflDocument),
     layouts: collectLayoutDefinitions(sflDocument),
     symbols: collectSymbolDefinitions(sflDocument),
+    shaders: collectShaderDefinitions(sflDocument),
     model: findCanvasModel(sflDocument),
   };
+}
+
+function collectShaderDefinitions(sflDocument: SflDocument): Map<string, Shader> {
+  const shaders = new Map<string, Shader>();
+  for (const block of sflDocument.blocks) {
+    if (block.kind !== 'Shader') {
+      continue;
+    }
+    const shader = readShaderDefinition(block);
+    if (shader) {
+      shaders.set(block.name, shader);
+    }
+  }
+  return shaders;
 }
 
 function collectStyleDefinitions(sflDocument: SflDocument): BlockDefinitions {

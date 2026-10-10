@@ -20,6 +20,7 @@ export type {
   ScenePath,
   SceneRect,
   SceneRole,
+  SceneShaderSurface,
   SceneStyle,
   SceneText,
 } from './types';

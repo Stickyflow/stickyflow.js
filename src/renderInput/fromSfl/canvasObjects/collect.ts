@@ -32,8 +32,11 @@ const byOrder = <T extends { order?: number }>(items: readonly T[]): T[] =>
 
 export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObjects {
   const canvasObjects = byOrder(state.canvasObjects);
+  const shaders = new Map((state.shaders ?? []).map(shader => [shader.name, shader]));
   return {
-    shapes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'shape').map(shapeObject),
+    shapes: canvasObjects
+      .filter(canvasObject => canvasObject.objectType === 'shape')
+      .map(shape => shapeObject(shape, shaders)),
     frames: canvasObjects.filter(canvasObject => canvasObject.objectType === 'frame').map(frameObject),
     swimlanes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'swimlane').map(swimlaneObject),
     isometricObjects: canvasObjects.filter(isIsometricObject).map(isometricObject),

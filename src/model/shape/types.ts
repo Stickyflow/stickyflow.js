@@ -1,4 +1,5 @@
 import type { GradientColor, MeshGradientColor } from '../color/types';
+import type { Shader } from '../shader';
 import type { ShadowStyle } from '../shadow';
 
 export type ShapeStrokeStyle = 'solid' | 'dashed' | 'dotted' | 'double';
@@ -8,6 +9,7 @@ export type ShapeType =
   | 'rectangle'
   | 'diamond'
   | 'oval'
+  | 'circle'
   | 'cylinder'
   | 'document'
   | 'pill'
@@ -62,6 +64,7 @@ export interface Shape {
   laneId?: string | null;
 
   symbol?: SymbolDef | null;
+  shader?: Shader;
 }
 
 export interface SymbolDef {

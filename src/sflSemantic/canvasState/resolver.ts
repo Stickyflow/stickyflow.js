@@ -16,5 +16,12 @@ export function resolveCanvasState(document: SflDocument): SflCanvasState {
     resolution.canvasObjectResolutionContext,
   );
 
-  return { canvasObjects, groups, links, connections, diagnostics: resolution.diagnostics };
+  return {
+    canvasObjects,
+    groups,
+    links,
+    connections,
+    diagnostics: resolution.diagnostics,
+    shaders: [...resolution.canvasObjectResolutionContext.shaderDefs.values()],
+  };
 }

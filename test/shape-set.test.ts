@@ -15,6 +15,7 @@ describe('the built-in shape set', () => {
   it('ships exactly the meaningful shapes, with no duplicates or look-alikes', () => {
     expect([...SHAPE_TYPES].sort()).toEqual(
       [
+        'circle',
         'cloud',
         'cylinder',
         'diamond',
@@ -47,11 +48,11 @@ describe('the built-in shape set', () => {
   });
 });
 
-describe('an unknown or removed shape name is reported, not silently swapped', () => {
-  it('points circle at oval', () => {
+describe('shape aliases and unknown names', () => {
+  it('renders circle as an ellipse without diagnostics', () => {
     const { svg, diagnostics } = render(entity('shape: circle'));
-    expect(svg).toMatch(/<rect id="sf-shape-e"/);
-    expect(diagnostics?.map(d => d.message).join('\n')).toContain("use 'oval'");
+    expect(svg).toMatch(/<ellipse id="sf-shape-e"/);
+    expect(diagnostics).toEqual([]);
   });
 
   it('points container_rectangle at rectangle with strokeStyle', () => {
