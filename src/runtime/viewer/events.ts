@@ -22,11 +22,6 @@ export interface ViewerErrorEvent {
   message: string;
 }
 
-/** Owner ids added/removed/changed by the last update() call — see
- *  display/types.ts's SceneDiff for what "changed" means at owner
- *  granularity. Always emitted on update(), independent of the
- *  `highlightChanges` flag that gates the built-in flash: a host can use this
- *  for its own purposes (a toast, a log) without opting into the overlay. */
 export interface SceneDiffEvent {
   diagramId: string;
   added: string[];
