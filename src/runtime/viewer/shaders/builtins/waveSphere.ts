@@ -30,13 +30,12 @@ vec3 rotateY(vec3 p, float angle) {
 void main() {
   vec2 p = vUv * 2.0 - 1.0;
   float time = uTime * max(uSpeed, 0.0);
-  float angle = atan(p.y, p.x);
-  float boundary = 0.88;
-  boundary += sin(angle * 3.0 - time * 0.7) * 0.06;
-  boundary += sin(angle * 7.0 + time * 0.43) * 0.024;
-  boundary += sin(angle * 11.0 - time * 0.29) * 0.012;
-
-  vec2 q = p / boundary;
+  float warp = max(uWarp, 0.0);
+  vec2 flow = vec2(
+    sin(p.y * 4.8 - time * 1.15) + 0.45 * sin(p.x * 3.1 + p.y * 2.2 + time * 0.72),
+    sin(p.x * 4.2 + time * 0.9) + 0.4 * sin(p.y * 5.3 - p.x * 1.7 - time * 0.64)
+  ) * warp * 0.075;
+  vec2 q = (p + flow) / 0.88;
   float radiusSquared = dot(q, q);
   if (radiusSquared > 1.0) discard;
 
@@ -47,25 +46,23 @@ void main() {
     asin(clamp(surface.y, -1.0, 1.0)) / PI + 0.5
   );
 
-  float warp = max(uWarp, 0.0);
-  sphereUv.x += sin(sphereUv.y * 18.0 + time * 1.1) * warp * 0.022;
-  sphereUv.x += sin(sphereUv.y * 41.0 - time * 0.54) * warp * 0.008;
-  sphereUv.y += sin(sphereUv.x * 13.0 - time * 0.83) * warp * 0.018;
-  sphereUv.y += sin((sphereUv.x + sphereUv.y) * 29.0 + time * 0.37) * warp * 0.007;
+  sphereUv.x += sin(sphereUv.y * 12.0 + time * 0.8) * warp * 0.016;
+  sphereUv.y += sin(sphereUv.x * 10.0 - time * 0.62) * warp * 0.014;
+  sphereUv.x += sin((sphereUv.x + sphereUv.y) * 18.0 - time * 0.46) * warp * 0.005;
 
   float density = max(uDensity, 24.0);
   vec2 gridSize = vec2(density, density * 0.62);
   vec2 gridUv = sphereUv * gridSize;
   vec2 cell = floor(gridUv);
   vec2 point = fract(gridUv) - 0.5;
-  point.x += sin(cell.y * 1.73 + time * 0.65) * warp * 0.12;
-  point.y += sin(cell.x * 0.91 - time * 0.48) * warp * 0.055;
 
   float pointSize = max(uPointSize, 0.07);
   float sizeVariation = mix(0.72, 1.2, hash(cell + 4.7));
+  float dotRadius = pointSize * sizeVariation;
+  float pixelWidth = gridSize.x / max(uResolution.x, 1.0) * 0.5;
   float particle = 1.0 - smoothstep(
-    pointSize * sizeVariation * 0.5,
-    pointSize * sizeVariation,
+    max(0.0, dotRadius - pixelWidth),
+    dotRadius + pixelWidth,
     length(point)
   );
 
@@ -76,7 +73,7 @@ void main() {
   float top = smoothstep(0.18, 0.82, vUv.y);
   vec3 particleColor = mix(uBottomColor, uTopColor, top);
   vec3 color = particleColor * light * max(uIntensity, 0.0);
-  float edgeFade = mix(0.58, 1.0, smoothstep(0.0, 0.1, depth));
+  float edgeFade = smoothstep(0.0, 0.09, depth);
   float alpha = particle * edgeFade * clamp(uIntensity, 0.0, 1.5);
 
   gl_FragColor = vec4(color * alpha, alpha);

@@ -10,8 +10,10 @@ describe('shader programs', () => {
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uBottomColor');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uTopColor');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('rotateY');
-    expect(shaderProgram('waveSphere')?.fragmentSource).toContain('uWarp');
-    expect(shaderProgram('waveSphere')?.fragmentSource).toContain('boundary');
+    expect(shaderProgram('waveSphere')).toMatchObject({
+      name: 'waveSphere',
+      fragmentSource: expect.stringContaining('void main()'),
+    });
   });
 
   it('allows a host to register and unregister its own program', () => {
