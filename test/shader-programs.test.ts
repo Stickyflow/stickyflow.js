@@ -3,9 +3,15 @@ import { registerShaderProgram } from '../src/runtime/viewer';
 import { shaderProgram } from '../src/runtime/viewer/shaders/programs';
 
 describe('shader programs', () => {
-  it('ships orb and halo as built-in programs', () => {
+  it('ships every built-in shader program', () => {
     expect(shaderProgram('orb')?.fragmentSource).toContain('void main()');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uThickness');
+    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uDensity');
+    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uBottomColor');
+    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uTopColor');
+    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('rotateY');
+    expect(shaderProgram('waveSphere')?.fragmentSource).toContain('uWarp');
+    expect(shaderProgram('waveSphere')?.fragmentSource).toContain('boundary');
   });
 
   it('allows a host to register and unregister its own program', () => {
