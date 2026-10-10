@@ -10,8 +10,8 @@ describe('shader programs', () => {
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uBottomColor');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uTopColor');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('rotateY');
-    expect(shaderProgram('waveSphere')).toMatchObject({
-      name: 'waveSphere',
+    expect(shaderProgram('eclipseOrb')).toMatchObject({
+      name: 'eclipseOrb',
       fragmentSource: expect.stringContaining('void main()'),
     });
   });

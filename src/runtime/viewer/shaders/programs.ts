@@ -1,10 +1,10 @@
+import { eclipseOrbProgram } from './builtins/eclipseOrb';
 import { haloProgram } from './builtins/halo';
 import { orbProgram } from './builtins/orb';
 import { particleSphereProgram } from './builtins/particleSphere';
-import { waveSphereProgram } from './builtins/waveSphere';
 import type { ShaderProgram } from './types';
 
-const builtins = [orbProgram, haloProgram, particleSphereProgram, waveSphereProgram];
+const builtins = [orbProgram, haloProgram, particleSphereProgram, eclipseOrbProgram];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 
 export function registerShaderProgram(program: ShaderProgram): () => void {
