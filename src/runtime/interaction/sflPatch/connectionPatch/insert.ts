@@ -1,4 +1,4 @@
-import { indentOf } from '../format';
+import { insertBlockLines } from '../blockInsert';
 import { buildConnectionBlock } from './blockText';
 import { resolveConnectionInsertionTarget } from './insertionTarget';
 import type { InsertConnectionOptions } from './types';
@@ -10,8 +10,6 @@ export function insertConnection(sfl: string, options: InsertConnectionOptions):
     return sfl;
   }
 
-  const baseIndent = `${indentOf(lines[modelRange.start])}    `;
-  const block = buildConnectionBlock(options, baseIndent);
-  lines.splice(modelRange.end, 0, ...block);
+  insertBlockLines(lines, modelRange, baseIndent => buildConnectionBlock(options, baseIndent));
   return lines.join('\n');
 }

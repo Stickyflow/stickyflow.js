@@ -1,4 +1,4 @@
-import { indentOf } from '../format';
+import { insertBlockLines } from '../blockInsert';
 import { nameExists, VALID_IDENT } from '../scanner';
 import { buildCanvasObjectBlock } from './blockText';
 import { resolveCanvasObjectInsertionTarget } from './insertionTarget';
@@ -20,9 +20,7 @@ export function insertCanvasObject(sfl: string, options: InsertCanvasObjectOptio
     return sfl;
   }
 
-  const baseIndent = `${indentOf(lines[target.range.start])}    `;
-  const block = buildCanvasObjectBlock(options, target.origin, baseIndent);
-  lines.splice(target.range.end, 0, ...block);
+  insertBlockLines(lines, target.range, baseIndent => buildCanvasObjectBlock(options, target.origin, baseIndent));
   return lines.join('\n');
 }
 
@@ -41,8 +39,6 @@ export function insertPath(sfl: string, options: InsertPathOptions): string {
     return sfl;
   }
 
-  const baseIndent = `${indentOf(lines[target.range.start])}    `;
-  const block = buildPathBlock(options, target.origin, baseIndent);
-  lines.splice(target.range.end, 0, ...block);
+  insertBlockLines(lines, target.range, baseIndent => buildPathBlock(options, target.origin, baseIndent));
   return lines.join('\n');
 }

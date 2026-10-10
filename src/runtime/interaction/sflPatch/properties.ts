@@ -1,6 +1,7 @@
 import type { Side } from '../../../model/geometry/types';
 import { insertDirectProperty, replacePropertyValue } from './edits/propertyValues';
-import { escapeSflString, indentOf, round1 } from './format';
+import { childIndent } from './blockInsert';
+import { escapeSflString, round1 } from './format';
 import { formatLinkEndpoint } from './linkPatch/endpointText';
 import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';
 
@@ -20,8 +21,7 @@ export function setOrInsertText(lines: string[], range: LineRange, text: string)
     replacePropertyValue(lines, existing, value);
     return;
   }
-  const indent = `${indentOf(lines[range.start])}    `;
-  insertDirectProperty(lines, range, indent, 'text', value);
+  insertDirectProperty(lines, range, childIndent(lines, range), 'text', value);
 }
 
 export function setOrInsertLayoutTuples(lines: string[], range: LineRange, props: ReadonlyArray<LayoutTuple>): void {
@@ -67,7 +67,7 @@ function insertCompactLayout(lines: string[], row: number, props: ReadonlyArray<
 }
 
 function insertMultilineLayout(lines: string[], range: LineRange, props: ReadonlyArray<LayoutTuple>): void {
-  const indent = `${indentOf(lines[range.start])}    `;
+  const indent = childIndent(lines, range);
   const body = props.map(tuple => `${indent}    ${tuple[0]}: ${layoutTupleValue(tuple)}`);
   lines.splice(range.start + 1, 0, `${indent}layout {`, ...body, `${indent}}`);
 }
@@ -85,7 +85,7 @@ function setLayoutTuple(lines: string[], layout: LineRange, tuple: LayoutTuple):
     replacePropertyValue(lines, existing, layoutTupleValue(tuple));
     return layout;
   }
-  const indent = `${indentOf(lines[layout.start])}    `;
+  const indent = childIndent(lines, layout);
   const lengthBefore = lines.length;
   insertDirectProperty(lines, layout, indent, tuple[0], layoutTupleValue(tuple));
   return { start: layout.start, end: layout.end + (lines.length - lengthBefore) };
@@ -103,6 +103,6 @@ export function setEndpoint(lines: string[], range: LineRange, patch: LinkEndpoi
     replacePropertyValue(lines, existing, value);
     return;
   }
-  const indent = `${indentOf(lines[range.start])}    `;
+  const indent = childIndent(lines, range);
   insertDirectProperty(lines, range, indent, patch.end, value);
 }
