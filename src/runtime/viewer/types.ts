@@ -1,6 +1,7 @@
 import type { RenderOptions } from '../../render';
 import type { ViewBox } from './display';
 import type { OwnerRef, Unsubscribe, ViewerEventHandler, ViewerEventName } from './events';
+import type { ViewerImageExportOptions } from './export';
 
 export interface ViewerOptions {
   container: HTMLElement;
@@ -37,6 +38,8 @@ export interface Viewer {
   select(ids: string[]): void;
   fit(): void;
   getViewport(): ViewBox;
+  exportSvg(): string;
+  exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
   update(next: ViewerSource): void;
   destroy(): void;
 }

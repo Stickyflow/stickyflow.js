@@ -182,6 +182,7 @@ function renderSurface(surface: Surface, seconds: number): void {
 }
 
 export interface ShaderSurfaceHandle {
+  capture(): Array<string | undefined>;
   refresh(): void;
   destroy(): void;
 }
@@ -227,6 +228,23 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     }
   };
 
+  const capture = (): Array<string | undefined> => {
+    const seconds = (view?.performance.now() ?? 0) / 1000;
+    const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
+    return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].map(canvas => {
+      const surface = surfaceByCanvas.get(canvas);
+      if (!surface) {
+        return undefined;
+      }
+      try {
+        renderSurface(surface, seconds);
+        return surface.canvas.toDataURL('image/png');
+      } catch {
+        return undefined;
+      }
+    });
+  };
+
   refresh();
-  return { refresh, destroy: stop };
+  return { capture, refresh, destroy: stop };
 }

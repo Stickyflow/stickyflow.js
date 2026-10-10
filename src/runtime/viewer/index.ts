@@ -24,5 +24,6 @@ export type {
   ViewerEventMap,
   ViewerEventName,
 } from './events';
+export type { ViewerImageExportOptions, ViewerImageFormat } from './export';
 export { registerShaderProgram, type ShaderProgram } from './shaders';
 export type { Viewer, ViewerOptions, ViewerSource } from './types';

@@ -1,6 +1,7 @@
 import type { DisplayHandle, ViewBox } from './display';
 import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
+import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
@@ -47,6 +48,14 @@ export class ViewerSession implements Viewer {
 
   getViewport(): ViewBox {
     return this.display.getViewport();
+  }
+
+  exportSvg(): string {
+    return serializeSvgSnapshot(this.svg, this.shaderSurfaces.capture());
+  }
+
+  exportImage(options?: ViewerImageExportOptions): Promise<Blob> {
+    return rasterizeSvgSnapshot(this.svg, this.exportSvg(), options);
   }
 
   update(next: ViewerSource): void {
