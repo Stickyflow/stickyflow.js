@@ -14,6 +14,13 @@ describe('shader programs', () => {
       name: 'eclipseOrb',
       fragmentSource: expect.stringContaining('void main()'),
     });
+    expect(shaderProgram('liquidLens')).toBeUndefined();
+    for (const name of ['violetGlass', 'violetGlassLight', 'lumenPortal', 'lumenPortalLight', 'prismSlats']) {
+      expect(shaderProgram(name)).toMatchObject({
+        name,
+        fragmentSource: expect.stringContaining('void main()'),
+      });
+    }
   });
 
   it('allows a host to register and unregister its own program', () => {
