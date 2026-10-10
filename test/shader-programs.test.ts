@@ -15,7 +15,14 @@ describe('shader programs', () => {
       fragmentSource: expect.stringContaining('void main()'),
     });
     expect(shaderProgram('liquidLens')).toBeUndefined();
-    for (const name of ['violetGlass', 'violetGlassLight', 'lumenPortal', 'lumenPortalLight', 'prismSlats']) {
+    for (const name of [
+      'violetGlass',
+      'violetGlassLight',
+      'lumenPortal',
+      'lumenPortalLight',
+      'prismSlats',
+      'emberMatrix',
+    ]) {
       expect(shaderProgram(name)).toMatchObject({
         name,
         fragmentSource: expect.stringContaining('void main()'),

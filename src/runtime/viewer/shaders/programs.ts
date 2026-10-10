@@ -1,4 +1,5 @@
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
+import { emberMatrixProgram } from './builtins/emberMatrix';
 import { haloProgram } from './builtins/halo';
 import { lumenPortalProgram } from './builtins/lumenPortal';
 import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
@@ -15,6 +16,7 @@ const builtins = [
   particleSphereProgram,
   prismSlatsProgram,
   eclipseOrbProgram,
+  emberMatrixProgram,
   violetGlassProgram,
   violetGlassLightProgram,
   lumenPortalProgram,
