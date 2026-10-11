@@ -102,6 +102,11 @@ export function buildShape(
     shape.strokeStyle === 'double' ? renderDoubleStroke(context, strokeWidth || 1) : renderShapeGeometry(context);
   const shader = renderShaderSurface(context);
   if (shader) {
+    for (const node of nodes) {
+      if (node.type === 'ellipse' || node.type === 'path' || node.type === 'rect') {
+        node.style = { ...node.style, pointerEvents: 'all' };
+      }
+    }
     nodes.push(shader);
   }
   const text = renderShapeText(context, strokeWidth, measureText);

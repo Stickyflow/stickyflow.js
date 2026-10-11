@@ -22,7 +22,7 @@ export interface SceneStyle {
   lineCap?: 'butt' | 'round' | 'square';
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
-  pointerEvents?: 'none';
+  pointerEvents?: 'none' | 'all';
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;

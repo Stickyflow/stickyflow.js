@@ -5,7 +5,7 @@ import type { OwnerRef } from '../viewer';
 // the body to move it) - its resize handles are a separate, dedicated
 // session (see isometricAxisResize/) that bypasses the generic resize
 // pipeline entirely, so it was deliberately left out of COMPOSITE_ROLES.
-const GEOMETRY_ROLES: ReadonlySet<string> = new Set(['shape', 'chart', 'frame', 'swimlane', 'isometric']);
+const GEOMETRY_ROLES: ReadonlySet<string> = new Set(['shape', 'chart', 'frame', 'swimlane', 'isometric', 'widget']);
 const COMPOSITE_ROLES: ReadonlySet<string> = new Set(['chart']);
 const MOVABLE_ROLES: ReadonlySet<string> = new Set([...GEOMETRY_ROLES, 'path']);
 

@@ -73,6 +73,8 @@ export function applySingleNodeBounds(primary: SVGGraphicsElement, kind: string 
     applyRectBounds(primary, kind, bounds);
   } else if (tag === 'ellipse') {
     applyEllipseBounds(primary, bounds);
+  } else if (tag === 'foreignobject') {
+    applyRectBounds(primary, null, bounds);
   } else if (tag === 'path' && primary.hasAttribute(CORNER_RADIUS_ATTR)) {
     applyFrameBoundaryBounds(primary, bounds);
   } else if (tag === 'path' && kind) {
