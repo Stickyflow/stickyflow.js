@@ -1,4 +1,5 @@
 import type { ShaderParameter } from '../../../model/shader';
+import { captureShaderBackdrop, type ShaderBackdrop } from './backdrop';
 import { shaderProgram } from './programs';
 
 const VERTEX_SOURCE = `
@@ -18,6 +19,10 @@ interface Surface {
   program: WebGLProgram;
   buffer: WebGLBuffer;
   parameters: Record<string, ShaderParameter>;
+  backdropTexture?: WebGLTexture;
+  backdropOrigin: [number, number];
+  backdropScale: [number, number];
+  usesBackdrop: boolean;
 }
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | undefined {
@@ -72,6 +77,20 @@ function parametersOf(owner: Element): Record<string, ShaderParameter> {
   }
 }
 
+function transparentTexture(gl: WebGLRenderingContext): WebGLTexture | undefined {
+  const texture = gl.createTexture();
+  if (!texture) {
+    return undefined;
+  }
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+  return texture;
+}
+
 function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
   const owner = canvas.closest('[data-sf-shader]');
   const name = owner?.getAttribute('data-sf-shader');
@@ -100,7 +119,19 @@ function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
   }
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-  return { owner, canvas, gl, program, buffer, parameters: parametersOf(owner) };
+  const usesBackdrop = definition.usesBackdrop === true;
+  return {
+    owner,
+    canvas,
+    gl,
+    program,
+    buffer,
+    parameters: parametersOf(owner),
+    backdropTexture: usesBackdrop ? transparentTexture(gl) : undefined,
+    backdropOrigin: [0, 0],
+    backdropScale: [1, 1],
+    usesBackdrop,
+  };
 }
 
 function color(value: ShaderParameter | undefined, fallback: [number, number, number]): [number, number, number] {
@@ -131,6 +162,33 @@ function uniform3f(surface: Surface, name: string, value: [number, number, numbe
   if (location) {
     surface.gl.uniform3f(location, ...value);
   }
+}
+
+function uniform2f(surface: Surface, name: string, value: [number, number]): void {
+  const location = surface.gl.getUniformLocation(surface.program, name);
+  if (location) {
+    surface.gl.uniform2f(location, ...value);
+  }
+}
+
+function applyBackdrop(surface: Surface, svg: SVGSVGElement, backdrop: ShaderBackdrop): void {
+  if (!surface.backdropTexture) {
+    return;
+  }
+  const svgBounds = svg.getBoundingClientRect();
+  const surfaceBounds = surface.canvas.getBoundingClientRect();
+  if (svgBounds.width <= 0 || svgBounds.height <= 0) {
+    return;
+  }
+  surface.backdropOrigin = [
+    (surfaceBounds.left - svgBounds.left) / svgBounds.width,
+    (svgBounds.bottom - surfaceBounds.bottom) / svgBounds.height,
+  ];
+  surface.backdropScale = [surfaceBounds.width / svgBounds.width, surfaceBounds.height / svgBounds.height];
+  const { gl } = surface;
+  gl.bindTexture(gl.TEXTURE_2D, surface.backdropTexture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, backdrop.image);
 }
 
 function uniformName(parameter: string): string {
@@ -174,6 +232,16 @@ function renderSurface(surface: Surface, seconds: number): void {
     gl.uniform2f(resolution, width, height);
   }
   uniform1f(surface, 'uTime', seconds);
+  if (surface.backdropTexture) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, surface.backdropTexture);
+    const sampler = gl.getUniformLocation(surface.program, 'uBackdrop');
+    if (sampler) {
+      gl.uniform1i(sampler, 0);
+    }
+    uniform2f(surface, 'uBackdropOrigin', surface.backdropOrigin);
+    uniform2f(surface, 'uBackdropScale', surface.backdropScale);
+  }
   uniform1f(surface, 'uIntensity', number(parameters.intensity, 0.85));
   uniform1f(surface, 'uSpeed', number(parameters.speed, 0.18));
   uniform1f(surface, 'uProgress', number(parameters.progress, -1));
@@ -194,6 +262,7 @@ export interface ShaderSurfaceHandle {
 export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   let surfaces: Surface[] = [];
   let frame: number | undefined;
+  let backdropGeneration = 0;
   const view = svg.ownerDocument.defaultView;
 
   const draw = (milliseconds: number) => {
@@ -209,6 +278,9 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       frame = undefined;
     }
     for (const surface of surfaces) {
+      if (surface.backdropTexture) {
+        surface.gl.deleteTexture(surface.backdropTexture);
+      }
       surface.gl.deleteBuffer(surface.buffer);
       surface.gl.deleteProgram(surface.program);
     }
@@ -217,10 +289,21 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
 
   const refresh = () => {
     stop();
+    const generation = ++backdropGeneration;
     surfaces = [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].flatMap(canvas => {
       const surface = createSurface(canvas);
       return surface ? [surface] : [];
     });
+    for (const surface of surfaces) {
+      if (!surface.usesBackdrop) {
+        continue;
+      }
+      void captureShaderBackdrop(svg, surface.owner).then(backdrop => {
+        if (backdrop && generation === backdropGeneration) {
+          applyBackdrop(surface, svg, backdrop);
+        }
+      });
+    }
     if (surfaces.length > 0) {
       if (view?.requestAnimationFrame) {
         frame = view.requestAnimationFrame(draw);
@@ -265,5 +348,10 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   };
 
   refresh();
-  return { capture, setParameters, refresh, destroy: stop };
+  const destroy = () => {
+    backdropGeneration += 1;
+    stop();
+  };
+
+  return { capture, setParameters, refresh, destroy };
 }

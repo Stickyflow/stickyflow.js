@@ -1,8 +1,9 @@
 import { chromaticHaloProgram } from './builtins/chromaticHalo';
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
 import { emberMatrixProgram } from './builtins/emberMatrix';
-import { haloProgram } from './builtins/halo';
+import { glassRefractionProgram } from './builtins/glassRefraction';
 import { halftoneHaloProgram } from './builtins/halftoneHalo';
+import { haloProgram } from './builtins/halo';
 import { lumenPortalProgram } from './builtins/lumenPortal';
 import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
@@ -17,6 +18,7 @@ const builtins = [
   haloProgram,
   halftoneHaloProgram,
   chromaticHaloProgram,
+  glassRefractionProgram,
   pixelConstellationProgram,
   prismSlatsProgram,
   eclipseOrbProgram,

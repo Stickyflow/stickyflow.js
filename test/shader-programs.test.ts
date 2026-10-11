@@ -11,6 +11,10 @@ describe('shader programs', () => {
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uDotCount');
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uRingRadius');
     expect(shaderProgram('chromaticHalo')?.fragmentSource).toContain('uBloom');
+    expect(shaderProgram('glassRefraction')).toMatchObject({
+      usesBackdrop: true,
+      fragmentSource: expect.stringContaining('uBackdrop'),
+    });
     expect(shaderProgram('eclipseOrb')).toMatchObject({
       name: 'eclipseOrb',
       fragmentSource: expect.stringContaining('void main()'),
