@@ -9,7 +9,7 @@ import {
   pxPerUnit,
 } from '../../dom';
 import { computeSnap, MOVE_ACTIVE_POINTS, nearestCandidates, snapIsometricDiagonal } from '../snapGeometry';
-import { nearestIsometricLatticePoint, readIsometricSnapStep } from '../snapGrid';
+import { isSnapDisabled, nearestIsometricLatticePoint, readIsometricSnapStep } from '../snapGrid';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
 
@@ -70,6 +70,9 @@ function snapIsometricMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: numbe
 }
 
 export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number, rawDy: number): MoveDelta {
+  if (isSnapDisabled(svg)) {
+    return { dx: rawDx, dy: rawDy, guides: [] };
+  }
   const isometricSnap = snapIsometricMove(svg, drag, rawDx, rawDy);
   if (isometricSnap) {
     return isometricSnap;

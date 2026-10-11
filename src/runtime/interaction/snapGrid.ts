@@ -1,6 +1,11 @@
 import { AXIS_COS, AXIS_SIN } from '../../model/isometricObject';
 
 export const SNAP_GRID_ATTR = 'data-sf-snap-grid';
+export const SNAP_ATTR = 'data-sf-snap';
+
+export function isSnapDisabled(svg: SVGSVGElement): boolean {
+  return svg.getAttribute(SNAP_ATTR) === 'off';
+}
 
 const ISOMETRIC_GRID = /^isometric:(\d+(?:\.\d+)?)$/;
 

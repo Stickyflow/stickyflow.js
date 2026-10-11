@@ -171,8 +171,9 @@ function uniform2f(surface: Surface, name: string, value: [number, number]): voi
   }
 }
 
-function applyBackdrop(surface: Surface, svg: SVGSVGElement, backdrop: ShaderBackdrop): void {
-  if (!surface.backdropTexture) {
+function syncBackdropBounds(surface: Surface): void {
+  const svg = surface.canvas.closest('svg');
+  if (!svg) {
     return;
   }
   const svgBounds = svg.getBoundingClientRect();
@@ -185,6 +186,13 @@ function applyBackdrop(surface: Surface, svg: SVGSVGElement, backdrop: ShaderBac
     (svgBounds.bottom - surfaceBounds.bottom) / svgBounds.height,
   ];
   surface.backdropScale = [surfaceBounds.width / svgBounds.width, surfaceBounds.height / svgBounds.height];
+}
+
+function applyBackdrop(surface: Surface, backdrop: ShaderBackdrop): void {
+  if (!surface.backdropTexture) {
+    return;
+  }
+  syncBackdropBounds(surface);
   const { gl } = surface;
   gl.bindTexture(gl.TEXTURE_2D, surface.backdropTexture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -233,6 +241,7 @@ function renderSurface(surface: Surface, seconds: number): void {
   }
   uniform1f(surface, 'uTime', seconds);
   if (surface.backdropTexture) {
+    syncBackdropBounds(surface);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, surface.backdropTexture);
     const sampler = gl.getUniformLocation(surface.program, 'uBackdrop');
@@ -287,6 +296,19 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     surfaces = [];
   };
 
+  const captureBackdrops = (generation: number) => {
+    for (const surface of surfaces) {
+      if (!surface.usesBackdrop) {
+        continue;
+      }
+      void captureShaderBackdrop(svg, surface.owner).then(backdrop => {
+        if (backdrop && generation === backdropGeneration) {
+          applyBackdrop(surface, backdrop);
+        }
+      });
+    }
+  };
+
   const refresh = () => {
     stop();
     const generation = ++backdropGeneration;
@@ -294,16 +316,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       const surface = createSurface(canvas);
       return surface ? [surface] : [];
     });
-    for (const surface of surfaces) {
-      if (!surface.usesBackdrop) {
-        continue;
-      }
-      void captureShaderBackdrop(svg, surface.owner).then(backdrop => {
-        if (backdrop && generation === backdropGeneration) {
-          applyBackdrop(surface, svg, backdrop);
-        }
-      });
-    }
+    captureBackdrops(generation);
     if (surfaces.length > 0) {
       if (view?.requestAnimationFrame) {
         frame = view.requestAnimationFrame(draw);
@@ -347,9 +360,29 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     return changed;
   };
 
+  let recapture: number | undefined;
+  const scheduleRecapture = () => {
+    if (recapture !== undefined) {
+      view?.clearTimeout(recapture);
+    }
+    recapture = view?.setTimeout(() => {
+      recapture = undefined;
+      captureBackdrops(backdropGeneration);
+    }, 120);
+  };
+  const viewObserver = view ? new view.MutationObserver(scheduleRecapture) : undefined;
+  viewObserver?.observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+  const sizeObserver = view?.ResizeObserver ? new view.ResizeObserver(scheduleRecapture) : undefined;
+  sizeObserver?.observe(svg);
+
   refresh();
   const destroy = () => {
     backdropGeneration += 1;
+    viewObserver?.disconnect();
+    sizeObserver?.disconnect();
+    if (recapture !== undefined) {
+      view?.clearTimeout(recapture);
+    }
     stop();
   };
 

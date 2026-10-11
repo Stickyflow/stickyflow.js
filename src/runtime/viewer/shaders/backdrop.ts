@@ -4,6 +4,22 @@ export interface ShaderBackdrop {
   width: number;
 }
 
+const MIN_BACKDROP_DENSITY = 2.5;
+const MAX_BACKDROP_PIXELS = 4096;
+
+const TRANSPARENT = /^rgba?(s*d+,s*d+,s*d+,s*0s*)$|^transparent$/;
+
+function hostBackground(svg: SVGSVGElement): string | undefined {
+  const view = svg.ownerDocument.defaultView;
+  for (let element: Element | null = svg.parentElement; element && view; element = element.parentElement) {
+    const color = view.getComputedStyle(element).backgroundColor;
+    if (color && !TRANSPARENT.test(color.trim())) {
+      return color;
+    }
+  }
+  return undefined;
+}
+
 function backdropClone(svg: SVGSVGElement, owner: Element, width: number, height: number): SVGSVGElement {
   const clone = svg.cloneNode(true) as SVGSVGElement;
   const ownerIndex = [...svg.children].indexOf(owner);
@@ -15,6 +31,17 @@ function backdropClone(svg: SVGSVGElement, owner: Element, width: number, height
   for (const surface of clone.querySelectorAll('foreignObject[data-sf-shader]')) {
     surface.remove();
   }
+  const background = hostBackground(svg);
+  if (background) {
+    const { x, y, width: viewWidth, height: viewHeight } = svg.viewBox.baseVal;
+    const fill = svg.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    fill.setAttribute('x', String(x));
+    fill.setAttribute('y', String(y));
+    fill.setAttribute('width', String(viewWidth));
+    fill.setAttribute('height', String(viewHeight));
+    fill.setAttribute('fill', background);
+    clone.insertBefore(fill, clone.firstChild);
+  }
   clone.setAttribute('width', String(width));
   clone.setAttribute('height', String(height));
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -22,8 +49,10 @@ function backdropClone(svg: SVGSVGElement, owner: Element, width: number, height
 }
 
 export function captureShaderBackdrop(svg: SVGSVGElement, owner: Element): Promise<ShaderBackdrop | undefined> {
-  const width = Math.max(1, Math.round(svg.clientWidth * (globalThis.devicePixelRatio || 1)));
-  const height = Math.max(1, Math.round(svg.clientHeight * (globalThis.devicePixelRatio || 1)));
+  const density = Math.max(globalThis.devicePixelRatio || 1, MIN_BACKDROP_DENSITY);
+  const scale = Math.min(density, MAX_BACKDROP_PIXELS / Math.max(1, Math.max(svg.clientWidth, svg.clientHeight)));
+  const width = Math.max(1, Math.round(svg.clientWidth * scale));
+  const height = Math.max(1, Math.round(svg.clientHeight * scale));
   const view = svg.ownerDocument.defaultView;
   if (!view) {
     return Promise.resolve(undefined);
