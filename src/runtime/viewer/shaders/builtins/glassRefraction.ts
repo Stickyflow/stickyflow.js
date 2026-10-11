@@ -35,30 +35,31 @@ float smoothNoise(vec2 point) {
 }
 
 void main() {
-  vec2 p = vUv * 2.0 - 1.0;
+  float time = uTime * max(uSpeed, 0.0);
+  vec2 sphereOffset = vec2(
+    sin(time * 0.72) * 0.04,
+    cos(time * 0.56) * 0.026
+  );
+  float sphereScale = 0.95;
+  vec2 p = (vUv * 2.0 - 1.0 - sphereOffset) / sphereScale;
   float radius = length(p);
   if (radius >= 1.0) discard;
 
-  float time = uTime * max(uSpeed, 0.0);
   float roughness = max(uRoughness, 0.0);
   vec2 flow = vec2(
-    smoothNoise(p * 2.4 + vec2(time * 0.12, -time * 0.08)),
-    smoothNoise(p * 2.8 + vec2(-time * 0.09, time * 0.11))
+    smoothNoise(p * 2.4 + vec2(0.7, -0.3)),
+    smoothNoise(p * 2.8 + vec2(-0.4, 0.8))
   ) - 0.5;
   float sphereDepth = sqrt(max(1.0 - radius * radius, 0.0));
   vec2 glassMotion = vec2(
-    sin(p.y * 3.2 + time * 1.15),
-    cos(p.x * 2.8 - time * 0.92)
+    sin(p.y * 3.2 + 0.6),
+    cos(p.x * 2.8 - 0.35)
   ) * 0.014;
   vec3 surfaceNormal = normalize(vec3(p + glassMotion + flow * roughness * 0.22, sphereDepth));
   float eta = 1.0 / max(uIor, 1.001);
   vec3 refracted = refract(vec3(0.0, 0.0, -1.0), surfaceNormal, eta);
   vec2 distortion = refracted.xy * max(uRefraction, 0.0);
   distortion += flow * (0.008 + roughness * 0.025);
-  distortion += vec2(
-    sin(time * 0.82 + p.y * 1.7),
-    cos(time * 0.68 + p.x * 1.5)
-  ) * 0.009;
 
   vec2 backdropUv = uBackdropOrigin + vUv * uBackdropScale;
   vec2 refractedUv = clamp(backdropUv + distortion * uBackdropScale, 0.001, 0.999);
@@ -79,16 +80,15 @@ void main() {
 
   float fresnel = pow(1.0 - sphereDepth, 2.35);
   float innerRim = smoothstep(0.72, 0.995, radius);
-  vec3 movingLight = normalize(vec3(
-    -0.4 + sin(time * 1.05) * 0.32,
-    0.58 + cos(time * 0.88) * 0.2,
-    0.62
-  ));
-  float highlight = pow(max(dot(movingLight, surfaceNormal), 0.0), 28.0);
-  float hotSpot = pow(max(dot(movingLight, surfaceNormal), 0.0), 92.0);
+  vec2 fixedLightPosition = vec2(-0.46, 0.7);
+  vec2 surfacePosition = sphereOffset + p * sphereScale * 0.22;
+  vec3 lightDirection = normalize(vec3(fixedLightPosition - surfacePosition, 0.62));
+  float highlight = pow(max(dot(lightDirection, surfaceNormal), 0.0), 28.0);
+  float hotSpot = pow(max(dot(lightDirection, surfaceNormal), 0.0), 92.0);
   float angle = atan(p.y, p.x);
-  float movingRim = 0.68 + 0.32 * sin(angle * 2.0 - time * 1.05);
-  float rimGlint = pow(max(cos(angle - time * 0.72 - 2.35), 0.0), 20.0) * innerRim;
+  float lightAngle = atan(lightDirection.y, lightDirection.x);
+  float movingRim = 0.68 + 0.32 * sin(angle * 2.0 - lightAngle);
+  float rimGlint = pow(max(cos(angle - lightAngle), 0.0), 20.0) * innerRim;
   vec3 color = mix(backdrop, backdrop * uTint, 0.025 + fresnel * 0.09);
   color += uEdgeColor * innerRim * max(uEdgeLight, 0.0) * (0.1 + fresnel * 0.5) * movingRim;
   color += uEdgeColor * rimGlint * max(uEdgeLight, 0.0) * 0.72;
