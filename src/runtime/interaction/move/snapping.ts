@@ -9,6 +9,7 @@ import {
   pxPerUnit,
 } from '../../dom';
 import { computeSnap, MOVE_ACTIVE_POINTS, nearestCandidates, snapIsometricDiagonal } from '../snapGeometry';
+import { nearestIsometricLatticePoint, readIsometricSnapStep } from '../snapGrid';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
 
@@ -26,7 +27,11 @@ export interface MoveDelta {
 // this is what actually lets two boxes land in the same "Flucht" instead of
 // an eyeballed stagger. Multi-select or non-isometric drags skip straight
 // to the regular horizontal/vertical bounds snap below.
-function snapIsometricMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number, rawDy: number): MoveDelta | null {
+function isometricApexOf(
+  svg: SVGSVGElement,
+  drag: MoveDragState,
+  declared = false,
+): { x: number; y: number } | null {
   if (drag.canvasObjects.length !== 1) {
     return null;
   }
@@ -39,7 +44,25 @@ function snapIsometricMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: numbe
   if (!geometry) {
     return null;
   }
-  const apex = { x: lead.draggedBounds.x + geometry.depth * AXIS_COS, y: lead.draggedBounds.y };
+  const frame = declared && geometry.bounds ? geometry.bounds : lead.draggedBounds;
+  return { x: frame.x + geometry.depth * AXIS_COS, y: frame.y };
+}
+
+function snapIsometricGrid(svg: SVGSVGElement, drag: MoveDragState, rawDx: number, rawDy: number): MoveDelta | null {
+  const step = readIsometricSnapStep(svg);
+  const apex = step ? isometricApexOf(svg, drag, true) : null;
+  if (!step || !apex) {
+    return null;
+  }
+  const lattice = nearestIsometricLatticePoint({ x: apex.x + rawDx, y: apex.y + rawDy }, step);
+  return { dx: lattice.x - apex.x, dy: lattice.y - apex.y, guides: [] };
+}
+
+function snapIsometricMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number, rawDy: number): MoveDelta | null {
+  const apex = isometricApexOf(svg, drag);
+  if (!apex) {
+    return null;
+  }
   const excludedIds = new Set(drag.canvasObjects.map(canvasObject => canvasObject.owner.id));
   const candidates = findIsometricApexCandidates(svg, excludedIds);
   const snap = snapIsometricDiagonal(apex, rawDx, rawDy, candidates, SNAP_THRESHOLD_PX / pxPerUnit(svg));
@@ -50,6 +73,10 @@ export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number,
   const isometricSnap = snapIsometricMove(svg, drag, rawDx, rawDy);
   if (isometricSnap) {
     return isometricSnap;
+  }
+  const gridSnap = snapIsometricGrid(svg, drag, rawDx, rawDy);
+  if (gridSnap) {
+    return gridSnap;
   }
 
   const leadBounds = offsetBounds(drag.canvasObjects[0].draggedBounds, rawDx, rawDy);
