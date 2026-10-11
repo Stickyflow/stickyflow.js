@@ -45,8 +45,12 @@ export function screenRectOf(el: SVGGraphicsElement): { left: number; top: numbe
 
 export function pxPerUnit(svg: SVGSVGElement): number {
   const rect = svg.getBoundingClientRect();
-  const viewBoxWidth = svg.viewBox.baseVal.width;
-  return rect.width > 0 && viewBoxWidth > 0 ? rect.width / viewBoxWidth : 1;
+  const { width: viewBoxWidth, height: viewBoxHeight } = svg.viewBox.baseVal;
+  if (rect.width <= 0 || viewBoxWidth <= 0) {
+    return 1;
+  }
+  const horizontal = rect.width / viewBoxWidth;
+  return rect.height > 0 && viewBoxHeight > 0 ? Math.min(horizontal, rect.height / viewBoxHeight) : horizontal;
 }
 
 // The dragged-object's own apex is computed the same way by the caller
