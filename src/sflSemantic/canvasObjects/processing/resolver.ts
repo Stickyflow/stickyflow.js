@@ -1,6 +1,6 @@
 import type { Shader } from '../../../model/shader';
 import type { SflBlock, SflValue } from '../../../sflLanguage/ast';
-import { asString } from '../../ast/valueAccess';
+import { asNumber, asString } from '../../ast/valueAccess';
 import { resolveChartObject } from '../artifacts/chart/resolver';
 import { resolveIsometricObject } from '../artifacts/isometric/resolver';
 import { resolvePathObject } from '../artifacts/path/resolver';
@@ -11,6 +11,7 @@ import type {
   SflFrameObject,
   SflShapeObject,
   SflSymbolDefinition,
+  SflWidgetObject,
 } from '../types';
 import { classifyCanvasObject } from './classification';
 import { readCanvasObjectGeometry } from './layout/geometry';
@@ -54,6 +55,18 @@ export function resolveCanvasObject(
       return resolveSwimlaneObject(base, properties);
     case 'frame':
       return { ...base, objectType: 'frame' } satisfies SflFrameObject;
+    case 'widget':
+      return {
+        ...base,
+        objectType: 'widget',
+        widget: {
+          type: asString(properties.get('type')) ?? 'rollingNumber',
+          value: asString(properties.get('value')) ?? '0',
+          digits: asNumber(properties.get('digits')),
+          duration: asNumber(properties.get('duration')),
+          label: asString(properties.get('label')),
+        },
+      } satisfies SflWidgetObject;
     case 'shape':
       return {
         ...base,

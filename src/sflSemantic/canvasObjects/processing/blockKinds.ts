@@ -6,6 +6,7 @@ export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Container',
   'Path',
   'Chart',
+  'Widget',
   'Isometric',
 ] as const satisfies readonly BlockKind[];
 

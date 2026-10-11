@@ -20,7 +20,10 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
   return '#64748b';
 }
 
-type StyledRenderNode = Exclude<RenderNode, SceneText | SceneShaderSurface>;
+type StyledRenderNode = Exclude<
+  RenderNode,
+  SceneText | SceneShaderSurface | Extract<RenderNode, { type: 'rolling-number' }>
+>;
 
 export function styleAttrs(node: StyledRenderNode, defs: SvgDefinitionRegistry): string {
   const stroke = defs.paint(node.style.stroke, `${node.id}-stroke`, node.bounds);

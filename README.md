@@ -171,11 +171,11 @@ break at different points under each.
 docs examples and `stickyflow/viewer` use it), so everything user-supplied —
 canvas-object/link text, ids — is escaped before it reaches the SVG string
 (`renderSceneToSvg.ts`'s `xml()`: `& < > " '`), and ids are additionally
-restricted to a safe character set (`safeId`). There is no `<script>`,
-`<foreignObject>`, or event-handler attribute anywhere in the renderer's own
-output, and no attribute ever carries a user-supplied URL — `href`/`url(...)`
-only ever point at gradients/markers/filters this package generates itself, by
-its own generated id. `test/domContract.test.ts` asserts this against an
+restricted to a safe character set (`safeId`). Controlled `<foreignObject>`
+nodes host shader canvases and native widgets, but the renderer emits no
+`<script>` or event-handler attributes and no attribute carries a user-supplied
+URL. `href`/`url(...)` only point at gradients, markers, and filters generated
+by the package. `test/domContract.test.ts` asserts this against an
 actively hostile payload (an attribute break-out plus an inline
 `<script>`/`onerror` string), not just plain text.
 
@@ -195,7 +195,7 @@ resolves to the owning canvas object via `closest('[data-sf-id]')`:
 
 - `data-sf-contract` on the root is the versioned handshake (`DOM_CONTRACT_VERSION`):
   a viewer checks it on mount and refuses a mismatch instead of binding blindly.
-- `data-sf-role` ∈ `entity | link | frame | swimlane | table`; `entity` is the
+- `data-sf-role` ∈ `entity | link | frame | swimlane | path | chart | widget | isometric`; `entity` is the
   version-1 serialized compatibility value for an internal `shape` role.
   `data-sf-id` is the stable owner id; `data-sf-kind` is the concrete kind.
 - The **primary** node of each owner is focusable (`tabindex="0"`) and labelled
@@ -227,6 +227,36 @@ pays nothing for viewer JS. The web component sits on top and composes both.
   defineStickyflowDiagram();
   document.querySelector('stickyflow-diagram').source = sflText; // or the source="" attribute
 </script>
+```
+
+## Native SFL widgets
+
+Interface elements with their own behavior are declared in the document. A
+`RollingNumber` therefore renders with its initial value in static SVG and
+image exports without requiring a Shape or a browser runtime.
+
+```sfl
+Model instrument {
+  Widget speed {
+    type: rollingNumber
+    value: 42
+    digits: 2
+    duration: 420
+
+    layout { position: 20, 20; size: 240, 140 }
+    style {
+      color: "#ffffff"
+      surface: "rgba(255, 255, 255, 0.12)"
+    }
+  }
+}
+```
+
+A running application can replace the document value without rebuilding the
+scene. Only changed digits animate.
+
+```ts
+viewer.setWidgetValue('speed', 87)
 ```
 
 ## Editing: `stickyflow/interaction`

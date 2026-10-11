@@ -17,6 +17,7 @@ export {
   type SflIsometricObject,
   type SflPathObject,
   type SflSwimlaneObject,
+  type SflWidgetObject,
 } from './canvasObjects/types';
 export type { SflGroupOut } from './groups/types';
 

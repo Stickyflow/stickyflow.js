@@ -4,6 +4,7 @@ import { collectCanvasDefinitions } from '../definitions/collection';
 import { collectUnresolvedCompositionReferences } from '../definitions/compositionReferences';
 import { createCanvasObjectPropertyReaders } from '../definitions/propertyReaders';
 import { collectEmptySeries, collectUnsupportedChartTypes, collectUnsupportedGridShapes } from '../diagnostics/charts';
+import { collectUnsupportedWidgetTypes } from '../diagnostics/widgets';
 import type { SflDiagnostic } from '../types';
 
 export interface CanvasResolution {
@@ -22,6 +23,7 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectUnsupportedChartTypes(doc),
       ...collectUnsupportedGridShapes(doc),
       ...collectEmptySeries(doc),
+      ...collectUnsupportedWidgetTypes(doc),
     ],
     canvasObjectResolutionContext: createCanvasObjectPropertyReaders(definitions),
   };

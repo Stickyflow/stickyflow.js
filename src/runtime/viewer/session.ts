@@ -7,12 +7,14 @@ import { bindInteraction, type InteractionHandle } from './interaction';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
 import type { Viewer, ViewerOptions, ViewerSource } from './types';
+import { type DocumentWidgetsHandle, mountDocumentWidgets } from './widgets';
 
 export class ViewerSession implements Viewer {
   private readonly emitter = new Emitter();
   private readonly display: DisplayHandle;
   private readonly interaction: InteractionHandle | null;
   private readonly shaderSurfaces: ShaderSurfaceHandle;
+  private readonly documentWidgets: DocumentWidgetsHandle;
   private readonly shaderParameterOverrides = new Map<string, Record<string, ShaderParameter>>();
 
   constructor(
@@ -22,6 +24,7 @@ export class ViewerSession implements Viewer {
   ) {
     this.display = mountDisplay(options.container, initialSvg);
     this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
+    this.documentWidgets = mountDocumentWidgets(this.display.svg);
     this.interaction = options.interactive
       ? bindInteraction(this.display, this.emitter, diagramId, { selectable: options.selectable })
       : null;
@@ -66,11 +69,16 @@ export class ViewerSession implements Viewer {
     return this.shaderSurfaces.setParameters(ownerId, parameters);
   }
 
+  setWidgetValue(widgetId: string, value: string | number): boolean {
+    return this.documentWidgets.setValue(widgetId, value);
+  }
+
   update(next: ViewerSource): void {
     const svg = renderViewerSource(next, this.options.renderOptions);
     assertViewerUpdateContract(svg);
     const diff = this.display.updateContent(svg);
     this.shaderSurfaces.refresh();
+    this.documentWidgets.refresh();
     for (const [ownerId, parameters] of this.shaderParameterOverrides) {
       this.shaderSurfaces.setParameters(ownerId, parameters);
     }
@@ -95,6 +103,7 @@ export class ViewerSession implements Viewer {
   destroy(): void {
     this.interaction?.destroy();
     this.shaderSurfaces.destroy();
+    this.documentWidgets.destroy();
     this.shaderParameterOverrides.clear();
     this.display.destroy();
     this.emitter.clear();

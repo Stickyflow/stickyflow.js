@@ -3,6 +3,7 @@ import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
 import type { Shader } from '../../model/shader';
+import type { RollingNumberWidgetStyle } from '../../model/widget';
 
 export type RenderDiagnostic = Diagnostic;
 export type { Bounds, Point } from '../../model/geometry/types';
@@ -30,7 +31,7 @@ export interface SceneStyle {
     | { type: 'path'; d: string };
 }
 
-export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'path' | 'chart' | 'isometric';
+export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'path' | 'chart' | 'widget' | 'isometric';
 
 export interface SceneIdentity {
   role: SceneRole;
@@ -174,7 +175,21 @@ export interface SceneShaderSurface extends SceneBase {
   mask: 'ellipse';
 }
 
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneShaderSurface;
+export interface SceneRollingNumber extends SceneBase {
+  type: 'rolling-number';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  value: string;
+  digits?: number;
+  duration: number;
+  label?: string;
+  widgetStyle: Required<RollingNumberWidgetStyle>;
+}
+
+export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneShaderSurface | SceneRollingNumber;
 
 export interface RenderScene {
   nodes: RenderNode[];

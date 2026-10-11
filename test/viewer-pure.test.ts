@@ -56,6 +56,13 @@ describe('owner resolution (DOM-agnostic)', () => {
   it('rejects an unknown role', () => {
     expect(resolveOwner(fake({ 'data-sf-role': 'bogus', 'data-sf-id': 'x' }))).toBeNull();
   });
+
+  it('resolves native widgets as semantic owners', () => {
+    const owner = resolveOwner(
+      fake({ 'data-sf-role': 'widget', 'data-sf-id': 'speed', 'data-sf-kind': 'rollingNumber' }),
+    );
+    expect(owner).toEqual({ role: 'widget', id: 'speed', kind: 'rollingNumber', label: undefined });
+  });
 });
 
 describe('camera gesture modifier', () => {

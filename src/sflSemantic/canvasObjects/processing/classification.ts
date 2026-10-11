@@ -16,6 +16,9 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Chart') {
     return 'chart';
   }
+  if (block.kind === 'Widget') {
+    return asString(properties.get('type')) ?? 'widget';
+  }
   if (block.kind === 'Isometric') {
     return 'isometric';
   }
@@ -36,6 +39,9 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   if (kind === 'chart') {
     return 'chart';
   }
+  if (kind === 'rollingNumber') {
+    return 'widget';
+  }
   if (kind === 'isometric') {
     return 'isometric';
   }
@@ -53,7 +59,7 @@ export function classifyCanvasObject(
   const symbol = shapeReference ? symbolDefinitions.get(shapeReference) : undefined;
 
   return {
-    objectType: canvasObjectTypeForKind(kind),
+    objectType: block.kind === 'Widget' ? 'widget' : canvasObjectTypeForKind(kind),
     kind,
     shapeType: symbol ? 'symbol' : shapeReference,
     symbol,

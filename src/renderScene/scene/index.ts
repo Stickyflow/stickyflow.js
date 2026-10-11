@@ -20,6 +20,7 @@ export type {
   ScenePath,
   SceneRect,
   SceneRole,
+  SceneRollingNumber,
   SceneShaderSurface,
   SceneStyle,
   SceneText,

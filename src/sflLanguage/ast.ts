@@ -6,6 +6,7 @@ export const NAMED_BLOCK_KINDS = [
   'Container',
   'Path',
   'Chart',
+  'Widget',
   'Shape',
   'Isometric',
   'Link',

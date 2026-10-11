@@ -41,6 +41,7 @@ export function createFakeViewer(): FakeViewer {
     exportSvg: () => '<svg xmlns="http://www.w3.org/2000/svg"/>',
     exportImage: async () => new Blob(),
     setShaderParameters: () => false,
+    setWidgetValue: () => false,
     update: (_next: ViewerSource) => undefined,
     destroy: () => undefined,
   };

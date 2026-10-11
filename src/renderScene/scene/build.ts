@@ -4,6 +4,7 @@ import { buildIsometricObjects } from '../artifacts/isometric';
 import { buildLinks } from '../artifacts/link';
 import { buildFreeformPaths } from '../artifacts/path';
 import { buildShapes } from '../artifacts/shape';
+import { buildWidgets } from '../artifacts/widget';
 import { buildCharts } from '../charts';
 import { EMPTY_BOUNDS } from './bounds';
 import type { MeasureTextFactory } from './textMetrics';
@@ -34,6 +35,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ...buildCharts(input.charts ?? [], diagnostics),
     ...buildLinks(input.links, measureText),
     ...buildShapes(input.shapes, diagnostics, measureText),
+    ...buildWidgets(input.widgets ?? []),
     ...buildIsometricObjects(input.isometricObjects ?? []),
   ].sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return { nodes, bounds: sceneBounds(nodes), diagnostics };
