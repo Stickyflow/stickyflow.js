@@ -19,12 +19,13 @@ export function readConnections(
   connectionBlocks: SflBlock[],
   canvasObjects: SflCanvasObject[],
   context: CanvasObjectResolutionContext,
+  sourceIndexes: readonly number[] = [],
 ): SflConnectionOut[] {
   const endpointContext = {
     idByName: buildLinkNameIndex(model),
     canvasObjectById: new Map(canvasObjects.map(canvasObject => [canvasObject.id, canvasObject])),
   };
-  return connectionBlocks.map(block => {
+  return connectionBlocks.map((block, index) => {
     const properties = context.mergedProps(block);
     return {
       id: asString(properties.get('id')) ?? block.name,
@@ -33,6 +34,7 @@ export function readConnections(
       fromFace: readFace(asString(properties.get('fromFace'))),
       toFace: readFace(asString(properties.get('toFace'))),
       order: asNumber(properties.get('order')),
+      sourceIndex: sourceIndexes[index],
       props: readLinkPresentation(properties),
     };
   });

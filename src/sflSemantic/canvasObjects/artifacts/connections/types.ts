@@ -7,5 +7,6 @@ export interface SflConnectionOut {
   fromFace: IsometricFace;
   toFace: IsometricFace;
   order?: number;
+  sourceIndex?: number;
   props: Record<string, string>;
 }

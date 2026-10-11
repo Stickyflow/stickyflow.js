@@ -39,5 +39,6 @@ export function linkObject(l: SflLinkOut): Link {
         ? { kind: 'side' as const, side: l.toSide, offset: l.toFraction }
         : undefined,
     order: l.order,
+    sourceIndex: l.sourceIndex,
   };
 }

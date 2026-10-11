@@ -1,6 +1,6 @@
 import type { Frame } from '../../../model/frame';
 import type { RenderNode } from '../../scene';
-import { boxBounds, orderOf } from '../../scene';
+import { boxBounds } from '../../scene';
 import { cornersRoundedRectPath, type RectCornerRadii } from '../../scene/roundedRectPath';
 import { simpleContainerStyle } from './style';
 import { renderTitleTab, type TitleTabPosition } from './titleTab';
@@ -59,7 +59,7 @@ export function buildFrame(frame: Frame, index: number): RenderNode[] {
   if (frame.isVisible === false) {
     return [];
   }
-  const order = orderOf(frame, index);
+  const order = index;
   const hasTab = (frame.showLabel ?? true) && Boolean(frame.title);
   const nodes: RenderNode[] = [frameBoundaryNode(frame, order, hasTab)];
   if (hasTab && frame.title) {

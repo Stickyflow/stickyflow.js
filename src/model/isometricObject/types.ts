@@ -11,6 +11,7 @@ export interface IsometricObject {
   depth: number;
   rotation?: number;
   order?: number;
+  sourceIndex?: number;
 
   text?: string;
   icon?: string;

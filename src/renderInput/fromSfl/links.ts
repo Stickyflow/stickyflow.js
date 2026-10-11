@@ -7,8 +7,7 @@ import type { CollectedCanvasObjects } from './canvasObjects/collect';
 import { resolveLinkEndpoint } from './endpoint';
 import type { PositionedCanvasObject } from './types';
 
-// Must match the isometric object's own order fallback in renderScene/artifacts/isometric.ts.
-const ISOMETRIC_ORDER_BASE = 15_000;
+const ISOMETRIC_SEQUENCE_BASE = 15_000;
 
 function positionedCanvasObjects(canvasObjects: CollectedCanvasObjects): PositionedCanvasObject[] {
   return [
@@ -24,29 +23,43 @@ function connectionEndpointPoint(object: IsometricObject | undefined, face: Conn
   return object ? isometricFaceCenter(object, face) : { x: 0, y: 0 };
 }
 
-function effectiveIsometricOrder(isometricObjects: IsometricObject[], id: string | undefined): number | undefined {
+interface StackPosition {
+  rank: number;
+  sequence: number;
+}
+
+function isometricStackPosition(isometricObjects: IsometricObject[], id: string | undefined): StackPosition | undefined {
   const index = isometricObjects.findIndex(object => object.id === id);
   if (index < 0) {
     return undefined;
   }
   const object = isometricObjects[index];
-  return typeof object.order === 'number' ? object.order : ISOMETRIC_ORDER_BASE + index;
+  return { rank: object.order ?? 0, sequence: object.sourceIndex ?? ISOMETRIC_SEQUENCE_BASE + index };
 }
 
 // A hidden-face endpoint must render behind the object it's attached to.
-function connectionOrder(isometricObjects: IsometricObject[], connection: Connection): number | undefined {
+function connectionStack(
+  isometricObjects: IsometricObject[],
+  connection: Connection,
+): Pick<Connection, 'order' | 'sourceIndex'> {
   if (typeof connection.order === 'number') {
-    return connection.order;
+    return { order: connection.order, sourceIndex: connection.sourceIndex };
   }
-  const behindOrders = [
+  const behind = [
     VISIBLE_ISOMETRIC_FACES.has(connection.fromFace)
       ? undefined
-      : effectiveIsometricOrder(isometricObjects, connection.fromId),
+      : isometricStackPosition(isometricObjects, connection.fromId),
     VISIBLE_ISOMETRIC_FACES.has(connection.toFace)
       ? undefined
-      : effectiveIsometricOrder(isometricObjects, connection.toId),
-  ].filter((order): order is number => order !== undefined);
-  return behindOrders.length ? Math.min(...behindOrders) - 0.5 : undefined;
+      : isometricStackPosition(isometricObjects, connection.toId),
+  ].filter((position): position is StackPosition => position !== undefined);
+  if (!behind.length) {
+    return { sourceIndex: connection.sourceIndex };
+  }
+  const lowest = behind.reduce((best, position) =>
+    position.rank < best.rank || (position.rank === best.rank && position.sequence < best.sequence) ? position : best,
+  );
+  return { order: lowest.rank, sourceIndex: lowest.sequence - 0.5 };
 }
 
 function createRenderInputConnections(canvasObjects: CollectedCanvasObjects): RenderInputLink[] {
@@ -59,7 +72,7 @@ function createRenderInputConnections(canvasObjects: CollectedCanvasObjects): Re
       fromPoint: { kind: 'face', face: connection.fromFace },
       toPoint: { kind: 'face', face: connection.toFace },
       style: connection.style,
-      order: connectionOrder(canvasObjects.isometricObjects, connection),
+      ...connectionStack(canvasObjects.isometricObjects, connection),
     };
     return {
       link,

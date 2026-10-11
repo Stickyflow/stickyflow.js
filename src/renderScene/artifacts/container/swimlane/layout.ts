@@ -1,5 +1,5 @@
 import type { Lane, Swimlane } from '../../../../model/swimlane';
-import { boxBounds, orderOf } from '../../../scene';
+import { boxBounds } from '../../../scene';
 import type { PositionedLane, SwimlaneRenderContext } from './types';
 
 function normalizeLanes(swimlane: Swimlane): Lane[] {
@@ -23,7 +23,7 @@ function positionLanes(swimlane: Swimlane): PositionedLane[] {
 export function createSwimlaneRenderContext(swimlane: Swimlane, index: number): SwimlaneRenderContext {
   return {
     swimlane,
-    order: orderOf(swimlane, 5_000 + index),
+    order: 5_000 + index,
     bounds: boxBounds(
       { x: swimlane.x, y: swimlane.y, width: swimlane.width, height: swimlane.height },
       swimlane.strokeWidth + 4,

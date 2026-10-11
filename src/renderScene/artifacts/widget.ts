@@ -1,5 +1,5 @@
 import { formatRollingNumber, resolveRollingNumberStyle, type Widget } from '../../model/widget';
-import { finite, orderOf, type RenderNode, rotatedBounds } from '../scene';
+import { finite, type RenderNode, rotatedBounds } from '../scene';
 import { tag } from '../scene/tagging';
 
 function buildRollingNumber(widget: Widget, index: number): RenderNode[] {
@@ -12,7 +12,7 @@ function buildRollingNumber(widget: Widget, index: number): RenderNode[] {
     {
       id: `widget-${widget.id}`,
       type: 'rolling-number',
-      order: orderOf(widget, 10_000 + index),
+      order: 10_000 + index,
       bounds: rotatedBounds({ x, y, width, height }, rotation, 2),
       x,
       y,

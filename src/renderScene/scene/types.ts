@@ -101,6 +101,8 @@ export type SceneDetail =
 export interface SceneBase {
   id: string;
   order: number;
+  rank?: number;
+  sequence?: number;
   bounds: Bounds;
   identity?: SceneIdentity;
   detail?: SceneDetail;

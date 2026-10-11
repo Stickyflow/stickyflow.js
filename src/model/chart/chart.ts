@@ -52,6 +52,7 @@ export interface ChartBase {
   legendPosition?: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
   shadowStyle?: ShadowStyle;
   order?: number;
+  sourceIndex?: number;
   isVisible?: boolean;
 }
 

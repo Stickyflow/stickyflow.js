@@ -22,6 +22,7 @@ export interface SflCanvasObjectBase {
   height: number;
   rotation?: number;
   order?: number;
+  sourceIndex?: number;
   parentFrameId?: string;
   props: Record<string, string>;
 }

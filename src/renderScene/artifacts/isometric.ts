@@ -6,7 +6,7 @@ import {
   isometricTopFaceCenter,
 } from '../../model/isometricObject';
 import type { RenderNode, ScenePath, SceneRect, SceneText } from '../scene';
-import { DEFAULT_FONT, finite, orderOf, rotatedBounds } from '../scene';
+import { DEFAULT_FONT, finite, rotatedBounds } from '../scene';
 import { roundedPolygonPath } from '../scene/roundedPolygonPath';
 import { tag } from '../scene/tagging';
 
@@ -19,7 +19,7 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     y: box.y + box.height / 2,
   };
   const bounds = rotatedBounds(box, rotation, strokeWidth + 2);
-  const order = orderOf(object, 15_000 + index);
+  const order = 15_000 + index;
   const faces = isometricFaces(object);
   const cornerRadius = Math.max(0, finite(object.cornerRadius, 8));
   const depth = Math.max(0, object.depth);

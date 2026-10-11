@@ -22,5 +22,6 @@ export function pathObject(e: SflCanvasObject): FreeformPath {
     opacity: numOf(p.opacity) ?? 1,
     fillColor: solidColor(p.fill) ?? 'transparent',
     order: e.order,
+    sourceIndex: e.sourceIndex,
   };
 }

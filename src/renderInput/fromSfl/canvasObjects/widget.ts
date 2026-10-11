@@ -27,6 +27,7 @@ export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget
     height: canvasObject.height,
     rotation: canvasObject.rotation,
     order: canvasObject.order,
+    sourceIndex: canvasObject.sourceIndex,
     parentFrameId: canvasObject.parentFrameId,
     style: {
       color: color(properties.color),

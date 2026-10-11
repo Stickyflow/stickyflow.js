@@ -21,6 +21,7 @@ export interface RollingNumberWidget {
   height: number;
   rotation?: number;
   order?: number;
+  sourceIndex?: number;
   parentFrameId?: string;
   style: RollingNumberWidgetStyle;
 }

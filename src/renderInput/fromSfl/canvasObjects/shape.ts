@@ -49,6 +49,7 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     opacity: numOf(p.opacity),
     parentFrameId: e.parentFrameId,
     order: e.order,
+    sourceIndex: e.sourceIndex,
     shader: p.shader ? shaders.get(p.shader) : undefined,
   };
 }

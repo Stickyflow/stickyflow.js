@@ -21,6 +21,7 @@ export interface Frame {
   layerGroup?: string;
   orderKey?: string;
   order?: number;
+  sourceIndex?: number;
   isVisible?: boolean;
   isLocked?: boolean;
 }

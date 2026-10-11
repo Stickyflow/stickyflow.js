@@ -55,6 +55,7 @@ export interface Shape {
 
   layerGroup?: string;
   orderKey?: string;
+  sourceIndex?: number;
   isVisible?: boolean;
   isLocked?: boolean;
 

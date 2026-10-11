@@ -1,6 +1,6 @@
 import type { FreeformPath } from '../../model/path';
 import type { RenderNode } from '../scene';
-import { finite, freeformPathData, orderOf } from '../scene';
+import { finite, freeformPathData } from '../scene';
 import { tag } from '../scene/tagging';
 
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
@@ -21,7 +21,7 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
     {
       type: 'path',
       id: `path-${path.id}`,
-      order: orderOf(path, 30_000 + index),
+      order: 30_000 + index,
       bounds,
       d: freeformPathData({ points: path.points, tension, closed }),
       markerStart: path.startMarker,

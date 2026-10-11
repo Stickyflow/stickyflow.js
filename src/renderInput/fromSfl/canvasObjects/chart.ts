@@ -77,6 +77,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     legendPosition,
     shadowStyle: decodeShadow(p.shadow),
     order: e.order,
+    sourceIndex: e.sourceIndex,
   } satisfies ChartBase;
 
   const source = e.chart;

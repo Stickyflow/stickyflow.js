@@ -16,6 +16,7 @@ export function isometricObject(canvasObject: SflIsometricObject): IsometricObje
     depth: canvasObject.isometric.depth,
     rotation: canvasObject.rotation,
     order: canvasObject.order,
+    sourceIndex: canvasObject.sourceIndex,
     text: canvasObject.text,
     icon: canvasObject.isometric.icon,
     fill: solidColor(presentation.fill) ?? '#f8fafc',

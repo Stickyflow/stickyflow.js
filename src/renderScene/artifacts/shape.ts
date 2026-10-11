@@ -1,6 +1,6 @@
 import type { Shape } from '../../model/shape';
 import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
-import { finite, orderOf, rotatedBounds } from '../scene';
+import { finite, rotatedBounds } from '../scene';
 import { tag } from '../scene/tagging';
 import { renderShapeGeometry } from './shape/geometry';
 import { shapeStyle } from './shape/style';
@@ -56,7 +56,7 @@ function createRenderContext(
     context: {
       shape,
       id: `shape-${shape.id}`,
-      order: orderOf(shape, 10_000 + index),
+      order: 10_000 + index,
       bounds: rotatedBounds({ x, y, width, height }, rotation, strokeWidth + (shape.hasShadow ? 20 : 2)),
       rotation,
       rotationCenter: { x: x + width / 2, y: y + height / 2 },
