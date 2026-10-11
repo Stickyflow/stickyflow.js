@@ -8,10 +8,9 @@ describe('shader programs', () => {
     expect(shaderProgram('halo')?.fragmentSource).toContain('uThickness');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uProgress');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uBoost');
-    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uDensity');
-    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uBottomColor');
-    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uTopColor');
-    expect(shaderProgram('particleSphere')?.fragmentSource).toContain('rotateY');
+    expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uDotCount');
+    expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uRingRadius');
+    expect(shaderProgram('chromaticHalo')?.fragmentSource).toContain('uBloom');
     expect(shaderProgram('eclipseOrb')).toMatchObject({
       name: 'eclipseOrb',
       fragmentSource: expect.stringContaining('void main()'),
