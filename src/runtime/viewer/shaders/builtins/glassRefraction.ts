@@ -47,15 +47,18 @@ void main() {
   ) - 0.5;
   float sphereDepth = sqrt(max(1.0 - radius * radius, 0.0));
   vec2 glassMotion = vec2(
-    sin(p.y * 3.2 + time * 0.48),
-    cos(p.x * 2.8 - time * 0.41)
-  ) * 0.008;
+    sin(p.y * 3.2 + time * 1.15),
+    cos(p.x * 2.8 - time * 0.92)
+  ) * 0.014;
   vec3 surfaceNormal = normalize(vec3(p + glassMotion + flow * roughness * 0.22, sphereDepth));
   float eta = 1.0 / max(uIor, 1.001);
   vec3 refracted = refract(vec3(0.0, 0.0, -1.0), surfaceNormal, eta);
   vec2 distortion = refracted.xy * max(uRefraction, 0.0);
-  distortion += flow * (0.004 + roughness * 0.025);
-  distortion += vec2(sin(time * 0.31), cos(time * 0.27)) * 0.0035;
+  distortion += flow * (0.008 + roughness * 0.025);
+  distortion += vec2(
+    sin(time * 0.82 + p.y * 1.7),
+    cos(time * 0.68 + p.x * 1.5)
+  ) * 0.009;
 
   vec2 backdropUv = uBackdropOrigin + vUv * uBackdropScale;
   vec2 refractedUv = clamp(backdropUv + distortion * uBackdropScale, 0.001, 0.999);
@@ -77,15 +80,18 @@ void main() {
   float fresnel = pow(1.0 - sphereDepth, 2.35);
   float innerRim = smoothstep(0.72, 0.995, radius);
   vec3 movingLight = normalize(vec3(
-    -0.48 + sin(time * 0.34) * 0.16,
-    0.66 + cos(time * 0.29) * 0.1,
+    -0.4 + sin(time * 1.05) * 0.32,
+    0.58 + cos(time * 0.88) * 0.2,
     0.62
   ));
   float highlight = pow(max(dot(movingLight, surfaceNormal), 0.0), 28.0);
   float hotSpot = pow(max(dot(movingLight, surfaceNormal), 0.0), 92.0);
-  float movingRim = 0.72 + 0.28 * sin(atan(p.y, p.x) * 2.0 - time * 0.42);
+  float angle = atan(p.y, p.x);
+  float movingRim = 0.68 + 0.32 * sin(angle * 2.0 - time * 1.05);
+  float rimGlint = pow(max(cos(angle - time * 0.72 - 2.35), 0.0), 20.0) * innerRim;
   vec3 color = mix(backdrop, backdrop * uTint, 0.025 + fresnel * 0.09);
   color += uEdgeColor * innerRim * max(uEdgeLight, 0.0) * (0.1 + fresnel * 0.5) * movingRim;
+  color += uEdgeColor * rimGlint * max(uEdgeLight, 0.0) * 0.72;
   color += uEdgeColor * highlight * 0.5;
   color += vec3(1.0) * hotSpot * 0.58;
   color += vec3(1.0) * fresnel * 0.05;
