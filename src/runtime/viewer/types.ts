@@ -1,3 +1,4 @@
+import type { ShaderParameter } from '../../model/shader';
 import type { RenderOptions } from '../../render';
 import type { ViewBox } from './display';
 import type { OwnerRef, Unsubscribe, ViewerEventHandler, ViewerEventName } from './events';
@@ -30,6 +31,7 @@ export interface Viewer {
   getViewport(): ViewBox;
   exportSvg(): string;
   exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
+  setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
   update(next: ViewerSource): void;
   destroy(): void;
 }

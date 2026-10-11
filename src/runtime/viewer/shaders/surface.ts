@@ -12,6 +12,7 @@ void main() {
 `;
 
 interface Surface {
+  owner: Element;
   canvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;
   program: WebGLProgram;
@@ -99,7 +100,7 @@ function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
   }
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-  return { canvas, gl, program, buffer, parameters: parametersOf(owner) };
+  return { owner, canvas, gl, program, buffer, parameters: parametersOf(owner) };
 }
 
 function color(value: ShaderParameter | undefined, fallback: [number, number, number]): [number, number, number] {
@@ -175,6 +176,8 @@ function renderSurface(surface: Surface, seconds: number): void {
   uniform1f(surface, 'uTime', seconds);
   uniform1f(surface, 'uIntensity', number(parameters.intensity, 0.85));
   uniform1f(surface, 'uSpeed', number(parameters.speed, 0.18));
+  uniform1f(surface, 'uProgress', number(parameters.progress, -1));
+  uniform1f(surface, 'uBoost', number(parameters.boost, 0));
   uniform3f(surface, 'uColor', color(parameters.color, [0.08, 0.02, 0.22]));
   uniform3f(surface, 'uAccent', color(parameters.accent, [0.58, 0.31, 1]));
   applyParameters(surface);
@@ -183,6 +186,7 @@ function renderSurface(surface: Surface, seconds: number): void {
 
 export interface ShaderSurfaceHandle {
   capture(): Array<string | undefined>;
+  setParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
   refresh(): void;
   destroy(): void;
 }
@@ -245,6 +249,21 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     });
   };
 
+  const setParameters = (ownerId: string, parameters: Record<string, ShaderParameter>): boolean => {
+    let changed = false;
+    const seconds = (view?.performance.now() ?? 0) / 1000;
+    for (const surface of surfaces) {
+      if (surface.owner.getAttribute('data-sf-id') !== ownerId) {
+        continue;
+      }
+      Object.assign(surface.parameters, parameters);
+      surface.owner.setAttribute('data-sf-shader-params', JSON.stringify(surface.parameters));
+      renderSurface(surface, seconds);
+      changed = true;
+    }
+    return changed;
+  };
+
   refresh();
-  return { capture, refresh, destroy: stop };
+  return { capture, setParameters, refresh, destroy: stop };
 }

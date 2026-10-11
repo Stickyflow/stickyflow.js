@@ -5,6 +5,7 @@ import { lumenPortalProgram } from './builtins/lumenPortal';
 import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
 import { particleSphereProgram } from './builtins/particleSphere';
+import { pixelConstellationProgram } from './builtins/pixelConstellation';
 import { prismSlatsProgram } from './builtins/prismSlats';
 import { violetGlassProgram } from './builtins/violetGlass';
 import { violetGlassLightProgram } from './builtins/violetGlassLight';
@@ -14,6 +15,7 @@ const builtins = [
   orbProgram,
   haloProgram,
   particleSphereProgram,
+  pixelConstellationProgram,
   prismSlatsProgram,
   eclipseOrbProgram,
   emberMatrixProgram,

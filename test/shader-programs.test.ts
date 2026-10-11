@@ -6,6 +6,8 @@ describe('shader programs', () => {
   it('ships every built-in shader program', () => {
     expect(shaderProgram('orb')?.fragmentSource).toContain('void main()');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uThickness');
+    expect(shaderProgram('halo')?.fragmentSource).toContain('uProgress');
+    expect(shaderProgram('halo')?.fragmentSource).toContain('uBoost');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uDensity');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uBottomColor');
     expect(shaderProgram('particleSphere')?.fragmentSource).toContain('uTopColor');
@@ -22,6 +24,7 @@ describe('shader programs', () => {
       'lumenPortalLight',
       'prismSlats',
       'emberMatrix',
+      'pixelConstellation',
     ]) {
       expect(shaderProgram(name)).toMatchObject({
         name,

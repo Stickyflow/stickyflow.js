@@ -1,3 +1,4 @@
+import type { ShaderParameter } from '../../model/shader';
 import type { DisplayHandle, ViewBox } from './display';
 import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
@@ -12,6 +13,7 @@ export class ViewerSession implements Viewer {
   private readonly display: DisplayHandle;
   private readonly interaction: InteractionHandle | null;
   private readonly shaderSurfaces: ShaderSurfaceHandle;
+  private readonly shaderParameterOverrides = new Map<string, Record<string, ShaderParameter>>();
 
   constructor(
     private readonly options: ViewerOptions,
@@ -58,11 +60,20 @@ export class ViewerSession implements Viewer {
     return rasterizeSvgSnapshot(this.svg, this.exportSvg(), options);
   }
 
+  setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean {
+    const merged = { ...this.shaderParameterOverrides.get(ownerId), ...parameters };
+    this.shaderParameterOverrides.set(ownerId, merged);
+    return this.shaderSurfaces.setParameters(ownerId, parameters);
+  }
+
   update(next: ViewerSource): void {
     const svg = renderViewerSource(next, this.options.renderOptions);
     assertViewerUpdateContract(svg);
     const diff = this.display.updateContent(svg);
     this.shaderSurfaces.refresh();
+    for (const [ownerId, parameters] of this.shaderParameterOverrides) {
+      this.shaderSurfaces.setParameters(ownerId, parameters);
+    }
     if (next.resetView) {
       this.display.fit();
     }
@@ -84,6 +95,7 @@ export class ViewerSession implements Viewer {
   destroy(): void {
     this.interaction?.destroy();
     this.shaderSurfaces.destroy();
+    this.shaderParameterOverrides.clear();
     this.display.destroy();
     this.emitter.clear();
   }
