@@ -29,8 +29,8 @@ void main() {
   float motion = max(uMotion, 0.0);
   float radius = length(p);
 
-  float wave = sin(p.y * 6.4 - time * 0.55) * 0.018 * motion;
-  wave += sin(p.x * 5.1 + time * 0.33) * 0.012 * motion;
+  float wave = sin(p.y * 6.4 - time * 0.9) * 0.04 * motion;
+  wave += sin(p.x * 5.1 + time * 0.6) * 0.026 * motion;
   float ringRadius = length(p + vec2(wave, 0.0));
   float holeSize = clamp(uHoleSize, 0.0, 0.72);
   float ring = uHole ? smoothstep(holeSize - 0.08, holeSize + 0.08, ringRadius) : 1.0;
@@ -40,14 +40,14 @@ void main() {
   float count = clamp(uSlitCount, 12.0, 90.0);
   vec2 slitPoint = uOrientation < 0.5 ? p : vec2(p.y, p.x);
   float phase = slitPoint.x * count * 3.14159265;
-  phase += sin(slitPoint.y * 3.6 - time * 0.58) * 0.23 * motion;
-  phase += time * 0.17 * motion;
+  phase += sin(slitPoint.y * 3.6 - time * 0.95) * 0.75 * motion;
+  phase += time * 2.2 * motion;
   float bars = pow(0.5 + 0.5 * cos(phase), 1.9);
   float slit = 0.12 + 0.88 * bars;
   float sideFade = 1.0 - smoothstep(0.67, 0.91, abs(p.x));
 
-  float upperLight = bell(p.y - 0.45, 0.21);
-  float lowerLight = bell(p.y + 0.48, 0.24);
+  float upperLight = bell(p.y - 0.45 - sin(time * 0.6) * 0.1 * motion, 0.21);
+  float lowerLight = bell(p.y + 0.48 + sin(time * 0.5 + 1.7) * 0.1 * motion, 0.24);
   vec3 heat = mix(uHotColor, uCoreColor, smoothstep(-0.57, 0.55, p.y));
   heat = mix(heat, uHighlightColor, upperLight * 0.45 + lowerLight * 0.28);
   float molten = ring * slit * sideFade;
