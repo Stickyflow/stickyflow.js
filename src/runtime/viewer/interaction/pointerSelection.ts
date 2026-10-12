@@ -59,6 +59,10 @@ export class OwnerPointerController {
       owner,
       modifiers,
     });
-    findOwnerNode(this.#svg, owner.id, isPrimary)?.focus({ preventScroll: true });
+    const node = findOwnerNode(this.#svg, owner.id, isPrimary);
+    if (node && !node.hasAttribute('tabindex')) {
+      node.setAttribute('tabindex', '-1');
+    }
+    node?.focus({ preventScroll: true });
   }
 }
