@@ -1,4 +1,3 @@
-import { auroraOrbProgram } from './builtins/auroraOrb';
 import { chromaticHaloProgram } from './builtins/chromaticHalo';
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
 import { emberMatrixProgram } from './builtins/emberMatrix';
@@ -11,7 +10,6 @@ import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
 import { pixelConstellationProgram } from './builtins/pixelConstellation';
 import { prismSlatsProgram } from './builtins/prismSlats';
-import { scanOrbProgram } from './builtins/scanOrb';
 import { smearOrbProgram } from './builtins/smearOrb';
 import { violetGlassProgram } from './builtins/violetGlass';
 import { violetGlassLightProgram } from './builtins/violetGlassLight';
@@ -23,8 +21,6 @@ const builtins = [
   halftoneHaloProgram,
   chromaticHaloProgram,
   glassRefractionProgram,
-  scanOrbProgram,
-  auroraOrbProgram,
   emberSlitsProgram,
   smearOrbProgram,
   pixelConstellationProgram,
