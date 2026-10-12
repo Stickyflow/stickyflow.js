@@ -9,6 +9,7 @@ import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
 import { pixelConstellationProgram } from './builtins/pixelConstellation';
 import { prismSlatsProgram } from './builtins/prismSlats';
+import { spectralDustProgram } from './builtins/spectralDust';
 import { violetGlassProgram } from './builtins/violetGlass';
 import { violetGlassLightProgram } from './builtins/violetGlassLight';
 import type { ShaderProgram } from './types';
@@ -19,6 +20,7 @@ const builtins = [
   halftoneHaloProgram,
   chromaticHaloProgram,
   glassRefractionProgram,
+  spectralDustProgram,
   pixelConstellationProgram,
   prismSlatsProgram,
   eclipseOrbProgram,
