@@ -85,6 +85,7 @@ function renderShaderSurface(context: ShapeRenderContext): RenderNode | undefine
     rotation: context.rotation,
     shader: context.shape.shader,
     mask: 'ellipse',
+    fillColor: context.style.fill?.kind === 'solid' ? context.style.fill.color : undefined,
   };
 }
 

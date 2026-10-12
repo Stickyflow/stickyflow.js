@@ -175,6 +175,7 @@ export interface SceneShaderSurface extends SceneBase {
   rotation?: number;
   shader: Shader;
   mask: 'ellipse';
+  fillColor?: string;
 }
 
 export interface SceneRollingNumber extends SceneBase {

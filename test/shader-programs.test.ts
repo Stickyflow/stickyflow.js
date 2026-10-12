@@ -11,7 +11,14 @@ describe('shader programs', () => {
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uDotCount');
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uRingRadius');
     expect(shaderProgram('chromaticHalo')?.fragmentSource).toContain('uBloom');
-    expect(shaderProgram('spectralDust')?.fragmentSource).toContain('uDensity');
+    expect(shaderProgram('scanOrb')?.fragmentSource).toContain('uAperture');
+    expect(shaderProgram('scanOrb')?.fragmentSource).not.toContain('uScanDensity');
+    expect(shaderProgram('scanOrb')?.fragmentSource).not.toContain('scanParticles');
+    expect(shaderProgram('auroraOrb')?.fragmentSource).toContain('uBandWidth');
+    expect(shaderProgram('emberSlits')?.fragmentSource).toContain('uSlitCount');
+    expect(shaderProgram('smearOrb')?.fragmentSource).toContain('uBlur');
+    expect(shaderProgram('spectralDust')).toBeUndefined();
+    expect(shaderProgram('solarSlices')).toBeUndefined();
     expect(shaderProgram('glassRefraction')).toMatchObject({
       usesBackdrop: true,
       fragmentSource: expect.stringContaining('uBackdrop'),

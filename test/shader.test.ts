@@ -49,6 +49,7 @@ describe('shape shaders', () => {
     expect(svg).toContain('<ellipse');
     expect(svg).toContain('data-sf-shader="orb"');
     expect(svg).toContain('data-sf-shader-name="VioletOrb"');
+    expect(svg).toContain('data-sf-shader-fill="#11052f"');
     expect(svg.indexOf('<ellipse')).toBeLessThan(svg.indexOf('<foreignObject'));
   });
 
@@ -57,5 +58,25 @@ describe('shape shaders', () => {
     const { svg } = render(source);
     expect(svg).toContain('<ellipse');
     expect(svg).not.toContain('<foreignObject');
+  });
+
+  it('keeps directional and boolean shader controls as document parameters', () => {
+    const source = SOURCE.replace(
+      'speed: 0.12',
+      `speed: 0.12
+  direction: top
+  reach: 0.6
+  orientation: horizontal
+  hole: false
+  holeSize: 0.3`,
+    );
+    const [shader] = sflToCanvasState(source).shaders ?? [];
+    expect(shader?.parameters).toMatchObject({
+      direction: 'top',
+      reach: 0.6,
+      orientation: 'horizontal',
+      hole: false,
+      holeSize: 0.3,
+    });
   });
 });

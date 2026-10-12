@@ -23,6 +23,9 @@ interface Surface {
   backdropOrigin: [number, number];
   backdropScale: [number, number];
   usesBackdrop: boolean;
+  shapeColor: [number, number, number];
+  baseGeometry?: Element;
+  baseFill?: string | null;
 }
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | undefined {
@@ -120,6 +123,16 @@ function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   const usesBackdrop = definition.usesBackdrop === true;
+  const shapeColor = color(owner.getAttribute('data-sf-shader-fill') ?? undefined, [1, 1, 1]);
+  const ownerId = owner.getAttribute('data-sf-id');
+  const baseGeometry =
+    definition.replacesBaseFill && ownerId
+      ? ([...(owner.closest('svg')?.querySelectorAll('[data-sf-primary="true"]') ?? [])].find(
+          element => element !== owner && element.getAttribute('data-sf-id') === ownerId,
+        ) ?? undefined)
+      : undefined;
+  const baseFill = baseGeometry?.getAttribute('fill');
+  baseGeometry?.setAttribute('fill', 'none');
   return {
     owner,
     canvas,
@@ -131,6 +144,9 @@ function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
     backdropOrigin: [0, 0],
     backdropScale: [1, 1],
     usesBackdrop,
+    shapeColor,
+    baseGeometry,
+    baseFill,
   };
 }
 
@@ -203,6 +219,14 @@ function uniformName(parameter: string): string {
   return `u${parameter.charAt(0).toUpperCase()}${parameter.slice(1)}`;
 }
 
+function enumParameter(name: string, value: string): number | undefined {
+  const values: Record<string, Record<string, number>> = {
+    direction: { left: 0, right: 1, top: 2, bottom: 3 },
+    orientation: { vertical: 0, horizontal: 1 },
+  };
+  return values[name]?.[value];
+}
+
 function applyParameters(surface: Surface): void {
   for (const [key, value] of Object.entries(surface.parameters)) {
     const name = uniformName(key);
@@ -215,6 +239,11 @@ function applyParameters(surface: Surface): void {
       if (location) {
         surface.gl.uniform1i(location, value ? 1 : 0);
       }
+      continue;
+    }
+    const enumValue = enumParameter(key, value);
+    if (enumValue !== undefined) {
+      uniform1f(surface, name, enumValue);
       continue;
     }
     if (/^#[0-9a-f]{6}$/i.test(value)) {
@@ -257,6 +286,7 @@ function renderSurface(surface: Surface, seconds: number): void {
   uniform1f(surface, 'uBoost', number(parameters.boost, 0));
   uniform3f(surface, 'uColor', color(parameters.color, [0.08, 0.02, 0.22]));
   uniform3f(surface, 'uAccent', color(parameters.accent, [0.58, 0.31, 1]));
+  uniform3f(surface, 'uShapeColor', surface.shapeColor);
   applyParameters(surface);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
@@ -292,6 +322,13 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       }
       surface.gl.deleteBuffer(surface.buffer);
       surface.gl.deleteProgram(surface.program);
+      if (surface.baseGeometry) {
+        if (surface.baseFill === null || surface.baseFill === undefined) {
+          surface.baseGeometry.removeAttribute('fill');
+        } else {
+          surface.baseGeometry.setAttribute('fill', surface.baseFill);
+        }
+      }
     }
     surfaces = [];
   };
