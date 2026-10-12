@@ -36,6 +36,14 @@ export interface LinkReconnectEvent {
   fraction: number;
 }
 
+export interface LinkSegmentChangeEvent {
+  owner: OwnerRef;
+  /** Slot in the link's `segments:` offsets: 1 first inner segment, 2 middle, 3 last inner. */
+  index: number;
+  /** Perpendicular offset from the default route, in diagram units. */
+  offset: number;
+}
+
 export type IsometricQuickDuplicateDirection =
   | 'iso-width-pos'
   | 'iso-width-neg'
@@ -115,6 +123,7 @@ export interface InteractionEventMap {
   moveChange: MoveChangeEvent;
   resizeChange: ResizeChangeEvent;
   linkReconnect: LinkReconnectEvent;
+  linkSegmentChange: LinkSegmentChangeEvent;
   quickDuplicate: QuickDuplicateEvent;
   linkTo: LinkToEvent;
   delete: DeleteEvent;

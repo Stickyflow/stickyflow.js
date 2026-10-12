@@ -8,6 +8,7 @@ import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './i
 import { bindIsometricLabelDrag, type IsometricLabelDragHandle } from './isometricLabelDrag/binding';
 import { bindIsometricQuickDuplicate, type IsometricQuickDuplicateHandle } from './isometricQuickDuplicate/binding';
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
+import { bindLinkSegmentDrag, type LinkSegmentDragHandle } from './linkSegmentDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
 import { bindPathReshape, type PathReshapeDragHandle } from './pathReshapeDrag';
@@ -40,6 +41,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const isometricAxisResize: IsometricAxisResizeDragHandle = bindIsometricAxisResize(viewer, emitter);
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
+  const linkSegments: LinkSegmentDragHandle = bindLinkSegmentDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
   const isometricQuickDuplicate: IsometricQuickDuplicateHandle = bindIsometricQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
@@ -70,6 +72,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       isometricAxisResize.destroy();
       pathReshape.destroy();
       linkEndpoints.destroy();
+      linkSegments.destroy();
       quickDuplicate.destroy();
       isometricQuickDuplicate.destroy();
       deleteSelection.destroy();
@@ -102,6 +105,7 @@ export type {
   InteractionEventName,
   IsometricQuickDuplicateDirection,
   LinkReconnectEvent,
+  LinkSegmentChangeEvent,
   LinkToEvent,
   MoveChangeEvent,
   PathDrawCompleteEvent,
@@ -125,6 +129,7 @@ export type {
 export {
   applyChartValueChange,
   applyLinkReconnectChange,
+  applyLinkSegmentChange,
   applyMoveChange,
   applyPathPointChange,
   applyPropertyChange,

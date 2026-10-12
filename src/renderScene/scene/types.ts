@@ -22,7 +22,7 @@ export interface SceneStyle {
   lineCap?: 'butt' | 'round' | 'square';
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
-  pointerEvents?: 'none' | 'all';
+  pointerEvents?: 'none' | 'all' | 'stroke';
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
@@ -42,6 +42,16 @@ export interface SceneIdentity {
   parentFrameId?: string;
 }
 
+export interface SceneLinkSegment {
+  ax: number;
+  ay: number;
+  bx: number;
+  by: number;
+  ox: number;
+  oy: number;
+  movable: boolean;
+}
+
 export type SceneDetail =
   | {
       of: 'link';
@@ -53,6 +63,7 @@ export type SceneDetail =
       fromFace?: IsometricFace;
       toFace?: IsometricFace;
       labelGap?: boolean;
+      segments?: SceneLinkSegment[];
     }
   | {
       of: 'chartValue';

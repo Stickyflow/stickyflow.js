@@ -11,7 +11,7 @@ function copyAttributes(source: Element, target: Element): void {
 }
 
 function removeRuntimeOverlays(svg: SVGSVGElement): void {
-  for (const overlay of svg.querySelectorAll('[data-sf-selection-overlay], [data-sf-change-overlay]')) {
+  for (const overlay of svg.querySelectorAll('[data-sf-selection-overlay], [data-sf-change-overlay], [id*="link-hit-"]')) {
     overlay.remove();
   }
 }

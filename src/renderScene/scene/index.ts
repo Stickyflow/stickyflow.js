@@ -14,6 +14,7 @@ export type {
   RenderScene,
   SceneBase,
   SceneDetail,
+  SceneLinkSegment,
   SceneEllipse,
   SceneIdentity,
   ScenePaint,

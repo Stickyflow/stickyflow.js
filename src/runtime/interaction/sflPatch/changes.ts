@@ -6,3 +6,4 @@ export { applyPropertyChange } from './changes/propertyChange';
 export { applyResizeChange } from './changes/resizeChange';
 export { applySankeyNodeMoveChange, applySankeyNodeRenameChange } from './changes/sankeyNodeChange';
 export { applyTextChange } from './changes/textChange';
+export { applyLinkSegmentChange } from './changes/linkSegmentChange';

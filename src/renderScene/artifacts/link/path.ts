@@ -1,5 +1,5 @@
 import type { PathType } from '../../../model/link';
-import type { ScenePath } from '../../scene';
+import type { SceneLinkSegment, ScenePath } from '../../scene';
 import type { PathSegment } from './geometry/routing/types';
 import { markerForEnd } from './markers';
 import { roundedOrthogonalPathData } from './roundedOrthogonalPathData';
@@ -26,6 +26,23 @@ function pathData(points: number[], pathType: PathType, segments: PathSegment[],
   return polylinePathData(points);
 }
 
+const round = (value: number): number => Math.round(value * 100) / 100;
+
+function movableSegments(pathType: PathType, segments: PathSegment[]): SceneLinkSegment[] | undefined {
+  if (pathType !== 'orthogonal' || !segments.some(segment => segment.canMove)) {
+    return undefined;
+  }
+  return segments.map(segment => ({
+    ax: round(segment.start.x),
+    ay: round(segment.start.y),
+    bx: round(segment.end.x),
+    by: round(segment.end.y),
+    ox: round(segment.originalMidpoint.x),
+    oy: round(segment.originalMidpoint.y),
+    movable: segment.canMove,
+  }));
+}
+
 export function renderLinkPath(context: LinkRenderContext): ScenePath {
   const { link } = context;
   return {
@@ -47,6 +64,7 @@ export function renderLinkPath(context: LinkRenderContext): ScenePath {
       fromFace: link.fromPoint?.kind === 'face' ? link.fromPoint.face : undefined,
       toFace: link.toPoint?.kind === 'face' ? link.toPoint.face : undefined,
       labelGap: context.hasLabelGap,
+      segments: movableSegments(context.pathType, context.segments),
     },
   };
 }

@@ -4,7 +4,10 @@ import type { ViewerSource } from './types';
 
 export function renderViewerSource(next: ViewerSource, defaultRenderOptions?: RenderOptions): string {
   const svg =
-    next.svg ?? (next.source != null ? render(next.source, next.renderOptions ?? defaultRenderOptions).svg : null);
+    next.svg ??
+    (next.source != null
+      ? render(next.source, { ...(next.renderOptions ?? defaultRenderOptions), linkHitAreas: true }).svg
+      : null);
   if (svg == null) {
     throw new Error('createViewer: provide either `source` (SFL) or `svg`.');
   }
