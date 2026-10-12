@@ -73,7 +73,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     fontFamily: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     showGrid: p.showGrid !== 'false',
     showAxisLabels: p.showAxisLabels !== 'false',
-    showLegend: p.showLegend !== 'false',
+    showLegend: p.showLegend === 'true',
     legendPosition,
     shadowStyle: decodeShadow(p.shadow),
     order: e.order,

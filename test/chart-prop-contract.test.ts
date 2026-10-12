@@ -8,6 +8,7 @@ Model board {
   Chart c {
     text: "Revenue"
     type: bar
+    style { showLegend: true }
     stacked: none
     categories: ["Q1", "Q2"]
 

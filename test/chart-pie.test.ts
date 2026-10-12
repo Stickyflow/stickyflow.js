@@ -11,6 +11,7 @@ Model board {
   Chart share {
     text: "Market share"
     type: pie
+    style { showLegend: true }
 
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 1; step: 1 }

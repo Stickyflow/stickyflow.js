@@ -33,6 +33,7 @@ Model board {
     style {
       fill: "#ebf1e5"
       gridColor: "#60a5fa"
+      showLegend: true
     }
   }
 }`;

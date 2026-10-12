@@ -11,6 +11,7 @@ Model board {
   Chart wlan {
     text: "WLAN signal"
     type: field
+    style { showLegend: true }
     scale: "ramp(#0b1d51 0, #22d3ee 0.5, #f5d90a 1)"
     interpolate: idw
     idwPower: 2
@@ -121,7 +122,7 @@ describe('Chart type field (SFL 1.4, §3.4)', () => {
   });
 
   it('omits the colorbar (but keeps the surface) when the legend is off', () => {
-    const noLegend = FIELD_SFL.replace('text: "WLAN signal"', 'text: "WLAN signal"\n    style { showLegend: false }');
+    const noLegend = FIELD_SFL.replace('    style { showLegend: true }\n', '');
     const { scene } = renderCanvas(sflToRenderInput(noLegend));
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-colorbar-'))).toBe(false);
     expect(scene.nodes.some(node => node.id.startsWith('chart-field-cell-'))).toBe(true);

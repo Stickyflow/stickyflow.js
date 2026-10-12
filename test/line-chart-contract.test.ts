@@ -6,6 +6,7 @@ const lineOf = () => `sfl 1.4
 Model M {
   Chart c {
     type: line
+    style { showLegend: true }
     categories: ["Q1", "Q2", "Q3"]
     Axis x { min: 0; max: 3; step: 1 }
     Axis y { min: 0; max: 100; step: 20 }
@@ -29,6 +30,7 @@ const linedOf = (tension: number) => `sfl 1.4
 Model M {
   Chart c {
     type: line
+    style { showLegend: true }
     lineTension: ${tension}
     categories: ["Q1", "Q2", "Q3"]
     Axis x { min: 0; max: 3; step: 1 }

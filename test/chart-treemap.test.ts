@@ -11,6 +11,7 @@ Model board {
   Chart usage {
     text: "Disk usage"
     type: treemap
+    style { showLegend: true }
 
     Axis x { min: 0; max: 1; step: 1 }
     Axis y { min: 0; max: 100; step: 20 }
