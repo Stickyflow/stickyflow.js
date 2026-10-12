@@ -67,7 +67,7 @@ void main() {
   color = mix(color, uLightColor, lowerBloom * ring * 0.58);
 
   float circleMask = 1.0 - smoothstep(0.965, 1.0, length(p));
-  float dotAlpha = dot * pow(light, 0.82) * circleMask;
+  float dotAlpha = dot * pow(light, 0.82) * smoothstep(0.06, 0.24, light) * circleMask;
   float glow = bell(length(p) - ringRadius, ringWidth * 1.75) * max(uGlow, 0.0) * 0.17;
   glow *= circleMask;
   float alpha = clamp((dotAlpha + glow) * max(uIntensity, 0.0), 0.0, 1.0);
