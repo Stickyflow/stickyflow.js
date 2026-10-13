@@ -23,17 +23,27 @@ function updateConnectedLine(svg: SVGSVGElement, drag: ChartValueDragState): voi
   }
 }
 
+// The bar, plus the glow and shadow copies drawn from the same shape: left alone, a copy of the old
+// size would keep covering the bar while it shrinks.
+function setBarPath(svg: SVGSVGElement, drag: ChartValueDragState, d: string): void {
+  drag.element.setAttribute('d', d);
+  for (const kind of ['glow', 'shadow']) {
+    const copy = svg.querySelector(`[id="${drag.element.id.replace('chart-bar-', `chart-bar-${kind}-`)}"]`);
+    copy?.setAttribute('d', d);
+  }
+}
+
 export function updateChartValuePreview(svg: SVGSVGElement, drag: ChartValueDragState, value: number): void {
   if (drag.isBar && drag.scale.horizontal) {
     const width = Math.max(0, pixelForValue(value, drag.scale) - drag.barX);
-    drag.element.setAttribute('d', roundedBarPath(drag.barX, drag.barTop, width, drag.barHeight, drag.barRadius));
+    setBarPath(svg, drag, roundedBarPath(drag.barX, drag.barTop, width, drag.barHeight, drag.barRadius));
     return;
   }
   const y = pixelForValue(value, drag.scale);
   if (drag.isBar) {
     const top = Math.min(y, drag.baseY);
     const height = Math.max(0, Math.abs(drag.baseY - y));
-    drag.element.setAttribute('d', barShapePath(drag.barX, top, drag.barWidth, height, drag.barRadius));
+    setBarPath(svg, drag, barShapePath(drag.barX, top, drag.barWidth, height, drag.barRadius));
     return;
   }
   drag.element.setAttribute('cy', String(y));
