@@ -106,6 +106,7 @@ export function chartObject(e: SflCanvasObject): Chart {
         barGroupGap: source?.barGroupGap,
         barGap: source?.barGap,
         barGlow: source?.barGlow,
+        barThickness: numOf(p.barThickness),
         orientation: source?.orientation,
         barTrack: p.barTrack === 'true',
         barRoundedBottom: p.barRoundedBottom === 'true',

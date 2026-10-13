@@ -7,7 +7,7 @@ type ChartValueTarget = Pick<ChartValueDragState, 'owner' | 'series' | 'index'>;
 
 type ChartValueGeometry = Pick<
   ChartValueDragState,
-  'element' | 'baseY' | 'isBar' | 'barX' | 'barWidth' | 'barRadius' | 'lineTension'
+  'element' | 'baseY' | 'isBar' | 'barX' | 'barWidth' | 'barTop' | 'barHeight' | 'barRadius' | 'lineTension'
 >;
 
 function chartGeometry(svg: SVGSVGElement, target: ChartValueTarget): SVGGraphicsElement | null {
@@ -97,6 +97,10 @@ function resolveChartValueGeometry(
   if (!Number.isFinite(baseY)) {
     return null;
   }
+  // A horizontal bar is dragged by its end; stacked segments do not start at the plot edge.
+  if (bbox && scale.horizontal && Math.abs(bbox.x - scale.plotY) > 1) {
+    return null;
+  }
   const line = isBar ? null : findConnectedLine(svg, target.owner.id, target.series);
   return {
     element,
@@ -104,6 +108,8 @@ function resolveChartValueGeometry(
     isBar,
     barX: bbox?.x ?? 0,
     barWidth: bbox?.width ?? 0,
+    barTop: bbox?.y ?? 0,
+    barHeight: bbox?.height ?? 0,
     barRadius: isBar ? Number(element.getAttribute('data-sf-bar-radius')) || 0 : 0,
     lineTension: Number(line?.getAttribute('data-sf-line-tension')) || 0,
   };

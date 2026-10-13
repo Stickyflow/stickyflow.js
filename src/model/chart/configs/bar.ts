@@ -9,6 +9,8 @@ export interface BarChartConfig extends CategoryChartConfig {
   barGroupGap?: number;
   /** Glow radius in px, drawn in each bar's own color over the neighbouring bars. Default 0 (off). */
   barGlow?: number;
+  /** Bar thickness in px for horizontal charts. Default: fills the row. */
+  barThickness?: number;
   /** Bars grow from the left instead of the bottom. Default vertical. */
   orientation?: 'horizontal' | 'vertical';
   /** Full-height track behind every bar. */

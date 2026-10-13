@@ -1,5 +1,5 @@
-import { barLabelSize, formatBarLabel, pillPath } from '../../../renderScene/charts/primitives/barLabel';
-import { barShapePath } from '../../../renderScene/charts/primitives/barShape';
+import { BAR_LABEL, barLabelSize, formatBarLabel, pillPath } from '../../../renderScene/charts/primitives/barLabel';
+import { barShapePath, roundedBarPath } from '../../../renderScene/charts/primitives/barShape';
 import { linePathData } from '../../../renderScene/charts/primitives/linePath';
 import { findConnectedLine, findConnectedLineArea, findSeriesPoints } from './lineLookup';
 import { pixelForValue } from './scale';
@@ -24,6 +24,11 @@ function updateConnectedLine(svg: SVGSVGElement, drag: ChartValueDragState): voi
 }
 
 export function updateChartValuePreview(svg: SVGSVGElement, drag: ChartValueDragState, value: number): void {
+  if (drag.isBar && drag.scale.horizontal) {
+    const width = Math.max(0, pixelForValue(value, drag.scale) - drag.barX);
+    drag.element.setAttribute('d', roundedBarPath(drag.barX, drag.barTop, width, drag.barHeight, drag.barRadius));
+    return;
+  }
   const y = pixelForValue(value, drag.scale);
   if (drag.isBar) {
     const top = Math.min(y, drag.baseY);
@@ -38,6 +43,8 @@ export function updateChartValuePreview(svg: SVGSVGElement, drag: ChartValueDrag
 export interface BarOrigin {
   top: number;
   height: number;
+  left: number;
+  width: number;
 }
 
 interface BarLabelElements {
@@ -78,10 +85,42 @@ function resizePill(pill: SVGPathElement, text: SVGTextElement, label: string, d
 
 // Moves and rewrites the bar's own value label while it is dragged. Returns
 // false when the bar has no label, so the caller can show the drag readout instead.
+// Horizontal bars: the label rides at the bar end (or centered) and keeps its own edge fixed as the text grows.
+function updateHorizontalBarLabel(label: BarLabelElements, drag: ChartValueDragState, origin: BarOrigin, value: number): boolean {
+  const content = formatBarLabel(value, label.template);
+  (label.text.querySelector('tspan') ?? label.text).textContent = content;
+  if (label.placement === 'axis') {
+    return true;
+  }
+  const fontSize = parseFloat(label.text.getAttribute('font-size') ?? '12');
+  const size = barLabelSize(content, fontSize, label.pill !== null);
+  const width = Math.max(0, pixelForValue(value, drag.scale) - origin.left);
+  const end = origin.left + width;
+  const center =
+    label.placement === 'outside'
+      ? end + BAR_LABEL.gap + size.width / 2
+      : label.placement === 'inside'
+        ? end - BAR_LABEL.gap - size.width / 2
+        : origin.left + width / 2;
+  const stored = label.text.dataset.sfLabelX ?? label.text.getAttribute('x') ?? '0';
+  label.text.dataset.sfLabelX = stored;
+  label.text.setAttribute('transform', `translate(${center - Number(stored)} 0)`);
+  if (label.pill) {
+    const pillY = label.pill.dataset.sfPillY ?? (label.pill.getAttribute('d') ?? '').split(/\s+/)[2];
+    label.pill.dataset.sfPillY = pillY;
+    label.pill.removeAttribute('transform');
+    label.pill.setAttribute('d', pillPath(center - size.width / 2, Number(pillY), size.width, size.height));
+  }
+  return true;
+}
+
 export function updateBarLabel(svg: SVGSVGElement, drag: ChartValueDragState, origin: BarOrigin, value: number): boolean {
   const label = drag.isBar ? findBarLabel(svg, drag) : null;
   if (!label) {
     return false;
+  }
+  if (drag.scale.horizontal) {
+    return updateHorizontalBarLabel(label, drag, origin, value);
   }
   const y = pixelForValue(value, drag.scale);
   const top = Math.min(y, drag.baseY);

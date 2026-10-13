@@ -1,6 +1,6 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { BAR_LABEL, barLabelSize, chartText, formatBarLabel, pillPath } from '../../primitives';
+import { BAR_LABEL, barLabelSize, CATEGORY_LABEL_ROW, chartText, formatBarLabel, pillPath } from '../../primitives';
 import type { BarLabelSize } from '../../primitives/barLabel';
 import type { ChartRenderContext } from '../types';
 
@@ -94,10 +94,12 @@ function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget
       id: target.id,
       order: nextOrder(),
       bounds,
-      frame: { x: target.frame.x, y: top, width: target.frame.width, height: fontSize * 1.2 },
+      frame: target.horizontal
+        ? { x: plot.x, y: target.frame.y - CATEGORY_LABEL_ROW, width: plot.width, height: fontSize * 1.2 }
+        : { x: target.frame.x, y: top, width: target.frame.width, height: fontSize * 1.2 },
       text,
       chart,
-      align: chart.categoryAlign === 'left' ? 'left' : 'center',
+      align: target.horizontal ? 'right' : chart.categoryAlign === 'left' ? 'left' : 'center',
     }),
     mark: `bar-label|axis|${config?.barLabelFormat ?? ''}`,
     color: config?.barLabelColor ?? chart.textColor ?? '#0f172a',
@@ -130,7 +132,7 @@ export function createBarLabelNodes(context: ChartRenderContext, target: BarLabe
   const config = chart.config;
   const fontSize = Math.max(8, finite(config?.barLabelFontSize, finite(chart.fontSize, 12)));
   const text = formatBarLabel(target.value, config?.barLabelFormat);
-  if (target.placement === 'axis' && !target.horizontal) {
+  if (target.placement === 'axis') {
     return [createAxisValueNode(context, target, text, fontSize)];
   }
   const pill = config?.barLabelPill === true;

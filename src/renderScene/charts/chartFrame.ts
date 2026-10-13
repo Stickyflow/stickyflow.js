@@ -29,11 +29,12 @@ export function buildChartFrame(
     },
   };
 
-  // Dragging a bar to change its value is wired to the vertical scale only.
-  if (CARTESIAN_VALUE_TYPES.has(chart.chartType) && !isHorizontalBar(chart)) {
+  if (CARTESIAN_VALUE_TYPES.has(chart.chartType)) {
+    // Horizontal bars read their value along x: the scale then describes the plot's x range.
+    const range = isHorizontalBar(chart) ? `${plot.x},${plot.width}` : `${plot.y},${plot.height}`;
     frame.detail = {
       of: 'chartScale',
-      valueScale: `${plot.y},${plot.height},${chart.axisY.min},${chart.axisY.max}`,
+      valueScale: `${range},${chart.axisY.min},${chart.axisY.max}${isHorizontalBar(chart) ? ',horizontal' : ''}`,
     };
   }
 
