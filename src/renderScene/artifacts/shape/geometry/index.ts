@@ -11,6 +11,7 @@ const GEOMETRY_RENDERERS: Record<ShapeType, ShapeGeometryRenderer> = {
   hexagon: renderPath,
   note: renderPath,
   oval: renderEllipse,
+  circle: renderEllipse,
   parallelogram: renderPath,
   person: renderBoundedPath,
   pill: renderRectangle,

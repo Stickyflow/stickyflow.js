@@ -1,6 +1,8 @@
+import type { ShaderParameter } from '../../model/shader';
 import type { RenderOptions } from '../../render';
 import type { ViewBox } from './display';
 import type { OwnerRef, Unsubscribe, ViewerEventHandler, ViewerEventName } from './events';
+import type { ViewerImageExportOptions } from './export';
 
 export interface ViewerOptions {
   container: HTMLElement;
@@ -17,16 +19,6 @@ export interface ViewerSource {
   svg?: string;
   renderOptions?: RenderOptions;
   resetView?: boolean;
-  /**
-   * update() only: briefly flash a ring/halo around whichever shapes this
-   * update actually added or changed (see SceneDiff). Default false — a shared
-   * library, so a new visual behavior is opt-in per call rather than silently
-   * appearing for every existing consumer's update(). The `sceneDiff` event
-   * fires either way, regardless of this flag. Pass `{ color }` instead of
-   * `true` to override the default amber (CHANGE_COLOR in
-   * runtime/dom/changeOverlay.ts) — e.g. a host that can tell a bulk rewrite
-   * apart from an ordinary edit and wants a visually distinct flash.
-   */
   highlightChanges?: boolean | { color?: string };
 }
 
@@ -37,6 +29,10 @@ export interface Viewer {
   select(ids: string[]): void;
   fit(): void;
   getViewport(): ViewBox;
+  exportSvg(): string;
+  exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
+  setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
+  setWidgetValue(widgetId: string, value: string | number): boolean;
   update(next: ViewerSource): void;
   destroy(): void;
 }

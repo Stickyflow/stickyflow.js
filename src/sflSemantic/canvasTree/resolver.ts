@@ -14,6 +14,8 @@ export interface CanvasTree {
   groups: SflGroupOut[];
   linkBlocks: SflBlock[];
   connectionBlocks: SflBlock[];
+  linkSourceIndexes: number[];
+  connectionSourceIndexes: number[];
 }
 
 interface CanvasLocation {
@@ -26,6 +28,9 @@ class CanvasTreeResolver {
   readonly #canvasObjects: SflCanvasObject[] = [];
   readonly #linkBlocks: SflBlock[] = [];
   readonly #connectionBlocks: SflBlock[] = [];
+  readonly #linkSourceIndexes: number[] = [];
+  readonly #connectionSourceIndexes: number[] = [];
+  #sequence = 0;
 
   constructor(resolution: CanvasResolution) {
     this.#context = resolution.canvasObjectResolutionContext;
@@ -38,6 +43,8 @@ class CanvasTreeResolver {
       groups,
       linkBlocks: this.#linkBlocks,
       connectionBlocks: this.#connectionBlocks,
+      linkSourceIndexes: this.#linkSourceIndexes,
+      connectionSourceIndexes: this.#connectionSourceIndexes,
     };
   }
 
@@ -52,11 +59,12 @@ class CanvasTreeResolver {
   }
 
   #resolveChild(child: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
+    const sourceIndex = this.#sequence++;
     if (child.kind === 'Container') {
-      return this.#resolveContainer(child, location, nextFlowPosition);
+      return this.#resolveContainer(child, location, nextFlowPosition, sourceIndex);
     }
     if (isCanvasObjectBlockKind(child.kind)) {
-      this.#resolveCanvasObject(child, location, nextFlowPosition);
+      this.#resolveCanvasObject(child, location, nextFlowPosition, sourceIndex);
       return [];
     }
 
@@ -65,20 +73,30 @@ class CanvasTreeResolver {
         return [this.#resolveGroup(child, location)];
       case 'Link':
         this.#linkBlocks.push(child);
+        this.#linkSourceIndexes.push(sourceIndex);
         return [];
       case 'Connection':
         this.#connectionBlocks.push(child);
+        this.#connectionSourceIndexes.push(sourceIndex);
         return [];
-      case 'Net':
-        this.#linkBlocks.push(...expandNetLinks(child, this.#context));
+      case 'Net': {
+        const expanded = expandNetLinks(child, this.#context);
+        this.#linkBlocks.push(...expanded);
+        this.#linkSourceIndexes.push(...expanded.map(() => sourceIndex));
         return [];
+      }
       default:
         return [];
     }
   }
 
-  #resolveContainer(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
-    const canvasObject = this.#resolvePositionedCanvasObject(block, location, nextFlowPosition);
+  #resolveContainer(
+    block: SflBlock,
+    location: CanvasLocation,
+    nextFlowPosition: FlowPositioner,
+    sourceIndex: number,
+  ): SflGroupOut[] {
+    const canvasObject = this.#resolvePositionedCanvasObject(block, location, nextFlowPosition, sourceIndex);
     this.#canvasObjects.push(canvasObject);
     return this.#resolveChildren(block, {
       origin: { x: canvasObject.x, y: canvasObject.y },
@@ -86,17 +104,26 @@ class CanvasTreeResolver {
     });
   }
 
-  #resolveCanvasObject(block: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): void {
-    this.#canvasObjects.push(this.#resolvePositionedCanvasObject(block, location, nextFlowPosition));
+  #resolveCanvasObject(
+    block: SflBlock,
+    location: CanvasLocation,
+    nextFlowPosition: FlowPositioner,
+    sourceIndex: number,
+  ): void {
+    this.#canvasObjects.push(this.#resolvePositionedCanvasObject(block, location, nextFlowPosition, sourceIndex));
   }
 
   #resolvePositionedCanvasObject(
     block: SflBlock,
     location: CanvasLocation,
     nextFlowPosition: FlowPositioner,
+    sourceIndex: number,
   ): SflCanvasObject {
     const size = tupleValues(this.#context.layoutProp(block, 'size')) ?? [0, 0];
-    return resolveCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size));
+    return {
+      ...resolveCanvasObject(block, location.origin, this.#context, location.frameId, nextFlowPosition(size)),
+      sourceIndex,
+    };
   }
 
   #resolveGroup(block: SflBlock, location: CanvasLocation): SflGroupOut {

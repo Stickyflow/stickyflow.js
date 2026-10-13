@@ -5,7 +5,7 @@ import { clickAction } from './selection';
 import type { SelectionController } from './selectionController';
 
 const SELECTION_OVERLAY_CONTROL_SELECTOR =
-  '[data-sf-resize-handle], [data-sf-link-endpoint], [data-sf-quick-duplicate]';
+  '[data-sf-resize-handle], [data-sf-link-endpoint], [data-sf-link-segment], [data-sf-quick-duplicate]';
 
 export function isSelectionOverlayControl(target: Element | null): boolean {
   return Boolean(target?.closest(SELECTION_OVERLAY_CONTROL_SELECTOR));
@@ -59,6 +59,10 @@ export class OwnerPointerController {
       owner,
       modifiers,
     });
-    findOwnerNode(this.#svg, owner.id, isPrimary)?.focus({ preventScroll: true });
+    const node = findOwnerNode(this.#svg, owner.id, isPrimary);
+    if (node && !node.hasAttribute('tabindex')) {
+      node.setAttribute('tabindex', '-1');
+    }
+    node?.focus({ preventScroll: true });
   }
 }

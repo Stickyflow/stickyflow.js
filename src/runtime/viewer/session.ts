@@ -1,14 +1,21 @@
+import type { ShaderParameter } from '../../model/shader';
 import type { DisplayHandle, ViewBox } from './display';
 import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
+import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
+import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
 import type { Viewer, ViewerOptions, ViewerSource } from './types';
+import { type DocumentWidgetsHandle, mountDocumentWidgets } from './widgets';
 
 export class ViewerSession implements Viewer {
   private readonly emitter = new Emitter();
   private readonly display: DisplayHandle;
   private readonly interaction: InteractionHandle | null;
+  private readonly shaderSurfaces: ShaderSurfaceHandle;
+  private readonly documentWidgets: DocumentWidgetsHandle;
+  private readonly shaderParameterOverrides = new Map<string, Record<string, ShaderParameter>>();
 
   constructor(
     private readonly options: ViewerOptions,
@@ -16,6 +23,8 @@ export class ViewerSession implements Viewer {
     private readonly diagramId: string,
   ) {
     this.display = mountDisplay(options.container, initialSvg);
+    this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
+    this.documentWidgets = mountDocumentWidgets(this.display.svg);
     this.interaction = options.interactive
       ? bindInteraction(this.display, this.emitter, diagramId, { selectable: options.selectable })
       : null;
@@ -46,10 +55,33 @@ export class ViewerSession implements Viewer {
     return this.display.getViewport();
   }
 
+  exportSvg(): string {
+    return serializeSvgSnapshot(this.svg, this.shaderSurfaces.capture());
+  }
+
+  exportImage(options?: ViewerImageExportOptions): Promise<Blob> {
+    return rasterizeSvgSnapshot(this.svg, this.exportSvg(), options);
+  }
+
+  setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean {
+    const merged = { ...this.shaderParameterOverrides.get(ownerId), ...parameters };
+    this.shaderParameterOverrides.set(ownerId, merged);
+    return this.shaderSurfaces.setParameters(ownerId, parameters);
+  }
+
+  setWidgetValue(widgetId: string, value: string | number): boolean {
+    return this.documentWidgets.setValue(widgetId, value);
+  }
+
   update(next: ViewerSource): void {
     const svg = renderViewerSource(next, this.options.renderOptions);
     assertViewerUpdateContract(svg);
     const diff = this.display.updateContent(svg);
+    this.shaderSurfaces.refresh();
+    this.documentWidgets.refresh();
+    for (const [ownerId, parameters] of this.shaderParameterOverrides) {
+      this.shaderSurfaces.setParameters(ownerId, parameters);
+    }
     if (next.resetView) {
       this.display.fit();
     }
@@ -70,6 +102,9 @@ export class ViewerSession implements Viewer {
 
   destroy(): void {
     this.interaction?.destroy();
+    this.shaderSurfaces.destroy();
+    this.documentWidgets.destroy();
+    this.shaderParameterOverrides.clear();
     this.display.destroy();
     this.emitter.clear();
   }

@@ -2,6 +2,8 @@ import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
+import type { Shader } from '../../model/shader';
+import type { RollingNumberWidgetStyle } from '../../model/widget';
 
 export type RenderDiagnostic = Diagnostic;
 export type { Bounds, Point } from '../../model/geometry/types';
@@ -20,16 +22,18 @@ export interface SceneStyle {
   lineCap?: 'butt' | 'round' | 'square';
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
-  pointerEvents?: 'none';
+  pointerEvents?: 'none' | 'all' | 'stroke';
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
+  // Color saturation of the element, 1 = unchanged. Applied together with blur.
+  saturate?: number;
   clip?:
     | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
     | { type: 'path'; d: string };
 }
 
-export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'path' | 'chart' | 'isometric';
+export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'path' | 'chart' | 'widget' | 'isometric';
 
 export interface SceneIdentity {
   role: SceneRole;
@@ -38,6 +42,16 @@ export interface SceneIdentity {
   primary?: boolean;
   label?: string;
   parentFrameId?: string;
+}
+
+export interface SceneLinkSegment {
+  ax: number;
+  ay: number;
+  bx: number;
+  by: number;
+  ox: number;
+  oy: number;
+  movable: boolean;
 }
 
 export type SceneDetail =
@@ -51,6 +65,7 @@ export type SceneDetail =
       fromFace?: IsometricFace;
       toFace?: IsometricFace;
       labelGap?: boolean;
+      segments?: SceneLinkSegment[];
     }
   | {
       of: 'chartValue';
@@ -99,6 +114,8 @@ export type SceneDetail =
 export interface SceneBase {
   id: string;
   order: number;
+  rank?: number;
+  sequence?: number;
   bounds: Bounds;
   identity?: SceneIdentity;
   detail?: SceneDetail;
@@ -162,7 +179,51 @@ export interface SceneText extends SceneBase {
   richLines?: Array<Array<{ text: string; bold: boolean }>>;
 }
 
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText;
+export interface SceneShaderSurface extends SceneBase {
+  type: 'shader-surface';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  shader: Shader;
+  mask: 'ellipse';
+  fillColor?: string;
+}
+
+export interface SceneRollingNumber extends SceneBase {
+  type: 'rolling-number';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  value: string;
+  digits?: number;
+  duration: number;
+  label?: string;
+  widgetStyle: Required<RollingNumberWidgetStyle>;
+}
+
+export interface SceneImage extends SceneBase {
+  type: 'image';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  href: string;
+  // Only opacity, blur, clip and pointerEvents apply to an image.
+  style: SceneStyle;
+}
+
+export type RenderNode =
+  | SceneRect
+  | SceneEllipse
+  | ScenePath
+  | SceneText
+  | SceneShaderSurface
+  | SceneRollingNumber
+  | SceneImage;
 
 export interface RenderScene {
   nodes: RenderNode[];

@@ -26,5 +26,6 @@ export function swimlaneObject(e: SflCanvasObject): Swimlane {
     fontFamily: p.fontFamily,
     showLaneLabels: p.showLaneLabels !== 'false',
     order: e.order,
+    sourceIndex: e.sourceIndex,
   };
 }

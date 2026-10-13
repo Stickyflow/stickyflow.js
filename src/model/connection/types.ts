@@ -9,4 +9,5 @@ export interface Connection {
   toFace: IsometricFace;
   style?: LinkStyle;
   order?: number;
+  sourceIndex?: number;
 }

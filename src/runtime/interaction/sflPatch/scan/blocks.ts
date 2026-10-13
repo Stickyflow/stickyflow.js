@@ -1,6 +1,6 @@
 import { braceDelta, maskLines } from './sourceMask';
 
-const OWNER_HEADER = /^\s*(Entity|Shape|Container|Chart|Path|Link|Isometric|Connection)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
+const OWNER_HEADER = /^\s*(Entity|Shape|Container|Chart|Path|Link|Isometric|Widget|Connection)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 export const VALID_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export interface LineRange {

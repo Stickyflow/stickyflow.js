@@ -2,6 +2,7 @@ import { AXIS_COS, AXIS_SIN } from '../../../model/isometricObject';
 import { isCameraGesture, pointerUserPoint } from '../../dom';
 import type { Emitter } from '../events';
 import { updateLiveFaceLinks } from '../linkPreview';
+import { readIsometricSnapStep, snapToStep } from '../snapGrid';
 import { applyIsometricAxisPreview } from './preview';
 import { createIsometricAxisDragState, type IsometricAxisDragState, type IsometricObjectSize } from './state';
 
@@ -13,17 +14,22 @@ const MIN_SIZE = 10;
 // actually lies along that axis's direction should count, via a dot
 // product projection. A drag perpendicular to the arrow should barely move
 // it at all, exactly like dragging a 3D tool's axis gizmo.
-function nextGeometry(drag: IsometricAxisDragState, point: { x: number; y: number }): IsometricObjectSize {
+function nextGeometry(
+  drag: IsometricAxisDragState,
+  point: { x: number; y: number },
+  step: number | null,
+): IsometricObjectSize {
   const { start, axis } = drag;
+  const length = (value: number, min: number): number => (step ? snapToStep(value, step, step) : Math.max(min, value));
   const dx = point.x - drag.startUser.x;
   const dy = point.y - drag.startUser.y;
 
   if (axis === 'width') {
     const delta = dx * AXIS_COS + dy * AXIS_SIN;
-    return { ...start, width: Math.max(MIN_SIZE, start.width + delta) };
+    return { ...start, width: length(start.width + delta, MIN_SIZE) };
   }
   if (axis === 'height') {
-    return { ...start, height: Math.max(MIN_SIZE, start.height + dy) };
+    return { ...start, height: length(start.height + dy, MIN_SIZE) };
   }
   // The apex sits at x + depth*cos (see isometricFaces) so that `left`
   // lands exactly on x - meaning depth alone, with x held still, silently
@@ -32,7 +38,7 @@ function nextGeometry(drag: IsometricAxisDragState, point: { x: number; y: numbe
   // and the whole right side - exactly where it was, so only the left
   // portion visibly slides, same as width does to the right side for free.
   const delta = -dx * AXIS_COS + dy * AXIS_SIN;
-  const depth = Math.max(0, start.depth + delta);
+  const depth = length(start.depth + delta, 0);
   const x = start.x + (start.depth - depth) * AXIS_COS;
   return { ...start, x, depth };
 }
@@ -64,7 +70,7 @@ export class IsometricAxisResizeSession {
       return;
     }
     drag.moved = true;
-    drag.current = nextGeometry(drag, point);
+    drag.current = nextGeometry(drag, point, readIsometricSnapStep(this.#svg));
     updateLiveFaceLinks(drag.liveFaceLinks, drag.current);
     applyIsometricAxisPreview(
       drag.nodes,

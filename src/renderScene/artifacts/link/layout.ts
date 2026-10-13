@@ -1,6 +1,6 @@
 import type { RenderInput } from '../../../renderInput/types';
 import type { MeasureTextFactory, SceneStyle } from '../../scene';
-import { DEFAULT_FONT, finite, orderOf } from '../../scene';
+import { DEFAULT_FONT, finite } from '../../scene';
 import { getLinkStrokeColor } from '../../scene/linkPaint';
 import { getDashArray } from '../../scene/linkStroke';
 import { resolveShadow } from '../../scene/shadow';
@@ -78,7 +78,7 @@ export function createLinkRenderContext(
     strokeWidth,
     bounds: linkBounds(points, strokeWidth + 14),
     color,
-    order: orderOf(link, 20_000 + index),
+    order: 20_000 + index,
     style: linkStyle(item, strokeWidth, color, dash),
     label,
     hasLabelGap: Boolean(gap),

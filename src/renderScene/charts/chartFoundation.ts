@@ -1,6 +1,7 @@
 import type { Chart } from '../../model/chart';
 import type { RenderDiagnostic, RenderNode } from '../scene';
-import { orderOf } from '../scene';
+
+import { buildChartBackdrop } from './chartBackdrop';
 import { buildChartFrame } from './chartFrame';
 import { buildOrderedChartLegend } from './chartLegend';
 import { createChartRenderContext } from './chartRenderContext';
@@ -18,10 +19,11 @@ export interface ChartFoundation {
 }
 
 export function createChartFoundation(chart: Chart, index: number, diagnostics: RenderDiagnostic[]): ChartFoundation {
-  const baseOrder = orderOf(chart, 20_000 + index);
+  const baseOrder = 20_000 + index;
   const layout = decorations(chart);
   const renderOrder = new ChartRenderOrder(baseOrder);
   const nodes: RenderNode[] = [buildChartFrame(chart, layout.bounds, layout.plot, baseOrder)];
+  nodes.push(...buildChartBackdrop(chart, layout.bounds, renderOrder));
   nodes.push(...buildChartTitle(chart, layout.bounds, layout.plot, renderOrder));
   nodes.push(...buildOrderedChartLegend(chart, layout, renderOrder, diagnostics));
 

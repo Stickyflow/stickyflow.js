@@ -1,6 +1,6 @@
 import type { Shape } from '../../model/shape';
 import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } from '../scene';
-import { finite, orderOf, rotatedBounds } from '../scene';
+import { finite, rotatedBounds } from '../scene';
 import { tag } from '../scene/tagging';
 import { renderShapeGeometry } from './shape/geometry';
 import { shapeStyle } from './shape/style';
@@ -56,7 +56,7 @@ function createRenderContext(
     context: {
       shape,
       id: `shape-${shape.id}`,
-      order: orderOf(shape, 10_000 + index),
+      order: 10_000 + index,
       bounds: rotatedBounds({ x, y, width, height }, rotation, strokeWidth + (shape.hasShadow ? 20 : 2)),
       rotation,
       rotationCenter: { x: x + width / 2, y: y + height / 2 },
@@ -66,6 +66,26 @@ function createRenderContext(
       width,
       height,
     },
+  };
+}
+
+function renderShaderSurface(context: ShapeRenderContext): RenderNode | undefined {
+  if (!context.shape.shader || (context.shape.shapeType !== 'circle' && context.shape.shapeType !== 'oval')) {
+    return undefined;
+  }
+  return {
+    id: `${context.id}-shader`,
+    type: 'shader-surface',
+    order: context.order,
+    bounds: context.bounds,
+    x: context.x,
+    y: context.y,
+    width: context.width,
+    height: context.height,
+    rotation: context.rotation,
+    shader: context.shape.shader,
+    mask: 'ellipse',
+    fillColor: context.style.fill?.kind === 'solid' ? context.style.fill.color : undefined,
   };
 }
 
@@ -81,6 +101,15 @@ export function buildShape(
   const { context, strokeWidth } = createRenderContext(shape, index, diagnostics);
   const nodes =
     shape.strokeStyle === 'double' ? renderDoubleStroke(context, strokeWidth || 1) : renderShapeGeometry(context);
+  const shader = renderShaderSurface(context);
+  if (shader) {
+    for (const node of nodes) {
+      if (node.type === 'ellipse' || node.type === 'path' || node.type === 'rect') {
+        node.style = { ...node.style, pointerEvents: 'all' };
+      }
+    }
+    nodes.push(shader);
+  }
   const text = renderShapeText(context, strokeWidth, measureText);
   if (text) {
     nodes.push(text);

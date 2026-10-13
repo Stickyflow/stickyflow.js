@@ -1,16 +1,14 @@
-interface OrderedCanvasObject {
+interface StackableObject {
   order_key?: string;
   orderKey?: string;
   order?: number;
+  sourceIndex?: number;
 }
 
-export function orderOf(canvasObject: OrderedCanvasObject, fallback: number): number {
-  const key = canvasObject.order_key ?? canvasObject.orderKey;
-  if (!key && typeof canvasObject.order === 'number') {
-    return canvasObject.order;
-  }
+export function stackRank(object: StackableObject): number {
+  const key = object.order_key ?? object.orderKey;
   if (!key) {
-    return fallback;
+    return object.order ?? 0;
   }
 
   let rank = 0;
@@ -18,4 +16,8 @@ export function orderOf(canvasObject: OrderedCanvasObject, fallback: number): nu
     rank = rank * 128 + key.charCodeAt(index);
   }
   return rank;
+}
+
+export function stackSequence(object: StackableObject, fallback: number): number {
+  return object.sourceIndex ?? fallback;
 }

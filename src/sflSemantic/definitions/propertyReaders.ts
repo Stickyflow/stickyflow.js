@@ -6,7 +6,7 @@ import { classifyCompositionReferences } from './compositionReferences';
 import { resolveDefinitionInheritance } from './inheritance';
 
 export function createCanvasObjectPropertyReaders(definitions: CanvasDefinitions): CanvasObjectResolutionContext {
-  const { styles, layouts, symbols } = definitions;
+  const { styles, layouts, symbols, shaders } = definitions;
   const references = (block: SflBlock) => classifyCompositionReferences(block.composition, styles, layouts);
   const resolvedStyles = resolveDefinitionInheritance(styles, block => references(block).styleRef);
   const resolvedLayouts = resolveDefinitionInheritance(layouts, block => references(block).layoutRef);
@@ -32,5 +32,5 @@ export function createCanvasObjectPropertyReaders(definitions: CanvasDefinitions
     return reference ? resolvedLayouts.get(reference)?.get(key) : undefined;
   };
 
-  return { mergedProps, layoutProp, symbolDefs: symbols };
+  return { mergedProps, layoutProp, symbolDefs: symbols, shaderDefs: shaders };
 }

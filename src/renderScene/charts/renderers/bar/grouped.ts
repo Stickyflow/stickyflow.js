@@ -2,19 +2,27 @@ import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import {
-  barShapePath,
+  barCategoryCount,
+  barPath,
+  segmentedBarPath,
   CHART_COLORS,
   createVerticalErrorWhiskerNode,
   errorBarRange,
   mapChartValue,
   resolveChartShadow,
 } from '../../primitives';
+import { createBarGlowNode } from './glow';
+import { createGlassBackdropNodes } from './glass';
+import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
+import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 
 interface GroupedBarLayout {
   slotWidth: number;
   seriesWidth: number;
+  groupGap: number;
+  barGap: number;
 }
 
 interface GroupedBarMark {
@@ -34,18 +42,78 @@ interface GroupedBarMark {
 
 export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {
   const layout = createGroupedBarLayout(context);
-  return context.chart.series.flatMap((series, seriesIndex) =>
-    renderGroupedBarSeries(context, layout, series, seriesIndex),
+  const marks = context.chart.series.flatMap((series, seriesIndex) =>
+    createSeriesBarMarks(context, layout, series, seriesIndex),
   );
+  const tracks = barTrackEnabled(context)
+    ? marks.flatMap(mark =>
+        createBarTrackNodes(context, `${mark.seriesId}-${mark.valueIndex}`, { x: mark.frame.x, y: context.plot.y, width: mark.frame.width, height: context.plot.height }),
+      )
+    : [];
+  const bars = marks.flatMap(mark => renderGroupedBarMark(context, mark));
+  const labels = barLabelsEnabled(context) ? marks.flatMap(mark => createGroupedLabel(context, mark, marks)) : [];
+  return [...tracks, ...bars, ...marks.flatMap(mark => createGroupedGlow(context, mark)), ...labels];
+}
+
+function isSeriesMax(mark: GroupedBarMark, marks: GroupedBarMark[]): boolean {
+  const values = marks.filter(entry => entry.seriesId === mark.seriesId).map(entry => entry.value);
+  return mark.value >= Math.max(...values);
+}
+
+function createGroupedLabel(context: ChartRenderContext, mark: GroupedBarMark, marks: GroupedBarMark[]): RenderNode[] {
+  const { chart } = context;
+  if (chart.config?.barLabelMaxOnly && !isSeriesMax(mark, marks)) {
+    return [];
+  }
+  return createBarLabelNodes(context, {
+    id: `chart-bar-label-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
+    value: mark.value,
+    frame: mark.frame,
+    placement: chart.config?.barLabelPosition ?? 'outside',
+  });
+}
+
+// The bar's outline: solid, or cut into segments like a level meter.
+function groupedShape(context: ChartRenderContext, frame: GroupedBarMark['frame']): string {
+  const { chart, plot } = context;
+  const config = chart.config;
+  const radius = config?.barCornerRadius ?? 2;
+  const segments = finite(config?.barSegments, 0);
+  if (segments > 0) {
+    return segmentedBarPath(
+      { x: frame.x, y: plot.y, width: frame.width, height: plot.height },
+      'vertical',
+      segments,
+      finite(config?.barSegmentGap, 4),
+      radius,
+      frame.height / plot.height,
+      config?.barSegmentSnap !== false,
+    );
+  }
+  return barPath(frame.x, frame.y, frame.width, frame.height, radius, config?.barRoundedBottom === true);
+}
+
+function createGroupedGlow(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
+  const { chart } = context;
+  const glow = finite(chart.config?.barGlow, 0);
+  if (glow <= 0 || mark.frame.height <= 0) {
+    return [];
+  }
+  const d = groupedShape(context, mark.frame);
+  return [createBarGlowNode(context, `chart-bar-glow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`, d, mark.color, glow)];
 }
 
 function createGroupedBarLayout(context: ChartRenderContext): GroupedBarLayout {
   const { chart, plot } = context;
-  const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
+  const valueCount = barCategoryCount(chart);
   const slotWidth = plot.width / valueCount;
+  const groupGap = Math.min(Math.max(0, finite(chart.config?.barGroupGap, 8)), Math.max(0, slotWidth - 1));
+  const barGap = Math.max(0, finite(chart.config?.barGap, 2));
   return {
     slotWidth,
-    seriesWidth: Math.max(1, (slotWidth - 8) / Math.max(1, chart.series.length)),
+    seriesWidth: Math.max(1, (slotWidth - groupGap) / Math.max(1, chart.series.length)),
+    groupGap,
+    barGap,
   };
 }
 
@@ -68,24 +136,13 @@ function createSeriesBarMarks(
       color: series.colors?.[valueIndex] ?? seriesColor,
       hasColorOverride: series.colors?.[valueIndex] != null,
       frame: {
-        x: plot.x + valueIndex * layout.slotWidth + 4 + seriesIndex * layout.seriesWidth,
+        x: plot.x + valueIndex * layout.slotWidth + layout.groupGap / 2 + seriesIndex * layout.seriesWidth,
         y: plot.y + plot.height - height,
-        width: Math.max(1, layout.seriesWidth - 2),
+        width: Math.max(1, layout.seriesWidth - layout.barGap),
         height,
       },
     };
   });
-}
-
-function renderGroupedBarSeries(
-  context: ChartRenderContext,
-  layout: GroupedBarLayout,
-  series: ChartSeries,
-  seriesIndex: number,
-): RenderNode[] {
-  return createSeriesBarMarks(context, layout, series, seriesIndex).flatMap(mark =>
-    renderGroupedBarMark(context, mark),
-  );
 }
 
 function renderGroupedBarMark(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
@@ -105,8 +162,8 @@ function plotClipPath(plot: { x: number; y: number; width: number; height: numbe
 function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const radius = chart.config?.barCornerRadius ?? 2;
-  const { x, y, width, height } = mark.frame;
-  const barPath = barShapePath(x, y, width, height, radius);
+  const { x, width } = mark.frame;
+  const path = groupedShape(context, mark.frame);
   const fill = paint(mark.color, diagnostics, chart.id);
   const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
   const strokeWidth = finite(chart.config?.barBorderWidth, 0);
@@ -118,8 +175,14 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
         id: `chart-bar-shadow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
         order: nextOrder(),
         bounds,
-        d: barPath,
-        style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: plotClipPath(plot) } },
+        d: path,
+        style: {
+          fill,
+          stroke,
+          strokeWidth,
+          shadow,
+          clip: barTrackClip(context, { x, y: plot.y, width, height: plot.height }) ?? { type: 'path', d: plotClipPath(plot) },
+        },
       }
     : undefined;
 
@@ -128,7 +191,7 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
     id: `chart-bar-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
     order: nextOrder(),
     bounds,
-    d: barPath,
+    d: path,
     detail: {
       of: 'chartValue',
       series: mark.seriesId,
@@ -142,7 +205,8 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
     style: { fill, stroke, strokeWidth, innerShadow: shadow },
   };
 
-  return shadowCaster ? [shadowCaster, bar] : [bar];
+  const glass = createGlassBackdropNodes(context, `${mark.seriesId}-${mark.valueIndex}`, path);
+  return shadowCaster ? [shadowCaster, ...glass, bar] : [...glass, bar];
 }
 
 function createGroupedBarError(context: ChartRenderContext, mark: GroupedBarMark): RenderNode | null {

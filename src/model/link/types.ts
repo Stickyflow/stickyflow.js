@@ -63,6 +63,7 @@ export interface Link {
   layerGroup?: string;
   orderKey?: string;
   order?: number;
+  sourceIndex?: number;
   isVisible?: boolean;
   isLocked?: boolean;
   parentFrameId?: string;

@@ -13,6 +13,7 @@ export type {
   SflLinkOut,
   SflPathObject,
   SflSwimlaneObject,
+  SflWidgetObject,
 } from './types';
 export {
   isChartObject,

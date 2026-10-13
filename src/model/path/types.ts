@@ -21,5 +21,6 @@ export interface FreeformPath {
   closed?: boolean;
   fillColor?: string;
   order?: number;
+  sourceIndex?: number;
   isVisible?: boolean;
 }

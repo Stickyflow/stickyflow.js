@@ -92,7 +92,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   // that doesn't have an unambiguous place to anchor - same scope line
   // atlas's Stage 2b implementation drew.
   it('renders a per-point error whisker on a grouped (non-stacked) bar series', () => {
-    const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
+    const sfl = STACKED_SFL.replace('stacked: true', 'stacked: none');
     const { svg } = render(sfl);
     expect(svg).toContain('sf-chart-bar-error-chart-b-0');
     expect(svg).not.toContain('sf-chart-bar-error-chart-b-1');
@@ -102,7 +102,7 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     // Was hardcoded '#000000' - invisible against a dark-mode chart. NOT the
     // series color either: a symmetric range's lower half sits inside the
     // bar's own fill, where the series color would vanish against itself.
-    const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
+    const sfl = STACKED_SFL.replace('stacked: true', 'stacked: none');
     const { svg } = render(sfl);
     const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)?.[0];
     expect(whisker).toContain('stroke="#0f172a"');
@@ -116,10 +116,10 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     expect(label).toContain('fill="#ef4444"');
   });
 
-  it('normalizes "none" and an absent stacked to ungrouped/grouped bars (no stacked rects)', () => {
-    const sfl = STACKED_SFL.replace('stacked: true\n    ', '');
+  it('keeps none as an explicit grouped mode', () => {
+    const sfl = STACKED_SFL.replace('stacked: true', 'stacked: none');
     const state = sflToCanvasState(sfl);
-    expect(state.canvasObjects[0].chart?.stacked).toBeUndefined();
+    expect(state.canvasObjects[0].chart?.stacked).toBe('none');
   });
 
   it('computes waterfall segments with a floating per-series baseline', () => {

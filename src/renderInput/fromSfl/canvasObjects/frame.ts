@@ -24,5 +24,6 @@ export function frameObject(e: SflCanvasObject): Frame {
     labelPosition: oneOf(p.labelPosition, LABEL_POSITIONS, 'top'),
     shadow: p.shadow !== 'false',
     order: e.order,
+    sourceIndex: e.sourceIndex,
   };
 }

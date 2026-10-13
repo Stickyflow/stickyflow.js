@@ -11,6 +11,7 @@ Model board {
   Chart density {
     text: "Point density"
     type: hexbin
+    style { showLegend: true }
     hexRadius: 10
 
     Axis x { min: 0; max: 100; step: 20 }

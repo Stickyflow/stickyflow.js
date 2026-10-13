@@ -12,6 +12,7 @@ export interface SflLinkOut {
   fromPort?: string;
   toPort?: string;
   order?: number;
+  sourceIndex?: number;
   segments?: number[];
   props: Record<string, string>;
 }

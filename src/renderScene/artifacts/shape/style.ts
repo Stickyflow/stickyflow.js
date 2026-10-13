@@ -3,7 +3,6 @@ import type { RenderDiagnostic, SceneStyle } from '../../scene';
 import { finite, paint } from '../../scene';
 
 const REMOVED_SHAPE_HINTS: Record<string, string> = {
-  circle: " (use 'oval', which takes any width and height)",
   container_rectangle: " (use 'rectangle' with strokeStyle: dashed)",
 };
 
@@ -46,6 +45,7 @@ const SHAPE_RENDER_DEFAULTS = {
   diamond: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
   hexagon: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
   oval: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
+  circle: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
   document: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
   parallelogram: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },
   trapezoid: { ...COMMON_SHAPE_DEFAULTS, rotation: 0 },

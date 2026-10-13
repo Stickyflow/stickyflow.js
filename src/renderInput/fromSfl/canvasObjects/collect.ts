@@ -6,7 +6,8 @@ import type { Link } from '../../../model/link';
 import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
-import { isIsometricObject, type SflCanvasState } from '../../../sflSemantic/sflToCanvasState';
+import type { RollingNumberWidget } from '../../../model/widget';
+import { isIsometricObject, type SflCanvasState, type SflWidgetObject } from '../../../sflSemantic/sflToCanvasState';
 import { chartObject } from './chart';
 import { connectionObject } from './connection';
 import { frameObject } from './frame';
@@ -15,6 +16,7 @@ import { linkObject } from './link';
 import { pathObject } from './path';
 import { shapeObject } from './shape';
 import { swimlaneObject } from './swimlane';
+import { widgetObject } from './widget';
 
 export interface CollectedCanvasObjects {
   shapes: Shape[];
@@ -23,6 +25,7 @@ export interface CollectedCanvasObjects {
   isometricObjects: IsometricObject[];
   paths: FreeformPath[];
   charts: Chart[];
+  widgets: RollingNumberWidget[];
   links: Link[];
   connections: Connection[];
 }
@@ -32,13 +35,22 @@ const byOrder = <T extends { order?: number }>(items: readonly T[]): T[] =>
 
 export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObjects {
   const canvasObjects = byOrder(state.canvasObjects);
+  const shaders = new Map((state.shaders ?? []).map(shader => [shader.name, shader]));
   return {
-    shapes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'shape').map(shapeObject),
+    shapes: canvasObjects
+      .filter(canvasObject => canvasObject.objectType === 'shape')
+      .map(shape => shapeObject(shape, shaders)),
     frames: canvasObjects.filter(canvasObject => canvasObject.objectType === 'frame').map(frameObject),
     swimlanes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'swimlane').map(swimlaneObject),
     isometricObjects: canvasObjects.filter(isIsometricObject).map(isometricObject),
     paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
     charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
+    widgets: canvasObjects
+      .filter(
+        (canvasObject): canvasObject is SflWidgetObject =>
+          canvasObject.objectType === 'widget' && canvasObject.widget?.type === 'rollingNumber',
+      )
+      .map(widgetObject),
     links: byOrder(state.links).map(linkObject),
     connections: byOrder(state.connections).map(connectionObject),
   };

@@ -35,6 +35,10 @@ export function createValueReadout(svg: SVGSVGElement): SVGGElement {
   return group;
 }
 
+export function markAnchorY(drag: ChartValueDragState): number {
+  return drag.barTop + drag.barHeight / 2;
+}
+
 export function markAnchorX(drag: ChartValueDragState): number {
   if (drag.isBar) {
     return drag.barX + drag.barWidth / 2;
@@ -45,6 +49,7 @@ export function markAnchorX(drag: ChartValueDragState): number {
 
 export interface ReadoutAnchor {
   centerX: number;
+  centerY?: number;
   scale: ValueScale;
 }
 
@@ -68,6 +73,21 @@ export function updateValueReadout(readout: SVGGElement, anchor: ReadoutAnchor, 
 
   text.textContent = formatReadoutValue(value);
   const width = readoutWidth(anchor.scale);
+
+  if (anchor.scale.horizontal) {
+    // Beside the bar end, flipping to the left when the plot edge is too close.
+    const markX = pixelForValue(value, anchor.scale);
+    const plotEnd = anchor.scale.plotY + anchor.scale.plotHeight;
+    const left = markX + GAP + width <= plotEnd ? markX + GAP : markX - GAP - width;
+    const centerY = anchor.centerY ?? 0;
+    background.setAttribute('x', String(left));
+    background.setAttribute('y', String(centerY - HEIGHT / 2));
+    background.setAttribute('width', String(width));
+    background.setAttribute('height', String(HEIGHT));
+    text.setAttribute('x', String(left + width / 2));
+    text.setAttribute('y', String(centerY));
+    return;
+  }
 
   const markY = pixelForValue(value, anchor.scale);
   const above = markY - GAP - HEIGHT >= anchor.scale.plotY;

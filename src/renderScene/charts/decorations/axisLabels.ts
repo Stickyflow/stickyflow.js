@@ -10,6 +10,7 @@ function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
   }
   return {
     ...chartText({
+      role: 'axis',
       id: `chart-x-label-${chart.id}`,
       order,
       bounds: layout.bounds,
@@ -23,11 +24,12 @@ function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
 }
 
 function buildYAxisLabel(chart: Chart, layout: ChartLayout, order: number): RenderNode | null {
-  if (!chart.axisY.label) {
+  if (!chart.axisY.label || chart.showValueAxis === false) {
     return null;
   }
   return {
     ...chartText({
+      role: 'axis',
       id: `chart-y-label-${chart.id}`,
       order,
       bounds: layout.bounds,

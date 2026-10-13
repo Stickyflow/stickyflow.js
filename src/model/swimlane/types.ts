@@ -31,6 +31,7 @@ export interface Swimlane {
   layerGroup?: string;
   orderKey?: string;
   order?: number;
+  sourceIndex?: number;
   isVisible?: boolean;
   isLocked?: boolean;
 }

@@ -51,8 +51,8 @@ describe('stacked mode validation', () => {
     expect(chartOf(chart('    type: bar\n    stacked: sideways'))?.stacked).toBeUndefined();
   });
 
-  it('treats none as absent', () => {
-    expect(chartOf(chart('    type: bar\n    stacked: none'))?.stacked).toBeUndefined();
+  it('keeps none as an explicit grouped mode', () => {
+    expect(chartOf(chart('    type: bar\n    stacked: none'))?.stacked).toBe('none');
   });
 });
 

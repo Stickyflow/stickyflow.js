@@ -4,6 +4,7 @@ import { readIdentifier, startsIdentifier } from './identifiers';
 import { isLineBreak, readLineBreak } from './lineBreak';
 import { consumeLineComment, startsLineComment } from './lineComment';
 import { readNumber, startsNumber } from './numbers';
+import { readOperator } from './operators';
 import { readPunctuation } from './punctuation';
 import { consumeSpacing, isSpacing } from './spacing';
 import { readStringToken } from './strings';
@@ -47,7 +48,10 @@ function readSymbolToken(cursor: SourceCursor, character: string, start: SourceP
   if (punctuation) {
     return punctuation;
   }
-  return character === '"' ? readStringToken(cursor, start) : null;
+  if (character === '"') {
+    return readStringToken(cursor, start);
+  }
+  return readOperator(cursor, start);
 }
 
 function readWordToken(cursor: SourceCursor, start: SourcePosition): Token | null {

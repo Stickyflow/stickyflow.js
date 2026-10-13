@@ -17,6 +17,7 @@ Model board {
   Chart activity {
     text: "Weekly activity"
     type: heatmap
+    style { showLegend: true }
     categories: ["Mon", "Tue", "Wed"]
     zones: [["Low", "#ddd6fe"], ["Medium", "#a78bfa"], ["High", "#6d28d9"]]
 

@@ -29,7 +29,16 @@ export function isContractCompatible(version: number | null): boolean {
   return version === DOM_CONTRACT_VERSION;
 }
 
-const ROLES: ReadonlySet<string> = new Set(['entity', 'link', 'frame', 'swimlane', 'chart', 'path', 'isometric']);
+const ROLES: ReadonlySet<string> = new Set([
+  'entity',
+  'link',
+  'frame',
+  'swimlane',
+  'chart',
+  'path',
+  'widget',
+  'isometric',
+]);
 
 function sceneRole(domRole: string): SceneRole {
   return domRole === 'entity' ? 'shape' : (domRole as SceneRole);

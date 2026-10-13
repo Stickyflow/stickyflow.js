@@ -1,7 +1,7 @@
 export { boxBounds, EMPTY_BOUNDS, rotatedBounds } from './bounds';
 export { freeformPathData } from './freeformPath';
 export { finite } from './numbers';
-export { orderOf } from './order';
+export { stackRank, stackSequence } from './order';
 export { paint } from './paint';
 export { tag } from './tagging';
 export type { MeasureTextFactory, TextMetrics } from './textMetrics';
@@ -14,12 +14,15 @@ export type {
   RenderScene,
   SceneBase,
   SceneDetail,
+  SceneLinkSegment,
   SceneEllipse,
   SceneIdentity,
   ScenePaint,
   ScenePath,
   SceneRect,
   SceneRole,
+  SceneRollingNumber,
+  SceneShaderSurface,
   SceneStyle,
   SceneText,
 } from './types';

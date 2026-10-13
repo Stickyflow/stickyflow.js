@@ -1,6 +1,7 @@
 import type { PropertyChangeEvent, PropertyValue } from '../../events';
 import { insertDirectProperty, replacePropertyValue } from '../edits/propertyValues';
-import { escapeSflString, indentOf } from '../format';
+import { childIndent } from '../blockInsert';
+import { escapeSflString } from '../format';
 import { findDirectProperty, findOwnerBlock, type PropertySpan, parsePropertyPath, resolveBlocks } from '../scanner';
 import { growListElement, replaceListElement } from './listElement';
 
@@ -27,7 +28,7 @@ export function applyPropertyChange(sfl: string, event: PropertyChangeEvent): st
     findDirectProperty(lines, range, path.property.name, NESTED_STYLE_DEPTH) ??
     findDirectProperty(lines, range, path.property.name);
   if (span === null) {
-    const indent = `${indentOf(lines[range.start])}    `;
+    const indent = childIndent(lines, range);
     if (path.property.indices.length === 1) {
       const [index] = path.property.indices;
       const items = growListElement('[]', index, formatValue(event.value, undefined, event.quote));

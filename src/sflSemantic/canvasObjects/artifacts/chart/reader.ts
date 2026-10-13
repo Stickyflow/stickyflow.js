@@ -9,7 +9,7 @@ import type { ChartData, ChartProperties } from './types';
 import { numberList, readBoolean, stringList } from './values';
 import { readChartZones } from './zones';
 
-const STACKED_MODES: ReadonlyArray<NonNullable<ChartData['stacked']>> = ['true', 'percent', 'waterfall'];
+const STACKED_MODES: ReadonlyArray<NonNullable<ChartData['stacked']>> = ['none', 'true', 'percent', 'waterfall'];
 
 function asChartType(value: string | undefined): ChartData['chartType'] {
   return isChartType(value) ? value : 'bar';
@@ -47,6 +47,9 @@ export function readChart(
     showBoxplotPoints: readBoolean(properties.get('showBoxplotPoints')),
     barBorderColor: asString(properties.get('barBorderColor')),
     barBorderWidth: asNumber(properties.get('barBorderWidth')),
+    barGroupGap: asNumber(properties.get('barGroupGap')),
+    barGlow: asNumber(properties.get('barGlow')),
+    barGap: asNumber(properties.get('barGap')),
     mekkoVaryHeight: readBoolean(properties.get('mekkoVaryHeight')),
     hexRadius: asNumber(properties.get('hexRadius')),
     innerRadius: asNumber(properties.get('innerRadius')),

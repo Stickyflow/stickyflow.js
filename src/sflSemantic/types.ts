@@ -1,4 +1,5 @@
 import type { Diagnostic } from '../model/diagnostic';
+import type { Shader } from '../model/shader';
 import type { SflConnectionOut } from './canvasObjects/artifacts/connections/types';
 import type { SflLinkOut } from './canvasObjects/artifacts/links/types';
 import type { SflCanvasObject } from './canvasObjects/types';
@@ -16,6 +17,7 @@ export {
   type SflIsometricObject,
   type SflPathObject,
   type SflSwimlaneObject,
+  type SflWidgetObject,
 } from './canvasObjects/types';
 export type { SflGroupOut } from './groups/types';
 
@@ -27,4 +29,5 @@ export interface SflCanvasState {
   connections: SflConnectionOut[];
   groups: SflGroupOut[];
   diagnostics: SflDiagnostic[];
+  shaders?: Shader[];
 }

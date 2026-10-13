@@ -36,6 +36,14 @@ export interface LinkReconnectEvent {
   fraction: number;
 }
 
+export interface LinkSegmentChangeEvent {
+  owner: OwnerRef;
+  /** Slot in the link's `segments:` offsets: 1 first inner segment, 2 middle, 3 last inner. */
+  index: number;
+  /** Perpendicular offset from the default route, in diagram units. */
+  offset: number;
+}
+
 export type IsometricQuickDuplicateDirection =
   | 'iso-width-pos'
   | 'iso-width-neg'
@@ -66,6 +74,14 @@ export interface ChartValueChangeEvent {
   series: string;
   index: number;
   value: number;
+}
+
+// Emitted on every pointer move of a chart value drag; value is null once the drag ends.
+export interface ChartValuePreviewEvent {
+  owner: OwnerRef;
+  series: string;
+  index: number;
+  value: number | null;
 }
 
 export type PropertyValue = string | number | boolean | readonly number[];
@@ -115,10 +131,12 @@ export interface InteractionEventMap {
   moveChange: MoveChangeEvent;
   resizeChange: ResizeChangeEvent;
   linkReconnect: LinkReconnectEvent;
+  linkSegmentChange: LinkSegmentChangeEvent;
   quickDuplicate: QuickDuplicateEvent;
   linkTo: LinkToEvent;
   delete: DeleteEvent;
   chartValueChange: ChartValueChangeEvent;
+  chartValuePreview: ChartValuePreviewEvent;
   propertyChange: PropertyChangeEvent;
   pathPointChange: PathPointChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;

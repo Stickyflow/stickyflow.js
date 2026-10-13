@@ -1,4 +1,4 @@
-import { indentOf } from '../format';
+import { insertBlockLines } from '../blockInsert';
 import { buildLinkBlock } from './blockText';
 import { resolveLinkInsertionTarget } from './insertionTarget';
 import type { InsertLinkOptions } from './types';
@@ -10,8 +10,6 @@ export function insertLink(sfl: string, options: InsertLinkOptions): string {
     return sfl;
   }
 
-  const baseIndent = `${indentOf(lines[modelRange.start])}    `;
-  const block = buildLinkBlock(options, baseIndent);
-  lines.splice(modelRange.end, 0, ...block);
+  insertBlockLines(lines, modelRange, baseIndent => buildLinkBlock(options, baseIndent));
   return lines.join('\n');
 }

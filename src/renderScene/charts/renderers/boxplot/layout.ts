@@ -1,4 +1,5 @@
 import { finite } from '../../../scene';
+import { representativeColor } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { BoxplotLayout } from './types';
 
@@ -14,7 +15,7 @@ export function createBoxplotLayout(context: ChartRenderContext): BoxplotLayout 
     boxWidth: Math.max(4, slotWidth * widthFraction),
     cornerRadius: chart.config?.barCornerRadius ?? 2,
     showPoints: chart.config?.showBoxplotPoints ?? true,
-    borderColor: chart.config?.barBorderColor || '#000000',
+    borderColor: representativeColor(chart.config?.barBorderColor, '#000000'),
     borderWidth: finite(chart.config?.barBorderWidth, 1),
   };
 }

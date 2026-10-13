@@ -1,7 +1,8 @@
 import type { Chart } from '../../model/chart';
 import type { Bounds, SceneRect } from '../scene';
-import { finite } from '../scene';
+import { finite, paint } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
+import { isHorizontalBar } from './primitives';
 import { resolvePieRadii } from './primitives/pieShape';
 import { radarCategoryCount, radarRadius } from './primitives/radarShape';
 
@@ -22,16 +23,18 @@ export function buildChartFrame(
     height: chart.height,
     rx: chart.cornerRadius ?? 12,
     style: {
-      fill: { kind: 'solid', color: chart.fillColor ?? '#ffffff' },
+      fill: paint(chart.fillColor ?? '#ffffff', [], chart.id),
       stroke: { kind: 'solid', color: chart.strokeColor ?? '#475569' },
       strokeWidth: finite(chart.strokeWidth, 1),
     },
   };
 
   if (CARTESIAN_VALUE_TYPES.has(chart.chartType)) {
+    // Horizontal bars read their value along x: the scale then describes the plot's x range.
+    const range = isHorizontalBar(chart) ? `${plot.x},${plot.width}` : `${plot.y},${plot.height}`;
     frame.detail = {
       of: 'chartScale',
-      valueScale: `${plot.y},${plot.height},${chart.axisY.min},${chart.axisY.max}`,
+      valueScale: `${range},${chart.axisY.min},${chart.axisY.max}${isHorizontalBar(chart) ? ',horizontal' : ''}`,
     };
   }
 

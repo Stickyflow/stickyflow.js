@@ -1,6 +1,7 @@
-import { isNamedBlockKind, type SflBlock, type SflEntry } from '../ast';
+import { isNamedBlockKind, type SflBinding, type SflBlock, type SflEntry } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
+import { parseExpression } from './expressions';
 import { PropertyParser } from './properties';
 
 export class BlockParser {
@@ -80,10 +81,27 @@ export class BlockParser {
     if (token.value === 'style' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'style', style: this.properties.parseStyle() };
     }
+    if (token.value === 'fields' && this.cursor.peek(1).type === 'lbrace') {
+      return { type: 'fields', fields: this.properties.parseFields() };
+    }
+    if (['bind', 'bind2', 'action'].includes(this.cursor.peek(1).type)) {
+      return { type: 'binding', binding: this.parseBinding() };
+    }
     if (token.value === 'data' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'data', data: this.parseDataBlock() };
     }
     return { type: 'property', property: this.properties.parseProperty() };
+  }
+
+  private parseBinding(): SflBinding {
+    const key = this.cursor.expect('ident', 'bound property');
+    const operator = this.cursor.next().value as SflBinding['operator'];
+    const expr = parseExpression(this.cursor);
+    const next = this.cursor.peek();
+    if (!['newline', 'semi', 'rbrace', 'eof'].includes(next.type)) {
+      throw new SflParseError(`unexpected '${next.value || next.type}' after binding`, next.line, next.col);
+    }
+    return { key: key.value, operator, expr, line: key.line, col: key.col };
   }
 
   private parseDataEntry(): SflEntry {

@@ -17,6 +17,7 @@ export interface RenderOptions {
   includeXmlDeclaration?: boolean;
   idPrefix?: string;
   measureText?: MeasureTextFactory;
+  linkHitAreas?: boolean;
 }
 
 export function renderCanvas(input: RenderInput, options: RenderOptions = {}): RenderResult {

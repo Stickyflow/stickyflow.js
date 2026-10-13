@@ -131,6 +131,7 @@ function linkDetailAttrs(detail: Extract<SceneDetail, { of: 'link' }>): Array<st
     detail.route ? `data-sf-route="${detail.route}"` : undefined,
     detail.fromSide ? `data-sf-from-side="${detail.fromSide}"` : undefined,
     detail.toSide ? `data-sf-to-side="${detail.toSide}"` : undefined,
+    detail.segments ? `data-sf-link-segments="${xml(JSON.stringify(detail.segments))}"` : undefined,
     detail.fromFace ? `data-sf-from-face="${detail.fromFace}"` : undefined,
     detail.toFace ? `data-sf-to-face="${detail.toFace}"` : undefined,
     detail.labelGap ? 'data-sf-label-gap="true"' : undefined,

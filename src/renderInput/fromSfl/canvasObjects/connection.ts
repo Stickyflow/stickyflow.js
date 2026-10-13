@@ -11,6 +11,7 @@ export function connectionObject(c: SflConnectionOut): Connection {
     fromFace: c.fromFace,
     toFace: c.toFace,
     order: c.order,
+    sourceIndex: c.sourceIndex,
     style: {
       pathType: optionalOneOf(p.route, PATH_TYPES) ?? 'straight',
       color: strokePaint(p.stroke),

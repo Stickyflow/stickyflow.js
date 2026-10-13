@@ -23,7 +23,7 @@ export interface SflChartData {
     | 'custom';
   categories?: string[];
   areaOpacity?: number;
-  stacked?: 'true' | 'percent' | 'waterfall';
+  stacked?: 'none' | 'true' | 'percent' | 'waterfall';
   scale?: string;
   interpolate?: 'idw';
   idwPower?: number;
@@ -36,6 +36,9 @@ export interface SflChartData {
   showBoxplotPoints?: boolean;
   barBorderColor?: string;
   barBorderWidth?: number;
+  barGroupGap?: number;
+  barGlow?: number;
+  barGap?: number;
   mekkoVaryHeight?: boolean;
   hexRadius?: number;
   innerRadius?: number;

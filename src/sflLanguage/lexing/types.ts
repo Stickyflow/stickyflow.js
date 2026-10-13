@@ -13,6 +13,10 @@ export type TokenType =
   | 'semi'
   | 'dot'
   | 'amp'
+  | 'bind'
+  | 'bind2'
+  | 'action'
+  | 'op'
   | 'newline'
   | 'eof';
 

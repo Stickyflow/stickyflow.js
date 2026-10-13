@@ -11,6 +11,7 @@ export interface ChartTextOptions {
   chart: Chart;
   align?: 'left' | 'center' | 'right';
   rotation?: number;
+  role?: 'axis' | 'legend';
 }
 
 export function chartText(options: ChartTextOptions): SceneText {
@@ -22,10 +23,13 @@ export function chartText(options: ChartTextOptions): SceneText {
     bounds: options.bounds,
     ...frame,
     lines: [options.text],
-    fontFamily: chart.fontFamily ?? DEFAULT_FONT,
-    fontSize: Math.max(9, finite(chart.fontSize, 12)),
+    fontFamily: (options.role === 'axis' ? chart.axisFontFamily : undefined) ?? chart.fontFamily ?? DEFAULT_FONT,
+    fontSize: Math.max(9, finite(options.role === 'axis' ? (chart.axisFontSize ?? chart.fontSize) : chart.fontSize, 12)),
     fontWeight: 'normal',
-    color: chart.textColor ?? '#0f172a',
+    color:
+      (options.role === 'axis' ? chart.axisLabelColor : options.role === 'legend' ? chart.legendColor : undefined) ??
+      chart.textColor ??
+      '#0f172a',
     align: options.align ?? 'left',
     verticalAlign: 'top',
     lineHeight: 1.2,

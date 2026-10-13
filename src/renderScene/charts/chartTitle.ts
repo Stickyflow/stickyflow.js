@@ -25,8 +25,9 @@ export function buildChartTitle(
         text: chart.title,
         chart,
       }),
-      fontWeight: 'bold',
-      fontSize: Math.max(10, finite(chart.fontSize, 12)) + 2,
+      ...(chart.titleColor ? { color: chart.titleColor } : {}),
+      fontWeight: chart.titleWeight ?? 'bold',
+      fontSize: finite(chart.titleSize, Math.max(10, finite(chart.fontSize, 12)) + 2),
       prop: CHART_TITLE_PROP,
     },
   ];

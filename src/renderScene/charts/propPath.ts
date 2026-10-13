@@ -10,6 +10,10 @@ export function axisLabelProp(axis: 'x' | 'y'): string {
   return `Axis[${axis}].label`;
 }
 
+export function categoryProp(index: number): string | undefined {
+  return Number.isInteger(index) && index >= 0 ? `categories[${index}]` : undefined;
+}
+
 export function seriesLabelProp(id: string): string | undefined {
   return block('Series', id, 'label');
 }

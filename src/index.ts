@@ -7,6 +7,8 @@ export type { IsometricFace, IsometricObject } from './model/isometricObject';
 export type { FreeformPath, PathPoint } from './model/path';
 export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
+export type { Shader, ShaderParameter } from './model/shader';
+export type { RollingNumberWidget, RollingNumberWidgetStyle, Widget, WidgetType } from './model/widget';
 
 // L1 — SFL Language
 export { canonicalize, parse } from './sflLanguage';
@@ -57,3 +59,19 @@ export { render, renderCanvas } from './render';
 // Adapters
 export type { SflImportJson } from './adapters/importJson';
 export { sflToImportJson } from './adapters/importJson';
+
+// Data binding
+export type {
+  BindingDiagnostic,
+  BindingGraph,
+  BindingRuntime,
+  BindingRuntimeOptions,
+  BindingTarget,
+  BindingType,
+  BindingValue,
+  BoundProperty,
+  DataSource,
+  DataSourceContract,
+  MutableDataSource,
+} from './binding';
+export { buildBindingGraph, createBindingRuntime, createDataSource } from './binding';

@@ -38,6 +38,10 @@ export function createFakeViewer(): FakeViewer {
     select: () => undefined,
     fit: () => undefined,
     getViewport: () => ({ x: 0, y: 0, w: 100, h: 100 }),
+    exportSvg: () => '<svg xmlns="http://www.w3.org/2000/svg"/>',
+    exportImage: async () => new Blob(),
+    setShaderParameters: () => false,
+    setWidgetValue: () => false,
     update: (_next: ViewerSource) => undefined,
     destroy: () => undefined,
   };

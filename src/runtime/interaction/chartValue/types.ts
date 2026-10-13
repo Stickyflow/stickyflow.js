@@ -1,6 +1,8 @@
 import type { OwnerRef } from '../../viewer';
 
+// For horizontal bars plotY/plotHeight describe the plot's x range instead.
 export interface ValueScale {
+  horizontal?: boolean;
   plotY: number;
   plotHeight: number;
   min: number;
@@ -17,6 +19,8 @@ export interface ChartValueDragState {
   isBar: boolean;
   barX: number;
   barWidth: number;
+  barTop: number;
+  barHeight: number;
   barRadius: number;
   lineTension: number;
   pointerId: number;

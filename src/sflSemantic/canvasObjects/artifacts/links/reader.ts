@@ -11,11 +11,15 @@ export function readLinks(
   linkBlocks: SflBlock[],
   canvasObjects: SflCanvasObject[],
   context: CanvasObjectResolutionContext,
+  sourceIndexes: readonly number[] = [],
 ): SflLinkOut[] {
   const endpointContext: LinkEndpointReaderContext = {
     idByName: buildLinkNameIndex(model),
     canvasObjectById: new Map(canvasObjects.map(canvasObject => [canvasObject.id, canvasObject])),
   };
 
-  return linkBlocks.map(block => readLinkBlock(block, context, endpointContext));
+  return linkBlocks.map((block, index) => ({
+    ...readLinkBlock(block, context, endpointContext),
+    sourceIndex: sourceIndexes[index],
+  }));
 }

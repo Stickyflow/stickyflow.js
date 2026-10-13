@@ -23,6 +23,12 @@ import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeRamp, decodeShadow } from '../../styleDecoding';
 import { numOf, solidColor } from './values';
 
+// image(url) or image(url, overlayColor), the url without commas or parentheses.
+function decodeImageFill(source: string | undefined): { url: string; overlay?: string } | undefined {
+  const match = source?.match(/^image\(\s*([^,)]+?)\s*(?:,\s*(.+?))?\s*\)$/);
+  return match ? { url: match[1], overlay: match[2] } : undefined;
+}
+
 export function chartObject(e: SflCanvasObject): Chart {
   const p = e.props;
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
@@ -59,7 +65,8 @@ export function chartObject(e: SflCanvasObject): Chart {
       strokeWidth: r.strokeWidth,
       dash: r.dash,
     })),
-    fillColor: solidColor(p.fill) ?? '#ffffff',
+    fillColor: decodeImageFill(p.fill) ? '#111418' : (decodeColor(p.fill) ?? '#ffffff'),
+    fillImage: decodeImageFill(p.fill),
     strokeColor: solidColor(p.stroke) ?? '#475569',
     strokeWidth: numOf(p.strokeWidth) ?? 1,
     cornerRadius: numOf(p.cornerRadius) ?? 12,
@@ -69,14 +76,29 @@ export function chartObject(e: SflCanvasObject): Chart {
     gridLineStyle,
     gridRoundedCorners: p.gridRoundedCorners === 'true',
     textColor: p.textColor ?? '#0f172a',
+    axisLabelColor: p.axisLabelColor,
+    legendColor: p.legendColor,
+    axisLineWidth: numOf(p.axisLineWidth),
+    axisLineColor: p.axisLineColor,
+    axisLineStyle: p.axisLineStyle === 'dashed' || p.axisLineStyle === 'dotted' ? p.axisLineStyle : undefined,
+    tickLength: numOf(p.tickLength),
+    axisFontSize: numOf(p.axisFontSize),
+    axisFontFamily: p.axisFontFamily,
+    showValueAxis: p.showValueAxis !== 'false',
+    categoryAlign: p.categoryAlign === 'left' || p.categoryAlign === 'inside' ? p.categoryAlign : undefined,
+    titleSize: numOf(p.titleSize),
+    titleWeight: p.titleWeight === 'normal' ? 'normal' : undefined,
+    titleColor: p.titleColor,
+    gridAxes: p.gridAxes === 'x' || p.gridAxes === 'y' ? p.gridAxes : undefined,
     fontSize: numOf(p.fontSize) ?? 12,
     fontFamily: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     showGrid: p.showGrid !== 'false',
     showAxisLabels: p.showAxisLabels !== 'false',
-    showLegend: p.showLegend !== 'false',
+    showLegend: p.showLegend === 'true',
     legendPosition,
     shadowStyle: decodeShadow(p.shadow),
     order: e.order,
+    sourceIndex: e.sourceIndex,
   } satisfies ChartBase;
 
   const source = e.chart;
@@ -86,9 +108,43 @@ export function chartObject(e: SflCanvasObject): Chart {
       return typedChart(base, chartType, {
         categories: source?.categories,
         barCornerRadius: source?.barCornerRadius,
-        barBorderColor: source?.barBorderColor,
+        barBorderColor: decodeColor(source?.barBorderColor),
         barBorderWidth: source?.barBorderWidth,
-        stacked: source?.stacked,
+        barGroupGap: source?.barGroupGap,
+        barGap: source?.barGap,
+        barGlow: source?.barGlow,
+        barSegments: numOf(p.barSegments),
+        barSegmentGap: numOf(p.barSegmentGap),
+        barSegmentSnap: p.barSegmentSnap === 'false' ? false : undefined,
+        barGlassBlur: numOf(p.barGlassBlur),
+        barGlassSaturation: numOf(p.barGlassSaturation),
+        barGlassTint: p.barGlassTint,
+        barThickness: numOf(p.barThickness),
+        orientation: source?.orientation,
+        barTrack: p.barTrack === 'true',
+        barRoundedBottom: p.barRoundedBottom === 'true',
+        barLabelMaxOnly: p.barLabelMaxOnly === 'true',
+        barTrackColor: p.barTrackColor,
+        barTrackHatch: p.barTrackHatch === 'true',
+        barTrackHatchColor: p.barTrackHatchColor,
+        barTrackHatchAngle: numOf(p.barTrackHatchAngle),
+        barTrackHatchSpacing: numOf(p.barTrackHatchSpacing),
+        barTrackHatchWidth: numOf(p.barTrackHatchWidth),
+        stacked: source?.stacked ?? 'true',
+        showBarLabels: p.showBarLabels === 'true',
+        barLabelPosition:
+          p.barLabelPosition === 'inside' || p.barLabelPosition === 'center' || p.barLabelPosition === 'axis'
+            ? p.barLabelPosition
+            : undefined,
+        barLabelFontSize: numOf(p.barLabelFontSize),
+        barLabelFontFamily: p.barLabelFontFamily,
+        barLabelFontWeight: p.barLabelFontWeight === 'bold' ? 'bold' : undefined,
+        barLabelColor: p.barLabelColor,
+        barLabelPill: p.barLabelPill === 'true',
+        barLabelPillColor: p.barLabelPillColor,
+        barLabelBorderColor: p.barLabelBorderColor,
+        barLabelBorderWidth: numOf(p.barLabelBorderWidth),
+        barLabelFormat: p.barLabelFormat,
       } satisfies BarChartConfig);
     case 'line':
       return typedChart(base, chartType, {
