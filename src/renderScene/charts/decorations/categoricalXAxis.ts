@@ -2,7 +2,7 @@ import type { TypedChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
 import { chartText } from '../primitives';
 import { seriesLabelProp } from '../propPath';
-import type { ChartLayout } from './layout';
+import { type ChartLayout, tickOffset } from './layout';
 
 function categoryLabels(chart: TypedChart, count: number): string[] {
   if (chart.config?.categories?.length) {
@@ -25,7 +25,7 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
       bounds: layout.bounds,
       frame: {
         x: centerX - slotWidth / 2,
-        y: layout.plot.y + layout.plot.height + 4,
+        y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
         width: slotWidth,
         height: 18,
       },
@@ -50,7 +50,7 @@ export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, or
         bounds: layout.bounds,
         frame: {
           x: centerX - slotWidth / 2,
-          y: layout.plot.y + layout.plot.height + 4,
+          y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
           width: slotWidth,
           height: 18,
         },

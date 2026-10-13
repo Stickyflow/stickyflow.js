@@ -18,6 +18,11 @@ export function hasCartesianDecorations(chart: Chart): boolean {
   return !CHARTS_WITHOUT_CARTESIAN_DECORATIONS.has(chart.chartType);
 }
 
+// Tick marks push the axis labels outward by their own length.
+export function tickOffset(chart: Chart): number {
+  return hasCartesianDecorations(chart) ? Math.max(0, finite(chart.tickLength, 0)) : 0;
+}
+
 function isHorizontalBoxplot(chart: Chart): boolean {
   return chart.chartType === 'boxplot' && chart.config?.orientation === 'horizontal';
 }
@@ -55,7 +60,9 @@ export function decorations(chart: Chart): ChartLayout {
   const sideColumnWidth = legendStacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0;
   const treemapSide = treemapSideLegendSide(chart, showLegend);
 
+  const tick = tickOffset(chart);
   const padLeft =
+    tick +
     (showLabels ? (isHorizontalBoxplot(chart) ? boxplotCategoryLabelWidth(chart) : chart.axisY.label ? 60 : 46) : 12) +
     (legendPosition === 'bottomLeft' ? sideColumnWidth : 0) +
     (treemapSide === 'left' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
@@ -66,7 +73,7 @@ export function decorations(chart: Chart): ChartLayout {
   const basePadBottom = showLabels ? (chart.axisX.label ? 52 : 34) : 12;
   const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
-  const padBottom = basePadBottom + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
+  const padBottom = tick + basePadBottom + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
   const padTop = chart.title || (legendAtTop && hasLegendItems) ? 44 : 24;
 
   return {
