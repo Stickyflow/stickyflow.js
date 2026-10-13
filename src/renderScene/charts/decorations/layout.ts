@@ -63,7 +63,7 @@ function leftLabelWidth(chart: Chart): number {
     return boxplotCategoryLabelWidth(chart);
   }
   if (isHorizontalBar(chart)) {
-    return chart.categoryAlign === 'left' ? 20 : barCategoryLabelWidth(chart);
+    return chart.categoryAlign === 'left' || chart.categoryAlign === 'inside' ? 20 : barCategoryLabelWidth(chart);
   }
   if (chart.showValueAxis === false) {
     return 20;

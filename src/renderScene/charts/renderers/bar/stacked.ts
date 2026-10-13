@@ -2,6 +2,7 @@ import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { barCategoryCount, barPath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
 import { createBarGlowNode } from './glow';
+import { createGlassBackdropNodes } from './glass';
 import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
@@ -57,6 +58,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
           },
         });
       }
+      nodes.push(...createGlassBackdropNodes(context, `${series.id}-${valueIndex}`, path));
       nodes.push({
         type: 'path',
         id: `chart-bar-${chart.id}-${series.id}-${valueIndex}`,

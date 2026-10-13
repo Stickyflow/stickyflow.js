@@ -23,6 +23,12 @@ import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeRamp, decodeShadow } from '../../styleDecoding';
 import { numOf, solidColor } from './values';
 
+// image(url) or image(url, overlayColor), the url without commas or parentheses.
+function decodeImageFill(source: string | undefined): { url: string; overlay?: string } | undefined {
+  const match = source?.match(/^image\(\s*([^,)]+?)\s*(?:,\s*(.+?))?\s*\)$/);
+  return match ? { url: match[1], overlay: match[2] } : undefined;
+}
+
 export function chartObject(e: SflCanvasObject): Chart {
   const p = e.props;
   const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
@@ -59,7 +65,8 @@ export function chartObject(e: SflCanvasObject): Chart {
       strokeWidth: r.strokeWidth,
       dash: r.dash,
     })),
-    fillColor: decodeColor(p.fill) ?? '#ffffff',
+    fillColor: decodeImageFill(p.fill) ? '#111418' : (decodeColor(p.fill) ?? '#ffffff'),
+    fillImage: decodeImageFill(p.fill),
     strokeColor: solidColor(p.stroke) ?? '#475569',
     strokeWidth: numOf(p.strokeWidth) ?? 1,
     cornerRadius: numOf(p.cornerRadius) ?? 12,
@@ -78,7 +85,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     axisFontSize: numOf(p.axisFontSize),
     axisFontFamily: p.axisFontFamily,
     showValueAxis: p.showValueAxis !== 'false',
-    categoryAlign: p.categoryAlign === 'left' ? 'left' : undefined,
+    categoryAlign: p.categoryAlign === 'left' || p.categoryAlign === 'inside' ? p.categoryAlign : undefined,
     titleSize: numOf(p.titleSize),
     titleWeight: p.titleWeight === 'normal' ? 'normal' : undefined,
     titleColor: p.titleColor,
@@ -106,6 +113,7 @@ export function chartObject(e: SflCanvasObject): Chart {
         barGroupGap: source?.barGroupGap,
         barGap: source?.barGap,
         barGlow: source?.barGlow,
+        barGlassBlur: numOf(p.barGlassBlur),
         barThickness: numOf(p.barThickness),
         orientation: source?.orientation,
         barTrack: p.barTrack === 'true',

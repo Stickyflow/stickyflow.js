@@ -39,6 +39,8 @@ export interface ChartBase {
   strokeWidth?: number;
   cornerRadius?: number;
   fillColor?: string | GradientColor | MeshGradientColor;
+  /** A photo behind the chart, optionally darkened or tinted by an overlay color. */
+  fillImage?: { url: string; overlay?: string };
   gridColor?: string;
   gridWidth?: number;
   gridShape?: 'rect' | 'circle';
@@ -61,7 +63,7 @@ export interface ChartBase {
   /** Value axis tick labels and title. Default true. */
   showValueAxis?: boolean;
   /** Category labels centered under the bar (default) or aligned with its left edge. */
-  categoryAlign?: 'center' | 'left';
+  categoryAlign?: 'center' | 'left' | 'inside';
   titleSize?: number;
   titleWeight?: 'normal' | 'bold';
   titleColor?: string;

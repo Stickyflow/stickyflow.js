@@ -93,6 +93,7 @@ function buildHorizontalBarAxes(chart: Chart, layout: ChartLayout, order: number
   const { plot, bounds } = layout;
   const rows = horizontalRows(chart, plot);
   const above = chart.categoryAlign === 'left';
+  const inside = chart.categoryAlign === 'inside';
   const editable = Boolean((chart.config as { categories?: string[] } | undefined)?.categories?.length);
   const nodes: RenderNode[] = categoryNames(chart, rows.count).map((name, index) => {
     const top = rowTop(rows, plot, index);
@@ -104,10 +105,12 @@ function buildHorizontalBarAxes(chart: Chart, layout: ChartLayout, order: number
         bounds,
         frame: above
           ? { x: plot.x, y: top, width: plot.width, height: rows.labelRow }
-          : { x: chart.x + 8, y: top + rows.barsHeight / 2 - 9, width: plot.x - chart.x - 16, height: 18 },
+          : inside
+            ? { x: plot.x + 14, y: top + rows.barsHeight / 2 - 9, width: plot.width - 28, height: 18 }
+            : { x: chart.x + 8, y: top + rows.barsHeight / 2 - 9, width: plot.x - chart.x - 16, height: 18 },
         text: name,
         chart,
-        align: above ? 'left' : 'right',
+        align: above || inside ? 'left' : 'right',
       }),
       prop: editable ? categoryProp(index) : undefined,
     };

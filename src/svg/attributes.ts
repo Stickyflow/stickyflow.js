@@ -22,7 +22,7 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
 
 type StyledRenderNode = Exclude<
   RenderNode,
-  SceneText | SceneShaderSurface | Extract<RenderNode, { type: 'rolling-number' }>
+  SceneText | SceneShaderSurface | Extract<RenderNode, { type: 'rolling-number' | 'image' }>
 >;
 
 export function styleAttrs(node: StyledRenderNode, defs: SvgDefinitionRegistry): string {
@@ -56,7 +56,7 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   }
 }
 
-function addVisualEffectAttrs(attrs: string[], node: StyledRenderNode, defs: SvgDefinitionRegistry): void {
+function addVisualEffectAttrs(attrs: string[], node: { id: string; style: SceneStyle }, defs: SvgDefinitionRegistry): void {
   const filter = defs.filter(node.style, node.id);
   if (filter) {
     attrs.push(`filter="url(#${filter})"`);
@@ -83,4 +83,16 @@ function addPathMarkerAttrs(attrs: string[], node: StyledRenderNode, defs: SvgDe
 
 export function transform(rotation?: number, center?: { x: number; y: number }): string {
   return rotation && center ? ` transform="rotate(${num(rotation)} ${num(center.x)} ${num(center.y)})"` : '';
+}
+
+export function imageAttrs(node: Extract<RenderNode, { type: 'image' }>, defs: SvgDefinitionRegistry): string {
+  const attrs: string[] = [];
+  if (node.style.opacity !== undefined) {
+    attrs.push(`opacity="${num(node.style.opacity)}"`);
+  }
+  if (node.style.pointerEvents) {
+    attrs.push(`pointer-events="${node.style.pointerEvents}"`);
+  }
+  addVisualEffectAttrs(attrs, node, defs);
+  return attrs.join(' ');
 }

@@ -11,6 +11,7 @@ import {
   resolveChartShadow,
 } from '../../primitives';
 import { createBarGlowNode } from './glow';
+import { createGlassBackdropNodes } from './glass';
 import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
@@ -184,7 +185,8 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
     style: { fill, stroke, strokeWidth, innerShadow: shadow },
   };
 
-  return shadowCaster ? [shadowCaster, bar] : [bar];
+  const glass = createGlassBackdropNodes(context, `${mark.seriesId}-${mark.valueIndex}`, path);
+  return shadowCaster ? [shadowCaster, ...glass, bar] : [...glass, bar];
 }
 
 function createGroupedBarError(context: ChartRenderContext, mark: GroupedBarMark): RenderNode | null {

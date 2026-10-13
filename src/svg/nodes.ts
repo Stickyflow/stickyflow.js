@@ -1,5 +1,5 @@
 import type { RenderNode } from '../renderScene/scene';
-import { styleAttrs, transform } from './attributes';
+import { imageAttrs, styleAttrs, transform } from './attributes';
 import { contractAttrs } from './contract';
 import type { SvgDefinitionRegistry } from './definitions';
 import { num, xml } from './format';
@@ -37,6 +37,9 @@ export function nodeSvg(node: RenderNode, defs: SvgDefinitionRegistry): string {
   }
   if (node.type === 'rolling-number') {
     return rollingNumberSvg(node, defs);
+  }
+  if (node.type === 'image') {
+    return `<image id="${defs.elementId(node.id)}"${contractAttrs(node)} ${imageAttrs(node, defs)} href="${xml(node.href)}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}" preserveAspectRatio="xMidYMid slice"/>`;
   }
   const attrs = `id="${defs.elementId(node.id)}"${contractAttrs(node)} ${styleAttrs(node, defs)}`;
   if (node.type === 'rect') {

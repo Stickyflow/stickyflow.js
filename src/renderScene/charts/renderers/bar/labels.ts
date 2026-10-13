@@ -95,7 +95,9 @@ function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget
       order: nextOrder(),
       bounds,
       frame: target.horizontal
-        ? { x: plot.x, y: target.frame.y - CATEGORY_LABEL_ROW, width: plot.width, height: fontSize * 1.2 }
+        ? chart.categoryAlign === 'inside'
+          ? { x: plot.x, y: target.frame.y + target.frame.height / 2 - fontSize * 0.6, width: plot.width - 14, height: fontSize * 1.2 }
+          : { x: plot.x, y: target.frame.y - CATEGORY_LABEL_ROW, width: plot.width, height: fontSize * 1.2 }
         : { x: target.frame.x, y: top, width: target.frame.width, height: fontSize * 1.2 },
       text,
       chart,

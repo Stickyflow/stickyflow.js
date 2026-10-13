@@ -9,6 +9,8 @@ export interface BarChartConfig extends CategoryChartConfig {
   barGroupGap?: number;
   /** Glow radius in px, drawn in each bar's own color over the neighbouring bars. Default 0 (off). */
   barGlow?: number;
+  /** Frosted glass bars: blur radius of the photo behind each bar. Needs an image fill. */
+  barGlassBlur?: number;
   /** Bar thickness in px for horizontal charts. Default: fills the row. */
   barThickness?: number;
   /** Bars grow from the left instead of the bottom. Default vertical. */

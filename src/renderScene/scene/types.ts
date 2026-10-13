@@ -203,7 +203,25 @@ export interface SceneRollingNumber extends SceneBase {
   widgetStyle: Required<RollingNumberWidgetStyle>;
 }
 
-export type RenderNode = SceneRect | SceneEllipse | ScenePath | SceneText | SceneShaderSurface | SceneRollingNumber;
+export interface SceneImage extends SceneBase {
+  type: 'image';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  href: string;
+  // Only opacity, blur, clip and pointerEvents apply to an image.
+  style: SceneStyle;
+}
+
+export type RenderNode =
+  | SceneRect
+  | SceneEllipse
+  | ScenePath
+  | SceneText
+  | SceneShaderSurface
+  | SceneRollingNumber
+  | SceneImage;
 
 export interface RenderScene {
   nodes: RenderNode[];

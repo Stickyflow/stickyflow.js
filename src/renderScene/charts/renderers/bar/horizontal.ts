@@ -12,6 +12,7 @@ import {
 import { seriesValueColorProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { createBarGlowNode } from './glow';
+import { createGlassBackdropNodes } from './glass';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 
@@ -71,6 +72,7 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
         tracks.push(...createBarTrackNodes(context, id, { x: plot.x, y: frame.y, width: plot.width, height: frame.height }));
       }
       const fill = paint(color, diagnostics, chart.id);
+      bars.push(...createGlassBackdropNodes(context, id, d));
       if (shadow) {
         bars.push({
           type: 'path',
