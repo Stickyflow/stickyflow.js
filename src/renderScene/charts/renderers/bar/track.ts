@@ -24,6 +24,17 @@ function hatchPath(x: number, y: number, width: number, height: number, angle: n
   return segments.join(' ');
 }
 
+// With a track, a bar's shadow falls on the track only, not on the chart background.
+export function barTrackClip(
+  context: ChartRenderContext,
+  frame: { x: number; y: number; width: number; height: number },
+): { type: 'path'; d: string } | undefined {
+  if (!barTrackEnabled(context)) {
+    return undefined;
+  }
+  return { type: 'path', d: roundedBarPath(frame.x, frame.y, frame.width, frame.height, context.chart.config?.barCornerRadius ?? 2) };
+}
+
 export function barTrackEnabled(context: ChartRenderContext): boolean {
   return context.chart.config?.barTrack === true;
 }
@@ -32,11 +43,11 @@ export function barTrackEnabled(context: ChartRenderContext): boolean {
 export function createBarTrackNodes(
   context: ChartRenderContext,
   id: string,
-  frame: { x: number; width: number },
+  frame: { x: number; y: number; width: number; height: number },
 ): RenderNode[] {
-  const { chart, plot, bounds, diagnostics, nextOrder } = context;
+  const { chart, bounds, diagnostics, nextOrder } = context;
   const config = chart.config;
-  const d = roundedBarPath(frame.x, plot.y, frame.width, plot.height, config?.barCornerRadius ?? 2);
+  const d = roundedBarPath(frame.x, frame.y, frame.width, frame.height, config?.barCornerRadius ?? 2);
   const nodes: RenderNode[] = [
     {
       type: 'path',
@@ -55,9 +66,9 @@ export function createBarTrackNodes(
       bounds,
       d: hatchPath(
         frame.x,
-        plot.y,
+        frame.y,
         frame.width,
-        plot.height,
+        frame.height,
         finite(config.barTrackHatchAngle, DEFAULT_HATCH.angle),
         Math.max(MIN_HATCH_SPACING, finite(config.barTrackHatchSpacing, DEFAULT_HATCH.spacing)),
       ),

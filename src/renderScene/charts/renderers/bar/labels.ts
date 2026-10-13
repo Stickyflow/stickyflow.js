@@ -11,6 +11,7 @@ export interface BarLabelTarget {
   value: number;
   frame: { x: number; y: number; width: number; height: number };
   placement: BarLabelPlacement;
+  horizontal?: boolean;
 }
 
 interface LabelBox extends BarLabelSize {
@@ -106,22 +107,42 @@ function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget
   };
 }
 
+// Horizontal bars: the label sits past the bar end, inside its end, or centered.
+function horizontalPlacement(target: BarLabelTarget, size: BarLabelSize): BarLabelPlacement {
+  const requested = target.placement === 'axis' ? 'outside' : target.placement;
+  const fits = target.frame.width >= size.width + BAR_LABEL.gap * 2;
+  return requested !== 'outside' && !fits ? 'outside' : requested;
+}
+
+function horizontalBox(target: BarLabelTarget, size: BarLabelSize, placement: BarLabelPlacement): LabelBox {
+  const { frame } = target;
+  const left =
+    placement === 'outside'
+      ? frame.x + frame.width + BAR_LABEL.gap
+      : placement === 'inside'
+        ? frame.x + frame.width - size.width - BAR_LABEL.gap
+        : frame.x + frame.width / 2 - size.width / 2;
+  return { ...size, left, top: frame.y + frame.height / 2 - size.height / 2 };
+}
+
 export function createBarLabelNodes(context: ChartRenderContext, target: BarLabelTarget): RenderNode[] {
   const { chart } = context;
   const config = chart.config;
   const fontSize = Math.max(8, finite(config?.barLabelFontSize, finite(chart.fontSize, 12)));
   const text = formatBarLabel(target.value, config?.barLabelFormat);
-  if (target.placement === 'axis') {
+  if (target.placement === 'axis' && !target.horizontal) {
     return [createAxisValueNode(context, target, text, fontSize)];
   }
   const pill = config?.barLabelPill === true;
   const size = barLabelSize(text, fontSize, pill);
-  const placement = resolvePlacement(target, size);
-  const box: LabelBox = {
-    ...size,
-    left: target.frame.x + target.frame.width / 2 - size.width / 2,
-    top: labelTop(placement, target.frame, size.height),
-  };
+  const placement = target.horizontal ? horizontalPlacement(target, size) : resolvePlacement(target, size);
+  const box: LabelBox = target.horizontal
+    ? horizontalBox(target, size, placement)
+    : {
+        ...size,
+        left: target.frame.x + target.frame.width / 2 - size.width / 2,
+        top: labelTop(placement, target.frame, size.height),
+      };
   const color = config?.barLabelColor ?? chart.textColor ?? '#0f172a';
 
   const nodes: RenderNode[] = [];

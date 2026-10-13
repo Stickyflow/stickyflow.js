@@ -2,7 +2,7 @@ import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { barCategoryCount, barPath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
 import { createBarGlowNode } from './glow';
-import { barTrackEnabled, createBarTrackNodes } from './track';
+import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
@@ -35,7 +35,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
       const path = barPath(x, y, barWidth, height, radius, chart.config?.barRoundedBottom === true);
       if (seriesIndex === 0 && barTrackEnabled(context)) {
-        trackNodes.push(...createBarTrackNodes(context, String(valueIndex), { x, width: barWidth }));
+        trackNodes.push(...createBarTrackNodes(context, String(valueIndex), { x, y: plot.y, width: barWidth, height: plot.height }));
       }
       const fill = paint(color, diagnostics, chart.id);
       const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
@@ -48,7 +48,13 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
           order: nextOrder(),
           bounds,
           d: path,
-          style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: clipPath } },
+          style: {
+            fill,
+            stroke,
+            strokeWidth,
+            shadow,
+            clip: barTrackClip(context, { x, y: plot.y, width: barWidth, height: plot.height }) ?? { type: 'path', d: clipPath },
+          },
         });
       }
       nodes.push({

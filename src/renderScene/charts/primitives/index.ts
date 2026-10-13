@@ -28,3 +28,4 @@ export { stackedSegment } from './stacking';
 export { chartText } from './text';
 export { BAR_LABEL, barLabelSize, formatBarLabel, pillPath } from './barLabel';
 export { barCategoryCount } from './barCategories';
+export { CATEGORY_LABEL_ROW, horizontalRows, isHorizontalBar, rowTop } from './horizontalBars';

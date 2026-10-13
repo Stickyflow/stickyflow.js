@@ -1,7 +1,8 @@
 import type { Chart } from '../../../model/chart';
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
-import { barCategoryCount, chartTicks, mapChartValue } from '../primitives';
+import { barCategoryCount, chartText, chartTicks, horizontalRows, isHorizontalBar, mapChartValue, rowTop } from '../primitives';
+import { categoryProp } from '../propPath';
 import { buildAxisLabels } from './axisLabels';
 import { buildBoxplotSeriesYAxisTicks } from './boxplotYAxis';
 import { buildCategoricalXAxisTicks, buildSeriesXAxisTicks } from './categoricalXAxis';
@@ -70,13 +71,62 @@ function buildAxisLines(chart: Chart, layout: ChartLayout, order: number): Rende
     }
     add('line-x', `M ${plot.x} ${bottom} L ${plot.x + plot.width} ${bottom}`);
   }
-  if (tickLength > 0 && !isHorizontalBoxplot(chart)) {
+  if (tickLength > 0 && !isHorizontalBoxplot(chart) && !isHorizontalBar(chart)) {
     chartTicks(chart.axisY).forEach(tick => {
       const y = bottom - mapChartValue(tick, chart.axisY, plot.height);
       add(`tick-y-${tick}`, `M ${plot.x - tickLength} ${y} L ${plot.x} ${y}`);
     });
     xTickPositions(chart, layout).forEach((x, index) => {
       add(`tick-x-${index}`, `M ${x} ${bottom} L ${x} ${bottom + tickLength}`);
+    });
+  }
+  return nodes;
+}
+
+function categoryNames(chart: Chart, count: number): string[] {
+  const names = (chart.config as { categories?: string[] } | undefined)?.categories;
+  return Array.from({ length: count }, (_value, index) => names?.[index] ?? String(index + 1));
+}
+
+// Horizontal bars: category labels per row (left of the plot, or above each bar), value ticks along the bottom.
+function buildHorizontalBarAxes(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
+  const { plot, bounds } = layout;
+  const rows = horizontalRows(chart, plot);
+  const above = chart.categoryAlign === 'left';
+  const editable = Boolean((chart.config as { categories?: string[] } | undefined)?.categories?.length);
+  const nodes: RenderNode[] = categoryNames(chart, rows.count).map((name, index) => {
+    const top = rowTop(rows, plot, index);
+    return {
+      ...chartText({
+        role: 'axis',
+        id: `chart-y-category-${chart.id}-${index}`,
+        order: order + index,
+        bounds,
+        frame: above
+          ? { x: plot.x, y: top, width: plot.width, height: rows.labelRow }
+          : { x: chart.x + 8, y: top + rows.barsHeight / 2 - 9, width: plot.x - chart.x - 16, height: 18 },
+        text: name,
+        chart,
+        align: above ? 'left' : 'right',
+      }),
+      prop: editable ? categoryProp(index) : undefined,
+    };
+  });
+  if (chart.showValueAxis !== false) {
+    chartTicks(chart.axisY).forEach((tick, index) => {
+      const x = plot.x + mapChartValue(tick, chart.axisY, plot.width);
+      nodes.push(
+        chartText({
+          role: 'axis',
+          id: `chart-x-tick-${chart.id}-${tick}`,
+          order: order + rows.count + index,
+          bounds,
+          frame: { x: x - 20, y: plot.y + plot.height + 4 + finite(chart.tickLength, 0), width: 40, height: 18 },
+          text: String(tick),
+          chart,
+          align: 'center',
+        }),
+      );
     });
   }
   return nodes;
@@ -91,6 +141,9 @@ export function buildChartAxes(chart: Chart, layout: ChartLayout, order: number)
     return lines;
   }
   order += lines.length;
+  if (isHorizontalBar(chart)) {
+    return [...lines, ...buildHorizontalBarAxes(chart, layout, order)];
+  }
 
   const xTicks = buildXAxisTicks(chart, layout, order);
   const yTicks = buildYAxisTicks(chart, layout, order + xTicks.length);

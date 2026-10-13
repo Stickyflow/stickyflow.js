@@ -2,6 +2,7 @@ import type { Chart } from '../../model/chart';
 import type { Bounds, SceneRect } from '../scene';
 import { finite, paint } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
+import { isHorizontalBar } from './primitives';
 import { resolvePieRadii } from './primitives/pieShape';
 import { radarCategoryCount, radarRadius } from './primitives/radarShape';
 
@@ -28,7 +29,8 @@ export function buildChartFrame(
     },
   };
 
-  if (CARTESIAN_VALUE_TYPES.has(chart.chartType)) {
+  // Dragging a bar to change its value is wired to the vertical scale only.
+  if (CARTESIAN_VALUE_TYPES.has(chart.chartType) && !isHorizontalBar(chart)) {
     frame.detail = {
       of: 'chartScale',
       valueScale: `${plot.y},${plot.height},${chart.axisY.min},${chart.axisY.max}`,

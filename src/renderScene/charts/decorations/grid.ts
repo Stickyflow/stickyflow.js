@@ -3,7 +3,7 @@ import type { Bounds, RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
 import { fieldSurfaceClip } from '../field/grid';
 import { CIRCULAR_GRID_CHART_TYPES } from '../gridSupport';
-import { chartTicks, mapChartValue } from '../primitives';
+import { chartTicks, isHorizontalBar, mapChartValue } from '../primitives';
 import { buildCircularChartGrid } from './gridCircle';
 import { createGridDot } from './gridDots';
 import { gridLineDashStyle } from './gridLineStyle';
@@ -19,6 +19,9 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
   }
 
   const width = finite(chart.gridWidth, 1);
+  if (isHorizontalBar(chart)) {
+    return buildHorizontalBarGrid(chart, plot, bounds, order, width);
+  }
   const clip = chart.chartType === 'field' ? fieldSurfaceClip(chart, plot) : undefined;
   if (chart.gridLineStyle === 'dotted') {
     return buildDottedRectGrid(chart, plot, bounds, order, width, clip);
@@ -56,6 +59,36 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
     });
   });
   return nodes;
+}
+
+// Horizontal bars: the value axis runs along the bottom, so the grid lines are vertical.
+function buildHorizontalBarGrid(
+  chart: Chart,
+  plot: ChartLayout['plot'],
+  bounds: Bounds,
+  order: number,
+  width: number,
+): RenderNode[] {
+  if (chart.gridAxes === 'y') {
+    return [];
+  }
+  const style: SceneStyle = {
+    fill: { kind: 'none' },
+    stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
+    strokeWidth: width,
+    ...gridLineDashStyle(chart, width),
+  };
+  return chartTicks(chart.axisY).map((tick, index) => {
+    const x = plot.x + mapChartValue(tick, chart.axisY, plot.width);
+    return {
+      type: 'path',
+      id: `chart-grid-x-${chart.id}-${tick}`,
+      order: order + index,
+      bounds,
+      d: `M ${x} ${plot.y} L ${x} ${plot.y + plot.height}`,
+      style,
+    };
+  });
 }
 
 function buildDottedRectGrid(

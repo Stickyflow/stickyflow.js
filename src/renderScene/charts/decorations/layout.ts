@@ -1,6 +1,7 @@
 import type { Chart } from '../../../model/chart';
 import type { Bounds } from '../../scene';
 import { boxBounds, finite } from '../../scene';
+import { isHorizontalBar } from '../primitives';
 import { isStackedLegendPosition, LEGEND_COLUMN_GAP, LEGEND_ROW_HEIGHT, stackedLegendColumnWidth } from './legend';
 
 export const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'field']);
@@ -50,6 +51,26 @@ export interface ChartLayout {
   padLeft: number;
 }
 
+function barCategoryLabelWidth(chart: Chart): number {
+  const fontSize = finite(chart.axisFontSize ?? chart.fontSize, 12);
+  const categories = (chart.config as { categories?: string[] } | undefined)?.categories ?? [];
+  return Math.max(0, ...categories.map(category => category.length)) * fontSize * 0.58 + 16;
+}
+
+// Room left of the plot for the value axis labels, or for the category labels of horizontal charts.
+function leftLabelWidth(chart: Chart): number {
+  if (isHorizontalBoxplot(chart)) {
+    return boxplotCategoryLabelWidth(chart);
+  }
+  if (isHorizontalBar(chart)) {
+    return chart.categoryAlign === 'left' ? 20 : barCategoryLabelWidth(chart);
+  }
+  if (chart.showValueAxis === false) {
+    return 20;
+  }
+  return chart.axisY.label ? 60 : 46;
+}
+
 export function decorations(chart: Chart): ChartLayout {
   const showLabels = chart.showAxisLabels !== false;
   const showLegend = chart.showLegend !== false;
@@ -63,14 +84,7 @@ export function decorations(chart: Chart): ChartLayout {
   const tick = tickOffset(chart);
   const padLeft =
     tick +
-    (showLabels ? (isHorizontalBoxplot(chart)
-        ? boxplotCategoryLabelWidth(chart)
-        : chart.showValueAxis === false
-          ? 20
-          : chart.axisY.label
-            ? 60
-            : 46)
-      : 12) +
+    (showLabels ? leftLabelWidth(chart) : 12) +
     (legendPosition === 'bottomLeft' ? sideColumnWidth : 0) +
     (treemapSide === 'left' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
   const padRight =
@@ -78,7 +92,14 @@ export function decorations(chart: Chart): ChartLayout {
     (legendPosition === 'bottomRight' ? sideColumnWidth : 0) +
     (treemapSide === 'right' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
   const valueRow = chart.chartType === 'bar' && chart.config?.showBarLabels === true && chart.config.barLabelPosition === 'axis';
-  const basePadBottom = showLabels ? (chart.axisX.label ? 52 : 34) + (valueRow ? 18 : 0) : 12;
+  const horizontalValueAxis = isHorizontalBar(chart) && chart.showValueAxis !== false;
+  const basePadBottom = showLabels
+    ? isHorizontalBar(chart)
+      ? horizontalValueAxis
+        ? 34
+        : 12
+      : (chart.axisX.label ? 52 : 34) + (valueRow ? 18 : 0)
+    : 12;
   const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
   const padBottom = tick + basePadBottom + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);

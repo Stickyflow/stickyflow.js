@@ -11,7 +11,7 @@ import {
   resolveChartShadow,
 } from '../../primitives';
 import { createBarGlowNode } from './glow';
-import { barTrackEnabled, createBarTrackNodes } from './track';
+import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
@@ -45,7 +45,7 @@ export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {
   );
   const tracks = barTrackEnabled(context)
     ? marks.flatMap(mark =>
-        createBarTrackNodes(context, `${mark.seriesId}-${mark.valueIndex}`, { x: mark.frame.x, width: mark.frame.width }),
+        createBarTrackNodes(context, `${mark.seriesId}-${mark.valueIndex}`, { x: mark.frame.x, y: context.plot.y, width: mark.frame.width, height: context.plot.height }),
       )
     : [];
   const bars = marks.flatMap(mark => renderGroupedBarMark(context, mark));
@@ -155,7 +155,13 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
         order: nextOrder(),
         bounds,
         d: path,
-        style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: plotClipPath(plot) } },
+        style: {
+          fill,
+          stroke,
+          strokeWidth,
+          shadow,
+          clip: barTrackClip(context, { x, y: plot.y, width, height: plot.height }) ?? { type: 'path', d: plotClipPath(plot) },
+        },
       }
     : undefined;
 
