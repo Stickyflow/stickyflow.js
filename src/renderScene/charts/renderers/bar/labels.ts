@@ -4,7 +4,7 @@ import { BAR_LABEL, barLabelSize, chartText, formatBarLabel, pillPath } from '..
 import type { BarLabelSize } from '../../primitives/barLabel';
 import type { ChartRenderContext } from '../types';
 
-export type BarLabelPlacement = 'outside' | 'inside' | 'center';
+export type BarLabelPlacement = 'outside' | 'inside' | 'center' | 'axis';
 
 export interface BarLabelTarget {
   id: string;
@@ -83,11 +83,37 @@ function createTextNode(
   };
 }
 
+// The value sits under the category label, aligned with it.
+function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget, text: string, fontSize: number): RenderNode {
+  const { chart, plot, bounds, nextOrder } = context;
+  const config = chart.config;
+  const top = plot.y + plot.height + 4 + 16 + Math.max(0, chart.tickLength ?? 0);
+  return {
+    ...chartText({
+      id: target.id,
+      order: nextOrder(),
+      bounds,
+      frame: { x: target.frame.x, y: top, width: target.frame.width, height: fontSize * 1.2 },
+      text,
+      chart,
+      align: chart.categoryAlign === 'left' ? 'left' : 'center',
+    }),
+    mark: `bar-label|axis|${config?.barLabelFormat ?? ''}`,
+    color: config?.barLabelColor ?? chart.textColor ?? '#0f172a',
+    fontSize,
+    fontFamily: config?.barLabelFontFamily ?? chart.fontFamily ?? 'Inter, sans-serif',
+    fontWeight: config?.barLabelFontWeight ?? 'normal',
+  };
+}
+
 export function createBarLabelNodes(context: ChartRenderContext, target: BarLabelTarget): RenderNode[] {
   const { chart } = context;
   const config = chart.config;
   const fontSize = Math.max(8, finite(config?.barLabelFontSize, finite(chart.fontSize, 12)));
   const text = formatBarLabel(target.value, config?.barLabelFormat);
+  if (target.placement === 'axis') {
+    return [createAxisValueNode(context, target, text, fontSize)];
+  }
   const pill = config?.barLabelPill === true;
   const size = barLabelSize(text, fontSize, pill);
   const placement = resolvePlacement(target, size);

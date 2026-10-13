@@ -27,7 +27,7 @@ function buildYAxisTicks(chart: Chart, layout: ChartLayout, order: number): Rend
   if (isHorizontalBoxplot(chart)) {
     return buildBoxplotSeriesYAxisTicks(chart, layout, order);
   }
-  return buildNumericYAxisTicks(chart, layout, order);
+  return chart.showValueAxis === false ? [] : buildNumericYAxisTicks(chart, layout, order);
 }
 
 function xTickPositions(chart: Chart, layout: ChartLayout): number[] {

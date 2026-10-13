@@ -63,18 +63,27 @@ export function decorations(chart: Chart): ChartLayout {
   const tick = tickOffset(chart);
   const padLeft =
     tick +
-    (showLabels ? (isHorizontalBoxplot(chart) ? boxplotCategoryLabelWidth(chart) : chart.axisY.label ? 60 : 46) : 12) +
+    (showLabels ? (isHorizontalBoxplot(chart)
+        ? boxplotCategoryLabelWidth(chart)
+        : chart.showValueAxis === false
+          ? 20
+          : chart.axisY.label
+            ? 60
+            : 46)
+      : 12) +
     (legendPosition === 'bottomLeft' ? sideColumnWidth : 0) +
     (treemapSide === 'left' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
   const padRight =
     24 +
     (legendPosition === 'bottomRight' ? sideColumnWidth : 0) +
     (treemapSide === 'right' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
-  const basePadBottom = showLabels ? (chart.axisX.label ? 52 : 34) : 12;
+  const valueRow = chart.chartType === 'bar' && chart.config?.showBarLabels === true && chart.config.barLabelPosition === 'axis';
+  const basePadBottom = showLabels ? (chart.axisX.label ? 52 : 34) + (valueRow ? 18 : 0) : 12;
   const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
   const padBottom = tick + basePadBottom + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
-  const padTop = chart.title || (legendAtTop && hasLegendItems) ? 44 : 24;
+  const titleHeight = chart.title ? Math.max(44, 20 + finite(chart.titleSize, 14) * 1.6) : 0;
+  const padTop = titleHeight || (legendAtTop && hasLegendItems ? 44 : 24);
 
   return {
     bounds: boxBounds(

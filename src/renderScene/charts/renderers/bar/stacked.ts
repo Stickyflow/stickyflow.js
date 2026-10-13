@@ -2,6 +2,7 @@ import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { barCategoryCount, barShapePath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
 import { createBarGlowNode } from './glow';
+import { barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
@@ -11,6 +12,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
   const nodes: RenderNode[] = [];
   const glowNodes: RenderNode[] = [];
   const labelNodes: RenderNode[] = [];
+  const trackNodes: RenderNode[] = [];
   const glow = finite(chart.config?.barGlow, 0);
   const valueCount = barCategoryCount(chart);
   const slotWidth = plot.width / valueCount;
@@ -32,6 +34,9 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
       const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
       const barPath = barShapePath(x, y, barWidth, height, radius);
+      if (seriesIndex === 0 && barTrackEnabled(context)) {
+        trackNodes.push(...createBarTrackNodes(context, String(valueIndex), { x, width: barWidth }));
+      }
       const fill = paint(color, diagnostics, chart.id);
       const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
       const strokeWidth = finite(chart.config?.barBorderWidth, 0);
@@ -64,7 +69,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         prop: seriesValueProp(series.id, valueIndex),
         style: { fill, stroke, strokeWidth, innerShadow: shadow },
       });
-      if (barLabelsEnabled(context)) {
+      if (barLabelsEnabled(context) && (chart.config?.barLabelPosition !== 'axis' || seriesIndex === outerSeriesIndex)) {
         const requested = chart.config?.barLabelPosition ?? 'outside';
         const value = series.values[valueIndex];
         labelNodes.push(
@@ -83,5 +88,5 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       }
     });
   }
-  return [...nodes, ...glowNodes, ...labelNodes];
+  return [...trackNodes, ...nodes, ...glowNodes, ...labelNodes];
 }

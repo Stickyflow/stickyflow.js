@@ -59,6 +59,9 @@ function findBarLabel(svg: SVGSVGElement, drag: ChartValueDragState): BarLabelEl
 
 // How far the label travels with the bar: it follows the top edge, or the middle when centered.
 function labelShift(placement: string, origin: BarOrigin, top: number, height: number): number {
+  if (placement === 'axis') {
+    return 0;
+  }
   return placement === 'center' ? top + height / 2 - (origin.top + origin.height / 2) : top - origin.top;
 }
 

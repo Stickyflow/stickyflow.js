@@ -1,5 +1,6 @@
 import type { TypedChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
+import { finite } from '../../scene';
 import { barCategoryCount, chartText } from '../primitives';
 import { categoryProp, seriesLabelProp } from '../propPath';
 import { type ChartLayout, tickOffset } from './layout';
@@ -17,6 +18,10 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
   const labels = categoryLabels(chart, count);
 
   const editable = Boolean(chart.config?.categories?.length);
+  const left = chart.categoryAlign === 'left';
+  const groupGap = left
+    ? Math.min(Math.max(0, finite((chart.config as { barGroupGap?: number } | undefined)?.barGroupGap, 8)), Math.max(0, slotWidth - 1))
+    : 0;
 
   return Array.from({ length: count }, (_value, index) => {
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
@@ -27,14 +32,14 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
         order: order + index,
         bounds: layout.bounds,
         frame: {
-          x: centerX - slotWidth / 2,
+          x: left ? layout.plot.x + index * slotWidth + groupGap / 2 : centerX - slotWidth / 2,
           y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
-          width: slotWidth,
+          width: left ? slotWidth - groupGap : slotWidth,
           height: 18,
         },
         text: labels[index] ?? String(index + 1),
         chart,
-        align: 'center',
+        align: left ? 'left' : 'center',
       }),
       prop: editable ? categoryProp(index) : undefined,
     };

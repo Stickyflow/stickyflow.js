@@ -11,6 +11,7 @@ import {
   resolveChartShadow,
 } from '../../primitives';
 import { createBarGlowNode } from './glow';
+import { barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
@@ -42,9 +43,14 @@ export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {
   const marks = context.chart.series.flatMap((series, seriesIndex) =>
     createSeriesBarMarks(context, layout, series, seriesIndex),
   );
+  const tracks = barTrackEnabled(context)
+    ? marks.flatMap(mark =>
+        createBarTrackNodes(context, `${mark.seriesId}-${mark.valueIndex}`, { x: mark.frame.x, width: mark.frame.width }),
+      )
+    : [];
   const bars = marks.flatMap(mark => renderGroupedBarMark(context, mark));
   const labels = barLabelsEnabled(context) ? marks.flatMap(mark => createGroupedLabel(context, mark)) : [];
-  return [...bars, ...marks.flatMap(mark => createGroupedGlow(context, mark)), ...labels];
+  return [...tracks, ...bars, ...marks.flatMap(mark => createGroupedGlow(context, mark)), ...labels];
 }
 
 function createGroupedLabel(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {

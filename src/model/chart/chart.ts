@@ -55,6 +55,13 @@ export interface ChartBase {
   tickLength?: number;
   axisFontSize?: number;
   axisFontFamily?: string;
+  /** Value axis tick labels and title. Default true. */
+  showValueAxis?: boolean;
+  /** Category labels centered under the bar (default) or aligned with its left edge. */
+  categoryAlign?: 'center' | 'left';
+  titleSize?: number;
+  titleWeight?: 'normal' | 'bold';
+  titleColor?: string;
   /** Which grid lines to draw: horizontal ones follow the y axis. Default both. */
   gridAxes?: 'both' | 'x' | 'y';
   fontFamily?: string;

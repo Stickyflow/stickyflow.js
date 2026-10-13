@@ -8,9 +8,16 @@ export interface BarChartConfig extends CategoryChartConfig {
   barGroupGap?: number;
   /** Glow radius in px, drawn in each bar's own color over the neighbouring bars. Default 0 (off). */
   barGlow?: number;
+  /** Full-height track behind every bar. */
+  barTrack?: boolean;
+  barTrackColor?: string;
+  /** Diagonal hatching on the track. */
+  barTrackHatch?: boolean;
+  barTrackHatchColor?: string;
   /** Value labels on the bars. Default off. */
   showBarLabels?: boolean;
-  barLabelPosition?: 'outside' | 'inside' | 'center';
+  /** 'axis' puts the value under the category label. */
+  barLabelPosition?: 'outside' | 'inside' | 'center' | 'axis';
   barLabelFontSize?: number;
   barLabelFontFamily?: string;
   barLabelFontWeight?: 'normal' | 'bold';
