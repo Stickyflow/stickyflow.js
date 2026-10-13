@@ -59,3 +59,19 @@ export { render, renderCanvas } from './render';
 // Adapters
 export type { SflImportJson } from './adapters/importJson';
 export { sflToImportJson } from './adapters/importJson';
+
+// Data binding
+export type {
+  BindingDiagnostic,
+  BindingGraph,
+  BindingRuntime,
+  BindingRuntimeOptions,
+  BindingTarget,
+  BindingType,
+  BindingValue,
+  BoundProperty,
+  DataSource,
+  DataSourceContract,
+  MutableDataSource,
+} from './binding';
+export { buildBindingGraph, createBindingRuntime, createDataSource } from './binding';

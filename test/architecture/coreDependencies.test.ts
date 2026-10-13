@@ -20,6 +20,7 @@ const ALLOWED_DEPENDENCIES: Record<CoreLayer, readonly CoreLayer[]> = {
 const FORBIDDEN_COLLECTION_DIRECTORIES = new Set(['common', 'helpers', 'misc', 'shared', 'utils']);
 const ALLOWED_TOP_LEVEL_DIRECTORIES = new Set([
   'adapters',
+  'binding',
   'model',
   'renderInput',
   'renderScene',

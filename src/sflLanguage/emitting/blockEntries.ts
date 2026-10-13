@@ -1,4 +1,4 @@
-import type { SflBlock, SflLayout, SflProperty, SflStyle } from '../ast';
+import type { SflBinding, SflBlock, SflLayout, SflProperty, SflStyle } from '../ast';
 
 export interface BlockEntries {
   properties: SflProperty[];
@@ -6,10 +6,12 @@ export interface BlockEntries {
   layouts: SflLayout[];
   styles: SflStyle[];
   dataBlocks: SflBlock[];
+  fields: SflProperty[][];
+  bindings: SflBinding[];
 }
 
 export function collectBlockEntries(block: SflBlock): BlockEntries {
-  const entries: BlockEntries = { properties: [], blocks: [], layouts: [], styles: [], dataBlocks: [] };
+  const entries: BlockEntries = { properties: [], blocks: [], layouts: [], styles: [], dataBlocks: [], fields: [], bindings: [] };
 
   for (const entry of block.entries) {
     if (entry.type === 'property') {
@@ -20,6 +22,10 @@ export function collectBlockEntries(block: SflBlock): BlockEntries {
       entries.layouts.push(entry.layout);
     } else if (entry.type === 'style') {
       entries.styles.push(entry.style);
+    } else if (entry.type === 'fields') {
+      entries.fields.push(entry.fields);
+    } else if (entry.type === 'binding') {
+      entries.bindings.push(entry.binding);
     } else {
       entries.dataBlocks.push(entry.data);
     }

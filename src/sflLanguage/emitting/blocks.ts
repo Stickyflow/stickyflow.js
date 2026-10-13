@@ -1,6 +1,7 @@
 import type { BlockKind, SflBlock, SflProperty } from '../ast';
 import { type BlockEntries, collectBlockEntries } from './blockEntries';
 import { emitComposition } from './composition';
+import { emitBinding } from './expressions';
 import { emitPropertyBlock } from './propertyBlock';
 import { compareLayoutProps, compareProps, compareStyleProps } from './propertyOrder';
 import { emitProperty } from './values';
@@ -59,7 +60,9 @@ function usesCompactBlockForm(kind: BlockKind, entries: BlockEntries, propertyCo
     entries.blocks.length > 0 ||
     entries.layouts.length > 0 ||
     entries.styles.length > 0 ||
-    entries.dataBlocks.length > 0;
+    entries.dataBlocks.length > 0 ||
+    entries.fields.length > 0 ||
+    entries.bindings.length > 0;
   return supportsCompactForm && !hasNestedContent && propertyCount <= COMPACT_MAX_PROPS;
 }
 
@@ -76,16 +79,26 @@ function emitExpandedBlockBody(entries: BlockEntries, properties: SflProperty[],
 
 function emitPrimaryBlockEntries(entries: BlockEntries, properties: SflProperty[], depth: number): string {
   const innerPad = INDENT.repeat(depth + 1);
-  const propertyLines = properties.map(property => `${innerPad}${emitProperty(property)}`).join('\n');
+  const propertyLines = [
+    ...properties.map(property => `${innerPad}${emitProperty(property)}`),
+    ...entries.bindings.map(binding => `${innerPad}${emitBinding(binding)}`),
+  ].join('\n');
   const nestedBlocks = joinSiblingBlocks(entries.blocks, depth + 1);
   return [propertyLines, nestedBlocks].filter(Boolean).join('\n\n');
 }
 
 function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number): string {
+  const fields = entries.fields.map(properties => emitFieldsBlock(properties, depth + 1));
   const dataBlocks = entries.dataBlocks.map(data => emitDataBlock(data, depth + 1));
   const layouts = entries.layouts.map(layout => emitPropertyBlock('layout', layout.properties, depth + 1));
   const styles = entries.styles.map(style => emitPropertyBlock('style', style.properties, depth + 1));
-  return [...dataBlocks, ...layouts, ...styles].join('\n');
+  return [...fields, ...dataBlocks, ...layouts, ...styles].join('\n');
+}
+
+function emitFieldsBlock(properties: SflProperty[], depth: number): string {
+  const pad = INDENT.repeat(depth);
+  const lines = properties.map(property => `${pad}${INDENT}${emitProperty(property)}`);
+  return lines.length ? `${pad}fields {\n${lines.join('\n')}\n${pad}}` : `${pad}fields {\n${pad}}`;
 }
 
 function emitDataBlock(data: SflBlock, depth: number): string {

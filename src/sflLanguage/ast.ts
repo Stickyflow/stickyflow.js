@@ -20,6 +20,7 @@ export const NAMED_BLOCK_KINDS = [
   'Net',
   'Symbol',
   'Port',
+  'DataSource',
 ] as const;
 
 export type NamedBlockKind = (typeof NAMED_BLOCK_KINDS)[number];
@@ -48,7 +49,29 @@ export type SflEntry =
   | { type: 'block'; block: SflBlock }
   | { type: 'layout'; layout: SflLayout }
   | { type: 'style'; style: SflStyle }
-  | { type: 'data'; data: SflBlock };
+  | { type: 'data'; data: SflBlock }
+  | { type: 'fields'; fields: SflProperty[] }
+  | { type: 'binding'; binding: SflBinding };
+
+export type BindingOperator = '<-' | '<->' | '->';
+
+export type ExpressionOperator = '+' | '-' | '*' | '/' | '>' | '<' | '>=' | '<=' | '==' | '!=';
+
+export type SflExpr =
+  | { kind: 'number'; value: number }
+  | { kind: 'string'; value: string }
+  | { kind: 'ref'; path: string[] }
+  | { kind: 'unary'; operator: '!' | '-'; operand: SflExpr }
+  | { kind: 'binary'; operator: ExpressionOperator; left: SflExpr; right: SflExpr }
+  | { kind: 'call'; callee: string[]; args: SflExpr[] };
+
+export interface SflBinding {
+  key: string;
+  operator: BindingOperator;
+  expr: SflExpr;
+  line: number;
+  col: number;
+}
 
 export interface SflProperty {
   key: string;
