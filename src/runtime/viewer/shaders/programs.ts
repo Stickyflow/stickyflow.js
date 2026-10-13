@@ -1,3 +1,4 @@
+import { chromaticGlassPlateProgram } from './builtins/chromaticGlassPlate';
 import { chromaticHaloProgram } from './builtins/chromaticHalo';
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
 import { emberMatrixProgram } from './builtins/emberMatrix';
@@ -20,6 +21,7 @@ const builtins = [
   haloProgram,
   halftoneHaloProgram,
   chromaticHaloProgram,
+  chromaticGlassPlateProgram,
   glassRefractionProgram,
   emberSlitsProgram,
   smearOrbProgram,

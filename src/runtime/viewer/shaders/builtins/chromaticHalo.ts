@@ -11,6 +11,7 @@ uniform float uRingRadius;
 uniform float uRingWidth;
 uniform float uBloom;
 uniform float uMotion;
+uniform bool uLightMode;
 uniform vec3 uWarmColor;
 uniform vec3 uCoolColor;
 uniform vec3 uAccentColor;
@@ -48,12 +49,17 @@ void main() {
   vec3 color = uCoolColor * coolRing * 0.72;
   color += uWarmColor * warmRing * 0.68;
   color += uAccentColor * accentRing * 0.64;
-  color += uHighlightColor * coreRing * 1.35;
+  if (!uLightMode) {
+    color += uHighlightColor * coreRing * 1.35;
+  }
   float broadBloom = displacedRing(p, radius, width * 2.35, 0.0, time, motion);
   color += mix(uCoolColor, uWarmColor, smoothstep(-0.8, 0.8, p.y)) * broadBloom * max(uBloom, 0.0) * 0.2;
 
   float ringAlpha = max(max(coolRing, warmRing), max(accentRing, coreRing));
   float alpha = clamp(ringAlpha * 0.9 + broadBloom * max(uBloom, 0.0) * 0.18, 0.0, 1.0);
+  if (uLightMode) {
+    color = mix(color, uHighlightColor, smoothstep(0.16, 0.82, coreRing));
+  }
   float circleMask = 1.0 - smoothstep(0.965, 1.0, length(p));
   alpha *= circleMask * max(uIntensity, 0.0);
   color *= circleMask * max(uIntensity, 0.0);

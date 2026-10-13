@@ -19,6 +19,11 @@ describe('shader programs', () => {
       usesBackdrop: true,
       fragmentSource: expect.stringContaining('uBackdrop'),
     });
+    expect(shaderProgram('chromaticGlassPlate')).toMatchObject({
+      usesBackdrop: true,
+      replacesBaseFill: true,
+      fragmentSource: expect.stringContaining('uThickness'),
+    });
     expect(shaderProgram('eclipseOrb')).toMatchObject({
       name: 'eclipseOrb',
       fragmentSource: expect.stringContaining('void main()'),
