@@ -4,6 +4,7 @@ import { finite, paint } from '../../../scene';
 import {
   barCategoryCount,
   barPath,
+  segmentedBarPath,
   CHART_COLORS,
   createVerticalErrorWhiskerNode,
   errorBarRange,
@@ -72,14 +73,33 @@ function createGroupedLabel(context: ChartRenderContext, mark: GroupedBarMark, m
   });
 }
 
+// The bar's outline: solid, or cut into segments like a level meter.
+function groupedShape(context: ChartRenderContext, frame: GroupedBarMark['frame']): string {
+  const { chart, plot } = context;
+  const config = chart.config;
+  const radius = config?.barCornerRadius ?? 2;
+  const segments = finite(config?.barSegments, 0);
+  if (segments > 0) {
+    return segmentedBarPath(
+      { x: frame.x, y: plot.y, width: frame.width, height: plot.height },
+      'vertical',
+      segments,
+      finite(config?.barSegmentGap, 4),
+      radius,
+      frame.height / plot.height,
+      config?.barSegmentSnap !== false,
+    );
+  }
+  return barPath(frame.x, frame.y, frame.width, frame.height, radius, config?.barRoundedBottom === true);
+}
+
 function createGroupedGlow(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
   const { chart } = context;
   const glow = finite(chart.config?.barGlow, 0);
   if (glow <= 0 || mark.frame.height <= 0) {
     return [];
   }
-  const { x, y, width, height } = mark.frame;
-  const d = barPath(x, y, width, height, chart.config?.barCornerRadius ?? 2, chart.config?.barRoundedBottom === true);
+  const d = groupedShape(context, mark.frame);
   return [createBarGlowNode(context, `chart-bar-glow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`, d, mark.color, glow)];
 }
 
@@ -142,8 +162,8 @@ function plotClipPath(plot: { x: number; y: number; width: number; height: numbe
 function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const radius = chart.config?.barCornerRadius ?? 2;
-  const { x, y, width, height } = mark.frame;
-  const path = barPath(x, y, width, height, radius, chart.config?.barRoundedBottom === true);
+  const { x, width } = mark.frame;
+  const path = groupedShape(context, mark.frame);
   const fill = paint(mark.color, diagnostics, chart.id);
   const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
   const strokeWidth = finite(chart.config?.barBorderWidth, 0);

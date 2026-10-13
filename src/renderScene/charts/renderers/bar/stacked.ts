@@ -1,6 +1,6 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { barCategoryCount, barPath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
+import { barCategoryCount, barPath, segmentedBarPath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
 import { createBarGlowNode } from './glow';
 import { createGlassBackdropNodes } from './glass';
 import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
@@ -34,7 +34,20 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       const x = plot.x + valueIndex * slotWidth + groupGap / 2;
       const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
       const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
-      const path = barPath(x, y, barWidth, height, radius, chart.config?.barRoundedBottom === true);
+      // One series looks the same stacked or grouped, so it can be cut into segments too.
+      const segments = chart.series.length === 1 ? finite(chart.config?.barSegments, 0) : 0;
+      const path =
+        segments > 0
+          ? segmentedBarPath(
+              { x, y: plot.y, width: barWidth, height: plot.height },
+              'vertical',
+              segments,
+              finite(chart.config?.barSegmentGap, 4),
+              radius,
+              height / plot.height,
+              chart.config?.barSegmentSnap !== false,
+            )
+          : barPath(x, y, barWidth, height, radius, chart.config?.barRoundedBottom === true);
       if (seriesIndex === 0 && barTrackEnabled(context)) {
         trackNodes.push(...createBarTrackNodes(context, String(valueIndex), { x, y: plot.y, width: barWidth, height: plot.height }));
       }

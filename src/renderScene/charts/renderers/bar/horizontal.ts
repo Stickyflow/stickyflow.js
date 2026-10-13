@@ -11,6 +11,7 @@ import {
 } from '../../primitives';
 import { seriesValueColorProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
+import { segmentedBarPath } from '../../primitives';
 import { createBarGlowNode } from './glow';
 import { createGlassBackdropNodes } from './glass';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
@@ -66,10 +67,23 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
         minY: frame.y,
         maxY: frame.y + frame.height,
       };
-      const d = roundedBarPath(frame.x, frame.y, frame.width, frame.height, config?.barCornerRadius ?? 2);
+      // A single series looks the same stacked or grouped, so only real stacks stay solid.
+      const segments = stacked && chart.series.length > 1 ? 0 : finite(config?.barSegments, 0);
+      const d =
+        segments > 0
+          ? segmentedBarPath(
+              { x: plot.x, y: frame.y, width: plot.width, height: frame.height },
+              'horizontal',
+              segments,
+              finite(config?.barSegmentGap, 4),
+              config?.barCornerRadius ?? 2,
+              frame.width / plot.width,
+              config?.barSegmentSnap !== false,
+            )
+          : roundedBarPath(frame.x, frame.y, frame.width, frame.height, config?.barCornerRadius ?? 2);
 
       if (barTrackEnabled(context) && (!stacked || seriesIndex === 0)) {
-        tracks.push(...createBarTrackNodes(context, id, { x: plot.x, y: frame.y, width: plot.width, height: frame.height }));
+        tracks.push(...createBarTrackNodes(context, id, { x: plot.x, y: frame.y, width: plot.width, height: frame.height }, 'horizontal'));
       }
       const fill = paint(color, diagnostics, chart.id);
       bars.push(...createGlassBackdropNodes(context, id, d));

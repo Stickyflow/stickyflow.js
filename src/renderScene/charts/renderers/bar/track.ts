@@ -1,6 +1,7 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { roundedBarPath } from '../../primitives/barShape';
+import { segmentedBarPath } from '../../primitives/segments';
 import type { ChartRenderContext } from '../types';
 
 const DEFAULT_HATCH = { angle: 45, spacing: 7, width: 1.5 };
@@ -44,10 +45,16 @@ export function createBarTrackNodes(
   context: ChartRenderContext,
   id: string,
   frame: { x: number; y: number; width: number; height: number },
+  orientation: 'horizontal' | 'vertical' = 'vertical',
 ): RenderNode[] {
   const { chart, bounds, diagnostics, nextOrder } = context;
   const config = chart.config;
-  const d = roundedBarPath(frame.x, frame.y, frame.width, frame.height, config?.barCornerRadius ?? 2);
+  const radius = config?.barCornerRadius ?? 2;
+  const segments = finite(config?.barSegments, 0);
+  const d =
+    segments > 0
+      ? segmentedBarPath(frame, orientation, segments, finite(config?.barSegmentGap, 4), radius, 1, true)
+      : roundedBarPath(frame.x, frame.y, frame.width, frame.height, radius);
   const nodes: RenderNode[] = [
     {
       type: 'path',

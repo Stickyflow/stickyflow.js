@@ -9,6 +9,12 @@ export interface BarChartConfig extends CategoryChartConfig {
   barGroupGap?: number;
   /** Glow radius in px, drawn in each bar's own color over the neighbouring bars. Default 0 (off). */
   barGlow?: number;
+  /** Split every bar and its track into this many segments, like a level meter. Default 0 (solid). */
+  barSegments?: number;
+  /** Gap between segments in px. Default 4. */
+  barSegmentGap?: number;
+  /** Fill whole segments only (default) instead of cutting the last one. */
+  barSegmentSnap?: boolean;
   /** Frosted glass bars: blur radius of the photo behind each bar. Needs an image fill. */
   barGlassBlur?: number;
   /** Saturation of the blurred photo inside glass bars, 1 = unchanged. */
