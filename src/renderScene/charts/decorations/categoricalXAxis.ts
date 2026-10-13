@@ -19,6 +19,7 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
   return Array.from({ length: count }, (_value, index) => {
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
     return chartText({
+      role: 'axis',
       id: `chart-x-tick-${chart.id}-${index}`,
       order: order + index,
       bounds: layout.bounds,
@@ -43,6 +44,7 @@ export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, or
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
     return {
       ...chartText({
+      role: 'axis',
         id: `chart-x-tick-${chart.id}-${index}`,
         order: order + index,
         bounds: layout.bounds,

@@ -1,12 +1,15 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import { barShapePath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
+import { createBarGlowNode } from './glow';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
 
 export function renderStackedBars(context: ChartRenderContext, mode: StackedMode): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const nodes: RenderNode[] = [];
+  const glowNodes: RenderNode[] = [];
+  const glow = finite(chart.config?.barGlow, 0);
   const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
   const slotWidth = plot.width / valueCount;
   const groupGap = Math.min(Math.max(0, finite(chart.config?.barGroupGap, 8)), Math.max(0, slotWidth - 1));
@@ -59,7 +62,12 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         prop: seriesValueProp(series.id, valueIndex),
         style: { fill, stroke, strokeWidth, innerShadow: shadow },
       });
+      if (glow > 0) {
+        glowNodes.push(
+          createBarGlowNode(context, `chart-bar-glow-${chart.id}-${series.id}-${valueIndex}`, barPath, color, glow),
+        );
+      }
     });
   }
-  return nodes;
+  return [...nodes, ...glowNodes];
 }

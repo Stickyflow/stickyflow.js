@@ -10,6 +10,7 @@ function buildXAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
   }
   return {
     ...chartText({
+      role: 'axis',
       id: `chart-x-label-${chart.id}`,
       order,
       bounds: layout.bounds,
@@ -28,6 +29,7 @@ function buildYAxisLabel(chart: Chart, layout: ChartLayout, order: number): Rend
   }
   return {
     ...chartText({
+      role: 'axis',
       id: `chart-y-label-${chart.id}`,
       order,
       bounds: layout.bounds,

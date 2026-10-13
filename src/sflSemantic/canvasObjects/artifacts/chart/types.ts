@@ -37,6 +37,7 @@ export interface SflChartData {
   barBorderColor?: string;
   barBorderWidth?: number;
   barGroupGap?: number;
+  barGlow?: number;
   barGap?: number;
   mekkoVaryHeight?: boolean;
   hexRadius?: number;

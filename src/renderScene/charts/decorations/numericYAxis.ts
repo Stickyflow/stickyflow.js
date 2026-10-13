@@ -7,6 +7,7 @@ export function buildNumericYAxisTicks(chart: Chart, layout: ChartLayout, order:
   return chartTicks(chart.axisY).map((tick, index) => {
     const y = layout.plot.y + layout.plot.height - mapChartValue(tick, chart.axisY, layout.plot.height);
     return chartText({
+      role: 'axis',
       id: `chart-y-tick-${chart.id}-${tick}`,
       order: order + index,
       bounds: layout.bounds,

@@ -9,6 +9,7 @@ import {
   mapChartValue,
   resolveChartShadow,
 } from '../../primitives';
+import { createBarGlowNode } from './glow';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 
@@ -36,9 +37,22 @@ interface GroupedBarMark {
 
 export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {
   const layout = createGroupedBarLayout(context);
-  return context.chart.series.flatMap((series, seriesIndex) =>
-    renderGroupedBarSeries(context, layout, series, seriesIndex),
+  const marks = context.chart.series.flatMap((series, seriesIndex) =>
+    createSeriesBarMarks(context, layout, series, seriesIndex),
   );
+  const bars = marks.flatMap(mark => renderGroupedBarMark(context, mark));
+  return [...bars, ...marks.flatMap(mark => createGroupedGlow(context, mark))];
+}
+
+function createGroupedGlow(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
+  const { chart } = context;
+  const glow = finite(chart.config?.barGlow, 0);
+  if (glow <= 0 || mark.frame.height <= 0) {
+    return [];
+  }
+  const { x, y, width, height } = mark.frame;
+  const d = barShapePath(x, y, width, height, chart.config?.barCornerRadius ?? 2);
+  return [createBarGlowNode(context, `chart-bar-glow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`, d, mark.color, glow)];
 }
 
 function createGroupedBarLayout(context: ChartRenderContext): GroupedBarLayout {
@@ -81,17 +95,6 @@ function createSeriesBarMarks(
       },
     };
   });
-}
-
-function renderGroupedBarSeries(
-  context: ChartRenderContext,
-  layout: GroupedBarLayout,
-  series: ChartSeries,
-  seriesIndex: number,
-): RenderNode[] {
-  return createSeriesBarMarks(context, layout, series, seriesIndex).flatMap(mark =>
-    renderGroupedBarMark(context, mark),
-  );
 }
 
 function renderGroupedBarMark(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {

@@ -140,6 +140,7 @@ function createLegendLabel(render: ChartLegendRender, item: ChartLegendItem): Re
   const { chart, bounds } = render;
   return {
     ...chartText({
+      role: 'legend',
       id: `chart-legend-${chart.id}-${item.series.id}`,
       order: item.order + 1,
       bounds,

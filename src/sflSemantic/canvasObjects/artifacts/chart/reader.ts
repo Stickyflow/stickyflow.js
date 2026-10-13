@@ -48,6 +48,7 @@ export function readChart(
     barBorderColor: asString(properties.get('barBorderColor')),
     barBorderWidth: asNumber(properties.get('barBorderWidth')),
     barGroupGap: asNumber(properties.get('barGroupGap')),
+    barGlow: asNumber(properties.get('barGlow')),
     barGap: asNumber(properties.get('barGap')),
     mekkoVaryHeight: readBoolean(properties.get('mekkoVaryHeight')),
     hexRadius: asNumber(properties.get('hexRadius')),

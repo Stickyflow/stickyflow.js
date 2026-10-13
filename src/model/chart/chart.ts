@@ -44,6 +44,10 @@ export interface ChartBase {
   gridLineStyle?: 'solid' | 'dashed' | 'dotted';
   gridRoundedCorners?: boolean;
   textColor?: string;
+  /** Color of axis ticks and axis titles. Falls back to textColor. */
+  axisLabelColor?: string;
+  /** Color of the legend text. Falls back to textColor. */
+  legendColor?: string;
   fontFamily?: string;
   fontSize?: number;
   showGrid?: boolean;

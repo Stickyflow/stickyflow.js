@@ -69,6 +69,8 @@ export function chartObject(e: SflCanvasObject): Chart {
     gridLineStyle,
     gridRoundedCorners: p.gridRoundedCorners === 'true',
     textColor: p.textColor ?? '#0f172a',
+    axisLabelColor: p.axisLabelColor,
+    legendColor: p.legendColor,
     fontSize: numOf(p.fontSize) ?? 12,
     fontFamily: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     showGrid: p.showGrid !== 'false',
@@ -91,6 +93,7 @@ export function chartObject(e: SflCanvasObject): Chart {
         barBorderWidth: source?.barBorderWidth,
         barGroupGap: source?.barGroupGap,
         barGap: source?.barGap,
+        barGlow: source?.barGlow,
         stacked: source?.stacked,
       } satisfies BarChartConfig);
     case 'line':
