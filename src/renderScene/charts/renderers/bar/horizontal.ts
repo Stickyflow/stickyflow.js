@@ -24,7 +24,7 @@ interface Frame {
 
 // Bars grow from the left edge of the plot; each category is one row.
 export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] {
-  const { chart, plot, bounds, diagnostics, nextOrder } = context;
+  const { chart, plot, diagnostics, nextOrder } = context;
   const config = chart.config;
   const rows = horizontalRows(chart, plot);
   const seriesCount = Math.max(1, chart.series.length);
@@ -58,6 +58,13 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
       const color = series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       const frame = frameOf(seriesIndex, valueIndex, value);
       const id = `${series.id}-${valueIndex}`;
+      // A gradient is laid out over the node's bounds, so each bar gets its own instead of the chart's.
+      const barBounds = {
+        minX: frame.x,
+        maxX: frame.x + Math.max(frame.width, 1),
+        minY: frame.y,
+        maxY: frame.y + frame.height,
+      };
       const d = roundedBarPath(frame.x, frame.y, frame.width, frame.height, config?.barCornerRadius ?? 2);
 
       if (barTrackEnabled(context) && (!stacked || seriesIndex === 0)) {
@@ -69,7 +76,7 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
           type: 'path',
           id: `chart-bar-shadow-${chart.id}-${id}`,
           order: nextOrder(),
-          bounds,
+          bounds: barBounds,
           d,
           style: {
             fill,
@@ -84,7 +91,7 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
         type: 'path',
         id: `chart-bar-${chart.id}-${id}`,
         order: nextOrder(),
-        bounds,
+        bounds: barBounds,
         d,
         detail: {
           of: 'chartValue',
@@ -98,7 +105,7 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
         style: { fill, stroke, strokeWidth, innerShadow: shadow },
       });
       if (glow > 0 && frame.width > 0) {
-        glows.push(createBarGlowNode(context, `chart-bar-glow-${chart.id}-${id}`, d, color, glow));
+        glows.push(createBarGlowNode(context, `chart-bar-glow-${chart.id}-${id}`, d, color, glow, barBounds));
       }
       const showLabel = barLabelsEnabled(context) && (!config?.barLabelMaxOnly || value >= highest);
       if (showLabel && (!stacked || seriesIndex === chart.series.length - 1 || config?.barLabelPosition !== 'outside')) {

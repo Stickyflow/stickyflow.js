@@ -10,8 +10,9 @@ export function createBarGlowNode(
   d: string,
   color: NonNullable<ChartSeries['color']>,
   glow: number,
+  bounds: RenderNode['bounds'] = context.bounds,
 ): RenderNode {
-  const { chart, bounds, diagnostics, nextOrder } = context;
+  const { chart, diagnostics, nextOrder } = context;
   return {
     type: 'path',
     id,
