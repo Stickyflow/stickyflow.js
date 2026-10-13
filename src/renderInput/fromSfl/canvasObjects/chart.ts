@@ -109,6 +109,9 @@ export function chartObject(e: SflCanvasObject): Chart {
         barTrackColor: p.barTrackColor,
         barTrackHatch: p.barTrackHatch === 'true',
         barTrackHatchColor: p.barTrackHatchColor,
+        barTrackHatchAngle: numOf(p.barTrackHatchAngle),
+        barTrackHatchSpacing: numOf(p.barTrackHatchSpacing),
+        barTrackHatchWidth: numOf(p.barTrackHatchWidth),
         stacked: source?.stacked ?? 'true',
         showBarLabels: p.showBarLabels === 'true',
         barLabelPosition:

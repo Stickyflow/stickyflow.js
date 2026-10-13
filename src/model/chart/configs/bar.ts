@@ -14,6 +14,12 @@ export interface BarChartConfig extends CategoryChartConfig {
   /** Diagonal hatching on the track. */
   barTrackHatch?: boolean;
   barTrackHatchColor?: string;
+  /** Direction of the hatch lines in degrees, 0 = horizontal. Default 45. */
+  barTrackHatchAngle?: number;
+  /** Distance between hatch lines in px. Default 7. */
+  barTrackHatchSpacing?: number;
+  /** Width of the hatch lines in px. Default 1.5. */
+  barTrackHatchWidth?: number;
   /** Value labels on the bars. Default off. */
   showBarLabels?: boolean;
   /** 'axis' puts the value under the category label. */

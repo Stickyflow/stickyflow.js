@@ -1,9 +1,9 @@
 import type { RenderNode } from '../../../scene';
-import { paint } from '../../../scene';
+import { finite, paint } from '../../../scene';
 import type { ChartRenderContext } from '../types';
 
-const HATCH_SPACING = 7;
-const HATCH_WIDTH = 1.5;
+const DEFAULT_HATCH = { angle: 45, spacing: 7, width: 1.5 };
+const MIN_HATCH_SPACING = 2;
 
 function roundedRectPath(x: number, y: number, width: number, height: number, radius: number): string {
   const r = Math.max(0, Math.min(radius, width / 2, height / 2));
@@ -17,10 +17,20 @@ function roundedRectPath(x: number, y: number, width: number, height: number, ra
   );
 }
 
-function hatchPath(x: number, y: number, width: number, height: number): string {
+// Parallel lines at any angle, long enough to cover the whole rectangle (the track clips them).
+function hatchPath(x: number, y: number, width: number, height: number, angle: number, spacing: number): string {
+  const radians = (angle * Math.PI) / 180;
+  const direction = { x: Math.cos(radians), y: Math.sin(radians) };
+  const normal = { x: -direction.y, y: direction.x };
+  const center = { x: x + width / 2, y: y + height / 2 };
+  const reach = Math.hypot(width, height) / 2;
   const segments: string[] = [];
-  for (let offset = -height; offset < width; offset += HATCH_SPACING) {
-    segments.push(`M ${x + offset} ${y} L ${x + offset + height} ${y + height}`);
+  for (let offset = -reach; offset <= reach; offset += spacing) {
+    const cx = center.x + normal.x * offset;
+    const cy = center.y + normal.y * offset;
+    segments.push(
+      `M ${cx - direction.x * reach} ${cy - direction.y * reach} L ${cx + direction.x * reach} ${cy + direction.y * reach}`,
+    );
   }
   return segments.join(' ');
 }
@@ -54,11 +64,18 @@ export function createBarTrackNodes(
       id: `chart-bar-track-hatch-${chart.id}-${id}`,
       order: nextOrder(),
       bounds,
-      d: hatchPath(frame.x, plot.y, frame.width, plot.height),
+      d: hatchPath(
+        frame.x,
+        plot.y,
+        frame.width,
+        plot.height,
+        finite(config.barTrackHatchAngle, DEFAULT_HATCH.angle),
+        Math.max(MIN_HATCH_SPACING, finite(config.barTrackHatchSpacing, DEFAULT_HATCH.spacing)),
+      ),
       style: {
         fill: { kind: 'none' },
         stroke: paint(config.barTrackHatchColor ?? chart.gridColor ?? '#cbd5e1', diagnostics, chart.id),
-        strokeWidth: HATCH_WIDTH,
+        strokeWidth: finite(config.barTrackHatchWidth, DEFAULT_HATCH.width),
         pointerEvents: 'none',
         clip: { type: 'path', d },
       },
