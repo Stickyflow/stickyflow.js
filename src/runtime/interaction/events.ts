@@ -76,6 +76,14 @@ export interface ChartValueChangeEvent {
   value: number;
 }
 
+// Emitted on every pointer move of a chart value drag; value is null once the drag ends.
+export interface ChartValuePreviewEvent {
+  owner: OwnerRef;
+  series: string;
+  index: number;
+  value: number | null;
+}
+
 export type PropertyValue = string | number | boolean | readonly number[];
 
 export interface PropertyChangeEvent {
@@ -128,6 +136,7 @@ export interface InteractionEventMap {
   linkTo: LinkToEvent;
   delete: DeleteEvent;
   chartValueChange: ChartValueChangeEvent;
+  chartValuePreview: ChartValuePreviewEvent;
   propertyChange: PropertyChangeEvent;
   pathPointChange: PathPointChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;

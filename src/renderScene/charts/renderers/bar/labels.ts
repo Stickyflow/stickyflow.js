@@ -84,6 +84,7 @@ export function createBarLabelNodes(context: ChartRenderContext, target: BarLabe
       chart,
       align: 'center',
     }),
+    mark: `bar-label|${placement}|${config?.barLabelFormat ?? ''}`,
     color,
     fontSize,
     fontFamily: config?.barLabelFontFamily ?? chart.fontFamily ?? 'Inter, sans-serif',
