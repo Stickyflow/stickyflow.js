@@ -11,6 +11,10 @@ export interface BarChartConfig extends CategoryChartConfig {
   barGlow?: number;
   /** Frosted glass bars: blur radius of the photo behind each bar. Needs an image fill. */
   barGlassBlur?: number;
+  /** Saturation of the blurred photo inside glass bars, 1 = unchanged. */
+  barGlassSaturation?: number;
+  /** Color laid over the blurred photo inside glass bars, e.g. a translucent white. */
+  barGlassTint?: string;
   /** Bar thickness in px for horizontal charts. Default: fills the row. */
   barThickness?: number;
   /** Bars grow from the left instead of the bottom. Default vertical. */

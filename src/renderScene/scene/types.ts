@@ -26,6 +26,8 @@ export interface SceneStyle {
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
+  // Color saturation of the element, 1 = unchanged. Applied together with blur.
+  saturate?: number;
   clip?:
     | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
     | { type: 'path'; d: string };

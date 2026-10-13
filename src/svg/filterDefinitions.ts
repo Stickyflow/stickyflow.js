@@ -16,8 +16,8 @@ export class SvgFilterDefinitions {
     if (style.shadow) {
       return this.define(nodeId, style.shadow, outerShadowPrimitives);
     }
-    if (style.blur) {
-      return this.define(nodeId, { blur: style.blur }, blurPrimitives);
+    if (style.blur || style.saturate !== undefined) {
+      return this.define(nodeId, { blur: style.blur ?? 0, saturate: style.saturate ?? 1 }, blurPrimitives);
     }
     return undefined;
   }
@@ -40,8 +40,10 @@ function outerShadowPrimitives(shadow: NonNullable<SceneStyle['shadow']>): strin
   return `<feDropShadow dx="${num(shadow.dx)}" dy="${num(shadow.dy)}" stdDeviation="${num(shadow.blur / 2)}" flood-color="${xml(shadow.color)}" flood-opacity="${num(shadow.opacity)}"/>`;
 }
 
-function blurPrimitives(blur: { blur: number }): string {
-  return `<feGaussianBlur stdDeviation="${num(blur.blur / 2)}"/>`;
+function blurPrimitives(effect: { blur: number; saturate: number }): string {
+  const blur = effect.blur > 0 ? `<feGaussianBlur stdDeviation="${num(effect.blur / 2)}"/>` : '';
+  const saturate = effect.saturate === 1 ? '' : `<feColorMatrix type="saturate" values="${num(effect.saturate)}"/>`;
+  return blur + saturate;
 }
 
 function innerShadowPrimitives(shadow: NonNullable<SceneStyle['shadow']>): string {

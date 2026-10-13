@@ -114,6 +114,8 @@ export function chartObject(e: SflCanvasObject): Chart {
         barGap: source?.barGap,
         barGlow: source?.barGlow,
         barGlassBlur: numOf(p.barGlassBlur),
+        barGlassSaturation: numOf(p.barGlassSaturation),
+        barGlassTint: p.barGlassTint,
         barThickness: numOf(p.barThickness),
         orientation: source?.orientation,
         barTrack: p.barTrack === 'true',
