@@ -1,7 +1,7 @@
 import type { Chart } from '../../../model/chart';
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
-import { chartTicks, mapChartValue } from '../primitives';
+import { barCategoryCount, chartTicks, mapChartValue } from '../primitives';
 import { buildAxisLabels } from './axisLabels';
 import { buildBoxplotSeriesYAxisTicks } from './boxplotYAxis';
 import { buildCategoricalXAxisTicks, buildSeriesXAxisTicks } from './categoricalXAxis';
@@ -33,7 +33,7 @@ function buildYAxisTicks(chart: Chart, layout: ChartLayout, order: number): Rend
 function xTickPositions(chart: Chart, layout: ChartLayout): number[] {
   const { plot } = layout;
   if (chart.chartType === 'bar') {
-    const count = Math.max(1, ...chart.series.map(series => series.values.length));
+    const count = barCategoryCount(chart);
     return Array.from({ length: count }, (_value, index) => plot.x + ((index + 0.5) * plot.width) / count);
   }
   return chartTicks(chart.axisX).map(tick => plot.x + mapChartValue(tick, chart.axisX, plot.width));

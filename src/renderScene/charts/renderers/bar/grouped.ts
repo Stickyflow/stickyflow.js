@@ -2,6 +2,7 @@ import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import {
+  barCategoryCount,
   barShapePath,
   CHART_COLORS,
   createVerticalErrorWhiskerNode,
@@ -69,7 +70,7 @@ function createGroupedGlow(context: ChartRenderContext, mark: GroupedBarMark): R
 
 function createGroupedBarLayout(context: ChartRenderContext): GroupedBarLayout {
   const { chart, plot } = context;
-  const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
+  const valueCount = barCategoryCount(chart);
   const slotWidth = plot.width / valueCount;
   const groupGap = Math.min(Math.max(0, finite(chart.config?.barGroupGap, 8)), Math.max(0, slotWidth - 1));
   const barGap = Math.max(0, finite(chart.config?.barGap, 2));

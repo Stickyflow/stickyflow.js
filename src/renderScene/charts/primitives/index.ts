@@ -26,3 +26,5 @@ export type { ResolvedShadow } from './shadow';
 export { resolveChartShadow } from './shadow';
 export { stackedSegment } from './stacking';
 export { chartText } from './text';
+export { BAR_LABEL, barLabelSize, formatBarLabel, pillPath } from './barLabel';
+export { barCategoryCount } from './barCategories';

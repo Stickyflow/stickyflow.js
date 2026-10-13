@@ -1,7 +1,7 @@
 import type { TypedChart } from '../../../model/chart';
 import type { RenderNode } from '../../scene';
-import { chartText } from '../primitives';
-import { seriesLabelProp } from '../propPath';
+import { barCategoryCount, chartText } from '../primitives';
+import { categoryProp, seriesLabelProp } from '../propPath';
 import { type ChartLayout, tickOffset } from './layout';
 
 function categoryLabels(chart: TypedChart, count: number): string[] {
@@ -12,27 +12,32 @@ function categoryLabels(chart: TypedChart, count: number): string[] {
 }
 
 export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayout, order: number): RenderNode[] {
-  const count = Math.max(1, ...chart.series.map(series => series.values.length));
+  const count = barCategoryCount(chart);
   const slotWidth = layout.plot.width / count;
   const labels = categoryLabels(chart, count);
 
+  const editable = Boolean(chart.config?.categories?.length);
+
   return Array.from({ length: count }, (_value, index) => {
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
-    return chartText({
-      role: 'axis',
-      id: `chart-x-tick-${chart.id}-${index}`,
-      order: order + index,
-      bounds: layout.bounds,
-      frame: {
-        x: centerX - slotWidth / 2,
-        y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
-        width: slotWidth,
-        height: 18,
-      },
-      text: labels[index] ?? String(index + 1),
-      chart,
-      align: 'center',
-    });
+    return {
+      ...chartText({
+        role: 'axis',
+        id: `chart-x-tick-${chart.id}-${index}`,
+        order: order + index,
+        bounds: layout.bounds,
+        frame: {
+          x: centerX - slotWidth / 2,
+          y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
+          width: slotWidth,
+          height: 18,
+        },
+        text: labels[index] ?? String(index + 1),
+        chart,
+        align: 'center',
+      }),
+      prop: editable ? categoryProp(index) : undefined,
+    };
   });
 }
 

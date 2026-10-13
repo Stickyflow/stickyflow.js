@@ -1,6 +1,6 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { barShapePath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
+import { barCategoryCount, barShapePath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
 import { createBarGlowNode } from './glow';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
@@ -12,7 +12,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
   const glowNodes: RenderNode[] = [];
   const labelNodes: RenderNode[] = [];
   const glow = finite(chart.config?.barGlow, 0);
-  const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
+  const valueCount = barCategoryCount(chart);
   const slotWidth = plot.width / valueCount;
   const groupGap = Math.min(Math.max(0, finite(chart.config?.barGroupGap, 8)), Math.max(0, slotWidth - 1));
   const barWidth = Math.max(1, slotWidth - groupGap);
