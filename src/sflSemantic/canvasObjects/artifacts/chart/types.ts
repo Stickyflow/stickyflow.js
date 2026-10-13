@@ -36,6 +36,8 @@ export interface SflChartData {
   showBoxplotPoints?: boolean;
   barBorderColor?: string;
   barBorderWidth?: number;
+  barGroupGap?: number;
+  barGap?: number;
   mekkoVaryHeight?: boolean;
   hexRadius?: number;
   innerRadius?: number;

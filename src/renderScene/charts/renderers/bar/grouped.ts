@@ -15,6 +15,8 @@ import type { ChartRenderContext } from '../types';
 interface GroupedBarLayout {
   slotWidth: number;
   seriesWidth: number;
+  groupGap: number;
+  barGap: number;
 }
 
 interface GroupedBarMark {
@@ -43,9 +45,13 @@ function createGroupedBarLayout(context: ChartRenderContext): GroupedBarLayout {
   const { chart, plot } = context;
   const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
   const slotWidth = plot.width / valueCount;
+  const groupGap = Math.min(Math.max(0, finite(chart.config?.barGroupGap, 8)), Math.max(0, slotWidth - 1));
+  const barGap = Math.max(0, finite(chart.config?.barGap, 2));
   return {
     slotWidth,
-    seriesWidth: Math.max(1, (slotWidth - 8) / Math.max(1, chart.series.length)),
+    seriesWidth: Math.max(1, (slotWidth - groupGap) / Math.max(1, chart.series.length)),
+    groupGap,
+    barGap,
   };
 }
 
@@ -68,9 +74,9 @@ function createSeriesBarMarks(
       color: series.colors?.[valueIndex] ?? seriesColor,
       hasColorOverride: series.colors?.[valueIndex] != null,
       frame: {
-        x: plot.x + valueIndex * layout.slotWidth + 4 + seriesIndex * layout.seriesWidth,
+        x: plot.x + valueIndex * layout.slotWidth + layout.groupGap / 2 + seriesIndex * layout.seriesWidth,
         y: plot.y + plot.height - height,
-        width: Math.max(1, layout.seriesWidth - 2),
+        width: Math.max(1, layout.seriesWidth - layout.barGap),
         height,
       },
     };

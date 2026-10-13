@@ -9,7 +9,8 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
   const nodes: RenderNode[] = [];
   const valueCount = Math.max(1, ...chart.series.map(series => series.values.length));
   const slotWidth = plot.width / valueCount;
-  const barWidth = Math.max(1, slotWidth - 8);
+  const groupGap = Math.min(Math.max(0, finite(chart.config?.barGroupGap, 8)), Math.max(0, slotWidth - 1));
+  const barWidth = Math.max(1, slotWidth - groupGap);
   const cornerRadius = chart.config?.barCornerRadius ?? 2;
   const outerSeriesIndex = mode === 'waterfall' ? null : chart.series.length - 1;
   const shadow = resolveChartShadow(chart.shadowStyle);
@@ -22,7 +23,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       const color = series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       const segment = stackedSegment(chart, mode, valueIndex, seriesIndex, plot.height);
       const radius = outerSeriesIndex === null || seriesIndex === outerSeriesIndex ? cornerRadius : 0;
-      const x = plot.x + valueIndex * slotWidth + 4;
+      const x = plot.x + valueIndex * slotWidth + groupGap / 2;
       const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
       const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
       const barPath = barShapePath(x, y, barWidth, height, radius);

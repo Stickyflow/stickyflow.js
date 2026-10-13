@@ -89,6 +89,8 @@ export function chartObject(e: SflCanvasObject): Chart {
         barCornerRadius: source?.barCornerRadius,
         barBorderColor: source?.barBorderColor,
         barBorderWidth: source?.barBorderWidth,
+        barGroupGap: source?.barGroupGap,
+        barGap: source?.barGap,
         stacked: source?.stacked,
       } satisfies BarChartConfig);
     case 'line':
