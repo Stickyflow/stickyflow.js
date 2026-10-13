@@ -71,6 +71,18 @@ function buildAxisLines(chart: Chart, layout: ChartLayout, order: number): Rende
     }
     add('line-x', `M ${plot.x} ${bottom} L ${plot.x + plot.width} ${bottom}`);
   }
+  if (tickLength > 0 && isHorizontalBar(chart)) {
+    // Value ticks along the bottom, one category tick per row on the left.
+    chartTicks(chart.axisY).forEach(tick => {
+      const x = plot.x + mapChartValue(tick, chart.axisY, plot.width);
+      add(`tick-v-${tick}`, `M ${x} ${bottom} L ${x} ${bottom + tickLength}`);
+    });
+    const rows = horizontalRows(chart, plot);
+    for (let index = 0; index < rows.count; index++) {
+      const y = rowTop(rows, plot, index) + rows.labelRow + rows.barsHeight / 2;
+      add(`tick-c-${index}`, `M ${plot.x - tickLength} ${y} L ${plot.x} ${y}`);
+    }
+  }
   if (tickLength > 0 && !isHorizontalBoxplot(chart) && !isHorizontalBar(chart)) {
     chartTicks(chart.axisY).forEach(tick => {
       const y = bottom - mapChartValue(tick, chart.axisY, plot.height);
