@@ -1,5 +1,5 @@
 export { axisBands, chartTicks, mapChartValue, zoneColorAtValue } from './axis';
-export { barShapePath } from './barShape';
+export { barShapePath, barPath, roundedBarPath } from './barShape';
 export { computeBoxplotStats } from './boxplot';
 export { contrastTextColor, isLightColor, representativeColor, sameHueContrastColor, sameHueTint } from './colors';
 export {

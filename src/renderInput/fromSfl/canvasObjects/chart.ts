@@ -106,6 +106,8 @@ export function chartObject(e: SflCanvasObject): Chart {
         barGap: source?.barGap,
         barGlow: source?.barGlow,
         barTrack: p.barTrack === 'true',
+        barRoundedBottom: p.barRoundedBottom === 'true',
+        barLabelMaxOnly: p.barLabelMaxOnly === 'true',
         barTrackColor: p.barTrackColor,
         barTrackHatch: p.barTrackHatch === 'true',
         barTrackHatchColor: p.barTrackHatchColor,

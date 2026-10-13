@@ -1,6 +1,6 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { barCategoryCount, barShapePath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
+import { barCategoryCount, barPath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
 import { createBarGlowNode } from './glow';
 import { barTrackEnabled, createBarTrackNodes } from './track';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
@@ -33,7 +33,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       const x = plot.x + valueIndex * slotWidth + groupGap / 2;
       const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
       const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
-      const barPath = barShapePath(x, y, barWidth, height, radius);
+      const path = barPath(x, y, barWidth, height, radius, chart.config?.barRoundedBottom === true);
       if (seriesIndex === 0 && barTrackEnabled(context)) {
         trackNodes.push(...createBarTrackNodes(context, String(valueIndex), { x, width: barWidth }));
       }
@@ -47,7 +47,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
           id: `chart-bar-shadow-${chart.id}-${series.id}-${valueIndex}`,
           order: nextOrder(),
           bounds,
-          d: barPath,
+          d: path,
           style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: clipPath } },
         });
       }
@@ -56,7 +56,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         id: `chart-bar-${chart.id}-${series.id}-${valueIndex}`,
         order: nextOrder(),
         bounds,
-        d: barPath,
+        d: path,
         detail: {
           of: 'chartValue',
           series: series.id,
@@ -69,7 +69,7 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         prop: seriesValueProp(series.id, valueIndex),
         style: { fill, stroke, strokeWidth, innerShadow: shadow },
       });
-      if (barLabelsEnabled(context) && (chart.config?.barLabelPosition !== 'axis' || seriesIndex === outerSeriesIndex)) {
+      if (barLabelsEnabled(context) && !(chart.config?.barLabelMaxOnly && !isSeriesMax(series.values, valueIndex)) && (chart.config?.barLabelPosition !== 'axis' || seriesIndex === outerSeriesIndex)) {
         const requested = chart.config?.barLabelPosition ?? 'outside';
         const value = series.values[valueIndex];
         labelNodes.push(
@@ -83,10 +83,15 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       }
       if (glow > 0) {
         glowNodes.push(
-          createBarGlowNode(context, `chart-bar-glow-${chart.id}-${series.id}-${valueIndex}`, barPath, color, glow),
+          createBarGlowNode(context, `chart-bar-glow-${chart.id}-${series.id}-${valueIndex}`, path, color, glow),
         );
       }
     });
   }
   return [...trackNodes, ...nodes, ...glowNodes, ...labelNodes];
+}
+
+function isSeriesMax(values: ReadonlyArray<number | readonly number[]>, index: number): boolean {
+  const numeric = values.map(value => (typeof value === 'number' ? value : value[1]));
+  return numeric[index] >= Math.max(...numeric);
 }

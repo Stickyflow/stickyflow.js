@@ -10,6 +10,10 @@ export interface BarChartConfig extends CategoryChartConfig {
   barGlow?: number;
   /** Full-height track behind every bar. */
   barTrack?: boolean;
+  /** Round the bottom corners of the bars too. Default false (only the top is rounded). */
+  barRoundedBottom?: boolean;
+  /** Show a value label only on the highest bar of each series. */
+  barLabelMaxOnly?: boolean;
   barTrackColor?: string;
   /** Diagonal hatching on the track. */
   barTrackHatch?: boolean;

@@ -3,7 +3,7 @@ import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
 import {
   barCategoryCount,
-  barShapePath,
+  barPath,
   CHART_COLORS,
   createVerticalErrorWhiskerNode,
   errorBarRange,
@@ -49,12 +49,20 @@ export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {
       )
     : [];
   const bars = marks.flatMap(mark => renderGroupedBarMark(context, mark));
-  const labels = barLabelsEnabled(context) ? marks.flatMap(mark => createGroupedLabel(context, mark)) : [];
+  const labels = barLabelsEnabled(context) ? marks.flatMap(mark => createGroupedLabel(context, mark, marks)) : [];
   return [...tracks, ...bars, ...marks.flatMap(mark => createGroupedGlow(context, mark)), ...labels];
 }
 
-function createGroupedLabel(context: ChartRenderContext, mark: GroupedBarMark): RenderNode[] {
+function isSeriesMax(mark: GroupedBarMark, marks: GroupedBarMark[]): boolean {
+  const values = marks.filter(entry => entry.seriesId === mark.seriesId).map(entry => entry.value);
+  return mark.value >= Math.max(...values);
+}
+
+function createGroupedLabel(context: ChartRenderContext, mark: GroupedBarMark, marks: GroupedBarMark[]): RenderNode[] {
   const { chart } = context;
+  if (chart.config?.barLabelMaxOnly && !isSeriesMax(mark, marks)) {
+    return [];
+  }
   return createBarLabelNodes(context, {
     id: `chart-bar-label-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
     value: mark.value,
@@ -70,7 +78,7 @@ function createGroupedGlow(context: ChartRenderContext, mark: GroupedBarMark): R
     return [];
   }
   const { x, y, width, height } = mark.frame;
-  const d = barShapePath(x, y, width, height, chart.config?.barCornerRadius ?? 2);
+  const d = barPath(x, y, width, height, chart.config?.barCornerRadius ?? 2, chart.config?.barRoundedBottom === true);
   return [createBarGlowNode(context, `chart-bar-glow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`, d, mark.color, glow)];
 }
 
@@ -134,7 +142,7 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const radius = chart.config?.barCornerRadius ?? 2;
   const { x, y, width, height } = mark.frame;
-  const barPath = barShapePath(x, y, width, height, radius);
+  const path = barPath(x, y, width, height, radius, chart.config?.barRoundedBottom === true);
   const fill = paint(mark.color, diagnostics, chart.id);
   const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
   const strokeWidth = finite(chart.config?.barBorderWidth, 0);
@@ -146,7 +154,7 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
         id: `chart-bar-shadow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
         order: nextOrder(),
         bounds,
-        d: barPath,
+        d: path,
         style: { fill, stroke, strokeWidth, shadow, clip: { type: 'path', d: plotClipPath(plot) } },
       }
     : undefined;
@@ -156,7 +164,7 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
     id: `chart-bar-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
     order: nextOrder(),
     bounds,
-    d: barPath,
+    d: path,
     detail: {
       of: 'chartValue',
       series: mark.seriesId,
