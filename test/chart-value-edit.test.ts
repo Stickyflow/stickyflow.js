@@ -7,6 +7,7 @@ const BAR_SFL = `sfl 1.4
 Model M {
   Chart c {
     type: bar
+    stacked: none
     categories: ["Q1", "Q2", "Q3", "Q4"]
     Axis x { min: 0; max: 4; step: 1 }
     Axis y { min: 0; max: 100; step: 20 }

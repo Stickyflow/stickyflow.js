@@ -9,7 +9,7 @@ import type { ChartData, ChartProperties } from './types';
 import { numberList, readBoolean, stringList } from './values';
 import { readChartZones } from './zones';
 
-const STACKED_MODES: ReadonlyArray<NonNullable<ChartData['stacked']>> = ['true', 'percent', 'waterfall'];
+const STACKED_MODES: ReadonlyArray<NonNullable<ChartData['stacked']>> = ['none', 'true', 'percent', 'waterfall'];
 
 function asChartType(value: string | undefined): ChartData['chartType'] {
   return isChartType(value) ? value : 'bar';

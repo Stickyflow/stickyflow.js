@@ -71,6 +71,12 @@ export function chartObject(e: SflCanvasObject): Chart {
     textColor: p.textColor ?? '#0f172a',
     axisLabelColor: p.axisLabelColor,
     legendColor: p.legendColor,
+    axisLineWidth: numOf(p.axisLineWidth),
+    axisLineColor: p.axisLineColor,
+    tickLength: numOf(p.tickLength),
+    axisFontSize: numOf(p.axisFontSize),
+    axisFontFamily: p.axisFontFamily,
+    gridAxes: p.gridAxes === 'x' || p.gridAxes === 'y' ? p.gridAxes : undefined,
     fontSize: numOf(p.fontSize) ?? 12,
     fontFamily: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     showGrid: p.showGrid !== 'false',
@@ -94,7 +100,19 @@ export function chartObject(e: SflCanvasObject): Chart {
         barGroupGap: source?.barGroupGap,
         barGap: source?.barGap,
         barGlow: source?.barGlow,
-        stacked: source?.stacked,
+        stacked: source?.stacked ?? 'true',
+        showBarLabels: p.showBarLabels === 'true',
+        barLabelPosition:
+          p.barLabelPosition === 'inside' || p.barLabelPosition === 'center' ? p.barLabelPosition : undefined,
+        barLabelFontSize: numOf(p.barLabelFontSize),
+        barLabelFontFamily: p.barLabelFontFamily,
+        barLabelFontWeight: p.barLabelFontWeight === 'bold' ? 'bold' : undefined,
+        barLabelColor: p.barLabelColor,
+        barLabelPill: p.barLabelPill === 'true',
+        barLabelPillColor: p.barLabelPillColor,
+        barLabelBorderColor: p.barLabelBorderColor,
+        barLabelBorderWidth: numOf(p.barLabelBorderWidth),
+        barLabelFormat: p.barLabelFormat,
       } satisfies BarChartConfig);
     case 'line':
       return typedChart(base, chartType, {

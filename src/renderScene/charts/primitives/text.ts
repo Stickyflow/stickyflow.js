@@ -23,8 +23,8 @@ export function chartText(options: ChartTextOptions): SceneText {
     bounds: options.bounds,
     ...frame,
     lines: [options.text],
-    fontFamily: chart.fontFamily ?? DEFAULT_FONT,
-    fontSize: Math.max(9, finite(chart.fontSize, 12)),
+    fontFamily: (options.role === 'axis' ? chart.axisFontFamily : undefined) ?? chart.fontFamily ?? DEFAULT_FONT,
+    fontSize: Math.max(9, finite(options.role === 'axis' ? (chart.axisFontSize ?? chart.fontSize) : chart.fontSize, 12)),
     fontWeight: 'normal',
     color:
       (options.role === 'axis' ? chart.axisLabelColor : options.role === 'legend' ? chart.legendColor : undefined) ??

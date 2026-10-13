@@ -23,7 +23,7 @@ export interface SflChartData {
     | 'custom';
   categories?: string[];
   areaOpacity?: number;
-  stacked?: 'true' | 'percent' | 'waterfall';
+  stacked?: 'none' | 'true' | 'percent' | 'waterfall';
   scale?: string;
   interpolate?: 'idw';
   idwPower?: number;

@@ -12,7 +12,7 @@ export function buildBoxplotSeriesYAxisTicks(chart: Chart, layout: ChartLayout, 
     const centerY = layout.plot.y + (index + 0.5) * slotWidth;
     return {
       ...chartText({
-      role: 'axis',
+        role: 'axis',
         id: `chart-y-tick-${chart.id}-${index}`,
         order: order + index,
         bounds: layout.bounds,

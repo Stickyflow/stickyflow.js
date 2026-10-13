@@ -33,7 +33,7 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
   };
 
   const nodes: RenderNode[] = [];
-  chartTicks(chart.axisX).forEach(tick => {
+  (chart.gridAxes === 'y' ? [] : chartTicks(chart.axisX)).forEach(tick => {
     const x = plot.x + mapChartValue(tick, chart.axisX, plot.width);
     nodes.push({
       type: 'path',
@@ -44,7 +44,7 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
       style,
     });
   });
-  chartTicks(chart.axisY).forEach(tick => {
+  (chart.gridAxes === 'x' ? [] : chartTicks(chart.axisY)).forEach(tick => {
     const y = plot.y + plot.height - mapChartValue(tick, chart.axisY, plot.height);
     nodes.push({
       type: 'path',

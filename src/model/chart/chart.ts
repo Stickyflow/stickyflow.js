@@ -48,6 +48,15 @@ export interface ChartBase {
   axisLabelColor?: string;
   /** Color of the legend text. Falls back to textColor. */
   legendColor?: string;
+  /** Width of the axis lines in px. Default 0 (no axis lines). */
+  axisLineWidth?: number;
+  axisLineColor?: string;
+  /** Length of the tick marks in px. Default 0 (no tick marks). */
+  tickLength?: number;
+  axisFontSize?: number;
+  axisFontFamily?: string;
+  /** Which grid lines to draw: horizontal ones follow the y axis. Default both. */
+  gridAxes?: 'both' | 'x' | 'y';
   fontFamily?: string;
   fontSize?: number;
   showGrid?: boolean;
