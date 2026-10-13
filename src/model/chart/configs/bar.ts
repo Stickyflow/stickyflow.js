@@ -1,8 +1,9 @@
+import type { GradientColor, MeshGradientColor } from '../../color';
 import type { CategoryChartConfig } from './category';
 
 export interface BarChartConfig extends CategoryChartConfig {
   barCornerRadius?: number;
-  barBorderColor?: string;
+  barBorderColor?: string | GradientColor | MeshGradientColor;
   barBorderWidth?: number;
   /** Space between the groups of bars, in px. Default 8. */
   barGroupGap?: number;

@@ -1,3 +1,4 @@
+import type { GradientColor, MeshGradientColor } from '../color';
 import type { ShadowStyle } from '../shadow';
 import type { ChartRule } from './annotations';
 import type { ChartAxis } from './axis';
@@ -37,7 +38,7 @@ export interface ChartBase {
   strokeColor?: string;
   strokeWidth?: number;
   cornerRadius?: number;
-  fillColor?: string;
+  fillColor?: string | GradientColor | MeshGradientColor;
   gridColor?: string;
   gridWidth?: number;
   gridShape?: 'rect' | 'circle';
@@ -51,6 +52,8 @@ export interface ChartBase {
   /** Width of the axis lines in px. Default 0 (no axis lines). */
   axisLineWidth?: number;
   axisLineColor?: string;
+  /** Dash pattern of the axis lines. Default solid. */
+  axisLineStyle?: 'solid' | 'dashed' | 'dotted';
   /** Length of the tick marks in px. Default 0 (no tick marks). */
   tickLength?: number;
   axisFontSize?: number;

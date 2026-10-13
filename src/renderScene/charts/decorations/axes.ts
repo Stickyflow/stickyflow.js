@@ -39,6 +39,13 @@ function xTickPositions(chart: Chart, layout: ChartLayout): number[] {
   return chartTicks(chart.axisX).map(tick => plot.x + mapChartValue(tick, chart.axisX, plot.width));
 }
 
+function axisLineDash(chart: Chart, width: number): Pick<SceneStyle, 'dash' | 'lineCap'> {
+  if (chart.axisLineStyle === 'dashed') {
+    return { dash: [width * 3, width * 2] };
+  }
+  return chart.axisLineStyle === 'dotted' ? { dash: [0.1, width * 3], lineCap: 'round' } : {};
+}
+
 function buildAxisLines(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
   const lineWidth = finite(chart.axisLineWidth, 0);
   const tickLength = finite(chart.tickLength, 0);
@@ -52,12 +59,15 @@ function buildAxisLines(chart: Chart, layout: ChartLayout, order: number): Rende
     stroke: { kind: 'solid', color: chart.axisLineColor ?? chart.gridColor ?? '#94a3b8' },
     strokeWidth: lineWidth > 0 ? lineWidth : 1,
     pointerEvents: 'none',
+    ...axisLineDash(chart, lineWidth > 0 ? lineWidth : 1),
   };
   const nodes: RenderNode[] = [];
   const add = (id: string, d: string) =>
     nodes.push({ type: 'path', id: `chart-axis-${id}-${chart.id}`, order: order + nodes.length, bounds, d, style });
   if (lineWidth > 0) {
-    add('line-y', `M ${plot.x} ${plot.y} L ${plot.x} ${bottom}`);
+    if (chart.showValueAxis !== false) {
+      add('line-y', `M ${plot.x} ${plot.y} L ${plot.x} ${bottom}`);
+    }
     add('line-x', `M ${plot.x} ${bottom} L ${plot.x + plot.width} ${bottom}`);
   }
   if (tickLength > 0 && !isHorizontalBoxplot(chart)) {

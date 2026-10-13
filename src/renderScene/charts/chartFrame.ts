@@ -1,6 +1,6 @@
 import type { Chart } from '../../model/chart';
 import type { Bounds, SceneRect } from '../scene';
-import { finite } from '../scene';
+import { finite, paint } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
 import { resolvePieRadii } from './primitives/pieShape';
 import { radarCategoryCount, radarRadius } from './primitives/radarShape';
@@ -22,7 +22,7 @@ export function buildChartFrame(
     height: chart.height,
     rx: chart.cornerRadius ?? 12,
     style: {
-      fill: { kind: 'solid', color: chart.fillColor ?? '#ffffff' },
+      fill: paint(chart.fillColor ?? '#ffffff', [], chart.id),
       stroke: { kind: 'solid', color: chart.strokeColor ?? '#475569' },
       strokeWidth: finite(chart.strokeWidth, 1),
     },
