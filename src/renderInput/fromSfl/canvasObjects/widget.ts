@@ -1,4 +1,4 @@
-import type { RollingNumberWidget, TickScaleWidget } from '../../../model/widget';
+import type { RollingNumberWidget, RulerWidget, TickScaleWidget } from '../../../model/widget';
 import type { SflWidgetObject } from '../../../sflSemantic/canvasObjects/types';
 
 const CSS_COLOR = /^(?:#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\)|[a-z][\w-]*)$/i;
@@ -26,7 +26,7 @@ function fontWeight(value: string | undefined): string | undefined {
   return value && FONT_WEIGHT.test(value) ? value : undefined;
 }
 
-const TICK_SCALE_NUMBERS = ['ticks', 'major', 'radius', 'length', 'thickness', 'start', 'sweep', 'intensity'] as const;
+const TICK_SCALE_NUMBERS = ['ticks', 'major', 'radius', 'length', 'thickness', 'round', 'start', 'sweep', 'intensity'] as const;
 const TICK_SCALE_COLORS = ['color', 'accent'] as const;
 
 function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
@@ -72,9 +72,61 @@ function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
   };
 }
 
-export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget | TickScaleWidget {
+const RULER_NUMBERS = ['ticks', 'major', 'length', 'thickness', 'round', 'dent', 'spread', 'inset', 'line', 'intensity'] as const;
+const RULER_COLORS = ['color', 'accent', 'glow'] as const;
+const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
+
+function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
+  const properties = canvasObject.props;
+  const parameters: Record<string, string | number> = {};
+  for (const key of RULER_NUMBERS) {
+    const value = Number(properties[key]);
+    if (properties[key] !== undefined && Number.isFinite(value)) {
+      parameters[key] = value;
+    }
+  }
+  for (const key of RULER_COLORS) {
+    parameters[key] = color(properties[key]) ?? RULER_DEFAULTS[key];
+  }
+  parameters.axis = properties.axis === 'horizontal' ? 'horizontal' : 'vertical';
+  if (properties.knob) {
+    parameters.knob = properties.knob;
+  }
+  return {
+    id: canvasObject.id,
+    type: 'ruler',
+    value: canvasObject.widget.value,
+    min: canvasObject.widget.min,
+    max: canvasObject.widget.max,
+    label: canvasObject.widget.label,
+    x: canvasObject.x,
+    y: canvasObject.y,
+    width: canvasObject.width,
+    height: canvasObject.height,
+    rotation: canvasObject.rotation,
+    order: canvasObject.order,
+    sourceIndex: canvasObject.sourceIndex,
+    parentFrameId: canvasObject.parentFrameId,
+    parameters,
+    labels:
+      properties.labels === 'true'
+        ? {
+            size: Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined ? Number(properties.labelSize) : undefined,
+            color: color(properties.labelColor),
+            offset: Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined ? Number(properties.labelOffset) : undefined,
+            weight: fontWeight(properties.labelWeight),
+            fontFamily: fontFamily(properties.labelFont),
+          }
+        : undefined,
+  };
+}
+
+export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget | TickScaleWidget | RulerWidget {
   if (canvasObject.widget.type === 'tickScale') {
     return tickScaleObject(canvasObject);
+  }
+  if (canvasObject.widget.type === 'ruler') {
+    return rulerObject(canvasObject);
   }
   const properties = canvasObject.props;
   return {

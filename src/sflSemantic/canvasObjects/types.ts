@@ -43,6 +43,7 @@ export interface SflWidgetData {
   value: string;
   digits?: number;
   duration?: number;
+  min?: number;
   max?: number;
   label?: string;
 }

@@ -8,6 +8,7 @@ import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
 import type { Viewer, ViewerOptions, ViewerSource } from './types';
 import { type DocumentWidgetsHandle, mountDocumentWidgets } from './widgets';
+import { placeRulerKnobs, rulerProgress } from './widgets/rulerKnob';
 
 export class ViewerSession implements Viewer {
   private readonly emitter = new Emitter();
@@ -16,6 +17,7 @@ export class ViewerSession implements Viewer {
   private readonly shaderSurfaces: ShaderSurfaceHandle;
   private readonly documentWidgets: DocumentWidgetsHandle;
   private readonly shaderParameterOverrides = new Map<string, Record<string, ShaderParameter>>();
+  private readonly rulerProgressOverrides = new Map<string, number>();
 
   constructor(
     private readonly options: ViewerOptions,
@@ -28,6 +30,11 @@ export class ViewerSession implements Viewer {
     this.interaction = options.interactive
       ? bindInteraction(this.display, this.emitter, diagramId, { selectable: options.selectable })
       : null;
+    this.placeKnobs();
+  }
+
+  private placeKnobs(): void {
+    placeRulerKnobs(this.display.svg, id => this.rulerProgressOverrides.get(id));
   }
 
   get svg(): SVGSVGElement {
@@ -73,6 +80,16 @@ export class ViewerSession implements Viewer {
     if (this.documentWidgets.setValue(widgetId, value)) {
       return true;
     }
+    const ruler = [...this.svg.querySelectorAll('foreignObject[data-sf-shader="ruler"]')].find(
+      element => element.getAttribute('data-sf-id') === widgetId,
+    );
+    if (ruler) {
+      const progress = rulerProgress(ruler, Number(value));
+      this.rulerProgressOverrides.set(widgetId, progress);
+      const applied = this.setShaderParameters(widgetId, { progress });
+      this.placeKnobs();
+      return applied;
+    }
     // A tick scale takes the value as progress along its max.
     const scale = [...this.svg.querySelectorAll('foreignObject[data-sf-shader="tickScale"]')].find(
       element => element.getAttribute('data-sf-id') === widgetId,
@@ -91,6 +108,7 @@ export class ViewerSession implements Viewer {
 
   clearOverrides(): void {
     this.shaderParameterOverrides.clear();
+    this.rulerProgressOverrides.clear();
     this.documentWidgets.clearValues();
   }
 
@@ -100,6 +118,7 @@ export class ViewerSession implements Viewer {
     const diff = this.display.updateContent(svg);
     this.shaderSurfaces.refresh();
     this.documentWidgets.refresh();
+    this.placeKnobs();
     for (const [ownerId, parameters] of this.shaderParameterOverrides) {
       this.shaderSurfaces.setParameters(ownerId, parameters);
     }

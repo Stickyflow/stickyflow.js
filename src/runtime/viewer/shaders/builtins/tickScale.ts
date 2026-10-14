@@ -14,6 +14,7 @@ uniform float uSweep;
 uniform float uRadius;
 uniform float uLength;
 uniform float uThickness;
+uniform float uRound;
 uniform vec3 uColor;
 uniform vec3 uAccent;
 varying vec2 vUv;
@@ -44,9 +45,13 @@ void main() {
 
   float outer = uRadius > 0.0 ? uRadius : 0.9;
   float tickLength = (uLength > 0.0 ? uLength : 0.05) * mix(1.0, 1.8, major);
-  float band = smoothstep(outer - tickLength - pixel, outer - tickLength + pixel, radius) * (1.0 - smoothstep(outer - pixel, outer + pixel, radius));
-  float width = max((uThickness > 0.0 ? uThickness : 0.003) * mix(1.0, 1.4, major), pixel * 0.9);
-  float tick = (1.0 - smoothstep(width - pixel, width + pixel, arcDistance)) * band * inArc;
+  float halfWidth = max((uThickness > 0.0 ? uThickness : 0.003) * mix(1.0, 1.4, major), pixel * 0.9);
+  float halfLength = tickLength * 0.5;
+  // A rounded box around the tick: uRound 0 keeps the corners square, 1 turns the tick into a capsule.
+  float corner = min(halfWidth, halfLength) * clamp(uRound, 0.0, 1.0);
+  vec2 q = vec2(arcDistance, abs(radius - (outer - halfLength))) - vec2(halfWidth, halfLength) + corner;
+  float edge = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
+  float tick = (1.0 - smoothstep(-pixel, pixel, edge)) * inArc;
 
   float progress = uProgress < 0.0 ? 1.0 : clamp(uProgress, 0.0, 1.0);
   // Per tick, so a tick never flickers while the value rests on it.

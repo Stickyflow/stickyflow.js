@@ -42,7 +42,7 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   if (kind === 'chart') {
     return 'chart';
   }
-  if (kind === 'rollingNumber' || kind === 'tickScale') {
+  if (kind === 'rollingNumber' || kind === 'tickScale' || kind === 'ruler') {
     return 'widget';
   }
   if (kind === 'isometric') {

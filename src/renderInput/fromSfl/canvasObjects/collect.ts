@@ -48,7 +48,7 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     widgets: canvasObjects
       .filter(
         (canvasObject): canvasObject is SflWidgetObject =>
-          canvasObject.objectType === 'widget' && (canvasObject.widget?.type === 'rollingNumber' || canvasObject.widget?.type === 'tickScale'),
+          canvasObject.objectType === 'widget' && ['rollingNumber', 'tickScale', 'ruler'].includes(canvasObject.widget?.type ?? ''),
       )
       .map(widgetObject),
     links: byOrder(state.links).map(linkObject),

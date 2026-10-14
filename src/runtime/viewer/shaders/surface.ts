@@ -227,6 +227,7 @@ function enumParameter(name: string, value: string): number | undefined {
   const values: Record<string, Record<string, number>> = {
     direction: { left: 0, right: 1, top: 2, bottom: 3 },
     orientation: { vertical: 0, horizontal: 1 },
+    axis: { vertical: 0, horizontal: 1 },
   };
   return values[name]?.[value];
 }

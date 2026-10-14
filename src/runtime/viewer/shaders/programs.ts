@@ -11,6 +11,7 @@ import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
 import { pixelConstellationProgram } from './builtins/pixelConstellation';
 import { plasmaGaugeProgram } from './builtins/plasmaGauge';
+import { rulerProgram } from './builtins/ruler';
 import { tickScaleProgram } from './builtins/tickScale';
 import { prismSlatsProgram } from './builtins/prismSlats';
 import { smearOrbProgram } from './builtins/smearOrb';
@@ -30,6 +31,7 @@ const builtins = [
   pixelConstellationProgram,
   plasmaGaugeProgram,
   tickScaleProgram,
+  rulerProgram,
   prismSlatsProgram,
   eclipseOrbProgram,
   emberMatrixProgram,

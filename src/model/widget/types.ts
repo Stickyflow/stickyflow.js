@@ -1,4 +1,4 @@
-export type WidgetType = 'rollingNumber' | 'tickScale';
+export type WidgetType = 'rollingNumber' | 'tickScale' | 'ruler';
 
 export interface RollingNumberWidgetStyle {
   color?: string;
@@ -51,4 +51,25 @@ export interface TickScaleWidget {
   labels?: { size?: number; color?: string; offset?: number; weight?: string; fontFamily?: string };
 }
 
-export type Widget = RollingNumberWidget | TickScaleWidget;
+// A straight scale with a wire that bends around a knob. The knob is a Shape named by the style key knob; the value moves it.
+export interface RulerWidget {
+  id: string;
+  type: 'ruler';
+  value: string;
+  min?: number;
+  max?: number;
+  label?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  order?: number;
+  sourceIndex?: number;
+  parentFrameId?: string;
+  parameters: Record<string, string | number>;
+  // Numbers next to the major ticks; present when the style says labels: true.
+  labels?: { size?: number; color?: string; offset?: number; weight?: string; fontFamily?: string };
+}
+
+export type Widget = RollingNumberWidget | TickScaleWidget | RulerWidget;

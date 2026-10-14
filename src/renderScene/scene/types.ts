@@ -188,7 +188,7 @@ export interface SceneShaderSurface extends SceneBase {
   height: number;
   rotation?: number;
   shader: Shader;
-  mask: 'ellipse';
+  mask: 'ellipse' | 'rect';
   fillColor?: string;
 }
 
