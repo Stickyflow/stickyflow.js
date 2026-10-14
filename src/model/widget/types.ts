@@ -8,6 +8,8 @@ export interface RollingNumberWidgetStyle {
   fontFamily?: string;
   // 'plain' draws bare digits without cells, dividers or surface.
   variant?: 'flip' | 'plain';
+  // 'fade' changes a digit in place with a soft cross-fade instead of rolling it.
+  motion?: 'roll' | 'fade';
   fontWeight?: string;
 }
 

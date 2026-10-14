@@ -71,7 +71,33 @@ function animateDigit(element: HTMLElement, keyframes: Keyframe[], duration: num
   });
 }
 
+function fadeDigit(cell: HTMLSpanElement, character: string, theme: RollingNumberTheme, duration: number): void {
+  const previous = cell.querySelector<HTMLSpanElement>('[data-sf-rolling-current]');
+  previous?.removeAttribute('data-sf-rolling-current');
+  const next = createDigit(cell.ownerDocument, character, theme);
+  next.style.opacity = '0';
+  cell.insertBefore(next, cell.lastElementChild ?? null);
+  const hidden = { opacity: 0, filter: 'blur(0.025em)', transform: 'scale(0.985)' };
+  const shown = { opacity: 1, filter: 'blur(0)', transform: 'scale(1)' };
+  const incoming = animateDigit(next, [hidden, shown], duration);
+  const outgoing = previous ? animateDigit(previous, [shown, hidden], duration) : null;
+  const finish = (): void => {
+    previous?.remove();
+    next.style.opacity = '1';
+  };
+  if (incoming) {
+    incoming.finished.then(finish, finish);
+  } else {
+    outgoing?.cancel();
+    finish();
+  }
+}
+
 function replaceDigit(cell: HTMLSpanElement, character: string, theme: RollingNumberTheme, duration: number): void {
+  if (theme.motion === 'fade') {
+    fadeDigit(cell, character, theme, duration);
+    return;
+  }
   const previous = cell.querySelector<HTMLSpanElement>('[data-sf-rolling-current]');
   previous?.removeAttribute('data-sf-rolling-current');
   const next = createDigit(cell.ownerDocument, character, theme);

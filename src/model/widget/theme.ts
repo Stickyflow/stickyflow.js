@@ -7,6 +7,7 @@ export const DEFAULT_ROLLING_NUMBER_STYLE: Required<RollingNumberWidgetStyle> = 
   labelColor: 'rgba(0, 0, 0, 0.62)',
   fontFamily: "'Roboto Mono', 'SFMono-Regular', Consolas, monospace",
   variant: 'flip',
+  motion: 'roll',
   fontWeight: '300',
 };
 
@@ -18,6 +19,7 @@ export function resolveRollingNumberStyle(style: RollingNumberWidgetStyle): Requ
     labelColor: style.labelColor ?? DEFAULT_ROLLING_NUMBER_STYLE.labelColor,
     fontFamily: style.fontFamily ?? DEFAULT_ROLLING_NUMBER_STYLE.fontFamily,
     variant: style.variant ?? DEFAULT_ROLLING_NUMBER_STYLE.variant,
+    motion: style.motion ?? DEFAULT_ROLLING_NUMBER_STYLE.motion,
     fontWeight: style.fontWeight ?? DEFAULT_ROLLING_NUMBER_STYLE.fontWeight,
   };
 }

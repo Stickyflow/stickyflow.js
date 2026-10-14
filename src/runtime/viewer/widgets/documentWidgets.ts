@@ -19,6 +19,8 @@ function findRollingNumber(svg: SVGSVGElement, widgetId: string): RollingNumberS
   );
 }
 
+const FADE_INTERVAL = 140;
+
 function widgetDigits(surface: RollingNumberSurface): HTMLDivElement | undefined {
   return surface.querySelector<HTMLDivElement>('[data-sf-rolling-digits]') ?? undefined;
 }
@@ -69,6 +71,8 @@ function setRollingNumber(surface: RollingNumberSurface, value: string | number,
 
 export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle {
   const valueOverrides = new Map<string, string | number>();
+  const lastApplied = new Map<string, number>();
+  const pending = new Map<string, ReturnType<typeof setTimeout>>();
   return {
     setValue(widgetId: string, value: string | number): boolean {
       const surface = findRollingNumber(svg, widgetId);
@@ -76,7 +80,31 @@ export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle 
         return false;
       }
       valueOverrides.set(widgetId, value);
-      return setRollingNumber(surface, value, true);
+      if (widgetStyle(surface).motion !== 'fade') {
+        return setRollingNumber(surface, value, true);
+      }
+      // A fading display settles on the latest value at most every FADE_INTERVAL ms, so fast data does not flicker.
+      const now = Date.now();
+      const wait = (lastApplied.get(widgetId) ?? 0) + FADE_INTERVAL - now;
+      if (wait <= 0) {
+        lastApplied.set(widgetId, now);
+        return setRollingNumber(surface, value, true);
+      }
+      if (!pending.has(widgetId)) {
+        pending.set(
+          widgetId,
+          setTimeout(() => {
+            pending.delete(widgetId);
+            lastApplied.set(widgetId, Date.now());
+            const current = findRollingNumber(svg, widgetId);
+            const latest = valueOverrides.get(widgetId);
+            if (current && latest !== undefined) {
+              setRollingNumber(current, latest, true);
+            }
+          }, wait),
+        );
+      }
+      return true;
     },
     refresh(): void {
       for (const [widgetId, value] of valueOverrides) {
@@ -87,6 +115,8 @@ export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle 
       }
     },
     destroy(): void {
+      pending.forEach(timer => clearTimeout(timer));
+      pending.clear();
       valueOverrides.clear();
     },
   };

@@ -53,11 +53,22 @@ void main() {
   vec3 hot = uHot;
   vec3 tint = mix(cool, hot, heat);
 
+  // The needle (progress) is a finger moving through a fluid that follows with a delay (dent). While it speeds up it drags a groove
+  // behind it and piles the fluid up in front; when it stops, the groove closes and the pile settles back at an even pace.
   float ripple = 0.5 + 0.5 * sin(delta * 9.0 - time * 1.4);
-  float dent = bell(delta, 0.13 + 0.02 * ripple) * (0.82 + 0.18 * ripple);
+  float wake = (progress - dentValue) * sweep;
+  float lo = min(0.0, wake);
+  float hi = max(0.0, wake);
+  float segment = delta < lo ? lo - delta : (delta > hi ? delta - hi : 0.0);
+  float wakePos = hi > lo ? clamp((delta - lo) / (hi - lo), 0.0, 1.0) : 0.0;
+  float fromNeedle = wake >= 0.0 ? wakePos : 1.0 - wakePos;
+  float taper = mix(1.0, 0.45, fromNeedle * smoothstep(0.02, 0.2, abs(wake)));
+  float dent = bell(segment, 0.13 + 0.02 * ripple) * (0.82 + 0.18 * ripple) * taper;
   float shoulder = bell(delta, 0.34);
-  float baseRadius = 0.64;
-  float orbRadius = baseRadius * (1.0 - 0.32 * level * dent - 0.07 * level * shoulder);
+  float ahead = wake >= 0.0 ? -1.0 : 1.0;
+  float pile = bell(delta - ahead * 0.17, 0.15) * clamp(abs(wake) * 2.2, 0.0, 1.0) * engage;
+  float baseRadius = 0.72;
+  float orbRadius = baseRadius * (1.0 - 0.32 * level * dent - 0.07 * level * shoulder + 0.13 * pile);
   float body = 1.0 - smoothstep(orbRadius - 0.012, orbRadius + 0.012, radius);
   float depth = clamp(radius / orbRadius, 0.0, 1.25);
   float roundDepth = clamp(radius / baseRadius, 0.0, 1.2);
@@ -70,14 +81,14 @@ void main() {
   bodyColor *= (0.82 + 0.18 * smoothstep(-0.5, 0.5, -p.x)) * (0.9 + 0.6 * energy * energy);
 
   float ribbons = 0.5 + 0.5 * sin(depth * 24.0 - delta * 8.0 + time * 1.1);
-  float zone = bell(delta, 0.3) * bell(depth - 0.84, 0.32) * level * (1.0 + 0.9 * energy);
+  float zone = max(bell(delta, 0.3), dent * 0.8) * bell(depth - 0.84, 0.32) * level * (1.0 + 0.9 * energy);
   vec3 ribbonColor = mix(tint, hot, smoothstep(0.2, 0.9, ribbons) * (0.35 + 0.65 * heat));
   bodyColor = mix(bodyColor, ribbonColor, clamp(zone * (0.4 + 0.45 * ribbons), 0.0, 1.0));
-  float edge = bell(delta, 0.2) * bell(depth - 0.99, 0.09) * level;
+  float edge = max(max(bell(delta, 0.2), dent * 0.7), pile * 0.8) * bell(depth - 0.99, 0.09) * level;
   bodyColor += mix(hot, vec3(1.0, 0.92, 1.0), 0.45) * edge * (0.45 + 1.3 * energy);
 
   float outside = max(radius - orbRadius, 0.0);
-  float notchLight = bell(delta, 0.2) * level;
+  float notchLight = max(max(bell(delta, 0.2), dent * 0.8), pile * 0.6) * level;
   float halo = exp(-outside * (12.0 - 6.0 * notchLight * (0.4 + energy))) * (1.0 - body) * (0.2 + 0.5 * energy * energy + 0.9 * notchLight * (0.5 + energy));
   vec3 haloColor = mix(tint, hot, clamp(notchLight * 1.2, 0.0, 1.0));
 

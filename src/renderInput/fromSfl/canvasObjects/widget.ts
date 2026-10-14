@@ -18,6 +18,10 @@ function variant(value: string | undefined): 'flip' | 'plain' | undefined {
   return value === 'plain' || value === 'flip' ? value : undefined;
 }
 
+function motion(value: string | undefined): 'roll' | 'fade' | undefined {
+  return value === 'roll' || value === 'fade' ? value : undefined;
+}
+
 function fontWeight(value: string | undefined): string | undefined {
   return value && FONT_WEIGHT.test(value) ? value : undefined;
 }
@@ -46,6 +50,7 @@ export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget
       labelColor: color(properties.labelColor),
       fontFamily: fontFamily(properties.fontFamily),
       variant: variant(properties.variant),
+      motion: motion(properties.motion),
       fontWeight: fontWeight(properties.fontWeight),
     },
   };
