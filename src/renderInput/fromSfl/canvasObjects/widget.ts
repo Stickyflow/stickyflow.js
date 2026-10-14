@@ -72,7 +72,7 @@ function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
   };
 }
 
-const RULER_NUMBERS = ['ticks', 'major', 'length', 'thickness', 'round', 'dent', 'spread', 'inset', 'line', 'intensity'] as const;
+const RULER_NUMBERS = ['ticks', 'major', 'length', 'thickness', 'round', 'dent', 'spread', 'inset', 'line', 'gap', 'intensity'] as const;
 const RULER_COLORS = ['color', 'accent', 'glow'] as const;
 const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
 

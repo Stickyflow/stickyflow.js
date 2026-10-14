@@ -70,8 +70,9 @@ void main() {
   float corner = halfTick * clamp(uRound, 0.0, 1.0);
   vec2 q = abs(vec2(across - (tickEnd - tickLength * 0.5), tickAlong)) - vec2(tickLength * 0.5, halfTick) + corner;
   float edge = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
-  float tick = (1.0 - smoothstep(-0.75, 0.75, edge)) * inRange * mix(0.45, 1.0, tickBump);
-  vec3 tickColor = mix(uColor, uAccent, tickBump * 0.5);
+  float tick = (1.0 - smoothstep(-0.75, 0.75, edge)) * inRange * mix(0.4, 1.0, tickBump);
+  // The ticks at the knob turn white and fade back to their color with the distance.
+  vec3 tickColor = mix(uColor, vec3(1.0), tickBump);
 
   float alpha = clamp(tick + line * 0.95 + glow, 0.0, 1.0);
   vec3 rgb = tickColor * tick + lineColor * line * 0.95 + glowColor * glow;
