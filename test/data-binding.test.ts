@@ -75,8 +75,8 @@ describe('binding type check', () => {
     expect(codes(doc('colour: <- sales.month'))).toEqual(['unknown-bound-property']);
   });
 
-  it('rejects functions beyond when()', () => {
-    expect(codes(doc('values: <- round(sales.revenue)'))).toEqual(['unknown-function']);
+  it('rejects functions it does not know', () => {
+    expect(codes(doc('values: <- sqrt(sales.revenue)'))).toEqual(['unknown-function']);
   });
 
   it('warns that two-way and event bindings are parsed but not executed', () => {
@@ -352,5 +352,20 @@ Model dash {
     expect(widgets.at(-1)).toEqual(['display', 240]);
     expect(renders).toBe(0);
     expect(runtime.input.shapes.find(shape => shape.id === 'dial')?.shader?.parameters.progress).toBe(1);
+  });
+});
+
+describe('number functions', () => {
+  it('rounds, limits and works on columns', () => {
+    const runtime = createBindingRuntime(doc('values: <- clamp(round(sales.revenue / 3), 2, 6)\n      label: <- "n=" + max(round(2.6), 1)'));
+    runtime.registerSource('sales', createDataSource(rows([4, 10, 40])));
+    runtime.flush();
+    expect(seriesValues(runtime)).toEqual([2, 3, 6]);
+    expect(runtime.input.charts?.[0].series[0].label).toBe('n=3');
+  });
+
+  it('checks the number of arguments and their types', () => {
+    expect(codes(doc('values: <- round(sales.revenue, 2)'))).toEqual(['wrong-arguments']);
+    expect(codes(doc('values: <- round(sales.month)'))).toEqual(['type-mismatch']);
   });
 });

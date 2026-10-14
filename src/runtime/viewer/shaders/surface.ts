@@ -301,6 +301,7 @@ function renderSurface(surface: Surface, seconds: number): void {
   uniform3f(surface, 'uAccent', color(parameters.accent, [0.58, 0.31, 1]));
   uniform3f(surface, 'uHot', color(parameters.hot, [1, 0.45, 0.82]));
   uniform1f(surface, 'uDent', number(parameters.dent, -1));
+  uniform1f(surface, 'uDay', number(parameters.day, -1));
   uniform3f(surface, 'uShapeColor', surface.shapeColor);
   const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
   surface.lastSeconds = seconds;

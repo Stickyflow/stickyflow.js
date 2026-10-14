@@ -60,10 +60,41 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
   return isList(left) || isList(right) ? { list: 'number' } : 'number';
 }
 
+// Number functions; a list argument applies to every element.
+const MATH: Record<string, { arguments: number; apply(values: number[]): number }> = {
+  round: { arguments: 1, apply: ([value]) => Math.round(value) },
+  floor: { arguments: 1, apply: ([value]) => Math.floor(value) },
+  ceil: { arguments: 1, apply: ([value]) => Math.ceil(value) },
+  abs: { arguments: 1, apply: ([value]) => Math.abs(value) },
+  min: { arguments: 2, apply: ([a, b]) => Math.min(a, b) },
+  max: { arguments: 2, apply: ([a, b]) => Math.max(a, b) },
+  clamp: { arguments: 3, apply: ([value, low, high]) => Math.min(high, Math.max(low, value)) },
+};
+
+function inferMath(name: string, expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
+  const spec = MATH[name];
+  if (expr.args.length !== spec.arguments) {
+    report('wrong-arguments', `${name}() takes exactly ${spec.arguments} argument${spec.arguments === 1 ? '' : 's'}.`);
+    return undefined;
+  }
+  const types = expr.args.map(arg => inferType(arg, scope, report));
+  if (types.some(type => !type)) {
+    return undefined;
+  }
+  if (types.some(type => !isNumeric(type as BindingType))) {
+    report('type-mismatch', `${name}() needs numbers, got ${types.map(type => typeName(type as BindingType)).join(', ')}.`);
+    return undefined;
+  }
+  return types.some(type => isList(type as BindingType)) ? { list: 'number' } : 'number';
+}
+
 function inferCall(expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
   const name = expr.callee.join('.');
+  if (name in MATH) {
+    return inferMath(name, expr, scope, report);
+  }
   if (name !== 'when') {
-    report('unknown-function', `Unknown function '${name}'. Only when(condition, then, else) is available in expressions.`);
+    report('unknown-function', `Unknown function '${name}'. Available: when, ${Object.keys(MATH).join(', ')}.`);
     return undefined;
   }
   if (expr.args.length !== 3) {
@@ -178,6 +209,17 @@ export function evaluate(expr: SflExpr, env: ValueEnv): BindingValue {
     case 'binary':
       return evaluateBinary(expr, env);
     case 'call': {
+      const name = expr.callee.join('.');
+      if (name in MATH) {
+        const values = expr.args.map(arg => evaluate(arg, env));
+        const length = Math.max(0, ...values.map(value => (Array.isArray(value) ? value.length : 0)));
+        if (length === 0 && !values.some(Array.isArray)) {
+          return MATH[name].apply(values as number[]);
+        }
+        return Array.from({ length }, (_value, index) =>
+          MATH[name].apply(values.map(value => (Array.isArray(value) ? (value[index] as number) : (value as number)))),
+        );
+      }
       const [condition, whenTrue, whenFalse] = expr.args;
       return evaluate(condition, env) ? evaluate(whenTrue, env) : evaluate(whenFalse, env);
     }

@@ -25,6 +25,8 @@ void main() {
   p.x *= uResolution.x / max(uResolution.y, 1.0);
   float radius = length(p);
   float angle = atan(p.y, p.x);
+  // One pixel in the units of p, so every edge is softened by exactly that much.
+  float pixel = 2.0 / max(uResolution.y, 1.0);
 
   float sweep = radians(uSweep > 0.0 ? uSweep : 270.0);
   float start = radians(uStart != 0.0 ? uStart : 225.0);
@@ -42,9 +44,9 @@ void main() {
 
   float outer = uRadius > 0.0 ? uRadius : 0.9;
   float tickLength = (uLength > 0.0 ? uLength : 0.05) * mix(1.0, 1.8, major);
-  float band = smoothstep(outer - tickLength - 0.004, outer - tickLength, radius) * (1.0 - smoothstep(outer - 0.004, outer, radius));
-  float width = (uThickness > 0.0 ? uThickness : 0.003) * mix(1.0, 1.4, major);
-  float tick = smoothstep(width, width * 0.35, arcDistance) * band * inArc;
+  float band = smoothstep(outer - tickLength - pixel, outer - tickLength + pixel, radius) * (1.0 - smoothstep(outer - pixel, outer + pixel, radius));
+  float width = max((uThickness > 0.0 ? uThickness : 0.003) * mix(1.0, 1.4, major), pixel * 0.9);
+  float tick = (1.0 - smoothstep(width - pixel, width + pixel, arcDistance)) * band * inArc;
 
   float progress = uProgress < 0.0 ? 1.0 : clamp(uProgress, 0.0, 1.0);
   // Per tick, so a tick never flickers while the value rests on it.
