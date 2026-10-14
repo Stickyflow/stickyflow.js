@@ -50,7 +50,7 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
     }
     return 'boolean';
   }
-  if (operator === '+' && left === 'string' && right === 'string') {
+  if (operator === '+' && !isList(left) && !isList(right) && (left === 'string' || right === 'string')) {
     return 'string';
   }
   if (!isNumeric(left) || !isNumeric(right)) {
@@ -127,6 +127,9 @@ function arithmetic(operator: string, left: number, right: number): number {
   }
 }
 
+// Numbers join text with at most one decimal.
+const text = (value: BindingValue): string => (typeof value === 'number' ? String(Math.round(value * 10) / 10) : String(value));
+
 function evaluateBinary(expr: Extract<SflExpr, { kind: 'binary' }>, env: ValueEnv): BindingValue {
   const left = evaluate(expr.left, env);
   const right = evaluate(expr.right, env);
@@ -145,7 +148,7 @@ function evaluateBinary(expr: Extract<SflExpr, { kind: 'binary' }>, env: ValueEn
       return left !== right;
   }
   if (typeof left === 'string' || typeof right === 'string') {
-    return String(left) + String(right);
+    return text(left) + text(right);
   }
   const apply = (a: number, b: number) => arithmetic(expr.operator, a, b);
   if (Array.isArray(left) && Array.isArray(right)) {

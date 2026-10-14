@@ -26,6 +26,10 @@ function collectSites(blocks: SflBlock[], chartPath: string[], sites: BindingSit
     for (const entry of block.entries) {
       if (entry.type === 'binding') {
         sites.push({ kind: block.kind, path, binding: entry.binding });
+      } else if (entry.type === 'style') {
+        for (const binding of entry.style.bindings ?? []) {
+          sites.push({ kind: block.kind, path, binding });
+        }
       } else if (entry.type === 'block') {
         collectSites([entry.block], ownChart, sites);
       } else if (entry.type === 'data') {
@@ -77,7 +81,8 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
       );
       continue;
     }
-    const expected = BINDABLE_PROPERTIES[kind]?.[binding.key];
+    // A shader takes any numeric parameter of its program.
+    const expected = kind === 'Shader' ? 'number' : BINDABLE_PROPERTIES[kind]?.[binding.key];
     if (!expected) {
       const allowed = Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
       report(

@@ -6,6 +6,9 @@ export interface RollingNumberWidgetStyle {
   divider?: string;
   labelColor?: string;
   fontFamily?: string;
+  // 'plain' draws bare digits without cells, dividers or surface.
+  variant?: 'flip' | 'plain';
+  fontWeight?: string;
 }
 
 export interface RollingNumberWidget {

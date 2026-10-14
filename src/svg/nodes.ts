@@ -14,6 +14,9 @@ function shaderSurfaceSvg(node: Extract<RenderNode, { type: 'shader-surface' }>,
 
 function rollingDigitSvg(character: string, node: Extract<RenderNode, { type: 'rolling-number' }>): string {
   const style = node.widgetStyle;
+  if (style.variant === 'plain') {
+    return `<span xmlns="http://www.w3.org/1999/xhtml" data-sf-rolling-digit="true" style="position:relative;display:inline-block;width:.62em;height:1.1em;overflow:hidden"><span data-sf-rolling-current="true" style="position:absolute;inset:0;display:grid;place-items:center;color:${xml(style.color)};font-weight:${xml(style.fontWeight)};line-height:1">${xml(character)}</span></span>`;
+  }
   return `<span xmlns="http://www.w3.org/1999/xhtml" data-sf-rolling-digit="true" style="position:relative;display:inline-block;width:.72em;height:1.2em;overflow:hidden;border:1px solid ${xml(style.divider)};border-radius:.09em;background:${xml(style.surface)};box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -.16em .38em rgba(0,0,0,.12)"><span data-sf-rolling-current="true" style="position:absolute;inset:0;display:grid;place-items:center;color:${xml(style.color)};font-weight:300;line-height:1">${xml(character)}</span><span style="position:absolute;z-index:2;left:0;right:0;top:50%;height:1px;background:${xml(style.divider)};pointer-events:none"></span></span>`;
 }
 
@@ -25,7 +28,7 @@ function rollingNumberSvg(node: Extract<RenderNode, { type: 'rolling-number' }>,
     : '';
   const digits = [...node.value].map(character => rollingDigitSvg(character, node)).join('');
   const widgetStyle = xml(JSON.stringify(node.widgetStyle));
-  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-widget="rollingNumber" data-sf-widget-value="${xml(node.value)}" data-sf-widget-digits="${node.digits ?? ''}" data-sf-widget-duration="${num(node.duration)}" data-sf-widget-style="${widgetStyle}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation}><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:${xml(node.widgetStyle.fontFamily)};font-size:${num(fontSize)}px">${label}<div data-sf-rolling-digits="true" aria-label="${xml(node.value)}" style="display:flex;gap:.1em;font-size:1em">${digits}</div></div></foreignObject>`;
+  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-widget="rollingNumber" data-sf-widget-value="${xml(node.value)}" data-sf-widget-digits="${node.digits ?? ''}" data-sf-widget-duration="${num(node.duration)}" data-sf-widget-style="${widgetStyle}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation}><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:${xml(node.widgetStyle.fontFamily)};font-size:${num(fontSize)}px">${label}<div data-sf-rolling-digits="true" aria-label="${xml(node.value)}" style="display:flex;gap:${node.widgetStyle.variant === 'plain' ? '.02em' : '.1em'};font-size:1em">${digits}</div></div></foreignObject>`;
 }
 
 export function nodeSvg(node: RenderNode, defs: SvgDefinitionRegistry): string {

@@ -6,6 +6,8 @@ export const DEFAULT_ROLLING_NUMBER_STYLE: Required<RollingNumberWidgetStyle> = 
   divider: 'rgba(0, 0, 0, 0.2)',
   labelColor: 'rgba(0, 0, 0, 0.62)',
   fontFamily: "'Roboto Mono', 'SFMono-Regular', Consolas, monospace",
+  variant: 'flip',
+  fontWeight: '300',
 };
 
 export function resolveRollingNumberStyle(style: RollingNumberWidgetStyle): Required<RollingNumberWidgetStyle> {
@@ -15,5 +17,7 @@ export function resolveRollingNumberStyle(style: RollingNumberWidgetStyle): Requ
     divider: style.divider ?? DEFAULT_ROLLING_NUMBER_STYLE.divider,
     labelColor: style.labelColor ?? DEFAULT_ROLLING_NUMBER_STYLE.labelColor,
     fontFamily: style.fontFamily ?? DEFAULT_ROLLING_NUMBER_STYLE.fontFamily,
+    variant: style.variant ?? DEFAULT_ROLLING_NUMBER_STYLE.variant,
+    fontWeight: style.fontWeight ?? DEFAULT_ROLLING_NUMBER_STYLE.fontWeight,
   };
 }

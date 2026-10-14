@@ -12,6 +12,16 @@ function fontFamily(value: string | undefined): string | undefined {
   return value && CSS_FONT_FAMILY.test(value) ? value : undefined;
 }
 
+const FONT_WEIGHT = /^(?:[1-9]00|normal|bold)$/;
+
+function variant(value: string | undefined): 'flip' | 'plain' | undefined {
+  return value === 'plain' || value === 'flip' ? value : undefined;
+}
+
+function fontWeight(value: string | undefined): string | undefined {
+  return value && FONT_WEIGHT.test(value) ? value : undefined;
+}
+
 export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget {
   const properties = canvasObject.props;
   return {
@@ -35,6 +45,8 @@ export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget
       divider: color(properties.divider),
       labelColor: color(properties.labelColor),
       fontFamily: fontFamily(properties.fontFamily),
+      variant: variant(properties.variant),
+      fontWeight: fontWeight(properties.fontWeight),
     },
   };
 }

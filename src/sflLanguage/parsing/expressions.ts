@@ -1,4 +1,4 @@
-import type { ExpressionOperator, SflExpr } from '../ast';
+import type { ExpressionOperator, SflBinding, SflExpr } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
 import { parsePathSegments } from './values';
@@ -87,4 +87,22 @@ function parsePrimary(cursor: TokenCursor): SflExpr {
     default:
       throw new SflParseError(`expected an expression, got '${token.value || token.type}'`, token.line, token.col);
   }
+}
+
+export const BINDING_OPERATORS = ['bind', 'bind2', 'action'];
+
+export function atBinding(cursor: TokenCursor): boolean {
+  return cursor.peek().type === 'ident' && cursor.peek(1).type === 'colon' && BINDING_OPERATORS.includes(cursor.peek(2).type);
+}
+
+export function parseBinding(cursor: TokenCursor): SflBinding {
+  const key = cursor.expect('ident', 'bound property');
+  cursor.expect('colon', "':'");
+  const operator = cursor.next().value as SflBinding['operator'];
+  const expr = parseExpression(cursor);
+  const next = cursor.peek();
+  if (!['newline', 'semi', 'rbrace', 'eof'].includes(next.type)) {
+    throw new SflParseError(`unexpected '${next.value || next.type}' after binding`, next.line, next.col);
+  }
+  return { key: key.value, operator, expr, line: key.line, col: key.col };
 }

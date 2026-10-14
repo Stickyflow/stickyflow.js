@@ -84,6 +84,7 @@ export interface SflLayout {
 
 export interface SflStyle {
   properties: SflProperty[];
+  bindings?: SflBinding[];
 }
 
 export type SflValue =

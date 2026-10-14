@@ -241,3 +241,116 @@ Model board {
     expect(() => runtime.registerSource('costs', createDataSource([]))).toThrow(/No DataSource 'costs'/);
   });
 });
+
+describe('style bindings and text joins', () => {
+  const board = `sfl 1.4
+
+DataSource machine {
+  mode: record
+  fields {
+    temp: float
+  }
+}
+
+Model board {
+  Shape light {
+    type: circle
+    text: <- "Temp " + machine.temp + " C"
+    style {
+      stroke: "#000000"
+      fill: <- when(machine.temp > 80, "#ef4444", "#22c55e")
+    }
+    layout {
+      position: 0, 0
+      size: 120, 60
+    }
+  }
+}
+`;
+
+  it('round-trips a binding inside a style block', () => {
+    const text = canonicalize(board);
+    expect(text).toContain('fill: <- when(machine.temp > 80, "#ef4444", "#22c55e")');
+    expect(canonicalize(text)).toBe(text);
+    expect(codes(board)).toEqual([]);
+  });
+
+  it('applies a bound fill and a text with a number in it', () => {
+    const runtime = createBindingRuntime(board);
+    const machine = createDataSource({ temp: 20.04 });
+    runtime.registerSource('machine', machine);
+    runtime.flush();
+    const light = () => runtime.input.shapes.find(shape => shape.id === 'light');
+    expect(light()?.fillColor).toBe('#22c55e');
+    expect(light()?.text).toBe('Temp 20 C');
+
+    machine.set({ temp: 91.26 });
+    runtime.flush();
+    expect(light()?.fillColor).toBe('#ef4444');
+    expect(light()?.text).toBe('Temp 91.3 C');
+  });
+});
+
+describe('live bindings', () => {
+  const gauge = `sfl 1.4
+
+DataSource car {
+  mode: record
+  fields {
+    speed: int
+  }
+}
+
+Shader Halo {
+  program: halo
+  progress: <- car.speed / 240
+}
+
+Style Face {
+  shape: circle
+  shader: Halo
+}
+
+Model dash {
+  Shape dial : Face {
+    layout {
+      position: 0, 0
+      size: 200, 200
+    }
+  }
+
+  Widget display {
+    type: rollingNumber
+    value: <- car.speed
+    layout {
+      position: 40, 60
+      size: 120, 80
+    }
+  }
+}
+`;
+
+  it('sends shader parameters and widget values to the target without redrawing', () => {
+    const runtime = createBindingRuntime(gauge);
+    const car = createDataSource({ speed: 120 });
+    runtime.registerSource('car', car);
+    const shader: Array<[string, Record<string, number>]> = [];
+    const widgets: Array<[string, string | number]> = [];
+    let renders = 0;
+    runtime.attach({
+      update: () => (renders += 1),
+      setShaderParameters: (id, parameters) => shader.push([id, parameters]),
+      setWidgetValue: (id, value) => widgets.push([id, value]),
+    });
+    runtime.flush();
+    expect(shader).toContainEqual(['dial', { progress: 0.5 }]);
+    expect(widgets).toContainEqual(['display', 120]);
+
+    car.set({ speed: 240 });
+    runtime.flush();
+    expect(shader.at(-1)).toEqual(['dial', { progress: 1 }]);
+    expect(widgets.at(-1)).toEqual(['display', 240]);
+    expect(renders).toBe(0);
+    expect(runtime.input.shapes.find(shape => shape.id === 'dial')?.shader?.parameters.progress).toBe(1);
+  });
+});

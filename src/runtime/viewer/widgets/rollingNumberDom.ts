@@ -18,7 +18,7 @@ function createDigit(document: Document, character: string, theme: RollingNumber
     display: 'grid',
     placeItems: 'center',
     color: theme.color,
-    fontWeight: '300',
+    fontWeight: theme.fontWeight,
     lineHeight: '1',
   });
   return digit;
@@ -27,6 +27,11 @@ function createDigit(document: Document, character: string, theme: RollingNumber
 function createDigitCell(document: Document, character: string, theme: RollingNumberTheme): HTMLSpanElement {
   const cell = document.createElementNS(HTML_NAMESPACE, 'span') as HTMLSpanElement;
   cell.setAttribute('data-sf-rolling-digit', 'true');
+  if (theme.variant === 'plain') {
+    setStyles(cell, { position: 'relative', display: 'inline-block', width: '0.62em', height: '1.1em', overflow: 'hidden' });
+    cell.appendChild(createDigit(document, character, theme));
+    return cell;
+  }
   setStyles(cell, {
     position: 'relative',
     display: 'inline-block',

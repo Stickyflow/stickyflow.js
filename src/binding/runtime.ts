@@ -41,7 +41,14 @@ export interface BindingRuntimeOptions {
 
 export interface BindingTarget {
   update(next: { svg: string }): void;
+  // Widget values and shader parameters change live, without redrawing the SVG.
+  setWidgetValue?(widgetId: string, value: string | number): unknown;
+  setShaderParameters?(ownerId: string, parameters: Record<string, number>): unknown;
 }
+
+type LiveChange =
+  | { kind: 'widget'; id: string; value: number }
+  | { kind: 'shader'; owners: string[]; parameters: Record<string, number> };
 
 export interface BindingRuntime {
   readonly diagnostics: BindingDiagnostic[];
@@ -92,6 +99,13 @@ function applyToSeries(input: RenderInput, path: string[], change: (series: { va
   change(series);
 }
 
+function setShape(input: RenderInput, path: string[], change: (shape: RenderInput['shapes'][number]) => void): void {
+  const shape = input.shapes.find(candidate => candidate.id === path[0]);
+  if (shape) {
+    change(shape);
+  }
+}
+
 const APPLY: Record<string, Apply> = {
   'Chart.categories': (input, path, value) => {
     const chart = findChart(input, path[0]);
@@ -113,6 +127,10 @@ const APPLY: Record<string, Apply> = {
       shape.text = value as string;
     }
   },
+  'Shape.fill': (input, path, value) => setShape(input, path, shape => (shape.fillColor = value as string)),
+  'Shape.stroke': (input, path, value) => setShape(input, path, shape => (shape.strokeColor = value as string)),
+  'Shape.textColor': (input, path, value) => setShape(input, path, shape => (shape.textColor = value as string)),
+  'Shape.opacity': (input, path, value) => setShape(input, path, shape => (shape.opacity = value as number)),
   'Widget.value': (input, path, value) => {
     const widget = input.widgets?.find(candidate => candidate.id === path[0]);
     if (widget) {
@@ -120,6 +138,17 @@ const APPLY: Record<string, Apply> = {
     }
   },
 };
+
+function applyShader(input: RenderInput, binding: BoundProperty, value: BindingValue): string[] {
+  const owners: string[] = [];
+  for (const shape of input.shapes) {
+    if (shape.shader?.name === binding.ownerPath[0]) {
+      shape.shader.parameters = { ...shape.shader.parameters, [binding.property]: value as number };
+      owners.push(shape.id);
+    }
+  }
+  return owners;
+}
 
 export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions = {}): BindingRuntime {
   const graph = buildBindingGraph(parse(sfl));
@@ -130,6 +159,8 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
   const dirty = new Set<BoundProperty>();
   const listeners = new Set<(result: RenderResult) => void>();
   const warned = new Set<string>();
+  const liveListeners = new Set<(change: LiveChange) => void>();
+  const liveState = new Map<string, LiveChange>();
   let scheduled = false;
 
   const read = (path: string[]): BindingValue => {
@@ -145,6 +176,13 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
 
   const missingSource = (binding: BoundProperty): string | undefined =>
     binding.dependencies.map(dependency => dependency.split('.')[0]).find(name => !sources.has(name));
+
+  const announce = (id: string, change: LiveChange) => {
+    liveState.set(id, change);
+    for (const listener of [...liveListeners]) {
+      listener(change);
+    }
+  };
 
   const evaluateBinding = (binding: BoundProperty): boolean => {
     const missing = missingSource(binding);
@@ -167,7 +205,15 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       return false;
     }
     applied.set(binding.id, key);
+    if (binding.ownerKind === 'Shader') {
+      announce(binding.id, { kind: 'shader', owners: applyShader(input, binding, value), parameters: { [binding.property]: value as number } });
+      return false;
+    }
     APPLY[`${binding.ownerKind}.${binding.property}`]?.(input, binding.ownerPath, value);
+    if (binding.ownerKind === 'Widget') {
+      announce(binding.id, { kind: 'widget', id: binding.ownerPath[0], value: value as number });
+      return false;
+    }
     return true;
   };
 
@@ -253,7 +299,24 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       return () => listeners.delete(listener);
     },
     attach(target) {
-      const off = this.onRender(result => target.update({ svg: result.svg }));
+      const send = (change: LiveChange) => {
+        if (change.kind === 'widget') {
+          target.setWidgetValue?.(change.id, change.value);
+        } else {
+          for (const owner of change.owners) {
+            target.setShaderParameters?.(owner, change.parameters);
+          }
+        }
+      };
+      liveListeners.add(send);
+      for (const change of liveState.values()) {
+        send(change);
+      }
+      const offRender = this.onRender(result => target.update({ svg: result.svg }));
+      const off = () => {
+        offRender();
+        liveListeners.delete(send);
+      };
       for (const binding of graph.bindings) {
         dirty.add(binding);
       }

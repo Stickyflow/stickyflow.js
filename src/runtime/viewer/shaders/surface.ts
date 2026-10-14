@@ -26,6 +26,9 @@ interface Surface {
   shapeColor: [number, number, number];
   baseGeometry?: Element;
   baseFill?: string | null;
+  // Numbers that follow their target with inertia, see the "<name>Lag" parameters.
+  smoothed: Map<string, number>;
+  lastSeconds?: number;
 }
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | undefined {
@@ -140,6 +143,7 @@ function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
     program,
     buffer,
     parameters: parametersOf(owner),
+    smoothed: new Map(),
     backdropTexture: usesBackdrop ? transparentTexture(gl) : undefined,
     backdropOrigin: [0, 0],
     backdropScale: [1, 1],
@@ -227,10 +231,19 @@ function enumParameter(name: string, value: string): number | undefined {
   return values[name]?.[value];
 }
 
-function applyParameters(surface: Surface): void {
+function applyParameters(surface: Surface, elapsed: number): void {
   for (const [key, value] of Object.entries(surface.parameters)) {
     const name = uniformName(key);
     if (typeof value === 'number') {
+      // A parameter with a matching "<name>Lag" (seconds) eases toward its value instead of jumping.
+      const lag = surface.parameters[`${key}Lag`];
+      if (typeof lag === 'number' && lag > 0) {
+        const current = surface.smoothed.get(key) ?? value;
+        const next = current + (value - current) * (1 - Math.exp(-elapsed / lag));
+        surface.smoothed.set(key, next);
+        uniform1f(surface, name, next);
+        continue;
+      }
       uniform1f(surface, name, value);
       continue;
     }
@@ -286,8 +299,12 @@ function renderSurface(surface: Surface, seconds: number): void {
   uniform1f(surface, 'uBoost', number(parameters.boost, 0));
   uniform3f(surface, 'uColor', color(parameters.color, [0.08, 0.02, 0.22]));
   uniform3f(surface, 'uAccent', color(parameters.accent, [0.58, 0.31, 1]));
+  uniform3f(surface, 'uHot', color(parameters.hot, [1, 0.45, 0.82]));
+  uniform1f(surface, 'uDent', number(parameters.dent, -1));
   uniform3f(surface, 'uShapeColor', surface.shapeColor);
-  applyParameters(surface);
+  const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
+  surface.lastSeconds = seconds;
+  applyParameters(surface, elapsed);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
