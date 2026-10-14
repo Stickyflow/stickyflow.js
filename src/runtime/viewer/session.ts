@@ -89,6 +89,11 @@ export class ViewerSession implements Viewer {
     return this.setShaderParameters(widgetId, { progress: Math.min(1, Math.max(0, Number(value) / max)) });
   }
 
+  clearOverrides(): void {
+    this.shaderParameterOverrides.clear();
+    this.documentWidgets.clearValues();
+  }
+
   update(next: ViewerSource): void {
     const svg = renderViewerSource(next, this.options.renderOptions);
     assertViewerUpdateContract(svg);

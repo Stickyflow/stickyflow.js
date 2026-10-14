@@ -10,6 +10,7 @@ type RollingNumberSurface = SVGForeignObjectElement;
 export interface DocumentWidgetsHandle {
   setValue(widgetId: string, value: string | number): boolean;
   refresh(): void;
+  clearValues(): void;
   destroy(): void;
 }
 
@@ -113,6 +114,11 @@ export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle 
           setRollingNumber(surface, value, false);
         }
       }
+    },
+    clearValues(): void {
+      pending.forEach(timer => clearTimeout(timer));
+      pending.clear();
+      valueOverrides.clear();
     },
     destroy(): void {
       pending.forEach(timer => clearTimeout(timer));

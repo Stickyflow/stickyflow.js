@@ -33,6 +33,8 @@ export interface Viewer {
   exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
   setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
   setWidgetValue(widgetId: string, value: string | number): boolean;
+  // Forgets the values set from outside, so a new document starts from what it declares.
+  clearOverrides(): void;
   update(next: ViewerSource): void;
   destroy(): void;
 }

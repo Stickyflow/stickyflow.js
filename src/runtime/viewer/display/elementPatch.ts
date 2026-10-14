@@ -74,9 +74,11 @@ function replaceTextContent(current: Element, next: Element): void {
  *  scene-diff classification in sceneNodesPatch.ts depends on this being
  *  precise: a false positive flashes an untouched shape. */
 export function patchSceneElement(current: Element, next: Element): boolean {
-  // A widget's digits carry its style, so a new style needs fresh digits.
+  // A widget's digits carry its style and its value, so either one changing needs fresh digits.
   const widgetRestyled =
-    next.hasAttribute('data-sf-widget') && current.getAttribute('data-sf-widget-style') !== next.getAttribute('data-sf-widget-style');
+    next.hasAttribute('data-sf-widget') &&
+    (current.getAttribute('data-sf-widget-style') !== next.getAttribute('data-sf-widget-style') ||
+      current.getAttribute('data-sf-widget-value') !== next.getAttribute('data-sf-widget-value'));
   const attributesChanged = patchAttributes(current, next);
   let contentChanged = false;
   if (widgetRestyled) {
