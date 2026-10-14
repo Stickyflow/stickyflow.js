@@ -75,6 +75,7 @@ function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
 const RULER_NUMBERS = ['ticks', 'major', 'length', 'thickness', 'round', 'dent', 'spread', 'inset', 'line', 'gap', 'intensity'] as const;
 const RULER_COLORS = ['color', 'accent', 'glow'] as const;
 const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
+const RULER_OPTIONAL_COLORS = ['core'] as const;
 
 function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
   const properties = canvasObject.props;
@@ -87,6 +88,12 @@ function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
   }
   for (const key of RULER_COLORS) {
     parameters[key] = color(properties[key]) ?? RULER_DEFAULTS[key];
+  }
+  for (const key of RULER_OPTIONAL_COLORS) {
+    const value = color(properties[key]);
+    if (value) {
+      parameters[key] = value;
+    }
   }
   parameters.axis = properties.axis === 'horizontal' ? 'horizontal' : 'vertical';
   if (properties.knob) {

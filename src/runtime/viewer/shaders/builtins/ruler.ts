@@ -17,11 +17,30 @@ uniform float uDent;
 uniform float uSpread;
 uniform float uInset;
 uniform float uLine;
+uniform float uGap;
+uniform float uKnobRadius;
 uniform float uAxis;
 uniform vec3 uColor;
 uniform vec3 uAccent;
 uniform vec3 uGlow;
+uniform vec3 uCore;
 varying vec2 vUv;
+
+// The wire across the scale at a position along it. Right at a knob it follows the outline of the knob at the distance of the gap;
+// farther out it eases into the straight line in a wide, soft shoulder. Without a known knob it bends in a soft hill.
+float wireAt(float at, float lineAt, float depth, float radius, float knob, float spread) {
+  float reach = abs(at - knob);
+  if (uKnobRadius > 0.0) {
+    float outline = max(sqrt(max(radius * radius - reach * reach, 0.0)) - (radius - depth), 0.0);
+    float shoulder = max(sqrt(2.0 * depth * radius) * 0.9, 1.0);
+    float soft = depth * exp(-(reach * reach) / (shoulder * shoulder));
+    float k = max(depth * 0.15, 1.0);
+    float h = max(k - abs(outline - soft), 0.0) / k;
+    return lineAt - (max(outline, soft) + h * h * k * 0.25);
+  }
+  float away = reach / spread;
+  return lineAt - depth * exp(-away * away);
+}
 
 void main() {
   vec2 px = vUv * uResolution;
@@ -47,14 +66,26 @@ void main() {
 
   float away = (along - knob) / spread;
   float bump = exp(-away * away);
-  float wire = lineAt - depth * bump;
-  float lineDistance = abs(across - wire);
+  float radius = (uKnobRadius + (uGap > 0.0 ? uGap : 0.04)) * width;
+  float wire = wireAt(along, lineAt, depth, radius, knob, spread);
+  // The distance to the wire across the scale shrinks where the wire is steep, so measure it along the normal.
+  float slope = (wireAt(along + 1.0, lineAt, depth, radius, knob, spread) - wireAt(along - 1.0, lineAt, depth, radius, knob, spread)) * 0.5;
+  float lineDistance = abs(across - wire) / sqrt(1.0 + slope * slope);
   float line = 1.0 - smoothstep(halfLine - 0.75, halfLine + 0.75, lineDistance);
+  float wireDistance = abs(across - wire);
   vec3 lineColor = mix(uColor, uAccent, bump);
 
   vec3 glowColor = dot(uGlow, uGlow) > 0.0 ? uGlow : uAccent;
   float glowSide = across < wire ? 1.0 : 0.35;
-  float glow = bump * exp(-lineDistance / (0.1 * width)) * glowSide * 1.3 * max(uIntensity, 0.0);
+  float glow = bump * exp(-wireDistance / (0.1 * width)) * glowSide * 1.3 * max(uIntensity, 0.0);
+  // A hotter core of another color sits at the knob, where the glow starts.
+  vec3 coreColor = dot(uCore, uCore) > 0.0 ? uCore : mix(glowColor, vec3(1.0), 0.55);
+  float core = bump * bump * exp(-wireDistance / (0.035 * width)) * glowSide * 1.6 * max(uIntensity, 0.0);
+  // Both fade out before the edge of the surface instead of being cut off by it.
+  float reachEdge = min(min(along, extent - along), min(across, width - across));
+  float fade = smoothstep(0.0, 0.14 * width, reachEdge);
+  glow *= fade;
+  core *= fade;
 
   float spacing = span / count;
   float position = (along - start) / spacing;
@@ -74,8 +105,8 @@ void main() {
   // The ticks at the knob turn white and fade back to their color with the distance.
   vec3 tickColor = mix(uColor, vec3(1.0), tickBump);
 
-  float alpha = clamp(tick + line * 0.95 + glow, 0.0, 1.0);
-  vec3 rgb = tickColor * tick + lineColor * line * 0.95 + glowColor * glow;
+  float alpha = clamp(tick + line * 0.95 + glow + core, 0.0, 1.0);
+  vec3 rgb = tickColor * tick + lineColor * line * 0.95 + glowColor * glow + coreColor * core;
   gl_FragColor = vec4(clamp(rgb, 0.0, 1.0), alpha);
 }
 `;

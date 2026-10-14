@@ -58,7 +58,8 @@ function shade(node: SVGElement, bump: number): void {
 
 // A ruler with a knob names a Shape of the document; the viewer lays that Shape beside the wire at the current value and
 // moves the numbers out of its way.
-export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => number | undefined): void {
+export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => number | undefined): Map<string, number> {
+  const radii = new Map<string, number>();
   for (const surface of svg.querySelectorAll('foreignObject[data-sf-shader="ruler"]')) {
     const params = parameters(surface);
     const id = surface.getAttribute('data-sf-id') ?? '';
@@ -84,6 +85,7 @@ export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => 
         move(primary, 0, 0);
         const box = primary.getBBox();
         const half = (horizontal ? box.height : box.width) / 2;
+        radii.set(id, half / across);
         const gap = (params.gap === undefined ? 0.04 : Number(params.gap)) * across;
         const side = line * across - depth + half + gap;
         const target = horizontal
@@ -111,4 +113,5 @@ export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => 
       shade(label, bump);
     }
   }
+  return radii;
 }

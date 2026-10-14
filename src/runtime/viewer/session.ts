@@ -34,7 +34,10 @@ export class ViewerSession implements Viewer {
   }
 
   private placeKnobs(): void {
-    placeRulerKnobs(this.display.svg, id => this.rulerProgressOverrides.get(id));
+    const radii = placeRulerKnobs(this.display.svg, id => this.rulerProgressOverrides.get(id));
+    for (const [id, knobRadius] of radii) {
+      this.setShaderParameters(id, { knobRadius });
+    }
   }
 
   get svg(): SVGSVGElement {
