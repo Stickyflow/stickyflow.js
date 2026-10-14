@@ -265,10 +265,16 @@ function applyParameters(surface: Surface, elapsed: number): void {
   }
 }
 
+const MAX_SURFACE_PIXELS = 2560;
+
 function renderSurface(surface: Surface, seconds: number): void {
   const { canvas, gl, parameters } = surface;
-  const width = Math.max(1, Math.round(canvas.clientWidth * (globalThis.devicePixelRatio || 1)));
-  const height = Math.max(1, Math.round(canvas.clientHeight * (globalThis.devicePixelRatio || 1)));
+  // One canvas pixel per screen pixel: the zoom of the viewer scales the canvas on screen, so measure it there.
+  const shown = canvas.getBoundingClientRect();
+  const density = Math.min(globalThis.devicePixelRatio || 1, 3);
+  const fit = Math.min(1, MAX_SURFACE_PIXELS / Math.max(1, shown.width * density, shown.height * density));
+  const width = Math.max(1, Math.round((shown.width || canvas.clientWidth) * density * fit));
+  const height = Math.max(1, Math.round((shown.height || canvas.clientHeight) * density * fit));
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
