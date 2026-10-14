@@ -121,8 +121,6 @@ const APPLY: Record<string, Apply> = {
   },
 };
 
-const sampleSource = (sample: Row | Row[]): DataSource => ({ get: () => sample, subscribe: () => () => undefined });
-
 export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions = {}): BindingRuntime {
   const graph = buildBindingGraph(parse(sfl));
   const diagnostics = [...graph.diagnostics];
@@ -156,7 +154,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
         diagnostics.push({
           severity: 'warning',
           code: 'source-not-registered',
-          message: `DataSource '${missing}' has no registered source and no sample data, so '${binding.property}' stays empty.`,
+          message: `DataSource '${missing}' has no registered source, so '${binding.property}' stays empty.`,
           line: binding.line,
           col: binding.col,
         });
@@ -207,13 +205,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     }
   };
 
-  // Sample data stands in until a real source is registered; constants never change, so they apply once.
-  for (const contract of graph.contracts.values()) {
-    if (contract.sample) {
-      sources.set(contract.name, sampleSource(contract.sample));
-      markDirty(contract.name);
-    }
-  }
+  // Constants never change, so they apply once.
   for (const binding of graph.bindings) {
     if (binding.dependencies.length === 0) {
       dirty.add(binding);
@@ -252,11 +244,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       const unsubscribe = source.subscribe(adopt);
       return () => {
         unsubscribe();
-        if (contract.sample) {
-          sources.set(name, sampleSource(contract.sample));
-        } else {
-          sources.delete(name);
-        }
+        sources.delete(name);
       };
     },
     flush,
@@ -275,9 +263,17 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
   };
 }
 
-// A static render that shows the sample data of every DataSource, for previews and exports.
-export function renderBound(sfl: string, options: RenderOptions = {}): RenderResult {
-  const runtime = createBindingRuntime(sfl, { renderOptions: options });
+export interface RenderBoundOptions extends RenderOptions {
+  data?: Record<string, Row | Row[]>;
+}
+
+// A static render of the bound document with the given rows per DataSource, for previews and exports.
+export function renderBound(sfl: string, options: RenderBoundOptions = {}): RenderResult {
+  const { data = {}, ...renderOptions } = options;
+  const runtime = createBindingRuntime(sfl, { renderOptions });
+  for (const [name, rows] of Object.entries(data)) {
+    runtime.registerSource(name, { get: () => rows, subscribe: () => () => undefined });
+  }
   runtime.flush();
-  return renderCanvas(runtime.input, options);
+  return renderCanvas(runtime.input, renderOptions);
 }

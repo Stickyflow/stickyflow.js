@@ -7,12 +7,11 @@ export interface BlockEntries {
   styles: SflStyle[];
   dataBlocks: SflBlock[];
   fields: SflProperty[][];
-  samples: SflProperty[][];
   bindings: SflBinding[];
 }
 
 export function collectBlockEntries(block: SflBlock): BlockEntries {
-  const entries: BlockEntries = { properties: [], blocks: [], layouts: [], styles: [], dataBlocks: [], fields: [], samples: [], bindings: [] };
+  const entries: BlockEntries = { properties: [], blocks: [], layouts: [], styles: [], dataBlocks: [], fields: [], bindings: [] };
 
   for (const entry of block.entries) {
     if (entry.type === 'property') {
@@ -25,8 +24,6 @@ export function collectBlockEntries(block: SflBlock): BlockEntries {
       entries.styles.push(entry.style);
     } else if (entry.type === 'fields') {
       entries.fields.push(entry.fields);
-    } else if (entry.type === 'sample') {
-      entries.samples.push(entry.sample);
     } else if (entry.type === 'binding') {
       entries.bindings.push(entry.binding);
     } else {

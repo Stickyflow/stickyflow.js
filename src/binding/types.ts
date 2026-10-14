@@ -33,7 +33,6 @@ export interface DataSourceContract {
   // The type as written in the SFL (number, int, float, string, bool ...).
   declared: Record<string, string>;
   // Preview data written in the SFL; used while no real source is registered.
-  sample?: Row | Row[];
 }
 
 export interface BindingDiagnostic {

@@ -62,7 +62,6 @@ function usesCompactBlockForm(kind: BlockKind, entries: BlockEntries, propertyCo
     entries.styles.length > 0 ||
     entries.dataBlocks.length > 0 ||
     entries.fields.length > 0 ||
-    entries.samples.length > 0 ||
     entries.bindings.length > 0;
   return supportsCompactForm && !hasNestedContent && propertyCount <= COMPACT_MAX_PROPS;
 }
@@ -89,20 +88,17 @@ function emitPrimaryBlockEntries(entries: BlockEntries, properties: SflProperty[
 }
 
 function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number): string {
-  const fields = [
-    ...entries.fields.map(properties => emitFieldsBlock('fields', properties, depth + 1)),
-    ...entries.samples.map(properties => emitFieldsBlock('sample', properties, depth + 1)),
-  ];
+  const fields = entries.fields.map(properties => emitFieldsBlock(properties, depth + 1));
   const dataBlocks = entries.dataBlocks.map(data => emitDataBlock(data, depth + 1));
   const layouts = entries.layouts.map(layout => emitPropertyBlock('layout', layout.properties, depth + 1));
   const styles = entries.styles.map(style => emitPropertyBlock('style', style.properties, depth + 1));
   return [...fields, ...dataBlocks, ...layouts, ...styles].join('\n');
 }
 
-function emitFieldsBlock(name: 'fields' | 'sample', properties: SflProperty[], depth: number): string {
+function emitFieldsBlock(properties: SflProperty[], depth: number): string {
   const pad = INDENT.repeat(depth);
   const lines = properties.map(property => `${pad}${INDENT}${emitProperty(property)}`);
-  return lines.length ? `${pad}${name} {\n${lines.join('\n')}\n${pad}}` : `${pad}${name} {\n${pad}}`;
+  return lines.length ? `${pad}fields {\n${lines.join('\n')}\n${pad}}` : `${pad}fields {\n${pad}}`;
 }
 
 function emitDataBlock(data: SflBlock, depth: number): string {

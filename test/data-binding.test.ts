@@ -2,19 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { buildBindingGraph, createBindingRuntime, createDataSource, renderBound } from '../src/binding';
 import { canonicalize, parse } from '../src/sflLanguage';
 
-const SAMPLE = `sample {
-    month: ["Jan", "Feb", "Mar"]
-    revenue: [10, 20, 30]
-  }`;
-
-const doc = (series: string, options: { sample?: boolean; revenue?: string } = {}) => `sfl 1.4
+const doc = (series: string, options: { revenue?: string } = {}) => `sfl 1.4
 
 DataSource sales {
   fields {
     month: string
     revenue: ${options.revenue ?? 'number'}
   }
-  ${options.sample ? SAMPLE : ''}
 }
 
 Model board {
@@ -43,11 +37,10 @@ const seriesValues = (runtime: ReturnType<typeof createBindingRuntime>) =>
   runtime.input.charts?.find(chart => chart.id === 'revenueChart')?.series.find(series => series.id === 'revenue')?.values;
 
 describe('binding syntax', () => {
-  it('round-trips a top-level DataSource, fields, sample and all three operators', () => {
-    const sfl = doc('values: <- sales.revenue * 2 + 1\n      label: <-> sales.month\n      onClick: -> sales.reload()', { sample: true });
+  it('round-trips a top-level DataSource, fields and all three operators', () => {
+    const sfl = doc('values: <- sales.revenue * 2 + 1\n      label: <-> sales.month\n      onClick: -> sales.reload()');
     const text = canonicalize(sfl);
     expect(text).toContain('fields {');
-    expect(text).toContain('sample {');
     expect(text).toContain('values: <- sales.revenue * 2 + 1');
     expect(text).toContain('label: <-> sales.month');
     expect(text).toContain('onClick: -> sales.reload()');
@@ -61,39 +54,39 @@ describe('binding syntax', () => {
   });
 
   it('still reads a plain colon as a literal, not a binding', () => {
-    expect(codes(doc('values: [1, 2, 3]'))).toEqual(['no-sample-data']);
+    expect(codes(doc('values: [1, 2, 3]'))).toEqual([]);
     expect(buildBindingGraph(parse(doc('values: [1, 2, 3]'))).bindings.map(binding => binding.property)).toEqual(['categories']);
   });
 });
 
 describe('binding type check', () => {
-  it('accepts a matching contract and warns about missing sample data', () => {
-    expect(codes(BOUND)).toEqual(['no-sample-data', 'no-sample-data']);
-    expect(codes(doc('values: <- sales.revenue', { sample: true }))).toEqual([]);
+  it('accepts a matching contract', () => {
+    expect(codes(BOUND)).toEqual([]);
+    expect(codes(doc('values: <- sales.revenue'))).toEqual([]);
   });
 
   it('rejects a number column bound to a string list', () => {
-    expect(codes(doc('values: <- sales.month', { sample: true }))).toEqual(['type-mismatch']);
+    expect(codes(doc('values: <- sales.month'))).toEqual(['type-mismatch']);
   });
 
   it('rejects unknown fields, sources and properties', () => {
-    expect(codes(doc('values: <- sales.profit', { sample: true }))).toEqual(['unknown-reference']);
-    expect(codes(doc('values: <- cost.revenue', { sample: true }))).toEqual(['unknown-reference']);
-    expect(codes(doc('colour: <- sales.month', { sample: true }))).toEqual(['unknown-bound-property']);
+    expect(codes(doc('values: <- sales.profit'))).toEqual(['unknown-reference']);
+    expect(codes(doc('values: <- cost.revenue'))).toEqual(['unknown-reference']);
+    expect(codes(doc('colour: <- sales.month'))).toEqual(['unknown-bound-property']);
   });
 
   it('rejects functions beyond when()', () => {
-    expect(codes(doc('values: <- round(sales.revenue)', { sample: true }))).toEqual(['unknown-function']);
+    expect(codes(doc('values: <- round(sales.revenue)'))).toEqual(['unknown-function']);
   });
 
   it('warns that two-way and event bindings are parsed but not executed', () => {
-    expect(codes(doc('label: <-> sales.month', { sample: true }))).toEqual(['binding-operator-unsupported']);
+    expect(codes(doc('label: <-> sales.month'))).toEqual(['binding-operator-unsupported']);
   });
 
   it('accepts int, float and bool next to number and boolean, and rejects unknown field types', () => {
-    expect(codes(doc('values: <- sales.revenue', { sample: true, revenue: 'int' }))).toEqual([]);
-    expect(codes(doc('values: <- sales.revenue', { sample: true, revenue: 'float' }))).toEqual([]);
-    expect(codes(doc('values: <- sales.revenue', { sample: true, revenue: 'decimal' }))).toContain('unknown-field-type');
+    expect(codes(doc('values: <- sales.revenue', { revenue: 'int' }))).toEqual([]);
+    expect(codes(doc('values: <- sales.revenue', { revenue: 'float' }))).toEqual([]);
+    expect(codes(doc('values: <- sales.revenue', { revenue: 'decimal' }))).toContain('unknown-field-type');
   });
 
   it('finds a DataSource declared inside the Model block as well', () => {
@@ -104,10 +97,6 @@ Model board {
     fields {
       month: string
       revenue: number
-    }
-    sample {
-      month: ["Jan"]
-      revenue: [5]
     }
   }
 
@@ -156,26 +145,23 @@ describe('binding runtime', () => {
     expect(runtime.flush()).toBeNull();
   });
 
-  it('shows the sample data until a real source is registered, then follows the source', () => {
-    const runtime = createBindingRuntime(doc('values: <- sales.revenue', { sample: true }));
-    runtime.flush();
-    expect(seriesValues(runtime)).toEqual([10, 20, 30]);
-
+  it('keeps the last values after a source is unregistered', () => {
+    const runtime = createBindingRuntime(BOUND);
     const sales = createDataSource(rows([7, 8, 9]));
     const unregister = runtime.registerSource('sales', sales);
     runtime.flush();
     expect(seriesValues(runtime)).toEqual([7, 8, 9]);
 
     unregister();
-    runtime.flush();
     sales.set(rows([1, 1, 1]));
+    runtime.flush();
     expect(seriesValues(runtime)).toEqual([7, 8, 9]);
   });
 
-  it('renderBound draws the sample data without a runtime', () => {
-    const withSample = renderBound(doc('values: <- sales.revenue', { sample: true }));
+  it('renderBound draws the rows it is given without a runtime', () => {
+    const withData = renderBound(BOUND, { data: { sales: rows([10, 20, 30]) } });
     const without = renderBound(BOUND);
-    expect(withSample.svg).toContain('sf-chart-bar-revenueChart-revenue-2');
+    expect(withData.svg).toContain('sf-chart-bar-revenueChart-revenue-2');
     expect(without.svg).not.toContain('sf-chart-bar-revenueChart-revenue-0');
   });
 
@@ -243,7 +229,7 @@ Model board {
     expect(runtime.diagnostics.find(diagnostic => diagnostic.code === 'data-type-mismatch')?.message).toContain('whole number');
   });
 
-  it('warns once when a bound DataSource has neither a source nor sample data', () => {
+  it('warns once when a bound DataSource has no registered source', () => {
     const runtime = createBindingRuntime(BOUND);
     runtime.attach({ update: () => undefined });
     runtime.attach({ update: () => undefined });

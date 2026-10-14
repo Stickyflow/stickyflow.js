@@ -84,9 +84,6 @@ export class BlockParser {
     if (token.value === 'fields' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'fields', fields: this.properties.parseFields() };
     }
-    if (token.value === 'sample' && this.cursor.peek(1).type === 'lbrace') {
-      return { type: 'sample', sample: this.properties.parseSample() };
-    }
     if (this.cursor.peek(1).type === 'colon' && ['bind', 'bind2', 'action'].includes(this.cursor.peek(2).type)) {
       return { type: 'binding', binding: this.parseBinding() };
     }

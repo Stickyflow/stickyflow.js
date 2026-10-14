@@ -95,15 +95,6 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
       continue;
     }
     const dependencies = [...new Set(collectRefs(binding.expr).map(ref => ref.join('.')))];
-    for (const name of new Set(dependencies.map(dependency => dependency.split('.')[0]))) {
-      if (contracts.get(name) && !contracts.get(name)?.sample) {
-        report(
-          'no-sample-data',
-          `'${binding.key}' reads DataSource '${name}', which has no sample data: previews and exports without a runtime stay empty. Add a sample { ... } block.`,
-          'warning',
-        );
-      }
-    }
     bindings.push({
       id: `${kind}.${owner}.${binding.key}`,
       ownerKind: kind,

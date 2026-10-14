@@ -66,6 +66,7 @@ export type {
   BindingGraph,
   BindingRuntime,
   BindingRuntimeOptions,
+  RenderBoundOptions,
   BindingTarget,
   BindingType,
   BindingValue,

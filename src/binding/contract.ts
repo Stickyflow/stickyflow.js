@@ -1,32 +1,8 @@
-import type { SflBlock, SflDocument, SflProperty, SflValue } from '../sflLanguage/ast';
-import { type BindingDiagnostic, type DataSourceContract, type Row, scalarOf, type SourceMode } from './types';
+import type { SflBlock, SflDocument, SflValue } from '../sflLanguage/ast';
+import { type BindingDiagnostic, type DataSourceContract, scalarOf, type SourceMode } from './types';
 
 function identOf(value: SflValue | undefined): string | undefined {
   return value?.type === 'ident' ? value.segments.join('.') : undefined;
-}
-
-function literal(value: SflValue): unknown {
-  switch (value.type) {
-    case 'number':
-    case 'string':
-      return value.value;
-    case 'ident':
-      return value.segments.join('.') === 'true' ? true : value.segments.join('.') === 'false' ? false : undefined;
-    case 'list':
-      return value.values.map(literal);
-    default:
-      return undefined;
-  }
-}
-
-function readSample(mode: SourceMode, properties: SflProperty[]): Row | Row[] {
-  const columns = Object.fromEntries(properties.map(property => [property.key, literal(property.value)]));
-  if (mode === 'record') {
-    return columns;
-  }
-  const lists = Object.entries(columns).filter(([, value]) => Array.isArray(value)) as Array<[string, unknown[]]>;
-  const length = Math.max(0, ...lists.map(([, list]) => list.length));
-  return Array.from({ length }, (_value, index) => Object.fromEntries(lists.map(([field, list]) => [field, list[index]])));
 }
 
 function readContract(block: SflBlock, diagnostics: BindingDiagnostic[]): DataSourceContract {
@@ -51,8 +27,6 @@ function readContract(block: SflBlock, diagnostics: BindingDiagnostic[]): DataSo
           });
         }
       }
-    } else if (entry.type === 'sample') {
-      contract.sample = readSample(mode, entry.sample);
     }
   }
   return contract;
