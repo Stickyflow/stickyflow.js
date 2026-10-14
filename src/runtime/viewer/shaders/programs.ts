@@ -1,3 +1,4 @@
+import { buttonProgram } from './builtins/button';
 import { chromaticGlassPlateProgram } from './builtins/chromaticGlassPlate';
 import { chromaticHaloProgram } from './builtins/chromaticHalo';
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
@@ -32,6 +33,7 @@ const builtins = [
   plasmaGaugeProgram,
   tickScaleProgram,
   rulerProgram,
+  buttonProgram,
   prismSlatsProgram,
   eclipseOrbProgram,
   emberMatrixProgram,

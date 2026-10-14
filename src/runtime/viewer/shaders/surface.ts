@@ -309,6 +309,10 @@ function renderSurface(surface: Surface, seconds: number): void {
   uniform3f(surface, 'uHot', color(parameters.hot, [1, 0.45, 0.82]));
   uniform1f(surface, 'uDent', number(parameters.dent, -1));
   uniform1f(surface, 'uDay', number(parameters.day, -1));
+  uniform1f(surface, 'uLight', number(parameters.light, 135));
+  uniform1f(surface, 'uGloss', number(parameters.gloss, 0.15));
+  uniform1f(surface, 'uDepth', number(parameters.depth, 0.4));
+  uniform1f(surface, 'uRim', number(parameters.rim, 0.2));
   uniform3f(surface, 'uShapeColor', surface.shapeColor);
   const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
   surface.lastSeconds = seconds;
