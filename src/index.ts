@@ -8,7 +8,7 @@ export type { FreeformPath, PathPoint } from './model/path';
 export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { Shader, ShaderParameter } from './model/shader';
-export type { RollingNumberWidget, RollingNumberWidgetStyle, Widget, WidgetType } from './model/widget';
+export type { RollingNumberWidget, RollingNumberWidgetStyle, TickScaleWidget, Widget, WidgetType } from './model/widget';
 
 // L1 — SFL Language
 export { canonicalize, parse } from './sflLanguage';

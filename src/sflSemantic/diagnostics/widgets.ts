@@ -9,12 +9,12 @@ export function collectUnsupportedWidgetTypes(sflDocument: SflDocument): SflDiag
   const visit = (block: SflBlock): void => {
     if (block.kind === 'Widget') {
       const type = asString(directProperties(block).get('type')) ?? 'rollingNumber';
-      if (type !== 'rollingNumber') {
+      if (type !== 'rollingNumber' && type !== 'tickScale') {
         diagnostics.push({
           severity: 'warning',
           code: 'unsupported-widget-type',
           ownerId: block.name,
-          message: `Unsupported widget type '${type}'. Supported: rollingNumber.`,
+          message: `Unsupported widget type '${type}'. Supported: rollingNumber, tickScale.`,
         });
       }
     }

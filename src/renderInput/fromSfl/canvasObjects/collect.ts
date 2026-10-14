@@ -6,7 +6,7 @@ import type { Link } from '../../../model/link';
 import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
-import type { RollingNumberWidget } from '../../../model/widget';
+import type { Widget } from '../../../model/widget';
 import { isIsometricObject, type SflCanvasState, type SflWidgetObject } from '../../../sflSemantic/sflToCanvasState';
 import { chartObject } from './chart';
 import { connectionObject } from './connection';
@@ -25,7 +25,7 @@ export interface CollectedCanvasObjects {
   isometricObjects: IsometricObject[];
   paths: FreeformPath[];
   charts: Chart[];
-  widgets: RollingNumberWidget[];
+  widgets: Widget[];
   links: Link[];
   connections: Connection[];
 }
@@ -48,7 +48,7 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     widgets: canvasObjects
       .filter(
         (canvasObject): canvasObject is SflWidgetObject =>
-          canvasObject.objectType === 'widget' && canvasObject.widget?.type === 'rollingNumber',
+          canvasObject.objectType === 'widget' && (canvasObject.widget?.type === 'rollingNumber' || canvasObject.widget?.type === 'tickScale'),
       )
       .map(widgetObject),
     links: byOrder(state.links).map(linkObject),

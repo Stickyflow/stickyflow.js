@@ -19,6 +19,9 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Widget') {
     return asString(properties.get('type')) ?? 'widget';
   }
+  if (block.kind === 'Text') {
+    return 'text';
+  }
   if (block.kind === 'Isometric') {
     return 'isometric';
   }
@@ -39,7 +42,7 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   if (kind === 'chart') {
     return 'chart';
   }
-  if (kind === 'rollingNumber') {
+  if (kind === 'rollingNumber' || kind === 'tickScale') {
     return 'widget';
   }
   if (kind === 'isometric') {

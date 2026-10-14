@@ -169,7 +169,8 @@ export interface SceneText extends SceneBase {
   lines: string[];
   fontFamily: string;
   fontSize: number;
-  fontWeight: 'normal' | 'bold';
+  fontWeight: 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+  letterSpacing?: number;
   color: string;
   align: 'left' | 'center' | 'right';
   verticalAlign: 'top' | 'middle' | 'bottom';

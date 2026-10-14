@@ -1,4 +1,4 @@
-import type { RollingNumberWidget } from '../../../model/widget';
+import type { RollingNumberWidget, TickScaleWidget } from '../../../model/widget';
 import type { SflWidgetObject } from '../../../sflSemantic/canvasObjects/types';
 
 const CSS_COLOR = /^(?:#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\)|[a-z][\w-]*)$/i;
@@ -26,7 +26,56 @@ function fontWeight(value: string | undefined): string | undefined {
   return value && FONT_WEIGHT.test(value) ? value : undefined;
 }
 
-export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget {
+const TICK_SCALE_NUMBERS = ['ticks', 'major', 'radius', 'length', 'thickness', 'start', 'sweep', 'intensity'] as const;
+const TICK_SCALE_COLORS = ['color', 'accent'] as const;
+
+function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
+  const properties = canvasObject.props;
+  const parameters: Record<string, string | number> = {};
+  for (const key of TICK_SCALE_NUMBERS) {
+    const value = Number(properties[key]);
+    if (properties[key] !== undefined && Number.isFinite(value)) {
+      parameters[key] = value;
+    }
+  }
+  for (const key of TICK_SCALE_COLORS) {
+    const value = color(properties[key]);
+    if (value) {
+      parameters[key] = value;
+    }
+  }
+  return {
+    id: canvasObject.id,
+    type: 'tickScale',
+    value: canvasObject.widget.value,
+    max: canvasObject.widget.max,
+    label: canvasObject.widget.label,
+    x: canvasObject.x,
+    y: canvasObject.y,
+    width: canvasObject.width,
+    height: canvasObject.height,
+    rotation: canvasObject.rotation,
+    order: canvasObject.order,
+    sourceIndex: canvasObject.sourceIndex,
+    parentFrameId: canvasObject.parentFrameId,
+    parameters,
+    labels:
+      properties.labels === 'true'
+        ? {
+            size: Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined ? Number(properties.labelSize) : undefined,
+            color: color(properties.labelColor),
+            offset: Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined ? Number(properties.labelOffset) : undefined,
+            weight: fontWeight(properties.labelWeight),
+            fontFamily: fontFamily(properties.labelFont),
+          }
+        : undefined,
+  };
+}
+
+export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget | TickScaleWidget {
+  if (canvasObject.widget.type === 'tickScale') {
+    return tickScaleObject(canvasObject);
+  }
   const properties = canvasObject.props;
   return {
     id: canvasObject.id,

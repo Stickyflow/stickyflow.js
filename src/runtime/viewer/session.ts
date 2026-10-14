@@ -70,7 +70,23 @@ export class ViewerSession implements Viewer {
   }
 
   setWidgetValue(widgetId: string, value: string | number): boolean {
-    return this.documentWidgets.setValue(widgetId, value);
+    if (this.documentWidgets.setValue(widgetId, value)) {
+      return true;
+    }
+    // A tick scale takes the value as progress along its max.
+    const scale = [...this.svg.querySelectorAll('foreignObject[data-sf-shader="tickScale"]')].find(
+      element => element.getAttribute('data-sf-id') === widgetId,
+    );
+    if (!scale) {
+      return false;
+    }
+    let max = 100;
+    try {
+      max = Number((JSON.parse(scale.getAttribute('data-sf-shader-params') ?? '{}') as { max?: number }).max) || 100;
+    } catch {
+      max = 100;
+    }
+    return this.setShaderParameters(widgetId, { progress: Math.min(1, Math.max(0, Number(value) / max)) });
   }
 
   update(next: ViewerSource): void {

@@ -209,7 +209,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       announce(binding.id, { kind: 'shader', owners: applyShader(input, binding, value), parameters: { [binding.property]: value as number } });
       return false;
     }
-    APPLY[`${binding.ownerKind}.${binding.property}`]?.(input, binding.ownerPath, value);
+    APPLY[`${binding.ownerKind === 'Text' ? 'Shape' : binding.ownerKind}.${binding.property}`]?.(input, binding.ownerPath, value);
     if (binding.ownerKind === 'Widget') {
       announce(binding.id, { kind: 'widget', id: binding.ownerPath[0], value: value as number });
       return false;

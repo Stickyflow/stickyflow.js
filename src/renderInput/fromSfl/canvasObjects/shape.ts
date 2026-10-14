@@ -4,10 +4,10 @@ import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeShadow } from '../../styleDecoding';
 import {
   dashArray,
-  FONT_WEIGHTS,
   numOf,
   oneOf,
   optionalOneOf,
+  SHAPE_FONT_WEIGHTS,
   SHAPE_STROKE_STYLES,
   strokePaint,
   TEXT_ALIGNS,
@@ -20,6 +20,7 @@ function shapeTypeOf(value: string | undefined): ShapeType {
 
 export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Shader>) {
   const p = e.props;
+  const isText = e.kind === 'text';
   return {
     id: e.id,
     type: 'shape',
@@ -33,12 +34,15 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     w: e.width,
     h: e.height,
     rotation: e.rotation ?? 0,
-    fillColor: decodeColor(p.fill),
-    strokeColor: strokePaint(p.stroke),
+    fillColor: decodeColor(p.fill ?? (isText ? 'none' : undefined)),
+    strokeColor: strokePaint(p.stroke ?? (isText ? 'none' : undefined)),
+    isText: isText || undefined,
     strokeWidth: numOf(p.strokeWidth),
     textColor: p.textColor,
     fontSize: numOf(p.fontSize),
-    fontWeight: p.fontWeight === undefined ? undefined : oneOf(p.fontWeight, FONT_WEIGHTS, 'normal'),
+    fontWeight: p.fontWeight === undefined ? undefined : oneOf(p.fontWeight, SHAPE_FONT_WEIGHTS, 'normal'),
+    letterSpacing: numOf(p.letterSpacing),
+    lineHeight: numOf(p.lineHeight),
     fontFamily: p.fontFamily,
     textAlign: optionalOneOf(p.textAlign, TEXT_ALIGNS),
     textVerticalAlign: optionalOneOf(p.verticalAlign, VERTICAL_ALIGNS),

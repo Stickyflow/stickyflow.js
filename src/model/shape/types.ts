@@ -2,6 +2,8 @@ import type { GradientColor, MeshGradientColor } from '../color/types';
 import type { Shader } from '../shader';
 import type { ShadowStyle } from '../shadow';
 
+export type FontWeight = 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+
 export type ShapeStrokeStyle = 'solid' | 'dashed' | 'dotted' | 'double';
 
 export type ShapeType =
@@ -36,7 +38,11 @@ export interface Shape {
   textColor?: string | null;
 
   fontSize?: number;
-  fontWeight?: 'normal' | 'bold';
+  fontWeight?: FontWeight;
+  // Extra space between letters, in px.
+  letterSpacing?: number;
+  // A Text block: bare text without fill, stroke or inner padding.
+  isText?: boolean;
   fontFamily?: string;
   textAlign?: 'left' | 'center' | 'right';
   textVerticalAlign?: 'top' | 'middle' | 'bottom';
