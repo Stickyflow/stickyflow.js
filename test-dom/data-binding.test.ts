@@ -4,21 +4,21 @@ import { createViewer } from '../src/runtime/viewer';
 
 const sfl = `sfl 1.4
 
-Model board {
-  DataSource sales {
-    fields {
-      month: string
-      revenue: number
-    }
+DataSource sales {
+  fields {
+    month: string
+    revenue: number
   }
+}
 
+Model board {
   Chart revenueChart {
     type: bar
     stacked: none
-    category <- sales.month
-    value <- sales.revenue
     data {
+      categories: <- sales.month
       Axis y { min: 0; max: 100; step: 25 }
+      revenue { values: <- sales.revenue }
     }
     layout {
       position: 0, 0
@@ -41,7 +41,7 @@ describe('a viewer attached to a binding runtime', () => {
     const sales = createDataSource(rows([20, 40, 60]));
     runtime.registerSource('sales', sales);
     runtime.attach(viewer);
-    const bar = () => viewer.svg.querySelector('[id$="chart-bar-revenueChart-value-2"]')?.getAttribute('d');
+    const bar = () => viewer.svg.querySelector('[id$="chart-bar-revenueChart-revenue-2"]')?.getAttribute('d');
     const before = bar();
     expect(before).toBeTruthy();
 

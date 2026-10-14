@@ -21,6 +21,11 @@ export class PropertyParser {
     return this.parsePropertyBlock('fields');
   }
 
+  parseSample(): SflProperty[] {
+    this.cursor.next();
+    return this.parsePropertyBlock('sample');
+  }
+
   parseProperty(): SflProperty {
     const key = this.cursor.expect('ident', 'property key').value;
     this.cursor.expect('colon', "':'");
@@ -29,7 +34,7 @@ export class PropertyParser {
     return { key, value };
   }
 
-  private parsePropertyBlock(kind: 'layout' | 'style' | 'fields'): SflProperty[] {
+  private parsePropertyBlock(kind: 'layout' | 'style' | 'fields' | 'sample'): SflProperty[] {
     this.cursor.skipNewlines();
     this.cursor.expect('lbrace', "'{'");
     const properties: SflProperty[] = [];

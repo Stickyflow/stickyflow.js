@@ -84,7 +84,10 @@ export class BlockParser {
     if (token.value === 'fields' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'fields', fields: this.properties.parseFields() };
     }
-    if (['bind', 'bind2', 'action'].includes(this.cursor.peek(1).type)) {
+    if (token.value === 'sample' && this.cursor.peek(1).type === 'lbrace') {
+      return { type: 'sample', sample: this.properties.parseSample() };
+    }
+    if (this.cursor.peek(1).type === 'colon' && ['bind', 'bind2', 'action'].includes(this.cursor.peek(2).type)) {
       return { type: 'binding', binding: this.parseBinding() };
     }
     if (token.value === 'data' && this.cursor.peek(1).type === 'lbrace') {
@@ -95,6 +98,7 @@ export class BlockParser {
 
   private parseBinding(): SflBinding {
     const key = this.cursor.expect('ident', 'bound property');
+    this.cursor.expect('colon', "':'");
     const operator = this.cursor.next().value as SflBinding['operator'];
     const expr = parseExpression(this.cursor);
     const next = this.cursor.peek();

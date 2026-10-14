@@ -1,5 +1,5 @@
-import type { BindingOperator, SflBlock, SflDocument } from '../sflLanguage/ast';
-import { collectContracts, visitBlocks } from './contract';
+import type { BlockKind, SflBinding, SflBlock, SflDocument } from '../sflLanguage/ast';
+import { collectContracts } from './contract';
 import { collectRefs, inferType, type TypeScope } from './expression';
 import { BINDABLE_PROPERTIES } from './targets';
 import { type BindingDiagnostic, type BindingType, type BoundProperty, type DataSourceContract, sameType, typeName } from './types';
@@ -10,6 +10,35 @@ export interface BindingGraph {
   // "source.field" -> the bindings that read it; a source change only touches these.
   byField: Map<string, BoundProperty[]>;
   diagnostics: BindingDiagnostic[];
+}
+
+interface BindingSite {
+  kind: BlockKind;
+  path: string[];
+  binding: SflBinding;
+}
+
+// Bindings sit where the property sits: on a block, in its data block (charts), or on a series.
+function collectSites(blocks: SflBlock[], chartPath: string[], sites: BindingSite[]): void {
+  for (const block of blocks) {
+    const path = block.kind === 'Series' ? [...chartPath, block.name] : [block.name];
+    const ownChart = block.kind === 'Chart' ? [block.name] : chartPath;
+    for (const entry of block.entries) {
+      if (entry.type === 'binding') {
+        sites.push({ kind: block.kind, path, binding: entry.binding });
+      } else if (entry.type === 'block') {
+        collectSites([entry.block], ownChart, sites);
+      } else if (entry.type === 'data') {
+        for (const inner of entry.data.entries) {
+          if (inner.type === 'binding') {
+            sites.push({ kind: 'Chart', path: ownChart, binding: inner.binding });
+          } else if (inner.type === 'block') {
+            collectSites([inner.block], ownChart, sites);
+          }
+        }
+      }
+    }
+  }
 }
 
 function fieldType(contract: DataSourceContract, field: string): BindingType | undefined {
@@ -29,60 +58,65 @@ function createScope(contracts: Map<string, DataSourceContract>): TypeScope {
   };
 }
 
-function bindingsOf(block: SflBlock): Array<{ operator: BindingOperator; key: string; expr: import('../sflLanguage/ast').SflExpr; line: number; col: number }> {
-  return block.entries.flatMap(entry => (entry.type === 'binding' ? [entry.binding] : []));
-}
-
 export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
   const { contracts, diagnostics } = collectContracts(sflDocument);
   const scope = createScope(contracts);
   const bindings: BoundProperty[] = [];
+  const sites: BindingSite[] = [];
+  collectSites(sflDocument.blocks, [], sites);
 
-  visitBlocks(sflDocument.blocks, block => {
-    for (const binding of bindingsOf(block)) {
-      const report = (code: string, message: string) =>
-        diagnostics.push({ severity: 'error', code, message, line: binding.line, col: binding.col });
-      if (binding.operator !== '<-') {
-        diagnostics.push({
-          severity: 'warning',
-          code: 'binding-operator-unsupported',
-          message: `'${binding.operator}' on '${binding.key}' is parsed but not executed yet; only '<-' is supported.`,
-          line: binding.line,
-          col: binding.col,
-        });
-        continue;
-      }
-      const expected = BINDABLE_PROPERTIES[block.kind]?.[binding.key];
-      if (!expected) {
-        const allowed = Object.keys(BINDABLE_PROPERTIES[block.kind] ?? {});
-        report(
-          'unknown-bound-property',
-          `${block.kind} '${block.name}' has no bindable property '${binding.key}'${allowed.length ? ` (bindable: ${allowed.join(', ')})` : ''}.`,
-        );
-        continue;
-      }
-      const actual = inferType(binding.expr, scope, report);
-      if (!actual) {
-        continue;
-      }
-      if (!sameType(actual, expected)) {
-        report('type-mismatch', `'${binding.key}' expects ${typeName(expected)}, the expression is ${typeName(actual)}.`);
-        continue;
-      }
-      bindings.push({
-        id: `${block.kind}.${block.name}.${binding.key}`,
-        ownerKind: block.kind,
-        ownerName: block.name,
-        property: binding.key,
-        operator: binding.operator,
-        expr: binding.expr,
-        type: expected,
-        dependencies: [...new Set(collectRefs(binding.expr).map(path => path.join('.')))],
-        line: binding.line,
-        col: binding.col,
-      });
+  for (const { kind, path, binding } of sites) {
+    const owner = path.join('.');
+    const report = (code: string, message: string, severity: 'error' | 'warning' = 'error') =>
+      diagnostics.push({ severity, code, message, line: binding.line, col: binding.col });
+    if (binding.operator !== '<-') {
+      report(
+        'binding-operator-unsupported',
+        `'${binding.operator}' on '${binding.key}' is parsed but not executed yet; only '<-' is supported.`,
+        'warning',
+      );
+      continue;
     }
-  });
+    const expected = BINDABLE_PROPERTIES[kind]?.[binding.key];
+    if (!expected) {
+      const allowed = Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
+      report(
+        'unknown-bound-property',
+        `${kind} '${owner}' has no bindable property '${binding.key}'${allowed.length ? ` (bindable: ${allowed.join(', ')})` : ''}.`,
+      );
+      continue;
+    }
+    const actual = inferType(binding.expr, scope, report);
+    if (!actual) {
+      continue;
+    }
+    if (!sameType(actual, expected)) {
+      report('type-mismatch', `'${binding.key}' expects ${typeName(expected)}, the expression is ${typeName(actual)}.`);
+      continue;
+    }
+    const dependencies = [...new Set(collectRefs(binding.expr).map(ref => ref.join('.')))];
+    for (const name of new Set(dependencies.map(dependency => dependency.split('.')[0]))) {
+      if (contracts.get(name) && !contracts.get(name)?.sample) {
+        report(
+          'no-sample-data',
+          `'${binding.key}' reads DataSource '${name}', which has no sample data: previews and exports without a runtime stay empty. Add a sample { ... } block.`,
+          'warning',
+        );
+      }
+    }
+    bindings.push({
+      id: `${kind}.${owner}.${binding.key}`,
+      ownerKind: kind,
+      ownerPath: path,
+      property: binding.key,
+      operator: binding.operator,
+      expr: binding.expr,
+      type: expected,
+      dependencies,
+      line: binding.line,
+      col: binding.col,
+    });
+  }
 
   const byField = new Map<string, BoundProperty[]>();
   for (const binding of bindings) {

@@ -74,4 +74,4 @@ export type {
   DataSourceContract,
   MutableDataSource,
 } from './binding';
-export { buildBindingGraph, createBindingRuntime, createDataSource } from './binding';
+export { buildBindingGraph, createBindingRuntime, createDataSource, renderBound } from './binding';

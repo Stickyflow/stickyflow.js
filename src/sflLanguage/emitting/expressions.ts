@@ -24,4 +24,4 @@ export function emitExpression(expr: SflExpr, parentPrecedence = 0): string {
 }
 
 export const emitBinding = (binding: SflBinding): string =>
-  `${binding.key} ${binding.operator} ${emitExpression(binding.expr)}`;
+  `${binding.key}: ${binding.operator} ${emitExpression(binding.expr)}`;

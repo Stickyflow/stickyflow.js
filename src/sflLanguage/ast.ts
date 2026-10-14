@@ -51,6 +51,7 @@ export type SflEntry =
   | { type: 'style'; style: SflStyle }
   | { type: 'data'; data: SflBlock }
   | { type: 'fields'; fields: SflProperty[] }
+  | { type: 'sample'; sample: SflProperty[] }
   | { type: 'binding'; binding: SflBinding };
 
 export type BindingOperator = '<-' | '<->' | '->';

@@ -4,20 +4,20 @@ import type { RenderInput } from '../renderInput/types';
 import { parse } from '../sflLanguage';
 import { evaluate } from './expression';
 import { type BindingGraph, buildBindingGraph } from './graph';
-import type { BindingDiagnostic, BindingValue, BoundProperty, DataSourceContract, ScalarType } from './types';
+import type { BindingDiagnostic, BindingValue, BoundProperty, DataSourceContract, Row } from './types';
 
 export type SourceListener = () => void;
 
 export interface DataSource {
-  get(): readonly Record<string, unknown>[] | Record<string, unknown>;
+  get(): readonly Row[] | Row;
   subscribe(listener: SourceListener): () => void;
 }
 
 export interface MutableDataSource extends DataSource {
-  set(next: readonly Record<string, unknown>[] | Record<string, unknown>): void;
+  set(next: readonly Row[] | Row): void;
 }
 
-export function createDataSource(initial: readonly Record<string, unknown>[] | Record<string, unknown>): MutableDataSource {
+export function createDataSource(initial: readonly Row[] | Row): MutableDataSource {
   let current = initial;
   const listeners = new Set<SourceListener>();
   return {
@@ -54,61 +54,74 @@ export interface BindingRuntime {
   attach(target: BindingTarget): () => void;
 }
 
-const typeOfValue = (value: unknown): string => (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean' ? typeof value : 'other');
+const typeOfValue = (value: unknown): string =>
+  typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean' ? typeof value : 'other';
 
 function checkData(contract: DataSourceContract, data: ReturnType<DataSource['get']>): string | null {
   const rows = Array.isArray(data) ? data : [data];
   if (contract.mode === 'table' !== Array.isArray(data)) {
     return `DataSource '${contract.name}' is a ${contract.mode} source but delivered ${Array.isArray(data) ? 'rows' : 'a record'}.`;
   }
-  for (const row of rows as Record<string, unknown>[]) {
-    for (const [field, type] of Object.entries(contract.fields) as Array<[string, ScalarType]>) {
+  for (const row of rows as Row[]) {
+    for (const [field, type] of Object.entries(contract.fields)) {
       if (typeOfValue(row[field]) !== type) {
-        return `'${contract.name}.${field}' should be ${type}, got ${typeOfValue(row[field])}.`;
+        return `'${contract.name}.${field}' should be ${contract.declared[field]}, got ${typeOfValue(row[field])}.`;
+      }
+      if (contract.declared[field] === 'int' && !Number.isInteger(row[field])) {
+        return `'${contract.name}.${field}' should be a whole number (int), got ${String(row[field])}.`;
       }
     }
   }
   return null;
 }
 
-type Apply = (input: RenderInput, owner: string, value: BindingValue) => void;
+type Apply = (input: RenderInput, path: string[], value: BindingValue) => void;
+
+const findChart = (input: RenderInput, id: string) => input.charts?.find(candidate => candidate.id === id);
+
+function applyToSeries(input: RenderInput, path: string[], change: (series: { values: unknown; label: string }) => void): void {
+  const chart = findChart(input, path[0]);
+  if (!chart) {
+    return;
+  }
+  let series = chart.series.find(candidate => candidate.id === path[1]);
+  if (!series) {
+    series = { id: path[1], label: path[1], values: [] };
+    chart.series.push(series);
+  }
+  change(series);
+}
 
 const APPLY: Record<string, Apply> = {
-  'Chart.category': (input, owner, value) => {
-    const chart = input.charts?.find(candidate => candidate.id === owner);
+  'Chart.categories': (input, path, value) => {
+    const chart = findChart(input, path[0]);
     if (chart) {
       chart.config = { ...(chart.config ?? {}), categories: value as string[] } as typeof chart.config;
     }
   },
-  'Chart.value': (input, owner, value) => {
-    const chart = input.charts?.find(candidate => candidate.id === owner);
-    if (!chart) {
-      return;
-    }
-    if (chart.series.length === 0) {
-      chart.series.push({ id: 'value', label: 'value', values: [] });
-    }
-    chart.series[0].values = value as number[];
-  },
-  'Chart.text': (input, owner, value) => {
-    const chart = input.charts?.find(candidate => candidate.id === owner);
+  'Chart.text': (input, path, value) => {
+    const chart = findChart(input, path[0]);
     if (chart) {
       chart.title = value as string;
     }
   },
-  'Shape.text': (input, owner, value) => {
-    const shape = input.shapes.find(candidate => candidate.id === owner);
+  'Series.values': (input, path, value) => applyToSeries(input, path, series => (series.values = value)),
+  'Series.label': (input, path, value) => applyToSeries(input, path, series => (series.label = value as string)),
+  'Shape.text': (input, path, value) => {
+    const shape = input.shapes.find(candidate => candidate.id === path[0]);
     if (shape) {
       shape.text = value as string;
     }
   },
-  'Widget.value': (input, owner, value) => {
-    const widget = input.widgets?.find(candidate => candidate.id === owner);
+  'Widget.value': (input, path, value) => {
+    const widget = input.widgets?.find(candidate => candidate.id === path[0]);
     if (widget) {
       widget.value = String(value);
     }
   },
 };
+
+const sampleSource = (sample: Row | Row[]): DataSource => ({ get: () => sample, subscribe: () => () => undefined });
 
 export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions = {}): BindingRuntime {
   const graph = buildBindingGraph(parse(sfl));
@@ -118,13 +131,13 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
   const applied = new Map<string, string>();
   const dirty = new Set<BoundProperty>();
   const listeners = new Set<(result: RenderResult) => void>();
+  const warned = new Set<string>();
   let scheduled = false;
 
   const read = (path: string[]): BindingValue => {
     const [name, field] = path;
-    const contract = graph.contracts.get(name);
     const data = sources.get(name)?.get();
-    if (!contract || data === undefined) {
+    if (data === undefined) {
       throw new Error(`DataSource '${name}' has no data yet.`);
     }
     return Array.isArray(data)
@@ -132,8 +145,22 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       : ((data as Record<string, unknown>)[field] as BindingValue);
   };
 
+  const missingSource = (binding: BoundProperty): string | undefined =>
+    binding.dependencies.map(dependency => dependency.split('.')[0]).find(name => !sources.has(name));
+
   const evaluateBinding = (binding: BoundProperty): boolean => {
-    if (!binding.dependencies.every(dependency => sources.has(dependency.split('.')[0]))) {
+    const missing = missingSource(binding);
+    if (missing) {
+      if (!warned.has(missing)) {
+        warned.add(missing);
+        diagnostics.push({
+          severity: 'warning',
+          code: 'source-not-registered',
+          message: `DataSource '${missing}' has no registered source and no sample data, so '${binding.property}' stays empty.`,
+          line: binding.line,
+          col: binding.col,
+        });
+      }
       return false;
     }
     const value = evaluate(binding.expr, { read });
@@ -142,7 +169,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       return false;
     }
     applied.set(binding.id, key);
-    APPLY[`${binding.ownerKind}.${binding.property}`]?.(input, binding.ownerName, value);
+    APPLY[`${binding.ownerKind}.${binding.property}`]?.(input, binding.ownerPath, value);
     return true;
   };
 
@@ -180,7 +207,13 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     }
   };
 
-  // Expressions without a data source never change, so they are applied once.
+  // Sample data stands in until a real source is registered; constants never change, so they apply once.
+  for (const contract of graph.contracts.values()) {
+    if (contract.sample) {
+      sources.set(contract.name, sampleSource(contract.sample));
+      markDirty(contract.name);
+    }
+  }
   for (const binding of graph.bindings) {
     if (binding.dependencies.length === 0) {
       dirty.add(binding);
@@ -207,21 +240,23 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
         }
         return true;
       };
-      if (accept()) {
-        sources.set(name, source);
-        markDirty(name);
-        schedule();
-      }
-      const unsubscribe = source.subscribe(() => {
+      const adopt = () => {
         if (accept()) {
           sources.set(name, source);
+          warned.delete(name);
           markDirty(name);
           schedule();
         }
-      });
+      };
+      adopt();
+      const unsubscribe = source.subscribe(adopt);
       return () => {
         unsubscribe();
-        sources.delete(name);
+        if (contract.sample) {
+          sources.set(name, sampleSource(contract.sample));
+        } else {
+          sources.delete(name);
+        }
       };
     },
     flush,
@@ -238,4 +273,11 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       return off;
     },
   };
+}
+
+// A static render that shows the sample data of every DataSource, for previews and exports.
+export function renderBound(sfl: string, options: RenderOptions = {}): RenderResult {
+  const runtime = createBindingRuntime(sfl, { renderOptions: options });
+  runtime.flush();
+  return renderCanvas(runtime.input, options);
 }
