@@ -68,6 +68,8 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
   const svg = viewer.svg;
   let active: string | null = null;
   let hovered: string | null = null;
+  // The click that follows a press the document took must not reach the viewer either, or it would select the element.
+  let swallowClick = false;
 
   const track = (event: PointerEvent) => {
     for (const id of scales) {
@@ -93,6 +95,7 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
   };
 
   const down = (event: PointerEvent) => {
+    swallowClick = false;
     if (event.button !== 0 || options.enabled?.() === false || !(event.target instanceof Node) || !svg.contains(event.target)) {
       return;
     }
@@ -103,6 +106,7 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
     // The viewer must not start selecting or moving what the document lets the pointer press.
     event.stopPropagation();
     event.preventDefault();
+    swallowClick = true;
     active = id;
     track(event);
     runtime.press(id);
@@ -122,6 +126,8 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
     if (!active) {
       return;
     }
+    // The viewer has seen neither the press nor the end of it.
+    event.stopPropagation();
     const id = active;
     active = null;
     runtime.release(id, tapOnElement && hit(svg, pressable, event.clientX, event.clientY) === id);
@@ -130,6 +136,16 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
   const up = end(true);
   const cancel = end(false);
 
+  const click = (event: MouseEvent) => {
+    if (!swallowClick) {
+      return;
+    }
+    swallowClick = false;
+    event.stopPropagation();
+    event.preventDefault();
+  };
+
+  window.addEventListener('click', click, true);
   window.addEventListener('pointerdown', down, true);
   window.addEventListener('pointermove', move, true);
   window.addEventListener('pointerup', up, true);
@@ -147,6 +163,7 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
   }
 
   return () => {
+    window.removeEventListener('click', click, true);
     window.removeEventListener('pointerdown', down, true);
     window.removeEventListener('pointermove', move, true);
     window.removeEventListener('pointerup', up, true);
