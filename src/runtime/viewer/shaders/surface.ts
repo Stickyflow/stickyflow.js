@@ -1,6 +1,6 @@
 import type { ShaderParameter } from '../../../model/shader';
 import { captureShaderBackdrop } from './backdrop';
-import { createSurface } from './createSurface';
+import { createSurface, releaseSurface } from './createSurface';
 import { applyBackdrop, renderSurface } from './renderSurface';
 import type { Surface } from './surfaceTypes';
 
@@ -37,18 +37,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       frame = undefined;
     }
     for (const surface of surfaces) {
-      if (surface.backdropTexture) {
-        surface.gl.deleteTexture(surface.backdropTexture);
-      }
-      surface.gl.deleteBuffer(surface.buffer);
-      surface.gl.deleteProgram(surface.program);
-      if (surface.baseGeometry) {
-        if (surface.baseFill === null || surface.baseFill === undefined) {
-          surface.baseGeometry.removeAttribute('fill');
-        } else {
-          surface.baseGeometry.setAttribute('fill', surface.baseFill);
-        }
-      }
+      releaseSurface(surface);
     }
     surfaces = [];
   };
