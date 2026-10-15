@@ -5,6 +5,7 @@ import { pixelPoints, seriesValuePairs } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
 import { createLineAreaFill } from './area';
 import { createLinePointMarks, renderLineMarks } from './marks';
+import { renderLineHighlights } from './highlights';
 import { createLinePath } from './path';
 
 function seriesColor(series: ChartSeries, seriesIndex: number): string {
@@ -37,5 +38,6 @@ export function renderLineSeries(context: ChartRenderContext, series: ChartSerie
   }
   const marks = createLinePointMarks(series, pairs, points, color);
   nodes.push(...renderLineMarks(context, marks));
+  nodes.push(...renderLineHighlights(context, series, color));
   return nodes;
 }

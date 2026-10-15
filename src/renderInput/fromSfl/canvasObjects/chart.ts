@@ -151,6 +151,18 @@ export function chartObject(e: SflCanvasObject): Chart {
         categories: source?.categories,
         areaOpacity: source?.areaOpacity,
         lineTension: source?.lineTension,
+        lineWidth: numOf(p.lineWidth),
+        lineGlow: numOf(p.lineGlow),
+        pointSize: numOf(p.pointSize),
+        pointFill: p.pointFill,
+        pointStrokeWidth: numOf(p.pointStrokeWidth),
+        highlightPoints: source?.highlightPoints,
+        highlightSize: numOf(p.highlightSize),
+        highlightColor: p.highlightColor,
+        highlightGuide: p.highlightGuide === 'true',
+        highlightLabels: p.highlightLabels === 'true',
+        highlightLabelColor: p.highlightLabelColor,
+        highlightLabelFormat: p.highlightLabelFormat,
       } satisfies LineChartConfig);
     case 'scatter':
       return typedChart(base, chartType, { categories: source?.categories } satisfies ScatterChartConfig);
@@ -194,6 +206,22 @@ export function chartObject(e: SflCanvasObject): Chart {
         innerRadius: source?.innerRadius,
         pieCornerRadius: source?.pieCornerRadius,
         pieSliceGap: source?.pieSliceGap,
+        pieStartAngle: numOf(p.pieStartAngle),
+        pieSweep: numOf(p.pieSweep),
+        pieExplode: numOf(p.pieExplode),
+        pieGlow: numOf(p.pieGlow),
+        pieStroke: p.pieStroke,
+        pieStrokeWidth: numOf(p.pieStrokeWidth),
+        pieLabelPosition:
+          p.pieLabelPosition === 'inside' || p.pieLabelPosition === 'outside' ? p.pieLabelPosition : undefined,
+        pieLabelContent:
+          p.pieLabelContent === 'percent' || p.pieLabelContent === 'name' || p.pieLabelContent === 'inline'
+            ? p.pieLabelContent
+            : undefined,
+        pieLabelColor: p.pieLabelColor,
+        pieCenterText: p.pieCenterText,
+        pieCenterSize: numOf(p.pieCenterSize),
+        pieCenterColor: p.pieCenterColor,
       } satisfies PieChartConfig);
     case 'polarArea':
       return typedChart(base, chartType, {

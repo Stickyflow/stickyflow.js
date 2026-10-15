@@ -31,8 +31,8 @@ export class SvgDefinitionRegistry {
     return this.paints.paint(value, nodeId, bounds);
   }
 
-  filter(style: SceneStyle, nodeId: string): string | undefined {
-    return this.filters.filter(style, nodeId);
+  filter(style: SceneStyle, nodeId: string, size?: number): string | undefined {
+    return this.filters.filter(style, nodeId, size);
   }
 
   marker(type: MarkerType | undefined, color: string, strokeWidth: number): string | undefined {

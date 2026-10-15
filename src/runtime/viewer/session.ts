@@ -109,6 +109,10 @@ export class ViewerSession implements Viewer {
     return this.setShaderParameters(widgetId, { progress: Math.min(1, Math.max(0, Number(value) / max)) });
   }
 
+  setPaused(paused: boolean): void {
+    this.shaderSurfaces.setPaused(paused);
+  }
+
   clearOverrides(): void {
     this.shaderParameterOverrides.clear();
     this.rulerProgressOverrides.clear();

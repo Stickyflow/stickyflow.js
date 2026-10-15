@@ -9,12 +9,15 @@ export class SvgFilterDefinitions {
     private readonly prefix: string,
   ) {}
 
-  filter(style: SceneStyle, nodeId: string): string | undefined {
+  // `size` is the smaller side of the element when it is known; a small element with a wide glow
+  // needs a filter region that reaches past the glow, or the glow is cut to a box.
+  filter(style: SceneStyle, nodeId: string, size?: number): string | undefined {
     if (style.innerShadow) {
       return this.define(nodeId, style.innerShadow, innerShadowPrimitives);
     }
     if (style.shadow) {
-      return this.define(nodeId, style.shadow, outerShadowPrimitives);
+      const reach = style.shadow.blur * 1.5 + Math.max(Math.abs(style.shadow.dx), Math.abs(style.shadow.dy));
+      return this.define(nodeId, style.shadow, outerShadowPrimitives, size && size > 0 ? Math.max(0.5, reach / size) : 0.5);
     }
     if (style.blur || style.saturate !== undefined) {
       return this.define(nodeId, { blur: style.blur ?? 0, saturate: style.saturate ?? 1 }, blurPrimitives);
@@ -22,14 +25,14 @@ export class SvgFilterDefinitions {
     return undefined;
   }
 
-  private define<T>(nodeId: string, value: T, primitives: (value: T) => string): string {
-    const key = JSON.stringify(value) + primitives.name;
+  private define<T>(nodeId: string, value: T, primitives: (value: T) => string, margin = 0.5): string {
+    const key = JSON.stringify(value) + primitives.name + margin;
     let id = this.ids.get(key);
     if (!id) {
       id = safeId(`${this.prefix}shadow-${nodeId}-${this.ids.size}`);
       this.ids.set(key, id);
       this.addDefinition(
-        `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%">${primitives(value)}</filter>`,
+        `<filter id="${id}" x="${num(-margin * 100)}%" y="${num(-margin * 100)}%" width="${num((1 + margin * 2) * 100)}%" height="${num((1 + margin * 2) * 100)}%">${primitives(value)}</filter>`,
       );
     }
     return id;

@@ -24,6 +24,8 @@ export interface PieLabelMark {
   end: number;
   labelOffsetX: number;
   labelOffsetY: number;
+  // The slice is pushed out, and its label moves with it.
+  shift: { dx: number; dy: number };
 }
 
 export function renderPieLabels(
@@ -48,13 +50,15 @@ function labelTextPair(
   percent: number,
   outside: boolean,
   midAngle: number,
-): [SceneText, SceneText] {
+): SceneText[] {
   const { chart, bounds, nextOrder } = context;
   const lineHeight = fontSize * 1.2;
+  const content = chart.config?.pieLabelContent ?? 'both';
+  const width = content === 'inline' ? LABEL_WIDTH * 1.9 : LABEL_WIDTH;
   const base = {
     bounds,
-    x: point.x - LABEL_WIDTH / 2,
-    width: LABEL_WIDTH,
+    x: point.x - width / 2,
+    width,
     height: lineHeight,
     fontFamily: chart.fontFamily ?? DEFAULT_FONT,
     fontSize,
@@ -76,8 +80,8 @@ function labelTextPair(
     id: `chart-pie-label-name-${chart.id}-${mark.seriesId}`,
     order: nextOrder(),
     ...base,
-    y: point.y - lineHeight,
-    lines: [mark.label],
+    y: content === 'name' ? point.y - lineHeight / 2 : point.y - lineHeight,
+    lines: [content === 'inline' ? `${mark.label}, ${percent}%` : mark.label],
     fontWeight: 'bold',
     detail: detail({}),
     prop: seriesLabelProp(mark.seriesId),
@@ -87,14 +91,17 @@ function labelTextPair(
     id: `chart-pie-label-value-${chart.id}-${mark.seriesId}`,
     order: nextOrder(),
     ...base,
-    y: point.y,
+    y: content === 'percent' ? point.y - lineHeight / 2 : point.y,
     lines: [`${percent}%`],
     fontWeight: 'normal',
     detail: detail({}),
     prop: seriesValueProp(mark.seriesId, 0),
     propKind: 'value',
   };
-  return [nameText, valueText];
+  if (content === 'inline' || content === 'name') {
+    return [nameText];
+  }
+  return content === 'percent' ? [valueText] : [nameText, valueText];
 }
 
 function createTick(
@@ -119,9 +126,11 @@ function createTick(
 
 function createPieLabel(
   context: ChartRenderContext<PieChart>,
-  geometry: PieGeometry,
+  base: PieGeometry,
   mark: PieLabelMark,
 ): RenderNode[] {
+  const config = context.chart.config;
+  const geometry = { ...base, centerX: base.centerX + mark.shift.dx, centerY: base.centerY + mark.shift.dy };
   const mid = (mark.start + mark.end) / 2;
   const fontSize = Math.max(9, finite(context.chart.fontSize, 12));
   const percent = Math.round(mark.share * 100);
@@ -131,14 +140,24 @@ function createPieLabel(
   const ringThickness = geometry.outerRadius - geometry.innerRadius;
   const tooThin = ringThickness < lineHeight * 2 + 6;
   const hasManualOffset = mark.labelOffsetX !== 0 || mark.labelOffsetY !== 0;
-  const outside = hasManualOffset || tooThin;
+  const position = config?.pieLabelPosition ?? 'auto';
+  const outside = hasManualOffset || position === 'outside' || (position === 'auto' && tooThin);
 
   if (outside) {
     const point = hasManualOffset
       ? addOffset(pieArcPoint(geometry, mid, geometry.outerRadius), mark.labelOffsetX, mark.labelOffsetY)
-      : pieArcPoint(geometry, mid, geometry.outerRadius + OUTSIDE_GAP);
+      : pieArcPoint(
+          geometry,
+          mid,
+          geometry.outerRadius +
+            OUTSIDE_GAP +
+            (position === 'outside'
+              ? Math.abs(Math.cos(mid)) * (config?.pieLabelContent === 'inline' ? LABEL_WIDTH * 0.95 : LABEL_WIDTH / 2)
+              : 0),
+        );
     const tickEnd = clipSegmentToRect(tickStart, point, LABEL_WIDTH / 2, lineHeight);
     const color =
+      config?.pieLabelColor ??
       sameHueTint(representativeColor(mark.color, OUTSIDE_FALLBACK_COLOR), OUTSIDE_TINT_LIGHTNESS) ??
       OUTSIDE_FALLBACK_COLOR;
     const tick = createTick(context, mark, tickStart, tickEnd, color, true);
@@ -147,7 +166,7 @@ function createPieLabel(
 
   const labelRadius = geometry.innerRadius + ringThickness * LABEL_RADIUS_FRACTION;
   const point = pieArcPoint(geometry, mid, labelRadius);
-  const color = sameHueContrastColor(representativeColor(mark.color, '#0f172a'), '#0f172a');
+  const color = config?.pieLabelColor ?? sameHueContrastColor(representativeColor(mark.color, '#0f172a'), '#0f172a');
   const tick = createTick(context, mark, tickStart, tickStart, color, false);
   return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent, false, mid)];
 }
