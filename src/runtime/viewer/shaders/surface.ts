@@ -2,6 +2,7 @@ import type { ShaderParameter } from '../../../model/shader';
 import { captureShaderBackdrop } from './backdrop';
 import { createSurface, releaseSurface } from './createSurface';
 import { applyBackdrop, renderSurface } from './renderSurface';
+import { createSurfaceClock } from './surfaceClock';
 import type { Surface } from './surfaceTypes';
 
 export interface ShaderSurfaceHandle {
@@ -12,20 +13,55 @@ export interface ShaderSurfaceHandle {
   destroy(): void;
 }
 
+const RECAPTURE_DELAY_MS = 120;
+
+function capturePngs(svg: SVGSVGElement, surfaces: Surface[], seconds: number): Array<string | undefined> {
+  const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
+  return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].map(canvas => {
+    const surface = surfaceByCanvas.get(canvas);
+    if (!surface) {
+      return undefined;
+    }
+    try {
+      renderSurface(surface, seconds);
+      return surface.canvas.toDataURL('image/png');
+    } catch {
+      return undefined;
+    }
+  });
+}
+
+function updateParameters(
+  surfaces: Surface[],
+  ownerId: string,
+  parameters: Record<string, ShaderParameter>,
+  seconds: number,
+): boolean {
+  let changed = false;
+  for (const surface of surfaces) {
+    if (surface.owner.getAttribute('data-sf-id') !== ownerId) {
+      continue;
+    }
+    Object.assign(surface.parameters, parameters);
+    surface.owner.setAttribute('data-sf-shader-params', JSON.stringify(surface.parameters));
+    renderSurface(surface, seconds);
+    changed = true;
+  }
+  return changed;
+}
+
 export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   let surfaces: Surface[] = [];
   let frame: number | undefined;
   let backdropGeneration = 0;
+  let recapture: number | undefined;
   const view = svg.ownerDocument.defaultView;
-  let pausedSince: number | null = null;
-  let spentPaused = 0;
-  const real = () => (view?.performance.now() ?? 0) / 1000;
-  const clock = () => (pausedSince ?? real()) - spentPaused;
+  const clock = createSurfaceClock(view);
 
   const draw = (milliseconds: number) => {
-    if (pausedSince === null) {
+    if (!clock.paused()) {
       for (const surface of surfaces) {
-        renderSurface(surface, milliseconds / 1000 - spentPaused);
+        renderSurface(surface, milliseconds / 1000 - clock.spent());
       }
     }
     frame = view?.requestAnimationFrame(draw);
@@ -55,6 +91,21 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     }
   };
 
+  const startFrames = () => {
+    if (!view?.requestAnimationFrame) {
+      for (const surface of surfaces) {
+        renderSurface(surface, 0);
+      }
+      return;
+    }
+    if (clock.paused()) {
+      for (const surface of surfaces) {
+        renderSurface(surface, clock.now());
+      }
+    }
+    frame = view.requestAnimationFrame(draw);
+  };
+
   const refresh = () => {
     stop();
     const generation = ++backdropGeneration;
@@ -64,54 +115,10 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     });
     captureBackdrops(generation);
     if (surfaces.length > 0) {
-      if (view?.requestAnimationFrame) {
-        if (pausedSince !== null) {
-          for (const surface of surfaces) {
-            renderSurface(surface, clock());
-          }
-        }
-        frame = view.requestAnimationFrame(draw);
-      } else {
-        for (const surface of surfaces) {
-          renderSurface(surface, 0);
-        }
-      }
+      startFrames();
     }
   };
 
-  const capture = (): Array<string | undefined> => {
-    const seconds = clock();
-    const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
-    return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].map(canvas => {
-      const surface = surfaceByCanvas.get(canvas);
-      if (!surface) {
-        return undefined;
-      }
-      try {
-        renderSurface(surface, seconds);
-        return surface.canvas.toDataURL('image/png');
-      } catch {
-        return undefined;
-      }
-    });
-  };
-
-  const setParameters = (ownerId: string, parameters: Record<string, ShaderParameter>): boolean => {
-    let changed = false;
-    const seconds = clock();
-    for (const surface of surfaces) {
-      if (surface.owner.getAttribute('data-sf-id') !== ownerId) {
-        continue;
-      }
-      Object.assign(surface.parameters, parameters);
-      surface.owner.setAttribute('data-sf-shader-params', JSON.stringify(surface.parameters));
-      renderSurface(surface, seconds);
-      changed = true;
-    }
-    return changed;
-  };
-
-  let recapture: number | undefined;
   const scheduleRecapture = () => {
     if (recapture !== undefined) {
       view?.clearTimeout(recapture);
@@ -119,7 +126,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     recapture = view?.setTimeout(() => {
       recapture = undefined;
       captureBackdrops(backdropGeneration);
-    }, 120);
+    }, RECAPTURE_DELAY_MS);
   };
   const viewObserver = view ? new view.MutationObserver(scheduleRecapture) : undefined;
   viewObserver?.observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
@@ -127,6 +134,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   sizeObserver?.observe(svg);
 
   refresh();
+
   const destroy = () => {
     backdropGeneration += 1;
     viewObserver?.disconnect();
@@ -137,14 +145,11 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     stop();
   };
 
-  const setPaused = (paused: boolean) => {
-    if (paused && pausedSince === null) {
-      pausedSince = real();
-    } else if (!paused && pausedSince !== null) {
-      spentPaused += real() - pausedSince;
-      pausedSince = null;
-    }
+  return {
+    capture: () => capturePngs(svg, surfaces, clock.now()),
+    setParameters: (ownerId, parameters) => updateParameters(surfaces, ownerId, parameters, clock.now()),
+    setPaused: clock.setPaused,
+    refresh,
+    destroy,
   };
-
-  return { capture, setParameters, setPaused, refresh, destroy };
 }
