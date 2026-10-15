@@ -18,7 +18,6 @@ function positive(value: unknown, fallback: number): number {
   return Number(value) > 0 ? Number(value) : fallback;
 }
 
-// The progress (0 to 1) of a ruler for a value; the knob and the shader both follow it.
 export function rulerProgress(surface: Element, value: number): number {
   const params = parameters(surface);
   const min = Number(params.min) || 0;
@@ -37,17 +36,20 @@ function move(node: Element, dx: number, dy: number): void {
 
 function hexToRgb(value: string): [number, number, number] | null {
   const match = /^#([0-9a-f]{6})$/i.exec(value.trim());
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
   const number = parseInt(match[1], 16);
   return [(number >> 16) & 255, (number >> 8) & 255, number & 255];
 }
 
-// The numbers give way and turn white around the knob, like the ticks do in the shader.
 function shade(node: SVGElement, bump: number): void {
   const base = fills.get(node) ?? node.getAttribute('fill') ?? '';
   fills.set(node, base);
   const rgb = hexToRgb(base);
-  if (!rgb) return;
+  if (!rgb) {
+    return;
+  }
   const mixed = rgb.map(channel => Math.round(channel + (255 - channel) * bump));
   const fill = `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`;
   node.style.fill = fill;
@@ -56,9 +58,10 @@ function shade(node: SVGElement, bump: number): void {
   }
 }
 
-// A ruler with a knob names a Shape of the document; the viewer lays that Shape beside the wire at the current value and
-// moves the numbers out of its way.
-export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => number | undefined): Map<string, number> {
+export function placeRulerKnobs(
+  svg: SVGSVGElement,
+  progressOf: (id: string) => number | undefined,
+): Map<string, number> {
   const radii = new Map<string, number>();
   for (const surface of svg.querySelectorAll('foreignObject[data-sf-shader="ruler"]')) {
     const params = parameters(surface);
@@ -93,7 +96,9 @@ export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => 
           : { x: x + side, y: y + height * (1 - along) };
         const dx = target.x - (box.x + box.width / 2);
         const dy = target.y - (box.y + box.height / 2);
-        for (const node of nodes) move(node, dx, dy);
+        for (const node of nodes) {
+          move(node, dx, dy);
+        }
       }
     }
 
@@ -105,7 +110,9 @@ export function placeRulerKnobs(svg: SVGSVGElement, progressOf: (id: string) => 
     const knobAt = start + span * progress;
     for (const label of svg.querySelectorAll<SVGTextElement>(`text[data-sf-id="${CSS.escape(id)}"]`)) {
       const value = Number(label.textContent);
-      if (!Number.isFinite(value) || max === min) continue;
+      if (!Number.isFinite(value) || max === min) {
+        continue;
+      }
       const labelAt = start + span * clamp01((value - min) / (max - min));
       const bump = Math.exp(-(((labelAt - knobAt) / spread) ** 2));
       const shift = depth * 0.4 * bump;

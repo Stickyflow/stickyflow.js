@@ -3,9 +3,6 @@ import { patchDefinitions } from './definitionsPatch';
 import { patchSceneElement } from './elementPatch';
 import type { SceneDiff } from './types';
 
-/** An element's semantic owner id — data-sf-id for anything the renderer
- *  stamped with the interactive contract, else its own plain id (defs
- *  children and other non-owner nodes carry no data-sf-id). */
 function ownerIdOf(element: Element): string {
   return element.getAttribute('data-sf-id') ?? element.id;
 }
@@ -18,9 +15,6 @@ function currentElementsById(svg: SVGSVGElement): Map<string, Element> {
   return elements;
 }
 
-/** Reuses `current` when it can share a node with `next`, else swaps `next`
- *  in. Calls `markTouched` with the owner id whenever the live element
- *  actually changed or is brand new — that is what feeds the scene diff. */
 function reusableElement(current: Element | undefined, next: Element, markTouched: (ownerId: string) => void): Element {
   if (current && current.tagName === next.tagName) {
     if (patchSceneElement(current, next)) {

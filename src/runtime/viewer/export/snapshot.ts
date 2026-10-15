@@ -11,7 +11,9 @@ function copyAttributes(source: Element, target: Element): void {
 }
 
 function removeRuntimeOverlays(svg: SVGSVGElement): void {
-  for (const overlay of svg.querySelectorAll('[data-sf-selection-overlay], [data-sf-change-overlay], [id*="link-hit-"]')) {
+  for (const overlay of svg.querySelectorAll(
+    '[data-sf-selection-overlay], [data-sf-change-overlay], [id*="link-hit-"]',
+  )) {
     overlay.remove();
   }
 }
@@ -26,13 +28,15 @@ function svgElement(document: Document, name: string, attributes: Record<string,
 
 function readWidgetStyle(surface: Element): Required<RollingNumberWidgetStyle> {
   try {
-    return { ...DEFAULT_ROLLING_NUMBER_STYLE, ...(JSON.parse(surface.getAttribute('data-sf-widget-style') ?? '{}') as RollingNumberWidgetStyle) };
+    return {
+      ...DEFAULT_ROLLING_NUMBER_STYLE,
+      ...(JSON.parse(surface.getAttribute('data-sf-widget-style') ?? '{}') as RollingNumberWidgetStyle),
+    };
   } catch {
     return DEFAULT_ROLLING_NUMBER_STYLE;
   }
 }
 
-// A foreignObject taints the canvas when the snapshot is rasterized, so each rolling number becomes plain SVG.
 function flattenRollingNumbers(svg: SVGSVGElement): void {
   const document = svg.ownerDocument;
   for (const surface of svg.querySelectorAll('foreignObject[data-sf-widget="rollingNumber"]')) {
@@ -76,17 +80,17 @@ function flattenRollingNumbers(svg: SVGSVGElement): void {
       const cellX = left + index * (cellWidth + gap);
       if (!plain) {
         group.appendChild(
-        svgElement(document, 'rect', {
-          x: cellX + 0.5,
-          y: top + 0.5,
-          width: cellWidth - 1,
-          height: cellHeight - 1,
-          rx: size * 0.09,
-          fill: style.surface,
-          stroke: style.divider,
-          'stroke-width': 1,
-        }),
-      );
+          svgElement(document, 'rect', {
+            x: cellX + 0.5,
+            y: top + 0.5,
+            width: cellWidth - 1,
+            height: cellHeight - 1,
+            rx: size * 0.09,
+            fill: style.surface,
+            stroke: style.divider,
+            'stroke-width': 1,
+          }),
+        );
       }
       const digit = svgElement(document, 'text', {
         x: cellX + cellWidth / 2,

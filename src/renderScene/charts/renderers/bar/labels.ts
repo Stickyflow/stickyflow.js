@@ -23,7 +23,6 @@ export function barLabelsEnabled(context: ChartRenderContext): boolean {
   return context.chart.config?.showBarLabels === true;
 }
 
-// A label that does not fit inside its bar moves above it instead.
 function resolvePlacement(target: BarLabelTarget, size: BarLabelSize): BarLabelPlacement {
   const fits = target.frame.height >= size.height + BAR_LABEL.gap * 2;
   return target.placement !== 'outside' && !fits ? 'outside' : target.placement;
@@ -75,7 +74,6 @@ function createTextNode(
       chart,
       align: 'center',
     }),
-    // Read back by the live drag preview (interaction/chartValue/preview.ts).
     mark: `bar-label|${placement}|${config?.barLabelFormat ?? ''}`,
     color,
     fontSize,
@@ -84,8 +82,12 @@ function createTextNode(
   };
 }
 
-// The value sits under the category label, aligned with it.
-function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget, text: string, fontSize: number): RenderNode {
+function createAxisValueNode(
+  context: ChartRenderContext,
+  target: BarLabelTarget,
+  text: string,
+  fontSize: number,
+): RenderNode {
   const { chart, plot, bounds, nextOrder } = context;
   const config = chart.config;
   const top = plot.y + plot.height + 4 + 16 + Math.max(0, chart.tickLength ?? 0);
@@ -96,7 +98,12 @@ function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget
       bounds,
       frame: target.horizontal
         ? chart.categoryAlign === 'inside'
-          ? { x: plot.x, y: target.frame.y + target.frame.height / 2 - fontSize * 0.6, width: plot.width - 14, height: fontSize * 1.2 }
+          ? {
+              x: plot.x,
+              y: target.frame.y + target.frame.height / 2 - fontSize * 0.6,
+              width: plot.width - 14,
+              height: fontSize * 1.2,
+            }
           : { x: plot.x, y: target.frame.y - CATEGORY_LABEL_ROW, width: plot.width, height: fontSize * 1.2 }
         : { x: target.frame.x, y: top, width: target.frame.width, height: fontSize * 1.2 },
       text,
@@ -111,7 +118,6 @@ function createAxisValueNode(context: ChartRenderContext, target: BarLabelTarget
   };
 }
 
-// Horizontal bars: the label sits past the bar end, inside its end, or centered.
 function horizontalPlacement(target: BarLabelTarget, size: BarLabelSize): BarLabelPlacement {
   const requested = target.placement === 'axis' ? 'outside' : target.placement;
   const fits = target.frame.width >= size.width + BAR_LABEL.gap * 2;

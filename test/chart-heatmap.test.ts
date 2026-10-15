@@ -6,11 +6,6 @@ import { applyPropertyChange } from '../src/runtime/interaction';
 const solidFill = (node: RenderNode): string | undefined =>
   'style' in node && node.style?.fill?.kind === 'solid' ? node.style.fill.color : undefined;
 
-// config.categories are column headers (reusing the field radar already uses
-// for its own category labels), each Series is one row, and axis_y.thresholds
-// + config.zones anchor a continuous low -> high color scale a cell's value
-// is interpolated along.
-
 const HEATMAP_SFL = `sfl 1.2
 
 Model board {
@@ -64,11 +59,6 @@ describe('Heatmap chart', () => {
     const { scene } = render(HEATMAP_SFL);
     const cells = scene.nodes.filter(node => node.id.startsWith('chart-heatmap-cell-') && node.type === 'rect');
     const morning = cells.filter(node => node.id.includes('-morning-'));
-    // Morning row: [1, 5, 9]. 1 is before the first threshold (3), so it's
-    // flat "Low". 5 sits halfway between the Medium (7) and Low (3)
-    // boundaries, so its color is halfway between those two zone colors,
-    // not a flat "Medium". Same for 9, two-thirds of the way from Medium
-    // (7) to High (10).
     expect(morning.map(solidFill)).toEqual(['#ddd6fe', '#c2b1fc', '#8049e4']);
   });
 
@@ -120,9 +110,6 @@ describe('Heatmap chart', () => {
     const longCell = render(longLabels).svg.match(/<rect id="[^"]*chart-heatmap-cell-activity-morning-0"[^>]*>/)?.[0];
     const shortX = Number(shortCell?.match(/ x="([\d.]+)"/)?.[1]);
     const longX = Number(longCell?.match(/ x="([\d.]+)"/)?.[1]);
-    // "Morning"/"Evening" no longer reserve the old fixed-96px gutter - the
-    // grid starts noticeably closer to the row labels - while a much longer
-    // label still pushes the grid further right to make room for it.
     expect(shortX).toBeLessThan(longX);
     expect(longX - shortX).toBeGreaterThan(20);
   });
@@ -164,9 +151,6 @@ describe('Heatmap chart', () => {
     expect(bar).toMatch(/fill="url\(#[^"]+\)"/);
     const gradient = svg.match(/<linearGradient[^>]*>[\s\S]*?<\/linearGradient>/)?.[0];
     expect(gradient).toBeDefined();
-    // Two stops per band (a hard edge at each boundary, not a smooth blend
-    // between zone centers) - dedupe consecutive repeats to check the
-    // sequence of actual colors, not the stop count.
     const stops = [...(gradient ?? '').matchAll(/stop-color="([^"]+)"/g)].map(match => match[1]);
     const distinctInOrder = stops.filter((color, index) => color !== stops[index - 1]);
     expect(distinctInOrder).toEqual(['#ddd6fe', '#a78bfa', '#6d28d9']);
@@ -177,7 +161,6 @@ describe('Heatmap chart', () => {
     expect(svg).not.toContain('>Low<');
     expect(svg).not.toContain('>Medium<');
     expect(svg).not.toContain('>High<');
-    // Axis y runs 0-10 with thresholds [3, 7] : four boundary ticks (0, 3, 7, 10).
     for (const boundary of ['0', '3', '7', '10']) {
       expect(svg).toContain(`>${boundary}<`);
     }
@@ -213,16 +196,11 @@ describe('Heatmap chart', () => {
       value: '#ff00ff',
     });
     expect(patched).toContain('["Medium", "#ff00ff"]');
-    // Every other zone's own color is untouched by the edit.
     expect(patched).toContain('["Low", "#ddd6fe"]');
     expect(patched).toContain('["High", "#6d28d9"]');
 
     const { diagnostics, svg } = render(patched);
     expect(diagnostics).toEqual([]);
-    // Morning's own values are [1, 5, 9] : 5 sits exactly halfway between
-    // the Low (3) and Medium (7) boundaries, so its color is now halfway
-    // between Low's unchanged #ddd6fe and Medium's new #ff00ff - the
-    // recolor reaches the cells themselves, not just the legend's gradient.
     const morning = svg.match(/chart-heatmap-cell-activity-morning-1"[^>]* fill="([^"]+)"/)?.[1];
     expect(morning).toBe('#ee6bff');
     const stops = [

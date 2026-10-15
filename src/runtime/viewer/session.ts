@@ -93,7 +93,6 @@ export class ViewerSession implements Viewer {
       this.placeKnobs();
       return applied;
     }
-    // A tick scale takes the value as progress along its max.
     const scale = [...this.svg.querySelectorAll('foreignObject[data-sf-shader="tickScale"]')].find(
       element => element.getAttribute('data-sf-id') === widgetId,
     );

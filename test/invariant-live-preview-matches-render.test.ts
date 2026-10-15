@@ -3,15 +3,6 @@ import { render } from '../src/index';
 import { previewPathData, routePreviewLink } from '../src/runtime/interaction/linkPreview/geometry';
 import { applySingleNodeBounds } from '../src/runtime/interaction/resize/geometryPreview';
 
-// Verifies the claim behind this session's Symbol resize-snap fix, empirically
-// rather than by reading imports: does the hand-rolled live-preview path
-// (applySingleNodeBounds, run once per pointermove) produce byte-identical
-// geometry to a real render() at the SAME final bounds? If it doesn't, a live
-// drag visibly disagrees with what release lands on, exactly like the bugs
-// fixed this session. Seeded from a REAL rendered element (not a hand-typed
-// assumption of what the renderer emits), moved via the preview path, then
-// compared against a second real render at the end bounds.
-
 function fakeElement(tag: string, attrs: Record<string, string>) {
   const values = { ...attrs };
   return {

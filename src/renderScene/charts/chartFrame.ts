@@ -30,7 +30,6 @@ export function buildChartFrame(
   };
 
   if (CARTESIAN_VALUE_TYPES.has(chart.chartType)) {
-    // Horizontal bars read their value along x: the scale then describes the plot's x range.
     const range = isHorizontalBar(chart) ? `${plot.x},${plot.width}` : `${plot.y},${plot.height}`;
     frame.detail = {
       of: 'chartScale',

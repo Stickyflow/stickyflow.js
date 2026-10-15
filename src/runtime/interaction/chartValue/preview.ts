@@ -23,8 +23,6 @@ function updateConnectedLine(svg: SVGSVGElement, drag: ChartValueDragState): voi
   }
 }
 
-// The bar, plus the glow and shadow copies drawn from the same shape: left alone, a copy of the old
-// size would keep covering the bar while it shrinks.
 function setBarPath(svg: SVGSVGElement, drag: ChartValueDragState, d: string): void {
   drag.element.setAttribute('d', d);
   for (const kind of ['glow', 'shadow']) {
@@ -74,7 +72,6 @@ function findBarLabel(svg: SVGSVGElement, drag: ChartValueDragState): BarLabelEl
   return { text, pill: svg.querySelector<SVGPathElement>(`[id="${id}-pill"]`), placement, template };
 }
 
-// How far the label travels with the bar: it follows the top edge, or the middle when centered.
 function labelShift(placement: string, origin: BarOrigin, top: number, height: number): number {
   if (placement === 'axis') {
     return 0;
@@ -85,7 +82,6 @@ function labelShift(placement: string, origin: BarOrigin, top: number, height: n
 function resizePill(pill: SVGPathElement, text: SVGTextElement, label: string, dy: number): void {
   const fontSize = parseFloat(text.getAttribute('font-size') ?? '12');
   const size = barLabelSize(label, fontSize, true);
-  // The pill's own top edge is read once from its first path command and kept.
   const stored = pill.dataset.sfPillY ?? (pill.getAttribute('d') ?? '').split(/\s+/)[2];
   pill.dataset.sfPillY = stored;
   const centerX = Number(text.getAttribute('x'));
@@ -93,10 +89,12 @@ function resizePill(pill: SVGPathElement, text: SVGTextElement, label: string, d
   pill.setAttribute('transform', `translate(0 ${dy})`);
 }
 
-// Moves and rewrites the bar's own value label while it is dragged. Returns
-// false when the bar has no label, so the caller can show the drag readout instead.
-// Horizontal bars: the label rides at the bar end (or centered) and keeps its own edge fixed as the text grows.
-function updateHorizontalBarLabel(label: BarLabelElements, drag: ChartValueDragState, origin: BarOrigin, value: number): boolean {
+function updateHorizontalBarLabel(
+  label: BarLabelElements,
+  drag: ChartValueDragState,
+  origin: BarOrigin,
+  value: number,
+): boolean {
   const content = formatBarLabel(value, label.template);
   (label.text.querySelector('tspan') ?? label.text).textContent = content;
   if (label.placement === 'axis') {
@@ -124,7 +122,12 @@ function updateHorizontalBarLabel(label: BarLabelElements, drag: ChartValueDragS
   return true;
 }
 
-export function updateBarLabel(svg: SVGSVGElement, drag: ChartValueDragState, origin: BarOrigin, value: number): boolean {
+export function updateBarLabel(
+  svg: SVGSVGElement,
+  drag: ChartValueDragState,
+  origin: BarOrigin,
+  value: number,
+): boolean {
   const label = drag.isBar ? findBarLabel(svg, drag) : null;
   if (!label) {
     return false;

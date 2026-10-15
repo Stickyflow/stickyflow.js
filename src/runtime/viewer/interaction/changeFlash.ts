@@ -10,17 +10,11 @@ import {
 } from '../../dom';
 
 export interface ChangeFlash {
-  /** Flash a ring/halo around each given owner id. Ids that do not resolve to
-   *  a live primary node (already gone by the time this runs) are silently
-   *  skipped, not an error. `color` overrides changeOverlay's CHANGE_COLOR. */
   flash(ownerIds: readonly string[], color?: string): void;
   destroy(): void;
 }
 
 export function createChangeFlash(svg: SVGSVGElement): ChangeFlash {
-  // Pending removal timers keyed by owner id — a second flash landing on the
-  // same id before the first timer fires cancels the stale timer instead of
-  // racing it.
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
   const flash = (ownerIds: readonly string[], color: string = CHANGE_COLOR): void => {
@@ -47,11 +41,8 @@ export function createChangeFlash(svg: SVGSVGElement): ChangeFlash {
           ? linkChangeOverlay(doc, primary as unknown as SVGPathElement, id, color)
           : shapeChangeOverlay(doc, primary, id, color);
       svg.appendChild(overlay);
-      // After appending, not inside the builder — see startChangeFade's doc.
       startChangeFade(overlay, reducedMotion);
       const duration = reducedMotion ? REDUCED_MOTION_DURATION_MS : FLASH_DURATION_MS;
-      // Closes over this specific overlay element, not a re-query at fire
-      // time — a later flash on the same id already removed and replaced it.
       timers.set(
         id,
         setTimeout(() => {

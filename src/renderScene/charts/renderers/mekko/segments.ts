@@ -115,7 +115,6 @@ function createSegmentNode(
   const radius = segment.isTop ? mekkoCornerRadius(context) : 0;
   const { x, y, width, height } = segment.frame;
   const fallback = '#94a3b8';
-  // Forced-square bounds (side = height) so the angle:90 gradient spans exactly this segment, not the shared chart-wide bounds.
   const gradientBounds: Bounds = {
     minX: x + width / 2 - height / 2,
     maxX: x + width / 2 + height / 2,
@@ -158,7 +157,6 @@ function createSegmentLabel(context: ChartRenderContext, layout: MekkoLayout, se
   const innerHeight = Math.max(1, height - 6);
   const lineHeight = layout.smallFontSize * 1.2;
   const labelLines = wrapText(segment.seriesLabel, innerWidth, layout.smallFontSize);
-  // Checked against the real wrapped line count, not a fixed height guess, so long labels can't overflow.
   if ((labelLines.length + 1) * lineHeight > innerHeight) {
     return [];
   }

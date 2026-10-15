@@ -39,7 +39,6 @@ export interface ChartBase {
   strokeWidth?: number;
   cornerRadius?: number;
   fillColor?: string | GradientColor | MeshGradientColor;
-  /** A photo behind the chart, optionally darkened or tinted by an overlay color. */
   fillImage?: { url: string; overlay?: string };
   gridColor?: string;
   gridWidth?: number;
@@ -47,27 +46,19 @@ export interface ChartBase {
   gridLineStyle?: 'solid' | 'dashed' | 'dotted';
   gridRoundedCorners?: boolean;
   textColor?: string;
-  /** Color of axis ticks and axis titles. Falls back to textColor. */
   axisLabelColor?: string;
-  /** Color of the legend text. Falls back to textColor. */
   legendColor?: string;
-  /** Width of the axis lines in px. Default 0 (no axis lines). */
   axisLineWidth?: number;
   axisLineColor?: string;
-  /** Dash pattern of the axis lines. Default solid. */
   axisLineStyle?: 'solid' | 'dashed' | 'dotted';
-  /** Length of the tick marks in px. Default 0 (no tick marks). */
   tickLength?: number;
   axisFontSize?: number;
   axisFontFamily?: string;
-  /** Value axis tick labels and title. Default true. */
   showValueAxis?: boolean;
-  /** Category labels centered under the bar (default) or aligned with its left edge. */
   categoryAlign?: 'center' | 'left' | 'inside';
   titleSize?: number;
   titleWeight?: 'normal' | 'bold';
   titleColor?: string;
-  /** Which grid lines to draw: horizontal ones follow the y axis. Default both. */
   gridAxes?: 'both' | 'x' | 'y';
   fontFamily?: string;
   fontSize?: number;

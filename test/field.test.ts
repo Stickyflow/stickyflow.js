@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
-// Fields §3.4 - mirrors stickyflow-atlas's field chart_type (continuous
-// scale, IDW interpolation, isolines, vector-field arrows) on this package's
-// own render pipeline.
-
 const FIELD_SFL = `sfl 1.2
 
 Model board {

@@ -20,7 +20,12 @@ export class ChartValueDragSession {
 
   #endPreview(drag: ChartValueDragState): void {
     if (drag.moved) {
-      this.#emitter.emit('chartValuePreview', { owner: drag.owner, series: drag.series, index: drag.index, value: null });
+      this.#emitter.emit('chartValuePreview', {
+        owner: drag.owner,
+        series: drag.series,
+        index: drag.index,
+        value: null,
+      });
     }
   }
 
@@ -44,7 +49,12 @@ export class ChartValueDragSession {
     const value = valueAtPixel(pointerAlongValueAxis(this.#svg, event, this.#drag.scale.horizontal), this.#drag.scale);
     updateChartValuePreview(this.#svg, this.#drag, value);
 
-    this.#emitter.emit('chartValuePreview', { owner: this.#drag.owner, series: this.#drag.series, index: this.#drag.index, value });
+    this.#emitter.emit('chartValuePreview', {
+      owner: this.#drag.owner,
+      series: this.#drag.series,
+      index: this.#drag.index,
+      value,
+    });
 
     if (this.#origin && updateBarLabel(this.#svg, this.#drag, this.#origin, value)) {
       return;

@@ -26,7 +26,6 @@ export interface SceneStyle {
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
-  // Color saturation of the element, 1 = unchanged. Applied together with blur.
   saturate?: number;
   clip?:
     | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
@@ -123,9 +122,6 @@ export interface SceneBase {
   propKind?: 'value' | 'color';
   propSolidOnly?: boolean;
   zoneGradient?: { axis: 'x' | 'y'; min: number; max: number };
-  // Generic drag-target marker, read by interaction code that needs to tell
-  // a node apart from its owner's default move/resize geometry (e.g. a
-  // freely-draggable label) without a dedicated SceneDetail variant.
   mark?: string;
 }
 
@@ -213,7 +209,6 @@ export interface SceneImage extends SceneBase {
   width: number;
   height: number;
   href: string;
-  // Only opacity, blur, clip and pointerEvents apply to an image.
   style: SceneStyle;
 }
 

@@ -34,7 +34,6 @@ interface PieSliceMark {
   angles: PieSliceAngles;
   labelOffsetX: number;
   labelOffsetY: number;
-  // How far the slice is pushed out along its middle.
   explode: number;
 }
 
@@ -194,7 +193,9 @@ function createSliceNodes(
       fill,
       ...strokeStyle,
       innerShadow: shadow,
-      shadow: glow ? { color: representativeColor(mark.color, '#ffffff'), opacity: 0.85, blur: glow, dx: 0, dy: 0 } : undefined,
+      shadow: glow
+        ? { color: representativeColor(mark.color, '#ffffff'), opacity: 0.85, blur: glow, dx: 0, dy: 0 }
+        : undefined,
     },
   };
 

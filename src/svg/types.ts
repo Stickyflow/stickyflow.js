@@ -4,7 +4,6 @@ export interface SvgRenderOptions {
   padding?: number;
   includeXmlDeclaration?: boolean;
   idPrefix?: string;
-  /** Adds invisible wide strokes under links so they are easy to hit. Meant for the interactive viewer. */
   linkHitAreas?: boolean;
 }
 

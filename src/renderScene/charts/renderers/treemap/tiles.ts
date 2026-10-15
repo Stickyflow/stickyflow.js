@@ -172,7 +172,6 @@ function createTileNode(
   const tileWidth = Math.max(0, tile.width - gap);
   const tileHeight = Math.max(0, tile.height - gap);
   const fallback = '#94a3b8';
-  // Forced-square bounds (side = tileWidth) so the angle:0 gradient spans exactly this tile, not the shared chart-wide bounds.
   const gradientBounds: Bounds = {
     minX: tileX,
     maxX: tileX + tileWidth,

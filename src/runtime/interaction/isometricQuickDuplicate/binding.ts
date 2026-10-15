@@ -10,12 +10,6 @@ export interface IsometricQuickDuplicateHandle {
   destroy(): void;
 }
 
-// Click-only (no drag-to-link, unlike the generic quickDuplicate bubbles) -
-// a cube face points along a fixed 3D axis, not a 2D box edge, so dragging
-// it onto another shape to link up doesn't carry the same meaning here.
-// Emits the exact same `quickDuplicate` event the generic bubbles do; the
-// host tells the two apart by `direction` (iso-prefixed here, see
-// isometricQuickDuplicateBubbles).
 export function bindIsometricQuickDuplicate(viewer: Viewer, emitter: Emitter): IsometricQuickDuplicateHandle {
   const svg = viewer.svg;
 

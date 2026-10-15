@@ -61,7 +61,6 @@ export function buildChartGrid(chart: Chart, plot: ChartLayout['plot'], bounds: 
   return nodes;
 }
 
-// Horizontal bars: the value axis runs along the bottom, so the grid lines are vertical.
 function buildHorizontalBarGrid(
   chart: Chart,
   plot: ChartLayout['plot'],
@@ -76,7 +75,9 @@ function buildHorizontalBarGrid(
     fill: { kind: 'none' },
     stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
     strokeWidth: width,
-    ...(chart.gridLineStyle === 'dotted' ? { dash: [0.1, width * 3], lineCap: 'round' as const } : gridLineDashStyle(chart, width)),
+    ...(chart.gridLineStyle === 'dotted'
+      ? { dash: [0.1, width * 3], lineCap: 'round' as const }
+      : gridLineDashStyle(chart, width)),
   };
   return chartTicks(chart.axisY).map((tick, index) => {
     const x = plot.x + mapChartValue(tick, chart.axisY, plot.width);

@@ -104,10 +104,6 @@ function createSankeyRibbonNode(
   };
 }
 
-// The exact "M sx,sTop C cx,sTop cx,tTop tx,tTop L tx,tBottom C cx,tBottom
-// cx,sBottom sx,sBottom Z" shape below is re-parsed, as-is, by the sankeyNode
-// drag preview (stickyflow.js's interaction tier) to live-redraw a ribbon
-// while its node is being dragged - keep both in sync if this ever changes.
 function sankeyRibbonPath(ribbon: SankeyLinkRibbon): string {
   const { source, target, controlX } = ribbon;
   return [

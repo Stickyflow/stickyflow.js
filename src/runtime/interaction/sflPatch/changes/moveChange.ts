@@ -26,14 +26,6 @@ export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
   if (!canvasObject) {
     return sfl;
   }
-  // `canvasObject.x`/`canvasObject.y` are absolute canvas coordinates (the parent chain's
-  // origin already folded in â€” see sflSemantic/canvasObjects/processing/layout/geometry.ts), but `layout.position`
-  // is an offset from the immediate parent's own origin, not an absolute
-  // coordinate. Writing the absolute value straight back for a child nested
-  // in a container that itself sits away from (0, 0) double-counts that
-  // container's own offset on the next render. Subtracting the parent's
-  // absolute origin converts back to the coordinate space `position` is
-  // actually in; a top-level canvasObject has no parent, so this is a no-op there.
   const parent = canvasObject.parentFrameId
     ? state.canvasObjects.find(candidate => candidate.id === canvasObject.parentFrameId)
     : undefined;

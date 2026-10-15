@@ -37,20 +37,8 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
   };
 
   const heightFactor = 0.6 + Math.min(1, height / 150) * 0.7;
-  // Always drops at least to the object's own base (height), plus an
-  // optional extra gap - positive distance always pushes the shadow further
-  // away from the object, never closer, regardless of how tall it is.
   const shadowDrop = height + finite(object.shadowStyle?.distance, 0);
-  // The footprint on the ground is the same rhombus as the top face, just
-  // carried straight down by shadowDrop - that keeps it following the true
-  // 30deg/150deg isometric axes (independently stretched by width and
-  // depth) instead of a fixed-orientation ellipse that only ever grows
-  // horizontally.
   const contactFootprint = faces.top.map(point => ({ x: point.x, y: point.y + shadowDrop }));
-  // The exact contact footprint is pixel-for-pixel the same quad as the
-  // bottom edge of the object's own opaque front/side faces, so it's fully
-  // hidden behind them - scaled outward from its own centroid so it pokes
-  // out past the silhouette the way a cast shadow actually would.
   const footprintCenter = {
     x: contactFootprint.reduce((sum, point) => sum + point.x, 0) / contactFootprint.length,
     y: contactFootprint.reduce((sum, point) => sum + point.y, 0) / contactFootprint.length,
@@ -66,10 +54,6 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
     ? {
         type: 'path',
         id: `isometric-${object.id}-ground-shadow`,
-        // A dedicated layer strictly below every isometric object's own
-        // hull/faces (which start at 15_000+i) - a shadow must never paint
-        // in front of another object's body, regardless of declaration
-        // order or how far its footprint stretches.
         order: 14_000 + index,
         bounds: {
           minX: Math.min(...footprintXs),
@@ -95,9 +79,6 @@ export function buildIsometricObject(object: IsometricObject, index: number): Re
   const hullPath = roundedPolygonPath(silhouette, cornerRadius);
   const hullClip = { type: 'path' as const, d: hullPath };
 
-  // One color in, a consistent three-face cube out - front/side are always
-  // derived shades of the same fill, never independently chosen, so they
-  // can't drift out of sync with each other.
   const faceFills = deriveFaceFills(object.fill ?? '#f8fafc');
   const colorProp = { prop: 'style.fill', propKind: 'color' as const, propSolidOnly: true };
 

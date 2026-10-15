@@ -6,7 +6,6 @@ export interface InsertCanvasObjectOptions {
   y: number;
   width: number;
   height: number;
-  /** Isometric objects only - the third `layout.size` value. */
   depth?: number;
   parentId?: string;
   body?: string;

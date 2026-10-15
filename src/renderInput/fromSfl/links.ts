@@ -28,7 +28,10 @@ interface StackPosition {
   sequence: number;
 }
 
-function isometricStackPosition(isometricObjects: IsometricObject[], id: string | undefined): StackPosition | undefined {
+function isometricStackPosition(
+  isometricObjects: IsometricObject[],
+  id: string | undefined,
+): StackPosition | undefined {
   const index = isometricObjects.findIndex(object => object.id === id);
   if (index < 0) {
     return undefined;
@@ -37,7 +40,6 @@ function isometricStackPosition(isometricObjects: IsometricObject[], id: string 
   return { rank: object.order ?? 0, sequence: object.sourceIndex ?? ISOMETRIC_SEQUENCE_BASE + index };
 }
 
-// A hidden-face endpoint must render behind the object it's attached to.
 function connectionStack(
   isometricObjects: IsometricObject[],
   connection: Connection,

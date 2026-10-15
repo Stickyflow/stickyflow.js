@@ -7,13 +7,13 @@ import {
   resolveChartShadow,
   roundedBarPath,
   rowTop,
+  segmentedBarPath,
   stackedSegment,
 } from '../../primitives';
 import { seriesValueColorProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
-import { segmentedBarPath } from '../../primitives';
-import { createBarGlowNode } from './glow';
 import { createGlassBackdropNodes } from './glass';
+import { createBarGlowNode } from './glow';
 import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 
@@ -24,7 +24,6 @@ interface Frame {
   height: number;
 }
 
-// Bars grow from the left edge of the plot; each category is one row.
 export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] {
   const { chart, plot, diagnostics, nextOrder } = context;
   const config = chart.config;
@@ -46,7 +45,12 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
     if (stacked) {
       const segment = stackedSegment(chart, stacked, valueIndex, seriesIndex, plot.width);
       const start = Math.min(segment.pixelStart, segment.pixelEnd);
-      return { x: plot.x + start, y: top, width: Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart)), height: rows.barsHeight };
+      return {
+        x: plot.x + start,
+        y: top,
+        width: Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart)),
+        height: rows.barsHeight,
+      };
     }
     const seriesHeight = rows.barsHeight / seriesCount;
     const width = Math.max(0, mapChartValue(value, chart.axisY, plot.width));
@@ -60,14 +64,12 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
       const color = series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
       const frame = frameOf(seriesIndex, valueIndex, value);
       const id = `${series.id}-${valueIndex}`;
-      // A gradient is laid out over the node's bounds, so each bar gets its own instead of the chart's.
       const barBounds = {
         minX: frame.x,
         maxX: frame.x + Math.max(frame.width, 1),
         minY: frame.y,
         maxY: frame.y + frame.height,
       };
-      // A single series looks the same stacked or grouped, so only real stacks stay solid.
       const segments = stacked && chart.series.length > 1 ? 0 : finite(config?.barSegments, 0);
       const d =
         segments > 0
@@ -83,7 +85,14 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
           : roundedBarPath(frame.x, frame.y, frame.width, frame.height, config?.barCornerRadius ?? 2);
 
       if (barTrackEnabled(context) && (!stacked || seriesIndex === 0)) {
-        tracks.push(...createBarTrackNodes(context, id, { x: plot.x, y: frame.y, width: plot.width, height: frame.height }, 'horizontal'));
+        tracks.push(
+          ...createBarTrackNodes(
+            context,
+            id,
+            { x: plot.x, y: frame.y, width: plot.width, height: frame.height },
+            'horizontal',
+          ),
+        );
       }
       const fill = paint(color, diagnostics, chart.id);
       bars.push(...createGlassBackdropNodes(context, id, d));
@@ -124,7 +133,10 @@ export function renderHorizontalBars(context: ChartRenderContext): RenderNode[] 
         glows.push(createBarGlowNode(context, `chart-bar-glow-${chart.id}-${id}`, d, color, glow, barBounds));
       }
       const showLabel = barLabelsEnabled(context) && (!config?.barLabelMaxOnly || value >= highest);
-      if (showLabel && (!stacked || seriesIndex === chart.series.length - 1 || config?.barLabelPosition !== 'outside')) {
+      if (
+        showLabel &&
+        (!stacked || seriesIndex === chart.series.length - 1 || config?.barLabelPosition !== 'outside')
+      ) {
         labels.push(
           ...createBarLabelNodes(context, {
             id: `chart-bar-label-${chart.id}-${id}`,

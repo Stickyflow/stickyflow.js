@@ -2,17 +2,15 @@ import type { BindingRuntime } from '../../binding';
 import type { Viewer } from './types';
 
 export interface InteractionOptions {
-  // Return false to let the pointer through to the viewer (selecting, moving), for example while editing.
   enabled?: () => boolean;
-  // Return true to stop the ticks, for a frozen scene.
   paused?: () => boolean;
 }
 
 const TAU = Math.PI * 2;
-// A frame that took longer than this (a hidden tab, a breakpoint) is not allowed to jump the time of onTick.
 const LONGEST_TICK = 0.05;
 
-const finite = (value: unknown, fallback: number): number => (Number.isFinite(Number(value)) && value !== '' ? Number(value) : fallback);
+const finite = (value: unknown, fallback: number): number =>
+  Number.isFinite(Number(value)) && value !== '' ? Number(value) : fallback;
 
 function parameters(surface: Element): Record<string, unknown> {
   try {
@@ -22,7 +20,6 @@ function parameters(surface: Element): Record<string, unknown> {
   }
 }
 
-// The value a pointer position stands for on a scale: along the ruler, or around the arc of a tick scale.
 function pointerValue(svg: SVGSVGElement, id: string, x: number, y: number): number | undefined {
   const surface = svg.querySelector(`foreignObject[data-sf-shader][data-sf-id="${CSS.escape(id)}"]`);
   if (!surface) {
@@ -47,7 +44,6 @@ function pointerValue(svg: SVGSVGElement, id: string, x: number, y: number): num
   return fraction * finite(params.max, 100);
 }
 
-// The topmost of the given elements under the pointer, by the box it occupies (a shape without fill is hit as well).
 function hit(svg: SVGSVGElement, ids: ReadonlySet<string>, x: number, y: number): string | null {
   let found: string | null = null;
   for (const node of svg.querySelectorAll('[data-sf-primary][data-sf-id]')) {
@@ -63,14 +59,15 @@ function hit(svg: SVGSVGElement, ids: ReadonlySet<string>, x: number, y: number)
   return found;
 }
 
-// Delivers what the pointer does on the viewer to the binding runtime, and ticks it once per frame, so the handlers of the
-// document (onPress, onRelease, onTap, onDrag, onTick) run. Returns a function that disconnects.
-export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, options: InteractionOptions = {}): () => void {
+export function connectInteraction(
+  viewer: Viewer,
+  runtime: BindingRuntime,
+  options: InteractionOptions = {},
+): () => void {
   const { pressable, scales } = runtime.interactive;
   const svg = viewer.svg;
   let active: string | null = null;
   let hovered: string | null = null;
-  // The click that follows a press the document took must not reach the viewer either, or it would select the element.
   let swallowClick = false;
 
   const track = (event: PointerEvent) => {
@@ -98,14 +95,18 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
 
   const down = (event: PointerEvent) => {
     swallowClick = false;
-    if (event.button !== 0 || options.enabled?.() === false || !(event.target instanceof Node) || !svg.contains(event.target)) {
+    if (
+      event.button !== 0 ||
+      options.enabled?.() === false ||
+      !(event.target instanceof Node) ||
+      !svg.contains(event.target)
+    ) {
       return;
     }
     const id = hit(svg, pressable, event.clientX, event.clientY);
     if (!id) {
       return;
     }
-    // The viewer must not start selecting or moving what the document lets the pointer press.
     event.stopPropagation();
     event.preventDefault();
     swallowClick = true;
@@ -128,7 +129,6 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
     if (!active) {
       return;
     }
-    // The viewer has seen neither the press nor the end of it.
     event.stopPropagation();
     const id = active;
     active = null;

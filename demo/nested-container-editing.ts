@@ -1,9 +1,3 @@
-// Manual regression demo for stickyflow.js#9 (entity move/resize inside a
-// Container away from the canvas origin writing an absolute position instead
-// of one relative to its parent). Run with a TS-aware dev server, e.g.
-// from packages/stickyflow.js:  npx vite demo
-// then open nested-container-editing.html.
-
 import { applyMoveChange, applyResizeChange, bindEditing } from '../src/runtime/interaction';
 import { createViewer } from '../src/runtime/viewer';
 
@@ -75,5 +69,4 @@ editing.on('resizeChange', event => {
   render();
 });
 
-// Expose for poking around in the console.
 (window as unknown as { viewer: typeof viewer }).viewer = viewer;

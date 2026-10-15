@@ -1,9 +1,5 @@
 import type { SankeyNodeDragLink, SankeyNodeDragState } from './types';
 
-// Mirrors sankeyRibbonPath() in renderScene/charts/renderers/sankey/links.ts -
-// only the end attached to the dragged node shifts by (dx, dy); the other end
-// stays put, and the control-point x is recomputed from both current ends so
-// the curve keeps reading correctly as the node moves horizontally too.
 function redrawLink(link: SankeyNodeDragLink, dx: number, dy: number): void {
   const sx = link.endsAtSource ? link.sx + dx : link.sx;
   const sTop = link.endsAtSource ? link.sTop + dy : link.sTop;

@@ -11,7 +11,8 @@ export interface ValueEnv {
 
 type Report = (code: string, message: string) => void;
 
-const isNumeric = (type: BindingType): boolean => type === 'number' || (typeof type === 'object' && type.list === 'number');
+const isNumeric = (type: BindingType): boolean =>
+  type === 'number' || (typeof type === 'object' && type.list === 'number');
 const isList = (type: BindingType): boolean => typeof type === 'object';
 
 export function collectRefs(expr: SflExpr): string[][] {
@@ -29,7 +30,11 @@ export function collectRefs(expr: SflExpr): string[][] {
   }
 }
 
-function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScope, report: Report): BindingType | undefined {
+function inferBinary(
+  expr: Extract<SflExpr, { kind: 'binary' }>,
+  scope: TypeScope,
+  report: Report,
+): BindingType | undefined {
   const left = inferType(expr.left, scope, report);
   const right = inferType(expr.right, scope, report);
   if (!left || !right) {
@@ -52,7 +57,10 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
   }
   if (operator === '==' || operator === '!=') {
     if (isList(left) || !sameType(left, right)) {
-      report('type-mismatch', `'${operator}' compares two values of the same simple type, got ${typeName(left)} and ${typeName(right)}.`);
+      report(
+        'type-mismatch',
+        `'${operator}' compares two values of the same simple type, got ${typeName(left)} and ${typeName(right)}.`,
+      );
       return undefined;
     }
     return 'boolean';
@@ -67,7 +75,6 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
   return isList(left) || isList(right) ? { list: 'number' } : 'number';
 }
 
-// Number functions; a list argument applies to every element.
 const MATH: Record<string, { arguments: number; apply(values: number[]): number }> = {
   round: { arguments: 1, apply: ([value]) => Math.round(value) },
   floor: { arguments: 1, apply: ([value]) => Math.floor(value) },
@@ -76,14 +83,19 @@ const MATH: Record<string, { arguments: number; apply(values: number[]): number 
   min: { arguments: 2, apply: ([a, b]) => Math.min(a, b) },
   max: { arguments: 2, apply: ([a, b]) => Math.max(a, b) },
   clamp: { arguments: 3, apply: ([value, low, high]) => Math.min(high, Math.max(low, value)) },
-  // current moved toward target by at most maxStep, without passing it.
   moveToward: {
     arguments: 3,
-    apply: ([current, target, maxStep]) => (Math.abs(target - current) <= maxStep ? target : current + Math.sign(target - current) * maxStep),
+    apply: ([current, target, maxStep]) =>
+      Math.abs(target - current) <= maxStep ? target : current + Math.sign(target - current) * maxStep,
   },
 };
 
-function inferMath(name: string, expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
+function inferMath(
+  name: string,
+  expr: Extract<SflExpr, { kind: 'call' }>,
+  scope: TypeScope,
+  report: Report,
+): BindingType | undefined {
   const spec = MATH[name];
   if (expr.args.length !== spec.arguments) {
     report('wrong-arguments', `${name}() takes exactly ${spec.arguments} argument${spec.arguments === 1 ? '' : 's'}.`);
@@ -94,13 +106,20 @@ function inferMath(name: string, expr: Extract<SflExpr, { kind: 'call' }>, scope
     return undefined;
   }
   if (types.some(type => !isNumeric(type as BindingType))) {
-    report('type-mismatch', `${name}() needs numbers, got ${types.map(type => typeName(type as BindingType)).join(', ')}.`);
+    report(
+      'type-mismatch',
+      `${name}() needs numbers, got ${types.map(type => typeName(type as BindingType)).join(', ')}.`,
+    );
     return undefined;
   }
   return types.some(type => isList(type as BindingType)) ? { list: 'number' } : 'number';
 }
 
-function inferCall(expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
+function inferCall(
+  expr: Extract<SflExpr, { kind: 'call' }>,
+  scope: TypeScope,
+  report: Report,
+): BindingType | undefined {
   const name = expr.callee.join('.');
   if (name in MATH) {
     return inferMath(name, expr, scope, report);
@@ -122,7 +141,10 @@ function inferCall(expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, r
     return undefined;
   }
   if (!sameType(whenTrue, whenFalse)) {
-    report('type-mismatch', `when() branches must have the same type, got ${typeName(whenTrue)} and ${typeName(whenFalse)}.`);
+    report(
+      'type-mismatch',
+      `when() branches must have the same type, got ${typeName(whenTrue)} and ${typeName(whenFalse)}.`,
+    );
     return undefined;
   }
   return whenTrue;
@@ -178,8 +200,8 @@ function arithmetic(operator: string, left: number, right: number): number {
   }
 }
 
-// Numbers join text with at most one decimal.
-const text = (value: BindingValue): string => (typeof value === 'number' ? String(Math.round(value * 10) / 10) : String(value));
+const text = (value: BindingValue): string =>
+  typeof value === 'number' ? String(Math.round(value * 10) / 10) : String(value);
 
 function evaluateBinary(expr: Extract<SflExpr, { kind: 'binary' }>, env: ValueEnv): BindingValue {
   const left = evaluate(expr.left, env);

@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readConfig } from '../src/runtime/webComponent/config';
 
-// Pure attribute parsing for <stickyflow-diagram> — node-testable via a plain
-// getter. The element's DOM lifecycle is browser-verified via the demo.
 const from = (attrs: Record<string, string>) => (name: string) => attrs[name] ?? null;
 
 describe('web-component config parsing', () => {

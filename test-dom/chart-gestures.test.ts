@@ -85,8 +85,8 @@ describe('dragging a bar does not drag the chart', () => {
     svg.dispatchEvent(pointer('pointermove', 120, 150));
 
     const d = bar.getAttribute('d') ?? '';
-    expect(d).toContain(' Q '); // still rounded - data-sf-bar-radius carried through the drag
-    expect(bar).not.toHaveProperty('y'); // never reverts to rect-style attributes
+    expect(d).toContain(' Q ');
+    expect(bar).not.toHaveProperty('y');
   });
 
   it('still moves the chart when the drag starts on its background', () => {

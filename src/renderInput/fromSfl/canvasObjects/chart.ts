@@ -23,7 +23,6 @@ import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeRamp, decodeShadow } from '../../styleDecoding';
 import { numOf, solidColor } from './values';
 
-// image(url) or image(url, overlayColor), the url without commas or parentheses.
 function decodeImageFill(source: string | undefined): { url: string; overlay?: string } | undefined {
   const match = source?.match(/^image\(\s*([^,)]+?)\s*(?:,\s*(.+?))?\s*\)$/);
   return match ? { url: match[1], overlay: match[2] } : undefined;

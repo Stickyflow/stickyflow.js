@@ -50,7 +50,6 @@ describe('Hexbin chart', () => {
   it('groups nearby points into fewer bins than there are points', () => {
     const { scene } = render(HEXBIN_SFL);
     const hexNodes = scene.nodes.filter(node => node.id.startsWith('chart-hexbin-density-a-'));
-    // 3 clustered points (10,10)/(11,11)/(12,9) + 1 far point (90,90) -> some clustering
     expect(hexNodes.length).toBeLessThan(4);
     expect(hexNodes.length).toBeGreaterThan(0);
   });

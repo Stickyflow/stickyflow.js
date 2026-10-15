@@ -39,9 +39,7 @@ export interface Shape {
 
   fontSize?: number;
   fontWeight?: FontWeight;
-  // Extra space between letters, in px.
   letterSpacing?: number;
-  // A Text block: bare text without fill, stroke or inner padding.
   isText?: boolean;
   fontFamily?: string;
   textAlign?: 'left' | 'center' | 'right';

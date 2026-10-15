@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bindEditing } from '../src/runtime/interaction';
 import { createViewer } from '../src/runtime/viewer';

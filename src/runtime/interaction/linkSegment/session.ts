@@ -72,13 +72,21 @@ function movedSegments(drag: SegmentDrag, value: number): SegmentData[] {
   if (drag.axis === 'y') {
     target.ay = value;
     target.by = value;
-    if (before) before.by = value;
-    if (after) after.ay = value;
+    if (before) {
+      before.by = value;
+    }
+    if (after) {
+      after.ay = value;
+    }
   } else {
     target.ax = value;
     target.bx = value;
-    if (before) before.bx = value;
-    if (after) after.ax = value;
+    if (before) {
+      before.bx = value;
+    }
+    if (after) {
+      after.ax = value;
+    }
   }
   return next;
 }
@@ -201,7 +209,11 @@ export class LinkSegmentSession {
     if (!handle || !owner) {
       return;
     }
-    this.#emitter.emit('linkSegmentChange', { owner, index: Number(handle.getAttribute('data-sf-link-segment')), offset: 0 });
+    this.#emitter.emit('linkSegmentChange', {
+      owner,
+      index: Number(handle.getAttribute('data-sf-link-segment')),
+      offset: 0,
+    });
   };
 
   cancel(): void {

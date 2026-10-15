@@ -1,7 +1,5 @@
 import type { ShaderProgram } from '../types';
 
-// A gauge orb: a perfectly round sphere that is pressed in, fluidly, where the needle points. The dent is gone at rest, the colors
-// run from a cool blue at rest to a hot pink at full throttle. The tick scale around it is a separate program (tickScale).
 const fragmentSource = `
 precision highp float;
 
@@ -41,7 +39,6 @@ void main() {
   float needleAngle = start - progress * sweep;
   float delta = wrap(angle - needleAngle);
 
-  // The dent follows its own value (dent, usually with a Lag), so it trails the needle.
   float dentValue = clamp(uDent < 0.0 ? progress : uDent, 0.0, 1.0);
   float engage = smoothstep(0.0, 0.28, dentValue);
   float boost = smoothstep(0.0, 1.0, clamp(uBoost, 0.0, 1.0));
@@ -53,8 +50,6 @@ void main() {
   vec3 hot = uHot;
   vec3 tint = mix(cool, hot, heat);
 
-  // The needle (progress) is a finger moving through a fluid that follows with a delay (dent). While it speeds up it drags a groove
-  // behind it and piles the fluid up in front; when it stops, the groove closes and the pile settles back at an even pace.
   float ripple = 0.5 + 0.5 * sin(delta * 9.0 - time * 1.4);
   float wake = (progress - dentValue) * sweep;
   float lo = min(0.0, wake);
@@ -73,7 +68,6 @@ void main() {
   float depth = clamp(radius / orbRadius, 0.0, 1.25);
   float roundDepth = clamp(radius / baseRadius, 0.0, 1.2);
 
-  // Blue everywhere at rest; with speed the gradient turns pink, first around the dent.
   float local = clamp(heat * (0.7 + 0.3 * bell(delta, 0.9)) + 0.25 * heat * bell(delta, 0.3), 0.0, 1.0);
   vec3 rim = mix(cool, hot, local);
   vec3 bodyColor = mix(uColor, rim * (0.5 + 0.25 * energy), pow(roundDepth, 2.6));

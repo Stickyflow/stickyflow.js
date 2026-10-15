@@ -7,11 +7,6 @@ import {
   wrapRichText,
 } from '../src/renderScene/scene/richTextLayout';
 
-// Ported 1:1 from stickyflow-atlas's frontend/src/entities/shapes/ui/text/richText.test.ts
-// (the reference implementation this file mirrors) - same test cases, same
-// fixed-width-per-character fake measurer, so the wrap-boundary arithmetic is
-// pinned identically in both repos without needing real font metrics here either.
-
 describe('hasBoldMarkup', () => {
   it('detects a bold run', () => {
     expect(hasBoldMarkup('Output **doubled** this year.')).toBe(true);
@@ -56,8 +51,6 @@ describe('parseRichText', () => {
   });
 });
 
-// A fixed-width-per-character measurer keeps the wrap-boundary math simple
-// and deterministic to assert on, independent of any real font metrics.
 const fixedMeasure = (text: string, bold: boolean) => text.length * (bold ? 12 : 10);
 const fixedSpaceWidth = 10;
 
@@ -74,7 +67,6 @@ describe('wrapRichLine', () => {
   });
 
   it('wraps to a new line once a word would exceed maxWidth', () => {
-    // "aa"(20) + space(10) + "bb"(20) = 50 <= 50; + space(10) + "cc"(20) = 80 > 50 -> wraps
     const runs = [{ text: 'aa bb cc', bold: false }];
     expect(wrapRichLine(runs, 50, fixedMeasure, fixedSpaceWidth)).toEqual([
       [
@@ -86,14 +78,11 @@ describe('wrapRichLine', () => {
   });
 
   it('accounts for a bold word being wider than the same plain word', () => {
-    // plain "bb" = 20, bold "bb" = 24 - a maxWidth that fits the plain
-    // width but not the bold one must still wrap the bold word off.
     const plainRuns = [{ text: 'aa bb', bold: false }];
     const boldRuns = [
       { text: 'aa ', bold: false },
       { text: 'bb', bold: true },
     ];
-    // aa(20) + space(10) + bb(20 plain / 24 bold) = 50 plain (fits 50), 54 bold (doesn't fit 50)
     expect(wrapRichLine(plainRuns, 50, fixedMeasure, fixedSpaceWidth)).toEqual([
       [
         { text: 'aa', bold: false },

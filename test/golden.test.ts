@@ -2,11 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { render, renderCanvas } from '../src/index';
 import { fixtures, SFL_SAMPLE } from './fixtures';
 
-// Golden SVGs are the determinism contract (plan §18.3, ADR-02). They are real,
-// viewable .svg files under __golden__/ — open one to see exactly what the
-// pipeline emits. Regenerate intentionally with `vitest -u` after a reviewed
-// change; an accidental diff fails CI.
-
 describe('golden SVG snapshots', () => {
   for (const [name, input] of Object.entries(fixtures)) {
     it(`renders "${name}" to its golden SVG`, async () => {

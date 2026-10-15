@@ -29,9 +29,8 @@ describe('isometricFaces', () => {
     const base = { x: 10, y: 20, width: 100, height: 130, depth: 28 };
     const wider = { ...base, width: 160 };
 
-    expect(isometricFaces(wider).top[3]).toEqual(isometricFaces(base).top[3]); // left
-    expect(isometricFaces(wider).front[3]).toEqual(isometricFaces(base).front[3]); // bottomLeft
-    // right moves by exactly the width delta, along the fixed axis direction
+    expect(isometricFaces(wider).top[3]).toEqual(isometricFaces(base).top[3]);
+    expect(isometricFaces(wider).front[3]).toEqual(isometricFaces(base).front[3]);
     const dRight = {
       x: isometricFaces(wider).top[1].x - isometricFaces(base).top[1].x,
       y: isometricFaces(wider).top[1].y - isometricFaces(base).top[1].y,
@@ -49,7 +48,7 @@ describe('isometricFaces', () => {
 
   it('clamps negative depth to zero rather than mirroring the box', () => {
     const faces = isometricFaces({ x: 0, y: 0, width: 40, height: 30, depth: -10 });
-    expect(faces.top[0]).toEqual(faces.top[3]); // apex and left coincide when depth is 0
+    expect(faces.top[0]).toEqual(faces.top[3]);
   });
 });
 

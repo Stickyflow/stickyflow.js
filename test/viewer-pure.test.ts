@@ -12,9 +12,6 @@ import { Emitter } from '../src/runtime/viewer/events';
 import { clickAction, selectionReducer } from '../src/runtime/viewer/interaction/selection';
 import { SFL_SAMPLE } from './fixtures';
 
-// The interaction tier's PURE core — no DOM. These run under environment:'node'.
-// The DOM layers (display.ts / interaction.ts) are browser-verified separately.
-
 describe('contract helpers', () => {
   it('parses the contract version a real render stamps', () => {
     const { svg } = render(SFL_SAMPLE);
@@ -30,7 +27,6 @@ describe('contract helpers', () => {
 });
 
 describe('owner resolution (DOM-agnostic)', () => {
-  // Minimal fake element: the clicked node carries data-sf-* directly (flat SVG).
   const fake = (attrs: Record<string, string>): AttrElement => ({
     getAttribute: n => attrs[n] ?? null,
     closest: sel => (sel === '[data-sf-id]' && attrs['data-sf-id'] ? fake(attrs) : null),
@@ -66,10 +62,6 @@ describe('owner resolution (DOM-agnostic)', () => {
 });
 
 describe('camera gesture modifier', () => {
-  // Both tiers key off this one predicate: the viewer pans/zooms when it holds,
-  // and every mutating gesture in stickyflow/interaction declines. Panning a
-  // zoomed-in diagram depends on the two agreeing, which is why it is a shared
-  // function rather than the same two keys tested in five places.
   it('is Ctrl or Cmd, and nothing else', () => {
     expect(isCameraGesture({ ctrlKey: true, metaKey: false })).toBe(true);
     expect(isCameraGesture({ ctrlKey: false, metaKey: true })).toBe(true);
@@ -98,9 +90,6 @@ describe('selection reducer', () => {
 });
 
 describe('scene diff classification (change-highlighting)', () => {
-  // patchSceneNodes (DOM-bound, browser-verified) feeds this pure function
-  // three owner-id sets it tracks while patching; this is the trickiest,
-  // most bug-prone part of that patch — worth pinning without a browser.
   it('an id only present after the update is added', () => {
     expect(classifySceneDiff(new Set(), new Set(['a']), new Set(['a']))).toEqual({
       added: ['a'],

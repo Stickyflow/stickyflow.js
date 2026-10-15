@@ -4,16 +4,6 @@ import { renderCanvas } from '../src/index';
 import type { Shape } from '../src/model/shape';
 import { wrapText } from '../src/renderScene/scene/textLayout';
 
-// RenderOptions.measureText: the opt-in escape hatch from this package's
-// character-count wrap estimate to real glyph metrics supplied by the host
-// (stickyflow-atlas passes its canvas measurer; Node keeps the heuristic so
-// output stays reproducible). The contract these tests pin:
-//   - omitted  -> byte-identical to before (golden.test.ts covers that too)
-//   - supplied -> called once per text node with that node's RESOLVED font,
-//                 and its widths actually drive where lines break
-// Everything downstream of the wrap (label height -> link label gap) follows
-// from those, so getting the resolved font wrong is the failure that matters.
-
 const baseShape = (text: string, extra: Partial<Shape> = {}): Shape =>
   ({
     id: 'e',
@@ -38,8 +28,6 @@ function renderShape(text: string, extra: Partial<Shape> = {}, measureText?: Mea
   return renderCanvas(input, { measureText });
 }
 
-/** Records every (fontFamily, fontSize) the renderer asks about, and reports a
- *  fixed width per character so a test can predict breaks exactly. */
 function spyMeasurer(pxPerChar: number, boldPxPerChar = pxPerChar) {
   const calls: Array<{ fontFamily: string; fontSize: number }> = [];
   const factory: MeasureTextFactory = (fontFamily, fontSize) => {
@@ -56,13 +44,10 @@ const tspans = (svg: string): string[] => [...svg.matchAll(/<tspan[^>]*>([^<]*)<
 
 describe('wrapText — measured vs heuristic', () => {
   it('without metrics, wraps by character count exactly as before', () => {
-    // width 100 / (fontSize 10 * .58) => 17 chars per line
     expect(wrapText('aaaa bbbb cccc dddd', 100, 10)).toEqual(['aaaa bbbb cccc', 'dddd']);
   });
 
   it('with metrics, wraps by measured width instead', () => {
-    // 20px per char is far wider than the .58*10 = 5.8px the heuristic assumes,
-    // so the same string breaks much earlier.
     const metrics = { measure: (text: string) => text.length * 20, spaceWidth: 20 };
     expect(wrapText('aaaa bbbb cccc dddd', 100, 10, metrics)).toEqual(['aaaa', 'bbbb', 'cccc', 'dddd']);
   });
@@ -98,8 +83,6 @@ describe('RenderOptions.measureText', () => {
     const { factory } = spyMeasurer(30);
     const measured = renderShape(text, {}, factory);
     expect(tspans(measured.svg)).not.toEqual(tspans(plain.svg));
-    // 30px/char against a 220-wide shape minus 2*8 padding = 204 usable:
-    // every word lands on its own line.
     expect(tspans(measured.svg)).toEqual(['one', 'two', 'three', 'four', 'five', 'six']);
   });
 
@@ -117,8 +100,6 @@ describe('RenderOptions.measureText', () => {
   });
 
   it('drives the rich (bold-markup) wrap too, not just the plain one', () => {
-    // A bold-heavy measurer must push the bold run onto its own line — proving
-    // wrapRichText got these metrics rather than falling back to the heuristic.
     const { factory, calls } = spyMeasurer(2, 60);
     const { svg } = renderShape('aa **bold** cc', {}, factory);
     expect(calls).toHaveLength(1);

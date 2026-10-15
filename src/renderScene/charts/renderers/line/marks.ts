@@ -70,7 +70,6 @@ function createLinePoint(context: ChartRenderContext, mark: LinePointMark): Rend
   const radius = config?.pointSize ?? 3;
   const strokeWidth = config?.pointStrokeWidth ?? 0;
   const visible = radius > 0;
-  // "series" is the default: the dot has the color of its line.
   const fill = config?.pointFill && config.pointFill !== 'series' ? config.pointFill : mark.color;
   return {
     type: 'ellipse',
@@ -79,7 +78,6 @@ function createLinePoint(context: ChartRenderContext, mark: LinePointMark): Rend
     bounds,
     cx: mark.position.x,
     cy: mark.position.y,
-    // A hidden mark keeps a hit area, so the value can still be dragged.
     rx: visible ? radius : 6,
     ry: visible ? radius : 6,
     detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex },

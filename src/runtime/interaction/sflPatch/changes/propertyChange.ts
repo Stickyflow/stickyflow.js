@@ -1,6 +1,6 @@
 import type { PropertyChangeEvent, PropertyValue } from '../../events';
-import { insertDirectProperty, replacePropertyValue } from '../edits/propertyValues';
 import { childIndent } from '../blockInsert';
+import { insertDirectProperty, replacePropertyValue } from '../edits/propertyValues';
 import { escapeSflString } from '../format';
 import { findDirectProperty, findOwnerBlock, type PropertySpan, parsePropertyPath, resolveBlocks } from '../scanner';
 import { growListElement, replaceListElement } from './listElement';

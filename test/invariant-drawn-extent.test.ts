@@ -4,14 +4,6 @@ import type { Shape, ShapeType } from '../src/model/shape';
 import type { RenderInput } from '../src/renderInput/types';
 import { ALL_SHAPE_TYPES } from './fixtures';
 
-// This is the invariant the Symbol resize-snap bug (fixed this session) was
-// an instance of: whatever the resize/selection overlay treats as an
-// entity's box must match what its geometry actually draws, or the live
-// preview and the committed render disagree the moment a drag starts. Swept
-// here across every built-in shape type and several boxes, so a future
-// geometry change that breaks the invariant fails a test instead of only
-// showing up as a UI glitch.
-
 interface Envelope {
   minX: number;
   minY: number;
@@ -98,9 +90,6 @@ const BOXES = [
   { label: 'tall 80x200', box: { x: -20, y: 5, width: 80, height: 200 } },
 ];
 
-// person keeps its circle head and semicircle body undistorted, so it is fitted
-// uniformly into the box (see the dedicated test below) and declares the box
-// through data-sf-symbol-bounds instead of filling it.
 const FITTED_SHAPES = new Set<ShapeType>(['person']);
 
 describe('a shape draws exactly the box it declares', () => {

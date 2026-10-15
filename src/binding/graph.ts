@@ -20,9 +20,7 @@ export interface BindingGraph {
   contracts: Map<string, DataSourceContract>;
   bindings: BoundProperty[];
   handlers: BoundHandler[];
-  // The shapes, texts and widgets of the document, by name; their state can be read in expressions.
   elements: Map<string, ElementInfo>;
-  // "source.field" -> the bindings that read it; a source change only touches these.
   byField: Map<string, BoundProperty[]>;
   diagnostics: BindingDiagnostic[];
 }
@@ -33,7 +31,6 @@ interface BindingSite {
   binding: SflBinding;
 }
 
-// Bindings sit where the property sits: on a block, in its data block (charts), or on a series.
 function collectSites(blocks: SflBlock[], chartPath: string[], sites: BindingSite[]): void {
   for (const block of blocks) {
     const path = block.kind === 'Series' ? [...chartPath, block.name] : [block.name];
@@ -79,21 +76,28 @@ function collectElements(sflDocument: SflDocument): Map<string, ElementInfo> {
     }
     const type = block.entries.find(entry => entry.type === 'property' && entry.property.key === 'type');
     const value = type?.type === 'property' ? type.property.value : undefined;
-    elements.set(block.name, { kind: block.kind, widgetType: value?.type === 'ident' ? value.segments.join('.') : undefined });
+    elements.set(block.name, {
+      kind: block.kind,
+      widgetType: value?.type === 'ident' ? value.segments.join('.') : undefined,
+    });
   });
   return elements;
 }
 
-// `pressed` and `hovered` exist on every element; `pointer` on a widget with a scale.
 function elementStateType(element: ElementInfo, state: string): BindingType | undefined {
   if (state === 'pressed' || state === 'hovered') {
     return 'boolean';
   }
-  return state === 'pointer' && element.kind === 'Widget' && SCALE_WIDGETS.includes(element.widgetType ?? '') ? 'number' : undefined;
+  return state === 'pointer' && element.kind === 'Widget' && SCALE_WIDGETS.includes(element.widgetType ?? '')
+    ? 'number'
+    : undefined;
 }
 
-// A data source wins over an element of the same name. `time.delta` is only known while a source ticks.
-function createScope(contracts: Map<string, DataSourceContract>, elements: Map<string, ElementInfo>, ticking = false): TypeScope {
+function createScope(
+  contracts: Map<string, DataSourceContract>,
+  elements: Map<string, ElementInfo>,
+  ticking = false,
+): TypeScope {
   return {
     resolve(path) {
       if (path.length !== 2) {
@@ -112,11 +116,12 @@ function createScope(contracts: Map<string, DataSourceContract>, elements: Map<s
   };
 }
 
-// Inside a source, a bare name is a field of that source.
 function qualify(expr: SflExpr, source: DataSourceContract): SflExpr {
   switch (expr.kind) {
     case 'ref':
-      return expr.path.length === 1 && expr.path[0] in source.fields ? { kind: 'ref', path: [source.name, expr.path[0]] } : expr;
+      return expr.path.length === 1 && expr.path[0] in source.fields
+        ? { kind: 'ref', path: [source.name, expr.path[0]] }
+        : expr;
     case 'unary':
       return { ...expr, operand: qualify(expr.operand, source) };
     case 'binary':
@@ -176,7 +181,8 @@ function bindHandler(
   for (const assignment of handler.assignments) {
     const at = (code: string, message: string) => report(code, message, assignment.line, assignment.col);
     const target = assignment.target.join('.');
-    const [source, field] = own && assignment.target.length === 1 ? [own.name, assignment.target[0]] : assignment.target;
+    const [source, field] =
+      own && assignment.target.length === 1 ? [own.name, assignment.target[0]] : assignment.target;
     const contract = assignment.target.length <= 2 ? contracts.get(source) : undefined;
     if (!contract || field === undefined) {
       at('unknown-target', `'${target}' is not a field of a DataSource (write <DataSource>.<field>).`);
@@ -187,7 +193,10 @@ function bindHandler(
       continue;
     }
     if (contract.mode !== 'record') {
-      at('target-not-record', `DataSource '${source}' is a table source; only record sources can be changed by a handler.`);
+      at(
+        'target-not-record',
+        `DataSource '${source}' is a table source; only record sources can be changed by a handler.`,
+      );
       continue;
     }
     const wanted = contract.fields[field];
@@ -248,7 +257,6 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
       );
       continue;
     }
-    // A shader takes any numeric parameter of its program.
     const expected = kind === 'Shader' ? 'number' : BINDABLE_PROPERTIES[kind]?.[binding.key];
     if (!expected) {
       const allowed = Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
@@ -287,6 +295,8 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
       byField.set(dependency, [...(byField.get(dependency) ?? []), binding]);
     }
   }
-  const handlers = collectHandlerSites(sflDocument).flatMap(site => bindHandler(site, contracts, elements, diagnostics) ?? []);
+  const handlers = collectHandlerSites(sflDocument).flatMap(
+    site => bindHandler(site, contracts, elements, diagnostics) ?? [],
+  );
   return { contracts, bindings, handlers, elements, byField, diagnostics };
 }

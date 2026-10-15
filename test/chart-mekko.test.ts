@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { RenderNode } from '../src/index';
 import { render, sflToCanvasState } from '../src/index';
 
-// Segments render as a barShapePath, not a rect - with barCornerRadius: 0 below it's a plain M x y H.. V.. H.. Z square.
 function rect(node: RenderNode | undefined): { x: number; y: number; width: number; height: number } | undefined {
   if (node?.type !== 'path') {
     return undefined;

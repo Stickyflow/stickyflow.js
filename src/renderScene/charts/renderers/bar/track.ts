@@ -7,7 +7,6 @@ import type { ChartRenderContext } from '../types';
 const DEFAULT_HATCH = { angle: 45, spacing: 7, width: 1.5 };
 const MIN_HATCH_SPACING = 2;
 
-// Parallel lines at any angle, long enough to cover the whole rectangle (the track clips them).
 function hatchPath(x: number, y: number, width: number, height: number, angle: number, spacing: number): string {
   const radians = (angle * Math.PI) / 180;
   const direction = { x: Math.cos(radians), y: Math.sin(radians) };
@@ -25,7 +24,6 @@ function hatchPath(x: number, y: number, width: number, height: number, angle: n
   return segments.join(' ');
 }
 
-// With a track, a bar's shadow falls on the track only, not on the chart background.
 export function barTrackClip(
   context: ChartRenderContext,
   frame: { x: number; y: number; width: number; height: number },
@@ -33,14 +31,16 @@ export function barTrackClip(
   if (!barTrackEnabled(context)) {
     return undefined;
   }
-  return { type: 'path', d: roundedBarPath(frame.x, frame.y, frame.width, frame.height, context.chart.config?.barCornerRadius ?? 2) };
+  return {
+    type: 'path',
+    d: roundedBarPath(frame.x, frame.y, frame.width, frame.height, context.chart.config?.barCornerRadius ?? 2),
+  };
 }
 
 export function barTrackEnabled(context: ChartRenderContext): boolean {
   return context.chart.config?.barTrack === true;
 }
 
-// A full-height track behind one bar, optionally hatched.
 export function createBarTrackNodes(
   context: ChartRenderContext,
   id: string,
@@ -62,7 +62,10 @@ export function createBarTrackNodes(
       order: nextOrder(),
       bounds,
       d,
-      style: { fill: paint(config?.barTrackColor ?? chart.gridColor ?? '#e2e8f0', diagnostics, chart.id), pointerEvents: 'none' },
+      style: {
+        fill: paint(config?.barTrackColor ?? chart.gridColor ?? '#e2e8f0', diagnostics, chart.id),
+        pointerEvents: 'none',
+      },
     },
   ];
   if (config?.barTrackHatch) {

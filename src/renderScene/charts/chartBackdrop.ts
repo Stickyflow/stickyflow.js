@@ -3,7 +3,6 @@ import type { Bounds, RenderNode } from '../scene';
 import { finite } from '../scene';
 import type { ChartRenderOrder } from './chartRenderOrder';
 
-// The area inside the frame's stroke, where the photo is drawn.
 export function chartImageRect(chart: Chart): { x: number; y: number; width: number; height: number; rx: number } {
   const inset = finite(chart.strokeWidth, 1) / 2;
   return {

@@ -1,12 +1,19 @@
 import type { RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { barCategoryCount, barPath, segmentedBarPath, CHART_COLORS, resolveChartShadow, stackedSegment } from '../../primitives';
-import { createBarGlowNode } from './glow';
-import { createGlassBackdropNodes } from './glass';
-import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
-import { barLabelsEnabled, createBarLabelNodes } from './labels';
+import {
+  barCategoryCount,
+  barPath,
+  CHART_COLORS,
+  resolveChartShadow,
+  segmentedBarPath,
+  stackedSegment,
+} from '../../primitives';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext, StackedMode } from '../types';
+import { createGlassBackdropNodes } from './glass';
+import { createBarGlowNode } from './glow';
+import { barLabelsEnabled, createBarLabelNodes } from './labels';
+import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 
 export function renderStackedBars(context: ChartRenderContext, mode: StackedMode): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
@@ -34,7 +41,6 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
       const x = plot.x + valueIndex * slotWidth + groupGap / 2;
       const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
       const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
-      // One series looks the same stacked or grouped, so it can be cut into segments too.
       const segments = chart.series.length === 1 ? finite(chart.config?.barSegments, 0) : 0;
       const path =
         segments > 0
@@ -49,7 +55,9 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
             )
           : barPath(x, y, barWidth, height, radius, chart.config?.barRoundedBottom === true);
       if (seriesIndex === 0 && barTrackEnabled(context)) {
-        trackNodes.push(...createBarTrackNodes(context, String(valueIndex), { x, y: plot.y, width: barWidth, height: plot.height }));
+        trackNodes.push(
+          ...createBarTrackNodes(context, String(valueIndex), { x, y: plot.y, width: barWidth, height: plot.height }),
+        );
       }
       const fill = paint(color, diagnostics, chart.id);
       const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
@@ -67,7 +75,10 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
             stroke,
             strokeWidth,
             shadow,
-            clip: barTrackClip(context, { x, y: plot.y, width: barWidth, height: plot.height }) ?? { type: 'path', d: clipPath },
+            clip: barTrackClip(context, { x, y: plot.y, width: barWidth, height: plot.height }) ?? {
+              type: 'path',
+              d: clipPath,
+            },
           },
         });
       }
@@ -90,7 +101,11 @@ export function renderStackedBars(context: ChartRenderContext, mode: StackedMode
         prop: seriesValueProp(series.id, valueIndex),
         style: { fill, stroke, strokeWidth, innerShadow: shadow },
       });
-      if (barLabelsEnabled(context) && !(chart.config?.barLabelMaxOnly && !isSeriesMax(series.values, valueIndex)) && (chart.config?.barLabelPosition !== 'axis' || seriesIndex === outerSeriesIndex)) {
+      if (
+        barLabelsEnabled(context) &&
+        !(chart.config?.barLabelMaxOnly && !isSeriesMax(series.values, valueIndex)) &&
+        (chart.config?.barLabelPosition !== 'axis' || seriesIndex === outerSeriesIndex)
+      ) {
         const requested = chart.config?.barLabelPosition ?? 'outside';
         const value = series.values[valueIndex];
         labelNodes.push(

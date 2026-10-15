@@ -24,7 +24,6 @@ export interface PieLabelMark {
   end: number;
   labelOffsetX: number;
   labelOffsetY: number;
-  // The slice is pushed out, and its label moves with it.
   shift: { dx: number; dy: number };
 }
 
@@ -124,11 +123,7 @@ function createTick(
   };
 }
 
-function createPieLabel(
-  context: ChartRenderContext<PieChart>,
-  base: PieGeometry,
-  mark: PieLabelMark,
-): RenderNode[] {
+function createPieLabel(context: ChartRenderContext<PieChart>, base: PieGeometry, mark: PieLabelMark): RenderNode[] {
   const config = context.chart.config;
   const geometry = { ...base, centerX: base.centerX + mark.shift.dx, centerY: base.centerY + mark.shift.dy };
   const mid = (mark.start + mark.end) / 2;

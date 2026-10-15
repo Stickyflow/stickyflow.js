@@ -12,7 +12,7 @@ export interface IsometricFaces {
 
 export const VISIBLE_ISOMETRIC_FACES: ReadonlySet<IsometricFace> = new Set(['top', 'front', 'right']);
 
-const AXIS_ANGLE = Math.PI / 6; // 30°
+const AXIS_ANGLE = Math.PI / 6;
 export const AXIS_COS = Math.cos(AXIS_ANGLE);
 export const AXIS_SIN = Math.sin(AXIS_ANGLE);
 

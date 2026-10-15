@@ -5,9 +5,6 @@ const DASH = '8 4';
 
 export type GuideLine =
   | { orientation: 'vertical' | 'horizontal'; position: number; from: number; to: number }
-  // An arbitrary-angle guide - the isometric "Flucht" snap draws its line at
-  // the fixed 30/150deg axis angle, which a position+from/to pair (always
-  // either purely horizontal or vertical) can't express.
   | { orientation: 'segment'; x1: number; y1: number; x2: number; y2: number };
 
 function el<K extends keyof SVGElementTagNameMap>(doc: Document, tag: K): SVGElementTagNameMap[K] {

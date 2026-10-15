@@ -20,7 +20,10 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
   const editable = Boolean(chart.config?.categories?.length);
   const left = chart.categoryAlign === 'left';
   const groupGap = left
-    ? Math.min(Math.max(0, finite((chart.config as { barGroupGap?: number } | undefined)?.barGroupGap, 8)), Math.max(0, slotWidth - 1))
+    ? Math.min(
+        Math.max(0, finite((chart.config as { barGroupGap?: number } | undefined)?.barGroupGap, 8)),
+        Math.max(0, slotWidth - 1),
+      )
     : 0;
 
   return Array.from({ length: count }, (_value, index) => {

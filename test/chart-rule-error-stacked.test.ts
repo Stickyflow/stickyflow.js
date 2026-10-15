@@ -2,12 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { RenderInput } from '../src/index';
 import { render, renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
-// SFL 1.4, §5.4.1/§5.4.5/§5.4.8 - mirrors stickyflow-atlas's Stage 2 Chart
-// ruleset (stacked/unit/error/Rule) on this package's own, simpler compact
-// bar/line implementation (no zones/horizontal here).
-
-// A bar mark is a path (rounded top corners, see barShapePath), not a rect :
-// its y/height live in `d`, not in attributes.
 function barGeometry(node: { type: string; d?: string } | undefined): { top: number; height: number } {
   const d = node?.type === 'path' ? node.d : undefined;
   if (!d) {
@@ -86,11 +80,6 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     expect(svg).toContain('Target');
   });
 
-  // Error bars are grouped(-bar)/line only, matching stickyflow-atlas's
-  // ChartMarksLayer.tsx: a stacked segment's position already depends on
-  // every other series at that category, so per-point uncertainty on top of
-  // that doesn't have an unambiguous place to anchor - same scope line
-  // atlas's Stage 2b implementation drew.
   it('renders a per-point error whisker on a grouped (non-stacked) bar series', () => {
     const sfl = STACKED_SFL.replace('stacked: true', 'stacked: none');
     const { svg } = render(sfl);
@@ -99,9 +88,6 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
   });
 
   it("colors a bar's error whisker with the chart's own text color, not a fixed black", () => {
-    // Was hardcoded '#000000' - invisible against a dark-mode chart. NOT the
-    // series color either: a symmetric range's lower half sits inside the
-    // bar's own fill, where the series color would vanish against itself.
     const sfl = STACKED_SFL.replace('stacked: true', 'stacked: none');
     const { svg } = render(sfl);
     const whisker = svg.match(/<path id="sf-chart-bar-error-chart-b-0"[^>]*>/)?.[0];
@@ -146,13 +132,8 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
       .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     expect(bars).toHaveLength(3);
     const heights = bars.map(bar => barGeometry(bar).height);
-    // Segment heights scale with |value| (10, -5, 20) regardless of the
-    // exact plot padding - a 2:1:4 ratio either way.
     expect(heights[0] / heights[1]).toBeCloseTo(2, 1);
     expect(heights[2] / heights[1]).toBeCloseTo(4, 1);
-    // Running baseline after [10, -5] is 5 - the third bar (value 20) must
-    // sit strictly above the second (smaller y = higher up the plot), not
-    // restart from a shared zero the way true/percent stacking would.
     const [, second, third] = bars;
     expect(barGeometry(third).top).toBeLessThan(barGeometry(second).top);
   });
@@ -181,7 +162,6 @@ describe('Chart stacked/unit/error/Rule (SFL 1.4)', () => {
     const { scene } = renderCanvas({ shapes: [], frames: [], swimlanes: [], links: [], charts: base } as RenderInput);
     const bar1 = scene.nodes.find(node => node.id === 'chart-bar-pct-s1-0');
     const bar2 = scene.nodes.find(node => node.id === 'chart-bar-pct-s2-0');
-    // 25% and 75% of the plot's own height, back-to-back, span it exactly.
     expect(barGeometry(bar2).height / barGeometry(bar1).height).toBeCloseTo(3, 1);
   });
 

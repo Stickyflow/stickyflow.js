@@ -11,12 +11,7 @@ function formatHighlight(template: string | undefined, category: string, value: 
     .replace('{value}', String(Math.round(value * 100) / 100));
 }
 
-// Chosen values stand out: a larger dot, a guide down to the axis, and a label above.
-export function renderLineHighlights(
-  context: ChartRenderContext,
-  series: ChartSeries,
-  color: string,
-): RenderNode[] {
+export function renderLineHighlights(context: ChartRenderContext, series: ChartSeries, color: string): RenderNode[] {
   const { chart, plot, bounds, diagnostics, nextOrder } = context;
   const config = chart.config;
   const wanted = config?.highlightPoints;
@@ -71,7 +66,11 @@ export function renderLineHighlights(
       },
     });
     if (config?.highlightLabels) {
-      const text = formatHighlight(config.highlightLabelFormat, chart.config?.categories?.[index] ?? '', pairs[index][1]);
+      const text = formatHighlight(
+        config.highlightLabelFormat,
+        chart.config?.categories?.[index] ?? '',
+        pairs[index][1],
+      );
       const width = Math.max(48, text.length * fontSize * 0.62);
       nodes.push({
         ...chartText({

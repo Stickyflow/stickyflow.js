@@ -31,11 +31,7 @@ export function childIndent(lines: string[], range: LineRange): string {
   return `${indentOf(lines[range.start])}${detectIndentUnit(lines, range)}`;
 }
 
-export function insertBlockLines(
-  lines: string[],
-  range: LineRange,
-  build: (baseIndent: string) => string[],
-): void {
+export function insertBlockLines(lines: string[], range: LineRange, build: (baseIndent: string) => string[]): void {
   const unit = detectIndentUnit(lines, range);
   const baseIndent = `${indentOf(lines[range.start])}${unit}`;
   const block = build(baseIndent).map(line => {

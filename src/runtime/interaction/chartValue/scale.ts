@@ -13,7 +13,9 @@ export function parseValueScale(element: Element | null): ValueScale | null {
   if (plotHeight <= 0 || max === min) {
     return null;
   }
-  return parts[4] === 'horizontal' ? { horizontal: true, plotY, plotHeight, min, max } : { plotY, plotHeight, min, max };
+  return parts[4] === 'horizontal'
+    ? { horizontal: true, plotY, plotHeight, min, max }
+    : { plotY, plotHeight, min, max };
 }
 
 export function valueAtPixel(position: number, scale: ValueScale): number {
@@ -26,5 +28,7 @@ export function valueAtPixel(position: number, scale: ValueScale): number {
 
 export function pixelForValue(value: number, scale: ValueScale): number {
   const fraction = (value - scale.min) / (scale.max - scale.min);
-  return scale.horizontal ? scale.plotY + fraction * scale.plotHeight : scale.plotY + scale.plotHeight - fraction * scale.plotHeight;
+  return scale.horizontal
+    ? scale.plotY + fraction * scale.plotHeight
+    : scale.plotY + scale.plotHeight - fraction * scale.plotHeight;
 }

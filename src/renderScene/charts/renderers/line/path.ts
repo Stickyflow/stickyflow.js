@@ -22,10 +22,7 @@ export function createLinePath(
     type: 'path',
     id: `chart-line-${chart.id}-${series.id}`,
     order: nextOrder(),
-    // A gradient runs along the plot, not along the whole chart frame.
-    bounds: gradient
-      ? { minX: plot.x, maxX: plot.x + plot.width, minY: plot.y, maxY: plot.y + plot.height }
-      : bounds,
+    bounds: gradient ? { minX: plot.x, maxX: plot.x + plot.width, minY: plot.y, maxY: plot.y + plot.height } : bounds,
     detail: { of: 'chartSeries', series: series.id, lineTension: tension || undefined },
     d: linePathData(points, tension),
     style: {

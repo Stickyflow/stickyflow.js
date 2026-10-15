@@ -1,8 +1,8 @@
 import {
   formatRollingNumber,
-  resolveRollingNumberStyle,
   type RollingNumberWidget,
   type RulerWidget,
+  resolveRollingNumberStyle,
   type TickScaleWidget,
   type Widget,
 } from '../../model/widget';
@@ -35,7 +35,6 @@ function buildRollingNumber(widget: RollingNumberWidget, index: number): RenderN
   ];
 }
 
-// The tick scale is a circle surface running the tickScale program; its progress is value / max.
 function buildTickScale(widget: TickScaleWidget, index: number): RenderNode[] {
   const x = finite(widget.x, 0);
   const y = finite(widget.y, 0);
@@ -65,7 +64,6 @@ function buildTickScale(widget: TickScaleWidget, index: number): RenderNode[] {
   return nodes;
 }
 
-// One number per major tick, placed on the same arc as the ticks.
 function buildTickLabels(
   widget: TickScaleWidget,
   box: { x: number; y: number; width: number; height: number; rotation: number; max: number; order: number },
@@ -106,7 +104,6 @@ function buildTickLabels(
   return nodes;
 }
 
-// The ruler is a rectangular surface running the ruler program; its progress is (value - min) / (max - min).
 function buildRuler(widget: RulerWidget, index: number): RenderNode[] {
   const x = finite(widget.x, 0);
   const y = finite(widget.y, 0);
@@ -137,7 +134,6 @@ function buildRuler(widget: RulerWidget, index: number): RenderNode[] {
   return nodes;
 }
 
-// One number per major tick, beside the ticks on the side away from the wire.
 function buildRulerLabels(
   widget: RulerWidget,
   box: { x: number; y: number; width: number; height: number; min: number; max: number; order: number },
@@ -146,10 +142,14 @@ function buildRulerLabels(
   const horizontal = widget.parameters.axis === 'horizontal';
   const ticks = Math.max(1, finite(Number(widget.parameters.ticks), 50));
   const major = Math.max(1, finite(Number(widget.parameters.major), 5));
-  const inset = finite(Number(widget.parameters.inset), 0.05) > 0 ? finite(Number(widget.parameters.inset), 0.05) : 0.05;
+  const inset =
+    finite(Number(widget.parameters.inset), 0.05) > 0 ? finite(Number(widget.parameters.inset), 0.05) : 0.05;
   const line = finite(Number(widget.parameters.line), 0.7) > 0 ? finite(Number(widget.parameters.line), 0.7) : 0.7;
   const across = horizontal ? box.height : box.width;
-  const tickLength = (finite(Number(widget.parameters.length), 0.1) > 0 ? finite(Number(widget.parameters.length), 0.1) : 0.1) * across * 1.9;
+  const tickLength =
+    (finite(Number(widget.parameters.length), 0.1) > 0 ? finite(Number(widget.parameters.length), 0.1) : 0.1) *
+    across *
+    1.9;
   const edge = line * across - 0.12 * across - tickLength - finite(labels.offset, 0.04) * across;
   const fontSize = finite(labels.size, 12);
   const count = Math.floor(ticks / major);

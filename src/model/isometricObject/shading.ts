@@ -30,12 +30,6 @@ export interface IsometricFaceFills {
   sideFill: string;
 }
 
-/** Derives the front/side face shades from a single base color (the top
- *  face) by uniformly darkening each RGB channel, instead of three
- *  independently chosen fills that can drift out of sync with each other -
- *  one color in, a consistent three-face cube out. Kept subtle rather than
- *  matching real ambient-occlusion contrast: a white cube's side face is a
- *  soft light gray, not a visibly "darker" gray next to it. */
 export function deriveFaceFills(fill: string): IsometricFaceFills {
   return {
     topFill: fill,

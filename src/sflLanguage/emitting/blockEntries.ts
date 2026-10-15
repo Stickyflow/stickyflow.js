@@ -12,7 +12,16 @@ export interface BlockEntries {
 }
 
 export function collectBlockEntries(block: SflBlock): BlockEntries {
-  const entries: BlockEntries = { properties: [], blocks: [], layouts: [], styles: [], dataBlocks: [], fields: [], bindings: [], handlers: [] };
+  const entries: BlockEntries = {
+    properties: [],
+    blocks: [],
+    layouts: [],
+    styles: [],
+    dataBlocks: [],
+    fields: [],
+    bindings: [],
+    handlers: [],
+  };
 
   for (const entry of block.entries) {
     if (entry.type === 'property') {

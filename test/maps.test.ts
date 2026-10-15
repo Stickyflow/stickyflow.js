@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sflToCanvasState } from '../src/index';
 
-// Maps §3.3: choropleth region value (Path.value), mirroring
-// stickyflow-atlas's implementation.
-
 describe('Path.value (choropleth region)', () => {
   const SFL = `sfl 1.2
 

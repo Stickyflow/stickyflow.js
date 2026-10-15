@@ -73,7 +73,6 @@ Model M {
   it('punches a donut hole when config.innerRadius is set', () => {
     const donut = PIE_SFL.replace('type: pie', 'type: pie\n    innerRadius: 30');
     const { svg } = render(donut);
-    // A donut slice's path uses two arcs (outer + inner); a plain pie slice uses one arc + a line to center.
     expect((svg.match(/A /g) ?? []).length).toBeGreaterThan(2);
   });
 });

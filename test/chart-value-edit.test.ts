@@ -20,9 +20,6 @@ Model M {
 
 const owner = { role: 'chart' as const, id: 'c', kind: 'bar' };
 
-// A bar is a path (rounded top corners, see barShapePath), not a rect : its
-// top edge is either the M command's own y (no radius) or the y shared by
-// the first Q command's two endpoints (rounded), never a `y="..."` attribute.
 function barTopY(d: string): number {
   const rounded = d.match(/Q [\d.-]+ ([\d.-]+)/);
   if (rounded) {

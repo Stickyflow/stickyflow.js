@@ -12,8 +12,6 @@ import type { RadialBarChartConfig } from './radialBar';
 import type { SankeyChartConfig } from './sankey';
 import type { TreemapChartConfig } from './treemap';
 
-// Renderers that accept every chart type need access to every optional
-// capability. Concrete Chart variants retain their exact config type.
 export interface ChartConfigCapabilities
   extends BarChartConfig,
     BoxplotChartConfig,

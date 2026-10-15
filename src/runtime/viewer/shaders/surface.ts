@@ -12,7 +12,6 @@ void main() {
 }
 `;
 
-// What a parameter is when the SFL leaves it out. The browser starts from these values, and so do the exports to other platforms.
 export const SHADER_DEFAULTS = {
   numbers: {
     intensity: 0.85,
@@ -47,7 +46,6 @@ interface Surface {
   shapeColor: [number, number, number];
   baseGeometry?: Element;
   baseFill?: string | null;
-  // Numbers that follow their target with inertia, see the "<name>Lag" parameters.
   smoothed: Map<string, number>;
   lastSeconds?: number;
 }
@@ -257,7 +255,6 @@ function applyParameters(surface: Surface, elapsed: number): void {
   for (const [key, value] of Object.entries(surface.parameters)) {
     const name = uniformName(key);
     if (typeof value === 'number') {
-      // A parameter with a matching "<name>Lag" (seconds) eases toward its value instead of jumping.
       const lag = surface.parameters[`${key}Lag`];
       if (typeof lag === 'number' && lag > 0) {
         const current = surface.smoothed.get(key) ?? value;
@@ -291,7 +288,6 @@ const MAX_SURFACE_PIXELS = 2560;
 
 function renderSurface(surface: Surface, seconds: number): void {
   const { canvas, gl, parameters } = surface;
-  // One canvas pixel per screen pixel: the zoom of the viewer scales the canvas on screen, so measure it there.
   const shown = canvas.getBoundingClientRect();
   const density = Math.min(globalThis.devicePixelRatio || 1, 3);
   const fit = Math.min(1, MAX_SURFACE_PIXELS / Math.max(1, shown.width * density, shown.height * density));
@@ -337,7 +333,6 @@ function renderSurface(surface: Surface, seconds: number): void {
 export interface ShaderSurfaceHandle {
   capture(): Array<string | undefined>;
   setParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
-  // A paused scene keeps its last frame: the time of the shaders stands still and resumes where it stopped.
   setPaused(paused: boolean): void;
   refresh(): void;
   destroy(): void;
@@ -348,7 +343,6 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   let frame: number | undefined;
   let backdropGeneration = 0;
   const view = svg.ownerDocument.defaultView;
-  // The shader time is the real time minus what was spent paused.
   let pausedSince: number | null = null;
   let spentPaused = 0;
   const real = () => (view?.performance.now() ?? 0) / 1000;
@@ -408,7 +402,6 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     captureBackdrops(generation);
     if (surfaces.length > 0) {
       if (view?.requestAnimationFrame) {
-        // A new canvas is blank, so a paused scene draws it once at the moment it stopped.
         if (pausedSince !== null) {
           for (const surface of surfaces) {
             renderSurface(surface, clock());

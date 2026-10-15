@@ -4,9 +4,6 @@ import { setOrInsertLayoutTuples } from '../properties';
 import { findOwnerBlock } from '../scanner';
 
 export function applyResizeChange(sfl: string, event: ResizeChangeEvent): string {
-  // event.x/event.y are absolute canvas coordinates (see moveChange.ts for
-  // why), same conversion needed for a resize target nested in a container
-  // that isn't itself at the canvas origin.
   const state = sflToCanvasState(sfl);
   const canvasObject = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
   const parent = canvasObject?.parentFrameId

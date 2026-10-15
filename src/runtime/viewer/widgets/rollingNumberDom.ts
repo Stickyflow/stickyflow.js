@@ -28,7 +28,13 @@ function createDigitCell(document: Document, character: string, theme: RollingNu
   const cell = document.createElementNS(HTML_NAMESPACE, 'span') as HTMLSpanElement;
   cell.setAttribute('data-sf-rolling-digit', 'true');
   if (theme.variant === 'plain') {
-    setStyles(cell, { position: 'relative', display: 'inline-block', width: '0.62em', height: '1.1em', overflow: 'hidden' });
+    setStyles(cell, {
+      position: 'relative',
+      display: 'inline-block',
+      width: '0.62em',
+      height: '1.1em',
+      overflow: 'hidden',
+    });
     cell.appendChild(createDigit(document, character, theme));
     return cell;
   }

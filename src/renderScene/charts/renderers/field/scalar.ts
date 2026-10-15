@@ -7,9 +7,6 @@ import { linePathData } from '../../primitives/linePath';
 import type { ChartRenderContext } from '../types';
 import type { ScalarFieldGrid } from './types';
 
-// Smooths the stitched marching-squares strand the same way a line/path
-// chart smooths its own points (freeformPathData under the hood) - below
-// 3 points a Catmull-Rom curve is undefined anyway, so those stay straight.
 const ISOLINE_TENSION = 0.5;
 
 export function renderScalarField(context: ChartRenderContext, samples: FieldSample[]): RenderNode[] {

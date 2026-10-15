@@ -24,8 +24,6 @@ void main() {
   float current = sin(p.x * 4.2 - time * 0.75) * 0.025;
   current += sin(p.y * 5.0 + p.x * 2.3 + time * 0.55) * 0.018;
   float vertical = p.y + current;
-  // day: 0 is night (the dark top takes over the orb, the blue and pink dim), 1 is day (blue everywhere, the dark cap shrinks).
-  // Left out, the orb keeps its original look.
   float useDay = step(0.0, uDay);
   float day = clamp(uDay, 0.0, 1.0);
   float capStart = mix(-0.04, -0.62 + day * 0.98, useDay);

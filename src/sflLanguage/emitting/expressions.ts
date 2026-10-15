@@ -1,7 +1,20 @@
 import type { SflAssignment, SflBinding, SflExpr, SflHandler } from '../ast';
 import { emitValue } from './values';
 
-const PRECEDENCE: Record<string, number> = { '||': 1, '&&': 2, '==': 3, '!=': 3, '>': 3, '<': 3, '>=': 3, '<=': 3, '+': 4, '-': 4, '*': 5, '/': 5 };
+const PRECEDENCE: Record<string, number> = {
+  '||': 1,
+  '&&': 2,
+  '==': 3,
+  '!=': 3,
+  '>': 3,
+  '<': 3,
+  '>=': 3,
+  '<=': 3,
+  '+': 4,
+  '-': 4,
+  '*': 5,
+  '/': 5,
+};
 
 export function emitExpression(expr: SflExpr, parentPrecedence = 0): string {
   switch (expr.kind) {
@@ -25,9 +38,9 @@ export function emitExpression(expr: SflExpr, parentPrecedence = 0): string {
   }
 }
 
-const emitAssignment = (assignment: SflAssignment): string => `${assignment.target.join('.')} <- ${emitExpression(assignment.expr)}`;
+const emitAssignment = (assignment: SflAssignment): string =>
+  `${assignment.target.join('.')} <- ${emitExpression(assignment.expr)}`;
 
-// One assignment reads best on the line of the event; several go in a block.
 export function emitHandler(handler: SflHandler, pad: string): string {
   if (handler.assignments.length === 1) {
     return `${pad}${handler.event}: ${emitAssignment(handler.assignments[0])}`;

@@ -1,6 +1,6 @@
 import type { Side } from '../../../model/geometry/types';
-import { insertDirectProperty, replacePropertyValue } from './edits/propertyValues';
 import { childIndent } from './blockInsert';
+import { insertDirectProperty, replacePropertyValue } from './edits/propertyValues';
 import { escapeSflString, round1 } from './format';
 import { formatLinkEndpoint } from './linkPatch/endpointText';
 import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';

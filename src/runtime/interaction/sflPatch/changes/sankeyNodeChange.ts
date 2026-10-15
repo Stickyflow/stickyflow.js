@@ -13,10 +13,6 @@ function escapeSflString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-// zones[*] holds [label, color, offsetX, offsetY] - offsetX/offsetY are
-// omitted until a node is first dragged. Reads whatever is there (0 if the
-// tuple doesn't reach that far yet), adds this gesture's delta, and grows
-// the tuple to 4 elements so later drags keep accumulating onto it.
 function applyTupleOffset(tuple: string, dx: number, dy: number): string {
   const list = listElementSpans(tuple);
   if (!list) {

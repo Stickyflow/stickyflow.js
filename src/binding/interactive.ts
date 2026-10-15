@@ -2,9 +2,7 @@ import { collectRefs } from './expression';
 import type { BindingGraph } from './graph';
 
 export interface InteractiveElements {
-  // Elements that take the pointer: they have a handler, or an expression reads their pressed or hovered state.
   pressable: ReadonlySet<string>;
-  // Widgets with a scale whose pointer value is read. The host keeps it up to date while a pointer is held.
   scales: ReadonlySet<string>;
 }
 

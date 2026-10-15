@@ -45,7 +45,6 @@ export class PropertyEditingSession {
     const shift = align === 'center' ? (width - rect.width) / 2 : align === 'right' ? width - rect.width : 0;
     const previousVisibility = node.getAttribute('visibility');
 
-    // Edited in place like a shape label: no box, the text keeps its own look.
     const textarea = createTextEditor({
       text: originalText,
       rect: { ...rect, left: rect.left - shift, width },
