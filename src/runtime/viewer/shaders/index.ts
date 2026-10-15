@@ -1,3 +1,3 @@
-export { registerShaderProgram } from './programs';
-export { mountShaderSurfaces, type ShaderSurfaceHandle } from './surface';
+export { registerShaderProgram, shaderProgram } from './programs';
+export { mountShaderSurfaces, SHADER_DEFAULTS, type ShaderSurfaceHandle } from './surface';
 export type { ShaderProgram } from './types';

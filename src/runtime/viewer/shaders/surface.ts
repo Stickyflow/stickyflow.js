@@ -12,6 +12,27 @@ void main() {
 }
 `;
 
+// What a parameter is when the SFL leaves it out. The browser starts from these values, and so do the exports to other platforms.
+export const SHADER_DEFAULTS = {
+  numbers: {
+    intensity: 0.85,
+    speed: 0.18,
+    progress: -1,
+    boost: 0,
+    dent: -1,
+    day: -1,
+    light: 135,
+    gloss: 0.15,
+    depth: 0.4,
+    rim: 0.2,
+  },
+  colors: {
+    color: [0.08, 0.02, 0.22],
+    accent: [0.58, 0.31, 1],
+    hot: [1, 0.45, 0.82],
+  },
+} as const;
+
 interface Surface {
   owner: Element;
   canvas: HTMLCanvasElement;
@@ -300,19 +321,12 @@ function renderSurface(surface: Surface, seconds: number): void {
     uniform2f(surface, 'uBackdropOrigin', surface.backdropOrigin);
     uniform2f(surface, 'uBackdropScale', surface.backdropScale);
   }
-  uniform1f(surface, 'uIntensity', number(parameters.intensity, 0.85));
-  uniform1f(surface, 'uSpeed', number(parameters.speed, 0.18));
-  uniform1f(surface, 'uProgress', number(parameters.progress, -1));
-  uniform1f(surface, 'uBoost', number(parameters.boost, 0));
-  uniform3f(surface, 'uColor', color(parameters.color, [0.08, 0.02, 0.22]));
-  uniform3f(surface, 'uAccent', color(parameters.accent, [0.58, 0.31, 1]));
-  uniform3f(surface, 'uHot', color(parameters.hot, [1, 0.45, 0.82]));
-  uniform1f(surface, 'uDent', number(parameters.dent, -1));
-  uniform1f(surface, 'uDay', number(parameters.day, -1));
-  uniform1f(surface, 'uLight', number(parameters.light, 135));
-  uniform1f(surface, 'uGloss', number(parameters.gloss, 0.15));
-  uniform1f(surface, 'uDepth', number(parameters.depth, 0.4));
-  uniform1f(surface, 'uRim', number(parameters.rim, 0.2));
+  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.numbers)) {
+    uniform1f(surface, uniformName(key), number(parameters[key], fallback));
+  }
+  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.colors)) {
+    uniform3f(surface, uniformName(key), color(parameters[key], [...fallback] as [number, number, number]));
+  }
   uniform3f(surface, 'uShapeColor', surface.shapeColor);
   const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
   surface.lastSeconds = seconds;
