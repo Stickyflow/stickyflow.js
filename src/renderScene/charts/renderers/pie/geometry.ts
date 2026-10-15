@@ -8,12 +8,13 @@ export { pieArcPoint };
 
 export function createPieGeometry(context: ChartRenderContext<PieChart>): PieGeometry {
   const { chart, plot } = context;
-  const { outerRadius, innerRadius, cornerRadius } = resolvePieRadii(
-    plot.width,
-    plot.height,
-    chart.config?.innerRadius,
-    chart.config?.pieCornerRadius,
-  );
+  const resolved = resolvePieRadii(plot.width, plot.height, chart.config?.innerRadius, chart.config?.pieCornerRadius);
+  // Labels outside the slices need room around the circle.
+  const outside = chart.config?.pieLabelPosition === 'outside' && chart.showAxisLabels !== false;
+  const room = outside ? (chart.config?.pieLabelContent === 'inline' ? 0.6 : 0.7) : 1;
+  const outerRadius = resolved.outerRadius * room;
+  const innerRadius = resolved.innerRadius * room;
+  const cornerRadius = resolved.cornerRadius;
   return {
     centerX: plot.x + plot.width / 2,
     centerY: plot.y + plot.height / 2,

@@ -66,6 +66,12 @@ function createLineError(context: ChartRenderContext, mark: LinePointMark): Rend
 
 function createLinePoint(context: ChartRenderContext, mark: LinePointMark): RenderNode {
   const { chart, bounds, diagnostics, nextOrder } = context;
+  const config = chart.config;
+  const radius = config?.pointSize ?? 3;
+  const strokeWidth = config?.pointStrokeWidth ?? 0;
+  const visible = radius > 0;
+  // "series" is the default: the dot has the color of its line.
+  const fill = config?.pointFill && config.pointFill !== 'series' ? config.pointFill : mark.color;
   return {
     type: 'ellipse',
     id: `chart-point-${chart.id}-${mark.seriesId}-${mark.valueIndex}`,
@@ -73,9 +79,15 @@ function createLinePoint(context: ChartRenderContext, mark: LinePointMark): Rend
     bounds,
     cx: mark.position.x,
     cy: mark.position.y,
-    rx: 3,
-    ry: 3,
+    // A hidden mark keeps a hit area, so the value can still be dragged.
+    rx: visible ? radius : 6,
+    ry: visible ? radius : 6,
     detail: { of: 'chartValue', series: mark.seriesId, valueIndex: mark.valueIndex },
-    style: { fill: paint(mark.color, diagnostics, chart.id) },
+    style: {
+      fill: visible ? paint(fill, diagnostics, chart.id) : { kind: 'none' },
+      stroke: visible && strokeWidth > 0 ? paint(mark.color, diagnostics, chart.id) : undefined,
+      strokeWidth: visible && strokeWidth > 0 ? strokeWidth : undefined,
+      pointerEvents: visible ? undefined : 'all',
+    },
   };
 }

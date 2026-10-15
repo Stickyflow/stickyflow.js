@@ -32,6 +32,7 @@ export interface SflChartData {
   boxWidth?: number;
   orientation?: 'horizontal' | 'vertical';
   lineTension?: number;
+  highlightPoints?: number[];
   barCornerRadius?: number;
   showBoxplotPoints?: boolean;
   barBorderColor?: string;
@@ -79,6 +80,8 @@ export interface SflChartSeries {
   symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
   stroke?: string;
   strokeWidth?: number;
+  dash?: number[];
+  offset?: number;
   labelOffsetX?: number;
   labelOffsetY?: number;
 }

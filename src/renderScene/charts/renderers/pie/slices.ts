@@ -9,6 +9,7 @@ import {
   maxPieCornerRadius,
   pieApexRadius,
   pieUsesInnerArc,
+  representativeColor,
   resolveChartShadow,
 } from '../../primitives';
 import { seriesValueProp } from '../../propPath';
@@ -17,8 +18,10 @@ import { renderPieLabels } from './labels';
 import { createPieSlicePath } from './path';
 import type { PieGeometry, PieSliceAngles } from './types';
 
-const START_ANGLE = -Math.PI / 2;
-const MAXIMUM_SWEEP = Math.PI * 2 * (359.999 / 360);
+const TOP = -Math.PI / 2;
+const FULL = Math.PI * 2;
+const MAXIMUM_SWEEP = FULL * (359.999 / 360);
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
 
 interface PieSliceMark {
   seriesId: string;
@@ -31,13 +34,20 @@ interface PieSliceMark {
   angles: PieSliceAngles;
   labelOffsetX: number;
   labelOffsetY: number;
+  // How far the slice is pushed out along its middle.
+  explode: number;
 }
 
 export function renderPieSlices(context: ChartRenderContext<PieChart>, geometry: PieGeometry): RenderNode[] {
-  const marks = createPieSliceMarks(context.chart.series, geometry.total);
-  const gapPx = context.chart.config?.pieSliceGap ?? 0;
+  const config = context.chart.config;
+  const marks = createPieSliceMarks(context.chart.series, geometry.total, {
+    start: TOP + radians(finite(config?.pieStartAngle, 0)),
+    sweep: Math.min(FULL, Math.max(radians(1), radians(finite(config?.pieSweep, 360)))),
+    explode: Math.max(0, finite(config?.pieExplode, 0)),
+  });
+  const gapPx = config?.pieSliceGap ?? 0;
   return [
-    ...marks.flatMap(mark => createSliceNodes(context, geometry, mark, gapPx)),
+    ...marks.flatMap(mark => createSliceNodes(context, shiftGeometry(geometry, mark), mark, gapPx)),
     ...renderPieLabels(
       context,
       geometry,
@@ -50,17 +60,35 @@ export function renderPieSlices(context: ChartRenderContext<PieChart>, geometry:
         end: mark.angles.end,
         labelOffsetX: mark.labelOffsetX,
         labelOffsetY: mark.labelOffsetY,
+        shift: shiftOf(mark),
       })),
     ),
   ];
 }
 
-function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSliceMark[] {
+function shiftOf(mark: PieSliceMark): { dx: number; dy: number } {
+  const mid = (mark.angles.start + mark.angles.end) / 2;
+  return { dx: Math.cos(mid) * mark.explode, dy: Math.sin(mid) * mark.explode };
+}
+
+function shiftGeometry(geometry: PieGeometry, mark: PieSliceMark): PieGeometry {
+  if (mark.explode === 0) {
+    return geometry;
+  }
+  const { dx, dy } = shiftOf(mark);
+  return { ...geometry, centerX: geometry.centerX + dx, centerY: geometry.centerY + dy };
+}
+
+function createPieSliceMarks(
+  seriesList: ChartSeries[],
+  total: number,
+  layout: { start: number; sweep: number; explode: number },
+): PieSliceMark[] {
   const marks: PieSliceMark[] = [];
-  let angle = START_ANGLE;
+  let angle = layout.start;
   seriesList.forEach((series, seriesIndex) => {
     const value = Math.max(0, finite((series.values as number[])[0], 0));
-    const sweep = (value / total) * Math.PI * 2;
+    const sweep = (value / total) * layout.sweep;
     marks.push({
       seriesId: series.id,
       label: series.label,
@@ -69,7 +97,8 @@ function createPieSliceMarks(seriesList: ChartSeries[], total: number): PieSlice
       strokeWidth: series.strokeWidth,
       value,
       share: value / total,
-      angles: { start: angle, end: angle + Math.min(sweep, MAXIMUM_SWEEP) },
+      angles: { start: angle, end: angle + Math.min(sweep, layout.sweep >= FULL ? MAXIMUM_SWEEP : layout.sweep) },
+      explode: Math.max(0, finite(series.offset, layout.explode)),
       labelOffsetX: finite(series.labelOffsetX, 0),
       labelOffsetY: finite(series.labelOffsetY, 0),
     });
@@ -119,9 +148,15 @@ function createSliceNodes(
   );
   const slicePath = createPieSlicePath(geometry, mark.angles, cornerRadius, gapPx);
   const shadow = resolveChartShadow(chart.shadowStyle);
-  const strokeStyle = mark.stroke
-    ? { stroke: { kind: 'solid' as const, color: mark.stroke }, strokeWidth: finite(mark.strokeWidth, 1) }
+  const config = chart.config;
+  const strokeColor = mark.stroke ?? config?.pieStroke;
+  const strokeStyle = strokeColor
+    ? {
+        stroke: { kind: 'solid' as const, color: strokeColor },
+        strokeWidth: finite(mark.strokeWidth, finite(config?.pieStrokeWidth, 1)),
+      }
     : {};
+  const glow = config?.pieGlow;
 
   const shadowCaster: RenderNode | undefined = shadow
     ? {
@@ -155,7 +190,12 @@ function createSliceNodes(
       pieValue: mark.value,
     },
     prop: seriesValueProp(mark.seriesId, 0),
-    style: { fill, ...strokeStyle, innerShadow: shadow },
+    style: {
+      fill,
+      ...strokeStyle,
+      innerShadow: shadow,
+      shadow: glow ? { color: representativeColor(mark.color, '#ffffff'), opacity: 0.85, blur: glow, dx: 0, dy: 0 } : undefined,
+    },
   };
 
   return shadowCaster ? [shadowCaster, slice] : [slice];

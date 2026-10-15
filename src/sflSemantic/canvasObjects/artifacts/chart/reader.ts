@@ -43,6 +43,7 @@ export function readChart(
     boxWidth: asNumber(properties.get('boxWidth')),
     orientation: asString(properties.get('orientation')) === 'horizontal' ? 'horizontal' : undefined,
     lineTension: asNumber(properties.get('lineTension')),
+    highlightPoints: numberList(properties.get('highlightPoints')),
     barCornerRadius: asNumber(properties.get('barCornerRadius')),
     showBoxplotPoints: readBoolean(properties.get('showBoxplotPoints')),
     barBorderColor: asString(properties.get('barBorderColor')),

@@ -13,20 +13,29 @@ export function createLinePath(
   color: string,
   tension: number,
 ): RenderNode {
-  const { chart, bounds, diagnostics, nextOrder } = context;
+  const { chart, plot, bounds, diagnostics, nextOrder } = context;
+  const config = chart.config;
+  const source = series.color;
+  const gradient = source && typeof source !== 'string' && source.type === 'gradient' ? source : undefined;
+  const glow = config?.lineGlow;
   return {
     type: 'path',
     id: `chart-line-${chart.id}-${series.id}`,
     order: nextOrder(),
-    bounds,
+    // A gradient runs along the plot, not along the whole chart frame.
+    bounds: gradient
+      ? { minX: plot.x, maxX: plot.x + plot.width, minY: plot.y, maxY: plot.y + plot.height }
+      : bounds,
     detail: { of: 'chartSeries', series: series.id, lineTension: tension || undefined },
     d: linePathData(points, tension),
     style: {
       fill: { kind: 'none' },
-      stroke: paint(color, diagnostics, chart.id),
-      strokeWidth: 2,
+      stroke: paint(gradient ?? color, diagnostics, chart.id),
+      strokeWidth: series.strokeWidth ?? config?.lineWidth ?? 2,
+      dash: series.dash,
+      lineCap: config?.lineWidth === undefined ? undefined : 'round',
       lineJoin: 'round',
-      shadow: resolveChartShadow(chart.shadowStyle),
+      shadow: glow ? { color, opacity: 0.9, blur: glow, dx: 0, dy: 0 } : resolveChartShadow(chart.shadowStyle),
     },
   };
 }
