@@ -42,6 +42,7 @@ export function createFakeViewer(): FakeViewer {
     exportImage: async () => new Blob(),
     setShaderParameters: () => false,
     setWidgetValue: () => false,
+    setPaused: () => undefined,
     clearOverrides: () => undefined,
     update: (_next: ViewerSource) => undefined,
     destroy: () => undefined,

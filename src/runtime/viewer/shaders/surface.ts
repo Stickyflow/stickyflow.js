@@ -337,6 +337,8 @@ function renderSurface(surface: Surface, seconds: number): void {
 export interface ShaderSurfaceHandle {
   capture(): Array<string | undefined>;
   setParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
+  // A paused scene keeps its last frame: the time of the shaders stands still and resumes where it stopped.
+  setPaused(paused: boolean): void;
   refresh(): void;
   destroy(): void;
 }
@@ -346,10 +348,17 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   let frame: number | undefined;
   let backdropGeneration = 0;
   const view = svg.ownerDocument.defaultView;
+  // The shader time is the real time minus what was spent paused.
+  let pausedSince: number | null = null;
+  let spentPaused = 0;
+  const real = () => (view?.performance.now() ?? 0) / 1000;
+  const clock = () => (pausedSince ?? real()) - spentPaused;
 
   const draw = (milliseconds: number) => {
-    for (const surface of surfaces) {
-      renderSurface(surface, milliseconds / 1000);
+    if (pausedSince === null) {
+      for (const surface of surfaces) {
+        renderSurface(surface, milliseconds / 1000 - spentPaused);
+      }
     }
     frame = view?.requestAnimationFrame(draw);
   };
@@ -399,6 +408,12 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     captureBackdrops(generation);
     if (surfaces.length > 0) {
       if (view?.requestAnimationFrame) {
+        // A new canvas is blank, so a paused scene draws it once at the moment it stopped.
+        if (pausedSince !== null) {
+          for (const surface of surfaces) {
+            renderSurface(surface, clock());
+          }
+        }
         frame = view.requestAnimationFrame(draw);
       } else {
         for (const surface of surfaces) {
@@ -409,7 +424,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   };
 
   const capture = (): Array<string | undefined> => {
-    const seconds = (view?.performance.now() ?? 0) / 1000;
+    const seconds = clock();
     const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
     return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].map(canvas => {
       const surface = surfaceByCanvas.get(canvas);
@@ -427,7 +442,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
 
   const setParameters = (ownerId: string, parameters: Record<string, ShaderParameter>): boolean => {
     let changed = false;
-    const seconds = (view?.performance.now() ?? 0) / 1000;
+    const seconds = clock();
     for (const surface of surfaces) {
       if (surface.owner.getAttribute('data-sf-id') !== ownerId) {
         continue;
@@ -466,5 +481,14 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     stop();
   };
 
-  return { capture, setParameters, refresh, destroy };
+  const setPaused = (paused: boolean) => {
+    if (paused && pausedSince === null) {
+      pausedSince = real();
+    } else if (!paused && pausedSince !== null) {
+      spentPaused += real() - pausedSince;
+      pausedSince = null;
+    }
+  };
+
+  return { capture, setParameters, setPaused, refresh, destroy };
 }

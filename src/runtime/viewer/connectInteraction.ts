@@ -4,6 +4,8 @@ import type { Viewer } from './types';
 export interface InteractionOptions {
   // Return false to let the pointer through to the viewer (selecting, moving), for example while editing.
   enabled?: () => boolean;
+  // Return true to stop the ticks, for a frozen scene.
+  paused?: () => boolean;
 }
 
 const TAU = Math.PI * 2;
@@ -155,7 +157,9 @@ export function connectInteraction(viewer: Viewer, runtime: BindingRuntime, opti
   if (runtime.graph.handlers.some(handler => handler.event === 'onTick')) {
     let previous = performance.now();
     const loop = (now: number) => {
-      runtime.tick(Math.min((now - previous) / 1000, LONGEST_TICK));
+      if (options.paused?.() !== true) {
+        runtime.tick(Math.min((now - previous) / 1000, LONGEST_TICK));
+      }
       previous = now;
       frame = window.requestAnimationFrame(loop);
     };

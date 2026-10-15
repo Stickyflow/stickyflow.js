@@ -33,6 +33,8 @@ export interface Viewer {
   exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
   setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
   setWidgetValue(widgetId: string, value: string | number): boolean;
+  // Freezes the scene for a recording: the shaders keep their last frame and resume where they stopped.
+  setPaused(paused: boolean): void;
   // Forgets the values set from outside, so a new document starts from what it declares.
   clearOverrides(): void;
   update(next: ViewerSource): void;
