@@ -1,4 +1,4 @@
-import type { ExpressionOperator, SflBinding, SflExpr } from '../ast';
+import type { ExpressionOperator, SflAssignment, SflBinding, SflExpr, SflHandler } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
 import { parsePathSegments } from './values';
@@ -23,10 +23,20 @@ function parseBinaryLevel(
   return left;
 }
 
+const OR = new Set(['||']);
+const AND = new Set(['&&']);
 const ADDITIVE = new Set(['+', '-']);
 const MULTIPLICATIVE = new Set(['*', '/']);
 
 export function parseExpression(cursor: TokenCursor): SflExpr {
+  return parseBinaryLevel(cursor, OR, parseAnd);
+}
+
+function parseAnd(cursor: TokenCursor): SflExpr {
+  return parseBinaryLevel(cursor, AND, parseComparison);
+}
+
+function parseComparison(cursor: TokenCursor): SflExpr {
   return parseBinaryLevel(cursor, COMPARISONS, parseAdditive);
 }
 
@@ -82,6 +92,9 @@ function parsePrimary(cursor: TokenCursor): SflExpr {
     }
     case 'ident': {
       const path = parsePathSegments(cursor);
+      if (path.length === 1 && (path[0] === 'true' || path[0] === 'false')) {
+        return { kind: 'boolean', value: path[0] === 'true' };
+      }
       return cursor.at('lparen') ? { kind: 'call', callee: path, args: parseCallArguments(cursor) } : { kind: 'ref', path };
     }
     default:
@@ -105,4 +118,52 @@ export function parseBinding(cursor: TokenCursor): SflBinding {
     throw new SflParseError(`unexpected '${next.value || next.type}' after binding`, next.line, next.col);
   }
   return { key: key.value, operator, expr, line: key.line, col: key.col };
+}
+
+// `path <- expression`, the body of a handler.
+export function parseAssignment(cursor: TokenCursor): SflAssignment {
+  const start = cursor.peek();
+  const target = parsePathSegments(cursor);
+  cursor.expect('bind', "'<-'");
+  const expr = parseExpression(cursor);
+  return { target, expr, line: start.line, col: start.col };
+}
+
+// `onTap: path <- expression` or `onPress { path <- expression ... }`; the cursor is on the event name.
+export function atHandler(cursor: TokenCursor): boolean {
+  const token = cursor.peek();
+  return token.type === 'ident' && /^on[A-Z]/.test(token.value) && ['colon', 'lbrace'].includes(cursor.peek(1).type);
+}
+
+export function parseHandler(cursor: TokenCursor): SflHandler {
+  const event = cursor.expect('ident', 'event name');
+  const assignments: SflAssignment[] = [];
+  if (cursor.at('colon')) {
+    cursor.next();
+    assignments.push(parseAssignment(cursor));
+    expectEnd(cursor, 'handler');
+  } else {
+    cursor.expect('lbrace', "'{'");
+    cursor.skipNewlines();
+    while (!cursor.at('rbrace')) {
+      if (cursor.at('eof')) {
+        throw new SflParseError(`unterminated handler '${event.value}'`, event.line, event.col);
+      }
+      assignments.push(parseAssignment(cursor));
+      expectEnd(cursor, 'assignment');
+      cursor.skipNewlines();
+    }
+    cursor.expect('rbrace', "'}'");
+  }
+  return { event: event.value, assignments, line: event.line, col: event.col };
+}
+
+function expectEnd(cursor: TokenCursor, what: string): void {
+  const next = cursor.peek();
+  if (!['newline', 'semi', 'rbrace', 'eof'].includes(next.type)) {
+    throw new SflParseError(`unexpected '${next.value || next.type}' after ${what}`, next.line, next.col);
+  }
+  if (next.type === 'semi') {
+    cursor.next();
+  }
 }

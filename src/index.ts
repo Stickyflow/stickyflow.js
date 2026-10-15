@@ -70,9 +70,14 @@ export type {
   BindingTarget,
   BindingType,
   BindingValue,
+  BoundAssignment,
+  BoundHandler,
   BoundProperty,
   DataSource,
   DataSourceContract,
+  ElementInfo,
+  ElementState,
+  InteractiveElements,
   MutableDataSource,
 } from './binding';
-export { buildBindingGraph, createBindingRuntime, createDataSource, renderBound } from './binding';
+export { buildBindingGraph, createBindingRuntime, createDataSource, interactiveElements, renderBound } from './binding';

@@ -1,7 +1,7 @@
 import { isNamedBlockKind, type SflBlock, type SflEntry } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
-import { atBinding, parseBinding } from './expressions';
+import { atBinding, atHandler, parseBinding, parseHandler } from './expressions';
 import { PropertyParser } from './properties';
 
 export class BlockParser {
@@ -86,6 +86,9 @@ export class BlockParser {
     }
     if (atBinding(this.cursor)) {
       return { type: 'binding', binding: parseBinding(this.cursor) };
+    }
+    if (atHandler(this.cursor)) {
+      return { type: 'handler', handler: parseHandler(this.cursor) };
     }
     if (token.value === 'data' && this.cursor.peek(1).type === 'lbrace') {
       return { type: 'data', data: this.parseDataBlock() };

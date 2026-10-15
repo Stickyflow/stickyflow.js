@@ -36,6 +36,13 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
     return undefined;
   }
   const { operator } = expr;
+  if (operator === '&&' || operator === '||') {
+    if (left !== 'boolean' || right !== 'boolean') {
+      report('type-mismatch', `'${operator}' needs two booleans, got ${typeName(left)} and ${typeName(right)}.`);
+      return undefined;
+    }
+    return 'boolean';
+  }
   if (['>', '<', '>=', '<='].includes(operator)) {
     if (left !== 'number' || right !== 'number') {
       report('type-mismatch', `'${operator}' compares two numbers, got ${typeName(left)} and ${typeName(right)}.`);
@@ -69,6 +76,11 @@ const MATH: Record<string, { arguments: number; apply(values: number[]): number 
   min: { arguments: 2, apply: ([a, b]) => Math.min(a, b) },
   max: { arguments: 2, apply: ([a, b]) => Math.max(a, b) },
   clamp: { arguments: 3, apply: ([value, low, high]) => Math.min(high, Math.max(low, value)) },
+  // current moved toward target by at most maxStep, without passing it.
+  moveToward: {
+    arguments: 3,
+    apply: ([current, target, maxStep]) => (Math.abs(target - current) <= maxStep ? target : current + Math.sign(target - current) * maxStep),
+  },
 };
 
 function inferMath(name: string, expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
@@ -122,10 +134,18 @@ export function inferType(expr: SflExpr, scope: TypeScope, report: Report): Bind
       return 'number';
     case 'string':
       return 'string';
+    case 'boolean':
+      return 'boolean';
     case 'ref': {
       const type = scope.resolve(expr.path);
       if (!type) {
-        report('unknown-reference', `Unknown reference '${expr.path.join('.')}'. Use <DataSource>.<field>.`);
+        const name = expr.path.join('.');
+        report(
+          'unknown-reference',
+          name === 'time.delta'
+            ? "'time.delta' is only available in an onTick handler."
+            : `Unknown reference '${name}'. Use <DataSource>.<field>, or <element>.pressed / hovered / pointer.`,
+        );
       }
       return type;
     }
@@ -163,6 +183,12 @@ const text = (value: BindingValue): string => (typeof value === 'number' ? Strin
 
 function evaluateBinary(expr: Extract<SflExpr, { kind: 'binary' }>, env: ValueEnv): BindingValue {
   const left = evaluate(expr.left, env);
+  if (expr.operator === '&&') {
+    return Boolean(left) && Boolean(evaluate(expr.right, env));
+  }
+  if (expr.operator === '||') {
+    return Boolean(left) || Boolean(evaluate(expr.right, env));
+  }
   const right = evaluate(expr.right, env);
   switch (expr.operator) {
     case '>':
@@ -199,6 +225,7 @@ export function evaluate(expr: SflExpr, env: ValueEnv): BindingValue {
   switch (expr.kind) {
     case 'number':
     case 'string':
+    case 'boolean':
       return expr.value;
     case 'ref':
       return env.read(expr.path);

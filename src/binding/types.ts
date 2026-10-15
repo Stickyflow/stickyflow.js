@@ -57,3 +57,34 @@ export interface BoundProperty {
   line: number;
   col: number;
 }
+
+// One `target <- expression` of a handler, with the target already resolved to a field of a record source.
+export interface BoundAssignment {
+  source: string;
+  field: string;
+  expr: SflExpr;
+  type: ScalarType;
+  line: number;
+  col: number;
+}
+
+// A reaction of an element to a pointer event, or of a data source to every tick.
+export interface BoundHandler {
+  id: string;
+  ownerKind: BlockKind;
+  ownerPath: string[];
+  event: string;
+  assignments: BoundAssignment[];
+  line: number;
+  col: number;
+}
+
+// What a block of the document can be addressed by in an expression: its state (pressed, hovered, pointer).
+export interface ElementInfo {
+  kind: BlockKind;
+  // The `type` of a widget, as in ruler or tickScale.
+  widgetType?: string;
+}
+
+export const POINTER_EVENTS = ['onPress', 'onRelease', 'onTap', 'onDrag'] as const;
+export const TICK_EVENT = 'onTick';

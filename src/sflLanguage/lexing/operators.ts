@@ -7,6 +7,8 @@ const OPERATORS: Array<[string, TokenType]> = [
   ['<->', 'bind2'],
   ['<-', 'bind'],
   ['->', 'action'],
+  ['&&', 'op'],
+  ['||', 'op'],
   ['>=', 'op'],
   ['<=', 'op'],
   ['==', 'op'],

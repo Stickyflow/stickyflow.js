@@ -11,6 +11,7 @@ export function createViewer(options: ViewerOptions): Viewer {
   return viewer;
 }
 
+export { connectInteraction, type InteractionOptions } from './connectInteraction';
 export type { SceneDiff, ViewBox } from './display';
 export type {
   Modifiers,

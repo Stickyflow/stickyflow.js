@@ -2,9 +2,11 @@ import { type RenderOptions, type RenderResult, renderCanvas } from '../render';
 import { sflToRenderInput } from '../renderInput/fromSfl';
 import type { RenderInput } from '../renderInput/types';
 import { parse } from '../sflLanguage';
-import { evaluate } from './expression';
+import { collectRefs, evaluate } from './expression';
 import { type BindingGraph, buildBindingGraph } from './graph';
-import type { BindingDiagnostic, BindingValue, BoundProperty, DataSourceContract, Row } from './types';
+import { type InteractiveElements, interactiveElements } from './interactive';
+import type { BindingDiagnostic, BindingValue, BoundHandler, BoundProperty, DataSourceContract, Row } from './types';
+import { TICK_EVENT } from './types';
 
 export type SourceListener = () => void;
 
@@ -50,12 +52,30 @@ type LiveChange =
   | { kind: 'widget'; id: string; value: number }
   | { kind: 'shader'; owners: string[]; parameters: Record<string, number> };
 
+// What an expression can read about an element: id.pressed, id.hovered, and id.pointer on a widget with a scale.
+export interface ElementState {
+  pressed: boolean;
+  hovered: boolean;
+  pointer: number;
+}
+
 export interface BindingRuntime {
   readonly diagnostics: BindingDiagnostic[];
   readonly graph: BindingGraph;
+  // Which elements the host has to deliver the pointer to.
+  readonly interactive: InteractiveElements;
   // The RenderInput with every bound property applied.
   readonly input: RenderInput;
   registerSource(name: string, source: DataSource): () => void;
+  // The host reports what the pointer does; the document says what follows from it (onPress, onRelease, onTap, onDrag).
+  setElementState(id: string, state: Partial<ElementState>): void;
+  press(id: string): void;
+  // tapped: the pointer went up on the element it went down on.
+  release(id: string, tapped: boolean): void;
+  // pointer: the value under the pointer, for a widget with a scale.
+  drag(id: string, pointer?: number): void;
+  // Runs the onTick handlers of the data sources; the host calls it once per frame with the seconds since the last call.
+  tick(seconds: number): void;
   flush(): RenderResult | null;
   onRender(listener: (result: RenderResult) => void): () => void;
   attach(target: BindingTarget): () => void;
@@ -163,8 +183,19 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
   const liveState = new Map<string, LiveChange>();
   let scheduled = false;
 
+  const elementState = new Map<string, ElementState>();
+  for (const name of graph.elements.keys()) {
+    if (!graph.contracts.has(name)) {
+      elementState.set(name, { pressed: false, hovered: false, pointer: 0 });
+    }
+  }
+
   const read = (path: string[]): BindingValue => {
     const [name, field] = path;
+    const state = sources.has(name) ? undefined : elementState.get(name);
+    if (state) {
+      return state[field as keyof ElementState];
+    }
     const data = sources.get(name)?.get();
     if (data === undefined) {
       throw new Error(`DataSource '${name}' has no data yet.`);
@@ -175,7 +206,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
   };
 
   const missingSource = (binding: BoundProperty): string | undefined =>
-    binding.dependencies.map(dependency => dependency.split('.')[0]).find(name => !sources.has(name));
+    binding.dependencies.map(dependency => dependency.split('.')[0]).find(name => !sources.has(name) && !elementState.has(name));
 
   const announce = (id: string, change: LiveChange) => {
     liveState.set(id, change);
@@ -251,6 +282,48 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     }
   };
 
+  // A handler writes record fields one after the other, each assignment seeing what the one before it wrote. An int field takes the
+  // nearest whole number. What it cannot read or write yet (a source nobody registered) it leaves alone.
+  const runHandler = (handler: BoundHandler, delta?: number) => {
+    const env = { read: (path: string[]) => (path[0] === 'time' && path[1] === 'delta' ? (delta ?? 0) : read(path)) };
+    for (const assignment of handler.assignments) {
+      const target = sources.get(assignment.source);
+      const readable = collectRefs(assignment.expr).every(([name]) => name === 'time' || sources.has(name) || elementState.has(name));
+      if (!target || !('set' in target) || !readable) {
+        continue;
+      }
+      let value = evaluate(assignment.expr, env);
+      if (typeof value === 'number') {
+        value = graph.contracts.get(assignment.source)?.declared[assignment.field] === 'int' ? Math.round(value) : value;
+        if (!Number.isFinite(value)) {
+          continue;
+        }
+      }
+      const row = target.get() as Row;
+      if (row[assignment.field] !== value) {
+        (target as MutableDataSource).set({ ...row, [assignment.field]: value });
+      }
+    }
+  };
+
+  const dispatch = (id: string, event: string) => {
+    for (const handler of graph.handlers) {
+      if (handler.event === event && handler.ownerKind !== 'DataSource' && handler.ownerPath[0] === id) {
+        runHandler(handler);
+      }
+    }
+  };
+
+  const setElementState = (id: string, patch: Partial<ElementState>) => {
+    const state = elementState.get(id);
+    if (!state || (Object.keys(patch) as Array<keyof ElementState>).every(key => state[key] === patch[key])) {
+      return;
+    }
+    Object.assign(state, patch);
+    markDirty(id);
+    schedule();
+  };
+
   // Constants never change, so they apply once.
   for (const binding of graph.bindings) {
     if (binding.dependencies.length === 0) {
@@ -264,6 +337,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
   return {
     diagnostics,
     graph,
+    interactive: interactiveElements(graph),
     input,
     registerSource(name, source) {
       const contract = graph.contracts.get(name);
@@ -292,6 +366,31 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
         unsubscribe();
         sources.delete(name);
       };
+    },
+    setElementState,
+    press(id) {
+      setElementState(id, { pressed: true });
+      dispatch(id, 'onPress');
+    },
+    release(id, tapped) {
+      setElementState(id, { pressed: false });
+      dispatch(id, 'onRelease');
+      if (tapped) {
+        dispatch(id, 'onTap');
+      }
+    },
+    drag(id, pointer) {
+      if (pointer !== undefined) {
+        setElementState(id, { pointer });
+      }
+      dispatch(id, 'onDrag');
+    },
+    tick(seconds) {
+      for (const handler of graph.handlers) {
+        if (handler.event === TICK_EVENT) {
+          runHandler(handler, seconds);
+        }
+      }
     },
     flush,
     onRender(listener) {

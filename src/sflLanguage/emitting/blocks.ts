@@ -1,7 +1,7 @@
 import type { BlockKind, SflBlock, SflProperty } from '../ast';
 import { type BlockEntries, collectBlockEntries } from './blockEntries';
 import { emitComposition } from './composition';
-import { emitBinding } from './expressions';
+import { emitBinding, emitHandler } from './expressions';
 import { emitPropertyBlock } from './propertyBlock';
 import { compareLayoutProps, compareProps, compareStyleProps } from './propertyOrder';
 import { emitProperty } from './values';
@@ -62,7 +62,8 @@ function usesCompactBlockForm(kind: BlockKind, entries: BlockEntries, propertyCo
     entries.styles.length > 0 ||
     entries.dataBlocks.length > 0 ||
     entries.fields.length > 0 ||
-    entries.bindings.length > 0;
+    entries.bindings.length > 0 ||
+    entries.handlers.length > 0;
   return supportsCompactForm && !hasNestedContent && propertyCount <= COMPACT_MAX_PROPS;
 }
 
@@ -82,6 +83,7 @@ function emitPrimaryBlockEntries(entries: BlockEntries, properties: SflProperty[
   const propertyLines = [
     ...properties.map(property => `${innerPad}${emitProperty(property)}`),
     ...entries.bindings.map(binding => `${innerPad}${emitBinding(binding)}`),
+    ...entries.handlers.map(handler => emitHandler(handler, innerPad)),
   ].join('\n');
   const nestedBlocks = joinSiblingBlocks(entries.blocks, depth + 1);
   return [propertyLines, nestedBlocks].filter(Boolean).join('\n\n');
