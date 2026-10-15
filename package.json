@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "description": "Framework-independent SFL parser, render-scene, SVG runtime and interactive viewer.",
   "type": "module",
-  "private": true,
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "author": "D-Queck",
   "keywords": [
     "sfl",
@@ -19,12 +18,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/D-Queck/stickyflow.js.git"
+    "url": "git+https://github.com/Stickyflow/stickyflow.js.git"
   },
   "bugs": {
-    "url": "https://github.com/D-Queck/stickyflow.js/issues"
+    "url": "https://github.com/Stickyflow/stickyflow.js/issues"
   },
-  "homepage": "https://github.com/D-Queck/stickyflow.js#readme",
+  "homepage": "https://github.com/Stickyflow/stickyflow.js#readme",
   "engines": {
     "node": ">=18"
   },
