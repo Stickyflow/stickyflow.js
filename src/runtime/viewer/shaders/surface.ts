@@ -50,6 +50,24 @@ function updateParameters(
   return changed;
 }
 
+function watchSvgChanges(
+  svg: SVGSVGElement,
+  view: (Window & typeof globalThis) | null,
+  onChange: () => void,
+): () => void {
+  if (!view) {
+    return () => undefined;
+  }
+  const mutations = new view.MutationObserver(onChange);
+  mutations.observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+  const sizes = view.ResizeObserver ? new view.ResizeObserver(onChange) : undefined;
+  sizes?.observe(svg);
+  return () => {
+    mutations.disconnect();
+    sizes?.disconnect();
+  };
+}
+
 export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   let surfaces: Surface[] = [];
   let frame: number | undefined;
@@ -128,17 +146,13 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       captureBackdrops(backdropGeneration);
     }, RECAPTURE_DELAY_MS);
   };
-  const viewObserver = view ? new view.MutationObserver(scheduleRecapture) : undefined;
-  viewObserver?.observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
-  const sizeObserver = view?.ResizeObserver ? new view.ResizeObserver(scheduleRecapture) : undefined;
-  sizeObserver?.observe(svg);
+  const unwatch = watchSvgChanges(svg, view, scheduleRecapture);
 
   refresh();
 
   const destroy = () => {
     backdropGeneration += 1;
-    viewObserver?.disconnect();
-    sizeObserver?.disconnect();
+    unwatch();
     if (recapture !== undefined) {
       view?.clearTimeout(recapture);
     }

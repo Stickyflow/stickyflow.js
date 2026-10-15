@@ -3,31 +3,29 @@ import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeShadow } from '../../styleDecoding';
 import { numOf, solidColor } from './values';
 
+type Props = SflCanvasObject['props'];
+
 function decodeImageFill(source: string | undefined): { url: string; overlay?: string } | undefined {
   const match = source?.match(/^image\(\s*([^,)]+?)\s*(?:,\s*(.+?))?\s*\)$/);
   return match ? { url: match[1], overlay: match[2] } : undefined;
 }
 
-export function chartBase(e: SflCanvasObject): ChartBase {
-  const p = e.props;
-  const gridShape: 'rect' | 'circle' = p.gridShape === 'circle' ? 'circle' : 'rect';
-  const gridLineStyle: 'solid' | 'dashed' | 'dotted' =
-    p.gridLineStyle === 'dashed' ? 'dashed' : p.gridLineStyle === 'dotted' ? 'dotted' : 'solid';
-  const legendPosition: 'top' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'left' | 'right' =
-    p.legendPosition === 'bottom' ||
-    p.legendPosition === 'bottomLeft' ||
-    p.legendPosition === 'bottomRight' ||
-    p.legendPosition === 'left' ||
-    p.legendPosition === 'right'
-      ? p.legendPosition
-      : 'top';
-  const base = {
-    id: e.id,
-    title: e.text ?? null,
-    x: e.x,
-    y: e.y,
-    width: e.width,
-    height: e.height,
+function legendPositionOf(value: string | undefined): ChartBase['legendPosition'] {
+  return value === 'bottom' ||
+    value === 'bottomLeft' ||
+    value === 'bottomRight' ||
+    value === 'left' ||
+    value === 'right'
+    ? value
+    : 'top';
+}
+
+function lineStyleOf(value: string | undefined): 'solid' | 'dashed' | 'dotted' {
+  return value === 'dashed' || value === 'dotted' ? value : 'solid';
+}
+
+function dataOf(e: SflCanvasObject): Pick<ChartBase, 'axisX' | 'axisY' | 'series' | 'rules'> {
+  return {
     axisX: e.chart?.axisX ?? { min: 0, max: 4, step: 1 },
     axisY: e.chart?.axisY ?? { min: 0, max: 500, step: 100 },
     series: (e.chart?.series ?? []).map(s => ({
@@ -44,19 +42,57 @@ export function chartBase(e: SflCanvasObject): ChartBase {
       strokeWidth: r.strokeWidth,
       dash: r.dash,
     })),
-    fillColor: decodeImageFill(p.fill) ? '#111418' : (decodeColor(p.fill) ?? '#ffffff'),
-    fillImage: decodeImageFill(p.fill),
+  };
+}
+
+function frameOf(
+  p: Props,
+): Pick<ChartBase, 'fillColor' | 'fillImage' | 'strokeColor' | 'strokeWidth' | 'cornerRadius' | 'shadowStyle'> {
+  const image = decodeImageFill(p.fill);
+  return {
+    fillColor: image ? '#111418' : (decodeColor(p.fill) ?? '#ffffff'),
+    fillImage: image,
     strokeColor: solidColor(p.stroke) ?? '#475569',
     strokeWidth: numOf(p.strokeWidth) ?? 1,
     cornerRadius: numOf(p.cornerRadius) ?? 12,
+    shadowStyle: decodeShadow(p.shadow),
+  };
+}
+
+function gridOf(
+  p: Props,
+): Pick<
+  ChartBase,
+  'gridColor' | 'gridWidth' | 'gridShape' | 'gridLineStyle' | 'gridRoundedCorners' | 'gridAxes' | 'showGrid'
+> {
+  return {
     gridColor: p.gridColor ?? '#e2e8f0',
     gridWidth: numOf(p.gridWidth) ?? 1,
-    gridShape,
-    gridLineStyle,
+    gridShape: p.gridShape === 'circle' ? ('circle' as const) : ('rect' as const),
+    gridLineStyle: lineStyleOf(p.gridLineStyle),
     gridRoundedCorners: p.gridRoundedCorners === 'true',
-    textColor: p.textColor ?? '#0f172a',
+    gridAxes: p.gridAxes === 'x' || p.gridAxes === 'y' ? p.gridAxes : undefined,
+    showGrid: p.showGrid !== 'false',
+  };
+}
+
+function axesOf(
+  p: Props,
+): Pick<
+  ChartBase,
+  | 'axisLabelColor'
+  | 'axisLineWidth'
+  | 'axisLineColor'
+  | 'axisLineStyle'
+  | 'tickLength'
+  | 'axisFontSize'
+  | 'axisFontFamily'
+  | 'showValueAxis'
+  | 'categoryAlign'
+  | 'showAxisLabels'
+> {
+  return {
     axisLabelColor: p.axisLabelColor,
-    legendColor: p.legendColor,
     axisLineWidth: numOf(p.axisLineWidth),
     axisLineColor: p.axisLineColor,
     axisLineStyle: p.axisLineStyle === 'dashed' || p.axisLineStyle === 'dotted' ? p.axisLineStyle : undefined,
@@ -65,19 +101,47 @@ export function chartBase(e: SflCanvasObject): ChartBase {
     axisFontFamily: p.axisFontFamily,
     showValueAxis: p.showValueAxis !== 'false',
     categoryAlign: p.categoryAlign === 'left' || p.categoryAlign === 'inside' ? p.categoryAlign : undefined,
+    showAxisLabels: p.showAxisLabels !== 'false',
+  };
+}
+
+function textOf(
+  p: Props,
+): Pick<ChartBase, 'textColor' | 'titleSize' | 'titleWeight' | 'titleColor' | 'fontSize' | 'fontFamily'> {
+  return {
+    textColor: p.textColor ?? '#0f172a',
     titleSize: numOf(p.titleSize),
-    titleWeight: p.titleWeight === 'normal' ? 'normal' : undefined,
+    titleWeight: p.titleWeight === 'normal' ? ('normal' as const) : undefined,
     titleColor: p.titleColor,
-    gridAxes: p.gridAxes === 'x' || p.gridAxes === 'y' ? p.gridAxes : undefined,
     fontSize: numOf(p.fontSize) ?? 12,
     fontFamily: p.fontFamily ?? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    showGrid: p.showGrid !== 'false',
-    showAxisLabels: p.showAxisLabels !== 'false',
+  };
+}
+
+function legendOf(p: Props): Pick<ChartBase, 'legendColor' | 'showLegend' | 'legendPosition'> {
+  return {
+    legendColor: p.legendColor,
     showLegend: p.showLegend === 'true',
-    legendPosition,
-    shadowStyle: decodeShadow(p.shadow),
+    legendPosition: legendPositionOf(p.legendPosition),
+  };
+}
+
+export function chartBase(e: SflCanvasObject): ChartBase {
+  const p = e.props;
+  return {
+    id: e.id,
+    title: e.text ?? null,
+    x: e.x,
+    y: e.y,
+    width: e.width,
+    height: e.height,
+    ...dataOf(e),
+    ...frameOf(p),
+    ...gridOf(p),
+    ...axesOf(p),
+    ...textOf(p),
+    ...legendOf(p),
     order: e.order,
     sourceIndex: e.sourceIndex,
-  } satisfies ChartBase;
-  return base;
+  };
 }

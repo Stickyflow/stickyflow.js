@@ -91,35 +91,56 @@ function pushLabel(
   );
 }
 
-function pushSegment(
+interface SegmentMark {
+  series: ChartSeries;
+  valueIndex: number;
+  radius: number;
+  color: NonNullable<ChartSeries['color']>;
+  x: number;
+  y: number;
+  height: number;
+  path: string;
+  column: { x: number; y: number; width: number; height: number };
+}
+
+function markOf(
   context: ChartRenderContext,
   mode: StackedMode,
-  layers: Layers,
   slot: Slot,
   series: ChartSeries,
   seriesIndex: number,
   valueIndex: number,
-): void {
-  const { chart, plot, bounds, diagnostics, nextOrder } = context;
-  const color = series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
+): SegmentMark {
+  const { chart, plot } = context;
   const segment = stackedSegment(chart, mode, valueIndex, seriesIndex, plot.height);
   const radius = slot.outerSeriesIndex === null || seriesIndex === slot.outerSeriesIndex ? slot.cornerRadius : 0;
   const x = plot.x + valueIndex * slot.slotWidth + slot.groupGap / 2;
   const y = plot.y + plot.height - Math.max(segment.pixelStart, segment.pixelEnd);
   const height = Math.max(1, Math.abs(segment.pixelEnd - segment.pixelStart));
-  const path = pathOf(context, x, y, height, slot, radius);
-  const column = { x, y: plot.y, width: slot.barWidth, height: plot.height };
-  if (seriesIndex === 0 && barTrackEnabled(context)) {
-    layers.tracks.push(...createBarTrackNodes(context, String(valueIndex), column));
-  }
-  const fill = paint(color, diagnostics, chart.id);
+  return {
+    series,
+    valueIndex,
+    radius,
+    color: series.colors?.[valueIndex] ?? series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length],
+    x,
+    y,
+    height,
+    path: pathOf(context, x, y, height, slot, radius),
+    column: { x, y: plot.y, width: slot.barWidth, height: plot.height },
+  };
+}
+
+function segmentNodes(context: ChartRenderContext, mark: SegmentMark): RenderNode[] {
+  const { chart, plot, bounds, diagnostics, nextOrder } = context;
+  const { series, valueIndex, path } = mark;
+  const fill = paint(mark.color, diagnostics, chart.id);
   const stroke = paint(chart.config?.barBorderColor || '#000000', diagnostics, chart.id);
   const strokeWidth = finite(chart.config?.barBorderWidth, 0);
   const shadow = resolveChartShadow(chart.shadowStyle);
-
+  const nodes: RenderNode[] = [];
   if (shadow) {
     const plotClip = `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`;
-    layers.bars.push({
+    nodes.push({
       type: 'path',
       id: `chart-bar-shadow-${chart.id}-${series.id}-${valueIndex}`,
       order: nextOrder(),
@@ -130,12 +151,12 @@ function pushSegment(
         stroke,
         strokeWidth,
         shadow,
-        clip: barTrackClip(context, column) ?? { type: 'path', d: plotClip },
+        clip: barTrackClip(context, mark.column) ?? { type: 'path', d: plotClip },
       },
     });
   }
-  layers.bars.push(...createGlassBackdropNodes(context, `${series.id}-${valueIndex}`, path));
-  layers.bars.push({
+  nodes.push(...createGlassBackdropNodes(context, `${series.id}-${valueIndex}`, path));
+  nodes.push({
     type: 'path',
     id: `chart-bar-${chart.id}-${series.id}-${valueIndex}`,
     order: nextOrder(),
@@ -146,18 +167,37 @@ function pushSegment(
       series: series.id,
       valueIndex,
       mark: 'bar',
-      radius,
+      radius: mark.radius,
       colorProp: seriesValueColorProp(series.id, valueIndex),
       hasColorOverride: series.colors?.[valueIndex] != null,
     },
     prop: seriesValueProp(series.id, valueIndex),
     style: { fill, stroke, strokeWidth, innerShadow: shadow },
   });
-  pushLabel(context, layers, series, seriesIndex, valueIndex, slot, { x, y, width: slot.barWidth, height });
+  return nodes;
+}
+
+function pushSegment(
+  context: ChartRenderContext,
+  mode: StackedMode,
+  layers: Layers,
+  slot: Slot,
+  series: ChartSeries,
+  seriesIndex: number,
+  valueIndex: number,
+): void {
+  const { chart } = context;
+  const mark = markOf(context, mode, slot, series, seriesIndex, valueIndex);
+  if (seriesIndex === 0 && barTrackEnabled(context)) {
+    layers.tracks.push(...createBarTrackNodes(context, String(valueIndex), mark.column));
+  }
+  layers.bars.push(...segmentNodes(context, mark));
+  const frame = { x: mark.x, y: mark.y, width: slot.barWidth, height: mark.height };
+  pushLabel(context, layers, series, seriesIndex, valueIndex, slot, frame);
   const glow = finite(chart.config?.barGlow, 0);
   if (glow > 0) {
     layers.glows.push(
-      createBarGlowNode(context, `chart-bar-glow-${chart.id}-${series.id}-${valueIndex}`, path, color, glow),
+      createBarGlowNode(context, `chart-bar-glow-${chart.id}-${series.id}-${valueIndex}`, mark.path, mark.color, glow),
     );
   }
 }

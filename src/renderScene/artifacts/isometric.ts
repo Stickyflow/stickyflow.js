@@ -165,24 +165,30 @@ const LABEL_PADDING_X = 6;
 const LABEL_PADDING_Y = 3;
 const LABEL_CHAR_WIDTH = 6.5;
 
-function labelNodes(context: IsometricContext, text: string): RenderNode[] {
-  const { object, order, rotation, rotationCenter, box } = context;
+interface LabelPlacement {
+  anchor: Point;
+  centerX: number;
+  topY: number;
+  bottomY: number;
+}
+
+function labelPlacement(context: IsometricContext): LabelPlacement {
+  const { object } = context;
   const anchor = isometricTopFaceCenter(object);
-  const labelCenterX = anchor.x + finite(object.labelOffsetX, 0);
-  const labelBottomY = anchor.y - LABEL_GAP + finite(object.labelOffsetY, 0);
-  const labelTopY = labelBottomY - LABEL_HEIGHT;
-  const label: SceneText = {
+  const bottomY = anchor.y - LABEL_GAP + finite(object.labelOffsetY, 0);
+  return { anchor, centerX: anchor.x + finite(object.labelOffsetX, 0), topY: bottomY - LABEL_HEIGHT, bottomY };
+}
+
+function labelTextNode(context: IsometricContext, placement: LabelPlacement, text: string): SceneText {
+  const { object, order, rotation, rotationCenter, box } = context;
+  const { centerX, topY, bottomY } = placement;
+  return {
     type: 'text',
     id: `isometric-${object.id}-label`,
     order: order + 0.3,
-    bounds: {
-      minX: labelCenterX - box.width / 2,
-      minY: labelTopY,
-      maxX: labelCenterX + box.width / 2,
-      maxY: labelBottomY,
-    },
-    x: labelCenterX - box.width / 2,
-    y: labelTopY,
+    bounds: { minX: centerX - box.width / 2, minY: topY, maxX: centerX + box.width / 2, maxY: bottomY },
+    x: centerX - box.width / 2,
+    y: topY,
     width: box.width,
     height: LABEL_HEIGHT,
     lines: [text],
@@ -197,17 +203,22 @@ function labelNodes(context: IsometricContext, text: string): RenderNode[] {
     rotationCenter,
     mark: 'isometric-label',
   };
-  const labelGuide: ScenePath = {
+}
+
+function labelGuideNode(context: IsometricContext, placement: LabelPlacement): ScenePath {
+  const { object, order, rotation, rotationCenter } = context;
+  const { anchor, centerX, bottomY } = placement;
+  return {
     type: 'path',
     id: `isometric-${object.id}-label-guide`,
     order: order + 0.25,
     bounds: {
-      minX: Math.min(anchor.x, labelCenterX),
-      minY: Math.min(anchor.y, labelBottomY),
-      maxX: Math.max(anchor.x, labelCenterX),
-      maxY: Math.max(anchor.y, labelBottomY),
+      minX: Math.min(anchor.x, centerX),
+      minY: Math.min(anchor.y, bottomY),
+      maxX: Math.max(anchor.x, centerX),
+      maxY: Math.max(anchor.y, bottomY),
     },
-    d: `M ${anchor.x} ${anchor.y} L ${labelCenterX} ${labelBottomY}`,
+    d: `M ${anchor.x} ${anchor.y} L ${centerX} ${bottomY}`,
     rotation,
     rotationCenter,
     style: {
@@ -218,33 +229,47 @@ function labelNodes(context: IsometricContext, text: string): RenderNode[] {
       pointerEvents: 'none',
     },
   };
-  if (!object.labelBackground) {
-    return [labelGuide, label];
-  }
-  const backgroundWidth = Math.max(24, text.length * LABEL_CHAR_WIDTH + LABEL_PADDING_X * 2);
-  const labelBackground: SceneRect = {
+}
+
+function labelBackgroundNode(
+  context: IsometricContext,
+  placement: LabelPlacement,
+  text: string,
+  background: string,
+): SceneRect {
+  const { object, order, rotation } = context;
+  const { centerX, topY, bottomY } = placement;
+  const width = Math.max(24, text.length * LABEL_CHAR_WIDTH + LABEL_PADDING_X * 2);
+  return {
     type: 'rect',
     id: `isometric-${object.id}-label-background`,
     order: order + 0.28,
-    x: labelCenterX - backgroundWidth / 2,
-    y: labelTopY - LABEL_PADDING_Y,
-    width: backgroundWidth,
+    x: centerX - width / 2,
+    y: topY - LABEL_PADDING_Y,
+    width,
     height: LABEL_HEIGHT + LABEL_PADDING_Y * 2,
     rx: 4,
     bounds: {
-      minX: labelCenterX - backgroundWidth / 2,
-      minY: labelTopY - LABEL_PADDING_Y,
-      maxX: labelCenterX + backgroundWidth / 2,
-      maxY: labelBottomY + LABEL_PADDING_Y,
+      minX: centerX - width / 2,
+      minY: topY - LABEL_PADDING_Y,
+      maxX: centerX + width / 2,
+      maxY: bottomY + LABEL_PADDING_Y,
     },
     rotation,
     mark: 'isometric-label',
-    style: {
-      fill: { kind: 'solid', color: object.labelBackground },
-      stroke: { kind: 'none' },
-    },
+    style: { fill: { kind: 'solid', color: background }, stroke: { kind: 'none' } },
   };
-  return [labelGuide, labelBackground, label];
+}
+
+function labelNodes(context: IsometricContext, text: string): RenderNode[] {
+  const placement = labelPlacement(context);
+  const label = labelTextNode(context, placement, text);
+  const guide = labelGuideNode(context, placement);
+  const background = context.object.labelBackground;
+  if (!background) {
+    return [guide, label];
+  }
+  return [guide, labelBackgroundNode(context, placement, text, background), label];
 }
 
 export function buildIsometricObject(object: IsometricObject, index: number): RenderNode[] {

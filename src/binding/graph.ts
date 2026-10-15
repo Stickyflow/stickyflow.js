@@ -151,6 +151,74 @@ function collectHandlerSites(sflDocument: SflDocument): HandlerSite[] {
   return sites;
 }
 
+type Report = (code: string, message: string, line?: number, col?: number) => void;
+
+function allowedEvents(kind: BlockKind): readonly string[] {
+  if (kind === 'DataSource') {
+    return [TICK_EVENT];
+  }
+  return INTERACTIVE_KINDS.includes(kind) ? POINTER_EVENTS : [];
+}
+
+function eventIsKnown(site: HandlerSite, report: Report): boolean {
+  const { kind, name, handler } = site;
+  const allowed = allowedEvents(kind);
+  if (allowed.includes(handler.event)) {
+    return true;
+  }
+  report(
+    'unknown-event',
+    allowed.length
+      ? `${kind} '${name}' has no event '${handler.event}' (events: ${allowed.join(', ')}).`
+      : `${kind} '${name}' has no events; handlers belong on a Shape, Text, Widget or DataSource.`,
+  );
+  return false;
+}
+
+function bindAssignment(
+  assignment: SflHandler['assignments'][number],
+  name: string,
+  own: DataSourceContract | undefined,
+  contracts: Map<string, DataSourceContract>,
+  scope: TypeScope,
+  report: Report,
+): BoundAssignment | undefined {
+  const at = (code: string, message: string) => report(code, message, assignment.line, assignment.col);
+  const target = assignment.target.join('.');
+  const [source, field] = own && assignment.target.length === 1 ? [own.name, assignment.target[0]] : assignment.target;
+  const contract = assignment.target.length <= 2 ? contracts.get(source) : undefined;
+  if (!contract || field === undefined) {
+    at('unknown-target', `'${target}' is not a field of a DataSource (write <DataSource>.<field>).`);
+    return undefined;
+  }
+  if (own && contract !== own) {
+    at('tick-foreign-target', `onTick of '${name}' can only change fields of '${name}', not '${target}'.`);
+    return undefined;
+  }
+  if (contract.mode !== 'record') {
+    at(
+      'target-not-record',
+      `DataSource '${source}' is a table source; only record sources can be changed by a handler.`,
+    );
+    return undefined;
+  }
+  const wanted = contract.fields[field];
+  if (!wanted) {
+    at('unknown-target', `DataSource '${source}' has no field '${field}'.`);
+    return undefined;
+  }
+  const expr = own ? qualify(assignment.expr, own) : assignment.expr;
+  const actual = inferType(expr, scope, (code, message) => at(code, message));
+  if (!actual) {
+    return undefined;
+  }
+  if (!sameType(actual, wanted)) {
+    at('type-mismatch', `'${target}' is ${wanted}, the expression is ${typeName(actual)}.`);
+    return undefined;
+  }
+  return { source, field, expr, type: wanted, line: assignment.line, col: assignment.col };
+}
+
 function bindHandler(
   site: HandlerSite,
   contracts: Map<string, DataSourceContract>,
@@ -158,63 +226,21 @@ function bindHandler(
   diagnostics: BindingDiagnostic[],
 ): BoundHandler | undefined {
   const { kind, name, handler } = site;
-  const report = (code: string, message: string, line = handler.line, col = handler.col) =>
+  const report: Report = (code, message, line = handler.line, col = handler.col) =>
     diagnostics.push({ severity: 'error', code, message, line, col });
-  const ticking = kind === 'DataSource';
-  const allowed: readonly string[] = ticking ? [TICK_EVENT] : INTERACTIVE_KINDS.includes(kind) ? POINTER_EVENTS : [];
-  if (!allowed.includes(handler.event)) {
-    report(
-      'unknown-event',
-      allowed.length
-        ? `${kind} '${name}' has no event '${handler.event}' (events: ${allowed.join(', ')}).`
-        : `${kind} '${name}' has no events; handlers belong on a Shape, Text, Widget or DataSource.`,
-    );
+  if (!eventIsKnown(site, report)) {
     return undefined;
   }
+  const ticking = kind === 'DataSource';
   const own = ticking ? contracts.get(name) : undefined;
   if (ticking && own?.mode !== 'record') {
     report('tick-needs-record', `DataSource '${name}' has to be a record source to change its fields on every tick.`);
     return undefined;
   }
   const scope = createScope(contracts, elements, ticking);
-  const assignments: BoundAssignment[] = [];
-  for (const assignment of handler.assignments) {
-    const at = (code: string, message: string) => report(code, message, assignment.line, assignment.col);
-    const target = assignment.target.join('.');
-    const [source, field] =
-      own && assignment.target.length === 1 ? [own.name, assignment.target[0]] : assignment.target;
-    const contract = assignment.target.length <= 2 ? contracts.get(source) : undefined;
-    if (!contract || field === undefined) {
-      at('unknown-target', `'${target}' is not a field of a DataSource (write <DataSource>.<field>).`);
-      continue;
-    }
-    if (own && contract !== own) {
-      at('tick-foreign-target', `onTick of '${name}' can only change fields of '${name}', not '${target}'.`);
-      continue;
-    }
-    if (contract.mode !== 'record') {
-      at(
-        'target-not-record',
-        `DataSource '${source}' is a table source; only record sources can be changed by a handler.`,
-      );
-      continue;
-    }
-    const wanted = contract.fields[field];
-    if (!wanted) {
-      at('unknown-target', `DataSource '${source}' has no field '${field}'.`);
-      continue;
-    }
-    const expr = own ? qualify(assignment.expr, own) : assignment.expr;
-    const actual = inferType(expr, scope, (code, message) => at(code, message));
-    if (!actual) {
-      continue;
-    }
-    if (!sameType(actual, wanted)) {
-      at('type-mismatch', `'${target}' is ${wanted}, the expression is ${typeName(actual)}.`);
-      continue;
-    }
-    assignments.push({ source, field, expr, type: wanted, line: assignment.line, col: assignment.col });
-  }
+  const assignments = handler.assignments.flatMap(
+    assignment => bindAssignment(assignment, name, own, contracts, scope, report) ?? [],
+  );
   return {
     id: `${kind}.${name}.${handler.event}`,
     ownerKind: kind,
@@ -226,9 +252,11 @@ function bindHandler(
   };
 }
 
-export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
-  const { contracts, diagnostics } = collectContracts(sflDocument);
-  const elements = collectElements(sflDocument);
+function warnNameCollisions(
+  contracts: Map<string, DataSourceContract>,
+  elements: Map<string, ElementInfo>,
+  diagnostics: BindingDiagnostic[],
+): void {
   for (const name of elements.keys()) {
     if (contracts.has(name)) {
       diagnostics.push({
@@ -240,63 +268,77 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
       });
     }
   }
-  const scope = createScope(contracts, elements);
-  const bindings: BoundProperty[] = [];
-  const sites: BindingSite[] = [];
-  collectSites(sflDocument.blocks, [], sites);
+}
 
-  for (const { kind, path, binding } of sites) {
-    const owner = path.join('.');
-    const report = (code: string, message: string, severity: 'error' | 'warning' = 'error') =>
-      diagnostics.push({ severity, code, message, line: binding.line, col: binding.col });
-    if (binding.operator !== '<-') {
-      report(
-        'binding-operator-unsupported',
-        `'${binding.operator}' on '${binding.key}' is parsed but not executed yet; only '<-' is supported.`,
-        'warning',
-      );
-      continue;
-    }
-    const expected = kind === 'Shader' ? 'number' : BINDABLE_PROPERTIES[kind]?.[binding.key];
-    if (!expected) {
-      const allowed = Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
-      report(
-        'unknown-bound-property',
-        `${kind} '${owner}' has no bindable property '${binding.key}'${allowed.length ? ` (bindable: ${allowed.join(', ')})` : ''}.`,
-      );
-      continue;
-    }
-    const actual = inferType(binding.expr, scope, report);
-    if (!actual) {
-      continue;
-    }
-    if (!sameType(actual, expected)) {
-      report('type-mismatch', `'${binding.key}' expects ${typeName(expected)}, the expression is ${typeName(actual)}.`);
-      continue;
-    }
-    const dependencies = [...new Set(collectRefs(binding.expr).map(ref => ref.join('.')))];
-    bindings.push({
-      id: `${kind}.${owner}.${binding.key}`,
-      ownerKind: kind,
-      ownerPath: path,
-      property: binding.key,
-      operator: binding.operator,
-      expr: binding.expr,
-      type: expected,
-      dependencies,
-      line: binding.line,
-      col: binding.col,
-    });
+function bindProperty(
+  site: BindingSite,
+  scope: TypeScope,
+  diagnostics: BindingDiagnostic[],
+): BoundProperty | undefined {
+  const { kind, path, binding } = site;
+  const owner = path.join('.');
+  const report = (code: string, message: string, severity: 'error' | 'warning' = 'error') =>
+    diagnostics.push({ severity, code, message, line: binding.line, col: binding.col });
+  if (binding.operator !== '<-') {
+    report(
+      'binding-operator-unsupported',
+      `'${binding.operator}' on '${binding.key}' is parsed but not executed yet; only '<-' is supported.`,
+      'warning',
+    );
+    return undefined;
   }
+  const expected = kind === 'Shader' ? 'number' : BINDABLE_PROPERTIES[kind]?.[binding.key];
+  if (!expected) {
+    const allowed = Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
+    report(
+      'unknown-bound-property',
+      `${kind} '${owner}' has no bindable property '${binding.key}'${allowed.length ? ` (bindable: ${allowed.join(', ')})` : ''}.`,
+    );
+    return undefined;
+  }
+  const actual = inferType(binding.expr, scope, report);
+  if (!actual) {
+    return undefined;
+  }
+  if (!sameType(actual, expected)) {
+    report('type-mismatch', `'${binding.key}' expects ${typeName(expected)}, the expression is ${typeName(actual)}.`);
+    return undefined;
+  }
+  return {
+    id: `${kind}.${owner}.${binding.key}`,
+    ownerKind: kind,
+    ownerPath: path,
+    property: binding.key,
+    operator: binding.operator,
+    expr: binding.expr,
+    type: expected,
+    dependencies: [...new Set(collectRefs(binding.expr).map(ref => ref.join('.')))],
+    line: binding.line,
+    col: binding.col,
+  };
+}
 
+function indexByField(bindings: BoundProperty[]): Map<string, BoundProperty[]> {
   const byField = new Map<string, BoundProperty[]>();
   for (const binding of bindings) {
     for (const dependency of binding.dependencies) {
       byField.set(dependency, [...(byField.get(dependency) ?? []), binding]);
     }
   }
+  return byField;
+}
+
+export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
+  const { contracts, diagnostics } = collectContracts(sflDocument);
+  const elements = collectElements(sflDocument);
+  warnNameCollisions(contracts, elements, diagnostics);
+  const scope = createScope(contracts, elements);
+  const sites: BindingSite[] = [];
+  collectSites(sflDocument.blocks, [], sites);
+
+  const bindings = sites.flatMap(site => bindProperty(site, scope, diagnostics) ?? []);
   const handlers = collectHandlerSites(sflDocument).flatMap(
     site => bindHandler(site, contracts, elements, diagnostics) ?? [],
   );
-  return { contracts, bindings, handlers, elements, byField, diagnostics };
+  return { contracts, bindings, handlers, elements, byField: indexByField(bindings), diagnostics };
 }

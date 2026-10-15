@@ -52,19 +52,14 @@ export interface ViewOptions {
   withReset: boolean;
 }
 
-export function buildPickerView(options: ViewOptions): PickerView {
-  const { anchor, allowGradient, lockStops } = options;
-  const root = el('div', 'sf-cp');
-  root.dataset.sfTheme = options.theme ?? 'auto';
-  root.style.left = `${anchor.left}px`;
-  root.style.top = `${anchor.top + anchor.height + GAP_BELOW_ANCHOR}px`;
+type SolidControls = Pick<
+  PickerView,
+  'matrix' | 'matrixCursor' | 'hue' | 'hueThumb' | 'channelRanges' | 'channelNumbers' | 'hexInput'
+>;
 
-  const tabs = el('div', 'sf-cp-tabs', root);
-  tabs.setAttribute('role', 'tablist');
-  tabs.hidden = !allowGradient;
-  const solidTab = tabButton('Solid', tabs);
-  const gradientTab = tabButton('Gradient', tabs);
+type GradientControls = Pick<PickerView, 'section' | 'preview' | 'angleRange' | 'angleNumber' | 'addStop' | 'stopList'>;
 
+function buildSolidControls(root: HTMLElement): SolidControls {
   const area = el('div', 'sf-cp-area', root);
   const matrix = el('div', 'sf-cp-matrix', area);
   el('div', 'sf-cp-matrix-white', matrix);
@@ -85,7 +80,10 @@ export function buildPickerView(options: ViewOptions): PickerView {
   const hexInput = el('input', 'sf-cp-text', hexRow);
   hexInput.type = 'text';
   hexInput.spellcheck = false;
+  return { matrix, matrixCursor, hue, hueThumb, channelRanges, channelNumbers, hexInput };
+}
 
+function buildGradientControls(root: HTMLElement, lockStops: boolean): GradientControls {
   const section = el('div', 'sf-cp-section', root);
   const preview = el('div', 'sf-cp-preview', section);
   const angleRow = labelledRow(section, 'Angle');
@@ -100,6 +98,24 @@ export function buildPickerView(options: ViewOptions): PickerView {
   addStop.title = 'Add stop';
   addStop.hidden = lockStops;
   const stopList = el('div', 'sf-cp-stops', section);
+  return { section, preview, angleRange, angleNumber, addStop, stopList };
+}
+
+export function buildPickerView(options: ViewOptions): PickerView {
+  const { anchor, allowGradient, lockStops } = options;
+  const root = el('div', 'sf-cp');
+  root.dataset.sfTheme = options.theme ?? 'auto';
+  root.style.left = `${anchor.left}px`;
+  root.style.top = `${anchor.top + anchor.height + GAP_BELOW_ANCHOR}px`;
+
+  const tabs = el('div', 'sf-cp-tabs', root);
+  tabs.setAttribute('role', 'tablist');
+  tabs.hidden = !allowGradient;
+  const solidTab = tabButton('Solid', tabs);
+  const gradientTab = tabButton('Gradient', tabs);
+
+  const solid = buildSolidControls(root);
+  const gradient = buildGradientControls(root, lockStops);
 
   let resetButton: HTMLButtonElement | undefined;
   if (options.withReset) {
@@ -108,26 +124,7 @@ export function buildPickerView(options: ViewOptions): PickerView {
     resetButton.textContent = 'Use series color';
   }
 
-  return {
-    root,
-    solidTab,
-    gradientTab,
-    matrix,
-    matrixCursor,
-    hue,
-    hueThumb,
-    channelRanges,
-    channelNumbers,
-    hexInput,
-    section,
-    preview,
-    angleRange,
-    angleNumber,
-    addStop,
-    stopList,
-    stopRows: [],
-    resetButton,
-  };
+  return { root, solidTab, gradientTab, ...solid, ...gradient, stopRows: [], resetButton };
 }
 
 export function clampIntoViewport(root: HTMLElement, anchor: Anchor): void {
