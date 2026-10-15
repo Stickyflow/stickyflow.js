@@ -25,8 +25,8 @@ export function applyPropertyChange(sfl: string, event: PropertyChangeEvent): st
   }
 
   const span =
-    findDirectProperty(lines, range, path.property.name, NESTED_STYLE_DEPTH) ??
-    findDirectProperty(lines, range, path.property.name);
+    findDirectProperty(lines, range, path.property.name) ??
+    findDirectProperty(lines, range, path.property.name, NESTED_STYLE_DEPTH);
   if (span === null) {
     const indent = childIndent(lines, range);
     if (path.property.indices.length === 1) {

@@ -1,7 +1,13 @@
 import type { ChartSeries, PieChart } from '../../../../model/chart';
 import type { RenderNode, SceneText } from '../../../scene';
 import { DEFAULT_FONT, finite } from '../../../scene';
-import { clipSegmentToRect, representativeColor, sameHueContrastColor, sameHueTint } from '../../primitives';
+import {
+  clipSegmentToRect,
+  contrastTextColor,
+  representativeColor,
+  sameHueContrastColor,
+  sameHueTint,
+} from '../../primitives';
 import { seriesLabelProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { pieArcPoint } from './geometry';
@@ -161,7 +167,8 @@ function createPieLabel(context: ChartRenderContext<PieChart>, base: PieGeometry
 
   const labelRadius = geometry.innerRadius + ringThickness * LABEL_RADIUS_FRACTION;
   const point = pieArcPoint(geometry, mid, labelRadius);
-  const color = config?.pieLabelColor ?? sameHueContrastColor(representativeColor(mark.color, '#0f172a'), '#0f172a');
+  const sliceColor = representativeColor(mark.color, '#0f172a');
+  const color = config?.pieLabelColor ?? sameHueContrastColor(sliceColor, contrastTextColor(sliceColor));
   const tick = createTick(context, mark, tickStart, tickStart, color, false);
   return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent, false, mid)];
 }

@@ -72,7 +72,8 @@ export function resolvePieLabelDrag(svg: SVGSVGElement, event: PointerEvent): Pi
   if (!geometry) {
     return null;
   }
-  const explicitRadius = Number(clicked.getAttribute('data-sf-pie-wedge-radius'));
+  const wedgeRadius = clicked.getAttribute('data-sf-pie-wedge-radius');
+  const explicitRadius = wedgeRadius === null ? Number.NaN : Number(wedgeRadius);
   const outerRadius = Number.isFinite(explicitRadius) ? explicitRadius : geometry.outerRadius;
   const start = pointerUserPoint(svg, event);
   if (!start) {

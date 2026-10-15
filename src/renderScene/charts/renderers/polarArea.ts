@@ -4,6 +4,7 @@ import { DEFAULT_FONT, finite, paint } from '../../scene';
 import {
   CHART_COLORS,
   clipSegmentToRect,
+  contrastTextColor,
   createPieSlicePath,
   formatFieldValue,
   gapInsetAngle,
@@ -198,7 +199,10 @@ function labelPlacement(
   const color = outside
     ? (sameHueTint(representativeColor(fillColor, OUTSIDE_FALLBACK_COLOR), OUTSIDE_TINT_LIGHTNESS) ??
       OUTSIDE_FALLBACK_COLOR)
-    : sameHueContrastColor(representativeColor(fillColor, '#0f172a'), '#0f172a');
+    : sameHueContrastColor(
+        representativeColor(fillColor, '#0f172a'),
+        contrastTextColor(representativeColor(fillColor, '#0f172a')),
+      );
   return { point, color, outside, mid, tickStart };
 }
 
