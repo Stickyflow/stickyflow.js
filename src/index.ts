@@ -8,7 +8,7 @@ export type { FreeformPath, PathPoint } from './model/path';
 export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { Shader, ShaderParameter } from './model/shader';
-export type { RollingNumberWidget, RollingNumberWidgetStyle, Widget, WidgetType } from './model/widget';
+export type { RollingNumberWidget, RollingNumberWidgetStyle, RulerWidget, TickScaleWidget, Widget, WidgetType } from './model/widget';
 
 // L1 — SFL Language
 export { canonicalize, parse } from './sflLanguage';
@@ -66,12 +66,18 @@ export type {
   BindingGraph,
   BindingRuntime,
   BindingRuntimeOptions,
+  RenderBoundOptions,
   BindingTarget,
   BindingType,
   BindingValue,
+  BoundAssignment,
+  BoundHandler,
   BoundProperty,
   DataSource,
   DataSourceContract,
+  ElementInfo,
+  ElementState,
+  InteractiveElements,
   MutableDataSource,
 } from './binding';
-export { buildBindingGraph, createBindingRuntime, createDataSource } from './binding';
+export { buildBindingGraph, createBindingRuntime, createDataSource, interactiveElements, renderBound } from './binding';

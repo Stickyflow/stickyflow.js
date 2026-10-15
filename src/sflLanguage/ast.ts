@@ -8,6 +8,7 @@ export const NAMED_BLOCK_KINDS = [
   'Chart',
   'Widget',
   'Shape',
+  'Text',
   'Isometric',
   'Link',
   'Connection',
@@ -51,15 +52,17 @@ export type SflEntry =
   | { type: 'style'; style: SflStyle }
   | { type: 'data'; data: SflBlock }
   | { type: 'fields'; fields: SflProperty[] }
-  | { type: 'binding'; binding: SflBinding };
+  | { type: 'binding'; binding: SflBinding }
+  | { type: 'handler'; handler: SflHandler };
 
 export type BindingOperator = '<-' | '<->' | '->';
 
-export type ExpressionOperator = '+' | '-' | '*' | '/' | '>' | '<' | '>=' | '<=' | '==' | '!=';
+export type ExpressionOperator = '+' | '-' | '*' | '/' | '>' | '<' | '>=' | '<=' | '==' | '!=' | '&&' | '||';
 
 export type SflExpr =
   | { kind: 'number'; value: number }
   | { kind: 'string'; value: string }
+  | { kind: 'boolean'; value: boolean }
   | { kind: 'ref'; path: string[] }
   | { kind: 'unary'; operator: '!' | '-'; operand: SflExpr }
   | { kind: 'binary'; operator: ExpressionOperator; left: SflExpr; right: SflExpr }
@@ -69,6 +72,22 @@ export interface SflBinding {
   key: string;
   operator: BindingOperator;
   expr: SflExpr;
+  line: number;
+  col: number;
+}
+
+// `path <- expression`: when the handler runs, the data field at the path takes the value of the expression.
+export interface SflAssignment {
+  target: string[];
+  expr: SflExpr;
+  line: number;
+  col: number;
+}
+
+// A reaction to an event, written `onTap: path <- expression` or, for several assignments, `onPress { path <- expression ... }`.
+export interface SflHandler {
+  event: string;
+  assignments: SflAssignment[];
   line: number;
   col: number;
 }
@@ -84,6 +103,7 @@ export interface SflLayout {
 
 export interface SflStyle {
   properties: SflProperty[];
+  bindings?: SflBinding[];
 }
 
 export type SflValue =

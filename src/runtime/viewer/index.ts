@@ -11,6 +11,7 @@ export function createViewer(options: ViewerOptions): Viewer {
   return viewer;
 }
 
+export { connectInteraction, type InteractionOptions } from './connectInteraction';
 export type { SceneDiff, ViewBox } from './display';
 export type {
   Modifiers,
@@ -25,5 +26,5 @@ export type {
   ViewerEventName,
 } from './events';
 export type { ViewerImageExportOptions, ViewerImageFormat } from './export';
-export { registerShaderProgram, type ShaderProgram } from './shaders';
+export { registerShaderProgram, SHADER_DEFAULTS, shaderProgram, type ShaderProgram } from './shaders';
 export type { Viewer, ViewerOptions, ViewerSource } from './types';

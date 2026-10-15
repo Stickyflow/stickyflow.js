@@ -64,6 +64,8 @@ export function resolveCanvasObject(
           value: asString(properties.get('value')) ?? '0',
           digits: asNumber(properties.get('digits')),
           duration: asNumber(properties.get('duration')),
+          min: asNumber(properties.get('min')),
+          max: asNumber(properties.get('max')),
           label: asString(properties.get('label')),
         },
       } satisfies SflWidgetObject;

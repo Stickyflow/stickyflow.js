@@ -32,6 +32,7 @@ export function oneOf<T extends string>(value: string | undefined, allowed: read
 }
 
 export const FONT_WEIGHTS = ['normal', 'bold'] as const;
+export const SHAPE_FONT_WEIGHTS = ['normal', 'bold', '100', '200', '300', '400', '500', '600', '700', '800', '900'] as const;
 export const LABEL_POSITIONS = ['top', 'bottom', 'left', 'right'] as const;
 export const PATH_MARKERS = ['none', 'arrow', 'filled_arrow'] as const;
 export const BORDER_STYLES = ['none', 'single', 'double'] as const;

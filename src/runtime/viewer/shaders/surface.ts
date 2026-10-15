@@ -12,6 +12,27 @@ void main() {
 }
 `;
 
+// What a parameter is when the SFL leaves it out. The browser starts from these values, and so do the exports to other platforms.
+export const SHADER_DEFAULTS = {
+  numbers: {
+    intensity: 0.85,
+    speed: 0.18,
+    progress: -1,
+    boost: 0,
+    dent: -1,
+    day: -1,
+    light: 135,
+    gloss: 0.15,
+    depth: 0.4,
+    rim: 0.2,
+  },
+  colors: {
+    color: [0.08, 0.02, 0.22],
+    accent: [0.58, 0.31, 1],
+    hot: [1, 0.45, 0.82],
+  },
+} as const;
+
 interface Surface {
   owner: Element;
   canvas: HTMLCanvasElement;
@@ -26,6 +47,9 @@ interface Surface {
   shapeColor: [number, number, number];
   baseGeometry?: Element;
   baseFill?: string | null;
+  // Numbers that follow their target with inertia, see the "<name>Lag" parameters.
+  smoothed: Map<string, number>;
+  lastSeconds?: number;
 }
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | undefined {
@@ -140,6 +164,7 @@ function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
     program,
     buffer,
     parameters: parametersOf(owner),
+    smoothed: new Map(),
     backdropTexture: usesBackdrop ? transparentTexture(gl) : undefined,
     backdropOrigin: [0, 0],
     backdropScale: [1, 1],
@@ -223,14 +248,24 @@ function enumParameter(name: string, value: string): number | undefined {
   const values: Record<string, Record<string, number>> = {
     direction: { left: 0, right: 1, top: 2, bottom: 3 },
     orientation: { vertical: 0, horizontal: 1 },
+    axis: { vertical: 0, horizontal: 1 },
   };
   return values[name]?.[value];
 }
 
-function applyParameters(surface: Surface): void {
+function applyParameters(surface: Surface, elapsed: number): void {
   for (const [key, value] of Object.entries(surface.parameters)) {
     const name = uniformName(key);
     if (typeof value === 'number') {
+      // A parameter with a matching "<name>Lag" (seconds) eases toward its value instead of jumping.
+      const lag = surface.parameters[`${key}Lag`];
+      if (typeof lag === 'number' && lag > 0) {
+        const current = surface.smoothed.get(key) ?? value;
+        const next = current + (value - current) * (1 - Math.exp(-elapsed / lag));
+        surface.smoothed.set(key, next);
+        uniform1f(surface, name, next);
+        continue;
+      }
       uniform1f(surface, name, value);
       continue;
     }
@@ -252,10 +287,16 @@ function applyParameters(surface: Surface): void {
   }
 }
 
+const MAX_SURFACE_PIXELS = 2560;
+
 function renderSurface(surface: Surface, seconds: number): void {
   const { canvas, gl, parameters } = surface;
-  const width = Math.max(1, Math.round(canvas.clientWidth * (globalThis.devicePixelRatio || 1)));
-  const height = Math.max(1, Math.round(canvas.clientHeight * (globalThis.devicePixelRatio || 1)));
+  // One canvas pixel per screen pixel: the zoom of the viewer scales the canvas on screen, so measure it there.
+  const shown = canvas.getBoundingClientRect();
+  const density = Math.min(globalThis.devicePixelRatio || 1, 3);
+  const fit = Math.min(1, MAX_SURFACE_PIXELS / Math.max(1, shown.width * density, shown.height * density));
+  const width = Math.max(1, Math.round((shown.width || canvas.clientWidth) * density * fit));
+  const height = Math.max(1, Math.round((shown.height || canvas.clientHeight) * density * fit));
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
@@ -280,14 +321,16 @@ function renderSurface(surface: Surface, seconds: number): void {
     uniform2f(surface, 'uBackdropOrigin', surface.backdropOrigin);
     uniform2f(surface, 'uBackdropScale', surface.backdropScale);
   }
-  uniform1f(surface, 'uIntensity', number(parameters.intensity, 0.85));
-  uniform1f(surface, 'uSpeed', number(parameters.speed, 0.18));
-  uniform1f(surface, 'uProgress', number(parameters.progress, -1));
-  uniform1f(surface, 'uBoost', number(parameters.boost, 0));
-  uniform3f(surface, 'uColor', color(parameters.color, [0.08, 0.02, 0.22]));
-  uniform3f(surface, 'uAccent', color(parameters.accent, [0.58, 0.31, 1]));
+  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.numbers)) {
+    uniform1f(surface, uniformName(key), number(parameters[key], fallback));
+  }
+  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.colors)) {
+    uniform3f(surface, uniformName(key), color(parameters[key], [...fallback] as [number, number, number]));
+  }
   uniform3f(surface, 'uShapeColor', surface.shapeColor);
-  applyParameters(surface);
+  const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
+  surface.lastSeconds = seconds;
+  applyParameters(surface, elapsed);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 

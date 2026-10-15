@@ -1,31 +1,31 @@
-import type { SflBlock, SflDocument, SflProperty } from '../sflLanguage/ast';
-import { type BindingDiagnostic, type DataSourceContract, isScalarType, type SourceMode } from './types';
+import type { SflBlock, SflDocument, SflValue } from '../sflLanguage/ast';
+import { type BindingDiagnostic, type DataSourceContract, scalarOf, type SourceMode } from './types';
 
-function propertyValue(properties: SflProperty[], key: string): string | undefined {
-  const value = properties.find(property => property.key === key)?.value;
+function identOf(value: SflValue | undefined): string | undefined {
   return value?.type === 'ident' ? value.segments.join('.') : undefined;
 }
 
 function readContract(block: SflBlock, diagnostics: BindingDiagnostic[]): DataSourceContract {
   const properties = block.entries.flatMap(entry => (entry.type === 'property' ? [entry.property] : []));
-  const mode: SourceMode = propertyValue(properties, 'mode') === 'record' ? 'record' : 'table';
-  const contract: DataSourceContract = { name: block.name, mode, fields: {} };
+  const mode: SourceMode = identOf(properties.find(property => property.key === 'mode')?.value) === 'record' ? 'record' : 'table';
+  const contract: DataSourceContract = { name: block.name, mode, fields: {}, declared: {} };
   for (const entry of block.entries) {
-    if (entry.type !== 'fields') {
-      continue;
-    }
-    for (const field of entry.fields) {
-      const type = field.value.type === 'ident' ? field.value.segments.join('.') : '';
-      if (isScalarType(type)) {
-        contract.fields[field.key] = type;
-      } else {
-        diagnostics.push({
-          severity: 'error',
-          code: 'unknown-field-type',
-          message: `Field '${block.name}.${field.key}' has unknown type '${type}' (use number, string or boolean).`,
-          line: 0,
-          col: 0,
-        });
+    if (entry.type === 'fields') {
+      for (const field of entry.fields) {
+        const declared = identOf(field.value) ?? '';
+        const scalar = scalarOf(declared);
+        if (scalar) {
+          contract.fields[field.key] = scalar;
+          contract.declared[field.key] = declared;
+        } else {
+          diagnostics.push({
+            severity: 'error',
+            code: 'unknown-field-type',
+            message: `Field '${block.name}.${field.key}' has unknown type '${declared}' (use int, float, number, string or bool).`,
+            line: 0,
+            col: 0,
+          });
+        }
       }
     }
   }

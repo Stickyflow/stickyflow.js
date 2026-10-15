@@ -1,2 +1,2 @@
 export { SHAPE_TYPES } from './supportedTypes';
-export type { Shape, ShapeStrokeStyle, ShapeType, SymbolDef } from './types';
+export type { FontWeight, Shape, ShapeStrokeStyle, ShapeType, SymbolDef } from './types';

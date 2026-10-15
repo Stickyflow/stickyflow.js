@@ -16,7 +16,7 @@ export function renderShapeText(
     return null;
   }
   const fontSize = finite(shape.fontSize, shapeDefaults(shape, []).fontSize);
-  const padding = Math.max(8, strokeWidth * 2);
+  const padding = shape.isText ? 0 : Math.max(8, strokeWidth * 2);
   const area = shape.shapeType === 'person' ? personLabelArea(x, y, width, height) : { x, y, width, height };
   const textWidth = Math.max(0, area.width - padding * 2);
   const fontFamily = shape.fontFamily || DEFAULT_FONT;
@@ -34,6 +34,7 @@ export function renderShapeText(
     fontFamily,
     fontSize,
     fontWeight: shape.fontWeight ?? 'normal',
+    letterSpacing: shape.letterSpacing,
     color: shape.textColor || '#111827',
     align: shape.textAlign ?? 'center',
     verticalAlign: shape.textVerticalAlign ?? 'middle',

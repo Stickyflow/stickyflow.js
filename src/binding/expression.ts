@@ -36,6 +36,13 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
     return undefined;
   }
   const { operator } = expr;
+  if (operator === '&&' || operator === '||') {
+    if (left !== 'boolean' || right !== 'boolean') {
+      report('type-mismatch', `'${operator}' needs two booleans, got ${typeName(left)} and ${typeName(right)}.`);
+      return undefined;
+    }
+    return 'boolean';
+  }
   if (['>', '<', '>=', '<='].includes(operator)) {
     if (left !== 'number' || right !== 'number') {
       report('type-mismatch', `'${operator}' compares two numbers, got ${typeName(left)} and ${typeName(right)}.`);
@@ -50,7 +57,7 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
     }
     return 'boolean';
   }
-  if (operator === '+' && left === 'string' && right === 'string') {
+  if (operator === '+' && !isList(left) && !isList(right) && (left === 'string' || right === 'string')) {
     return 'string';
   }
   if (!isNumeric(left) || !isNumeric(right)) {
@@ -60,10 +67,46 @@ function inferBinary(expr: Extract<SflExpr, { kind: 'binary' }>, scope: TypeScop
   return isList(left) || isList(right) ? { list: 'number' } : 'number';
 }
 
+// Number functions; a list argument applies to every element.
+const MATH: Record<string, { arguments: number; apply(values: number[]): number }> = {
+  round: { arguments: 1, apply: ([value]) => Math.round(value) },
+  floor: { arguments: 1, apply: ([value]) => Math.floor(value) },
+  ceil: { arguments: 1, apply: ([value]) => Math.ceil(value) },
+  abs: { arguments: 1, apply: ([value]) => Math.abs(value) },
+  min: { arguments: 2, apply: ([a, b]) => Math.min(a, b) },
+  max: { arguments: 2, apply: ([a, b]) => Math.max(a, b) },
+  clamp: { arguments: 3, apply: ([value, low, high]) => Math.min(high, Math.max(low, value)) },
+  // current moved toward target by at most maxStep, without passing it.
+  moveToward: {
+    arguments: 3,
+    apply: ([current, target, maxStep]) => (Math.abs(target - current) <= maxStep ? target : current + Math.sign(target - current) * maxStep),
+  },
+};
+
+function inferMath(name: string, expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
+  const spec = MATH[name];
+  if (expr.args.length !== spec.arguments) {
+    report('wrong-arguments', `${name}() takes exactly ${spec.arguments} argument${spec.arguments === 1 ? '' : 's'}.`);
+    return undefined;
+  }
+  const types = expr.args.map(arg => inferType(arg, scope, report));
+  if (types.some(type => !type)) {
+    return undefined;
+  }
+  if (types.some(type => !isNumeric(type as BindingType))) {
+    report('type-mismatch', `${name}() needs numbers, got ${types.map(type => typeName(type as BindingType)).join(', ')}.`);
+    return undefined;
+  }
+  return types.some(type => isList(type as BindingType)) ? { list: 'number' } : 'number';
+}
+
 function inferCall(expr: Extract<SflExpr, { kind: 'call' }>, scope: TypeScope, report: Report): BindingType | undefined {
   const name = expr.callee.join('.');
+  if (name in MATH) {
+    return inferMath(name, expr, scope, report);
+  }
   if (name !== 'when') {
-    report('unknown-function', `Unknown function '${name}'. Only when(condition, then, else) is available in expressions.`);
+    report('unknown-function', `Unknown function '${name}'. Available: when, ${Object.keys(MATH).join(', ')}.`);
     return undefined;
   }
   if (expr.args.length !== 3) {
@@ -91,10 +134,18 @@ export function inferType(expr: SflExpr, scope: TypeScope, report: Report): Bind
       return 'number';
     case 'string':
       return 'string';
+    case 'boolean':
+      return 'boolean';
     case 'ref': {
       const type = scope.resolve(expr.path);
       if (!type) {
-        report('unknown-reference', `Unknown reference '${expr.path.join('.')}'. Use <DataSource>.<field>.`);
+        const name = expr.path.join('.');
+        report(
+          'unknown-reference',
+          name === 'time.delta'
+            ? "'time.delta' is only available in an onTick handler."
+            : `Unknown reference '${name}'. Use <DataSource>.<field>, or <element>.pressed / hovered / pointer.`,
+        );
       }
       return type;
     }
@@ -127,8 +178,17 @@ function arithmetic(operator: string, left: number, right: number): number {
   }
 }
 
+// Numbers join text with at most one decimal.
+const text = (value: BindingValue): string => (typeof value === 'number' ? String(Math.round(value * 10) / 10) : String(value));
+
 function evaluateBinary(expr: Extract<SflExpr, { kind: 'binary' }>, env: ValueEnv): BindingValue {
   const left = evaluate(expr.left, env);
+  if (expr.operator === '&&') {
+    return Boolean(left) && Boolean(evaluate(expr.right, env));
+  }
+  if (expr.operator === '||') {
+    return Boolean(left) || Boolean(evaluate(expr.right, env));
+  }
   const right = evaluate(expr.right, env);
   switch (expr.operator) {
     case '>':
@@ -145,7 +205,7 @@ function evaluateBinary(expr: Extract<SflExpr, { kind: 'binary' }>, env: ValueEn
       return left !== right;
   }
   if (typeof left === 'string' || typeof right === 'string') {
-    return String(left) + String(right);
+    return text(left) + text(right);
   }
   const apply = (a: number, b: number) => arithmetic(expr.operator, a, b);
   if (Array.isArray(left) && Array.isArray(right)) {
@@ -165,6 +225,7 @@ export function evaluate(expr: SflExpr, env: ValueEnv): BindingValue {
   switch (expr.kind) {
     case 'number':
     case 'string':
+    case 'boolean':
       return expr.value;
     case 'ref':
       return env.read(expr.path);
@@ -175,6 +236,17 @@ export function evaluate(expr: SflExpr, env: ValueEnv): BindingValue {
     case 'binary':
       return evaluateBinary(expr, env);
     case 'call': {
+      const name = expr.callee.join('.');
+      if (name in MATH) {
+        const values = expr.args.map(arg => evaluate(arg, env));
+        const length = Math.max(0, ...values.map(value => (Array.isArray(value) ? value.length : 0)));
+        if (length === 0 && !values.some(Array.isArray)) {
+          return MATH[name].apply(values as number[]);
+        }
+        return Array.from({ length }, (_value, index) =>
+          MATH[name].apply(values.map(value => (Array.isArray(value) ? (value[index] as number) : (value as number)))),
+        );
+      }
       const [condition, whenTrue, whenFalse] = expr.args;
       return evaluate(condition, env) ? evaluate(whenTrue, env) : evaluate(whenFalse, env);
     }

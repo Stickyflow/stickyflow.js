@@ -27,9 +27,9 @@ void main() {
   float progress = clamp(uProgress, 0.0, 1.0);
   float boost = clamp(uBoost, 0.0, 1.0);
   float width = max(uThickness, 0.015);
-  float wave = sin(angle * 2.0 - time * (1.8 + boost * 2.4)) * 0.5 + 0.5;
+  float wave = sin(angle * 2.0 - time * 2.4) * 0.5 + 0.5;
   float fineWave = sin(angle * 7.0 + time * 1.15) * 0.5 + 0.5;
-  float ringRadius = 0.72 + sin(angle * 3.0 - time * (1.0 + boost * 1.8)) * (0.025 + boost * 0.012);
+  float ringRadius = 0.72 + sin(angle * 3.0 - time * 1.5) * (0.025 + boost * 0.012);
   float ring = exp(-pow((radius - ringRadius) / width, 2.0));
   float outerRim = exp(-pow((radius - 0.94) / 0.025, 2.0));
 

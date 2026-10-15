@@ -1,6 +1,7 @@
-import type { SflLayout, SflProperty, SflStyle } from '../ast';
+import type { SflBinding, SflLayout, SflProperty, SflStyle } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
+import { atBinding, parseBinding } from './expressions';
 import { parseEndpoint, parseValue } from './values';
 
 export class PropertyParser {
@@ -13,7 +14,28 @@ export class PropertyParser {
 
   parseStyle(): SflStyle {
     this.cursor.next();
-    return { properties: this.parsePropertyBlock('style') };
+    this.cursor.skipNewlines();
+    this.cursor.expect('lbrace', "'{'");
+    const properties: SflProperty[] = [];
+    const bindings: SflBinding[] = [];
+    this.cursor.skipNewlines();
+    while (!this.cursor.at('rbrace')) {
+      if (this.cursor.at('eof')) {
+        const token = this.cursor.peek();
+        throw new SflParseError('unterminated style block', token.line, token.col);
+      }
+      if (atBinding(this.cursor)) {
+        bindings.push(parseBinding(this.cursor));
+        if (this.cursor.at('newline') || this.cursor.at('semi')) {
+          this.cursor.next();
+        }
+      } else {
+        properties.push(this.parseProperty());
+      }
+      this.cursor.skipNewlines();
+    }
+    this.cursor.expect('rbrace', "'}'");
+    return bindings.length ? { properties, bindings } : { properties };
   }
 
   parseFields(): SflProperty[] {

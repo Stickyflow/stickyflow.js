@@ -3,6 +3,7 @@ import type { BlockKind } from '../../../sflLanguage/ast';
 export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Entity',
   'Shape',
+  'Text',
   'Container',
   'Path',
   'Chart',

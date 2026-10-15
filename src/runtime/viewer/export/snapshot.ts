@@ -44,9 +44,10 @@ function flattenRollingNumbers(svg: SVGSVGElement): void {
     const style = readWidgetStyle(surface);
     const label = surface.querySelector('div > span:not([data-sf-rolling-digit])')?.textContent ?? '';
     const size = Math.max(1, Math.min(width, height) * 0.28);
-    const cellWidth = size * 0.72 + 2;
-    const cellHeight = size * 1.2 + 2;
-    const gap = size * 0.1;
+    const plain = style.variant === 'plain';
+    const cellWidth = plain ? size * 0.62 : size * 0.72 + 2;
+    const cellHeight = plain ? size * 1.1 : size * 1.2 + 2;
+    const gap = size * (plain ? 0.02 : 0.1);
     const labelBlock = label ? size * 0.3 : 0;
     const rowWidth = value.length * cellWidth + Math.max(0, value.length - 1) * gap;
     const left = x + (width - rowWidth) / 2;
@@ -73,7 +74,8 @@ function flattenRollingNumbers(svg: SVGSVGElement): void {
     }
     [...value].forEach((character, index) => {
       const cellX = left + index * (cellWidth + gap);
-      group.appendChild(
+      if (!plain) {
+        group.appendChild(
         svgElement(document, 'rect', {
           x: cellX + 0.5,
           y: top + 0.5,
@@ -85,17 +87,21 @@ function flattenRollingNumbers(svg: SVGSVGElement): void {
           'stroke-width': 1,
         }),
       );
+      }
       const digit = svgElement(document, 'text', {
         x: cellX + cellWidth / 2,
         y: top + cellHeight / 2,
         'text-anchor': 'middle',
         'dominant-baseline': 'central',
         'font-size': size,
-        'font-weight': 300,
+        'font-weight': style.fontWeight,
         fill: style.color,
       });
       digit.textContent = character;
       group.appendChild(digit);
+      if (plain) {
+        return;
+      }
       group.appendChild(
         svgElement(document, 'line', {
           x1: cellX + 0.5,

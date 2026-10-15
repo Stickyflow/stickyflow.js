@@ -1,3 +1,4 @@
+import { buttonProgram } from './builtins/button';
 import { chromaticGlassPlateProgram } from './builtins/chromaticGlassPlate';
 import { chromaticHaloProgram } from './builtins/chromaticHalo';
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
@@ -10,6 +11,9 @@ import { lumenPortalProgram } from './builtins/lumenPortal';
 import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
 import { pixelConstellationProgram } from './builtins/pixelConstellation';
+import { plasmaGaugeProgram } from './builtins/plasmaGauge';
+import { rulerProgram } from './builtins/ruler';
+import { tickScaleProgram } from './builtins/tickScale';
 import { prismSlatsProgram } from './builtins/prismSlats';
 import { smearOrbProgram } from './builtins/smearOrb';
 import { violetGlassProgram } from './builtins/violetGlass';
@@ -26,6 +30,10 @@ const builtins = [
   emberSlitsProgram,
   smearOrbProgram,
   pixelConstellationProgram,
+  plasmaGaugeProgram,
+  tickScaleProgram,
+  rulerProgram,
+  buttonProgram,
   prismSlatsProgram,
   eclipseOrbProgram,
   emberMatrixProgram,
