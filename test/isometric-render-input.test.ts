@@ -16,9 +16,7 @@ Model example {
     }
 
     style {
-      topFill: "#7c3aed"
-      frontFill: "#5b21e8"
-      sideFill: "#4c1dca"
+      fill: "#7c3aed"
       stroke: "#111827"
       strokeWidth: 2
       cornerRadius: 10
@@ -37,9 +35,7 @@ Model example {
         depth: 28,
         text: 'Relay',
         icon: 'server',
-        topFill: '#7c3aed',
-        frontFill: '#5b21e8',
-        sideFill: '#4c1dca',
+        fill: '#7c3aed',
         strokeColor: '#111827',
         strokeWidth: 2,
         cornerRadius: 10,

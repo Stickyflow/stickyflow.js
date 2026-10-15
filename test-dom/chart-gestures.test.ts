@@ -113,7 +113,7 @@ describe('the composite resize preview', () => {
   function scenario() {
     const svg = document.createElementNS(SVG_NS, 'svg') as SVGSVGElement;
     const bar = node(svg, 'rect', { x: '10', y: '10', width: '20', height: '40' });
-    const label = node(svg, 'text', { transform: 'rotate(-90 12 200)' });
+    const label = node(svg, 'text', { x: '100', y: '50', transform: 'rotate(-90 12 200)' });
     const nodes = [bar, label];
     return { bar, label, nodes, base: nodes.map(n => n.getAttribute('transform')) };
   }
@@ -127,18 +127,19 @@ describe('the composite resize preview', () => {
     expect(bar.getAttribute('x')).toBe('10');
   });
 
-  it('carries text along rather than leaving it behind', () => {
+  it('moves text with its anchor instead of stretching the glyphs', () => {
     const { label, nodes, base } = scenario();
     applyCompositeScale(nodes, bounds, grown, base);
-    expect(label.getAttribute('transform')).toContain('scale(1.5 1)');
+    const transform = label.getAttribute('transform') ?? '';
+    expect(transform).toContain('translate(50 0)');
+    expect(transform).not.toContain('scale');
   });
 
   it('keeps a rotation the node already had', () => {
     const { label, nodes, base } = scenario();
     applyCompositeScale(nodes, bounds, grown, base);
-    expect(label.getAttribute('transform')).toContain('rotate(-90 12 200)');
-    expect(label.getAttribute('transform')?.indexOf('scale')).toBeLessThan(
-      label.getAttribute('transform')?.indexOf('rotate') ?? -1,
-    );
+    const transform = label.getAttribute('transform') ?? '';
+    expect(transform).toContain('rotate(-90 12 200)');
+    expect(transform.indexOf('translate')).toBeLessThan(transform.indexOf('rotate'));
   });
 });

@@ -20,6 +20,7 @@ interface FakeSvgNode {
   getAttribute(name: string): string | null;
   append(...nodes: FakeSvgNode[]): void;
   appendChild(node: FakeSvgNode): FakeSvgNode;
+  addEventListener(type: string, listener: unknown): void;
 }
 
 function fakeNode(tagName: string): FakeSvgNode {
@@ -39,6 +40,7 @@ function fakeNode(tagName: string): FakeSvgNode {
       children.push(node);
       return node;
     },
+    addEventListener: () => undefined,
   };
 }
 

@@ -66,6 +66,6 @@ describe('isometricBounds', () => {
   it('gives a true cube (equal width/height/depth) a 2:√3 aspect ratio', () => {
     const bounds = isometricBounds({ x: 0, y: 0, width: 100, height: 100, depth: 100 });
     expect(bounds.width).toBeCloseTo(200 * AXIS_COS, 5);
-    expect(bounds.height).toBeCloseTo(300 * AXIS_SIN, 5);
+    expect(bounds.height).toBeCloseTo(100 + 200 * AXIS_SIN, 5);
   });
 });

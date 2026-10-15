@@ -15,9 +15,7 @@ Model infrastructure {
     }
 
     style {
-      topFill: "#7c3aed"
-      frontFill: "#5b21e8"
-      sideFill: "#4c1dca"
+      fill: "#7c3aed"
       stroke: "#111827"
       strokeWidth: 2
       cornerRadius: 8
@@ -33,6 +31,8 @@ Model infrastructure {
       'isometric-relay-top',
       'isometric-relay-front',
       'isometric-relay-side',
+      'isometric-relay-seams',
+      'isometric-relay-hull',
       'isometric-relay-label-guide',
       'isometric-relay-label',
     ]);
@@ -40,6 +40,8 @@ Model infrastructure {
     expect(result.svg).toContain('id="sf-isometric-relay-top"');
     expect(result.svg).toContain('id="sf-isometric-relay-front"');
     expect(result.svg).toContain('id="sf-isometric-relay-side"');
+    expect(result.svg).toContain('id="sf-isometric-relay-hull"');
+    expect(result.svg).toContain('id="sf-isometric-relay-seams"');
     expect(result.svg).toContain('id="sf-isometric-relay-label-guide"');
     expect(result.svg).toContain('>Relay</tspan>');
   });
