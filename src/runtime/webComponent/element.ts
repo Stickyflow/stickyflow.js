@@ -2,7 +2,10 @@ import type { Viewer } from '../viewer';
 import { type DiagramConfig, OBSERVED_ATTRS, readConfig } from './config';
 import { mountShadowDiagram } from './shadowView';
 
-export class StickyflowDiagram extends HTMLElement {
+const ElementBase: typeof HTMLElement =
+  typeof HTMLElement === 'undefined' ? (class {} as unknown as typeof HTMLElement) : HTMLElement;
+
+export class StickyflowDiagram extends ElementBase {
   static get observedAttributes(): string[] {
     return [...OBSERVED_ATTRS];
   }
