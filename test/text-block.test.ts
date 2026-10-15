@@ -57,9 +57,21 @@ describe('Text block', () => {
 
 describe('Text block editing', () => {
   it('edits a style property and inserts new Text blocks', () => {
-    const edited = applyPropertyChange(sfl, { owner: { role: 'shape', id: 'label' }, path: 'style.fontSize', value: 30 });
+    const edited = applyPropertyChange(sfl, {
+      owner: { role: 'shape', id: 'label' },
+      path: 'style.fontSize',
+      value: 30,
+    });
     expect(edited).toContain('fontSize: 30');
-    const inserted = insertCanvasObject(sfl, { id: 'caption', kind: 'text', text: 'Hi', x: 0, y: 0, width: 100, height: 30 });
+    const inserted = insertCanvasObject(sfl, {
+      id: 'caption',
+      kind: 'text',
+      text: 'Hi',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 30,
+    });
     expect(inserted).toContain('Text caption {');
   });
 });
@@ -92,7 +104,11 @@ Model board {
   });
 
   it('follows a bound value', () => {
-    const runtime = createBindingRuntime(dial.replace('value: 40', 'value: <- car.speed').replace('Model board', 'DataSource car {\n  mode: record\n  fields {\n    speed: int\n  }\n}\n\nModel board'));
+    const runtime = createBindingRuntime(
+      dial
+        .replace('value: 40', 'value: <- car.speed')
+        .replace('Model board', 'DataSource car {\n  mode: record\n  fields {\n    speed: int\n  }\n}\n\nModel board'),
+    );
     runtime.registerSource('car', createDataSource({ speed: 70 }));
     const live: Array<[string, string | number]> = [];
     runtime.attach({ update: () => undefined, setWidgetValue: (id, value) => live.push([id, value]) });

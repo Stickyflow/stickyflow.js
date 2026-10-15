@@ -1,5 +1,5 @@
-import type { RadialBarChart } from '../../../model/chart';
-import type { RenderNode } from '../../scene';
+import type { ChartSeries, RadialBarChart } from '../../../model/chart';
+import type { RenderNode, ScenePaint } from '../../scene';
 import { finite, paint } from '../../scene';
 import type { ResolvedShadow } from '../primitives';
 import { CHART_COLORS, resolveChartShadow } from '../primitives';
@@ -55,86 +55,119 @@ function ringProgressPath(cx: number, cy: number, r: number, sweep: number): str
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
 }
 
-export function renderRadialBar(context: ChartRenderContext<RadialBarChart>): RenderNode[] {
-  const { chart, plot, bounds, diagnostics, nextOrder } = context;
-  const centerX = plot.x + plot.width / 2;
-  const centerY = plot.y + plot.height / 2;
-  const outerRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
-  const ringThickness = Math.max(1, finite(chart.config?.ringThickness, DEFAULT_RING_THICKNESS));
-  const ringGap = Math.max(0, finite(chart.config?.ringGap, DEFAULT_RING_GAP));
+interface RingLayout {
+  centerX: number;
+  centerY: number;
+  outerRadius: number;
+  ringThickness: number;
+  ringGap: number;
+  axisMin: number;
+  range: number;
+}
+
+function layoutOf(context: ChartRenderContext<RadialBarChart>): RingLayout {
+  const { chart, plot } = context;
   const axisMin = finite(chart.axisY.min, 0);
-  const range = finite(chart.axisY.max, 100) - axisMin;
+  return {
+    centerX: plot.x + plot.width / 2,
+    centerY: plot.y + plot.height / 2,
+    outerRadius: Math.max(1, Math.min(plot.width, plot.height) / 2 - 4),
+    ringThickness: Math.max(1, finite(chart.config?.ringThickness, DEFAULT_RING_THICKNESS)),
+    ringGap: Math.max(0, finite(chart.config?.ringGap, DEFAULT_RING_GAP)),
+    axisMin,
+    range: finite(chart.axisY.max, 100) - axisMin,
+  };
+}
+
+function ringEndShadows(
+  context: ChartRenderContext<RadialBarChart>,
+  layout: RingLayout,
+  series: ChartSeries,
+  radius: number,
+  sweep: number,
+  color: ScenePaint,
+): RenderNode[] {
+  const { chart, bounds, nextOrder } = context;
+  const { centerX, centerY, ringThickness } = layout;
   const shadow = resolveChartShadow(chart.shadowStyle);
-
-  return chart.series.flatMap((series, index): RenderNode[] => {
-    const radius = outerRadius - index * (ringThickness + ringGap) - ringThickness / 2;
-    if (radius <= ringThickness / 2) {
-      return [];
-    }
-
-    const color = paint(series.color ?? CHART_COLORS[index % CHART_COLORS.length], diagnostics, chart.id);
-    const value = Math.max(0, finite((series.values as number[])[0], 0));
-    const fraction = range > 0 ? Math.min(1, Math.max(0, (value - axisMin) / range)) : 0;
-
-    const track: RenderNode = {
-      type: 'ellipse',
-      id: `chart-radial-bar-track-${chart.id}-${series.id}`,
-      order: nextOrder(),
-      bounds,
-      cx: centerX,
-      cy: centerY,
-      rx: radius,
-      ry: radius,
-      style: { fill: { kind: 'none' }, stroke: color, strokeWidth: ringThickness, opacity: TRACK_OPACITY },
-    };
-    if (fraction <= 0) {
-      return [track];
-    }
-
-    const sweep = fraction * Math.PI * 2;
-    const progressPath = ringProgressPath(centerX, centerY, radius, sweep);
-    const clampedShadow = shadow ? ringShadow(shadow, ringThickness) : undefined;
-
-    const isFullCircle = sweep >= Math.PI * 2 - FULL_SWEEP_EPSILON;
-    const stubSweep = Math.min(sweep, ringThickness / radius);
-    const casters: RenderNode[] =
-      clampedShadow && !isFullCircle
-        ? [
-            [START_ANGLE, START_ANGLE + stubSweep],
-            [START_ANGLE + sweep - stubSweep, START_ANGLE + sweep],
-          ].map(
-            ([from, to], endIndex): RenderNode => ({
-              type: 'path',
-              id: `chart-radial-bar-ring-end-shadow-${chart.id}-${series.id}-${endIndex}`,
-              order: nextOrder(),
-              bounds,
-              d: arcSegmentPath(centerX, centerY, radius, from, to),
-              style: {
-                fill: { kind: 'none' },
-                stroke: color,
-                strokeWidth: ringThickness,
-                lineCap: 'round',
-                shadow: clampedShadow,
-                clip: {
-                  type: 'path',
-                  d: annulusPath(centerX, centerY, radius + ringThickness / 2, radius - ringThickness / 2),
-                },
-              },
-            }),
-          )
-        : [];
-
-    const progress: RenderNode = {
+  const isFullCircle = sweep >= Math.PI * 2 - FULL_SWEEP_EPSILON;
+  if (!shadow || isFullCircle) {
+    return [];
+  }
+  const clampedShadow = ringShadow(shadow, ringThickness);
+  const stubSweep = Math.min(sweep, ringThickness / radius);
+  return [
+    [START_ANGLE, START_ANGLE + stubSweep],
+    [START_ANGLE + sweep - stubSweep, START_ANGLE + sweep],
+  ].map(
+    ([from, to], endIndex): RenderNode => ({
       type: 'path',
-      id: `chart-radial-bar-ring-${chart.id}-${series.id}`,
+      id: `chart-radial-bar-ring-end-shadow-${chart.id}-${series.id}-${endIndex}`,
       order: nextOrder(),
       bounds,
-      d: progressPath,
-      detail: { of: 'chartValue', series: series.id, valueIndex: 0, mark: 'radial-bar-ring' },
-      prop: seriesValueProp(series.id, 0),
-      style: { fill: { kind: 'none' }, stroke: color, strokeWidth: ringThickness, lineCap: 'round' },
-    };
+      d: arcSegmentPath(centerX, centerY, radius, from, to),
+      style: {
+        fill: { kind: 'none' },
+        stroke: color,
+        strokeWidth: ringThickness,
+        lineCap: 'round',
+        shadow: clampedShadow,
+        clip: {
+          type: 'path',
+          d: annulusPath(centerX, centerY, radius + ringThickness / 2, radius - ringThickness / 2),
+        },
+      },
+    }),
+  );
+}
 
-    return [track, ...casters, progress];
-  });
+function ringNodes(
+  context: ChartRenderContext<RadialBarChart>,
+  layout: RingLayout,
+  series: ChartSeries,
+  index: number,
+): RenderNode[] {
+  const { chart, bounds, diagnostics, nextOrder } = context;
+  const { centerX, centerY, outerRadius, ringThickness, ringGap, axisMin, range } = layout;
+  const radius = outerRadius - index * (ringThickness + ringGap) - ringThickness / 2;
+  if (radius <= ringThickness / 2) {
+    return [];
+  }
+  const color = paint(series.color ?? CHART_COLORS[index % CHART_COLORS.length], diagnostics, chart.id);
+  const value = Math.max(0, finite((series.values as number[])[0], 0));
+  const fraction = range > 0 ? Math.min(1, Math.max(0, (value - axisMin) / range)) : 0;
+
+  const track: RenderNode = {
+    type: 'ellipse',
+    id: `chart-radial-bar-track-${chart.id}-${series.id}`,
+    order: nextOrder(),
+    bounds,
+    cx: centerX,
+    cy: centerY,
+    rx: radius,
+    ry: radius,
+    style: { fill: { kind: 'none' }, stroke: color, strokeWidth: ringThickness, opacity: TRACK_OPACITY },
+  };
+  if (fraction <= 0) {
+    return [track];
+  }
+
+  const sweep = fraction * Math.PI * 2;
+  const casters = ringEndShadows(context, layout, series, radius, sweep, color);
+  const progress: RenderNode = {
+    type: 'path',
+    id: `chart-radial-bar-ring-${chart.id}-${series.id}`,
+    order: nextOrder(),
+    bounds,
+    d: ringProgressPath(centerX, centerY, radius, sweep),
+    detail: { of: 'chartValue', series: series.id, valueIndex: 0, mark: 'radial-bar-ring' },
+    prop: seriesValueProp(series.id, 0),
+    style: { fill: { kind: 'none' }, stroke: color, strokeWidth: ringThickness, lineCap: 'round' },
+  };
+  return [track, ...casters, progress];
+}
+
+export function renderRadialBar(context: ChartRenderContext<RadialBarChart>): RenderNode[] {
+  const layout = layoutOf(context);
+  return context.chart.series.flatMap((series, index) => ringNodes(context, layout, series, index));
 }

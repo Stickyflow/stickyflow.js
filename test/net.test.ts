@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sflToCanvasState } from '../src/index';
 
-// Schematics category (stickyflow-atlas parity, SFL 1.4 §3.5 "Muster C"): a
-// `Net` block is a multi-terminal net (e.g. a shared power rail) authored
-// once instead of as N-1 hand-written Links. It is PARSE-ONLY - deterministic
-// star decomposition (first member = hub, every other member connects to it,
-// all synthetic links share the Net's `text`) into ordinary Link output.
-// There is no Net representation in the canvas model and no re-emission.
-
 const SFL = `sfl 1.4
 
 Model board {

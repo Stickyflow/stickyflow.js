@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, sflToCanvasState } from '../src/index';
 
-// Diagrams category audit (stickyflow-atlas parity): weight/showWeight had a
-// Link model field but were never parsed from SFL or rendered anywhere in
-// this package's SVG pipeline - pure write-side gap on the app side, and a
-// full gap here (no parse, no render at all).
-
 const SFL = `sfl 1.2
 
 Model board {
@@ -31,7 +26,7 @@ describe('Link weight/showWeight', () => {
     const state = sflToCanvasState(SFL);
     const heavy = state.links.find(l => l.id === 'heavy');
     expect(heavy?.props.weight).toBe('5');
-    expect(heavy?.props.showWeight).toBeUndefined(); // absent in SFL text itself
+    expect(heavy?.props.showWeight).toBeUndefined();
   });
 
   it('renders a weight badge (rect + text) for a link with weight set', () => {

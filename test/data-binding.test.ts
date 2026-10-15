@@ -29,12 +29,14 @@ Model board {
 
 const BOUND = doc('values: <- sales.revenue');
 
-const rows = (revenue: number[]) => revenue.map((value, index) => ({ month: ['Jan', 'Feb', 'Mar'][index], revenue: value }));
+const rows = (revenue: number[]) =>
+  revenue.map((value, index) => ({ month: ['Jan', 'Feb', 'Mar'][index], revenue: value }));
 
 const codes = (sfl: string) => buildBindingGraph(parse(sfl)).diagnostics.map(diagnostic => diagnostic.code);
 
 const seriesValues = (runtime: ReturnType<typeof createBindingRuntime>) =>
-  runtime.input.charts?.find(chart => chart.id === 'revenueChart')?.series.find(series => series.id === 'revenue')?.values;
+  runtime.input.charts?.find(chart => chart.id === 'revenueChart')?.series.find(series => series.id === 'revenue')
+    ?.values;
 
 describe('binding syntax', () => {
   it('round-trips a top-level DataSource, fields and all three operators', () => {
@@ -55,7 +57,9 @@ describe('binding syntax', () => {
 
   it('still reads a plain colon as a literal, not a binding', () => {
     expect(codes(doc('values: [1, 2, 3]'))).toEqual([]);
-    expect(buildBindingGraph(parse(doc('values: [1, 2, 3]'))).bindings.map(binding => binding.property)).toEqual(['categories']);
+    expect(buildBindingGraph(parse(doc('values: [1, 2, 3]'))).bindings.map(binding => binding.property)).toEqual([
+      'categories',
+    ]);
   });
 });
 
@@ -121,7 +125,7 @@ describe('binding runtime', () => {
     const first = runtime.flush();
     expect(seriesValues(runtime)).toEqual([10, 20, 30]);
     const chart = runtime.input.charts?.find(candidate => candidate.id === 'revenueChart');
-    expect((chart?.config as { categories?: string[] }).categories).toEqual(['Jan', 'Feb', 'Mar']);
+    expect((chart?.config as { categories?: string[] } | undefined)?.categories).toEqual(['Jan', 'Feb', 'Mar']);
     expect(first?.svg).toContain('sf-chart-bar-revenueChart-revenue-2');
 
     const renders: string[] = [];
@@ -226,7 +230,9 @@ Model board {
 
     sales.set(rows([1, 2.5, 3]));
     expect(runtime.flush()).toBeNull();
-    expect(runtime.diagnostics.find(diagnostic => diagnostic.code === 'data-type-mismatch')?.message).toContain('whole number');
+    expect(runtime.diagnostics.find(diagnostic => diagnostic.code === 'data-type-mismatch')?.message).toContain(
+      'whole number',
+    );
   });
 
   it('warns once when a bound DataSource has no registered source', () => {
@@ -357,7 +363,9 @@ Model dash {
 
 describe('number functions', () => {
   it('rounds, limits and works on columns', () => {
-    const runtime = createBindingRuntime(doc('values: <- clamp(round(sales.revenue / 3), 2, 6)\n      label: <- "n=" + max(round(2.6), 1)'));
+    const runtime = createBindingRuntime(
+      doc('values: <- clamp(round(sales.revenue / 3), 2, 6)\n      label: <- "n=" + max(round(2.6), 1)'),
+    );
     runtime.registerSource('sales', createDataSource(rows([4, 10, 40])));
     runtime.flush();
     expect(seriesValues(runtime)).toEqual([2, 3, 6]);

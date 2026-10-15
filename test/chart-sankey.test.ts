@@ -53,7 +53,6 @@ describe('Sankey chart', () => {
     const { scene } = render(SANKEY_SFL);
     const visits = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Visits');
     const churned = scene.nodes.find(node => node.id === 'chart-sankey-node-flow-Churned');
-    // Visits carries 80 (its only outflow), Churned only 30 - Visits' node should be taller.
     expect(visits?.type === 'rect' && churned?.type === 'rect' && visits.height > churned.height).toBe(true);
   });
 

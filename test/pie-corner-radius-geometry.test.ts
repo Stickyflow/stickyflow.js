@@ -38,8 +38,6 @@ function parsePath(d: string): { points: Array<{ x: number; y: number }>; arcs: 
   return { points, arcs };
 }
 
-// Standard SVG endpoint-to-center arc parameterization (spec appendix F.6.5),
-// specialized to rx === ry and x-axis-rotation === 0.
 function arcCenter(arc: ArcCommand): { x: number; y: number } {
   const { rx: r } = arc;
   const x1p = (arc.from.x - arc.to.x) / 2;
@@ -122,14 +120,11 @@ describe('rounded pie corner geometry — every arc bulges outward, none inverte
       expect(r).toBeLessThanOrEqual(donut.outerRadius + 1e-6);
     }
 
-    // 4th arc command is the inner-end fillet, connecting the end-edge line to the inner circle.
     const innerEndFillet = arcs[3];
     const innerFilletCenterRadius = donut.innerRadius + cornerRadius;
     const innerFilletCenter = arcCenter(innerEndFillet);
     expect(distance(innerFilletCenter, centerPoint(donut))).toBeCloseTo(innerFilletCenterRadius, 4);
 
-    // 5th arc command is the main inner arc; it ends at the inner-start fillet's arc
-    // tangent, on the inner circle, at an angle carved in from the raw boundary.
     const innerStartArcTangent = arcs[4].to;
     const innerStartAngle = Math.atan2(innerStartArcTangent.y - donut.centerY, innerStartArcTangent.x - donut.centerX);
     expect(innerStartAngle).toBeGreaterThan(start);

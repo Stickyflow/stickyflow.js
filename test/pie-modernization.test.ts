@@ -13,51 +13,51 @@ Model M {
 }
 `;
 
-describe('pie chart â€” font stack', () => {
+describe('pie chart — font stack', () => {
   it('falls back to the full Inter font stack, not a bare family name', () => {
     const { scene } = render(pieOf([60, 40]));
-    const label = scene.nodes.find(node => node.id === 'chart-pie-label-c-s0');
+    const label = scene.nodes.find(node => node.id === 'chart-pie-label-name-c-s0');
     expect(label?.type === 'text' && label.fontFamily).toContain('-apple-system');
   });
 });
 
-describe('pie chart â€” label color ties to the slice hue', () => {
+describe('pie chart — label color ties to the slice hue', () => {
   it('picks a lighter shade of the slice color for a dark slice, not a flat white', () => {
     const { scene } = render(pieOf([50, 50]));
-    const label = scene.nodes.find(node => node.id === 'chart-pie-label-c-s0');
+    const label = scene.nodes.find(node => node.id === 'chart-pie-label-name-c-s0');
     expect(label?.type === 'text' && label.color).toBe('#c0aee0');
     expect(label?.type === 'text' && label.color).not.toBe('#ffffff');
   });
 
   it('bolds the series name and keeps the percentage line regular weight', () => {
     const { scene } = render(pieOf([50, 50]));
-    const label = scene.nodes.find(node => node.id === 'chart-pie-label-c-s0');
-    expect(label?.type === 'text' && label.richLines).toEqual([
-      [{ text: 'Slice 0', bold: true }],
-      [{ text: '50%', bold: false }],
-    ]);
+    const name = scene.nodes.find(node => node.id === 'chart-pie-label-name-c-s0');
+    const value = scene.nodes.find(node => node.id === 'chart-pie-label-value-c-s0');
+    expect(name?.type === 'text' && [name.lines, name.fontWeight]).toEqual([['Slice 0'], 'bold']);
+    expect(value?.type === 'text' && [value.lines, value.fontWeight]).toEqual([['50%'], 'normal']);
   });
 });
 
-describe('pie chart â€” labels on a ring too thin to hold them', () => {
+describe('pie chart — labels on a ring too thin to hold them', () => {
   it('moves the label outside the ring with a leader tick instead of hiding it', () => {
     const thin = pieOf([50, 50], 'innerRadius: 145');
     const { scene } = render(thin);
-    const label = scene.nodes.find(node => node.id === 'chart-pie-label-c-s0');
+    const label = scene.nodes.find(node => node.id === 'chart-pie-label-name-c-s0');
     expect(label).toBeDefined();
     const tick = scene.nodes.find(node => node.id === 'chart-pie-label-tick-c-s0');
     expect(tick?.type === 'path' && tick.d.length).toBeGreaterThan(0);
+    expect(tick?.type === 'path' && tick.style.stroke?.kind).toBe('solid');
   });
 
-  it('keeps the label centered inside a normal-thickness ring, with no leader tick', () => {
+  it('keeps the label centered inside a normal-thickness ring, with a leader tick that stays invisible', () => {
     const normal = pieOf([50, 50], 'innerRadius: 60');
     const { scene } = render(normal);
     const tick = scene.nodes.find(node => node.id === 'chart-pie-label-tick-c-s0');
-    expect(tick).toBeUndefined();
+    expect(tick?.type === 'path' && tick.style.stroke?.kind).toBe('none');
   });
 });
 
-describe('pie chart â€” pieCornerRadius', () => {
+describe('pie chart — pieCornerRadius', () => {
   it('round-trips through sflToCanvasState', () => {
     const state = sflToCanvasState(pieOf([50, 50], 'pieCornerRadius: 8'));
     expect(state.canvasObjects[0].chart?.pieCornerRadius).toBe(8);

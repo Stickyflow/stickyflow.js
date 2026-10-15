@@ -2,11 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { render, sflToRenderInput } from '../src/index';
 import { applyMoveChange } from '../src/runtime/interaction';
 
-// A Path's geometry IS its points: its own layout.position is never read by
-// the renderer (buildFreeformPath uses path.points directly). Moving one by
-// writing layout.position would therefore round-trip to a no-op, so a move
-// rewrites the point list instead.
-
 const PATH_SFL = `sfl 1.4
 
 Model M {

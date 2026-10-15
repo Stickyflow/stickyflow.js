@@ -1,7 +1,3 @@
-// Representative render fixtures shared by the golden-snapshot suite. Each one
-// exercises a distinct part of the pipeline so the committed SVGs form a visual
-// contract: any change in geometry, ordering or serialization shows up as a diff.
-
 import type { RenderInput } from '../src/index';
 import type { Frame } from '../src/model/frame';
 import type { Link } from '../src/model/link';

@@ -35,8 +35,6 @@ function barPath(svg: string, id = 'sf-chart-bar-c-a-0'): string {
   return match[0];
 }
 
-// barShapePath only emits a Q (quadratic) command when it's actually
-// rounding a corner - a plain M/H/V/H/Z square has none.
 const isRounded = (path: string) => path.includes(' Q ');
 
 describe('bar border and corner radius', () => {
@@ -71,8 +69,8 @@ describe('bar border and corner radius', () => {
 
   it('stacked : only the outermost (last) series rounds, so segments never round at a seam', () => {
     const svg = render(stackedOf()).svg;
-    const inner = barPath(svg, 'sf-chart-bar-c-a-0'); // series a : bottom of the stack
-    const outer = barPath(svg, 'sf-chart-bar-c-b-0'); // series b : top of the stack
+    const inner = barPath(svg, 'sf-chart-bar-c-a-0');
+    const outer = barPath(svg, 'sf-chart-bar-c-b-0');
 
     expect(inner).toContain('data-sf-bar-radius="0"');
     expect(isRounded(inner)).toBe(false);

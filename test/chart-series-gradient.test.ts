@@ -48,7 +48,6 @@ describe('Series.color as a gradient', () => {
   });
 
   it("falls back to the gradient's first stop for contexts that can only paint a flat color", () => {
-    // Contrast calculation requires a representative solid color.
     const sfl = `sfl 1.4
 
 Model M {
@@ -68,7 +67,6 @@ Model M {
   });
 
   it('renders a sankey flow with a flat representative color, not a broken gradient literal', () => {
-    // Sankey layout carries a single solid color per flow.
     const sfl = `sfl 1.4
 
 Model M {

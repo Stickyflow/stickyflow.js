@@ -1,6 +1,3 @@
-// Browser demo for the INTERACTION tier. Run with a TS-aware dev server, e.g.
-// from packages/stickyflow.js:  npx vite demo
-// (The static tier needs no browser — see the node tests.)
 import { createViewer } from '../src/runtime/viewer';
 
 function requireDemoElement(id: string): HTMLElement {
@@ -65,11 +62,6 @@ Model Checkout {
 }
 `;
 
-// A second variant of the same diagram — "check"'s text changed, plus a new
-// "retry" entity + link — for the "Simulate external edit" button to toggle
-// against. Exercises all three change-highlighting categories: `check`
-// changed, `retry`/`c` added (toggling forward) or removed (toggling back —
-// reported via sceneDiff, but with no inline visual; see changeOverlay.ts).
 const SFL_ALT = SFL.replace('text: "Zahlung ok?"', 'text: "Zahlung OK?"')
   .replace(
     '  Entity done : Box {',
@@ -125,5 +117,4 @@ requireDemoElement('simulate').addEventListener('click', () => {
   viewer.update({ source: showingAlt ? SFL_ALT : SFL, highlightChanges: true });
 });
 
-// Expose for poking around in the console.
 (window as unknown as { viewer: typeof viewer }).viewer = viewer;

@@ -11,6 +11,10 @@ function installSvgGeometry(): void {
   globals.CSS.escape ??= value => value.replace(/([^\w-])/g, '\\$1');
   const proto = window.SVGElement.prototype as unknown as Record<string, unknown>;
   proto.getScreenCTM = () => ({ ...IDENTITY, inverse: () => IDENTITY });
+  proto.getBBox = function (this: Element) {
+    const read = (name: string) => Number(this.getAttribute(name) ?? 0);
+    return { x: read('x'), y: read('y'), width: read('width'), height: read('height') };
+  };
   proto.setPointerCapture = () => undefined;
   proto.releasePointerCapture = () => undefined;
   (globalThis as unknown as Record<string, unknown>).DOMPoint = class {
@@ -74,33 +78,34 @@ describe('pie label drag', () => {
     expect(label).toBeTruthy();
   });
 
-  it('pulls the label out and writes labelPulled: true once dragged past the ring', () => {
+  it('pulls the label out and writes its offset from the slice edge once dragged past the ring', () => {
     const { svg, events, label, centerX, centerY, outerRadius } = mount(PIE_SFL);
-    fire(label, 'pointerdown', { clientX: centerX + outerRadius * 0.6, clientY: centerY });
-    fire(svg, 'pointermove', { clientX: centerX + outerRadius + 40, clientY: centerY });
-    fire(svg, 'pointerup', { clientX: centerX + outerRadius + 40, clientY: centerY });
-    expect(events).toMatchObject([
-      {
-        name: 'propertyChange',
-        detail: { owner: { role: 'chart', id: 'c' }, path: 'Series[s0].labelPulled', value: true },
-      },
-    ]);
+    const restX = Number(label.getAttribute('x'));
+    const startX = centerX + outerRadius * 0.6;
+    const endX = centerX + outerRadius + 40;
+    fire(label, 'pointerdown', { clientX: startX, clientY: centerY });
+    fire(svg, 'pointermove', { clientX: endX, clientY: centerY });
+    fire(svg, 'pointerup', { clientX: endX, clientY: centerY });
+    expect(events.map(event => event.detail.path)).toEqual(['Series[s0].labelOffsetX', 'Series[s0].labelOffsetY']);
+    const offsetX = events[0].detail.value as number;
+    expect(offsetX).toBe(Math.round(restX + (endX - startX) - (centerX + outerRadius)));
+    expect(offsetX).toBeGreaterThan(0);
   });
 
-  it('pushes an already-pulled label back and writes labelPulled: false', () => {
+  it('pushes an already-pulled label back into the ring and resets its offset', () => {
     const pulled = PIE_SFL.replace(
       'Series s0 { color: "#4e3180"; label: "A"; values: [50] }',
-      'Series s0 { color: "#4e3180"; label: "A"; values: [50]; labelPulled: true }',
+      'Series s0 { color: "#4e3180"; label: "A"; values: [50]; labelOffsetX: 30; labelOffsetY: 0 }',
     );
     const { svg, events, label, centerX, centerY, outerRadius } = mount(pulled);
-    fire(label, 'pointerdown', { clientX: centerX + outerRadius + 20, clientY: centerY });
-    fire(svg, 'pointermove', { clientX: centerX + outerRadius * 0.5, clientY: centerY });
-    fire(svg, 'pointerup', { clientX: centerX + outerRadius * 0.5, clientY: centerY });
-    expect(events).toMatchObject([
-      {
-        name: 'propertyChange',
-        detail: { owner: { role: 'chart', id: 'c' }, path: 'Series[s0].labelPulled', value: false },
-      },
+    const labelX = Number(label.getAttribute('x'));
+    const labelY = Number(label.getAttribute('y'));
+    fire(label, 'pointerdown', { clientX: labelX, clientY: labelY });
+    fire(svg, 'pointermove', { clientX: centerX + outerRadius * 0.3, clientY: centerY });
+    fire(svg, 'pointerup', { clientX: centerX + outerRadius * 0.3, clientY: centerY });
+    expect(events.map(event => [event.detail.path, event.detail.value])).toEqual([
+      ['Series[s0].labelOffsetX', 0],
+      ['Series[s0].labelOffsetY', 0],
     ]);
   });
 

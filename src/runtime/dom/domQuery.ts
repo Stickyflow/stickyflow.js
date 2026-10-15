@@ -53,9 +53,6 @@ export function pxPerUnit(svg: SVGSVGElement): number {
   return rect.height > 0 && viewBoxHeight > 0 ? Math.min(horizontal, rect.height / viewBoxHeight) : horizontal;
 }
 
-// The dragged-object's own apex is computed the same way by the caller
-// (move/snapping.ts), from its own primary node - duplicated rather than
-// shared because that one also needs the raw pre-snap delta folded in.
 export function findIsometricApexCandidates(
   svg: SVGSVGElement,
   excludeIds: Set<string>,

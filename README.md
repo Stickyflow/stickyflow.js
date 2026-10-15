@@ -87,6 +87,14 @@
 
 SFL parser, scene builder, SVG renderer, interactive viewer and editing runtime in one package. No runtime dependencies, no React, no Konva. The static tier is DOM-free and runs in Node.
 
+## Install
+
+```bash
+npm install stickyflow
+```
+
+Node 18 or newer. The package ships ESM, CJS and TypeScript types.
+
 ## Quick start
 
 ```ts
@@ -154,3 +162,7 @@ Adding a new placeable object: [docs/ADDING_CANVAS_OBJECT.md](docs/ADDING_CANVAS
 - Docs and examples: [stickyflow.org/docs](https://stickyflow.org/docs)
 - The language: [stickyflow.org/sfl-language](https://stickyflow.org/sfl-language)
 - Playground: [stickyflow.org/playground](https://stickyflow.org/playground)
+
+## License
+
+[Apache-2.0](LICENSE)

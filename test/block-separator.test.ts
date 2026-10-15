@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parse, render } from '../src/index';
 
-// ";" as an entry separator inside a block. It always worked between two
-// properties (parseProperty -> consumeTerminator), but a nested
-// block/layout/style entry ends at its own "}" with nothing consumed after it,
-// so the same separator at the same nesting level threw. Only one-line SFL
-// needs an explicit separator at all — which is exactly the style the docs
-// site's showcase fixtures are written in, and why two of them wouldn't parse.
-
 const wrap = (body: string) => `sfl 1.2\nModel M {\n${body}\n}`;
 
 describe('";" after a nested block', () => {

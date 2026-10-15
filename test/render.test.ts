@@ -2,10 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { RenderInput } from '../src/index';
 import { render, renderCanvas, sflToCanvasState } from '../src/index';
 
-// This whole suite runs under environment: 'node' (see vitest.config.ts). If any
-// part of the render core reached for the DOM, Konva or React, it would fail to
-// import here — so a green run is itself the headless-portability proof.
-
 describe('render core runs headless through the package (real app source)', () => {
   it('does not render a shape whose canonical visibility flag is false', () => {
     const input = {
@@ -81,11 +77,6 @@ describe('render core runs headless through the package (real app source)', () =
   });
 
   it('falls back to rectangle defaults instead of crashing on an unrecognized shapeType', () => {
-    // A `shape:` value that names neither a built-in ShapeType nor a resolved
-    // Symbol (typo, or a value from a newer SFL version this build doesn't
-    // know) used to pass through as an arbitrary string and crash inside
-    // SHAPE_DEFAULTS[shape.shapeType] lookups with "Cannot read properties of
-    // undefined" - it must render as a plain rectangle plus a diagnostic instead.
     const input = {
       shapes: [
         {
@@ -114,11 +105,6 @@ describe('render core runs headless through the package (real app source)', () =
   });
 
   it('renders no fill/stroke (not a default color) when none is set, matching the interactive canvas', () => {
-    // The Konva canvas leaves an unset fillColor/strokeColor as `undefined`,
-    // painting nothing. Silently substituting SHAPE_DEFAULTS here (as this
-    // used to) made an unfilled entity render opaque white in stickyflow.js
-    // while the app showed it transparent — e.g. white text became invisible
-    // against a fill the entity's own style never actually specified.
     const input = {
       shapes: [
         {
@@ -147,9 +133,6 @@ describe('render core runs headless through the package (real app source)', () =
   });
 
   it('colors a link marker from its gradient stroke instead of a flat gray fallback', () => {
-    // Markers can't paint a live gradient reference, so buildRenderScene picks
-    // one representative color per end. This used to always fall back to a
-    // hardcoded gray whenever the stroke wasn't a plain solid color.
     const link = {
       id: 'grad-link',
       fromId: 'a',
@@ -265,12 +248,6 @@ describe('render core runs headless through the package (real app source)', () =
   });
 
   it("cuts a real gap in a link's stroke where its text label sits, instead of drawing the label on top of an unbroken line", () => {
-    // Matches the interactive canvas app's own ConnectionLine (which literally
-    // splits into two Konva Lines around the label) — here as a single path's
-    // stroke-dasharray instead, since other code (selectionOverlay.ts,
-    // linkEndpointDrag.ts) reads getTotalLength()/getPointAtLength() on this
-    // path assuming it spans the link end-to-end, which splitting into two
-    // real <path> elements would break.
     const link = {
       id: 'labeled',
       fromId: 'from',
@@ -300,16 +277,10 @@ describe('render core runs headless through the package (real app source)', () =
     const [dashBefore, gapLength] = dasharray.split(' ').map(Number);
     expect(dashBefore).toBeGreaterThan(0);
     expect(gapLength).toBeGreaterThan(0);
-    // getTotalLength()-dependent consumers need the `d` itself untouched —
-    // the gap is purely a paint-time dasharray, not a shorter/split path.
     expect(svg).toContain('d="M 0 0 L 400 0"');
   });
 
   it("leaves a dashed link's own stroke pattern alone when it has a text label, rather than overwriting it with a label gap", () => {
-    // A single stroke-dasharray can't encode both a line-style dash pattern and
-    // a label gap at once — narrow, documented tradeoff (see buildLink): a
-    // dashed/dotted link with a label keeps the pre-existing "line runs
-    // through the label" look instead of silently dropping its dash style.
     const link = {
       id: 'dashedLabeled',
       fromId: 'from',
@@ -332,7 +303,6 @@ describe('render core runs headless through the package (real app source)', () =
     const { svg } = renderCanvas(input);
 
     expect(svg).not.toContain('data-sf-label-gap');
-    // getDashArray(strokeWidth=2, 'dashed') = [strokeWidth*8, strokeWidth*4]
     expect(svg).toMatch(/id="sf-link-dashedLabeled"[^>]*stroke-dasharray="16 8"/);
   });
 });
@@ -395,24 +365,12 @@ Model Demo {
   });
 
   it('renders the link between the two entities, including its text label', () => {
-    // A Link's `text` used to never render at all: buildLink only draws the
-    // label when `showText` is truthy, and the SFL import never set that field
-    // (the app's own JSON import normalizes it to `true` upstream; the SFL
-    // path bypasses that step).
     const { svg } = render(SFL);
     expect(svg).toContain('sf-link-go');
     expect(svg).toContain('>next</tspan>');
   });
 
   it('gives a finite scene height when a link endpoint omits its fraction (spec §10: optional, defaults to 0.5)', () => {
-    // `from: a, right` with no `(fraction)` is valid SFL — the fraction may be
-    // omitted, and a renderer "may assume 0.5". sflToRenderInput's pointFor()
-    // used to multiply an element's width/height by that missing fraction
-    // directly (`element.width * explicit.offset`), and `width * undefined` is
-    // NaN — which then poisons the whole scene's bounds, not just this one
-    // link: render() silently returned `height: NaN` with zero diagnostics, and
-    // a NaN-valued SVG viewBox is rejected by browsers outright, effectively
-    // freezing pan/zoom on top of it.
     const withoutFraction = `sfl 1.2
 
 Model m {
@@ -433,11 +391,6 @@ Model m {
   });
 
   it('renders `kind: note` as an ordinary shape instead of silently dropping it', () => {
-    // `kind: note` used to be a special case left over from the text-era Note
-    // entity: the block was discarded outright, no entity and no diagnostic.
-    // Notes are long gone, so all that did was delete ordinary annotation
-    // boxes — and `kind:` is informational everywhere else, so an unrecognised
-    // value has to behave like every other unrecognised value.
     const withNote = `sfl 1.2
 
 Model m {
@@ -462,13 +415,6 @@ Model m {
   });
 
   it('reports a diagnostic for a Style declared inside Model instead of at the top level', () => {
-    // Real bug, hit live: an LLM nested every `Style` block inside `Model`
-    // instead of before it. `: LivingRoom` etc. then matched nothing in
-    // sflToCanvasState's styleBlocks map (only top-level siblings of Model are
-    // scanned there) and silently fell through to no shape, no fill, no
-    // stroke — an entity with only its text visible, and zero diagnostics
-    // reported anywhere. This is the one thing this whole feature exists to
-    // catch.
     const stylesInsideModel = `sfl 1.2
 
 Model m {
@@ -497,7 +443,6 @@ Model m {
     expect(diagnostics).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'unresolved-style-or-layout', ownerId: 'living' })]),
     );
-    // The actual visible symptom: no fill/stroke ever reaches the SVG.
     expect(svg).toMatch(/data-sf-id="living"[^>]*fill="none"/);
   });
 
@@ -528,18 +473,6 @@ Model m {
   });
 
   it("bends an orthogonal link per its `segments:` offsets instead of always using the router's default route", () => {
-    // `segments:` parses as a `list` SflValue — asString() (used for every
-    // other Link property) only stringifies string/ident/number, so this
-    // used to be silently dropped between sflToCanvasState and the render
-    // input, and every link rendered with the router's default bend
-    // regardless of any saved offsets. Proven here end-to-end (SFL text ->
-    // SVG), not just at the intermediate data-structure level.
-    //
-    // right -> left with a real diagonal offset (not axis-aligned, unlike
-    // the shared SFL fixture's straight bottom-to-top pair above) so the
-    // route actually has a movable middle segment for `segments[2]` to
-    // shift — an aligned pair collapses to a trivial 2-point straight line
-    // with nothing offset[2] could visibly move.
     const linkSfl = (segments?: string) => `sfl 1.2
 
 Model M {
@@ -579,14 +512,6 @@ ${segments ? `    segments: ${segments}\n` : ''}  }
   });
 
   it('keeps two renders with distinct idPrefix from colliding when embedded on the same page', () => {
-    // Two independent render() calls that happen to share entity ids (both
-    // declare `Shape e`) used to emit byte-identical gradient/id strings.
-    // Harmless alone, but once both SVGs sit in the same HTML document,
-    // url(#id) resolves to whichever element with that id appears first —
-    // so the second diagram would silently render with the first one's
-    // gradient. idPrefix keeps every id (element, gradient, marker) apart;
-    // data-sf-id must NOT be touched, since the viewer/interactive contract
-    // keys off it as the plain SFL entity id.
     const oneShape = (fill: string) => `sfl 1.2
 
 Model M {
@@ -609,9 +534,6 @@ Model M {
 
     expect(a.svg).toContain('id="sf-diagram-a-shape-e"');
     expect(b.svg).toContain('id="sf-diagram-b-shape-e"');
-    // Each diagram's own gradient id must be scoped by its own prefix —
-    // otherwise both would emit the exact same id and collide when concatenated
-    // into one document.
     const gradientIdIn = (svg: string, prefix: string) =>
       svg.match(new RegExp(`<linearGradient id="(${prefix}[^"]+)"`))?.[1];
     const idA = gradientIdIn(a.svg, 'sf-diagram-a-');
@@ -619,15 +541,11 @@ Model M {
     expect(idA).toBeTruthy();
     expect(idB).toBeTruthy();
     expect(idA).not.toBe(idB);
-    // data-sf-id stays the plain entity id regardless of idPrefix.
     expect(a.svg).toContain('data-sf-id="e"');
     expect(b.svg).toContain('data-sf-id="e"');
   });
 
   it('applies a gradient stroke and opacity declared on a shape via SFL', () => {
-    // Both used to be dropped: shape stroke passed through raw (so a gradient
-    // string never became a paint), and SFL `opacity` was never mapped onto the
-    // Shape opacity is applied to the rendered scene style.
     const SFL_SHAPE = `sfl 1.2
 
 Model M {
@@ -652,9 +570,6 @@ Model M {
   });
 
   it('renders a swimlane with real lanes from SFL text instead of collapsing it to a frame', () => {
-    // A `kind: swimlane` container carries orientation + a lanes nested-list.
-    // The SFL import used to route this through frameObject (losing the lanes);
-    // now it must produce actual lane dividers and per-lane labels.
     const SFL_SWIMLANE = `sfl 1.2
 
 Model LaneDemo {
@@ -679,12 +594,6 @@ Model LaneDemo {
   });
 
   it('never draws a title tab for a swimlane (matches the real canvas app, unlike a frame)', () => {
-    // SwimlaneComponent.tsx (the real app) is explicit that a swimlane has no
-    // overall title tab — the per-lane labels already identify each row, so
-    // an outer title would be redundant. swimlane.title still round-trips as
-    // data; it just isn't drawn. An earlier version of this package added a
-    // tab here to mirror Frame, which was wrong — verified against the real
-    // component before reverting it.
     const SFL_SWIMLANE_TITLE = `sfl 1.2
 
 Model M {
@@ -706,11 +615,6 @@ Model M {
   });
 
   it('rotates lane labels -90° for horizontal orientation, reading bottom-to-top like the real canvas app', () => {
-    // A horizontal-orientation lane is a wide, short strip; plain horizontal
-    // text would compete with shapes for that limited height. The real app's
-    // SwimlaneComponent.tsx rotates the label -90° along the lane's left
-    // edge instead — this package never did, until now. Vertical orientation
-    // keeps plain horizontal text in both, so only horizontal needs the fix.
     const demo = (orientation: 'horizontal' | 'vertical') => `sfl 1.2
 
 Model M {
@@ -734,14 +638,6 @@ Model M {
   });
 
   it("scales lane sizes to fit when they do not sum to the swimlane's own declared height", () => {
-    // The real canvas app guarantees lanes always sum to the swimlane's own
-    // dimension on every resize (laneScaling.ts's scaleLanesToSize) — nothing
-    // enforced that for SFL-declared lanes. Lanes summing to 260 in a
-    // declared 400x160 swimlane used to leave the second divider/label at
-    // world y=230 while the swimlane's own bounds (built from height=160)
-    // only extended to ~160 — the second lane's divider and label fell
-    // outside the viewBox and were silently clipped instead of the (harmless)
-    // lanes just being proportioned to fit, exactly like a resize would.
     const SFL_MISMATCHED = `sfl 1.2
 
 Model M {
@@ -757,19 +653,13 @@ Model M {
 }
 `;
     const { svg } = render(SFL_MISMATCHED);
-    // Both lanes scale down by the same factor (160/260) so the divider and
-    // second lane's label pivot land inside the swimlane's own 160-tall body,
-    // not at the un-scaled cursor position (130).
     const divider = svg.match(/<path id="sf-swimlane-divider-p-0"[^>]*d="M 0 ([\d.]+) H/);
-    expect(Number(divider?.[1])).toBeCloseTo(80, 0); // 130 * (160/260)
+    expect(Number(divider?.[1])).toBeCloseTo(80, 0);
     expect(svg).toContain('>Customer</tspan>');
     expect(svg).toContain('>Warehouse</tspan>');
   });
 
   it('renders a frame title tab without crashing when no fontSize is set, and lets showLabel hide it', () => {
-    // frameObject had no defaults at all: an untyped `font_size: undefined`
-    // reached the title tab's arithmetic and crashed the whole render. Also,
-    // `showLabel` was never read from SFL, so `showLabel: false` did nothing.
     const frameDoc = (extra: string) => `sfl 1.2
 
 Model M {
@@ -795,10 +685,6 @@ ${extra}
   });
 
   it('lets a link declare an explicit order that overrides its declaration position', () => {
-    // "one" is declared first but has the higher order (5), so it must paint
-    // last/on top; "two" is declared second but has the lower order (1), so
-    // it sorts ahead of "one" and paints underneath. Document order remains
-    // the fallback only when no order is set — see SFL spec §13.
     const SFL_ORDER = `sfl 1.2
 
 Model OrderDemo {

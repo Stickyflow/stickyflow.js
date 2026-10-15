@@ -2,15 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { sflToRenderInput } from '../src/index';
 import { applyMoveChange, applyResizeChange } from '../src/runtime/interaction';
 
-// The Path move bug (fixed this session) was a diff applier writing a
-// textually valid change that had zero visual effect: layout.position
-// changed, nothing moved, because the renderer never reads a Path's own
-// position. Swept here across every owner role a diff applier handles, so
-// the same silent-no-op shape can't reappear for a role nobody thought to
-// check by hand. Checked against the render input the renderer actually
-// consumes (x/y/width/height per role), not by re-parsing rendered SVG path
-// syntax : arc/line commands don't reduce to simple coordinate pairs.
-
 interface Box {
   x: number;
   y: number;

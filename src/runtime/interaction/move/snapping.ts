@@ -22,16 +22,7 @@ export interface MoveDelta {
   guides: GuideLine[];
 }
 
-// Single isometric object, dragged alone: try snapping its apex onto the
-// true-isometric diagonal through another isometric object's apex first -
-// this is what actually lets two boxes land in the same "Flucht" instead of
-// an eyeballed stagger. Multi-select or non-isometric drags skip straight
-// to the regular horizontal/vertical bounds snap below.
-function isometricApexOf(
-  svg: SVGSVGElement,
-  drag: MoveDragState,
-  declared = false,
-): { x: number; y: number } | null {
+function isometricApexOf(svg: SVGSVGElement, drag: MoveDragState, declared = false): { x: number; y: number } | null {
   if (drag.canvasObjects.length !== 1) {
     return null;
   }

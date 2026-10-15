@@ -8,12 +8,6 @@ import { createIsometricAxisDragState, type IsometricAxisDragState, type Isometr
 
 const MIN_SIZE = 10;
 
-// Width and depth now point diagonally (the true isometric angle, not
-// horizontal/vertical), so the pointer's raw dx/dy isn't the right delta
-// to feed into either one - only the component of pointer movement that
-// actually lies along that axis's direction should count, via a dot
-// product projection. A drag perpendicular to the arrow should barely move
-// it at all, exactly like dragging a 3D tool's axis gizmo.
 function nextGeometry(
   drag: IsometricAxisDragState,
   point: { x: number; y: number },
@@ -31,12 +25,6 @@ function nextGeometry(
   if (axis === 'height') {
     return { ...start, height: length(start.height + dy, MIN_SIZE) };
   }
-  // The apex sits at x + depth*cos (see isometricFaces) so that `left`
-  // lands exactly on x - meaning depth alone, with x held still, silently
-  // drags the apex (and everything right of it: right, top) sideways along
-  // with it. Compensating x by the same amount depth moves keeps the apex -
-  // and the whole right side - exactly where it was, so only the left
-  // portion visibly slides, same as width does to the right side for free.
   const delta = -dx * AXIS_COS + dy * AXIS_SIN;
   const depth = length(start.depth + delta, 0);
   const x = start.x + (start.depth - depth) * AXIS_COS;

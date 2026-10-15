@@ -41,12 +41,6 @@ export function resolveIsometricLabelDrag(svg: SVGSVGElement, event: PointerEven
   if (!start) {
     return null;
   }
-  // Top-face centroid, matching isometricTopFaceCenter exactly (box.width
-  // is (width+depth)*AXIS_COS, so box.width*(AXIS_SIN/AXIS_COS)/2 recovers
-  // (width+depth)*AXIS_SIN/2) - dropping the /2 here previously landed on
-  // the "center" vertex (where top/front/side meet) instead, snapping the
-  // guide line's start point there for the live drag and only correcting
-  // back to the true centroid once the renderer took over on release.
   const anchorX = geometry.bounds.x + geometry.bounds.width / 2;
   const anchorY = geometry.bounds.y + (geometry.bounds.width * (AXIS_SIN / AXIS_COS)) / 2;
   const text = findBySuffix(svg, `-${owner.id}-label`);

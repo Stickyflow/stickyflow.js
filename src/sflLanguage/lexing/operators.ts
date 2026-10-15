@@ -2,7 +2,6 @@ import type { SourceCursor, SourcePosition } from './cursor';
 import { createToken } from './tokenCreation';
 import type { Token, TokenType } from './types';
 
-// Longest first, so '<->' wins over '<-' and '<'.
 const OPERATORS: Array<[string, TokenType]> = [
   ['<->', 'bind2'],
   ['<-', 'bind'],
@@ -30,7 +29,6 @@ export function readOperator(cursor: SourceCursor, start: SourcePosition): Token
     return null;
   }
   const [text, type] = match;
-  // A '-' glued to a digit is a negative number, not an operator.
   if (text === '-' && startsNumber(cursor.peek(1))) {
     return null;
   }

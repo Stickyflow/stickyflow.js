@@ -1,11 +1,16 @@
 import type { SflBinding, SflProperty } from '../ast';
-import { compareLayoutProps, compareStyleProps } from './propertyOrder';
 import { emitBinding } from './expressions';
+import { compareLayoutProps, compareStyleProps } from './propertyOrder';
 import { emitProperty } from './values';
 
 const INDENT = '  ';
 
-export function emitPropertyBlock(name: 'layout' | 'style', properties: SflProperty[], depth: number, bindings: SflBinding[] = []): string {
+export function emitPropertyBlock(
+  name: 'layout' | 'style',
+  properties: SflProperty[],
+  depth: number,
+  bindings: SflBinding[] = [],
+): string {
   const pad = INDENT.repeat(depth);
   const innerPad = INDENT.repeat(depth + 1);
   const compare = name === 'layout' ? compareLayoutProps : compareStyleProps;

@@ -4,8 +4,8 @@ import { CHART_COLORS, representativeColor } from '../../primitives';
 import { pixelPoints, seriesValuePairs } from '../cartesianPoints';
 import type { ChartRenderContext } from '../types';
 import { createLineAreaFill } from './area';
-import { createLinePointMarks, renderLineMarks } from './marks';
 import { renderLineHighlights } from './highlights';
+import { createLinePointMarks, renderLineMarks } from './marks';
 import { createLinePath } from './path';
 
 function seriesColor(series: ChartSeries, seriesIndex: number): string {

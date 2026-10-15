@@ -4,7 +4,6 @@ import { chartImageRect } from '../../chartBackdrop';
 import { buildChartGrid } from '../../decorations/grid';
 import type { ChartRenderContext } from '../types';
 
-// Frosted glass: the chart's photo again, blurred and cut out in the bar's shape, drawn under the bar.
 export function createGlassBackdropNodes(context: ChartRenderContext, id: string, d: string): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
   const blur = finite(chart.config?.barGlassBlur, 0);
@@ -51,13 +50,16 @@ export function createGlassBackdropNodes(context: ChartRenderContext, id: string
       style: { fill: { kind: 'solid', color: chart.config.barGlassTint }, pointerEvents: 'none' },
     });
   }
-  // The photo copy hides the grid drawn earlier, so the grid is drawn once more inside the glass.
   nodes.push(
     ...buildChartGrid(chart, context.plot, bounds, 0).map(node => ({
       ...node,
       id: `${node.id}-glass-${id}`,
       order: nextOrder(),
-      style: { ...('style' in node ? node.style : {}), clip: { type: 'path' as const, d }, pointerEvents: 'none' as const },
+      style: {
+        ...('style' in node ? node.style : {}),
+        clip: { type: 'path' as const, d },
+        pointerEvents: 'none' as const,
+      },
     })),
   );
   return nodes;

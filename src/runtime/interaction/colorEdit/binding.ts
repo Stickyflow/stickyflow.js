@@ -20,9 +20,6 @@ export function bindColorEdit(
   const swatch = new ColorEditSession(svg, emitter, rules, theme, resolveColorEditTarget);
   const mark = new ColorEditSession(svg, emitter, rules, theme, resolveBarColorEditTarget);
   const zoneGradient = new ZoneGradientSession(svg, emitter, rules, theme);
-  // Capture phase, ahead of every other pointerdown listener (selection and
-  // move both react to it in the bubble phase) - this has to see selection
-  // state as it stood BEFORE this gesture's own pointerdown can change it.
   const onPointerDown = () => snapshotSelectionBeforeGesture(svg);
 
   svg.addEventListener('pointerdown', onPointerDown, true);

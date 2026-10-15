@@ -1,16 +1,11 @@
 export { collectContracts } from './contract';
-export { buildBindingGraph } from './graph';
+export type { DataSource, MutableDataSource } from './dataSource';
+export { createDataSource } from './dataSource';
 export type { BindingGraph } from './graph';
-export { interactiveElements, type InteractiveElements } from './interactive';
-export { createBindingRuntime, createDataSource, renderBound, type RenderBoundOptions } from './runtime';
-export type {
-  BindingRuntime,
-  BindingRuntimeOptions,
-  BindingTarget,
-  DataSource,
-  ElementState,
-  MutableDataSource,
-} from './runtime';
+export { buildBindingGraph } from './graph';
+export { type InteractiveElements, interactiveElements } from './interactive';
+export { createBindingRuntime, type RenderBoundOptions, renderBound } from './runtime';
+export type { BindingRuntime, BindingRuntimeOptions, BindingTarget, ElementState } from './runtimeTypes';
 export type {
   BindingDiagnostic,
   BindingType,

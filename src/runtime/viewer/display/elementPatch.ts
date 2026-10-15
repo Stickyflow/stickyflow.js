@@ -15,10 +15,6 @@ function patchAttributes(current: Element, next: Element): boolean {
   return changed;
 }
 
-/** Node-for-node equality (tag, attributes, text) of two elements' children —
- *  checked before a <text> node's tspans are wholesale-replaced, so an
- *  unchanged label is not reported as touched just because this branch used
- *  to replace unconditionally on every render. */
 function childrenEqual(a: Element, b: Element): boolean {
   const aChildren = Array.from(a.childNodes);
   const bChildren = Array.from(b.childNodes);
@@ -69,12 +65,7 @@ function replaceTextContent(current: Element, next: Element): void {
   }
 }
 
-/** Patches `current` in place to match `next` and returns whether anything
- *  actually changed (attributes, or — for <text> — its tspan content). The
- *  scene-diff classification in sceneNodesPatch.ts depends on this being
- *  precise: a false positive flashes an untouched shape. */
 export function patchSceneElement(current: Element, next: Element): boolean {
-  // A widget's digits carry its style and its value, so either one changing needs fresh digits.
   const widgetRestyled =
     next.hasAttribute('data-sf-widget') &&
     (current.getAttribute('data-sf-widget-style') !== next.getAttribute('data-sf-widget-style') ||

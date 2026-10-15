@@ -25,6 +25,13 @@ export function roundedBarPath(x: number, y: number, width: number, height: numb
   );
 }
 
-export function barPath(x: number, y: number, width: number, height: number, radius: number, roundedBottom: boolean): string {
+export function barPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  roundedBottom: boolean,
+): string {
   return roundedBottom ? roundedBarPath(x, y, width, height, radius) : barShapePath(x, y, width, height, radius);
 }

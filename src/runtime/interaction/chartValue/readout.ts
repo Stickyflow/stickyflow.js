@@ -60,7 +60,7 @@ export function formatReadoutValue(value: number): string {
 function readoutWidth(scale: ValueScale): number {
   const magnitude = Math.max(Math.abs(scale.min), Math.abs(scale.max));
   const sign = scale.min < 0 ? 1 : 0;
-  const chars = sign + formatReadoutValue(magnitude).length + 2; // + '.' + one decimal digit, always reserved
+  const chars = sign + formatReadoutValue(magnitude).length + 2;
   return Math.max(28, (chars * FONT_SIZE) / 1.7 + PADDING_X * 2);
 }
 
@@ -75,7 +75,6 @@ export function updateValueReadout(readout: SVGGElement, anchor: ReadoutAnchor, 
   const width = readoutWidth(anchor.scale);
 
   if (anchor.scale.horizontal) {
-    // Beside the bar end, flipping to the left when the plot edge is too close.
     const markX = pixelForValue(value, anchor.scale);
     const plotEnd = anchor.scale.plotY + anchor.scale.plotHeight;
     const left = markX + GAP + width <= plotEnd ? markX + GAP : markX - GAP - width;

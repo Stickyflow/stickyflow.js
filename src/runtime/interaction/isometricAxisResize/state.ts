@@ -94,11 +94,6 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
   const geometry = isometricGeometryOf(primary);
   const bounds = geometry?.bounds ?? primary.getBBox();
   const nodes = collectNodes(svg, ownerId);
-  // The live preview redraws these as sharp polygons each pointermove (see
-  // preview.ts) rather than reproducing the exact rounded-corner clip -
-  // dropping the clip for the duration of the drag avoids clipping the
-  // live, differently-sized fill to the stale pre-drag silhouette. The
-  // final render (after the committed resize) restores it.
   [nodes.top, nodes.front, nodes.side].forEach(node => {
     node?.removeAttribute('clip-path');
   });
@@ -112,20 +107,12 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
       (overlay?.querySelector(`[data-sf-resize-handle="iso-${axis}"]`) as SVGGElement | null) ?? null,
     ]),
   ) as Record<IsometricAxis, SVGGElement | null>;
-  // Hidden for the duration of the drag instead of kept live-positioned -
-  // they'd otherwise sit stale (wrong face centers) until the drag ends,
-  // and they're not meaningful to click mid-drag anyway.
   const overlayDuplicateBubbles =
     (overlay?.querySelector(`[${ISO_DUPLICATE_BUBBLES_ATTR}]`) as SVGGElement | null) ?? null;
   if (overlayDuplicateBubbles) {
     overlayDuplicateBubbles.style.display = 'none';
   }
 
-  // bounds (declaredBounds) is the on-screen box - only x/y double as the
-  // true object position (they're identical by construction, see
-  // isometricBounds). width/height/depth must come from the true-size
-  // attribute instead: the box's width/height are DERIVED from them, not
-  // interchangeable with them.
   const start: IsometricObjectSize = {
     x: bounds.x,
     y: bounds.y,

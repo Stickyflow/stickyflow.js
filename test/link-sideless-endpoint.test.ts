@@ -28,9 +28,7 @@ function endpoints(d: string): { start: [number, number]; end: [number, number] 
 }
 
 describe('links with no explicit side', () => {
-  // a occupies x 0..180, y 0..60.
   it.each([
-    // name,          b x,   b y,   expected start,      expected end
     ['b below', 0, 200, [90, 60], [90, 200]],
     ['b above', 0, -200, [90, 0], [90, -140]],
     ['b to the right', 400, 0, [180, 30], [400, 30]],

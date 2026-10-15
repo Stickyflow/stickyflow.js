@@ -4,19 +4,19 @@ import { finite, paint } from '../../../scene';
 import {
   barCategoryCount,
   barPath,
-  segmentedBarPath,
   CHART_COLORS,
   createVerticalErrorWhiskerNode,
   errorBarRange,
   mapChartValue,
   resolveChartShadow,
+  segmentedBarPath,
 } from '../../primitives';
-import { createBarGlowNode } from './glow';
-import { createGlassBackdropNodes } from './glass';
-import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
-import { barLabelsEnabled, createBarLabelNodes } from './labels';
 import { seriesValueColorProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
+import { createGlassBackdropNodes } from './glass';
+import { createBarGlowNode } from './glow';
+import { barLabelsEnabled, createBarLabelNodes } from './labels';
+import { barTrackClip, barTrackEnabled, createBarTrackNodes } from './track';
 
 interface GroupedBarLayout {
   slotWidth: number;
@@ -47,7 +47,12 @@ export function renderGroupedBars(context: ChartRenderContext): RenderNode[] {
   );
   const tracks = barTrackEnabled(context)
     ? marks.flatMap(mark =>
-        createBarTrackNodes(context, `${mark.seriesId}-${mark.valueIndex}`, { x: mark.frame.x, y: context.plot.y, width: mark.frame.width, height: context.plot.height }),
+        createBarTrackNodes(context, `${mark.seriesId}-${mark.valueIndex}`, {
+          x: mark.frame.x,
+          y: context.plot.y,
+          width: mark.frame.width,
+          height: context.plot.height,
+        }),
       )
     : [];
   const bars = marks.flatMap(mark => renderGroupedBarMark(context, mark));
@@ -73,7 +78,6 @@ function createGroupedLabel(context: ChartRenderContext, mark: GroupedBarMark, m
   });
 }
 
-// The bar's outline: solid, or cut into segments like a level meter.
 function groupedShape(context: ChartRenderContext, frame: GroupedBarMark['frame']): string {
   const { chart, plot } = context;
   const config = chart.config;
@@ -100,7 +104,9 @@ function createGroupedGlow(context: ChartRenderContext, mark: GroupedBarMark): R
     return [];
   }
   const d = groupedShape(context, mark.frame);
-  return [createBarGlowNode(context, `chart-bar-glow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`, d, mark.color, glow)];
+  return [
+    createBarGlowNode(context, `chart-bar-glow-${chart.id}-${mark.seriesId}-${mark.valueIndex}`, d, mark.color, glow),
+  ];
 }
 
 function createGroupedBarLayout(context: ChartRenderContext): GroupedBarLayout {
@@ -181,7 +187,10 @@ function createGroupedBarNodes(context: ChartRenderContext, mark: GroupedBarMark
           stroke,
           strokeWidth,
           shadow,
-          clip: barTrackClip(context, { x, y: plot.y, width, height: plot.height }) ?? { type: 'path', d: plotClipPath(plot) },
+          clip: barTrackClip(context, { x, y: plot.y, width, height: plot.height }) ?? {
+            type: 'path',
+            d: plotClipPath(plot),
+          },
         },
       }
     : undefined;

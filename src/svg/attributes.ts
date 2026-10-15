@@ -56,7 +56,6 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   }
 }
 
-// The smaller side of an element whose size is known from its own geometry.
 function elementSize(node: object): number | undefined {
   const shape = node as { type?: string; rx?: number; ry?: number; width?: number; height?: number };
   if (shape.type === 'ellipse' && shape.rx !== undefined && shape.ry !== undefined) {
@@ -68,7 +67,11 @@ function elementSize(node: object): number | undefined {
   return undefined;
 }
 
-function addVisualEffectAttrs(attrs: string[], node: { id: string; style: SceneStyle }, defs: SvgDefinitionRegistry): void {
+function addVisualEffectAttrs(
+  attrs: string[],
+  node: { id: string; style: SceneStyle },
+  defs: SvgDefinitionRegistry,
+): void {
   const filter = defs.filter(node.style, node.id, elementSize(node));
   if (filter) {
     attrs.push(`filter="url(#${filter})"`);

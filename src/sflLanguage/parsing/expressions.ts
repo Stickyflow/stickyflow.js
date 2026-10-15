@@ -95,7 +95,9 @@ function parsePrimary(cursor: TokenCursor): SflExpr {
       if (path.length === 1 && (path[0] === 'true' || path[0] === 'false')) {
         return { kind: 'boolean', value: path[0] === 'true' };
       }
-      return cursor.at('lparen') ? { kind: 'call', callee: path, args: parseCallArguments(cursor) } : { kind: 'ref', path };
+      return cursor.at('lparen')
+        ? { kind: 'call', callee: path, args: parseCallArguments(cursor) }
+        : { kind: 'ref', path };
     }
     default:
       throw new SflParseError(`expected an expression, got '${token.value || token.type}'`, token.line, token.col);
@@ -105,7 +107,9 @@ function parsePrimary(cursor: TokenCursor): SflExpr {
 export const BINDING_OPERATORS = ['bind', 'bind2', 'action'];
 
 export function atBinding(cursor: TokenCursor): boolean {
-  return cursor.peek().type === 'ident' && cursor.peek(1).type === 'colon' && BINDING_OPERATORS.includes(cursor.peek(2).type);
+  return (
+    cursor.peek().type === 'ident' && cursor.peek(1).type === 'colon' && BINDING_OPERATORS.includes(cursor.peek(2).type)
+  );
 }
 
 export function parseBinding(cursor: TokenCursor): SflBinding {
@@ -120,7 +124,6 @@ export function parseBinding(cursor: TokenCursor): SflBinding {
   return { key: key.value, operator, expr, line: key.line, col: key.col };
 }
 
-// `path <- expression`, the body of a handler.
 export function parseAssignment(cursor: TokenCursor): SflAssignment {
   const start = cursor.peek();
   const target = parsePathSegments(cursor);
@@ -129,7 +132,6 @@ export function parseAssignment(cursor: TokenCursor): SflAssignment {
   return { target, expr, line: start.line, col: start.col };
 }
 
-// `onTap: path <- expression` or `onPress { path <- expression ... }`; the cursor is on the event name.
 export function atHandler(cursor: TokenCursor): boolean {
   const token = cursor.peek();
   return token.type === 'ident' && /^on[A-Z]/.test(token.value) && ['colon', 'lbrace'].includes(cursor.peek(1).type);

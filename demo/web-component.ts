@@ -1,5 +1,3 @@
-// Browser demo for the web-component tier. Run from packages/stickyflow.js:
-//   npx vite demo   → open web-component.html
 import { defineStickyflowDiagram, type StickyflowDiagram } from '../src/runtime/webComponent';
 
 defineStickyflowDiagram();
@@ -41,12 +39,10 @@ Model Demo {
 }
 `;
 
-// Feed both diagrams via the .source property (avoids huge HTML attributes).
 for (const el of document.querySelectorAll<StickyflowDiagram>('stickyflow-diagram')) {
   el.source = SFL;
 }
 
-// Wire the interactive one's viewer to a log panel.
 const interactive = document.getElementById('interactive') as StickyflowDiagram;
 const log = document.getElementById('log') as HTMLElement;
 interactive.addEventListener('sf-render', () => {

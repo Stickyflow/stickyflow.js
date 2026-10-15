@@ -4,11 +4,6 @@ import { axisArrowPlacements, updateAxisArrowGroup, updateHalo } from '../../dom
 import type { IsometricAxis } from '../../dom/selectionOverlay/isometric';
 import type { IsometricGeometryNodes, IsometricObjectSize } from './state';
 
-// Mirrors renderScene/artifacts/isometric.ts's label constants exactly -
-// the live preview has to reproduce the same single-line middle-aligned
-// baseline math svg/text.ts uses at render time, not just the label's
-// container box, since it's the <text> element's own y (its baseline)
-// being written here.
 const LABEL_GAP = 12;
 const LABEL_HEIGHT = 20;
 const LABEL_FONT_SIZE = 12;
@@ -16,10 +11,6 @@ const LABEL_LINE_HEIGHT = 1.2;
 const LABEL_BASELINE_OFFSET =
   -LABEL_GAP - LABEL_HEIGHT + (LABEL_HEIGHT - LABEL_FONT_SIZE * LABEL_LINE_HEIGHT) / 2 + LABEL_FONT_SIZE;
 
-// Mirrors renderScene/artifacts/isometric.ts's own geometry build, applied
-// directly to the live DOM nodes instead of producing new RenderNodes - the
-// axis handles need to see the box update as they drag it, not only once
-// the pointer is released and the owning app re-renders from committed SFL.
 export function applyIsometricAxisPreview(
   nodes: IsometricGeometryNodes,
   object: IsometricObjectSize,
@@ -54,11 +45,6 @@ export function applyIsometricAxisPreview(
   );
 
   if (nodes.groundShadow) {
-    // Mirrors renderScene/artifacts/isometric.ts's own footprint math - the
-    // live drag doesn't know a configured shadow(distance:…), so this
-    // reproduces the no-distance case (shadowDrop = height) exactly; an
-    // object with an explicit distance just lags by that fixed amount for
-    // the duration of the drag, snapping correct once it's released.
     const contactFootprint = faces.top.map(point => ({ x: point.x, y: point.y + object.height }));
     const footprintCenter = {
       x: contactFootprint.reduce((sum, point) => sum + point.x, 0) / contactFootprint.length,

@@ -76,7 +76,6 @@ export interface SflBinding {
   col: number;
 }
 
-// `path <- expression`: when the handler runs, the data field at the path takes the value of the expression.
 export interface SflAssignment {
   target: string[];
   expr: SflExpr;
@@ -84,7 +83,6 @@ export interface SflAssignment {
   col: number;
 }
 
-// A reaction to an event, written `onTap: path <- expression` or, for several assignments, `onPress { path <- expression ... }`.
 export interface SflHandler {
   event: string;
   assignments: SflAssignment[];

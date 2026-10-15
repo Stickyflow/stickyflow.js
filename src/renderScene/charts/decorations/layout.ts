@@ -19,7 +19,6 @@ export function hasCartesianDecorations(chart: Chart): boolean {
   return !CHARTS_WITHOUT_CARTESIAN_DECORATIONS.has(chart.chartType);
 }
 
-// Tick marks push the axis labels outward by their own length.
 export function tickOffset(chart: Chart): number {
   return hasCartesianDecorations(chart) ? Math.max(0, finite(chart.tickLength, 0)) : 0;
 }
@@ -57,7 +56,6 @@ function barCategoryLabelWidth(chart: Chart): number {
   return Math.max(0, ...categories.map(category => category.length)) * fontSize * 0.58 + 16;
 }
 
-// Room left of the plot for the value axis labels, or for the category labels of horizontal charts.
 function leftLabelWidth(chart: Chart): number {
   if (isHorizontalBoxplot(chart)) {
     return boxplotCategoryLabelWidth(chart);
@@ -91,7 +89,8 @@ export function decorations(chart: Chart): ChartLayout {
     24 +
     (legendPosition === 'bottomRight' ? sideColumnWidth : 0) +
     (treemapSide === 'right' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
-  const valueRow = chart.chartType === 'bar' && chart.config?.showBarLabels === true && chart.config.barLabelPosition === 'axis';
+  const valueRow =
+    chart.chartType === 'bar' && chart.config?.showBarLabels === true && chart.config.barLabelPosition === 'axis';
   const horizontalValueAxis = isHorizontalBar(chart) && chart.showValueAxis !== false;
   const basePadBottom = showLabels
     ? isHorizontalBar(chart)

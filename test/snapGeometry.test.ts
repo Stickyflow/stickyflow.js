@@ -15,7 +15,6 @@ describe('computeSnap — move (all points active on both axes)', () => {
   const config = { threshold: 20, activeX: MOVE_ACTIVE_POINTS, activeY: MOVE_ACTIVE_POINTS, guideOverhang: 10 };
 
   it('snaps left-to-left when within threshold', () => {
-    // dragged left edge at x=105, target left edge at x=100 -> delta -5
     const result = computeSnap(bounds(105, 0, 50, 50), [bounds(100, 200, 50, 50)], config);
     expect(result.x.delta).toBe(-5);
     expect(result.x.guide).not.toBeNull();
@@ -24,9 +23,7 @@ describe('computeSnap — move (all points active on both axes)', () => {
   });
 
   it('snaps center-to-center', () => {
-    // dragged center x = 105+25 = 130, target center x = 100+25 = 125 -> delta -5
     const result = computeSnap(bounds(105, 0, 50, 50), [bounds(100, 200, 50, 50)], config);
-    // left-to-left (distance 5) and center-to-center (distance 5) tie; either is a valid single winner.
     expect(Math.abs(result.x.delta)).toBeLessThanOrEqual(5);
   });
 
@@ -46,9 +43,6 @@ describe('computeSnap — move (all points active on both axes)', () => {
   });
 
   it('threshold boundary: just under snaps, just at/over does not', () => {
-    // Isolated to a single min-vs-min comparison: target is wide enough that
-    // its center/max points sit far outside threshold, so only its min point
-    // is ever a candidate match.
     const isolated: SnapConfig = { threshold: 20, activeX: ['min'], activeY: [], guideOverhang: 10 };
     const justUnder = computeSnap(bounds(119, 0, 10, 10), [bounds(100, 0, 1000, 10)], isolated);
     expect(justUnder.x.delta).toBe(-19);
@@ -57,9 +51,6 @@ describe('computeSnap — move (all points active on both axes)', () => {
   });
 
   it('picks the single closest match across multiple candidates', () => {
-    // Isolated to min-vs-min so the winner is unambiguous by hand: candidate
-    // mins at 90 and 106 (wide bounds so their own center/max are far away),
-    // dragged min at 100 -> distances 10 and 6, 106 wins.
     const isolated: SnapConfig = { threshold: 20, activeX: ['min'], activeY: [], guideOverhang: 10 };
     const result = computeSnap(bounds(100, 0, 10, 10), [bounds(90, 0, 1000, 10), bounds(106, 0, 1000, 10)], isolated);
     expect(result.x.delta).toBe(6);
@@ -71,22 +62,23 @@ describe('computeSnap — resize (single axis/point active)', () => {
   it('a right-moving edge only compares its own max point', () => {
     const activeX = resizeActivePoints('right');
     expect(activeX).toEqual(['max']);
-    const result = computeSnap(
-      bounds(0, 0, 108, 50),
-      [bounds(200, 0, 50, 50)], // target min=200
-      { threshold: 20, activeX, activeY: [], guideOverhang: 10 },
-    );
-    // dragged max = 108, no candidate min/center/max near 108 except... none within 20 here, expect no snap
+    const result = computeSnap(bounds(0, 0, 108, 50), [bounds(200, 0, 50, 50)], {
+      threshold: 20,
+      activeX,
+      activeY: [],
+      guideOverhang: 10,
+    });
     expect(result.x.delta).toBe(0);
   });
 
   it('a right-moving edge snaps to a nearby target min', () => {
     const activeX = resizeActivePoints('right');
-    const result = computeSnap(
-      bounds(0, 0, 195, 50),
-      [bounds(200, 0, 50, 50)], // target min=200, dragged max=195 -> distance 5
-      { threshold: 20, activeX, activeY: [], guideOverhang: 10 },
-    );
+    const result = computeSnap(bounds(0, 0, 195, 50), [bounds(200, 0, 50, 50)], {
+      threshold: 20,
+      activeX,
+      activeY: [],
+      guideOverhang: 10,
+    });
     expect(result.x.delta).toBe(5);
   });
 
@@ -124,16 +116,16 @@ describe('applyAxisSnap', () => {
   });
 
   it('a left-moving snap shifts x and width oppositely', () => {
-    const proposed = bounds(105, 0, 95, 50); // right edge fixed at 200
+    const proposed = bounds(105, 0, 95, 50);
     const snap = { x: { delta: -5, guide: null }, y: { delta: 0, guide: null } };
     const result = applyAxisSnap(proposed, 'left', 'none', snap, 10);
     expect(result.x).toBe(100);
-    expect(result.width).toBe(100); // right edge stays at 200
+    expect(result.width).toBe(100);
   });
 
   it('clamps to minSize', () => {
     const proposed = bounds(0, 0, 15, 50);
-    const snap = { x: { delta: -10, guide: null }, y: { delta: 0, guide: null } }; // would shrink to 5
+    const snap = { x: { delta: -10, guide: null }, y: { delta: 0, guide: null } };
     const result = applyAxisSnap(proposed, 'right', 'none', snap, 10);
     expect(result.width).toBe(10);
   });
@@ -148,7 +140,7 @@ describe('applyAxisSnap', () => {
 
 describe('nearestCandidates', () => {
   it('sorts by center-to-center distance, closest first', () => {
-    const target = bounds(0, 0, 10, 10); // center (5,5)
+    const target = bounds(0, 0, 10, 10);
     const far = bounds(1000, 1000, 10, 10);
     const near = bounds(20, 20, 10, 10);
     const result = nearestCandidates(target, [far, near]);

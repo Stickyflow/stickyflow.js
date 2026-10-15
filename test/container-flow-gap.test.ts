@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderCanvas, sflToCanvasState, sflToRenderInput } from '../src/index';
 
-// Container `flow`/`gap` (SFL 1.4, §12.1): auto-positions a Container's
-// DIRECT children (Container or positioned-leaf kinds) along one axis â€” the
-// generalized, minimal version of what buildSwimlane's lane-offset loop
-// already does for lane bands specifically. Mirrors stickyflow-atlas's own
-// sflToCanvasState.ts implementation of the same feature (Container-only,
-// `flow: horizontal|vertical` + `gap`, a running cursor, child `layout.size`
-// stays required/explicit, child `layout.position` is ignored/overridden).
-
 const HORIZONTAL_SFL = `sfl 1.4
 
 Model board {
@@ -75,7 +67,6 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
     const state = sflToCanvasState(HORIZONTAL_SFL);
     const output = state.canvasObjects.find(e => e.id === 'output');
     const scrap = state.canvasObjects.find(e => e.id === 'scrap');
-    // Relative to the parent Container's own absolute origin (40, 420).
     expect(output).toMatchObject({ x: 40, y: 420, width: 140, height: 90 });
     expect(scrap).toMatchObject({ x: 40 + 140 + 16, y: 420, width: 140, height: 90 });
   });
@@ -89,8 +80,6 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
   });
 
   it("a child's own layout.position is ignored (overridden) when the parent has flow set", () => {
-    // Same as HORIZONTAL_SFL's children but each also declares an explicit
-    // (wrong, if honored) position â€” flow must win regardless.
     const sfl = HORIZONTAL_SFL.replace(
       'layout { size: 140, 90 }\n    }\n    Shape scrap',
       'layout { position: 999, 999; size: 140, 90 }\n    }\n    Shape scrap',
@@ -108,7 +97,7 @@ describe('Container flow/gap (SFL 1.4, §12.1)', () => {
     const output = state.canvasObjects.find(e => e.id === 'output');
     const scrap = state.canvasObjects.find(e => e.id === 'scrap');
     expect(output).toMatchObject({ x: 40 });
-    expect(scrap).toMatchObject({ x: 40 + 140 }); // no gap added
+    expect(scrap).toMatchObject({ x: 40 + 140 });
   });
 
   it('regression: absent flow leaves explicit positions fully untouched', () => {

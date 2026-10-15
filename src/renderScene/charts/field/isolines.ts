@@ -35,15 +35,6 @@ interface CellEdgeIntersections {
   left: IsolinePoint;
 }
 
-// Marching squares hands back one independent segment per grid cell - each
-// one individually correct, but drawn as its own "M ... L ..." command the
-// whole isoline is dozens of disconnected straight dashes rather than a
-// single curve, visibly kinked at every cell boundary instead of flowing.
-// This stitches same-threshold segments that share an endpoint (adjacent
-// cells compute that shared edge intersection identically, so the
-// coordinates match exactly) into ordered point chains - one per
-// contiguous strand or closed loop - ready to hand to a Catmull-Rom
-// smoother the same way line/path charts already smooth their own points.
 export function stitchIsolineSegments(segments: readonly IsolineSegment[]): IsolinePoint[][] {
   if (segments.length === 0) {
     return [];

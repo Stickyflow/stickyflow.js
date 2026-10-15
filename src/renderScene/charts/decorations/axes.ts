@@ -1,7 +1,15 @@
 import type { Chart } from '../../../model/chart';
 import type { RenderNode, SceneStyle } from '../../scene';
 import { finite } from '../../scene';
-import { barCategoryCount, chartText, chartTicks, horizontalRows, isHorizontalBar, mapChartValue, rowTop } from '../primitives';
+import {
+  barCategoryCount,
+  chartText,
+  chartTicks,
+  horizontalRows,
+  isHorizontalBar,
+  mapChartValue,
+  rowTop,
+} from '../primitives';
 import { categoryProp } from '../propPath';
 import { buildAxisLabels } from './axisLabels';
 import { buildBoxplotSeriesYAxisTicks } from './boxplotYAxis';
@@ -72,7 +80,6 @@ function buildAxisLines(chart: Chart, layout: ChartLayout, order: number): Rende
     add('line-x', `M ${plot.x} ${bottom} L ${plot.x + plot.width} ${bottom}`);
   }
   if (tickLength > 0 && isHorizontalBar(chart)) {
-    // Value ticks along the bottom, one category tick per row on the left.
     chartTicks(chart.axisY).forEach(tick => {
       const x = plot.x + mapChartValue(tick, chart.axisY, plot.width);
       add(`tick-v-${tick}`, `M ${x} ${bottom} L ${x} ${bottom + tickLength}`);
@@ -100,7 +107,6 @@ function categoryNames(chart: Chart, count: number): string[] {
   return Array.from({ length: count }, (_value, index) => names?.[index] ?? String(index + 1));
 }
 
-// Horizontal bars: category labels per row (left of the plot, or above each bar), value ticks along the bottom.
 function buildHorizontalBarAxes(chart: Chart, layout: ChartLayout, order: number): RenderNode[] {
   const { plot, bounds } = layout;
   const rows = horizontalRows(chart, plot);

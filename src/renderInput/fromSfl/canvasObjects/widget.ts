@@ -26,7 +26,17 @@ function fontWeight(value: string | undefined): string | undefined {
   return value && FONT_WEIGHT.test(value) ? value : undefined;
 }
 
-const TICK_SCALE_NUMBERS = ['ticks', 'major', 'radius', 'length', 'thickness', 'round', 'start', 'sweep', 'intensity'] as const;
+const TICK_SCALE_NUMBERS = [
+  'ticks',
+  'major',
+  'radius',
+  'length',
+  'thickness',
+  'round',
+  'start',
+  'sweep',
+  'intensity',
+] as const;
 const TICK_SCALE_COLORS = ['color', 'accent'] as const;
 
 function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
@@ -62,9 +72,15 @@ function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
     labels:
       properties.labels === 'true'
         ? {
-            size: Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined ? Number(properties.labelSize) : undefined,
+            size:
+              Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined
+                ? Number(properties.labelSize)
+                : undefined,
             color: color(properties.labelColor),
-            offset: Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined ? Number(properties.labelOffset) : undefined,
+            offset:
+              Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined
+                ? Number(properties.labelOffset)
+                : undefined,
             weight: fontWeight(properties.labelWeight),
             fontFamily: fontFamily(properties.labelFont),
           }
@@ -72,7 +88,19 @@ function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
   };
 }
 
-const RULER_NUMBERS = ['ticks', 'major', 'length', 'thickness', 'round', 'dent', 'spread', 'inset', 'line', 'gap', 'intensity'] as const;
+const RULER_NUMBERS = [
+  'ticks',
+  'major',
+  'length',
+  'thickness',
+  'round',
+  'dent',
+  'spread',
+  'inset',
+  'line',
+  'gap',
+  'intensity',
+] as const;
 const RULER_COLORS = ['color', 'accent', 'glow'] as const;
 const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
 const RULER_OPTIONAL_COLORS = ['core'] as const;
@@ -118,9 +146,15 @@ function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
     labels:
       properties.labels === 'true'
         ? {
-            size: Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined ? Number(properties.labelSize) : undefined,
+            size:
+              Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined
+                ? Number(properties.labelSize)
+                : undefined,
             color: color(properties.labelColor),
-            offset: Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined ? Number(properties.labelOffset) : undefined,
+            offset:
+              Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined
+                ? Number(properties.labelOffset)
+                : undefined,
             weight: fontWeight(properties.labelWeight),
             fontFamily: fontFamily(properties.labelFont),
           }

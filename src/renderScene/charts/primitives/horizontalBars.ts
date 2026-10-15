@@ -21,10 +21,8 @@ export interface HorizontalRows {
   count: number;
   slotHeight: number;
   groupGap: number;
-  // Height reserved above a bar for its category label (labels left-aligned above the bars).
   labelRow: number;
   barsHeight: number;
-  // Shifts a thin bar block to the middle of its row.
   offset: number;
 }
 

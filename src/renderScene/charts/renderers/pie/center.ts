@@ -14,14 +14,12 @@ function fill(template: string, chart: PieChart): string {
     .replace(/\{label\}/g, chart.series[0]?.label ?? '');
 }
 
-// The text in the middle of a donut: a number, a title, or both on two lines.
 export function renderPieCenter(context: ChartRenderContext<PieChart>, geometry: PieGeometry): RenderNode[] {
   const { chart, bounds, nextOrder } = context;
   const template = chart.config?.pieCenterText;
   if (!template) {
     return [];
   }
-  // A text in SFL cannot hold a real line break, so "\n" in it breaks the line.
   const lines = fill(template, chart).split(/\\n|\n/);
   const fontSize = finite(chart.config?.pieCenterSize, Math.max(14, Math.min(40, geometry.outerRadius * 0.3)));
   const lineHeight = fontSize * 1.2;

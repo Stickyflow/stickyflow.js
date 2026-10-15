@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument, SflValue } from '../sflLanguage/ast';
-import { type BindingDiagnostic, type DataSourceContract, scalarOf, type SourceMode } from './types';
+import { type BindingDiagnostic, type DataSourceContract, type SourceMode, scalarOf } from './types';
 
 function identOf(value: SflValue | undefined): string | undefined {
   return value?.type === 'ident' ? value.segments.join('.') : undefined;
@@ -7,7 +7,8 @@ function identOf(value: SflValue | undefined): string | undefined {
 
 function readContract(block: SflBlock, diagnostics: BindingDiagnostic[]): DataSourceContract {
   const properties = block.entries.flatMap(entry => (entry.type === 'property' ? [entry.property] : []));
-  const mode: SourceMode = identOf(properties.find(property => property.key === 'mode')?.value) === 'record' ? 'record' : 'table';
+  const mode: SourceMode =
+    identOf(properties.find(property => property.key === 'mode')?.value) === 'record' ? 'record' : 'table';
   const contract: DataSourceContract = { name: block.name, mode, fields: {}, declared: {} };
   for (const entry of block.entries) {
     if (entry.type === 'fields') {

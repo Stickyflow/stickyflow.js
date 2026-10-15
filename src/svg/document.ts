@@ -2,8 +2,8 @@ import type { RenderScene } from '../renderScene/scene';
 import { SvgDefinitionRegistry } from './definitions';
 import { DOM_CONTRACT_VERSION } from './domContract/version';
 import { num } from './format';
-import { nodeSvg } from './nodes';
 import { withLinkHitAreas } from './linkHitAreas';
+import { nodeSvg } from './nodes';
 import type { SvgRenderOptions, SvgRenderResult } from './types';
 
 export function renderSvgDocument(scene: RenderScene, options: SvgRenderOptions = {}): SvgRenderResult {

@@ -30,11 +30,6 @@ export function normalizeVec(v: Vec): Vec {
   return { x: v.x / length, y: v.y / length };
 }
 
-// width/depth point at the fixed 30deg axis angle - no native CSS cursor
-// (nwse/nesw-resize are 45) matches that, so the cursor is a tiny inline
-// double-headed-arrow SVG rotated to the arrow's own exact direction
-// instead, built from the same `direction` vector the arrow itself is
-// drawn with, so the two can never drift out of sync with each other.
 function axisCursorUrl(direction: Vec): string {
   const angleDeg = (Math.atan2(direction.y, direction.x) * 180) / Math.PI;
   const svg =
@@ -62,14 +57,6 @@ interface ArrowElements {
   head: SVGPolygonElement;
 }
 
-// A vector handle instead of a resize-box handle: a shaft running outward
-// from the object along the dimension's true isometric direction (the same
-// angle that dimension's own edge is drawn at), capped with an arrowhead -
-// grabbing and pulling it is the gesture, same as a 3D tool's per-axis
-// scale gizmo. The visible shaft/head carry no pointer events of their own;
-// a wider transparent line underneath is the actual (and easier-to-grab)
-// hit target. updateAxisArrow (below) repositions these same elements
-// during a live drag instead of rebuilding them from scratch.
 function createAxisArrow(document: Document, axis: IsometricAxis, direction: Vec, svg: SVGSVGElement): ArrowElements {
   const group = svgElement(document, 'g');
   group.setAttribute('data-sf-resize-handle', `iso-${axis}`);
@@ -135,8 +122,6 @@ function axisArrow(
   return elements.group;
 }
 
-/** Re-aims an existing axis-arrow group (found via its `data-sf-resize-handle`
- *  value) during a live drag, instead of tearing it down and rebuilding it. */
 export function updateAxisArrowGroup(group: SVGGElement, origin: Vec, direction: Vec, svg: SVGSVGElement): void {
   const hit = group.querySelector('line:nth-child(1)') as SVGLineElement | null;
   const shaft = group.querySelector('line:nth-child(2)') as SVGLineElement | null;
@@ -159,12 +144,6 @@ export interface IsometricSize {
   depth: number;
 }
 
-/** The origin/direction for each axis arrow, shared between the initial
- *  overlay build and the live-drag reposition in isometricAxisResize.
- *  Width and depth originate at the center of the face they alone resize
- *  (side, front) rather than at a corner - "grab the face, slide it along
- *  its own axis" reads more directly than a corner handle does. Height has
- *  no dedicated third face to center on, so it keeps the bottom vertex. */
 export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis, { origin: Vec; direction: Vec }> {
   const faces = isometricFaces(object);
   const apex = faces.top[0];
@@ -178,10 +157,6 @@ export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis
   };
 }
 
-// Clears the axis-resize arrow tips (ARROW_LENGTH_PX=34 out from the same
-// origin, for the two directions that share an arrow) plus the bubble's
-// own radius and a visible gap - otherwise the bubble sits mid-shaft and
-// overlaps the arrow it shares an origin with.
 const DUPLICATE_MARGIN_PX = ARROW_LENGTH_PX + BUBBLE_RADIUS_PX + 10;
 
 export type IsometricQuickDuplicateDirection =
@@ -196,13 +171,6 @@ function reflect(point: Vec, through: Vec): Vec {
   return { x: through.x * 2 - point.x, y: through.y * 2 - point.y };
 }
 
-/** One bubble per cube face (all 6, not just the 3 that happen to be
- *  visible) so a copy can be spun off in any direction, each offset exactly
- *  along that axis's own true isometric vector. The 3 hidden faces (the
- *  ones axisArrowPlacements has no dedicated geometry for, since nothing is
- *  drawn there) get their origin by reflecting the opposite, visible face's
- *  origin through the object's own visual center - same distance out, exact
- *  opposite direction. */
 export function quickDuplicatePlacements(
   object: IsometricSize,
 ): Record<IsometricQuickDuplicateDirection, { origin: Vec; direction: Vec }> {
@@ -238,11 +206,6 @@ export function quickDuplicatePlacements(
 
 export const ISO_DUPLICATE_BUBBLES_ATTR = 'data-sf-iso-duplicate-bubbles';
 
-// Only the three visible faces get a bubble - top (push a copy up, stacking
-// a "floor" on top), front (push left/down, the face toward the viewer),
-// side (push right/down). The three hidden/reflected directions
-// (iso-width-neg, iso-depth-neg, iso-height-pos) are still valid
-// quickDuplicatePlacements entries - just not ones worth a bubble for.
 const VISIBLE_FACE_DIRECTIONS: readonly IsometricQuickDuplicateDirection[] = [
   'iso-height-neg',
   'iso-depth-pos',
@@ -273,10 +236,6 @@ export function isometricQuickDuplicateBubbles(
   return group;
 }
 
-// Three vector handles instead of the generic rectangle's eight square
-// resize handles - dragging one changes exactly one of width/height/depth,
-// so the box always keeps its isometric angles instead of the generic
-// resize's free (and angle-breaking) two-axis stretch.
 export function isometricSelectionOverlay(
   document: Document,
   primary: SVGGraphicsElement,

@@ -15,11 +15,13 @@ Model M {
 `;
 
 function labelNode(svg: string, seriesId: string): string {
-  const match = svg.match(new RegExp(`<text id="sf-chart-pie-label-c-${seriesId}"[\\s\\S]*?</text>`));
-  if (!match) {
+  const parts = ['name', 'value'].map(
+    part => svg.match(new RegExp(`<text id="sf-chart-pie-label-${part}-c-${seriesId}".*?</text>`, 's'))?.[0],
+  );
+  if (parts.some(part => part === undefined)) {
     throw new Error(`no label for series "${seriesId}" in output`);
   }
-  return match[0];
+  return parts.join('');
 }
 
 describe('pie chart — in-slice labels', () => {
@@ -32,15 +34,15 @@ describe('pie chart — in-slice labels', () => {
 
   it('omits the label on a slice too thin to hold one', () => {
     const svg = render(pieOf([60, 39, 1])).svg;
-    expect(svg).toContain('sf-chart-pie-label-c-s0');
-    expect(svg).toContain('sf-chart-pie-label-c-s1');
-    expect(svg).not.toContain('sf-chart-pie-label-c-s2');
+    expect(svg).toContain('sf-chart-pie-label-name-c-s0');
+    expect(svg).toContain('sf-chart-pie-label-name-c-s1');
+    expect(svg).not.toContain('sf-chart-pie-label-name-c-s2');
   });
 
   it('respects showAxisLabels: false, same toggle every other chart type uses', () => {
     const svg = render(pieOf([60, 40], false)).svg;
-    expect(svg).not.toContain('sf-chart-pie-label-c-s0');
-    expect(svg).not.toContain('sf-chart-pie-label-c-s1');
+    expect(svg).not.toContain('sf-chart-pie-label-name-c-s0');
+    expect(svg).not.toContain('sf-chart-pie-label-name-c-s1');
   });
 
   it('picks a readable text color against each slice, not a fixed one', () => {
@@ -89,7 +91,7 @@ describe('pie chart — a slice dragged down to zero', () => {
 
   it('drops only its in-slice label, which no longer fits', () => {
     const svg = render(pieOf([60, 40, 0])).svg;
-    expect(svg).not.toContain('sf-chart-pie-label-c-s2');
+    expect(svg).not.toContain('sf-chart-pie-label-name-c-s2');
   });
 });
 
@@ -123,6 +125,6 @@ describe('pie chart — the drag round trip through the source', () => {
     expect(svg).toContain('sf-chart-pie-slice-c-s1');
 
     const regrown = applyChartValueChange(emptied, { owner, series: 's1', index: 0, value: 20 });
-    expect(render(regrown).svg).toContain('sf-chart-pie-label-c-s1');
+    expect(render(regrown).svg).toContain('sf-chart-pie-label-name-c-s1');
   });
 });

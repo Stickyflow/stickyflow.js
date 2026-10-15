@@ -17,57 +17,90 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-15
+
 ### Added
 
+- **Data binding.** A document can declare `DataSource` blocks with typed fields
+  and bind properties to them with `key: <- expression`. The runtime
+  (`createBindingRuntime`, `renderBound`, `createDataSource`) validates the
+  bindings against the declared types, re-renders only what changed, and reports
+  problems as diagnostics. Expressions support arithmetic, comparisons,
+  `&&` / `||`, boolean literals and number functions such as `moveToward`.
+- **Events and handlers.** `onPress`, `onRelease`, `onTap` and `onDrag` on
+  Shapes, Texts and Widgets, and `onTick` on a record `DataSource`, write to
+  data sources (`onTap: counter.value <- counter.value + 1`). Element state is
+  readable in expressions as `id.pressed`, `id.hovered` and `id.pointer`.
+  `connectInteraction(viewer, runtime)` from `stickyflow/viewer` wires pointer
+  input to the runtime; `viewer.setPaused()` freezes shader time and ticks.
+- **Shaders and widgets.** A `Shader` block with parameters that can be bound to
+  data, new built-in shaders (`plasmaGauge`, `tickScale`, `button`,
+  `chromaticGlassPlate`, orb and halo effects), `shaderProgram` and
+  `SHADER_DEFAULTS` as exports, a native `RollingNumber` widget, a `tickScale`
+  widget with numbers and a `ruler` widget with a bending wire and a knob.
+- **Text block** with wider font weights and letter spacing, and editable
+  `Shader` blocks.
+- **Line charts:** `lineWidth`, `lineGlow`, `pointSize`, `pointFill`,
+  `pointStrokeWidth`, per-series `dash` and `strokeWidth`, gradient strokes,
+  and `highlightPoints` with a guide and a label.
+- **Pie charts:** `pieStartAngle`, `pieSweep`, `pieExplode` (and a per-series
+  `offset`), `pieGlow`, `pieStroke`, `pieStrokeWidth`, `pieLabelPosition`,
+  `pieLabelContent`, `pieLabelColor` and `pieCenterText`.
+- **Bar charts:** horizontal bars, segmented bars with gap and snap, tracks with
+  hatching, photo backgrounds with frosted glass, per-bar gradients, glow, value
+  labels, axis lines and ticks.
 - Change-highlighting: `viewer.update()` takes an opt-in `highlightChanges` flag
-  that briefly flashes the shapes an update actually added or changed, plus a
-  `sceneDiff` event (always emitted) reporting added/removed/changed owner ids
-  for a host to use on its own. `highlightChanges` also accepts `{ color }`
-  instead of `true`, so a host that can distinguish categories of external
-  update (e.g. a likely bulk/tool-driven rewrite vs. an ordinary one) can flash
-  a different color for each.
-
-### Fixed
-
-- SFL patching no longer corrupts documents containing `"""` multiline strings.
-  The patcher used its own line-local regex scanner, so a `{` or `//` inside a
-  multiline string desynchronised brace depth for the rest of the document —
-  editing such an entity could produce unparseable SFL. Block and property
-  positions now come from the real lexer, so there is a single SFL grammar.
-- Property values that span multiple lines are replaced as a whole instead of
-  only their first line.
-- A throwing host event handler no longer prevents the remaining handlers from
-  running; the error is rethrown asynchronously instead of being swallowed.
+  that briefly flashes the shapes an update added or changed, plus a `sceneDiff`
+  event (always emitted) with added, removed and changed owner ids.
+  `highlightChanges` also accepts `{ color }`.
+- Bending orthogonal links with segment handles, editable frame titles, move and
+  resize of widgets, an isometric snap grid for move and axis resize.
+- Circular `radial` charts and configurable polar `areaOpacity`.
+- Tier layering, viewer encapsulation and the headless guarantee are enforced by
+  `test/boundary.test.ts`. A jsdom-based test project (`npm run test:dom`) covers
+  the DOM-bound interaction tier.
 
 ### Changed
 
-- **Breaking (terminology).** Runtime and interaction APIs now use the current
-  canvas-object vocabulary: `entityClick` is `canvasObjectClick`, and the pure
-  patch helpers are `insertCanvasObject` / `removeCanvasObject` with matching
-  option types. Diagnostic ownership is now exposed as `ownerId` instead of
-  `entityId`. The legacy SFL `Entity` block and the version-1 serialized
-  `data-sf-role="entity"` value remain supported.
+- **Breaking (terminology).** Runtime and interaction APIs use the canvas-object
+  vocabulary: `entityClick` is `canvasObjectClick`, and the pure patch helpers
+  are `insertCanvasObject` / `removeCanvasObject`. Diagnostic ownership is
+  exposed as `ownerId` instead of `entityId`. The legacy SFL `Entity` block and
+  the version-1 `data-sf-role="entity"` value remain supported.
+- **Breaking (isometric objects).** One `fill` replaces `topFill`, `frontFill`
+  and `sideFill`; the shaded sides are derived from it.
 - **Breaking (internal module layout).** `rendering/renderScene` is split into
-  `rendering/scene` (scene vocabulary), `rendering/renderInput` (pipeline input)
-  and `rendering/domContractVersion`. The public entry re-exports the same
-  names, so only deep imports into `dist/rendering/renderScene` are affected.
-- **Breaking (`Token`).** Lexer tokens now carry required `endLine`/`endCol`.
-- DOM-contract access (`resolveOwner`, `findOwnerNode`, overlays, SVG namespace)
-  moved out of `viewer/` into its own `domContract` tier, consumed by both the
-  viewer and the interaction tier. `stickyflow/interaction` now uses only the
-  public `stickyflow/viewer` API.
-- Added circular `radial` charts and configurable polar `areaOpacity`.
+  `rendering/scene`, `rendering/renderInput` and `rendering/domContractVersion`.
+  Only deep imports into `dist/rendering/renderScene` are affected.
+- **Breaking (`Token`).** Lexer tokens carry required `endLine` and `endCol`.
+- DOM-contract access moved into its own `domContract` tier, used by both the
+  viewer and the interaction tier. `stickyflow/interaction` uses only the public
+  `stickyflow/viewer` API.
+- A pie label drag writes `labelOffsetX` and `labelOffsetY` instead of a
+  `labelPulled` flag.
+- The legend is off by default; `showLegend: true` turns it on.
+- The package contains no comments in its sources, and the largest functions are
+  split into small ones. Rendered output is byte-identical.
 
-### Added
+### Fixed
 
-- Tier layering, viewer encapsulation and the headless guarantee are enforced by
-  `test/boundary.test.ts` instead of convention.
-- A second, jsdom-based test project (`npm run test:dom`) for the DOM-bound
-  interaction tier. The node-only run stays untouched as the headless proof.
-
-- Add full SFL parsing and headless SVG rendering for freeform `Path` and `Chart` entities.
-- Preserve explicit `[x, y]` series data for line and scatter charts while retaining legacy flat line-series support.
-- Add the registry-ready polar `radar` chart type with category labels, radial scale, polygon grid and multi-series rendering.
+- `stickyflow/web-component` can be imported where there is no DOM (SSR). It no
+  longer throws at import time, and `defineStickyflowDiagram()` does nothing
+  without `customElements`.
+- A property change on a chart no longer lands in a nested block that happens
+  to share the key (for example the `text` of a `Rule`).
+- A pie label can be pulled out of the ring again; its offset was clamped to zero.
+- Pie and polar-area labels on black or gray slices stay readable.
+- A glow on a small element is no longer cut to a box by the filter region.
+- SFL patching no longer corrupts documents containing `"""` multiline strings.
+  Block and property positions come from the real lexer, so there is a single
+  SFL grammar.
+- Property values that span multiple lines are replaced as a whole.
+- A throwing host event handler no longer prevents the remaining handlers from
+  running; the error is rethrown asynchronously.
+- A press that the document handles no longer selects the element afterwards.
+- Widget digits follow a changed value on update; shader surfaces render at the
+  size shown on screen, so zoomed widgets stay sharp.
 
 ## [0.1.0] - 2026-07-26
 

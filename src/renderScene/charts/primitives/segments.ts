@@ -7,8 +7,6 @@ export interface SegmentFrame {
   height: number;
 }
 
-// A bar drawn as separate segments along its length: left to right for horizontal bars, bottom to top
-// for vertical ones. fraction is how much of the full length is filled (1 for a track).
 export function segmentedBarPath(
   frame: SegmentFrame,
   orientation: 'horizontal' | 'vertical',

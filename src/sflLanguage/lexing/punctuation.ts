@@ -19,7 +19,6 @@ const PUNCTUATION: Partial<Record<string, TokenType>> = {
 export function readPunctuation(cursor: SourceCursor, start: SourcePosition): Token | null {
   const character = cursor.peek();
   const type = character ? PUNCTUATION[character] : undefined;
-  // '&&' is the logical operator; a single '&' joins names in a composition.
   if (!character || !type || (character === '&' && cursor.peek(1) === '&')) {
     return null;
   }

@@ -9,15 +9,18 @@ export class SvgFilterDefinitions {
     private readonly prefix: string,
   ) {}
 
-  // `size` is the smaller side of the element when it is known; a small element with a wide glow
-  // needs a filter region that reaches past the glow, or the glow is cut to a box.
   filter(style: SceneStyle, nodeId: string, size?: number): string | undefined {
     if (style.innerShadow) {
       return this.define(nodeId, style.innerShadow, innerShadowPrimitives);
     }
     if (style.shadow) {
       const reach = style.shadow.blur * 1.5 + Math.max(Math.abs(style.shadow.dx), Math.abs(style.shadow.dy));
-      return this.define(nodeId, style.shadow, outerShadowPrimitives, size && size > 0 ? Math.max(0.5, reach / size) : 0.5);
+      return this.define(
+        nodeId,
+        style.shadow,
+        outerShadowPrimitives,
+        size && size > 0 ? Math.max(0.5, reach / size) : 0.5,
+      );
     }
     if (style.blur || style.saturate !== undefined) {
       return this.define(nodeId, { blur: style.blur ?? 0, saturate: style.saturate ?? 1 }, blurPrimitives);

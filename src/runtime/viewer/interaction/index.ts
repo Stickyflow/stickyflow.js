@@ -10,10 +10,6 @@ export interface InteractionHandle {
   getSelection(): OwnerRef[];
   select(ids: string[]): void;
   repaint(): void;
-  /** Briefly flash a ring/halo around each given owner id (change-highlighting).
-   *  Ids that no longer resolve to a live node are silently skipped. `color`
-   *  overrides the default amber — a host passes its own to tell categories of
-   *  external change apart (e.g. a bulk/tool-driven rewrite vs. an edit). */
   flashChanged(ownerIds: readonly string[], color?: string): void;
   destroy(): void;
 }

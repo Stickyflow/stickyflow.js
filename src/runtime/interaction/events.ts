@@ -23,8 +23,6 @@ export interface ResizeChangeEvent {
   y: number;
   width: number;
   height: number;
-  /** Isometric axis-handle resize only - the new depth, when that's the
-   *  dimension being dragged. Unset for every other resize gesture. */
   depth?: number;
 }
 
@@ -38,9 +36,7 @@ export interface LinkReconnectEvent {
 
 export interface LinkSegmentChangeEvent {
   owner: OwnerRef;
-  /** Slot in the link's `segments:` offsets: 1 first inner segment, 2 middle, 3 last inner. */
   index: number;
-  /** Perpendicular offset from the default route, in diagram units. */
   offset: number;
 }
 
@@ -76,7 +72,6 @@ export interface ChartValueChangeEvent {
   value: number;
 }
 
-// Emitted on every pointer move of a chart value drag; value is null once the drag ends.
 export interface ChartValuePreviewEvent {
   owner: OwnerRef;
   series: string;
@@ -109,10 +104,6 @@ export interface PathDrawCompleteEvent {
   tension: number;
 }
 
-// A free-form drag of a Sankey node, released. dx/dy are deltas from this
-// gesture alone (in the chart's own user-space units) - the patch function
-// adds them to whatever offset the node already carries, so repeated drags
-// accumulate rather than overwrite.
 export interface SankeyNodeMoveEvent {
   owner: OwnerRef;
   nodeId: string;

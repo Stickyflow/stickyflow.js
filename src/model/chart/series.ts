@@ -15,9 +15,7 @@ export interface ChartSeries {
   symbol?: { points: Array<[number, number]>; normalized?: boolean; tension?: number };
   stroke?: string;
   strokeWidth?: number;
-  // Distance a pie slice is pushed out from the center.
   offset?: number;
-  // Dash pattern of a line series.
   dash?: number[];
   labelOffsetX?: number;
   labelOffsetY?: number;

@@ -22,7 +22,6 @@ function hitAreaFor(path: ScenePath, linkId: string): ScenePath {
   };
 }
 
-// Invisible, wider strokes under each link so a thin line is easy to hover and click.
 export function withLinkHitAreas(nodes: RenderNode[]): RenderNode[] {
   return nodes.flatMap(node =>
     node.type === 'path' && node.identity?.role === 'link' && node.identity.primary

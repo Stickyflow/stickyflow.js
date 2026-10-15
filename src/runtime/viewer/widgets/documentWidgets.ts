@@ -84,7 +84,6 @@ export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle 
       if (widgetStyle(surface).motion !== 'fade') {
         return setRollingNumber(surface, value, true);
       }
-      // A fading display settles on the latest value at most every FADE_INTERVAL ms, so fast data does not flicker.
       const now = Date.now();
       const wait = (lastApplied.get(widgetId) ?? 0) + FADE_INTERVAL - now;
       if (wait <= 0) {
@@ -116,12 +115,16 @@ export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle 
       }
     },
     clearValues(): void {
-      pending.forEach(timer => clearTimeout(timer));
+      for (const timer of pending.values()) {
+        clearTimeout(timer);
+      }
       pending.clear();
       valueOverrides.clear();
     },
     destroy(): void {
-      pending.forEach(timer => clearTimeout(timer));
+      for (const timer of pending.values()) {
+        clearTimeout(timer);
+      }
       pending.clear();
       valueOverrides.clear();
     },

@@ -47,7 +47,11 @@ function stackingOf(input: RenderInput): Map<string, Stacking> {
   add('shape', input.shapes, 10_000);
   add('widget', input.widgets ?? [], 10_000);
   add('isometric', input.isometricObjects ?? [], 15_000);
-  add('link', input.links.map(item => item.link), 20_000);
+  add(
+    'link',
+    input.links.map(item => item.link),
+    20_000,
+  );
   add('chart', input.charts ?? [], 20_000);
   add('path', input.paths ?? [], 30_000);
   return stacking;

@@ -2,12 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { render, sflToCanvasState, sflToRenderInput } from '../src/index';
 import { pointAtNormalizedPort } from '../src/model/geometry/ports';
 
-// Schematics category (stickyflow-atlas parity, SFL 1.4 §3.5): a Link
-// endpoint can be `entity.portName` - a dot-path whose last segment names a
-// `Port` child block on the Symbol the entity's `shape:` points at. `at:` is
-// normalized like Symbol.points (0..1, relative to the instance's own
-// bounding box).
-
 const SFL = `sfl 1.4
 
 Symbol OpAmp {
@@ -56,12 +50,6 @@ describe('Named Ports (§3.5, entity.portName)', () => {
   });
 
   it('does not misdetect a plain (non-port) 2-segment endpoint as a Named Port', () => {
-    // amp2 has no Symbol at all - "missing" on its endpoint therefore can't
-    // match any symbol.ports, so sflToCanvasState's endpoint() falls through
-    // to the pre-existing generic dot-path lookup (last segment as a bare
-    // name), exactly as it did before Named Ports existed. This guards
-    // against the new "entity.portName" check accidentally swallowing every
-    // ordinary multi-segment endpoint.
     const sfl = `sfl 1.4
 
 Model board {
@@ -73,17 +61,8 @@ Model board {
     const state = sflToCanvasState(sfl);
     const link = state.links[0];
     expect(link.toPort).toBeUndefined();
-    expect(link.toId).toBe('missing'); // unresolved last segment, used verbatim as id (pre-existing fallback)
+    expect(link.toId).toBe('missing');
   });
-
-  // The "missing symbol/port -> fall back to the entity's center" branch in
-  // sflToRenderInput's pointFor is defensive: sflToCanvasState only ever sets
-  // fromPort/toPort after confirming the port exists on the resolved
-  // symbol, so that branch is unreachable through the pure SFL-text pipeline
-  // - it exists for callers of the lower-level Link/Shape API (e.g. the
-  // interaction layer) that could otherwise hand pointFor an inconsistent
-  // named-port reference. See the equivalent comment in stickyflow-atlas's
-  // useResolvedLinks.ts.
 
   it('renders end-to-end without crashing and produces a link path', () => {
     const { svg } = render(SFL);
@@ -92,11 +71,7 @@ Model board {
   });
 
   it('pointAtNormalizedPort accounts for rectangle rotation', () => {
-    // Unrotated: at=(1, 0.5) on a 100x60 box at (0,0) is the right-edge midpoint.
     expect(pointAtNormalizedPort({ x: 0, y: 0, width: 100, height: 60 }, [1, 0.5])).toEqual({ x: 100, y: 30 });
-    // Rotated 90°: the box's local right edge now points toward +Y in world
-    // space (rotateVector(50, 0, 90) ~= (0, 50)), so the port lands below the
-    // box's center rather than to its right.
     const rotated = pointAtNormalizedPort({ x: 0, y: 200, width: 100, height: 60, rotation: 90 }, [1, 0.5]);
     expect(rotated.x).toBeCloseTo(50, 9);
     expect(rotated.y).toBeCloseTo(280, 9);

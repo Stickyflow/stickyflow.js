@@ -6,8 +6,11 @@ export function pointerUserY(svg: SVGSVGElement, event: PointerEvent): number {
   return new DOMPoint(event.clientX, event.clientY).matrixTransform(transform.inverse()).y;
 }
 
-// The pointer coordinate along the value axis: x for horizontal bars, y otherwise.
-export function pointerAlongValueAxis(svg: SVGSVGElement, event: PointerEvent, horizontal: boolean | undefined): number {
+export function pointerAlongValueAxis(
+  svg: SVGSVGElement,
+  event: PointerEvent,
+  horizontal: boolean | undefined,
+): number {
   const transform = svg.getScreenCTM();
   if (!transform) {
     return 0;

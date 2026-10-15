@@ -1,7 +1,5 @@
 import type { ShaderProgram } from '../types';
 
-// A straight scale with a wire beside it. The wire bends around the knob and glows there; the ticks give way with it.
-// The knob itself is a Shape of the document, placed on the wire by the viewer.
 const fragmentSource = `
 precision highp float;
 
@@ -26,8 +24,6 @@ uniform vec3 uGlow;
 uniform vec3 uCore;
 varying vec2 vUv;
 
-// The wire across the scale at a position along it. Right at a knob it follows the outline of the knob at the distance of the gap;
-// farther out it eases into the straight line in a wide, soft shoulder. Without a known knob it bends in a soft hill.
 float wireAt(float at, float lineAt, float depth, float radius, float knob, float spread) {
   float reach = abs(at - knob);
   if (uKnobRadius > 0.0) {
@@ -45,7 +41,6 @@ float wireAt(float at, float lineAt, float depth, float radius, float knob, floa
 void main() {
   vec2 px = vUv * uResolution;
   float horizontal = step(0.5, uAxis);
-  // Along the scale from its start, and across it from the side the ticks are on.
   float along = mix(px.y, px.x, horizontal);
   float across = mix(px.x, uResolution.y - px.y, horizontal);
   float extent = mix(uResolution.y, uResolution.x, horizontal);
@@ -68,7 +63,6 @@ void main() {
   float bump = exp(-away * away);
   float radius = (uKnobRadius + (uGap > 0.0 ? uGap : 0.04)) * width;
   float wire = wireAt(along, lineAt, depth, radius, knob, spread);
-  // The distance to the wire across the scale shrinks where the wire is steep, so measure it along the normal.
   float slope = (wireAt(along + 1.0, lineAt, depth, radius, knob, spread) - wireAt(along - 1.0, lineAt, depth, radius, knob, spread)) * 0.5;
   float lineDistance = abs(across - wire) / sqrt(1.0 + slope * slope);
   float line = 1.0 - smoothstep(halfLine - 0.75, halfLine + 0.75, lineDistance);
@@ -78,10 +72,8 @@ void main() {
   vec3 glowColor = dot(uGlow, uGlow) > 0.0 ? uGlow : uAccent;
   float glowSide = across < wire ? 1.0 : 0.35;
   float glow = bump * exp(-wireDistance / (0.1 * width)) * glowSide * 1.3 * max(uIntensity, 0.0);
-  // A hotter core of another color sits at the knob, where the glow starts.
   vec3 coreColor = dot(uCore, uCore) > 0.0 ? uCore : mix(glowColor, vec3(1.0), 0.55);
   float core = bump * bump * exp(-wireDistance / (0.035 * width)) * glowSide * 1.6 * max(uIntensity, 0.0);
-  // Both fade out before the edge of the surface instead of being cut off by it.
   float reachEdge = min(min(along, extent - along), min(across, width - across));
   float fade = smoothstep(0.0, 0.14 * width, reachEdge);
   glow *= fade;
@@ -102,7 +94,6 @@ void main() {
   vec2 q = abs(vec2(across - (tickEnd - tickLength * 0.5), tickAlong)) - vec2(tickLength * 0.5, halfTick) + corner;
   float edge = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
   float tick = (1.0 - smoothstep(-0.75, 0.75, edge)) * inRange * mix(0.4, 1.0, tickBump);
-  // The ticks at the knob turn white and fade back to their color with the distance.
   vec3 tickColor = mix(uColor, vec3(1.0), tickBump);
 
   float alpha = clamp(tick + line * 0.95 + glow + core, 0.0, 1.0);

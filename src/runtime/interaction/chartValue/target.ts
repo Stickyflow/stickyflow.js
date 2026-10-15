@@ -97,7 +97,6 @@ function resolveChartValueGeometry(
   if (!Number.isFinite(baseY)) {
     return null;
   }
-  // A horizontal bar is dragged by its end; stacked segments do not start at the plot edge.
   if (bbox && scale.horizontal && Math.abs(bbox.x - scale.plotY) > 1) {
     return null;
   }

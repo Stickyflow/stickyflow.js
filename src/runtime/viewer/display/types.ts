@@ -5,10 +5,6 @@ export interface ViewBox {
   h: number;
 }
 
-/** Owner ids added/removed/changed by a single updateContent() call, at owner
- *  granularity (data-sf-id — one owner is often several top-level SVG
- *  elements, e.g. a frame's body + tab + title text) rather than raw element
- *  id. Consumed by the `sceneDiff` viewer event and change-highlighting. */
 export interface SceneDiff {
   added: string[];
   removed: string[];

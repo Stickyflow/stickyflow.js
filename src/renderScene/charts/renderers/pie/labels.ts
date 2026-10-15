@@ -1,7 +1,13 @@
 import type { ChartSeries, PieChart } from '../../../../model/chart';
 import type { RenderNode, SceneText } from '../../../scene';
 import { DEFAULT_FONT, finite } from '../../../scene';
-import { clipSegmentToRect, representativeColor, sameHueContrastColor, sameHueTint } from '../../primitives';
+import {
+  clipSegmentToRect,
+  contrastTextColor,
+  representativeColor,
+  sameHueContrastColor,
+  sameHueTint,
+} from '../../primitives';
 import { seriesLabelProp, seriesValueProp } from '../../propPath';
 import type { ChartRenderContext } from '../types';
 import { pieArcPoint } from './geometry';
@@ -24,7 +30,6 @@ export interface PieLabelMark {
   end: number;
   labelOffsetX: number;
   labelOffsetY: number;
-  // The slice is pushed out, and its label moves with it.
   shift: { dx: number; dy: number };
 }
 
@@ -124,11 +129,7 @@ function createTick(
   };
 }
 
-function createPieLabel(
-  context: ChartRenderContext<PieChart>,
-  base: PieGeometry,
-  mark: PieLabelMark,
-): RenderNode[] {
+function createPieLabel(context: ChartRenderContext<PieChart>, base: PieGeometry, mark: PieLabelMark): RenderNode[] {
   const config = context.chart.config;
   const geometry = { ...base, centerX: base.centerX + mark.shift.dx, centerY: base.centerY + mark.shift.dy };
   const mid = (mark.start + mark.end) / 2;
@@ -166,7 +167,8 @@ function createPieLabel(
 
   const labelRadius = geometry.innerRadius + ringThickness * LABEL_RADIUS_FRACTION;
   const point = pieArcPoint(geometry, mid, labelRadius);
-  const color = config?.pieLabelColor ?? sameHueContrastColor(representativeColor(mark.color, '#0f172a'), '#0f172a');
+  const sliceColor = representativeColor(mark.color, '#0f172a');
+  const color = config?.pieLabelColor ?? sameHueContrastColor(sliceColor, contrastTextColor(sliceColor));
   const tick = createTick(context, mark, tickStart, tickStart, color, false);
   return [tick, ...labelTextPair(context, mark, point, color, fontSize, percent, false, mid)];
 }

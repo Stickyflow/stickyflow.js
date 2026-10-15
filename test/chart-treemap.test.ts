@@ -101,11 +101,6 @@ describe('Treemap chart', () => {
   });
 
   it('only shows one gradient stop for the one actual band, not one per default zone when axis_y has no thresholds', () => {
-    // TREEMAP_SFL's Axis y has no thresholds, so there's exactly one real
-    // band (0-100) even though the 3-entry default zone palette is used for
-    // fill color - the legend used to still draw all 3 zones, and the 2nd
-    // and 3rd showed a bogus "undefined-undefined" range past the one real
-    // boundary.
     const { svg } = render(TREEMAP_SFL);
     expect(svg).not.toContain('undefined');
     const stops = [
@@ -124,12 +119,6 @@ describe('Treemap chart', () => {
   });
 
   it('places each zone color stop at its own band boundary, not evenly spaced by zone count', () => {
-    // 0-100 axis with thresholds [10, 90] : a tiny "Low" band and a tiny
-    // "High" band either side of a huge "Medium" one. Evenly spacing 3
-    // zone colors by count (33%/66%/100%) would put the first stop at
-    // 33% instead of 10%, nowhere near the actual boundary. Still one
-    // smooth gradient throughout - one stop per zone, not a hard-edged
-    // pair - just positioned by real value, not by zone index.
     const uneven = TREEMAP_SFL.replace(
       'Axis y { min: 0; max: 100; step: 20 }',
       'Axis y { min: 0; max: 100; step: 20; thresholds: [10, 90] }',
@@ -206,28 +195,16 @@ describe('Treemap chart', () => {
       ),
     ].map(m => ({ x: Number(m[1]), y: Number(m[2]), width: Number(m[3]), height: Number(m[4]) }));
     expect(headers.length).toBe(3);
-    // Media (biggest branch) shares its top row with one other branch -
-    // find that horizontally-adjacent pair (same y) and check their gap :
-    // exactly the 4px cellGap, the same size as any leaf-to-leaf gap, so
-    // the whole chart reads as one consistent gap width rather than
-    // branches getting a conspicuously different one from leaves.
     const sameRow = headers.filter(h => headers.some(other => other !== h && Math.abs(other.y - h.y) < 0.01));
     expect(sameRow.length).toBeGreaterThanOrEqual(2);
     sameRow.sort((a, b) => a.x - b.x);
     const gapBetween = sameRow[1].x - (sameRow[0].x + sameRow[0].width);
     expect(gapBetween).toBeCloseTo(4);
-    // Leaves still render, just inset within their (now smaller) group region.
     const misc = scene.nodes.find(n => n.id === 'chart-treemap-tile-usage-misc');
     expect(misc?.type === 'rect' && misc.width > 0 && misc.height > 0).toBe(true);
   });
 
   it("gives a leaf at its own group's edge the same gap to its cross-group neighbor as to a sibling leaf", () => {
-    // Two groups side by side, each with one big and one small leaf - the
-    // group rects are exactly touching before any gap (squarify's raw
-    // output), so this is the case that used to double up : Photos (Media's
-    // own right edge) picking up both its own per-leaf inset AND a second,
-    // group-level inset at the same boundary, making the Media|Work gap
-    // read wider than the Videos|Photos gap right next to it.
     const twoGroups = `sfl 1.2
 
 Model board {
@@ -257,10 +234,7 @@ Model board {
     if (!videos || !photos || !docs) {
       return;
     }
-    // Videos and Photos are Media's own two leaves, side by side.
     const withinGroupGap = photos.x - (videos.x + videos.width);
-    // Photos (Media's right edge) and Docs (Work's left edge) are
-    // neighbors across the group boundary.
     const acrossGroupGap = docs.x - (photos.x + photos.width);
     expect(withinGroupGap).toBeGreaterThan(0);
     expect(acrossGroupGap).toBeCloseTo(withinGroupGap);
@@ -290,9 +264,6 @@ Model board {
     const photos = frameOf('photos');
     const docs = frameOf('docs');
     expect(videos && photos && docs).toBeTruthy();
-    // Media's two leaves (videos, photos) sit in the same horizontal band
-    // (matching y) since they're squarified inside one shared group
-    // rectangle, distinct from Work's docs tile.
     expect(videos?.y).toBeCloseTo(photos?.y ?? Number.NaN, 0);
     expect(docs?.y === videos?.y && docs?.x === videos?.x).toBe(false);
   });

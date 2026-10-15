@@ -1,4 +1,4 @@
-import type { Chart } from '../../model/chart';
+import type { Chart, PieChart, PolarAreaChart, RadarChart, RadialChart } from '../../model/chart';
 import type { Bounds, SceneRect } from '../scene';
 import { finite, paint } from '../scene';
 import { CARTESIAN_VALUE_TYPES } from './decorations';
@@ -6,12 +6,69 @@ import { isHorizontalBar } from './primitives';
 import { resolvePieRadii } from './primitives/pieShape';
 import { radarCategoryCount, radarRadius } from './primitives/radarShape';
 
-export function buildChartFrame(
-  chart: Chart,
-  bounds: Bounds,
-  plot: { x: number; y: number; width: number; height: number },
-  order: number,
-): SceneRect {
+type Plot = { x: number; y: number; width: number; height: number };
+type FrameDetail = NonNullable<SceneRect['detail']>;
+
+function scaleDetail(chart: Chart, plot: Plot): FrameDetail {
+  const horizontal = isHorizontalBar(chart);
+  const range = horizontal ? `${plot.x},${plot.width}` : `${plot.y},${plot.height}`;
+  return {
+    of: 'chartScale',
+    valueScale: `${range},${chart.axisY.min},${chart.axisY.max}${horizontal ? ',horizontal' : ''}`,
+  };
+}
+
+function pieDetail(chart: PieChart, plot: Plot): FrameDetail {
+  const { outerRadius, innerRadius, cornerRadius } = resolvePieRadii(
+    plot.width,
+    plot.height,
+    chart.config?.innerRadius,
+    chart.config?.pieCornerRadius,
+  );
+  return {
+    of: 'pieGeometry',
+    pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius},${cornerRadius}`,
+  };
+}
+
+function polarAreaDetail(chart: PolarAreaChart, plot: Plot): FrameDetail {
+  const maxRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
+  const innerRadius = Math.max(0, Math.min(finite(chart.config?.innerRadius, 0), maxRadius - 1));
+  const cornerRadius = Math.max(0, finite(chart.config?.pieCornerRadius, 0));
+  return {
+    of: 'pieGeometry',
+    pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${maxRadius},${innerRadius},${cornerRadius}`,
+  };
+}
+
+function radarDetail(chart: RadarChart | RadialChart, plot: Plot): FrameDetail {
+  const configuredCount = (chart.config?.categories?.filter(Boolean) ?? []).length;
+  const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));
+  const count = radarCategoryCount(configuredCount, dataCount);
+  const radius = radarRadius(plot.width, plot.height, finite(chart.fontSize, 12), chart.showAxisLabels !== false);
+  const centerX = plot.x + plot.width / 2;
+  const centerY = plot.y + plot.height / 2;
+  const curved = chart.chartType === 'radial' ? 1 : 0;
+  return {
+    of: 'radarGeometry',
+    radarGeometry: `${centerX},${centerY},${radius},${chart.axisY.min},${chart.axisY.max},${count},${curved}`,
+  };
+}
+
+function frameDetail(chart: Chart, plot: Plot): FrameDetail | undefined {
+  if (chart.chartType === 'pie') {
+    return pieDetail(chart, plot);
+  }
+  if (chart.chartType === 'polarArea') {
+    return polarAreaDetail(chart, plot);
+  }
+  if (chart.chartType === 'radar' || chart.chartType === 'radial') {
+    return radarDetail(chart, plot);
+  }
+  return CARTESIAN_VALUE_TYPES.has(chart.chartType) ? scaleDetail(chart, plot) : undefined;
+}
+
+export function buildChartFrame(chart: Chart, bounds: Bounds, plot: Plot, order: number): SceneRect {
   const frame: SceneRect = {
     type: 'rect',
     id: `chart-${chart.id}`,
@@ -28,52 +85,9 @@ export function buildChartFrame(
       strokeWidth: finite(chart.strokeWidth, 1),
     },
   };
-
-  if (CARTESIAN_VALUE_TYPES.has(chart.chartType)) {
-    // Horizontal bars read their value along x: the scale then describes the plot's x range.
-    const range = isHorizontalBar(chart) ? `${plot.x},${plot.width}` : `${plot.y},${plot.height}`;
-    frame.detail = {
-      of: 'chartScale',
-      valueScale: `${range},${chart.axisY.min},${chart.axisY.max}${isHorizontalBar(chart) ? ',horizontal' : ''}`,
-    };
+  const detail = frameDetail(chart, plot);
+  if (detail) {
+    frame.detail = detail;
   }
-
-  if (chart.chartType === 'pie') {
-    const { outerRadius, innerRadius, cornerRadius } = resolvePieRadii(
-      plot.width,
-      plot.height,
-      chart.config?.innerRadius,
-      chart.config?.pieCornerRadius,
-    );
-    frame.detail = {
-      of: 'pieGeometry',
-      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${outerRadius},${innerRadius},${cornerRadius}`,
-    };
-  }
-
-  if (chart.chartType === 'polarArea') {
-    const maxRadius = Math.max(1, Math.min(plot.width, plot.height) / 2 - 4);
-    const innerRadius = Math.max(0, Math.min(finite(chart.config?.innerRadius, 0), maxRadius - 1));
-    const cornerRadius = Math.max(0, finite(chart.config?.pieCornerRadius, 0));
-    frame.detail = {
-      of: 'pieGeometry',
-      pieGeometry: `${plot.x + plot.width / 2},${plot.y + plot.height / 2},${maxRadius},${innerRadius},${cornerRadius}`,
-    };
-  }
-
-  if (chart.chartType === 'radar' || chart.chartType === 'radial') {
-    const configuredCount = (chart.config?.categories?.filter(Boolean) ?? []).length;
-    const dataCount = Math.max(0, ...chart.series.map(series => series.values.length));
-    const count = radarCategoryCount(configuredCount, dataCount);
-    const radius = radarRadius(plot.width, plot.height, finite(chart.fontSize, 12), chart.showAxisLabels !== false);
-    const centerX = plot.x + plot.width / 2;
-    const centerY = plot.y + plot.height / 2;
-    const curved = chart.chartType === 'radial' ? 1 : 0;
-    frame.detail = {
-      of: 'radarGeometry',
-      radarGeometry: `${centerX},${centerY},${radius},${chart.axisY.min},${chart.axisY.max},${count},${curved}`,
-    };
-  }
-
   return frame;
 }

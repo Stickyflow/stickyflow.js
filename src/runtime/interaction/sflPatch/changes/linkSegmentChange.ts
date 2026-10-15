@@ -1,6 +1,6 @@
 import type { LinkSegmentChangeEvent } from '../../events';
-import { insertDirectProperty, replacePropertyValue } from '../edits/propertyValues';
 import { childIndent } from '../blockInsert';
+import { insertDirectProperty, replacePropertyValue } from '../edits/propertyValues';
 import { round1 } from '../format';
 import { findDirectProperty } from '../scan/properties';
 import { findOwnerBlock } from '../scanner';

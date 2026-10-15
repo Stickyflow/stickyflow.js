@@ -1,10 +1,6 @@
 import { DERIVED_HEIGHT_ROLES } from '../dom';
 import type { OwnerRef } from '../viewer';
 
-// 'isometric' only needs to be here for hasMovableGeometry below (dragging
-// the body to move it) - its resize handles are a separate, dedicated
-// session (see isometricAxisResize/) that bypasses the generic resize
-// pipeline entirely, so it was deliberately left out of COMPOSITE_ROLES.
 const GEOMETRY_ROLES: ReadonlySet<string> = new Set(['shape', 'chart', 'frame', 'swimlane', 'isometric', 'widget']);
 const COMPOSITE_ROLES: ReadonlySet<string> = new Set(['chart']);
 const MOVABLE_ROLES: ReadonlySet<string> = new Set([...GEOMETRY_ROLES, 'path']);

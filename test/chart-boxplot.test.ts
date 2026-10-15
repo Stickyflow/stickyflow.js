@@ -49,8 +49,6 @@ describe('Boxplot chart', () => {
   it('computes the five-number summary correctly (type-7 quantile)', () => {
     const { scene } = render(BOXPLOT_SFL);
     const box = scene.nodes.find(node => node.id === 'chart-box-scores-a');
-    // [55,60,65,70,90] sorted -> min 55, q1 60, median 65, q3 70, max 90
-    // box height in pixels spans q1..q3 -> (70-60)/100*200 = 20px (axis_y 0-100 over plot height ~200)
     expect(box?.type === 'rect' && box.height).toBeGreaterThan(0);
     expect(box?.type === 'rect' && box.width).toBeGreaterThan(0);
   });

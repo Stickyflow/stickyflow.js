@@ -2,9 +2,6 @@ import type { Rect } from '../../../model/geometry/types';
 import { isCameraGesture, pointerUserPoint, resolveOwner } from '../../dom';
 import type { SankeyNodeDragLink, SankeyNodeDragState } from './types';
 
-// Mirrors sankeyRibbonPath() in renderScene/charts/renderers/sankey/links.ts
-// exactly - see the comment there. Captures just the 6 numbers a drag needs
-// (the 3 repeated-for-bezier-control copies of sx/tx are redundant).
 const RIBBON_PATH =
   /^M\s+(-?[\d.]+)\s+(-?[\d.]+)\s+C\s+-?[\d.]+\s+-?[\d.]+\s+-?[\d.]+\s+(-?[\d.]+)\s+(-?[\d.]+)\s+-?[\d.]+\s+L\s+-?[\d.]+\s+(-?[\d.]+)\s+C\s+-?[\d.]+\s+-?[\d.]+\s+-?[\d.]+\s+(-?[\d.]+)\s+-?[\d.]+\s+-?[\d.]+\s+Z$/;
 

@@ -3,10 +3,6 @@ import { render } from '../src/index';
 import type { SceneDiffEvent } from '../src/runtime/viewer';
 import { createViewer } from '../src/runtime/viewer';
 
-// jsdom has no layout engine, no Web Animations API, and no matchMedia — stub
-// exactly what the change-flash path reaches for. getBBox: shapeChangeOverlay's
-// ring geometry. animate: startChangeFade's fade (spied, so "was it called?"
-// stands in for "did the animated path run"). matchMedia: reduced-motion.
 let animateSpy: ReturnType<typeof vi.fn>;
 
 function setReducedMotion(reduce: boolean): void {
@@ -28,7 +24,6 @@ beforeEach(() => {
     ({ x: 0, y: 0, width: 100, height: 50 }) as DOMRect;
   animateSpy = vi.fn(() => ({ cancel: () => undefined, finished: Promise.resolve() }));
   (Element.prototype as unknown as { animate: unknown }).animate = animateSpy;
-  // jsdom exposes no CSS object; findOwnerNode uses CSS.escape.
   const globals = globalThis as unknown as { CSS?: { escape(value: string): string } };
   if (!globals.CSS?.escape) {
     globals.CSS = { escape: value => String(value).replace(/[^\w-]/g, ch => `\\${ch}`) };
@@ -53,7 +48,6 @@ Model M {
 }
 `;
 
-// vs SFL: `a` changed (text), `c` + `f` added, nothing removed.
 const SFL_ALT = SFL.replace('text: "A"', 'text: "A2"')
   .replace(
     '  Entity b : Box',
@@ -84,7 +78,7 @@ const strokeOf = (group: SVGGElement): string | null => group.firstElementChild?
 describe('change-highlighting: sceneDiff event', () => {
   it('fires on every update() with added/removed/changed at owner granularity, flag or no flag', () => {
     const { viewer, diffs } = mount();
-    viewer.update({ source: SFL_ALT }); // no highlightChanges
+    viewer.update({ source: SFL_ALT });
 
     expect(diffs).toHaveLength(1);
     expect(diffs[0].diagramId).toBe('d');
@@ -92,7 +86,7 @@ describe('change-highlighting: sceneDiff event', () => {
     expect(diffs[0].changed).toEqual(['a']);
     expect(diffs[0].removed).toEqual([]);
 
-    viewer.update({ source: SFL }); // back
+    viewer.update({ source: SFL });
     expect([...diffs[1].removed].sort()).toEqual(['c', 'f']);
     expect(diffs[1].changed).toEqual(['a']);
     expect(diffs[1].added).toEqual([]);
