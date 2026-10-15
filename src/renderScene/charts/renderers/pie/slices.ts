@@ -122,20 +122,13 @@ function pieOuterShadow(shadow: ResolvedShadow, gapPx: number): ResolvedShadow {
   return { ...shadow, blur, dx: shadow.dx * scale, dy: shadow.dy * scale };
 }
 
-function createSliceNodes(
-  context: ChartRenderContext<PieChart>,
-  geometry: PieGeometry,
-  mark: PieSliceMark,
-  gapPx: number,
-): RenderNode[] {
-  const { chart, bounds, diagnostics, nextOrder } = context;
-  const fill = paint(mark.color, diagnostics, chart.id);
+function sliceCornerRadius(geometry: PieGeometry, mark: PieSliceMark, gapPx: number): number {
   const halfGap = Math.max(0, gapPx) / 2;
   const rawSweep = mark.angles.end - mark.angles.start;
   const usesInnerArc = pieUsesInnerArc(geometry, mark.angles, gapPx);
   const gapSweep = 2 * gapInsetAngle(halfGap, geometry.outerRadius);
   const availableSweep = Math.max(0, rawSweep - gapSweep);
-  const cornerRadius = Math.min(
+  return Math.min(
     geometry.cornerRadius,
     usesInnerArc
       ? maxPieCornerRadius(geometry.outerRadius, geometry.innerRadius, availableSweep)
@@ -145,17 +138,32 @@ function createSliceNodes(
           availableSweep,
         ),
   );
-  const slicePath = createPieSlicePath(geometry, mark.angles, cornerRadius, gapPx);
-  const shadow = resolveChartShadow(chart.shadowStyle);
-  const config = chart.config;
+}
+
+function sliceStroke(context: ChartRenderContext<PieChart>, mark: PieSliceMark) {
+  const config = context.chart.config;
   const strokeColor = mark.stroke ?? config?.pieStroke;
-  const strokeStyle = strokeColor
-    ? {
-        stroke: { kind: 'solid' as const, color: strokeColor },
-        strokeWidth: finite(mark.strokeWidth, finite(config?.pieStrokeWidth, 1)),
-      }
-    : {};
-  const glow = config?.pieGlow;
+  if (!strokeColor) {
+    return {};
+  }
+  return {
+    stroke: { kind: 'solid' as const, color: strokeColor },
+    strokeWidth: finite(mark.strokeWidth, finite(config?.pieStrokeWidth, 1)),
+  };
+}
+
+function createSliceNodes(
+  context: ChartRenderContext<PieChart>,
+  geometry: PieGeometry,
+  mark: PieSliceMark,
+  gapPx: number,
+): RenderNode[] {
+  const { chart, bounds, diagnostics, nextOrder } = context;
+  const fill = paint(mark.color, diagnostics, chart.id);
+  const slicePath = createPieSlicePath(geometry, mark.angles, sliceCornerRadius(geometry, mark, gapPx), gapPx);
+  const shadow = resolveChartShadow(chart.shadowStyle);
+  const strokeStyle = sliceStroke(context, mark);
+  const glow = chart.config?.pieGlow;
 
   const shadowCaster: RenderNode | undefined = shadow
     ? {
