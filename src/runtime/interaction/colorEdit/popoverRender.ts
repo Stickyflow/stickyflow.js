@@ -1,7 +1,15 @@
-import { hexToRgb } from './color';
+import { alphaOf, hexOf, hexToRgb } from './color';
 import { clampPosition, gradientCss } from './gradientValue';
-import { activeColor, commitStopOrder, MIN_STOPS, type Picker, removeStop, selectStop } from './popoverActions';
-import { el } from './popoverDom';
+import {
+  activeAlpha,
+  activeHex,
+  commitStopOrder,
+  MIN_STOPS,
+  type Picker,
+  removeStop,
+  selectStop,
+} from './popoverActions';
+import { el, showRatio } from './popoverDom';
 import { CHANNELS, type StopRow } from './popoverView';
 
 function createStopRow(picker: Picker, index: number): StopRow {
@@ -50,7 +58,8 @@ function renderStops(picker: Picker): void {
     const row = rows[index];
     row.root.setAttribute('aria-selected', String(index === state.selected));
     row.swatch.style.background = stop.color;
-    row.hex.textContent = stop.color;
+    const alpha = alphaOf(stop.color);
+    row.hex.textContent = alpha < 1 ? `${hexOf(stop.color)} ${Math.round(alpha * 100)}%` : hexOf(stop.color);
     if (document.activeElement !== row.position) {
       row.position.value = String(Math.round(stop.position));
     }
@@ -68,7 +77,7 @@ export function renderPicker(picker: Picker): void {
   view.gradientTab.setAttribute('aria-selected', String(state.mode === 'gradient'));
   view.section.hidden = state.mode !== 'gradient';
 
-  const hex = activeColor(picker);
+  const hex = activeHex(picker);
   const rgb = hexToRgb(hex);
   view.matrix.style.background = `hsl(${state.hsv.h}, 100%, 50%)`;
   view.matrixCursor.style.left = `${state.hsv.s * 100}%`;
@@ -77,16 +86,26 @@ export function renderPicker(picker: Picker): void {
 
   for (const channel of CHANNELS) {
     view.channelRanges[channel].value = String(rgb[channel]);
+    showRatio(view.channelRanges[channel]);
     if (document.activeElement !== view.channelNumbers[channel]) {
       view.channelNumbers[channel].value = String(rgb[channel]);
     }
   }
+  const percent = Math.round(activeAlpha(picker) * 100);
+  view.alphaRange.value = String(percent);
+  showRatio(view.alphaRange);
+  if (document.activeElement !== view.alphaNumber) {
+    view.alphaNumber.value = String(percent);
+  }
+  const opaque = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+  view.alphaRow.style.background = `linear-gradient(to right, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0), ${opaque}), conic-gradient(#c8c8c8 25%, #ffffff 0 50%, #c8c8c8 0 75%, #ffffff 0) 0 0 / 8px 8px`;
   if (document.activeElement !== view.hexInput) {
     view.hexInput.value = hex;
   }
 
   if (state.mode === 'gradient') {
     view.angleRange.value = String(Math.round(state.gradient.angle));
+    showRatio(view.angleRange);
     if (document.activeElement !== view.angleNumber) {
       view.angleNumber.value = String(Math.round(state.gradient.angle));
     }

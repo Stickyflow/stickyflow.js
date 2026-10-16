@@ -1,8 +1,8 @@
 export const TABS_AND_AREA_CSS = `
 .sf-cp-tabs {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: 3px;
+  padding: 3px;
   border-radius: 8px;
   background: var(--sf-cp-tabs-bg);
 }
@@ -13,7 +13,7 @@ export const TABS_AND_AREA_CSS = `
 
 .sf-cp-tab {
   flex: 1;
-  padding: 5px 12px;
+  padding: 3px 12px;
   border: none;
   border-radius: 6px;
   background: transparent;

@@ -52,8 +52,8 @@ interface Box {
   height: number;
 }
 
-function cellsOf(box: Box, plain: boolean): Cells {
-  const size = Math.max(1, Math.min(box.width, box.height) * 0.28);
+function cellsOf(box: Box, plain: boolean, fontSize = 0): Cells {
+  const size = fontSize > 0 ? fontSize : Math.max(1, Math.min(box.width, box.height) * 0.28);
   return {
     size,
     plain,
@@ -157,7 +157,7 @@ function flattenRollingNumbers(svg: SVGSVGElement): void {
     const value = surface.getAttribute('data-sf-widget-value') ?? '';
     const style = readWidgetStyle(surface);
     const label = surface.querySelector('div > span:not([data-sf-rolling-digit])')?.textContent ?? '';
-    const cells = cellsOf(box, style.variant === 'plain');
+    const cells = cellsOf(box, style.variant === 'plain', style.fontSize);
     const labelBlock = label ? cells.size * 0.3 : 0;
     const rowWidth = value.length * cells.cellWidth + Math.max(0, value.length - 1) * cells.gap;
     const left = box.x + (box.width - rowWidth) / 2;

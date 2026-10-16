@@ -20,6 +20,8 @@ Two things count as breaking here that are easy to overlook:
 ### Added
 
 - Arrow keys move the selected objects by 1 unit, Shift by 10, through the existing `moveChange` event.
+- The color picker has an alpha slider for solid colors and for every gradient stop. A transparent color is written as `rgba(r, g, b, a)`, and `rgba()` and `#rrggbbaa` fills are read back into the picker.
+- `fontSize` on the rollingNumber widget sets the digit size. Without it the size still follows the box.
 - `peak` on the ruler widget sets the color the ticks at the knob fade to. The default stays white.
 
 ### Fixed

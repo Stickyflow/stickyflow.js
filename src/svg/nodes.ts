@@ -22,7 +22,8 @@ function rollingDigitSvg(character: string, node: Extract<RenderNode, { type: 'r
 
 function rollingNumberSvg(node: Extract<RenderNode, { type: 'rolling-number' }>, defs: SvgDefinitionRegistry): string {
   const rotation = transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 });
-  const fontSize = Math.max(1, Math.min(node.width, node.height) * 0.28);
+  const fontSize =
+    node.widgetStyle.fontSize > 0 ? node.widgetStyle.fontSize : Math.max(1, Math.min(node.width, node.height) * 0.28);
   const label = node.label
     ? `<span xmlns="http://www.w3.org/1999/xhtml" style="margin-bottom:.14em;color:${xml(node.widgetStyle.labelColor)};font-size:.16em;font-weight:600;letter-spacing:.24em;line-height:1">${xml(node.label)}</span>`
     : '';

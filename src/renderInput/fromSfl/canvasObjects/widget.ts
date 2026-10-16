@@ -22,6 +22,11 @@ function motion(value: string | undefined): 'roll' | 'fade' | undefined {
   return value === 'roll' || value === 'fade' ? value : undefined;
 }
 
+function positiveNumber(value: string | undefined): number | undefined {
+  const number = Number(value);
+  return value !== undefined && Number.isFinite(number) && number > 0 ? number : undefined;
+}
+
 function fontWeight(value: string | undefined): string | undefined {
   return value && FONT_WEIGHT.test(value) ? value : undefined;
 }
@@ -194,6 +199,7 @@ export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget
       variant: variant(properties.variant),
       motion: motion(properties.motion),
       fontWeight: fontWeight(properties.fontWeight),
+      fontSize: positiveNumber(properties.fontSize),
     },
   };
 }

@@ -39,10 +39,10 @@ export const BASE_CSS = `
   z-index: 10000;
   box-sizing: border-box;
   width: 268px;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   border: 1px solid var(--sf-cp-border);
   border-radius: 12px;
   background: var(--sf-cp-bg);
