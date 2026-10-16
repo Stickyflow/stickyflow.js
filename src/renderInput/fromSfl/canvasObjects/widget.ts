@@ -103,7 +103,7 @@ const RULER_NUMBERS = [
 ] as const;
 const RULER_COLORS = ['color', 'accent', 'glow'] as const;
 const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
-const RULER_OPTIONAL_COLORS = ['core'] as const;
+const RULER_OPTIONAL_COLORS = ['core', 'peak'] as const;
 
 function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
   const properties = canvasObject.props;

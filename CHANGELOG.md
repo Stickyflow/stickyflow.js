@@ -17,6 +17,15 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- Arrow keys move the selected objects by 1 unit, Shift by 10, through the existing `moveChange` event.
+- `peak` on the ruler widget sets the color the ticks at the knob fade to. The default stays white.
+
+### Fixed
+
+- A `tickScale` widget can be clicked, selected and moved on the canvas. Its shader surface no longer ignores the pointer.
+
 ## [0.2.0] - 2026-10-15
 
 ### Added

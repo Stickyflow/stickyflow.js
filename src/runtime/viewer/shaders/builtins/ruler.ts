@@ -22,6 +22,7 @@ uniform vec3 uColor;
 uniform vec3 uAccent;
 uniform vec3 uGlow;
 uniform vec3 uCore;
+uniform vec3 uPeak;
 varying vec2 vUv;
 
 float wireAt(float at, float lineAt, float depth, float radius, float knob, float spread) {
@@ -94,7 +95,8 @@ void main() {
   vec2 q = abs(vec2(across - (tickEnd - tickLength * 0.5), tickAlong)) - vec2(tickLength * 0.5, halfTick) + corner;
   float edge = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
   float tick = (1.0 - smoothstep(-0.75, 0.75, edge)) * inRange * mix(0.4, 1.0, tickBump);
-  vec3 tickColor = mix(uColor, vec3(1.0), tickBump);
+  vec3 peakColor = dot(uPeak, uPeak) > 0.0 ? uPeak : vec3(1.0);
+  vec3 tickColor = mix(uColor, peakColor, tickBump);
 
   float alpha = clamp(tick + line * 0.95 + glow + core, 0.0, 1.0);
   vec3 rgb = tickColor * tick + lineColor * line * 0.95 + glowColor * glow + coreColor * core;
