@@ -28,6 +28,15 @@ export class ViewportController {
     this.#natural = natural;
   }
 
+  #userPoint(clientX: number, clientY: number): { x: number; y: number } | null {
+    const matrix = this.#svg.getScreenCTM();
+    if (!matrix) {
+      return null;
+    }
+    const point = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+    return { x: point.x, y: point.y };
+  }
+
   zoomBy(factor: number, clientX?: number, clientY?: number): void {
     const rect = this.#svg.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) {
@@ -35,17 +44,20 @@ export class ViewportController {
     }
     const centerX = clientX ?? rect.left + rect.width / 2;
     const centerY = clientY ?? rect.top + rect.height / 2;
-    const worldX = this.#view.x + ((centerX - rect.left) / rect.width) * this.#view.w;
-    const worldY = this.#view.y + ((centerY - rect.top) / rect.height) * this.#view.h;
-    this.#view = { w: this.#view.w / factor, h: this.#view.h / factor, x: 0, y: 0 };
-    this.#view.x = worldX - ((centerX - rect.left) / rect.width) * this.#view.w;
-    this.#view.y = worldY - ((centerY - rect.top) / rect.height) * this.#view.h;
+    const anchor = this.#userPoint(centerX, centerY);
+    this.#view = { ...this.#view, w: this.#view.w / factor, h: this.#view.h / factor };
+    this.apply();
+    const moved = anchor ? this.#userPoint(centerX, centerY) : null;
+    if (anchor && moved) {
+      this.#view.x += anchor.x - moved.x;
+      this.#view.y += anchor.y - moved.y;
+    }
     this.apply();
   }
 
   panBy(dxPixels: number, dyPixels: number): void {
-    const rect = this.#svg.getBoundingClientRect();
-    const pixelsPerUnit = rect.width > 0 ? rect.width / this.#view.w : 1;
+    const scale = this.#svg.getScreenCTM()?.a;
+    const pixelsPerUnit = scale && scale > 0 ? scale : 1;
     this.#view.x -= dxPixels / pixelsPerUnit;
     this.#view.y -= dyPixels / pixelsPerUnit;
     this.apply();
