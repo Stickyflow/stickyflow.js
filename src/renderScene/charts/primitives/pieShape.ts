@@ -140,7 +140,7 @@ function pieFillet(
 export function maxPieCornerRadius(outerRadius: number, innerRadius: number, sweep: number): number {
   const halfSweep = Math.min(Math.abs(sweep) / 2, Math.PI / 2);
   const angleFactor = Math.sin(halfSweep * CORNER_ANGLE_HEADROOM);
-  const outerLimit = outerRadius * angleFactor;
+  const outerLimit = (outerRadius * angleFactor) / (1 + angleFactor);
   const innerLimit = innerRadius > 0 ? innerRadius * angleFactor : Number.POSITIVE_INFINITY;
   const ringLimit = innerRadius > 0 ? (outerRadius - innerRadius) / 2 : outerRadius / 2;
   return Math.max(0, Math.min(outerLimit, innerLimit, ringLimit));
@@ -149,7 +149,7 @@ export function maxPieCornerRadius(outerRadius: number, innerRadius: number, swe
 export function maxApexCornerRadius(outerRadius: number, apexRadius: number, sweep: number): number {
   const halfSweep = Math.min(Math.abs(sweep) / 2, Math.PI / 2);
   const angleFactor = Math.sin(halfSweep * CORNER_ANGLE_HEADROOM);
-  const outerLimit = outerRadius * angleFactor;
+  const outerLimit = (outerRadius * angleFactor) / (1 + angleFactor);
   const depthLimit = (outerRadius * outerRadius - apexRadius * apexRadius) / (2 * outerRadius);
   return Math.max(0, Math.min(outerLimit, depthLimit));
 }

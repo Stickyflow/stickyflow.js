@@ -27,6 +27,7 @@ Two things count as breaking here that are easy to overlook:
 ### Fixed
 
 - Panning and zooming follow the pointer exactly when the canvas and the visible area have different aspect ratios. Panning used to lag behind the cursor, and the zoom anchor drifted.
+- A large `pieCornerRadius` no longer folds the corners of small slices and wedges into loops. The radius is limited to what the slice can hold.
 - A `tickScale` widget can be clicked, selected and moved on the canvas. Its shader surface no longer ignores the pointer.
 
 ## [0.2.0] - 2026-10-15
