@@ -127,6 +127,7 @@ export type {
   InsertConnectionOptions,
   InsertLinkOptions,
   InsertPathOptions,
+  QuickDuplicateOptions,
   RemoveCanvasObjectOptions,
 } from './patchSfl';
 export {
@@ -136,6 +137,7 @@ export {
   applyMoveChange,
   applyPathPointChange,
   applyPropertyChange,
+  applyQuickDuplicateChange,
   applyResizeChange,
   applySankeyNodeMoveChange,
   applySankeyNodeRenameChange,

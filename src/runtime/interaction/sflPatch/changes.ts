@@ -4,6 +4,8 @@ export { applyLinkSegmentChange } from './changes/linkSegmentChange';
 export { applyMoveChange } from './changes/moveChange';
 export { applyPathPointChange } from './changes/pathPointChange';
 export { applyPropertyChange } from './changes/propertyChange';
+export type { QuickDuplicateOptions } from './changes/quickDuplicateChange';
+export { applyQuickDuplicateChange } from './changes/quickDuplicateChange';
 export { applyResizeChange } from './changes/resizeChange';
 export { applySankeyNodeMoveChange, applySankeyNodeRenameChange } from './changes/sankeyNodeChange';
 export { applyTextChange } from './changes/textChange';
