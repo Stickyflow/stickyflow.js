@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- `applyQuickDuplicateChange(source, event, { shapeId, linkId, gap? })` in `stickyflow/interaction` carries out a quick duplicate. It adds a copy of the object with its look, beyond the edge that was dragged, and a link to it that looks like the other links of the document. For an isometric object it adds a copy and a connection between the touching faces. The ids come from the caller, and `gap` is 200 for a shape and 40 for an isometric object by default.
+
 ## [0.3.0] - 2026-10-17
 
 ### Added
