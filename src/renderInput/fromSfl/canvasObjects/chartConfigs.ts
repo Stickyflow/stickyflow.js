@@ -87,8 +87,14 @@ export function lineConfig(source: ChartSource, p: ChartProps): LineChartConfig 
   };
 }
 
-export function scatterConfig(source: ChartSource): ScatterChartConfig {
-  return { categories: source?.categories };
+export function scatterConfig(source: ChartSource, p: ChartProps): ScatterChartConfig {
+  return {
+    categories: source?.categories,
+    pointSize: numOf(p.pointSize),
+    pointOpacity: numOf(p.pointOpacity),
+    pointStrokeWidth: numOf(p.pointStrokeWidth),
+    pointStrokeColor: p.pointStrokeColor,
+  };
 }
 
 export function boxplotConfig(source: ChartSource): BoxplotChartConfig {
@@ -122,8 +128,15 @@ export function heatmapConfig(source: ChartSource): HeatmapChartConfig {
   };
 }
 
-export function hexbinConfig(source: ChartSource): HexbinChartConfig {
-  return { hexRadius: source?.hexRadius };
+export function hexbinConfig(source: ChartSource, p: ChartProps): HexbinChartConfig {
+  return {
+    hexRadius: source?.hexRadius,
+    scale: decodeRamp(source?.scale),
+    hexGap: numOf(p.hexGap),
+    hexStrokeWidth: numOf(p.hexStrokeWidth),
+    hexStrokeColor: p.hexStrokeColor,
+    hexMinOpacity: numOf(p.hexMinOpacity),
+  };
 }
 
 export function mekkoConfig(source: ChartSource): MekkoChartConfig {

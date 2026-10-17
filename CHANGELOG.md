@@ -23,6 +23,8 @@ Two things count as breaking here that are easy to overlook:
 - The color picker has an alpha slider for solid colors and for every gradient stop. A transparent color is written as `rgba(r, g, b, a)`, and `rgba()` and `#rrggbbaa` fills are read back into the picker.
 - `fontSize` on the rollingNumber widget sets the digit size. Without it the size still follows the box.
 - `peak` on the ruler widget sets the color the ticks at the knob fade to. The default stays white.
+- `pointSize`, `pointOpacity`, `pointStrokeWidth` and `pointStrokeColor` on scatter charts set the dots. The dots used to be fixed at a radius of 4.
+- `scale`, `hexGap`, `hexStrokeWidth`, `hexStrokeColor` and `hexMinOpacity` on hexbin charts. A `scale` ramp colors every cell by its density. Without these a hexbin chart is drawn as before.
 
 ### Fixed
 

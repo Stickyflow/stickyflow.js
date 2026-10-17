@@ -31,7 +31,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'line':
       return typedChart(base, chartType, lineConfig(source, p));
     case 'scatter':
-      return typedChart(base, chartType, scatterConfig(source));
+      return typedChart(base, chartType, scatterConfig(source, p));
     case 'boxplot':
       return typedChart(base, chartType, boxplotConfig(source));
     case 'field':
@@ -39,7 +39,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'heatmap':
       return typedChart(base, chartType, heatmapConfig(source));
     case 'hexbin':
-      return typedChart(base, chartType, hexbinConfig(source));
+      return typedChart(base, chartType, hexbinConfig(source, p));
     case 'mekko':
       return typedChart(base, chartType, mekkoConfig(source));
     case 'pie':
