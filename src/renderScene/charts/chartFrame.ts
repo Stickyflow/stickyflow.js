@@ -49,9 +49,10 @@ function radarDetail(chart: RadarChart | RadialChart, plot: Plot): FrameDetail {
   const centerX = plot.x + plot.width / 2;
   const centerY = plot.y + plot.height / 2;
   const curved = chart.chartType === 'radial' ? 1 : 0;
+  const tension = chart.config?.radarTension;
   return {
     of: 'radarGeometry',
-    radarGeometry: `${centerX},${centerY},${radius},${chart.axisY.min},${chart.axisY.max},${count},${curved}`,
+    radarGeometry: `${centerX},${centerY},${radius},${chart.axisY.min},${chart.axisY.max},${count},${curved}${tension === undefined ? '' : `,${tension}`}`,
   };
 }
 

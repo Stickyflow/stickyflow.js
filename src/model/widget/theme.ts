@@ -9,6 +9,7 @@ export const DEFAULT_ROLLING_NUMBER_STYLE: Required<RollingNumberWidgetStyle> = 
   variant: 'flip',
   motion: 'roll',
   fontWeight: '300',
+  fontSize: 0,
 };
 
 export function resolveRollingNumberStyle(style: RollingNumberWidgetStyle): Required<RollingNumberWidgetStyle> {
@@ -21,5 +22,6 @@ export function resolveRollingNumberStyle(style: RollingNumberWidgetStyle): Requ
     variant: style.variant ?? DEFAULT_ROLLING_NUMBER_STYLE.variant,
     motion: style.motion ?? DEFAULT_ROLLING_NUMBER_STYLE.motion,
     fontWeight: style.fontWeight ?? DEFAULT_ROLLING_NUMBER_STYLE.fontWeight,
+    fontSize: style.fontSize ?? DEFAULT_ROLLING_NUMBER_STYLE.fontSize,
   };
 }

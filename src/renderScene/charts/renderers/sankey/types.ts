@@ -7,6 +7,7 @@ export interface SankeyRenderData {
   baseY: number;
   labelGutter: number;
   fontSize: number;
+  labelSize: number;
   columnCount: number;
   nodeColors: Map<string, string>;
 }

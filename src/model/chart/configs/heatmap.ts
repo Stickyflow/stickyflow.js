@@ -7,4 +7,9 @@ export interface HeatmapChartConfig extends CategoryChartConfig {
   showValues?: boolean;
   squareCells?: boolean;
   barCornerRadius?: number;
+  cellShape?: 'square' | 'circle';
+  cellStrokeColor?: string;
+  cellStrokeWidth?: number;
+  cellValueSize?: number;
+  cellValueColor?: string;
 }

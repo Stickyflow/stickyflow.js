@@ -1,4 +1,4 @@
-import { el, labelledRow, numberField, rangeField, tabButton } from './popoverDom';
+import { el, fluidField, labelledRow, tabButton } from './popoverDom';
 import type { ColorPickerTheme } from './theme';
 
 export const CHANNELS = ['r', 'g', 'b'] as const;
@@ -33,6 +33,9 @@ export interface PickerView {
   hueThumb: HTMLDivElement;
   channelRanges: Record<Channel, HTMLInputElement>;
   channelNumbers: Record<Channel, HTMLInputElement>;
+  alphaRow: HTMLDivElement;
+  alphaRange: HTMLInputElement;
+  alphaNumber: HTMLInputElement;
   hexInput: HTMLInputElement;
   section: HTMLDivElement;
   preview: HTMLDivElement;
@@ -54,7 +57,16 @@ export interface ViewOptions {
 
 type SolidControls = Pick<
   PickerView,
-  'matrix' | 'matrixCursor' | 'hue' | 'hueThumb' | 'channelRanges' | 'channelNumbers' | 'hexInput'
+  | 'matrix'
+  | 'matrixCursor'
+  | 'hue'
+  | 'hueThumb'
+  | 'channelRanges'
+  | 'channelNumbers'
+  | 'alphaRow'
+  | 'alphaRange'
+  | 'alphaNumber'
+  | 'hexInput'
 >;
 
 type GradientControls = Pick<PickerView, 'section' | 'preview' | 'angleRange' | 'angleNumber' | 'addStop' | 'stopList'>;
@@ -72,24 +84,37 @@ function buildSolidControls(root: HTMLElement): SolidControls {
   const channelRanges = {} as Record<Channel, HTMLInputElement>;
   const channelNumbers = {} as Record<Channel, HTMLInputElement>;
   for (const channel of CHANNELS) {
-    const row = labelledRow(rows, channel.toUpperCase());
-    channelRanges[channel] = rangeField(row, 0, 255);
-    channelNumbers[channel] = numberField(row, 0, 255);
+    const field = fluidField(rows, channel.toUpperCase(), 0, 255);
+    channelRanges[channel] = field.range;
+    channelNumbers[channel] = field.number;
   }
+  const alpha = fluidField(rows, 'A', 0, 100);
+  alpha.row.classList.add('sf-cp-fluid--alpha');
+  const { row: alphaRow, range: alphaRange, number: alphaNumber } = alpha;
   const hexRow = labelledRow(rows, 'Hex');
   const hexInput = el('input', 'sf-cp-text', hexRow);
   hexInput.type = 'text';
   hexInput.spellcheck = false;
-  return { matrix, matrixCursor, hue, hueThumb, channelRanges, channelNumbers, hexInput };
+  return {
+    matrix,
+    matrixCursor,
+    hue,
+    hueThumb,
+    channelRanges,
+    channelNumbers,
+    alphaRow,
+    alphaRange,
+    alphaNumber,
+    hexInput,
+  };
 }
 
 function buildGradientControls(root: HTMLElement, lockStops: boolean): GradientControls {
   const section = el('div', 'sf-cp-section', root);
   const preview = el('div', 'sf-cp-preview', section);
-  const angleRow = labelledRow(section, 'Angle');
-  angleRow.hidden = lockStops;
-  const angleRange = rangeField(angleRow, 0, 360);
-  const angleNumber = numberField(angleRow, 0, 360);
+  const angle = fluidField(section, 'Angle', 0, 360);
+  angle.row.hidden = lockStops;
+  const { range: angleRange, number: angleNumber } = angle;
   const head = el('div', 'sf-cp-section-head', section);
   el('span', 'sf-cp-heading', head).textContent = 'Stops';
   const addStop = el('button', 'sf-cp-icon-btn', head);

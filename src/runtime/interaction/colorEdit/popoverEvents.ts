@@ -1,7 +1,8 @@
 import { hexToRgb, normalizeHex, rgbToHex, rgbToHsv } from './color';
 import {
-  activeColor,
+  activeHex,
   appendStop,
+  applyAlpha,
   applyAngle,
   applyHex,
   applyHsv,
@@ -47,7 +48,7 @@ function bindChannel(picker: Picker, channel: Channel): void {
     if (!Number.isFinite(value)) {
       return;
     }
-    const next = { ...hexToRgb(activeColor(picker)), [channel]: value };
+    const next = { ...hexToRgb(activeHex(picker)), [channel]: value };
     const nextHsv = rgbToHsv(next);
     picker.state.hsv = nextHsv.s === 0 ? { ...nextHsv, h: picker.state.hsv.h } : nextHsv;
     setActiveColor(picker, rgbToHex(next));
@@ -58,6 +59,15 @@ function bindChannel(picker: Picker, channel: Channel): void {
   channelRanges[channel].addEventListener('change', () => commit(picker));
   channelNumbers[channel].addEventListener('input', event => fromChannel(read(event)));
   channelNumbers[channel].addEventListener('change', () => commit(picker));
+}
+
+function bindAlpha(picker: Picker): void {
+  const { alphaRange, alphaNumber } = picker.view;
+  const read = (event: Event) => (event.target as HTMLInputElement).value;
+  alphaRange.addEventListener('input', event => applyAlpha(picker, read(event)));
+  alphaRange.addEventListener('change', () => commit(picker));
+  alphaNumber.addEventListener('input', event => applyAlpha(picker, read(event)));
+  alphaNumber.addEventListener('change', () => commit(picker));
 }
 
 function bindHex(picker: Picker): void {
@@ -98,6 +108,7 @@ export function bindPickerEvents(picker: Picker): Array<() => void> {
   for (const channel of CHANNELS) {
     bindChannel(picker, channel);
   }
+  bindAlpha(picker);
   bindHex(picker);
   bindAngle(picker);
   return disposers;

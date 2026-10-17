@@ -3,7 +3,14 @@ import { createSankeyGraph } from './graph';
 import { layoutSankeyLinks } from './links';
 import { calculateNodeGeometry } from './nodeGeometry';
 import { layoutSankeyNodes } from './nodes';
-import type { SankeyLayout, SankeyLinkInput, SankeyNodeInput, SankeyNodeOffset } from './types';
+import { SANKEY_NODE_GAP, SANKEY_NODE_WIDTH } from './constants';
+import type {
+  SankeyLayout,
+  SankeyLayoutOptions,
+  SankeyLinkInput,
+  SankeyNodeInput,
+  SankeyNodeOffset,
+} from './types';
 
 function collectOffsets(inputs: SankeyNodeInput[]): Map<string, SankeyNodeOffset> {
   const offsets = new Map<string, SankeyNodeOffset>();
@@ -20,16 +27,17 @@ export function layoutSankey(
   linkInputs: SankeyLinkInput[],
   width: number,
   height: number,
+  options: SankeyLayoutOptions = { nodeWidth: SANKEY_NODE_WIDTH, nodeGap: SANKEY_NODE_GAP },
 ): SankeyLayout {
   const graph = createSankeyGraph(nodeInputs, linkInputs);
   if (graph.ids.size === 0) {
     return { nodes: [], links: [] };
   }
   const columns = assignSankeyColumns(graph);
-  const geometry = calculateNodeGeometry(graph, columns, height);
+  const geometry = calculateNodeGeometry(graph, columns, height, options.nodeGap);
   const offsets = collectOffsets(nodeInputs);
   return {
-    nodes: layoutSankeyNodes(nodeInputs, graph, geometry, width, offsets),
-    links: layoutSankeyLinks(graph, geometry, width, offsets),
+    nodes: layoutSankeyNodes(nodeInputs, graph, geometry, width, offsets, options.nodeWidth),
+    links: layoutSankeyLinks(graph, geometry, width, offsets, options.nodeWidth),
   };
 }

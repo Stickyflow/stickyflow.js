@@ -9,7 +9,7 @@ export function renderRadarGrid(context: ChartRenderContext<RadarFamilyChart>, g
     return [];
   }
 
-  return [...renderRings(context, geometry), ...renderSpokes(context, geometry)];
+  return [...renderRings(context, geometry), ...(geometry.showSpokes ? renderSpokes(context, geometry) : [])];
 }
 
 function renderRings(context: ChartRenderContext<RadarFamilyChart>, geometry: RadarGeometry): RenderNode[] {

@@ -1,4 +1,4 @@
-import { normalizeHex } from './color';
+import { formatColorAlpha, parseColorAlpha } from './color';
 
 export interface GradientStopValue {
   color: string;
@@ -13,7 +13,7 @@ export interface GradientValue {
 export const DEFAULT_GRADIENT_ANGLE = 90;
 
 const GRADIENT = /^gradient\(\s*(-?[\d.]+)\s*,\s*(.+)\)\s*$/i;
-const STOP = /(#[0-9a-f]{3}(?:[0-9a-f]{3})?)\s+(-?[\d.]+)%/gi;
+const STOP = /(rgba?\([^)]*\)|#[0-9a-f]{3}(?:[0-9a-f]{3})?)\s+(-?[\d.]+)%/gi;
 
 function trim(value: number): number {
   return Number(value.toFixed(1));
@@ -38,10 +38,10 @@ export function parseGradient(source: string): GradientValue | null {
   }
   const stops: GradientStopValue[] = [];
   for (const stop of match[2].matchAll(STOP)) {
-    const color = normalizeHex(stop[1]);
+    const parsed = parseColorAlpha(stop[1]);
     const position = Number(stop[2]);
-    if (color && Number.isFinite(position)) {
-      stops.push({ color, position: clampPosition(position) });
+    if (parsed && Number.isFinite(position)) {
+      stops.push({ color: formatColorAlpha(parsed.hex, parsed.alpha), position: clampPosition(position) });
     }
   }
   return stops.length >= 2 ? { angle, stops } : null;

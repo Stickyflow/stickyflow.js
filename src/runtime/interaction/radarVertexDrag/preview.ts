@@ -26,7 +26,7 @@ export function updateRadarVertexDragPreview(svg: SVGSVGElement, drag: RadarVert
     x: Number(vertex.getAttribute('cx')),
     y: Number(vertex.getAttribute('cy')),
   }));
-  const path = radarSeriesPath(points, drag.frame.curved);
+  const path = radarSeriesPath(points, drag.frame.curved, drag.frame.tension);
   for (const shape of seriesShapes(svg, drag.owner.id, drag.series)) {
     shape.setAttribute('d', path);
   }

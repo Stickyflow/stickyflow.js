@@ -9,6 +9,7 @@ export interface RollingNumberWidgetStyle {
   variant?: 'flip' | 'plain';
   motion?: 'roll' | 'fade';
   fontWeight?: string;
+  fontSize?: number;
 }
 
 export interface RollingNumberWidget {

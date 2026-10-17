@@ -1,8 +1,9 @@
 export const TABS_AND_AREA_CSS = `
 .sf-cp-tabs {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: 2px;
+  height: 28px;
+  padding: 2px;
   border-radius: 8px;
   background: var(--sf-cp-tabs-bg);
 }
@@ -13,12 +14,13 @@ export const TABS_AND_AREA_CSS = `
 
 .sf-cp-tab {
   flex: 1;
-  padding: 5px 12px;
+  padding: 0 12px;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--sf-cp-muted);
   font: inherit;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -31,8 +33,8 @@ export const TABS_AND_AREA_CSS = `
 
 .sf-cp-tab[aria-selected="true"] {
   background: var(--sf-cp-tab-active-bg);
-  color: var(--sf-cp-accent);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  color: var(--sf-cp-fg);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .sf-cp-area {

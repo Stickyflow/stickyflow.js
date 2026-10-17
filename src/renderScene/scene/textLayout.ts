@@ -32,6 +32,17 @@ export function wrapText(text: string, width: number, fontSize: number, metrics?
   return result;
 }
 
+export function ellipsizeToWidth(text: string, width: number, fontSize: number, bold: boolean): string {
+  if (estimateTextWidth(text, fontSize, bold) <= width) {
+    return text;
+  }
+  let end = text.length;
+  while (end > 1 && estimateTextWidth(`${text.slice(0, end)}…`, fontSize, bold) > width) {
+    end -= 1;
+  }
+  return `${text.slice(0, end)}…`;
+}
+
 export function estimateTextWidth(text: string, fontSize: number, bold: boolean): number {
   return text.length * fontSize * (bold ? BOLD_CHAR_FACTOR : PLAIN_CHAR_FACTOR);
 }

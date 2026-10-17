@@ -15,8 +15,11 @@ export function renderSamplePoints(
     layout.orientation === 'horizontal'
       ? plot.x + mapChartValue(value, chart.axisX, plot.width)
       : plot.y + plot.height - mapChartValue(value, chart.axisY, plot.height);
+  if (layout.pointSize <= 0) {
+    return [];
+  }
   return (mark.series.values as number[]).map((value, pointIndex) => {
-    const center = mark.geometry.center + jitter(mark.seriesIndex * 10_000 + pointIndex) * layout.boxWidth;
+    const center = mark.geometry.center + jitter(mark.seriesIndex * 10_000 + pointIndex) * layout.jitter * layout.boxWidth;
     const { x, y } = boxplotPoint(layout.orientation, center, valueAt(value));
     return {
       type: 'ellipse',
@@ -25,9 +28,9 @@ export function renderSamplePoints(
       bounds,
       cx: x,
       cy: y,
-      rx: 3,
-      ry: 3,
-      style: { fill: paint(mark.color, diagnostics, chart.id), opacity: 0.7 },
+      rx: layout.pointSize,
+      ry: layout.pointSize,
+      style: { fill: paint(mark.color, diagnostics, chart.id), opacity: layout.pointOpacity },
     };
   });
 }

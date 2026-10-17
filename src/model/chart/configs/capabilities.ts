@@ -10,6 +10,7 @@ import type { PieChartConfig } from './pie';
 import type { RadarChartConfig } from './radar';
 import type { RadialBarChartConfig } from './radialBar';
 import type { SankeyChartConfig } from './sankey';
+import type { ScatterChartConfig } from './scatter';
 import type { TreemapChartConfig } from './treemap';
 
 export interface ChartConfigCapabilities
@@ -25,4 +26,5 @@ export interface ChartConfigCapabilities
     RadarChartConfig,
     RadialBarChartConfig,
     SankeyChartConfig,
+    ScatterChartConfig,
     TreemapChartConfig {}

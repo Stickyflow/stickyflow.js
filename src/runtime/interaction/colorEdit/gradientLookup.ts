@@ -1,4 +1,4 @@
-import { normalizeHex } from './color';
+import { formatColorAlpha, parseColorAlpha } from './color';
 import { clampPosition, DEFAULT_GRADIENT_ANGLE, type GradientStopValue, type GradientValue } from './gradientValue';
 
 function readAngle(def: Element): number {
@@ -23,10 +23,10 @@ export function readGradientValue(svg: SVGSVGElement, fill: string | null): Grad
 
   const stops: GradientStopValue[] = [];
   for (const stop of def.querySelectorAll('stop')) {
-    const color = normalizeHex(stop.getAttribute('stop-color') ?? '');
+    const parsed = parseColorAlpha(stop.getAttribute('stop-color') ?? '');
     const offset = Number.parseFloat(stop.getAttribute('offset') ?? '');
-    if (color && Number.isFinite(offset)) {
-      stops.push({ color, position: clampPosition(offset) });
+    if (parsed && Number.isFinite(offset)) {
+      stops.push({ color: formatColorAlpha(parsed.hex, parsed.alpha), position: clampPosition(offset) });
     }
   }
   if (stops.length < 2) {

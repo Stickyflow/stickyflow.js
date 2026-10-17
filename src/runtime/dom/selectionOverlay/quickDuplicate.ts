@@ -3,9 +3,9 @@ import { selectionOverlayGroup, svgElement } from './dom';
 import { screenPx } from './scale';
 import type { OverlayBounds, QuickDuplicateDirection } from './types';
 
-export const BUBBLE_RADIUS_PX = 8;
-const BUBBLE_MARGIN_PX = 15;
-export const PLUS_HALF_SIZE_PX = 4;
+export const BUBBLE_RADIUS_PX = 6;
+const BUBBLE_MARGIN_PX = 14;
+export const PLUS_HALF_SIZE_PX = 3;
 export const BUBBLE_STROKE_WIDTH_PX = 1.5;
 
 function quickDuplicatePositions(

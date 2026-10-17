@@ -4,7 +4,7 @@ import { bindPickerEvents } from './popoverEvents';
 import { renderPicker } from './popoverRender';
 import { type Anchor, buildPickerView, clampIntoViewport } from './popoverView';
 import { type ColorPickerTheme, ensureColorPickerStyles } from './theme';
-import { type PickerValue, toGradient, toSolid } from './value';
+import { type PickerValue, toAlpha, toGradient, toSolid } from './value';
 
 export interface ColorPopoverOptions {
   seed: PickerValue;
@@ -35,6 +35,7 @@ export function openColorPopover(options: ColorPopoverOptions): ColorPopoverHand
     state: {
       mode: allowGradient ? seed.mode : 'solid',
       solid,
+      alpha: toAlpha(seed),
       gradient: toGradient(seed),
       selected: 0,
       hsv: hexToHsv(solid),

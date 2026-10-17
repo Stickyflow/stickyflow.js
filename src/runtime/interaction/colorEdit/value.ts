@@ -1,4 +1,4 @@
-import { hexToHsv, hsvToHex, normalizeHex } from './color';
+import { alphaOf, formatColorAlpha, hexOf, hexToHsv, hsvToHex, parseColorAlpha } from './color';
 import {
   DEFAULT_GRADIENT_ANGLE,
   formatGradient,
@@ -11,7 +11,7 @@ import {
 export const FALLBACK_COLOR = '#888888';
 
 export type PickerValue =
-  | { mode: 'solid'; color: string }
+  | { mode: 'solid'; color: string; alpha?: number }
   | { mode: 'gradient'; angle: number; stops: GradientValue['stops'] };
 
 export function seedFrom(fill: string | null, gradient: GradientValue | null): PickerValue {
@@ -22,11 +22,14 @@ export function seedFrom(fill: string | null, gradient: GradientValue | null): P
   if (parsed) {
     return { mode: 'gradient', angle: parsed.angle, stops: sortStops(parsed.stops) };
   }
-  return { mode: 'solid', color: (fill && normalizeHex(fill)) || FALLBACK_COLOR };
+  const solid = fill ? parseColorAlpha(fill) : null;
+  return { mode: 'solid', color: solid?.hex ?? FALLBACK_COLOR, alpha: solid?.alpha ?? 1 };
 }
 
 export function formatPickerValue(value: PickerValue): string {
-  return value.mode === 'solid' ? value.color : formatGradient({ angle: value.angle, stops: value.stops });
+  return value.mode === 'solid'
+    ? formatColorAlpha(value.color, value.alpha ?? 1)
+    : formatGradient({ angle: value.angle, stops: value.stops });
 }
 
 export function cssBackground(color: string): string {
@@ -34,8 +37,12 @@ export function cssBackground(color: string): string {
   return gradient ? gradientCss(gradient) : color;
 }
 
+export function toAlpha(value: PickerValue): number {
+  return value.mode === 'solid' ? (value.alpha ?? 1) : alphaOf(sortStops(value.stops)[0]?.color ?? FALLBACK_COLOR);
+}
+
 export function toSolid(value: PickerValue): string {
-  return value.mode === 'solid' ? value.color : (sortStops(value.stops)[0]?.color ?? FALLBACK_COLOR);
+  return value.mode === 'solid' ? value.color : hexOf(sortStops(value.stops)[0]?.color ?? FALLBACK_COLOR);
 }
 
 export function darken(hex: string): string {
@@ -50,8 +57,8 @@ export function toGradient(value: PickerValue): GradientValue {
   return {
     angle: DEFAULT_GRADIENT_ANGLE,
     stops: [
-      { color: value.color, position: 0 },
-      { color: darken(value.color), position: 100 },
+      { color: formatColorAlpha(value.color, value.alpha ?? 1), position: 0 },
+      { color: formatColorAlpha(darken(value.color), value.alpha ?? 1), position: 100 },
     ],
   };
 }

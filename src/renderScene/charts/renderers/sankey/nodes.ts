@@ -139,7 +139,7 @@ function createOutsideLabel(context: ChartRenderContext, data: SankeyRenderData,
       chart,
       align: isLastColumn ? 'right' : 'left',
     }),
-    fontSize: data.fontSize - 2,
+    fontSize: data.labelSize,
     fontWeight: 'bold',
     verticalAlign: 'middle',
   };
@@ -156,7 +156,7 @@ function createInsideLabel(
   const y = data.baseY + node.y;
   const centerX = x + node.width / 2;
   const centerY = y + node.height / 2;
-  const fontSize = data.fontSize - 2;
+  const fontSize = data.labelSize;
   const id = `chart-sankey-label-${chart.id}-${node.id}`;
   if (orientation === 'vertical') {
     const thickness = fontSize * 1.4;

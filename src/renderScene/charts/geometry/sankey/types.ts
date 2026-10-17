@@ -61,3 +61,8 @@ export interface SankeyNodeGeometry {
   valueScale: number;
   columnCount: number;
 }
+
+export interface SankeyLayoutOptions {
+  nodeWidth: number;
+  nodeGap: number;
+}

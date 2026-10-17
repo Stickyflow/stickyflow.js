@@ -9,7 +9,7 @@ function shaderSurfaceSvg(node: Extract<RenderNode, { type: 'shader-surface' }>,
   const rotation = transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 });
   const parameters = xml(JSON.stringify(node.shader.parameters));
   const fillColor = node.fillColor ? ` data-sf-shader-fill="${xml(node.fillColor)}"` : '';
-  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-shader="${xml(node.shader.program)}" data-sf-shader-name="${xml(node.shader.name)}" data-sf-shader-params="${parameters}" data-sf-shader-mask="${node.mask}"${fillColor} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation} pointer-events="${node.shader.program === 'ruler' ? 'all' : 'none'}"><canvas xmlns="http://www.w3.org/1999/xhtml" data-sf-shader-canvas="true" style="display:block;width:100%;height:100%;pointer-events:none"></canvas></foreignObject>`;
+  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-shader="${xml(node.shader.program)}" data-sf-shader-name="${xml(node.shader.name)}" data-sf-shader-params="${parameters}" data-sf-shader-mask="${node.mask}"${fillColor} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation} pointer-events="${node.shader.program === 'ruler' || node.identity?.role === 'widget' ? 'all' : 'none'}"><canvas xmlns="http://www.w3.org/1999/xhtml" data-sf-shader-canvas="true" style="display:block;width:100%;height:100%;pointer-events:none"></canvas></foreignObject>`;
 }
 
 function rollingDigitSvg(character: string, node: Extract<RenderNode, { type: 'rolling-number' }>): string {
@@ -22,7 +22,8 @@ function rollingDigitSvg(character: string, node: Extract<RenderNode, { type: 'r
 
 function rollingNumberSvg(node: Extract<RenderNode, { type: 'rolling-number' }>, defs: SvgDefinitionRegistry): string {
   const rotation = transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 });
-  const fontSize = Math.max(1, Math.min(node.width, node.height) * 0.28);
+  const fontSize =
+    node.widgetStyle.fontSize > 0 ? node.widgetStyle.fontSize : Math.max(1, Math.min(node.width, node.height) * 0.28);
   const label = node.label
     ? `<span xmlns="http://www.w3.org/1999/xhtml" style="margin-bottom:.14em;color:${xml(node.widgetStyle.labelColor)};font-size:.16em;font-weight:600;letter-spacing:.24em;line-height:1">${xml(node.label)}</span>`
     : '';

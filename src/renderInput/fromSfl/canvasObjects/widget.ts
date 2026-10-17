@@ -22,6 +22,11 @@ function motion(value: string | undefined): 'roll' | 'fade' | undefined {
   return value === 'roll' || value === 'fade' ? value : undefined;
 }
 
+function positiveNumber(value: string | undefined): number | undefined {
+  const number = Number(value);
+  return value !== undefined && Number.isFinite(number) && number > 0 ? number : undefined;
+}
+
 function fontWeight(value: string | undefined): string | undefined {
   return value && FONT_WEIGHT.test(value) ? value : undefined;
 }
@@ -103,7 +108,7 @@ const RULER_NUMBERS = [
 ] as const;
 const RULER_COLORS = ['color', 'accent', 'glow'] as const;
 const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
-const RULER_OPTIONAL_COLORS = ['core'] as const;
+const RULER_OPTIONAL_COLORS = ['core', 'peak'] as const;
 
 function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
   const properties = canvasObject.props;
@@ -194,6 +199,7 @@ export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget
       variant: variant(properties.variant),
       motion: motion(properties.motion),
       fontWeight: fontWeight(properties.fontWeight),
+      fontSize: positiveNumber(properties.fontSize),
     },
   };
 }

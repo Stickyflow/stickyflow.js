@@ -10,6 +10,7 @@ import { bindIsometricQuickDuplicate, type IsometricQuickDuplicateHandle } from 
 import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpointDrag';
 import { bindLinkSegmentDrag, type LinkSegmentDragHandle } from './linkSegmentDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
+import { bindNudgeSelection, type NudgeSelectionHandle } from './nudgeSelection';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
 import { bindPathReshape, type PathReshapeDragHandle } from './pathReshapeDrag';
 import { bindPieLabelDrag, type PieLabelDragHandle } from './pieLabelDrag/binding';
@@ -45,6 +46,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
   const isometricQuickDuplicate: IsometricQuickDuplicateHandle = bindIsometricQuickDuplicate(viewer, emitter);
   const deleteSelection: DeleteSelectionHandle = bindDeleteSelection(viewer, emitter);
+  const nudgeSelection: NudgeSelectionHandle = bindNudgeSelection(viewer, emitter);
   const chartValues: ChartValueDragHandle = bindChartValueDrag(viewer, emitter);
   const pieLabels: PieLabelDragHandle = bindPieLabelDrag(viewer, emitter);
   const isometricLabels: IsometricLabelDragHandle = bindIsometricLabelDrag(viewer, emitter);
@@ -76,6 +78,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       quickDuplicate.destroy();
       isometricQuickDuplicate.destroy();
       deleteSelection.destroy();
+      nudgeSelection.destroy();
       chartValues.destroy();
       pieLabels.destroy();
       isometricLabels.destroy();

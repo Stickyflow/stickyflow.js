@@ -12,4 +12,8 @@ export interface TreemapLayout {
   gridHeight: number;
   cellGap: number;
   cellRadius: number;
+  headerHeight: number;
+  labelSize: number;
+  valueSize: number;
+  labelPadding: number;
 }

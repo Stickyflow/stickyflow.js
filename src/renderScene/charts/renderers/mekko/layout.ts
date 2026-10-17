@@ -2,19 +2,22 @@ import { finite } from '../../../scene';
 import type { ChartRenderContext } from '../types';
 import type { MekkoColumn, MekkoGrid, MekkoLayout } from './types';
 
-const COLUMN_GAP = 4;
-
 export function createMekkoLayout(context: ChartRenderContext): MekkoLayout {
   const labels = mekkoColumnLabels(context);
   const labelGutterWidth = context.showLabels ? 30 : 0;
   const grid = createMekkoGrid(context, labelGutterWidth);
   const fontSize = Math.max(9, finite(context.chart.fontSize, 12));
+  const columnGap = Math.max(0, finite(context.chart.config?.mekkoColumnGap, 4));
+  const smallFontSize = Math.max(8, fontSize - 1);
 
   return {
-    columns: createMekkoColumns(context, grid, labels),
+    columns: createMekkoColumns(context, grid, labels, columnGap),
     fontSize,
-    smallFontSize: Math.max(8, fontSize - 1),
+    smallFontSize,
     labelGutterWidth,
+    columnGap,
+    labelSize: Math.max(6, finite(context.chart.config?.mekkoLabelSize, smallFontSize)),
+    valueSize: Math.max(6, finite(context.chart.config?.mekkoValueSize, smallFontSize)),
     grid,
   };
 }
@@ -37,13 +40,18 @@ function createMekkoGrid(context: ChartRenderContext, labelGutterWidth: number):
   };
 }
 
-function createMekkoColumns(context: ChartRenderContext, grid: MekkoGrid, labels: string[]): MekkoColumn[] {
+function createMekkoColumns(
+  context: ChartRenderContext,
+  grid: MekkoGrid,
+  labels: string[],
+  columnGap: number,
+): MekkoColumn[] {
   const totals = labels.map((_, columnIndex) =>
     context.chart.series.reduce((sum, series) => sum + ((series.values as number[])[columnIndex] ?? 0), 0),
   );
   const grandTotal = totals.reduce((sum, total) => sum + total, 0);
   const maximumTotal = Math.max(1, ...totals);
-  const availableWidth = Math.max(1, grid.width - COLUMN_GAP * Math.max(0, labels.length - 1));
+  const availableWidth = Math.max(1, grid.width - columnGap * Math.max(0, labels.length - 1));
   let nextX = grid.x;
 
   return labels.map((label, index) => {
@@ -51,7 +59,7 @@ function createMekkoColumns(context: ChartRenderContext, grid: MekkoGrid, labels
     const width = grandTotal > 0 ? (total / grandTotal) * availableWidth : availableWidth / labels.length;
     const height = context.chart.config?.mekkoVaryHeight ? grid.height * (total / maximumTotal) : grid.height;
     const column = { label, total, x: nextX, y: grid.y + grid.height - height, width, height };
-    nextX += width + COLUMN_GAP;
+    nextX += width + columnGap;
     return column;
   });
 }

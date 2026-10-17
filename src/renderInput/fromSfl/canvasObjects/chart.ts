@@ -31,33 +31,33 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'line':
       return typedChart(base, chartType, lineConfig(source, p));
     case 'scatter':
-      return typedChart(base, chartType, scatterConfig(source));
+      return typedChart(base, chartType, scatterConfig(source, p));
     case 'boxplot':
-      return typedChart(base, chartType, boxplotConfig(source));
+      return typedChart(base, chartType, boxplotConfig(source, p));
     case 'field':
       return typedChart(base, chartType, fieldConfig(source));
     case 'heatmap':
-      return typedChart(base, chartType, heatmapConfig(source));
+      return typedChart(base, chartType, heatmapConfig(source, p));
     case 'hexbin':
-      return typedChart(base, chartType, hexbinConfig(source));
+      return typedChart(base, chartType, hexbinConfig(source, p));
     case 'mekko':
-      return typedChart(base, chartType, mekkoConfig(source));
+      return typedChart(base, chartType, mekkoConfig(source, p));
     case 'pie':
       return typedChart(base, chartType, pieConfig(source, p));
     case 'polarArea':
-      return typedChart(base, chartType, polarAreaConfig(source));
+      return typedChart(base, chartType, polarAreaConfig(source, p));
     case 'radar':
-      return typedChart(base, chartType, radarConfig(source));
+      return typedChart(base, chartType, radarConfig(source, p));
     case 'radial':
-      return typedChart(base, chartType, radialConfig(source));
+      return typedChart(base, chartType, radialConfig(source, p));
     case 'radialBar':
-      return typedChart(base, chartType, radialBarConfig(source));
+      return typedChart(base, chartType, radialBarConfig(source, p));
     case 'sankey':
-      return typedChart(base, chartType, sankeyConfig(source));
+      return typedChart(base, chartType, sankeyConfig(source, p));
     case 'treemap':
-      return typedChart(base, chartType, treemapConfig(source));
+      return typedChart(base, chartType, treemapConfig(source, p));
     case 'custom':
-      return typedChart(base, chartType, customConfig(source));
+      return typedChart(base, chartType, customConfig(source, p));
   }
 }
 

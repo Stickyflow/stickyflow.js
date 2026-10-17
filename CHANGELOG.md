@@ -17,6 +17,35 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- Arrow keys move the selected objects by 1 unit, Shift by 10, through the existing `moveChange` event.
+- The color picker has an alpha slider for solid colors and for every gradient stop. A transparent color is written as `rgba(r, g, b, a)`, and `rgba()` and `#rrggbbaa` fills are read back into the picker.
+- `fontSize` on the rollingNumber widget sets the digit size. Without it the size still follows the box.
+- `peak` on the ruler widget sets the color the ticks at the knob fade to. The default stays white.
+- `pointSize`, `pointOpacity`, `pointStrokeWidth` and `pointStrokeColor` on scatter charts set the dots. The dots used to be fixed at a radius of 4.
+- `scale`, `hexGap`, `hexStrokeWidth`, `hexStrokeColor` and `hexMinOpacity` on hexbin charts. A `scale` ramp colors every cell by its density. Without these a hexbin chart is drawn as before.
+- `radarStrokeWidth`, `radarPointSize` and `radarSpokes` on radar and radial charts set the outline, the corner dots and the spokes, and `radarTension` sets how round a radial chart curves. A width or size of 0 leaves the outline or the dots out. Without them both charts are drawn as before.
+- `ringTrackOpacity`, `ringCap`, `ringStartAngle` and `ringSweep` on radialBar charts set the track, the ends of the rings and where the rings start and how far they go around. A `ringSweep` below 360 gives a gauge. Without them the chart is drawn as before.
+- `pieStartAngle`, `pieStroke` and `pieStrokeWidth` now also work on polarArea charts, and `polarTrackOpacity`, `polarTrackStroke`, `polarTrackStrokeWidth` and `polarTrackDash` style the track behind the wedges, `polarRings` draws reference rings at the axis ticks, `polarNameSize`, `polarValueSize` and `polarValueFirst` set the size and order of the label in a wedge, and `polarOutsideLabels` puts the label of a wedge that is too small for it next to the wedge.
+- `boxWhiskerWidth`, `boxWhiskerColor` (a color or `series`), `boxMedianWidth`, `boxMedianColor`, `boxCapSize`, `boxPointSize`, `boxPointOpacity` and `boxJitter` on boxplot charts set the whiskers, the median line, the caps and the sample dots. Without them the chart is drawn as before. Without them the chart is drawn as before.
+- `cellShape` (`square` or `circle`), `cellStrokeColor`, `cellStrokeWidth`, `cellValueSize` and `cellValueColor` on heatmap charts set the cells and the numbers in them. Without them the chart is drawn as before.
+- `tileStrokeColor`, `tileStrokeWidth`, `tileLabelSize`, `tileValueSize`, `tileTextColor`, `tileLabelPadding`, `showTileValues` and `headerHeight` on treemap charts set the tile border, the text in the tiles and the group headers. Without them the chart is drawn as before.
+- `mekkoColumnGap`, `mekkoSegmentGap`, `mekkoRoundAll`, `mekkoSegmentStrokeColor`, `mekkoSegmentStrokeWidth`, `mekkoLabelSize`, `mekkoValueSize`, `mekkoTextColor`, `showMekkoTotals` and `mekkoValueFormat` (`value` or `percent`) on mekko charts set the gaps, the segment border, the text in the segments and the totals above the columns. A segment name that is wider than its column ends with an ellipsis. Without these a mekko chart is drawn as before.
+- `sankeyNodeWidth`, `sankeyNodeGap`, `sankeyLinkOpacity`, `sankeyLinkCurve` and `sankeyLabelSize` on sankey charts set the width of the nodes, the space between them, the opacity and the curve of the links and the size of the labels. Without them the chart is drawn as before.
+- `customConnectorWidth`, `customConnectorOpacity`, `customConnectorDash`, `customBeforeFill`, `customBeforeStroke`, `customBeforeStrokeWidth`, `customLabelSize` and `customLabelColor` on custom charts with `connectPoints` set the connectors, the hollow first point and the row labels. Without them the chart is drawn as before.
+
+### Changed
+
+- The quick duplicate buttons are smaller: the radius is 6 px instead of 8 and the plus is smaller to match.
+- The tabs of the color picker follow the segmented style of the panels, and its accent color is neutral instead of purple. The checkerboard behind the alpha slider follows the theme.
+
+### Fixed
+
+- Panning and zooming follow the pointer exactly when the canvas and the visible area have different aspect ratios. Panning used to lag behind the cursor, and the zoom anchor drifted.
+- A large `pieCornerRadius` no longer folds the corners of small slices and wedges into loops. The radius is limited to what the slice can hold.
+- A `tickScale` widget can be clicked, selected and moved on the canvas. Its shader surface no longer ignores the pointer.
+
 ## [0.2.0] - 2026-10-15
 
 ### Added

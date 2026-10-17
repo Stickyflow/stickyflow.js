@@ -1,8 +1,9 @@
 import type { ChartSeries } from '../../../../model/chart';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { wrapText } from '../../../scene/textLayout';
+import { ellipsizeToWidth, wrapText } from '../../../scene/textLayout';
 import {
+  barPath,
   barShapePath,
   CHART_COLORS,
   chartText,
@@ -112,8 +113,10 @@ function createSegmentNode(
   const clipPath = shadow
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
-  const radius = segment.isTop ? mekkoCornerRadius(context) : 0;
+  const config = chart.config;
+  const radius = segment.isTop || config?.mekkoRoundAll ? mekkoCornerRadius(context) : 0;
   const { x, y, width, height } = segment.frame;
+  const segmentGap = Math.max(0, finite(config?.mekkoSegmentGap, 0));
   const fallback = '#94a3b8';
   const gradientBounds: Bounds = {
     minX: x + width / 2 - height / 2,
@@ -136,11 +139,11 @@ function createSegmentNode(
     id: `chart-mekko-seg-${chart.id}-${segment.columnIndex}-${segment.seriesId}`,
     order: nextOrder(),
     bounds: nextColor ? gradientBounds : bounds,
-    d: barShapePath(x, y, width, height, radius),
+    d: barPath(x, y + segmentGap / 2, width, Math.max(0, height - segmentGap), radius, Boolean(config?.mekkoRoundAll)),
     style: {
       fill,
-      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
-      strokeWidth: finite(chart.gridWidth, 1),
+      stroke: { kind: 'solid', color: config?.mekkoSegmentStrokeColor ?? chart.gridColor ?? '#e2e8f0' },
+      strokeWidth: finite(config?.mekkoSegmentStrokeWidth, finite(chart.gridWidth, 1)),
       shadow,
       clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },
@@ -155,12 +158,20 @@ function createSegmentLabel(context: ChartRenderContext, layout: MekkoLayout, se
   }
   const innerWidth = Math.max(1, width - 8);
   const innerHeight = Math.max(1, height - 6);
-  const lineHeight = layout.smallFontSize * 1.2;
-  const labelLines = wrapText(segment.seriesLabel, innerWidth, layout.smallFontSize);
-  if ((labelLines.length + 1) * lineHeight > innerHeight) {
+  const lineHeight = layout.labelSize * 1.2;
+  const valueHeight = layout.valueSize * 1.2;
+  const labelLines = wrapText(segment.seriesLabel, innerWidth, layout.labelSize).map(line =>
+    ellipsizeToWidth(line, innerWidth, layout.labelSize, true),
+  );
+  if (labelLines.length * lineHeight + valueHeight > innerHeight) {
     return [];
   }
-  const textColor = contrastTextColor(representativeColor(segment.color, '#ffffff'));
+  const textColor = chart.config?.mekkoTextColor ?? contrastTextColor(representativeColor(segment.color, '#ffffff'));
+  const columnTotal = layout.columns[segment.columnIndex]?.total ?? 0;
+  const valueText =
+    chart.config?.mekkoValueFormat === 'percent'
+      ? `${columnTotal > 0 ? Math.round((segment.value / columnTotal) * 100) : 0}%`
+      : String(segment.value);
 
   const label: RenderNode = {
     ...chartText({
@@ -172,7 +183,7 @@ function createSegmentLabel(context: ChartRenderContext, layout: MekkoLayout, se
       chart,
     }),
     lines: labelLines,
-    fontSize: layout.smallFontSize,
+    fontSize: layout.labelSize,
     fontWeight: 'bold',
     color: textColor,
   };
@@ -188,11 +199,11 @@ function createSegmentLabel(context: ChartRenderContext, layout: MekkoLayout, se
         width: innerWidth,
         height: Math.max(1, innerHeight - labelLines.length * lineHeight),
       },
-      text: String(segment.value),
+      text: valueText,
       chart,
     }),
-    lines: [String(segment.value)],
-    fontSize: layout.smallFontSize,
+    lines: [valueText],
+    fontSize: layout.valueSize,
     color: textColor,
   };
 

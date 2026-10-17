@@ -143,9 +143,9 @@ function renderConnectedPairs(context: ChartRenderContext): RenderNode[] {
         valueIndex: index,
         point: beforePoint,
         style: {
-          fill: paint(chart.gridColor ?? '#e2e8f0', context.diagnostics, chart.id),
-          stroke: { kind: 'solid', color: HOLLOW_POINT_STROKE },
-          strokeWidth: 1.5,
+          fill: paint(chart.config?.customBeforeFill ?? chart.gridColor ?? '#e2e8f0', context.diagnostics, chart.id),
+          stroke: { kind: 'solid', color: chart.config?.customBeforeStroke ?? HOLLOW_POINT_STROKE },
+          strokeWidth: finite(chart.config?.customBeforeStrokeWidth, 1.5),
         },
       }),
     );
@@ -169,6 +169,14 @@ function renderConnectedPairs(context: ChartRenderContext): RenderNode[] {
   return nodes;
 }
 
+function connectorDash(text: string | undefined): number[] | undefined {
+  const parts = (text ?? '')
+    .split(/[ ,]+/)
+    .map(Number)
+    .filter(part => Number.isFinite(part) && part > 0);
+  return parts.length > 0 ? parts : undefined;
+}
+
 function createConnectorLine(
   context: ChartRenderContext,
   index: number,
@@ -183,7 +191,13 @@ function createConnectorLine(
     order: context.nextOrder(),
     bounds: context.bounds,
     d: `M ${from.x} ${from.y} L ${to.x} ${to.y}`,
-    style: { fill: { kind: 'none' }, stroke: { kind: 'solid', color }, strokeWidth: 2 },
+    style: {
+      fill: { kind: 'none' },
+      stroke: { kind: 'solid', color },
+      strokeWidth: finite(chart.config?.customConnectorWidth, 2),
+      opacity: chart.config?.customConnectorOpacity,
+      dash: connectorDash(chart.config?.customConnectorDash),
+    },
   };
 }
 
@@ -220,6 +234,7 @@ function createConnectorLabel(
       chart,
       align: horizontal ? 'left' : 'center',
     }),
-    fontSize: Math.max(9, finite(chart.fontSize, 12)) - 2,
+    fontSize: Math.max(6, finite(chart.config?.customLabelSize, Math.max(9, finite(chart.fontSize, 12)) - 2)),
+    ...(chart.config?.customLabelColor ? { color: chart.config.customLabelColor } : {}),
   };
 }

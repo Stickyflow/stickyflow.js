@@ -13,6 +13,7 @@ export interface RadarFrame {
   max: number;
   count: number;
   curved: boolean;
+  tension?: number;
 }
 
 const START_ANGLE = -Math.PI / 2;
@@ -66,12 +67,12 @@ export function radarValueAtPoint(frame: RadarFrame, index: number, px: number, 
   return frame.min + ratio * (frame.max - frame.min);
 }
 
-export function radarSeriesPath(points: RadarPoint[], curved: boolean): string {
+export function radarSeriesPath(points: RadarPoint[], curved: boolean, tension = CURVED_TENSION): string {
   if (points.length === 0) {
     return '';
   }
   if (curved) {
-    return freeformPathData({ points, tension: CURVED_TENSION, closed: true });
+    return freeformPathData({ points, tension, closed: true });
   }
   const commands = points.map((point, index) => `${index ? 'L ' : ''}${point.x} ${point.y}`);
   return `M ${commands.join(' ')} Z`;

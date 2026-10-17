@@ -1,7 +1,7 @@
-import { type Hsv, hexToHsv, hsvToHex } from './color';
+import { alphaOf, formatColorAlpha, type Hsv, hexOf, hexToHsv, hsvToHex } from './color';
 import { clampPosition, type GradientValue, sortStops } from './gradientValue';
 import type { PickerView } from './popoverView';
-import { darken, formatPickerValue, type PickerValue, toGradient, toSolid } from './value';
+import { darken, formatPickerValue, type PickerValue, toAlpha, toGradient, toSolid } from './value';
 
 const MIN_STOPS = 2;
 const MAX_STOPS = 8;
@@ -9,6 +9,7 @@ const MAX_STOPS = 8;
 export interface PickerState {
   mode: PickerValue['mode'];
   solid: string;
+  alpha: number;
   gradient: GradientValue;
   selected: number;
   hsv: Hsv;
@@ -27,18 +28,36 @@ export function activeColor(picker: Picker): string {
   return state.mode === 'solid' ? state.solid : (state.gradient.stops[state.selected]?.color ?? state.solid);
 }
 
-export function setActiveColor(picker: Picker, hex: string): void {
+export function activeHex(picker: Picker): string {
+  return hexOf(activeColor(picker));
+}
+
+export function activeAlpha(picker: Picker): number {
+  return picker.state.mode === 'solid' ? picker.state.alpha : alphaOf(activeColor(picker));
+}
+
+function setActiveColorAlpha(picker: Picker, hex: string, alpha: number): void {
   const { state } = picker;
   if (state.mode === 'solid') {
     state.solid = hex;
+    state.alpha = alpha;
   } else if (state.gradient.stops[state.selected]) {
-    state.gradient.stops[state.selected] = { ...state.gradient.stops[state.selected], color: hex };
+    state.gradient.stops[state.selected] = {
+      ...state.gradient.stops[state.selected],
+      color: formatColorAlpha(hex, alpha),
+    };
   }
+}
+
+export function setActiveColor(picker: Picker, hex: string): void {
+  setActiveColorAlpha(picker, hex, activeAlpha(picker));
 }
 
 function currentValue(picker: Picker): PickerValue {
   const { state } = picker;
-  return state.mode === 'solid' ? { mode: 'solid', color: state.solid } : { mode: 'gradient', ...state.gradient };
+  return state.mode === 'solid'
+    ? { mode: 'solid', color: state.solid, alpha: state.alpha }
+    : { mode: 'gradient', ...state.gradient };
 }
 
 export function commit(picker: Picker): void {
@@ -57,6 +76,15 @@ export function applyHex(picker: Picker, hex: string): void {
   picker.render();
 }
 
+export function applyAlpha(picker: Picker, raw: string): void {
+  const value = Number(raw);
+  if (!Number.isFinite(value)) {
+    return;
+  }
+  setActiveColorAlpha(picker, activeHex(picker), Math.max(0, Math.min(100, value)) / 100);
+  picker.render();
+}
+
 export function applyAngle(picker: Picker, raw: string): void {
   const value = Number(raw);
   if (!Number.isFinite(value)) {
@@ -72,7 +100,7 @@ export function selectStop(picker: Picker, index: number): void {
     return;
   }
   state.selected = index;
-  state.hsv = hexToHsv(state.gradient.stops[index].color);
+  state.hsv = hexToHsv(hexOf(state.gradient.stops[index].color));
   picker.render();
 }
 
@@ -83,7 +111,7 @@ export function removeStop(picker: Picker, index: number): void {
   }
   state.gradient = { ...state.gradient, stops: state.gradient.stops.filter((_stop, at) => at !== index) };
   state.selected = Math.min(state.selected, state.gradient.stops.length - 1);
-  state.hsv = hexToHsv(activeColor(picker));
+  state.hsv = hexToHsv(activeHex(picker));
   picker.render();
   commit(picker);
 }
@@ -97,12 +125,12 @@ export function appendStop(picker: Picker): void {
   const last = sorted[sorted.length - 1];
   const previous = sorted[sorted.length - 2];
   const inserted = {
-    color: darken(last.color),
+    color: formatColorAlpha(darken(hexOf(last.color)), alphaOf(last.color)),
     position: clampPosition((last.position + (previous?.position ?? 0)) / 2),
   };
   state.gradient = { ...state.gradient, stops: sortStops([...state.gradient.stops, inserted]) };
   state.selected = state.gradient.stops.indexOf(inserted);
-  state.hsv = hexToHsv(activeColor(picker));
+  state.hsv = hexToHsv(activeHex(picker));
   picker.render();
   commit(picker);
 }
@@ -119,8 +147,9 @@ export function setMode(picker: Picker, next: PickerValue['mode']): void {
     state.selected = 0;
   } else {
     state.solid = toSolid(value);
+    state.alpha = toAlpha(value);
   }
-  state.hsv = hexToHsv(activeColor(picker));
+  state.hsv = hexToHsv(activeHex(picker));
   picker.render();
   commit(picker);
 }

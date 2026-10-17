@@ -6,4 +6,12 @@ export interface BoxplotChartConfig {
   showBoxplotPoints?: boolean;
   barBorderColor?: string | GradientColor | MeshGradientColor;
   barBorderWidth?: number;
+  boxWhiskerWidth?: number;
+  boxMedianWidth?: number;
+  boxMedianColor?: string;
+  boxWhiskerColor?: string;
+  boxCapSize?: number;
+  boxPointSize?: number;
+  boxPointOpacity?: number;
+  boxJitter?: number;
 }
