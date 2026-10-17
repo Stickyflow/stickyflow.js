@@ -1,14 +1,12 @@
 import type { ChartSeries } from '../../../../model/chart';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { wrapText } from '../../../scene/textLayout';
+import { estimateTextWidth, wrapText } from '../../../scene/textLayout';
 import { squarifyTreemap } from '../../geometry';
 import { chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import { treemapLeafColor, treemapLeafValue } from './layout';
 import type { TreemapLayout } from './types';
-
-const HEADER_HEIGHT = 20;
 
 interface TreemapTile {
   x: number;
@@ -73,7 +71,7 @@ function layoutTreemapTiles(
   const tiles: TreemapTile[] = [];
   const headers: TreemapHeader[] = [];
   groupRects.forEach(groupRect => {
-    const headerHeight = context.showLabels ? Math.min(HEADER_HEIGHT, groupRect.height) : 0;
+    const headerHeight = context.showLabels ? Math.min(layout.headerHeight, groupRect.height) : 0;
     if (context.showLabels) {
       headers.push({
         key: groupRect.item.key,
@@ -113,7 +111,7 @@ function renderTreemapHeader(
     x: plot.x + header.x,
     y: plot.y + header.y,
     width: header.width,
-    height: HEADER_HEIGHT,
+    height: layout.headerHeight,
     rx: layout.cellRadius,
     style: { fill: { kind: 'solid', color: fill } },
   };
@@ -125,7 +123,7 @@ function renderTreemapHeader(
       bounds,
       frame: {
         x: plot.x + header.x,
-        y: plot.y + header.y + (HEADER_HEIGHT - smallFontSize) / 2,
+        y: plot.y + header.y + (layout.headerHeight - smallFontSize) / 2,
         width: header.width,
         height: smallFontSize + 2,
       },
@@ -200,12 +198,23 @@ function createTileNode(
     rx: layout.cellRadius,
     style: {
       fill,
-      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
-      strokeWidth: finite(chart.gridWidth, 1),
+      stroke: { kind: 'solid', color: chart.config?.tileStrokeColor ?? chart.gridColor ?? '#e2e8f0' },
+      strokeWidth: finite(chart.config?.tileStrokeWidth, finite(chart.gridWidth, 1)),
       shadow,
       clip: clipPath ? { type: 'path', d: clipPath } : undefined,
     },
   };
+}
+
+function fitLine(text: string, width: number, fontSize: number, bold: boolean): string {
+  if (estimateTextWidth(text, fontSize, bold) <= width) {
+    return text;
+  }
+  let end = text.length;
+  while (end > 1 && estimateTextWidth(`${text.slice(0, end)}…`, fontSize, bold) > width) {
+    end -= 1;
+  }
+  return `${text.slice(0, end)}…`;
 }
 
 function createTileLabel(
@@ -217,13 +226,17 @@ function createTileLabel(
   const { chart, plot, bounds, nextOrder } = context;
   const { leaf, value } = tile.item;
   const gap = layout.cellGap;
-  const width = Math.max(1, tile.width - gap - 8);
-  const height = Math.max(1, tile.height - gap - 6);
-  const x = plot.x + tile.x + gap / 2 + 4;
-  const y = plot.y + tile.y + gap / 2 + 3;
-  const textColor = contrastTextColor(representativeColor(color, '#ffffff'));
-  const labelLines = wrapText(leaf.label, width, layout.smallFontSize);
-  const lineHeight = layout.smallFontSize * 1.2;
+  const pad = layout.labelPadding;
+  const width = Math.max(1, tile.width - gap - pad * 2);
+  const height = Math.max(1, tile.height - gap - pad * 1.5);
+  const x = plot.x + tile.x + gap / 2 + pad;
+  const y = plot.y + tile.y + gap / 2 + pad * 0.75;
+  const textColor = chart.config?.tileTextColor ?? contrastTextColor(representativeColor(color, '#ffffff'));
+  const lineHeight = layout.labelSize * 1.2;
+  const maxLines = Math.max(1, Math.floor(height / lineHeight));
+  const labelLines = wrapText(leaf.label, width, layout.labelSize)
+    .slice(0, maxLines)
+    .map(line => fitLine(line, width, layout.labelSize, true));
 
   const label: RenderNode = {
     ...chartText({
@@ -235,10 +248,18 @@ function createTileLabel(
       chart,
     }),
     lines: labelLines,
-    fontSize: layout.smallFontSize,
+    fontSize: layout.labelSize,
     fontWeight: 'bold',
     color: textColor,
   };
+
+  const valueText = String(value);
+  const valueFits =
+    labelLines.length * lineHeight + layout.valueSize * 1.2 <= height + 2 &&
+    estimateTextWidth(valueText, layout.valueSize, false) <= width;
+  if (chart.config?.showTileValues === false || !valueFits) {
+    return [label];
+  }
 
   const valueNode: RenderNode = {
     ...chartText({
@@ -255,7 +276,7 @@ function createTileLabel(
       chart,
     }),
     lines: [String(value)],
-    fontSize: layout.smallFontSize,
+    fontSize: layout.valueSize,
     color: textColor,
   };
 

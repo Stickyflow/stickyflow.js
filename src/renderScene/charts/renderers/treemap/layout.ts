@@ -23,6 +23,10 @@ export function createTreemapLayout(context: ChartRenderContext): TreemapLayout 
     gridHeight: Math.max(1, plot.height - legendHeight),
     cellGap,
     cellRadius: Math.max(0, finite(chart.config?.barCornerRadius, cellGap)),
+    headerHeight: Math.max(0, finite(chart.config?.headerHeight, 20)),
+    labelSize: Math.max(6, finite(chart.config?.tileLabelSize, Math.max(8, fontSize - 1))),
+    valueSize: Math.max(6, finite(chart.config?.tileValueSize, Math.max(8, fontSize - 1))),
+    labelPadding: Math.max(0, finite(chart.config?.tileLabelPadding, 4)),
   };
 }
 

@@ -30,6 +30,7 @@ Two things count as breaking here that are easy to overlook:
 - `pieStartAngle`, `pieStroke` and `pieStrokeWidth` now also work on polarArea charts, and `polarTrackOpacity`, `polarTrackStroke`, `polarTrackStrokeWidth` and `polarTrackDash` style the track behind the wedges, `polarRings` draws reference rings at the axis ticks, `polarNameSize`, `polarValueSize` and `polarValueFirst` set the size and order of the label in a wedge, and `polarOutsideLabels` puts the label of a wedge that is too small for it next to the wedge.
 - `boxWhiskerWidth`, `boxWhiskerColor` (a color or `series`), `boxMedianWidth`, `boxMedianColor`, `boxCapSize`, `boxPointSize`, `boxPointOpacity` and `boxJitter` on boxplot charts set the whiskers, the median line, the caps and the sample dots. Without them the chart is drawn as before. Without them the chart is drawn as before.
 - `cellShape` (`square` or `circle`), `cellStrokeColor`, `cellStrokeWidth`, `cellValueSize` and `cellValueColor` on heatmap charts set the cells and the numbers in them. Without them the chart is drawn as before.
+- `tileStrokeColor`, `tileStrokeWidth`, `tileLabelSize`, `tileValueSize`, `tileTextColor`, `tileLabelPadding`, `showTileValues` and `headerHeight` on treemap charts set the tile border, the text in the tiles and the group headers. Without them the chart is drawn as before.
 
 ### Fixed
 

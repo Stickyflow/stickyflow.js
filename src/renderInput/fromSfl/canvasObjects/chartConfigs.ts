@@ -253,13 +253,21 @@ export function sankeyConfig(source: ChartSource): SankeyChartConfig {
   };
 }
 
-export function treemapConfig(source: ChartSource): TreemapChartConfig {
+export function treemapConfig(source: ChartSource, p: ChartProps): TreemapChartConfig {
   return {
     zones: source?.zones,
     cellGap: source?.cellGap,
     barCornerRadius: source?.barCornerRadius,
     headerColor: source?.headerColor,
     tileGradient: source?.tileGradient,
+    tileStrokeColor: p.tileStrokeColor,
+    tileStrokeWidth: numOf(p.tileStrokeWidth),
+    tileLabelSize: numOf(p.tileLabelSize),
+    tileValueSize: numOf(p.tileValueSize),
+    tileTextColor: p.tileTextColor,
+    tileLabelPadding: numOf(p.tileLabelPadding),
+    showTileValues: p.showTileValues === undefined ? undefined : String(p.showTileValues) !== 'false',
+    headerHeight: numOf(p.headerHeight),
   };
 }
 
