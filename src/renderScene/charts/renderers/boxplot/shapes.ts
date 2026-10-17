@@ -19,7 +19,8 @@ export function renderBoxAndWhiskers(
   mark: BoxplotSeriesMark,
 ): RenderNode[] {
   const whiskers = layout.whiskerWidth > 0 ? [lowerWhisker(layout, mark), upperWhisker(layout, mark)] : [];
-  const caps = layout.whiskerWidth > 0 && layout.capSize > 0 ? [lowerWhiskerCap(layout, mark), upperWhiskerCap(layout, mark)] : [];
+  const caps =
+    layout.whiskerWidth > 0 && layout.capSize > 0 ? [lowerWhiskerCap(layout, mark), upperWhiskerCap(layout, mark)] : [];
   const median = layout.medianWidth > 0 ? [medianLine(layout, mark)] : [];
   return [
     ...[...whiskers, ...caps].map(line =>

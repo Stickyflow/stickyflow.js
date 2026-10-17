@@ -136,7 +136,8 @@ function ringNodes(
   index: number,
 ): RenderNode[] {
   const { chart, bounds, diagnostics, nextOrder } = context;
-  const { centerX, centerY, outerRadius, ringThickness, ringGap, axisMin, range, start, total, trackOpacity, cap } = layout;
+  const { centerX, centerY, outerRadius, ringThickness, ringGap, axisMin, range, start, total, trackOpacity, cap } =
+    layout;
   const radius = outerRadius - index * (ringThickness + ringGap) - ringThickness / 2;
   if (radius <= ringThickness / 2) {
     return [];
@@ -145,7 +146,12 @@ function ringNodes(
   const value = Math.max(0, finite((series.values as number[])[0], 0));
   const fraction = range > 0 ? Math.min(1, Math.max(0, (value - axisMin) / range)) : 0;
 
-  const trackStyle = { fill: { kind: 'none' } as const, stroke: color, strokeWidth: ringThickness, opacity: trackOpacity };
+  const trackStyle = {
+    fill: { kind: 'none' } as const,
+    stroke: color,
+    strokeWidth: ringThickness,
+    opacity: trackOpacity,
+  };
   const track: RenderNode =
     total >= Math.PI * 2 - FULL_SWEEP_EPSILON
       ? {

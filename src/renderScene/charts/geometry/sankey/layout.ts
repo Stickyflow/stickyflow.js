@@ -1,16 +1,10 @@
 import { assignSankeyColumns } from './columns';
+import { SANKEY_NODE_GAP, SANKEY_NODE_WIDTH } from './constants';
 import { createSankeyGraph } from './graph';
 import { layoutSankeyLinks } from './links';
 import { calculateNodeGeometry } from './nodeGeometry';
 import { layoutSankeyNodes } from './nodes';
-import { SANKEY_NODE_GAP, SANKEY_NODE_WIDTH } from './constants';
-import type {
-  SankeyLayout,
-  SankeyLayoutOptions,
-  SankeyLinkInput,
-  SankeyNodeInput,
-  SankeyNodeOffset,
-} from './types';
+import type { SankeyLayout, SankeyLayoutOptions, SankeyLinkInput, SankeyNodeInput, SankeyNodeOffset } from './types';
 
 function collectOffsets(inputs: SankeyNodeInput[]): Map<string, SankeyNodeOffset> {
   const offsets = new Map<string, SankeyNodeOffset>();

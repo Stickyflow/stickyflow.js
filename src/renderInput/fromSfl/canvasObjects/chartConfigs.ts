@@ -168,7 +168,8 @@ export function mekkoConfig(source: ChartSource, p: ChartProps): MekkoChartConfi
     mekkoValueSize: numOf(p.mekkoValueSize),
     mekkoTextColor: p.mekkoTextColor,
     showMekkoTotals: p.showMekkoTotals === undefined ? undefined : String(p.showMekkoTotals) !== 'false',
-    mekkoValueFormat: p.mekkoValueFormat === 'percent' ? 'percent' : p.mekkoValueFormat === 'value' ? 'value' : undefined,
+    mekkoValueFormat:
+      p.mekkoValueFormat === 'percent' ? 'percent' : p.mekkoValueFormat === 'value' ? 'value' : undefined,
   };
 }
 
@@ -216,7 +217,9 @@ export function polarAreaConfig(source: ChartSource, p: ChartProps): PolarAreaCh
   };
 }
 
-function radarStyle(p: ChartProps): Pick<RadarChartConfig, 'radarStrokeWidth' | 'radarPointSize' | 'radarSpokes' | 'radarTension'> {
+function radarStyle(
+  p: ChartProps,
+): Pick<RadarChartConfig, 'radarStrokeWidth' | 'radarPointSize' | 'radarSpokes' | 'radarTension'> {
   return {
     radarStrokeWidth: numOf(p.radarStrokeWidth),
     radarPointSize: numOf(p.radarPointSize),

@@ -19,7 +19,8 @@ export function renderSamplePoints(
     return [];
   }
   return (mark.series.values as number[]).map((value, pointIndex) => {
-    const center = mark.geometry.center + jitter(mark.seriesIndex * 10_000 + pointIndex) * layout.jitter * layout.boxWidth;
+    const center =
+      mark.geometry.center + jitter(mark.seriesIndex * 10_000 + pointIndex) * layout.jitter * layout.boxWidth;
     const { x, y } = boxplotPoint(layout.orientation, center, valueAt(value));
     return {
       type: 'ellipse',
