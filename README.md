@@ -155,7 +155,7 @@ npm run ci      # lint, typecheck, tests, build, smoke
 npm run build   # tsup
 ```
 
-Adding a new placeable object: [docs/ADDING_CANVAS_OBJECT.md](docs/ADDING_CANVAS_OBJECT.md). Changes: [CHANGELOG.md](CHANGELOG.md).
+How the package and its neighbours fit together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Adding a new placeable object: [docs/ADDING_CANVAS_OBJECT.md](docs/ADDING_CANVAS_OBJECT.md). Changes: [CHANGELOG.md](CHANGELOG.md).
 
 ## More
 

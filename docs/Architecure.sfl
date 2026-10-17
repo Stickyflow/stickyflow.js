@@ -1,0 +1,700 @@
+sfl 1.4
+
+// Stickyflow, high level. Text is the source, stickyflow.js turns it into pictures and patches it back,
+// and everything else is a consumer of the package.
+
+Style Band {
+  shape: rounded_rectangle
+  fill: "#f8fafc"
+  stroke: "#cbd5e1"
+  strokeWidth: 1.5
+  cornerRadius: 18
+  textColor: "#334155"
+  fontSize: 15
+  fontWeight: bold
+}
+
+Style Layer {
+  shape: rounded_rectangle
+  fill: "#ffffff"
+  stroke: "#0f172a"
+  strokeWidth: 1.5
+  cornerRadius: 12
+  textColor: "#0f172a"
+  fontSize: 14
+}
+
+Style Base : Layer {
+  fill: "#f1f5f9"
+  stroke: "#64748b"
+  strokeStyle: dashed
+  dash: [6, 4]
+}
+
+Style Tier : Layer {
+  fill: "#fffbeb"
+  stroke: "#b45309"
+}
+
+Style Data : Layer {
+  fill: "#ecfeff"
+  stroke: "#0e7490"
+}
+
+Style Entry : Layer {
+  fill: "#0f172a"
+  stroke: "#0f172a"
+  textColor: "#f8fafc"
+  fontWeight: bold
+}
+
+Style Actor : Layer {
+  fill: "#f0fdf4"
+  stroke: "#15803d"
+}
+
+Style App : Layer {
+  fill: "#eef2ff"
+  stroke: "#3730a3"
+}
+
+Style Research : Layer {
+  fill: "#fdf2f8"
+  stroke: "#9d174d"
+  strokeStyle: dashed
+  dash: [6, 4]
+}
+
+Model architecture {
+  Text title {
+    text: "Stickyflow architecture"
+    layout {
+      position: 40, 20
+      size: 700, 40
+    }
+    style {
+      fontSize: 30
+      fontWeight: bold
+      textColor: "#0f172a"
+      textAlign: left
+    }
+  }
+
+  Text subtitle {
+    text: "One plain text document. Everything else reads it, draws it or patches it."
+    layout {
+      position: 40, 62
+      size: 900, 24
+    }
+    style {
+      fontSize: 15
+      textColor: "#64748b"
+      textAlign: left
+    }
+  }
+
+  // Who writes SFL
+
+  Shape people : Actor {
+    kind: input
+    text: "People on the canvas and in panels"
+    layout {
+      position: 440, 110
+      size: 260, 64
+    }
+  }
+
+  Shape models : Actor {
+    kind: input
+    text: "Language models"
+    layout {
+      position: 1000, 110
+      size: 260, 64
+    }
+  }
+
+  Container own : Band {
+    kind: frame
+    text: "Speak SFL on their own"
+    layout {
+      position: 40, 124
+      size: 370, 186
+    }
+    style {
+      stroke: "#475569"
+      textColor: "#ffffff"
+    }
+    Shape atlas : App {
+      text: "stickyflow-atlas: studio with its own canvas, React and FastAPI"
+      layout {
+        position: 20, 48
+        size: 330, 40
+      }
+      style {
+        fontSize: 12
+      }
+    }
+    Shape language_server : App {
+      text: "vscode-sfl: language support in the editor"
+      layout {
+        position: 20, 96
+        size: 330, 40
+      }
+      style {
+        fontSize: 12
+      }
+    }
+    Shape typesetting : App {
+      text: "latex-sfl: SFL inline in a document"
+      layout {
+        position: 20, 144
+        size: 330, 32
+      }
+      style {
+        fontSize: 12
+      }
+    }
+  }
+
+  Shape sfl_text {
+    kind: note
+    text: "SFL document"
+    layout {
+      position: 620, 224
+      size: 460, 76
+    }
+    style {
+      shape: document
+      fill: "#0f172a"
+      stroke: "#0f172a"
+      textColor: "#f8fafc"
+      fontSize: 18
+      fontWeight: bold
+    }
+  }
+
+  Text sfl_note {
+    text: "Edits patch the text. Comments and order survive."
+    layout {
+      position: 620, 312
+      size: 460, 20
+    }
+    style {
+      fontSize: 12
+      textColor: "#64748b"
+      textAlign: center
+    }
+  }
+
+  Container research : Band {
+    kind: frame
+    text: "Research"
+    layout {
+      position: 1330, 110
+      size: 330, 190
+    }
+    style {
+      stroke: "#9d174d"
+      strokeStyle: dashed
+      dash: [6, 4]
+      textColor: "#ffffff"
+    }
+    Shape visual_intelligence : Research {
+      text: "SFL-visual-intelligence"
+      layout {
+        position: 20, 50
+        size: 290, 52
+      }
+    }
+    Shape visual_planner : Research {
+      text: "stickyflow-visual-planner"
+      layout {
+        position: 20, 116
+        size: 290, 52
+      }
+    }
+  }
+
+  // The package
+
+  Container core_package : Band {
+    kind: frame
+    text: "stickyflow.js, the npm package"
+    layout {
+      position: 40, 350
+      size: 1620, 600
+    }
+
+    Container pipeline : Band {
+      kind: frame
+      text: "Core pipeline"
+      layout {
+        position: 20, 44
+        size: 1580, 210
+      }
+      style {
+        fill: "#ffffff"
+      }
+
+      Shape l1 : Layer {
+        text: "L1 sflLanguage"
+        layout {
+          position: 20, 46
+          size: 220, 82
+        }
+      }
+      Shape l2 : Layer {
+        text: "L2 sflSemantic"
+        layout {
+          position: 290, 46
+          size: 220, 82
+        }
+      }
+      Shape l3 : Layer {
+        text: "L3 renderInput"
+        layout {
+          position: 560, 46
+          size: 220, 82
+        }
+      }
+      Shape l4 : Layer {
+        text: "L4 renderScene"
+        layout {
+          position: 830, 46
+          size: 220, 82
+        }
+      }
+      Shape l5 : Layer {
+        text: "L5 svg"
+        layout {
+          position: 1100, 46
+          size: 220, 82
+        }
+      }
+      Shape result : Entry {
+        kind: output
+        text: "render() gives SVG, size, diagnostics"
+        layout {
+          position: 1370, 46
+          size: 190, 82
+        }
+        style {
+          fontSize: 13
+        }
+      }
+
+      Text l1_note {
+        text: "lexer, parser, canonical emitter"
+        layout {
+          position: 20, 132
+          size: 220, 18
+        }
+        style {
+          fontSize: 11
+          textColor: "#64748b"
+        }
+      }
+      Text l2_note {
+        text: "AST to canvas state, defaults"
+        layout {
+          position: 290, 132
+          size: 220, 18
+        }
+        style {
+          fontSize: 11
+          textColor: "#64748b"
+        }
+      }
+      Text l3_note {
+        text: "renderer contract, style decoding"
+        layout {
+          position: 560, 132
+          size: 220, 18
+        }
+        style {
+          fontSize: 11
+          textColor: "#64748b"
+        }
+      }
+      Text l4_note {
+        text: "scene nodes, charts, layout"
+        layout {
+          position: 830, 132
+          size: 220, 18
+        }
+        style {
+          fontSize: 11
+          textColor: "#64748b"
+        }
+      }
+      Text l5_note {
+        text: "serialization, DOM contract"
+        layout {
+          position: 1100, 132
+          size: 220, 18
+        }
+        style {
+          fontSize: 11
+          textColor: "#64748b"
+        }
+      }
+
+      Shape l0 : Base {
+        text: "L0 model: framework neutral types for charts, shapes, paths, shaders, widgets and isometric objects"
+        layout {
+          position: 20, 160
+          size: 1540, 36
+        }
+        style {
+          fontSize: 13
+        }
+      }
+    }
+
+    Container runtime : Band {
+      kind: frame
+      text: "Runtime tiers"
+      layout {
+        position: 20, 280
+        size: 960, 150
+      }
+      style {
+        fill: "#ffffff"
+        stroke: "#b45309"
+        textColor: "#ffffff"
+      }
+
+      Shape rt_dom : Tier {
+        text: "dom"
+        layout {
+          position: 20, 50
+          size: 168, 70
+        }
+      }
+      Shape rt_eventing : Tier {
+        text: "eventing"
+        layout {
+          position: 200, 50
+          size: 168, 70
+        }
+      }
+      Shape rt_viewer : Tier {
+        text: "viewer"
+        layout {
+          position: 380, 50
+          size: 168, 70
+        }
+      }
+      Shape rt_interaction : Tier {
+        text: "interaction"
+        layout {
+          position: 560, 50
+          size: 168, 70
+        }
+      }
+      Shape rt_web_component : Tier {
+        text: "webComponent"
+        layout {
+          position: 740, 50
+          size: 200, 70
+        }
+      }
+    }
+
+    Container binding_group : Band {
+      kind: frame
+      text: "Data and events"
+      layout {
+        position: 1010, 280
+        size: 590, 150
+      }
+      style {
+        fill: "#ffffff"
+        stroke: "#0e7490"
+        textColor: "#ffffff"
+      }
+
+      Shape binding : Data {
+        text: "binding: data sources, expressions, handlers"
+        layout {
+          position: 20, 50
+          size: 340, 70
+        }
+      }
+      Shape adapters : Data {
+        text: "adapters: JSON import"
+        layout {
+          position: 380, 50
+          size: 190, 70
+        }
+      }
+    }
+
+    Container entries : Band {
+      kind: frame
+      text: "Public entry points"
+      layout {
+        position: 20, 456
+        size: 1580, 124
+      }
+      style {
+        fill: "#ffffff"
+        stroke: "#0f172a"
+        textColor: "#ffffff"
+      }
+
+      Shape entry_core : Entry {
+        text: "stickyflow"
+        layout {
+          position: 20, 46
+          size: 340, 56
+        }
+      }
+      Shape entry_viewer : Entry {
+        text: "stickyflow/viewer"
+        layout {
+          position: 400, 46
+          size: 360, 56
+        }
+      }
+      Shape entry_interaction : Entry {
+        text: "stickyflow/interaction"
+        layout {
+          position: 800, 46
+          size: 360, 56
+        }
+      }
+      Shape entry_web_component : Entry {
+        text: "stickyflow/web-component"
+        layout {
+          position: 1200, 46
+          size: 360, 56
+        }
+      }
+    }
+  }
+
+  // Who uses the package
+
+  Container consumers : Band {
+    kind: frame
+    text: "Consumers of the package"
+    layout {
+      position: 40, 1010
+      size: 1620, 230
+    }
+
+    Shape web : App {
+      text: "StickyFlow-Web: website, docs, Playground"
+      layout {
+        position: 20, 50
+        size: 380, 66
+      }
+    }
+    Shape chat : App {
+      text: "sfl-chat and sfl-vue: the round trip with a model"
+      layout {
+        position: 420, 50
+        size: 380, 66
+      }
+    }
+    Shape preview : App {
+      text: "vscode-sfl-preview: live preview next to the text"
+      layout {
+        position: 820, 50
+        size: 380, 66
+      }
+    }
+    Shape notes : App {
+      text: "obsidian-sfl: diagram blocks in notes"
+      layout {
+        position: 1220, 50
+        size: 380, 66
+      }
+    }
+    Shape your_app : App {
+      text: "Your own app, with the viewer or the web component"
+      layout {
+        position: 20, 140
+        size: 380, 66
+      }
+      style {
+        strokeStyle: dashed
+        dash: [6, 4]
+      }
+    }
+  }
+
+  // Flows
+
+  Link people_to_text {
+    from: people, bottom
+    to: sfl_text, top (0.25)
+    style {
+      markerStart: arrow
+      markerEnd: arrow
+      stroke: "#15803d"
+      strokeWidth: 2
+    }
+  }
+
+  Link models_to_text {
+    from: models, bottom
+    to: sfl_text, top (0.75)
+    style {
+      markerStart: arrow
+      markerEnd: arrow
+      stroke: "#15803d"
+      strokeWidth: 2
+    }
+  }
+
+  Link own_to_text {
+    from: own, right
+    to: sfl_text, left
+    text: "read and write"
+    style {
+      markerStart: arrow
+      markerEnd: arrow
+      stroke: "#475569"
+      strokeStyle: dashed
+      dash: [6, 4]
+      strokeWidth: 2
+    }
+  }
+
+  Link research_to_text {
+    from: research, left
+    to: sfl_text, right
+    text: "measures"
+    style {
+      markerEnd: arrow
+      stroke: "#9d174d"
+      strokeStyle: dashed
+      dash: [6, 4]
+    }
+  }
+
+  Link text_to_l1 {
+    from: sfl_text, bottom (0.1)
+    to: l1, top (0.9)
+    text: "parse"
+    style {
+      markerEnd: filled_arrow
+      stroke: "#0f172a"
+      strokeWidth: 2
+    }
+  }
+
+  Link l1_to_l2 {
+    from: l1, right
+    to: l2, left
+    style {
+      markerEnd: filled_arrow
+      stroke: "#0f172a"
+      strokeWidth: 2
+    }
+  }
+
+  Link l2_to_l3 {
+    from: l2, right
+    to: l3, left
+    style {
+      markerEnd: filled_arrow
+      stroke: "#0f172a"
+      strokeWidth: 2
+    }
+  }
+
+  Link l3_to_l4 {
+    from: l3, right
+    to: l4, left
+    style {
+      markerEnd: filled_arrow
+      stroke: "#0f172a"
+      strokeWidth: 2
+    }
+  }
+
+  Link l4_to_l5 {
+    from: l4, right
+    to: l5, left
+    style {
+      markerEnd: filled_arrow
+      stroke: "#0f172a"
+      strokeWidth: 2
+    }
+  }
+
+  Link l5_to_result {
+    from: l5, right
+    to: result, left
+    style {
+      markerEnd: filled_arrow
+      stroke: "#0f172a"
+      strokeWidth: 2
+    }
+  }
+
+  Link result_to_dom {
+    from: result, bottom
+    to: rt_dom, top
+    text: "SVG into the page"
+    style {
+      markerEnd: filled_arrow
+      stroke: "#b45309"
+      strokeWidth: 2
+    }
+  }
+
+  Link viewer_to_entry {
+    from: rt_viewer, bottom
+    to: entry_viewer, top
+    style {
+      markerEnd: filled_arrow
+      stroke: "#b45309"
+      strokeWidth: 2
+    }
+  }
+
+  Link interaction_to_entry {
+    from: rt_interaction, bottom
+    to: entry_interaction, top
+    style {
+      markerEnd: filled_arrow
+      stroke: "#b45309"
+      strokeWidth: 2
+    }
+  }
+
+  Link component_to_entry {
+    from: rt_web_component, bottom
+    to: entry_web_component, top
+    style {
+      markerEnd: filled_arrow
+      stroke: "#b45309"
+      strokeWidth: 2
+    }
+  }
+
+  Link binding_to_viewer {
+    from: binding, left
+    to: rt_web_component, right
+    style {
+      markerEnd: arrow
+      stroke: "#0e7490"
+      strokeWidth: 2
+    }
+  }
+
+  Link consumers_to_entries {
+    from: consumers, top
+    to: core_package, bottom
+    text: "install from npm"
+    style {
+      markerEnd: filled_arrow
+      stroke: "#3730a3"
+      strokeWidth: 2.5
+    }
+  }
+}
