@@ -51,7 +51,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'radial':
       return typedChart(base, chartType, radialConfig(source, p));
     case 'radialBar':
-      return typedChart(base, chartType, radialBarConfig(source));
+      return typedChart(base, chartType, radialBarConfig(source, p));
     case 'sankey':
       return typedChart(base, chartType, sankeyConfig(source));
     case 'treemap':

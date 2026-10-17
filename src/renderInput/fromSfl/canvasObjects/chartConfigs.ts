@@ -206,10 +206,14 @@ export function radialConfig(source: ChartSource, p: ChartProps): RadialChartCon
   };
 }
 
-export function radialBarConfig(source: ChartSource): RadialBarChartConfig {
+export function radialBarConfig(source: ChartSource, p: ChartProps): RadialBarChartConfig {
   return {
     ringThickness: source?.ringThickness,
     ringGap: source?.ringGap,
+    ringTrackOpacity: numOf(p.ringTrackOpacity),
+    ringCap: p.ringCap === 'butt' ? 'butt' : p.ringCap === 'round' ? 'round' : undefined,
+    ringStartAngle: numOf(p.ringStartAngle),
+    ringSweep: numOf(p.ringSweep),
   };
 }
 
