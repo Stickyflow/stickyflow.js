@@ -1,5 +1,6 @@
 import type { RenderNode } from '../../../scene';
 import { paint } from '../../../scene';
+import { representativeColor } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import { boxplotPoint } from './geometry';
 import type { BoxplotLayout, BoxplotSeriesMark } from './types';
@@ -9,6 +10,7 @@ interface BoxplotBorderLine {
   from: { x: number; y: number };
   to: { x: number; y: number };
   strokeWidth: number;
+  color?: string;
 }
 
 export function renderBoxAndWhiskers(
@@ -16,14 +18,23 @@ export function renderBoxAndWhiskers(
   layout: BoxplotLayout,
   mark: BoxplotSeriesMark,
 ): RenderNode[] {
+  const whiskers = layout.whiskerWidth > 0 ? [lowerWhisker(layout, mark), upperWhisker(layout, mark)] : [];
+  const caps = layout.whiskerWidth > 0 && layout.capSize > 0 ? [lowerWhiskerCap(layout, mark), upperWhiskerCap(layout, mark)] : [];
+  const median = layout.medianWidth > 0 ? [medianLine(layout, mark)] : [];
   return [
-    createBoxBorderLine(context, layout, lowerWhisker(layout, mark)),
-    createBoxBorderLine(context, layout, upperWhisker(layout, mark)),
-    createBoxBorderLine(context, layout, lowerWhiskerCap(layout, mark)),
-    createBoxBorderLine(context, layout, upperWhiskerCap(layout, mark)),
+    ...[...whiskers, ...caps].map(line =>
+      createBoxBorderLine(context, layout, { ...line, color: whiskerColor(layout, mark) }),
+    ),
     createBoxNode(context, layout, mark),
-    createBoxBorderLine(context, layout, medianLine(layout, mark)),
+    ...median.map(line => createBoxBorderLine(context, layout, line)),
   ];
+}
+
+function whiskerColor(layout: BoxplotLayout, mark: BoxplotSeriesMark): string | undefined {
+  if (layout.whiskerColor === 'series') {
+    return representativeColor(mark.color, layout.borderColor);
+  }
+  return layout.whiskerColor;
 }
 
 function lowerWhisker(layout: BoxplotLayout, mark: BoxplotSeriesMark): BoxplotBorderLine {
@@ -32,7 +43,7 @@ function lowerWhisker(layout: BoxplotLayout, mark: BoxplotSeriesMark): BoxplotBo
     id: `chart-box-whisker-lo-${mark.id}`,
     from: boxplotPoint(layout.orientation, center, min),
     to: boxplotPoint(layout.orientation, center, q1),
-    strokeWidth: 1,
+    strokeWidth: layout.whiskerWidth,
   };
 }
 
@@ -42,7 +53,7 @@ function upperWhisker(layout: BoxplotLayout, mark: BoxplotSeriesMark): BoxplotBo
     id: `chart-box-whisker-hi-${mark.id}`,
     from: boxplotPoint(layout.orientation, center, q3),
     to: boxplotPoint(layout.orientation, center, max),
-    strokeWidth: 1,
+    strokeWidth: layout.whiskerWidth,
   };
 }
 
@@ -55,12 +66,12 @@ function upperWhiskerCap(layout: BoxplotLayout, mark: BoxplotSeriesMark): Boxplo
 }
 
 function whiskerCap(id: string, layout: BoxplotLayout, center: number, value: number): BoxplotBorderLine {
-  const capHalf = layout.boxWidth * 0.2;
+  const capHalf = (layout.boxWidth * layout.capSize) / 2;
   return {
     id,
     from: boxplotPoint(layout.orientation, center - capHalf, value),
     to: boxplotPoint(layout.orientation, center + capHalf, value),
-    strokeWidth: 1,
+    strokeWidth: layout.whiskerWidth,
   };
 }
 
@@ -70,7 +81,8 @@ function medianLine(layout: BoxplotLayout, mark: BoxplotSeriesMark): BoxplotBord
     id: `chart-box-median-${mark.id}`,
     from: boxplotPoint(layout.orientation, mark.geometry.center - half, mark.geometry.median),
     to: boxplotPoint(layout.orientation, mark.geometry.center + half, mark.geometry.median),
-    strokeWidth: 2,
+    strokeWidth: layout.medianWidth,
+    color: layout.medianColor,
   };
 }
 
@@ -83,7 +95,7 @@ function createBoxBorderLine(context: ChartRenderContext, layout: BoxplotLayout,
     d: `M ${line.from.x} ${line.from.y} L ${line.to.x} ${line.to.y}`,
     style: {
       fill: { kind: 'none' },
-      stroke: { kind: 'solid', color: layout.borderColor },
+      stroke: { kind: 'solid', color: line.color ?? layout.borderColor },
       strokeWidth: line.strokeWidth,
     },
   };

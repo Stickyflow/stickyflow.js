@@ -33,7 +33,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'scatter':
       return typedChart(base, chartType, scatterConfig(source, p));
     case 'boxplot':
-      return typedChart(base, chartType, boxplotConfig(source));
+      return typedChart(base, chartType, boxplotConfig(source, p));
     case 'field':
       return typedChart(base, chartType, fieldConfig(source));
     case 'heatmap':

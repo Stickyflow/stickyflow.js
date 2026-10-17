@@ -8,6 +8,14 @@ export interface BoxplotLayout {
   showPoints: boolean;
   borderColor: string;
   borderWidth: number;
+  whiskerWidth: number;
+  medianWidth: number;
+  medianColor: string;
+  whiskerColor?: string;
+  capSize: number;
+  pointSize: number;
+  pointOpacity: number;
+  jitter: number;
 }
 
 export interface BoxplotGeometry {

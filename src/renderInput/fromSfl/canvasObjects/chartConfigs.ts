@@ -97,7 +97,7 @@ export function scatterConfig(source: ChartSource, p: ChartProps): ScatterChartC
   };
 }
 
-export function boxplotConfig(source: ChartSource): BoxplotChartConfig {
+export function boxplotConfig(source: ChartSource, p: ChartProps): BoxplotChartConfig {
   return {
     boxWidth: source?.boxWidth,
     orientation: source?.orientation,
@@ -105,6 +105,14 @@ export function boxplotConfig(source: ChartSource): BoxplotChartConfig {
     showBoxplotPoints: source?.showBoxplotPoints,
     barBorderColor: source?.barBorderColor,
     barBorderWidth: source?.barBorderWidth,
+    boxWhiskerWidth: numOf(p.boxWhiskerWidth),
+    boxMedianWidth: numOf(p.boxMedianWidth),
+    boxMedianColor: p.boxMedianColor,
+    boxWhiskerColor: p.boxWhiskerColor,
+    boxCapSize: numOf(p.boxCapSize),
+    boxPointSize: numOf(p.boxPointSize),
+    boxPointOpacity: numOf(p.boxPointOpacity),
+    boxJitter: numOf(p.boxJitter),
   };
 }
 
