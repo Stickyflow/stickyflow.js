@@ -24,6 +24,7 @@ export function radarFrameFor(context: ChartRenderContext<RadarFamilyChart>): Ra
     max: chart.axisY.max,
     count: radarCategoryCount(configuredCount, dataCount),
     curved: chart.chartType === 'radial',
+    tension: chart.config?.radarTension,
   };
 }
 
@@ -37,6 +38,10 @@ export function createRadarGeometry(context: ChartRenderContext<RadarFamilyChart
   return {
     circular: frame.curved,
     areaOpacity: Math.max(0, Math.min(1, chart.config?.areaOpacity ?? 0.16)),
+    strokeWidth: Math.max(0, chart.config?.radarStrokeWidth ?? 2),
+    tension: frame.tension,
+    pointSize: Math.max(0, chart.config?.radarPointSize ?? 3),
+    showSpokes: chart.config?.radarSpokes ?? true,
     categories,
     centerX: frame.centerX,
     centerY: frame.centerY,

@@ -181,17 +181,28 @@ export function polarAreaConfig(source: ChartSource): PolarAreaChartConfig {
   };
 }
 
-export function radarConfig(source: ChartSource): RadarChartConfig {
+function radarStyle(p: ChartProps): Pick<RadarChartConfig, 'radarStrokeWidth' | 'radarPointSize' | 'radarSpokes' | 'radarTension'> {
   return {
-    categories: source?.categories,
-    areaOpacity: source?.areaOpacity,
+    radarStrokeWidth: numOf(p.radarStrokeWidth),
+    radarPointSize: numOf(p.radarPointSize),
+    radarTension: numOf(p.radarTension),
+    radarSpokes: p.radarSpokes === undefined ? undefined : String(p.radarSpokes) !== 'false',
   };
 }
 
-export function radialConfig(source: ChartSource): RadialChartConfig {
+export function radarConfig(source: ChartSource, p: ChartProps): RadarChartConfig {
   return {
     categories: source?.categories,
     areaOpacity: source?.areaOpacity,
+    ...radarStyle(p),
+  };
+}
+
+export function radialConfig(source: ChartSource, p: ChartProps): RadialChartConfig {
+  return {
+    categories: source?.categories,
+    areaOpacity: source?.areaOpacity,
+    ...radarStyle(p),
   };
 }
 

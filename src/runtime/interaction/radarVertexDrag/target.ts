@@ -7,11 +7,11 @@ function parseRadarFrame(node: SVGGraphicsElement | null): RadarFrame | null {
   if (!raw) {
     return null;
   }
-  const [centerX, centerY, radius, min, max, count, curved] = raw.split(',').map(Number);
+  const [centerX, centerY, radius, min, max, count, curved, tension] = raw.split(',').map(Number);
   if (![centerX, centerY, radius, min, max, count].every(Number.isFinite) || count < 3 || max === min) {
     return null;
   }
-  return { centerX, centerY, radius, min, max, count, curved: curved === 1 };
+  return { centerX, centerY, radius, min, max, count, curved: curved === 1, tension: Number.isFinite(tension) ? tension : undefined };
 }
 
 function findVertex(event: PointerEvent): SVGGraphicsElement | null {

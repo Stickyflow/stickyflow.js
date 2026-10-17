@@ -26,11 +26,11 @@ function renderSeries(
 ): RenderNode[] {
   const color = series.color ?? CHART_COLORS[seriesIndex % CHART_COLORS.length];
   const points = seriesPoints(series, context, geometry);
-  const path = radarSeriesPath(points, geometry.circular);
+  const path = radarSeriesPath(points, geometry.circular, geometry.tension);
   return [
     createSeriesFill(context, geometry, series, path, color),
-    createSeriesStroke(context, series, path, color),
-    ...createSeriesPoints(context, series, points, color),
+    ...(geometry.strokeWidth > 0 ? [createSeriesStroke(context, geometry, series, path, color)] : []),
+    ...(geometry.pointSize > 0 ? createSeriesPoints(context, geometry, series, points, color) : []),
   ];
 }
 
@@ -70,6 +70,7 @@ function createSeriesFill(
 
 function createSeriesStroke(
   context: ChartRenderContext,
+  geometry: RadarGeometry,
   series: ChartSeries,
   path: string,
   color: Parameters<typeof paint>[0],
@@ -85,7 +86,7 @@ function createSeriesStroke(
     style: {
       fill: { kind: 'none' },
       stroke: paint(color, diagnostics, chart.id),
-      strokeWidth: 2,
+      strokeWidth: geometry.strokeWidth,
       lineJoin: 'round',
       shadow: resolveChartShadow(chart.shadowStyle),
     },
@@ -94,6 +95,7 @@ function createSeriesStroke(
 
 function createSeriesPoints(
   context: ChartRenderContext,
+  geometry: RadarGeometry,
   series: ChartSeries,
   points: RadarPoint[],
   color: Parameters<typeof paint>[0],
@@ -106,8 +108,8 @@ function createSeriesPoints(
     bounds,
     cx: point.x,
     cy: point.y,
-    rx: 3,
-    ry: 3,
+    rx: geometry.pointSize,
+    ry: geometry.pointSize,
     detail: { of: 'chartValue', series: series.id, valueIndex: pointIndex, mark: 'radar-vertex' },
     prop: seriesValueProp(series.id, pointIndex),
     style: { fill: paint(color, diagnostics, chart.id) },

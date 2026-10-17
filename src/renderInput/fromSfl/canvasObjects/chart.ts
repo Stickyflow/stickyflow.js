@@ -47,9 +47,9 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'polarArea':
       return typedChart(base, chartType, polarAreaConfig(source));
     case 'radar':
-      return typedChart(base, chartType, radarConfig(source));
+      return typedChart(base, chartType, radarConfig(source, p));
     case 'radial':
-      return typedChart(base, chartType, radialConfig(source));
+      return typedChart(base, chartType, radialConfig(source, p));
     case 'radialBar':
       return typedChart(base, chartType, radialBarConfig(source));
     case 'sankey':

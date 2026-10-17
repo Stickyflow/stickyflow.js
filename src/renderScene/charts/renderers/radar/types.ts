@@ -10,6 +10,10 @@ export interface RadarPoint {
 export interface RadarGeometry {
   circular: boolean;
   areaOpacity: number;
+  strokeWidth: number;
+  tension?: number;
+  pointSize: number;
+  showSpokes: boolean;
   categories: string[];
   centerX: number;
   centerY: number;
