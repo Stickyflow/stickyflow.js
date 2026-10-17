@@ -31,6 +31,7 @@ Two things count as breaking here that are easy to overlook:
 - `boxWhiskerWidth`, `boxWhiskerColor` (a color or `series`), `boxMedianWidth`, `boxMedianColor`, `boxCapSize`, `boxPointSize`, `boxPointOpacity` and `boxJitter` on boxplot charts set the whiskers, the median line, the caps and the sample dots. Without them the chart is drawn as before. Without them the chart is drawn as before.
 - `cellShape` (`square` or `circle`), `cellStrokeColor`, `cellStrokeWidth`, `cellValueSize` and `cellValueColor` on heatmap charts set the cells and the numbers in them. Without them the chart is drawn as before.
 - `tileStrokeColor`, `tileStrokeWidth`, `tileLabelSize`, `tileValueSize`, `tileTextColor`, `tileLabelPadding`, `showTileValues` and `headerHeight` on treemap charts set the tile border, the text in the tiles and the group headers. Without them the chart is drawn as before.
+- `mekkoColumnGap`, `mekkoSegmentGap`, `mekkoRoundAll`, `mekkoSegmentStrokeColor`, `mekkoSegmentStrokeWidth`, `mekkoLabelSize`, `mekkoValueSize`, `mekkoTextColor`, `showMekkoTotals` and `mekkoValueFormat` (`value` or `percent`) on mekko charts set the gaps, the segment border, the text in the segments and the totals above the columns. A segment name that is wider than its column ends with an ellipsis. Without these a mekko chart is drawn as before.
 
 ### Fixed
 

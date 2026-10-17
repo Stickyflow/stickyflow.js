@@ -41,7 +41,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'hexbin':
       return typedChart(base, chartType, hexbinConfig(source, p));
     case 'mekko':
-      return typedChart(base, chartType, mekkoConfig(source));
+      return typedChart(base, chartType, mekkoConfig(source, p));
     case 'pie':
       return typedChart(base, chartType, pieConfig(source, p));
     case 'polarArea':

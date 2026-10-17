@@ -14,10 +14,10 @@ export function renderMekkoColumnLabels(
     return [];
   }
 
-  return [
-    createTotalLabel(context, layout, columnIndex, column),
-    createColumnLabel(context, layout, columnIndex, column),
-  ];
+  const columnLabel = createColumnLabel(context, layout, columnIndex, column);
+  return context.chart.config?.showMekkoTotals === false
+    ? [columnLabel]
+    : [createTotalLabel(context, layout, columnIndex, column), columnLabel];
 }
 
 function createTotalLabel(

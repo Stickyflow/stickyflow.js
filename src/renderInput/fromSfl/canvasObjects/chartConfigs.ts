@@ -152,13 +152,23 @@ export function hexbinConfig(source: ChartSource, p: ChartProps): HexbinChartCon
   };
 }
 
-export function mekkoConfig(source: ChartSource): MekkoChartConfig {
+export function mekkoConfig(source: ChartSource, p: ChartProps): MekkoChartConfig {
   return {
     categories: source?.categories,
     barCornerRadius: source?.barCornerRadius,
     mekkoVaryHeight: source?.mekkoVaryHeight,
     tileGradient: source?.tileGradient,
     showColumnBackdrop: source?.showColumnBackdrop,
+    mekkoColumnGap: numOf(p.mekkoColumnGap),
+    mekkoSegmentGap: numOf(p.mekkoSegmentGap),
+    mekkoRoundAll: p.mekkoRoundAll === undefined ? undefined : String(p.mekkoRoundAll) !== 'false',
+    mekkoSegmentStrokeColor: p.mekkoSegmentStrokeColor,
+    mekkoSegmentStrokeWidth: numOf(p.mekkoSegmentStrokeWidth),
+    mekkoLabelSize: numOf(p.mekkoLabelSize),
+    mekkoValueSize: numOf(p.mekkoValueSize),
+    mekkoTextColor: p.mekkoTextColor,
+    showMekkoTotals: p.showMekkoTotals === undefined ? undefined : String(p.showMekkoTotals) !== 'false',
+    mekkoValueFormat: p.mekkoValueFormat === 'percent' ? 'percent' : p.mekkoValueFormat === 'value' ? 'value' : undefined,
   };
 }
 

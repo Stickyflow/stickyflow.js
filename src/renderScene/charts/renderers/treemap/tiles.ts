@@ -1,7 +1,7 @@
 import type { ChartSeries } from '../../../../model/chart';
 import type { Bounds, RenderNode } from '../../../scene';
 import { finite, paint } from '../../../scene';
-import { estimateTextWidth, wrapText } from '../../../scene/textLayout';
+import { ellipsizeToWidth, estimateTextWidth, wrapText } from '../../../scene/textLayout';
 import { squarifyTreemap } from '../../geometry';
 import { chartText, contrastTextColor, representativeColor, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
@@ -206,17 +206,6 @@ function createTileNode(
   };
 }
 
-function fitLine(text: string, width: number, fontSize: number, bold: boolean): string {
-  if (estimateTextWidth(text, fontSize, bold) <= width) {
-    return text;
-  }
-  let end = text.length;
-  while (end > 1 && estimateTextWidth(`${text.slice(0, end)}…`, fontSize, bold) > width) {
-    end -= 1;
-  }
-  return `${text.slice(0, end)}…`;
-}
-
 function createTileLabel(
   context: ChartRenderContext,
   layout: TreemapLayout,
@@ -236,7 +225,7 @@ function createTileLabel(
   const maxLines = Math.max(1, Math.floor(height / lineHeight));
   const labelLines = wrapText(leaf.label, width, layout.labelSize)
     .slice(0, maxLines)
-    .map(line => fitLine(line, width, layout.labelSize, true));
+    .map(line => ellipsizeToWidth(line, width, layout.labelSize, true));
 
   const label: RenderNode = {
     ...chartText({
