@@ -11,7 +11,16 @@ function parseRadarFrame(node: SVGGraphicsElement | null): RadarFrame | null {
   if (![centerX, centerY, radius, min, max, count].every(Number.isFinite) || count < 3 || max === min) {
     return null;
   }
-  return { centerX, centerY, radius, min, max, count, curved: curved === 1, tension: Number.isFinite(tension) ? tension : undefined };
+  return {
+    centerX,
+    centerY,
+    radius,
+    min,
+    max,
+    count,
+    curved: curved === 1,
+    tension: Number.isFinite(tension) ? tension : undefined,
+  };
 }
 
 function findVertex(event: PointerEvent): SVGGraphicsElement | null {

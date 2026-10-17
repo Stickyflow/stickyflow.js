@@ -156,7 +156,7 @@ function trackStroke(context: ChartRenderContext<PolarAreaChart>) {
   const dash = (config.polarTrackDash ?? '')
     .split(/[ ,]+/)
     .map(Number)
-    .filter((part) => Number.isFinite(part) && part > 0);
+    .filter(part => Number.isFinite(part) && part > 0);
   return {
     stroke: { kind: 'solid' as const, color: config.polarTrackStroke },
     strokeWidth: finite(config.polarTrackStrokeWidth, 1),
@@ -181,9 +181,10 @@ function ringNodes(context: ChartRenderContext<PolarAreaChart>, layout: WedgeLay
     return [];
   }
   return chartTicks(chart.axisY)
-    .filter((tick) => tick > layout.axisMin && tick < layout.axisMin + layout.range)
+    .filter(tick => tick > layout.axisMin && tick < layout.axisMin + layout.range)
     .map((tick): RenderNode => {
-      const radius = layout.innerRadius + ((layout.maxRadius - layout.innerRadius) * (tick - layout.axisMin)) / layout.range;
+      const radius =
+        layout.innerRadius + ((layout.maxRadius - layout.innerRadius) * (tick - layout.axisMin)) / layout.range;
       return {
         type: 'ellipse',
         id: `chart-polar-area-ring-${chart.id}-${tick}`,
