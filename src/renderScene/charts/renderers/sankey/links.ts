@@ -1,4 +1,5 @@
 import type { Bounds, RenderNode, ScenePaint } from '../../../scene';
+import { finite } from '../../../scene';
 import type { SankeyLayoutLink } from '../../geometry/sankey';
 import { DEFAULT_ZONE_FILL, resolveChartShadow } from '../../primitives';
 import type { ChartRenderContext } from '../types';
@@ -29,12 +30,13 @@ export function renderSankeyLinks(context: ChartRenderContext, data: SankeyRende
     ? `M ${plot.x} ${plot.y} H ${plot.x + plot.width} V ${plot.y + plot.height} H ${plot.x} Z`
     : undefined;
   return data.links.map((link, linkIndex) => {
-    const ribbon = createSankeyLinkRibbon(data, link, linkIndex, gradient);
+    const ribbon = createSankeyLinkRibbon(context, data, link, linkIndex, gradient);
     return createSankeyRibbonNode(context, ribbon, shadow, clipPath, gradient);
   });
 }
 
 function createSankeyLinkRibbon(
+  context: ChartRenderContext,
   data: SankeyRenderData,
   link: SankeyLayoutLink,
   linkIndex: number,
@@ -50,6 +52,7 @@ function createSankeyLinkRibbon(
     top: data.baseY + link.targetY0,
     bottom: data.baseY + link.targetY1,
   };
+  const config = context.chart.config;
   const fromColor = link.color || data.nodeColors.get(link.source) || DEFAULT_ZONE_FILL;
   const toColor = data.nodeColors.get(link.target) || DEFAULT_ZONE_FILL;
   const fill: ScenePaint = gradient
@@ -68,9 +71,9 @@ function createSankeyLinkRibbon(
     toId: link.target,
     source,
     target,
-    controlX: (source.x + target.x) / 2,
+    controlX: source.x + (target.x - source.x) * Math.min(1, Math.max(0, finite(config?.sankeyLinkCurve, 0.5))),
     fill,
-    opacity: link.color ? 0.85 : 0.45,
+    opacity: Math.min(1, Math.max(0, finite(config?.sankeyLinkOpacity, link.color ? 0.85 : 0.45))),
   };
 }
 

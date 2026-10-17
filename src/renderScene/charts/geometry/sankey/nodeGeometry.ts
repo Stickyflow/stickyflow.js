@@ -12,11 +12,16 @@ function nodeValues(graph: SankeyGraph): Map<string, number> {
   return values;
 }
 
-function calculateValueScale(groups: Map<number, string[]>, values: Map<string, number>, height: number): number {
+function calculateValueScale(
+  groups: Map<number, string[]>,
+  values: Map<string, number>,
+  height: number,
+  nodeGap: number,
+): number {
   let scale = Infinity;
   for (const ids of groups.values()) {
     const total = ids.reduce((sum, id) => sum + (values.get(id) ?? 0), 0);
-    const gaps = Math.max(0, ids.length - 1) * SANKEY_NODE_GAP;
+    const gaps = Math.max(0, ids.length - 1) * nodeGap;
     const usable = Math.max(1, height - gaps);
     if (total > 0) {
       scale = Math.min(scale, usable / total);
@@ -28,21 +33,27 @@ function calculateValueScale(groups: Map<number, string[]>, values: Map<string, 
   return scale;
 }
 
-export function sankeyNodeX(column: number, columnCount: number, width: number): number {
+export function sankeyNodeX(
+  column: number,
+  columnCount: number,
+  width: number,
+  nodeWidth: number = SANKEY_NODE_WIDTH,
+): number {
   if (columnCount <= 1) {
     return 0;
   }
-  return (column * (width - SANKEY_NODE_WIDTH)) / (columnCount - 1);
+  return (column * (width - nodeWidth)) / (columnCount - 1);
 }
 
 export function calculateNodeGeometry(
   graph: SankeyGraph,
   columns: Map<string, number>,
   height: number,
+  nodeGap: number = SANKEY_NODE_GAP,
 ): SankeyNodeGeometry {
   const groups = groupSankeyColumns(graph.ids, columns);
   const values = nodeValues(graph);
-  const valueScale = calculateValueScale(groups, values, height);
+  const valueScale = calculateValueScale(groups, values, height, nodeGap);
   const y = new Map<string, number>();
   const heights = new Map<string, number>();
   for (const ids of groups.values()) {
@@ -51,7 +62,7 @@ export function calculateNodeGeometry(
       const nodeHeight = Math.max(2, (values.get(id) ?? 0) * valueScale);
       y.set(id, cursor);
       heights.set(id, nodeHeight);
-      cursor += nodeHeight + SANKEY_NODE_GAP;
+      cursor += nodeHeight + nodeGap;
     }
   }
   return {

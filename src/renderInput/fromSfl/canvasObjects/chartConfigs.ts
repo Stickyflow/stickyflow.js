@@ -252,7 +252,7 @@ export function radialBarConfig(source: ChartSource, p: ChartProps): RadialBarCh
   };
 }
 
-export function sankeyConfig(source: ChartSource): SankeyChartConfig {
+export function sankeyConfig(source: ChartSource, p: ChartProps): SankeyChartConfig {
   return {
     zones: source?.zones,
     barCornerRadius: source?.barCornerRadius,
@@ -260,6 +260,11 @@ export function sankeyConfig(source: ChartSource): SankeyChartConfig {
     labelOrientation: source?.labelOrientation,
     labelColor: source?.labelColor,
     linkGradient: source?.linkGradient,
+    sankeyNodeWidth: numOf(p.sankeyNodeWidth),
+    sankeyNodeGap: numOf(p.sankeyNodeGap),
+    sankeyLinkOpacity: numOf(p.sankeyLinkOpacity),
+    sankeyLinkCurve: numOf(p.sankeyLinkCurve),
+    sankeyLabelSize: numOf(p.sankeyLabelSize),
   };
 }
 

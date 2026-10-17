@@ -7,6 +7,7 @@ export function layoutSankeyLinks(
   geometry: SankeyNodeGeometry,
   width: number,
   offsets: Map<string, SankeyNodeOffset>,
+  nodeWidth: number = SANKEY_NODE_WIDTH,
 ): SankeyLayoutLink[] {
   const outgoingOffsets = new Map<string, number>();
   const incomingOffsets = new Map<string, number>();
@@ -30,10 +31,12 @@ export function layoutSankeyLinks(
       value: link.value,
       color: link.color,
       x0:
-        sankeyNodeX(geometry.columns.get(link.source) ?? 0, geometry.columnCount, width) +
-        SANKEY_NODE_WIDTH +
+        sankeyNodeX(geometry.columns.get(link.source) ?? 0, geometry.columnCount, width, nodeWidth) +
+        nodeWidth +
         (sourceOffset?.x ?? 0),
-      x1: sankeyNodeX(geometry.columns.get(link.target) ?? 0, geometry.columnCount, width) + (targetOffset?.x ?? 0),
+      x1:
+        sankeyNodeX(geometry.columns.get(link.target) ?? 0, geometry.columnCount, width, nodeWidth) +
+        (targetOffset?.x ?? 0),
       sourceY0: sourceTop + sourceSlice,
       sourceY1: sourceTop + sourceSlice + sliceHeight,
       targetY0: targetTop + targetSlice,

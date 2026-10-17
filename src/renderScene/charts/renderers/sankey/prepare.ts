@@ -8,13 +8,17 @@ export function createSankeyRenderData(context: ChartRenderContext): SankeyRende
   const { chart, plot, showLabels } = context;
   const labelGutter = showLabels ? 92 : 0;
   const availableWidth = Math.max(1, plot.width - labelGutter * 2);
-  const layout = layoutSankey(createNodeInputs(context), createLinkInputs(context), availableWidth, plot.height);
+  const layout = layoutSankey(createNodeInputs(context), createLinkInputs(context), availableWidth, plot.height, {
+    nodeWidth: Math.max(1, finite(chart.config?.sankeyNodeWidth, 18)),
+    nodeGap: Math.max(0, finite(chart.config?.sankeyNodeGap, 8)),
+  });
   return {
     ...layout,
     baseX: plot.x + labelGutter,
     baseY: plot.y,
     labelGutter,
     fontSize: Math.max(9, finite(chart.fontSize, 12)),
+    labelSize: Math.max(6, finite(chart.config?.sankeyLabelSize, Math.max(9, finite(chart.fontSize, 12)) - 2)),
     columnCount: Math.max(1, ...layout.nodes.map(node => node.column + 1)),
     nodeColors: new Map(layout.nodes.map(node => [node.id, node.color || DEFAULT_ZONE_FILL])),
   };
