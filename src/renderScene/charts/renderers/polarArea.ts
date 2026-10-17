@@ -3,6 +3,7 @@ import type { RenderNode, SceneText } from '../../scene';
 import { DEFAULT_FONT, finite, paint } from '../../scene';
 import {
   CHART_COLORS,
+  chartTicks,
   clipSegmentToRect,
   contrastTextColor,
   createPieSlicePath,
@@ -21,7 +22,7 @@ import {
 import { seriesLabelProp, seriesValueProp } from '../propPath';
 import type { ChartRenderContext } from './types';
 
-const START_ANGLE = -Math.PI / 2;
+const TOP = -Math.PI / 2;
 const TRACK_COLOR_FALLBACK = '#e2e8f0';
 const MIN_LABEL_SWEEP = (14 * Math.PI) / 180;
 const LABEL_WIDTH = 80;
@@ -41,6 +42,7 @@ interface WedgeLayout {
   axisMin: number;
   range: number;
   sweep: number;
+  start: number;
 }
 
 type Angles = { start: number; end: number };
@@ -61,6 +63,7 @@ function layoutOf(context: ChartRenderContext<PolarAreaChart>): WedgeLayout {
     axisMin,
     range: finite(chart.axisY.max, 100) - axisMin,
     sweep: chart.series.length > 0 ? (Math.PI * 2) / chart.series.length : 0,
+    start: TOP + (finite(chart.config?.pieStartAngle, 0) * Math.PI) / 180,
   };
 }
 
@@ -102,7 +105,11 @@ function wedgeNodes(
     order: nextOrder(),
     bounds,
     d: trackPath,
-    style: { fill: paint(chart.gridColor ?? TRACK_COLOR_FALLBACK, diagnostics, chart.id) },
+    style: {
+      fill: paint(chart.gridColor ?? TRACK_COLOR_FALLBACK, diagnostics, chart.id),
+      opacity: chart.config?.polarTrackOpacity,
+      ...trackStroke(context),
+    },
   };
   const wedgePath = createPieSlicePath(
     { centerX, centerY, outerRadius, innerRadius },
@@ -136,18 +143,73 @@ function wedgeNodes(
       pieValue: value,
     },
     prop: seriesValueProp(series.id, 0),
-    style: { fill: color, innerShadow: shadow },
+    style: { fill: color, innerShadow: shadow, ...wedgeStroke(context) },
   };
   return shadowCaster ? [track, shadowCaster, wedge] : [track, wedge];
 }
 
+function trackStroke(context: ChartRenderContext<PolarAreaChart>) {
+  const config = context.chart.config;
+  if (!config?.polarTrackStroke) {
+    return {};
+  }
+  const dash = (config.polarTrackDash ?? '')
+    .split(/[ ,]+/)
+    .map(Number)
+    .filter((part) => Number.isFinite(part) && part > 0);
+  return {
+    stroke: { kind: 'solid' as const, color: config.polarTrackStroke },
+    strokeWidth: finite(config.polarTrackStrokeWidth, 1),
+    dash: dash.length > 0 ? dash : undefined,
+  };
+}
+
+function wedgeStroke(context: ChartRenderContext<PolarAreaChart>) {
+  const config = context.chart.config;
+  if (!config?.pieStroke) {
+    return {};
+  }
+  return {
+    stroke: { kind: 'solid' as const, color: config.pieStroke },
+    strokeWidth: finite(config.pieStrokeWidth, 1),
+  };
+}
+
+function ringNodes(context: ChartRenderContext<PolarAreaChart>, layout: WedgeLayout): RenderNode[] {
+  const { chart, bounds, nextOrder } = context;
+  if (!chart.config?.polarRings || layout.range <= 0) {
+    return [];
+  }
+  return chartTicks(chart.axisY)
+    .filter((tick) => tick > layout.axisMin && tick < layout.axisMin + layout.range)
+    .map((tick): RenderNode => {
+      const radius = layout.innerRadius + ((layout.maxRadius - layout.innerRadius) * (tick - layout.axisMin)) / layout.range;
+      return {
+        type: 'ellipse',
+        id: `chart-polar-area-ring-${chart.id}-${tick}`,
+        order: nextOrder(),
+        bounds,
+        cx: layout.centerX,
+        cy: layout.centerY,
+        rx: radius,
+        ry: radius,
+        style: {
+          fill: { kind: 'none' },
+          stroke: { kind: 'solid', color: chart.textColor ?? '#334155' },
+          strokeWidth: finite(chart.gridWidth, 1),
+          opacity: 0.25,
+        },
+      };
+    });
+}
+
 export function renderPolarArea(context: ChartRenderContext<PolarAreaChart>): RenderNode[] {
   const layout = layoutOf(context);
-  const { centerX, centerY, innerRadius, maxRadius, axisMin, range, sweep } = layout;
+  const { centerX, centerY, innerRadius, maxRadius, axisMin, range, sweep, start } = layout;
   const showLabels = context.showLabels && sweep >= MIN_LABEL_SWEEP;
 
-  return context.chart.series.flatMap((series, index): RenderNode[] => {
-    const angles = { start: START_ANGLE + index * sweep, end: START_ANGLE + (index + 1) * sweep };
+  const wedges = context.chart.series.flatMap((series, index): RenderNode[] => {
+    const angles = { start: start + index * sweep, end: start + (index + 1) * sweep };
     const value = Math.max(0, finite((series.values as number[])[0], 0));
     const fraction = range > 0 ? Math.min(1, Math.max(0, (value - axisMin) / range)) : 0;
     const outerRadius = Math.max(innerRadius + 1, innerRadius + (maxRadius - innerRadius) * fraction);
@@ -159,6 +221,7 @@ export function renderPolarArea(context: ChartRenderContext<PolarAreaChart>): Re
     const geometry = { centerX, centerY, outerRadius, innerRadius };
     return [...nodes, ...createWedgeLabel(context, geometry, angles, series, value, rawColor)];
   });
+  return [...wedges, ...ringNodes(context, layout)];
 }
 
 interface LabelPlacement {
@@ -169,6 +232,14 @@ interface LabelPlacement {
   tickStart: { x: number; y: number };
 }
 
+function labelSizes(chart: PolarAreaChart): { nameSize: number; valueSize: number } {
+  const base = Math.max(9, finite(chart.fontSize, 12));
+  return {
+    nameSize: Math.max(6, finite(chart.config?.polarNameSize, base)),
+    valueSize: Math.max(6, finite(chart.config?.polarValueSize, base)),
+  };
+}
+
 function labelPlacement(
   context: ChartRenderContext<PolarAreaChart>,
   geometry: WedgeGeometry,
@@ -177,8 +248,8 @@ function labelPlacement(
   fillColor: FillColor,
 ): LabelPlacement | undefined {
   const mid = (angles.start + angles.end) / 2;
-  const fontSize = Math.max(9, finite(context.chart.fontSize, 12));
-  const lineHeight = fontSize * 1.2;
+  const { nameSize, valueSize } = labelSizes(context.chart);
+  const lineHeight = ((nameSize + valueSize) * 1.2) / 2;
   const ringThickness = geometry.outerRadius - geometry.innerRadius;
   const labelOffsetX = finite(series.labelOffsetX, 0);
   const labelOffsetY = finite(series.labelOffsetY, 0);
@@ -186,7 +257,8 @@ function labelPlacement(
   const tooThin = ringThickness < lineHeight * 2 + 6;
   const chordWidth = 2 * geometry.outerRadius * Math.sin(Math.abs(angles.end - angles.start) / 2);
   const fitsInline = !tooThin && chordWidth >= LABEL_WIDTH;
-  if (!fitsInline && !hasManualOffset) {
+  const outsideLabels = context.chart.config?.polarOutsideLabels ?? false;
+  if (!fitsInline && !hasManualOffset && !outsideLabels) {
     return undefined;
   }
   const outside = hasManualOffset || !fitsInline;
@@ -197,8 +269,10 @@ function labelPlacement(
       : pieArcPoint(geometry, mid, geometry.outerRadius + OUTSIDE_GAP)
     : pieArcPoint(geometry, mid, geometry.innerRadius + ringThickness * LABEL_RADIUS_FRACTION);
   const color = outside
-    ? (sameHueTint(representativeColor(fillColor, OUTSIDE_FALLBACK_COLOR), OUTSIDE_TINT_LIGHTNESS) ??
-      OUTSIDE_FALLBACK_COLOR)
+    ? outsideLabels && context.chart.textColor
+      ? context.chart.textColor
+      : (sameHueTint(representativeColor(fillColor, OUTSIDE_FALLBACK_COLOR), OUTSIDE_TINT_LIGHTNESS) ??
+        OUTSIDE_FALLBACK_COLOR)
     : sameHueContrastColor(
         representativeColor(fillColor, '#0f172a'),
         contrastTextColor(representativeColor(fillColor, '#0f172a')),
@@ -220,8 +294,8 @@ function createWedgeLabel(
   }
   const { chart, bounds, nextOrder } = context;
   const { point, color, outside, mid, tickStart } = placement;
-  const fontSize = Math.max(9, finite(chart.fontSize, 12));
-  const lineHeight = fontSize * 1.2;
+  const { nameSize, valueSize } = labelSizes(chart);
+  const lineHeight = Math.max(nameSize, valueSize) * 1.2;
 
   const tickEnd = outside ? clipSegmentToRect(tickStart, point, LABEL_WIDTH / 2, lineHeight) : tickStart;
   const tick: RenderNode = {
@@ -246,22 +320,28 @@ function createWedgeLabel(
     bounds,
     x: point.x - LABEL_WIDTH / 2,
     width: LABEL_WIDTH,
-    height: lineHeight,
     fontFamily: chart.fontFamily ?? DEFAULT_FONT,
-    fontSize,
     align: 'center' as const,
     verticalAlign: 'middle' as const,
     lineHeight: 1.2,
     color,
   };
+  const valueFirst = chart.config?.polarValueFirst ?? false;
+  const nameHeight = nameSize * 1.2;
+  const valueHeight = valueSize * 1.2;
+  const top = point.y - (nameHeight + valueHeight) / 2;
+  const nameY = valueFirst ? top + valueHeight : top;
+  const valueY = valueFirst ? top : top + nameHeight;
   const nameText: SceneText = {
     type: 'text',
     id: `chart-polar-area-label-name-${chart.id}-${series.id}`,
     order: nextOrder(),
     ...base,
-    y: point.y - lineHeight,
+    y: nameY,
+    height: nameSize * 1.2,
+    fontSize: nameSize,
     lines: [series.label],
-    fontWeight: 'bold',
+    fontWeight: valueFirst ? 'normal' : 'bold',
     detail,
     prop: seriesLabelProp(series.id),
   };
@@ -270,9 +350,11 @@ function createWedgeLabel(
     id: `chart-polar-area-label-value-${chart.id}-${series.id}`,
     order: nextOrder(),
     ...base,
-    y: point.y,
+    y: valueY,
+    height: valueSize * 1.2,
+    fontSize: valueSize,
     lines: [formatFieldValue(value)],
-    fontWeight: 'normal',
+    fontWeight: valueFirst ? 'bold' : 'normal',
     detail,
     prop: seriesValueProp(series.id, 0),
     propKind: 'value',

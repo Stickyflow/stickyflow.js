@@ -25,8 +25,9 @@ Two things count as breaking here that are easy to overlook:
 - `peak` on the ruler widget sets the color the ticks at the knob fade to. The default stays white.
 - `pointSize`, `pointOpacity`, `pointStrokeWidth` and `pointStrokeColor` on scatter charts set the dots. The dots used to be fixed at a radius of 4.
 - `scale`, `hexGap`, `hexStrokeWidth`, `hexStrokeColor` and `hexMinOpacity` on hexbin charts. A `scale` ramp colors every cell by its density. Without these a hexbin chart is drawn as before.
-- `radarStrokeWidth`, `radarPointSize` and `radarSpokes` on radar and radial charts set the outline, the corner dots and the spokes, and `radarTension` sets how round a radial chart curves (0.5 by default).
-- `ringTrackOpacity`, `ringCap`, `ringStartAngle` and `ringSweep` on radialBar charts set the track, the ends of the rings and where the rings start and how far they go around. A `ringSweep` below 360 gives a gauge. Without them the chart is drawn as before. A width or size of 0 leaves the outline or the dots out. Without them both charts are drawn as before.
+- `radarStrokeWidth`, `radarPointSize` and `radarSpokes` on radar and radial charts set the outline, the corner dots and the spokes, and `radarTension` sets how round a radial chart curves. A width or size of 0 leaves the outline or the dots out. Without them both charts are drawn as before.
+- `ringTrackOpacity`, `ringCap`, `ringStartAngle` and `ringSweep` on radialBar charts set the track, the ends of the rings and where the rings start and how far they go around. A `ringSweep` below 360 gives a gauge. Without them the chart is drawn as before.
+- `pieStartAngle`, `pieStroke` and `pieStrokeWidth` now also work on polarArea charts, and `polarTrackOpacity`, `polarTrackStroke`, `polarTrackStrokeWidth` and `polarTrackDash` style the track behind the wedges, `polarRings` draws reference rings at the axis ticks, `polarNameSize`, `polarValueSize` and `polarValueFirst` set the size and order of the label in a wedge, and `polarOutsideLabels` puts the label of a wedge that is too small for it next to the wedge. Without them the chart is drawn as before.
 
 ### Fixed
 

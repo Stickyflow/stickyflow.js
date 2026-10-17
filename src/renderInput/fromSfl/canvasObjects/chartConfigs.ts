@@ -173,11 +173,23 @@ export function pieConfig(source: ChartSource, p: ChartProps): PieChartConfig {
   };
 }
 
-export function polarAreaConfig(source: ChartSource): PolarAreaChartConfig {
+export function polarAreaConfig(source: ChartSource, p: ChartProps): PolarAreaChartConfig {
   return {
     innerRadius: source?.innerRadius,
     pieCornerRadius: source?.pieCornerRadius,
     pieSliceGap: source?.pieSliceGap,
+    pieStartAngle: numOf(p.pieStartAngle),
+    pieStroke: p.pieStroke,
+    pieStrokeWidth: numOf(p.pieStrokeWidth),
+    polarTrackOpacity: numOf(p.polarTrackOpacity),
+    polarRings: p.polarRings === undefined ? undefined : String(p.polarRings) !== 'false',
+    polarTrackStroke: p.polarTrackStroke,
+    polarTrackStrokeWidth: numOf(p.polarTrackStrokeWidth),
+    polarTrackDash: p.polarTrackDash,
+    polarValueSize: numOf(p.polarValueSize),
+    polarNameSize: numOf(p.polarNameSize),
+    polarValueFirst: p.polarValueFirst === undefined ? undefined : String(p.polarValueFirst) !== 'false',
+    polarOutsideLabels: p.polarOutsideLabels === undefined ? undefined : String(p.polarOutsideLabels) !== 'false',
   };
 }
 
