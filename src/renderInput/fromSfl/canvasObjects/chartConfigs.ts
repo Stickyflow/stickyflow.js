@@ -125,7 +125,7 @@ export function fieldConfig(source: ChartSource): FieldChartConfig {
   };
 }
 
-export function heatmapConfig(source: ChartSource): HeatmapChartConfig {
+export function heatmapConfig(source: ChartSource, p: ChartProps): HeatmapChartConfig {
   return {
     categories: source?.categories,
     zones: source?.zones,
@@ -133,6 +133,11 @@ export function heatmapConfig(source: ChartSource): HeatmapChartConfig {
     showValues: source?.showValues,
     squareCells: source?.squareCells,
     barCornerRadius: source?.barCornerRadius,
+    cellShape: p.cellShape === 'circle' ? 'circle' : p.cellShape === 'square' ? 'square' : undefined,
+    cellStrokeColor: p.cellStrokeColor,
+    cellStrokeWidth: numOf(p.cellStrokeWidth),
+    cellValueSize: numOf(p.cellValueSize),
+    cellValueColor: p.cellValueColor,
   };
 }
 

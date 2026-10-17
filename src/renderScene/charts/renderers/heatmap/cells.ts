@@ -74,23 +74,39 @@ function renderHeatmapCell(context: ChartRenderContext, layout: HeatmapLayout, c
 
 function createCellBackground(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode {
   const { chart, bounds, nextOrder } = context;
+  const id = `chart-heatmap-cell-${chart.id}-${cell.seriesId}-${cell.columnIndex}`;
+  const style = {
+    fill: { kind: 'solid' as const, color: cell.color },
+    stroke: { kind: 'solid' as const, color: chart.config?.cellStrokeColor ?? chart.gridColor ?? '#e2e8f0' },
+    strokeWidth: finite(chart.config?.cellStrokeWidth, finite(chart.gridWidth, 1)),
+  };
+  if (chart.config?.cellShape === 'circle') {
+    return {
+      type: 'ellipse',
+      id,
+      order: nextOrder(),
+      bounds,
+      cx: cell.frame.x + cell.frame.width / 2,
+      cy: cell.frame.y + cell.frame.height / 2,
+      rx: cell.frame.width / 2,
+      ry: cell.frame.height / 2,
+      style,
+    };
+  }
   return {
     type: 'rect',
-    id: `chart-heatmap-cell-${chart.id}-${cell.seriesId}-${cell.columnIndex}`,
+    id,
     order: nextOrder(),
     bounds,
     ...cell.frame,
     rx: layout.grid.cellRadius,
-    style: {
-      fill: { kind: 'solid', color: cell.color },
-      stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
-      strokeWidth: finite(chart.gridWidth, 1),
-    },
+    style,
   };
 }
 
 function createCellValueLabel(context: ChartRenderContext, layout: HeatmapLayout, cell: HeatmapCell): RenderNode {
   const { chart, bounds, nextOrder } = context;
+  const size = Math.max(6, finite(chart.config?.cellValueSize, layout.fontSize));
   return {
     ...chartText({
       id: `chart-heatmap-value-${chart.id}-${cell.seriesId}-${cell.columnIndex}`,
@@ -98,14 +114,15 @@ function createCellValueLabel(context: ChartRenderContext, layout: HeatmapLayout
       bounds,
       frame: {
         x: cell.frame.x,
-        y: cell.frame.y + cell.frame.height / 2 - layout.fontSize / 2,
+        y: cell.frame.y + cell.frame.height / 2 - size / 2,
         width: cell.frame.width,
-        height: layout.fontSize + 2,
+        height: size + 2,
       },
       text: String(cell.value),
       chart,
       align: 'center',
     }),
-    color: contrastTextColor(cell.color),
+    ...(chart.config?.cellValueSize === undefined ? {} : { fontSize: size }),
+    color: chart.config?.cellValueColor ?? contrastTextColor(cell.color),
   };
 }

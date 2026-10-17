@@ -37,7 +37,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'field':
       return typedChart(base, chartType, fieldConfig(source));
     case 'heatmap':
-      return typedChart(base, chartType, heatmapConfig(source));
+      return typedChart(base, chartType, heatmapConfig(source, p));
     case 'hexbin':
       return typedChart(base, chartType, hexbinConfig(source, p));
     case 'mekko':
