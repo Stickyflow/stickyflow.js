@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-17
+
 ### Added
 
 - Arrow keys move the selected objects by 1 unit, Shift by 10, through the existing `moveChange` event.
@@ -42,6 +44,7 @@ Two things count as breaking here that are easy to overlook:
 
 ### Fixed
 
+- A treemap tile name that is wider than its tile ends with an ellipsis, and a number that does not fit is left out. Before, the text ran over the edge of the tile.
 - Panning and zooming follow the pointer exactly when the canvas and the visible area have different aspect ratios. Panning used to lag behind the cursor, and the zoom anchor drifted.
 - A large `pieCornerRadius` no longer folds the corners of small slices and wedges into loops. The radius is limited to what the slice can hold.
 - A `tickScale` widget can be clicked, selected and moved on the canvas. Its shader surface no longer ignores the pointer.
