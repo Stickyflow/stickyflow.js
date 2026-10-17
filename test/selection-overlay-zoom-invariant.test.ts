@@ -89,16 +89,16 @@ describe('resize handles stay a constant on-screen size regardless of zoom', () 
 describe('quick-duplicate bubbles stay a constant on-screen size regardless of zoom', () => {
   const primary = fakePrimary({ x: 0, y: 0, width: 100, height: 60 });
 
-  it('uses the 8-unit radius at 1:1 scale', () => {
+  it('uses the 6-unit radius at 1:1 scale', () => {
     const group = quickDuplicateBubbles(fakeDocument(), primary, 'e', fakeSvg(100, 100)) as unknown as FakeSvgNode;
     const bubble = group.children.find(node => node.tagName === 'circle');
-    expect(Number(bubble?.getAttribute('r'))).toBeCloseTo(8, 5);
+    expect(Number(bubble?.getAttribute('r'))).toBeCloseTo(6, 5);
   });
 
   it('shrinks the radius (in SVG units) when heavily zoomed in', () => {
     const group = quickDuplicateBubbles(fakeDocument(), primary, 'e', fakeSvg(700, 100)) as unknown as FakeSvgNode;
     const bubble = group.children.find(node => node.tagName === 'circle');
-    expect(Number(bubble?.getAttribute('r'))).toBeCloseTo(8 / 7, 5);
+    expect(Number(bubble?.getAttribute('r'))).toBeCloseTo(6 / 7, 5);
   });
 });
 

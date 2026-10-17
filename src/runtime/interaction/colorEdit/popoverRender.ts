@@ -98,7 +98,7 @@ export function renderPicker(picker: Picker): void {
     view.alphaNumber.value = String(percent);
   }
   const opaque = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-  view.alphaRow.style.background = `linear-gradient(to right, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0), ${opaque}), conic-gradient(#c8c8c8 25%, #ffffff 0 50%, #c8c8c8 0 75%, #ffffff 0) 0 0 / 8px 8px`;
+  view.alphaRow.style.background = `linear-gradient(to right, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0), ${opaque}), conic-gradient(var(--sf-cp-check-a) 25%, var(--sf-cp-check-b) 0 50%, var(--sf-cp-check-a) 0 75%, var(--sf-cp-check-b) 0) 0 0 / 8px 8px`;
   if (document.activeElement !== view.hexInput) {
     view.hexInput.value = hex;
   }

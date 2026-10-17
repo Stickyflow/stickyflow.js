@@ -4,8 +4,8 @@ const DARK_TOKENS = `
   --sf-cp-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   --sf-cp-fg: rgba(255, 255, 255, 0.92);
   --sf-cp-muted: rgba(255, 255, 255, 0.6);
-  --sf-cp-tabs-bg: rgba(255, 255, 255, 0.04);
-  --sf-cp-tab-active-bg: rgba(255, 255, 255, 0.12);
+  --sf-cp-tabs-bg: rgba(255, 255, 255, 0.05);
+  --sf-cp-tab-active-bg: rgba(255, 255, 255, 0.1);
   --sf-cp-field-bg: rgba(255, 255, 255, 0.04);
   --sf-cp-field-border: rgba(255, 255, 255, 0.08);
   --sf-cp-row-bg: rgba(255, 255, 255, 0.04);
@@ -14,6 +14,9 @@ const DARK_TOKENS = `
   --sf-cp-thumb-bg: #e8e8e8;
   --sf-cp-thumb-border: #555;
   --sf-cp-danger: #ff7a77;
+  --sf-cp-accent: rgba(255, 255, 255, 0.85);
+  --sf-cp-check-a: #3b3b3f;
+  --sf-cp-check-b: #2a2a2d;
 `;
 
 export const BASE_CSS = `
@@ -23,7 +26,7 @@ export const BASE_CSS = `
   --sf-cp-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
   --sf-cp-fg: #333333;
   --sf-cp-muted: #666666;
-  --sf-cp-tabs-bg: #f5f5f5;
+  --sf-cp-tabs-bg: #f1f5f9;
   --sf-cp-tab-active-bg: #ffffff;
   --sf-cp-field-bg: #f8f8f8;
   --sf-cp-field-border: #e0e0e0;
@@ -33,7 +36,9 @@ export const BASE_CSS = `
   --sf-cp-thumb-bg: #ffffff;
   --sf-cp-thumb-border: #666666;
   --sf-cp-danger: #e53935;
-  --sf-cp-accent: #9b42df;
+  --sf-cp-accent: #0f172a;
+  --sf-cp-check-a: #c8c8c8;
+  --sf-cp-check-b: #ffffff;
 
   position: fixed;
   z-index: 10000;
