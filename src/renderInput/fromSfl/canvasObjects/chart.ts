@@ -57,7 +57,7 @@ export function chartObject(e: SflCanvasObject): Chart {
     case 'treemap':
       return typedChart(base, chartType, treemapConfig(source, p));
     case 'custom':
-      return typedChart(base, chartType, customConfig(source));
+      return typedChart(base, chartType, customConfig(source, p));
   }
 }
 

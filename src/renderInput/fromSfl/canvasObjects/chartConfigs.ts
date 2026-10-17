@@ -286,12 +286,20 @@ export function treemapConfig(source: ChartSource, p: ChartProps): TreemapChartC
   };
 }
 
-export function customConfig(source: ChartSource): CustomChartConfig {
+export function customConfig(source: ChartSource, p: ChartProps): CustomChartConfig {
   return {
     categories: source?.categories,
     zones: source?.zones,
     orientation: source?.orientation,
     connectPoints: source?.connectPoints,
     reverseComparison: source?.reverseComparison,
+    customConnectorWidth: numOf(p.customConnectorWidth),
+    customConnectorOpacity: numOf(p.customConnectorOpacity),
+    customConnectorDash: p.customConnectorDash,
+    customBeforeFill: p.customBeforeFill,
+    customBeforeStroke: p.customBeforeStroke,
+    customBeforeStrokeWidth: numOf(p.customBeforeStrokeWidth),
+    customLabelSize: numOf(p.customLabelSize),
+    customLabelColor: p.customLabelColor,
   };
 }

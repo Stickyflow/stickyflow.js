@@ -33,6 +33,12 @@ Two things count as breaking here that are easy to overlook:
 - `tileStrokeColor`, `tileStrokeWidth`, `tileLabelSize`, `tileValueSize`, `tileTextColor`, `tileLabelPadding`, `showTileValues` and `headerHeight` on treemap charts set the tile border, the text in the tiles and the group headers. Without them the chart is drawn as before.
 - `mekkoColumnGap`, `mekkoSegmentGap`, `mekkoRoundAll`, `mekkoSegmentStrokeColor`, `mekkoSegmentStrokeWidth`, `mekkoLabelSize`, `mekkoValueSize`, `mekkoTextColor`, `showMekkoTotals` and `mekkoValueFormat` (`value` or `percent`) on mekko charts set the gaps, the segment border, the text in the segments and the totals above the columns. A segment name that is wider than its column ends with an ellipsis. Without these a mekko chart is drawn as before.
 - `sankeyNodeWidth`, `sankeyNodeGap`, `sankeyLinkOpacity`, `sankeyLinkCurve` and `sankeyLabelSize` on sankey charts set the width of the nodes, the space between them, the opacity and the curve of the links and the size of the labels. Without them the chart is drawn as before.
+- `customConnectorWidth`, `customConnectorOpacity`, `customConnectorDash`, `customBeforeFill`, `customBeforeStroke`, `customBeforeStrokeWidth`, `customLabelSize` and `customLabelColor` on custom charts with `connectPoints` set the connectors, the hollow first point and the row labels. Without them the chart is drawn as before.
+
+### Changed
+
+- The quick duplicate buttons are smaller: the radius is 6 px instead of 8 and the plus is smaller to match.
+- The tabs of the color picker follow the segmented style of the panels, and its accent color is neutral instead of purple. The checkerboard behind the alpha slider follows the theme.
 
 ### Fixed
 
