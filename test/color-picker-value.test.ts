@@ -87,11 +87,11 @@ describe('gradientCss', () => {
 
 describe('seedFrom', () => {
   it('reads a solid fill', () => {
-    expect(seedFrom('#6d5ef0', null)).toEqual({ mode: 'solid', color: '#6d5ef0' });
+    expect(seedFrom('#6d5ef0', null)).toEqual({ mode: 'solid', color: '#6d5ef0', alpha: 1 });
   });
 
   it('falls back to a neutral seed rather than black for an unresolvable fill', () => {
-    expect(seedFrom('url(#missing)', null)).toEqual({ mode: 'solid', color: '#888888' });
+    expect(seedFrom('url(#missing)', null)).toEqual({ mode: 'solid', color: '#888888', alpha: 1 });
   });
 
   it('prefers resolved gradient stops over the raw fill', () => {
