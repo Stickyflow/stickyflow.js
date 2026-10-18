@@ -1,7 +1,9 @@
+import { type ComponentValue, getComponentDescriptor } from '../model/component';
 import type { RenderResult } from '../render';
 import { sflToRenderInput } from '../renderInput/fromSfl';
 import type { RenderInput } from '../renderInput/types';
 import { parse } from '../sflLanguage';
+import { findComponent } from './applyValue';
 import type { DataSource } from './dataSource';
 import { type BindingGraph, buildBindingGraph } from './graph';
 import type { BindingRuntimeOptions, ElementState, LiveChange } from './runtimeTypes';
@@ -21,21 +23,42 @@ export interface RuntimeState {
   liveState: Map<string, LiveChange>;
   elementState: Map<string, ElementState>;
   scheduled: boolean;
+  renderNeeded: boolean;
+}
+
+function initialValue(input: RenderInput, id: string, componentType: string | undefined): ComponentValue {
+  const descriptor = getComponentDescriptor(componentType);
+  const current = findComponent(input, id)?.value;
+  if (current === undefined) {
+    return descriptor?.value?.default ?? 0;
+  }
+  if (descriptor?.value?.type === 'number') {
+    const value = Number(current);
+    return Number.isFinite(value) ? value : descriptor.value.default;
+  }
+  return current;
 }
 
 export function createRuntimeState(sfl: string, options: BindingRuntimeOptions): RuntimeState {
   const graph = buildBindingGraph(parse(sfl));
+  const input = structuredClone(sflToRenderInput(sfl));
   const elementState = new Map<string, ElementState>();
-  for (const name of graph.elements.keys()) {
+  for (const [name, info] of graph.elements) {
     if (!graph.contracts.has(name)) {
-      elementState.set(name, { pressed: false, hovered: false, pointer: 0 });
+      elementState.set(name, {
+        pressed: false,
+        hovered: false,
+        focused: false,
+        pointer: 0,
+        value: initialValue(input, name, info.componentType),
+      });
     }
   }
   return {
     options,
     graph,
     diagnostics: [...graph.diagnostics],
-    input: structuredClone(sflToRenderInput(sfl)),
+    input,
     sources: new Map(),
     applied: new Map(),
     dirty: new Set(),
@@ -45,6 +68,7 @@ export function createRuntimeState(sfl: string, options: BindingRuntimeOptions):
     liveState: new Map(),
     elementState,
     scheduled: false,
+    renderNeeded: false,
   };
 }
 

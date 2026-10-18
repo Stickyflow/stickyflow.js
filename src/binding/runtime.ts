@@ -7,6 +7,7 @@ import { interactiveElements } from './interactive';
 import { createRuntimeState, type RuntimeState } from './runtimeState';
 import type { BindingRuntime, BindingRuntimeOptions, BindingTarget, LiveChange } from './runtimeTypes';
 import type { Row } from './types';
+import { activateElement, changeComponentValue, pressElement, releaseElement } from './userInput';
 
 function registerSource(state: RuntimeState, name: string, source: DataSource): () => void {
   const contract = state.graph.contracts.get(name);
@@ -38,8 +39,8 @@ function registerSource(state: RuntimeState, name: string, source: DataSource): 
 }
 
 function pushLiveChange(target: BindingTarget, change: LiveChange): void {
-  if (change.kind === 'widget') {
-    target.setWidgetValue?.(change.id, change.value);
+  if (change.kind === 'component') {
+    (target.setComponentValue ?? target.setWidgetValue)?.call(target, change.id, change.value);
     return;
   }
   for (const owner of change.owners) {
@@ -83,17 +84,10 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     input: state.input,
     registerSource: (name, source) => registerSource(state, name, source),
     setElementState: (id, patch) => setElementState(state, id, patch),
-    press(id) {
-      setElementState(state, id, { pressed: true });
-      dispatch(state, id, 'onPress');
-    },
-    release(id, tapped) {
-      setElementState(state, id, { pressed: false });
-      dispatch(state, id, 'onRelease');
-      if (tapped) {
-        dispatch(state, id, 'onTap');
-      }
-    },
+    press: id => pressElement(state, id),
+    release: (id, tapped) => releaseElement(state, id, tapped),
+    activate: id => activateElement(state, id),
+    change: (id, value) => changeComponentValue(state, id, value),
     drag(id, pointer) {
       if (pointer !== undefined) {
         setElementState(state, id, { pointer });

@@ -23,9 +23,9 @@ describe('RollingNumber Widget', () => {
   it('is represented as a first-class SFL canvas object', () => {
     const widget = sflToCanvasState(SOURCE).canvasObjects[0];
 
-    expect(widget.objectType).toBe('widget');
+    expect(widget.objectType).toBe('component');
     expect(widget.id).toBe('speed');
-    expect(widget.widget).toEqual({ type: 'rollingNumber', value: '7', digits: 2, duration: 360, label: 'KM/H' });
+    expect(widget.component).toEqual({ type: 'rollingNumber', value: '7', digits: 2, duration: 360, label: 'KM/H' });
   });
 
   it('renders a static initial value without a browser runtime', () => {
@@ -43,7 +43,7 @@ describe('RollingNumber Widget', () => {
 
     expect(result.svg).not.toContain('data-sf-widget=');
     expect(result.diagnostics).toContainEqual(
-      expect.objectContaining({ code: 'unsupported-widget-type', ownerId: 'speed' }),
+      expect.objectContaining({ code: 'unsupported-component-type', ownerId: 'speed' }),
     );
   });
 });

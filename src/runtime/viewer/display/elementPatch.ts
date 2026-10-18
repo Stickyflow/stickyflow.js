@@ -66,13 +66,13 @@ function replaceTextContent(current: Element, next: Element): void {
 }
 
 export function patchSceneElement(current: Element, next: Element): boolean {
-  const widgetRestyled =
+  const componentRestyled =
     next.hasAttribute('data-sf-widget') &&
     (current.getAttribute('data-sf-widget-style') !== next.getAttribute('data-sf-widget-style') ||
       current.getAttribute('data-sf-widget-value') !== next.getAttribute('data-sf-widget-value'));
   const attributesChanged = patchAttributes(current, next);
   let contentChanged = false;
-  if (widgetRestyled) {
+  if (componentRestyled) {
     contentChanged = true;
     replaceTextContent(current, next);
   }

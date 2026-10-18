@@ -32,7 +32,8 @@ export interface Viewer {
   exportSvg(): string;
   exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
   setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
-  setWidgetValue(widgetId: string, value: string | number): boolean;
+  setComponentValue(componentId: string, value: string | number): boolean;
+  setWidgetValue(componentId: string, value: string | number): boolean;
   setPaused(paused: boolean): void;
   clearOverrides(): void;
   update(next: ViewerSource): void;

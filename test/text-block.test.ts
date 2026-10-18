@@ -111,7 +111,7 @@ Model board {
     );
     runtime.registerSource('car', createDataSource({ speed: 70 }));
     const live: Array<[string, string | number]> = [];
-    runtime.attach({ update: () => undefined, setWidgetValue: (id, value) => live.push([id, value]) });
+    runtime.attach({ update: () => undefined, setComponentValue: (id, value) => live.push([id, value]) });
     runtime.flush();
     expect(live).toContainEqual(['scale', 70]);
   });

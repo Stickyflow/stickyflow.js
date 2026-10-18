@@ -1,38 +1,38 @@
 import {
   DEFAULT_ROLLING_NUMBER_STYLE,
   formatRollingNumber,
-  type RollingNumberWidgetStyle,
-} from '../../../model/widget';
+  type RollingNumberComponentStyle,
+} from '../../../model/component';
 import { updateRollingDigits } from './rollingNumberDom';
 
 type RollingNumberSurface = SVGForeignObjectElement;
 
-export interface DocumentWidgetsHandle {
-  setValue(widgetId: string, value: string | number): boolean;
+export interface DocumentComponentsHandle {
+  setValue(componentId: string, value: string | number): boolean;
   refresh(): void;
   clearValues(): void;
   destroy(): void;
 }
 
-function findRollingNumber(svg: SVGSVGElement, widgetId: string): RollingNumberSurface | undefined {
+function findRollingNumber(svg: SVGSVGElement, componentId: string): RollingNumberSurface | undefined {
   return [...svg.querySelectorAll<RollingNumberSurface>('foreignObject[data-sf-widget="rollingNumber"]')].find(
-    surface => surface.getAttribute('data-sf-id') === widgetId,
+    surface => surface.getAttribute('data-sf-id') === componentId,
   );
 }
 
 const FADE_INTERVAL = 140;
 
-function widgetDigits(surface: RollingNumberSurface): HTMLDivElement | undefined {
+function componentDigits(surface: RollingNumberSurface): HTMLDivElement | undefined {
   return surface.querySelector<HTMLDivElement>('[data-sf-rolling-digits]') ?? undefined;
 }
 
-function widgetStyle(surface: RollingNumberSurface): Required<RollingNumberWidgetStyle> {
+function componentStyle(surface: RollingNumberSurface): Required<RollingNumberComponentStyle> {
   const encoded = surface.getAttribute('data-sf-widget-style');
   if (!encoded) {
     return DEFAULT_ROLLING_NUMBER_STYLE;
   }
   try {
-    return { ...DEFAULT_ROLLING_NUMBER_STYLE, ...(JSON.parse(encoded) as RollingNumberWidgetStyle) };
+    return { ...DEFAULT_ROLLING_NUMBER_STYLE, ...(JSON.parse(encoded) as RollingNumberComponentStyle) };
   } catch {
     return DEFAULT_ROLLING_NUMBER_STYLE;
   }
@@ -56,7 +56,7 @@ function durationFor(surface: RollingNumberSurface): number {
 }
 
 function setRollingNumber(surface: RollingNumberSurface, value: string | number, animate: boolean): boolean {
-  const digits = widgetDigits(surface);
+  const digits = componentDigits(surface);
   if (!digits) {
     return false;
   }
@@ -65,39 +65,39 @@ function setRollingNumber(surface: RollingNumberSurface, value: string | number,
   if (previousValue === nextValue) {
     return true;
   }
-  updateRollingDigits(digits, previousValue, nextValue, widgetStyle(surface), animate ? durationFor(surface) : 0);
+  updateRollingDigits(digits, previousValue, nextValue, componentStyle(surface), animate ? durationFor(surface) : 0);
   surface.setAttribute('data-sf-widget-value', nextValue);
   return true;
 }
 
-export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle {
+export function mountDocumentComponents(svg: SVGSVGElement): DocumentComponentsHandle {
   const valueOverrides = new Map<string, string | number>();
   const lastApplied = new Map<string, number>();
   const pending = new Map<string, ReturnType<typeof setTimeout>>();
   return {
-    setValue(widgetId: string, value: string | number): boolean {
-      const surface = findRollingNumber(svg, widgetId);
+    setValue(componentId: string, value: string | number): boolean {
+      const surface = findRollingNumber(svg, componentId);
       if (!surface) {
         return false;
       }
-      valueOverrides.set(widgetId, value);
-      if (widgetStyle(surface).motion !== 'fade') {
+      valueOverrides.set(componentId, value);
+      if (componentStyle(surface).motion !== 'fade') {
         return setRollingNumber(surface, value, true);
       }
       const now = Date.now();
-      const wait = (lastApplied.get(widgetId) ?? 0) + FADE_INTERVAL - now;
+      const wait = (lastApplied.get(componentId) ?? 0) + FADE_INTERVAL - now;
       if (wait <= 0) {
-        lastApplied.set(widgetId, now);
+        lastApplied.set(componentId, now);
         return setRollingNumber(surface, value, true);
       }
-      if (!pending.has(widgetId)) {
+      if (!pending.has(componentId)) {
         pending.set(
-          widgetId,
+          componentId,
           setTimeout(() => {
-            pending.delete(widgetId);
-            lastApplied.set(widgetId, Date.now());
-            const current = findRollingNumber(svg, widgetId);
-            const latest = valueOverrides.get(widgetId);
+            pending.delete(componentId);
+            lastApplied.set(componentId, Date.now());
+            const current = findRollingNumber(svg, componentId);
+            const latest = valueOverrides.get(componentId);
             if (current && latest !== undefined) {
               setRollingNumber(current, latest, true);
             }
@@ -107,8 +107,8 @@ export function mountDocumentWidgets(svg: SVGSVGElement): DocumentWidgetsHandle 
       return true;
     },
     refresh(): void {
-      for (const [widgetId, value] of valueOverrides) {
-        const surface = findRollingNumber(svg, widgetId);
+      for (const [componentId, value] of valueOverrides) {
+        const surface = findRollingNumber(svg, componentId);
         if (surface) {
           setRollingNumber(surface, value, false);
         }

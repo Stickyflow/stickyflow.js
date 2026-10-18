@@ -12,7 +12,7 @@ An SFL document is block structured text. Comments, order and formatting belong 
 
 stickyflow.js is the only place where SFL is understood. It has six layers, numbered from the bottom, and every layer may only use the ones below it.
 
-L0, the model in `src/model`, holds the framework neutral types for charts, shapes, paths, shaders, widgets and isometric objects, and the geometry that needs no other layer.
+L0, the model in `src/model`, holds the framework neutral types for charts, shapes, paths, shaders, components and isometric objects, and the geometry that needs no other layer.
 
 L1, the language in `src/sflLanguage`, reads text. It has a lexer, a parser that produces a syntax tree, and a canonical emitter that writes the tree back as text. It knows the grammar and nothing about meaning.
 
@@ -38,7 +38,7 @@ The runtime is everything that needs a browser. It is split into tiers, and a ti
 
 The dom tier finds objects in the drawn SVG and paints the overlays for selection, handles and guides. The eventing tier is a small emitter. The viewer mounts the SVG in a container, keeps the camera, redraws when the source changes and exports images. The interaction tier binds gestures such as moving, resizing, drawing links, dragging chart values and picking colors, and turns each of them into a patch of the text. The web component tier wraps the viewer as a tag that needs no code of its own.
 
-Shaders and widgets are drawn by the viewer on top of the scene, which is why they work live while the core path stays pure.
+Shaders and components are drawn by the viewer on top of the scene, which is why they work live while the core path stays pure.
 
 ## Data and events
 
@@ -46,9 +46,9 @@ The binding folder lets a document react. A document can declare data sources an
 
 ## Entry points
 
-The package has four entries, and each one is a tier of the architecture.
+The package has five entries, and each one is a tier of the architecture.
 
-`stickyflow` holds the language, the semantic layer and `render`. `stickyflow/viewer` holds the viewer. `stickyflow/interaction` holds the editing. `stickyflow/web-component` holds the tag `stickyflow-diagram`.
+`stickyflow` holds the language, the semantic layer and `render`. `stickyflow/binding` holds the data sources and the binding runtime. `stickyflow/viewer` holds the viewer. `stickyflow/interaction` holds the editing. `stickyflow/web-component` holds the tag `stickyflow-diagram`.
 
 A consumer imports the entry it needs and nothing else. A page that only shows a diagram never loads the editing code.
 

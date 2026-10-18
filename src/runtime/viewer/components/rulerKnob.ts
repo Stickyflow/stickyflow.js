@@ -43,14 +43,16 @@ function hexToRgb(value: string): [number, number, number] | null {
   return [(number >> 16) & 255, (number >> 8) & 255, number & 255];
 }
 
-function shade(node: SVGElement, bump: number): void {
+const WHITE: [number, number, number] = [255, 255, 255];
+
+function shade(node: SVGElement, bump: number, target: [number, number, number]): void {
   const base = fills.get(node) ?? node.getAttribute('fill') ?? '';
   fills.set(node, base);
   const rgb = hexToRgb(base);
   if (!rgb) {
     return;
   }
-  const mixed = rgb.map(channel => Math.round(channel + (255 - channel) * bump));
+  const mixed = rgb.map((channel, index) => Math.round(channel + (target[index] - channel) * bump));
   const fill = `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`;
   node.style.fill = fill;
   for (const child of node.querySelectorAll<SVGElement>('tspan')) {
@@ -65,6 +67,7 @@ export function placeRulerKnobs(
   const radii = new Map<string, number>();
   for (const surface of svg.querySelectorAll('foreignObject[data-sf-shader="ruler"]')) {
     const params = parameters(surface);
+    const peak = (typeof params.peak === 'string' ? hexToRgb(params.peak) : null) ?? WHITE;
     const id = surface.getAttribute('data-sf-id') ?? '';
     const x = Number(surface.getAttribute('x'));
     const y = Number(surface.getAttribute('y'));
@@ -117,7 +120,7 @@ export function placeRulerKnobs(
       const bump = Math.exp(-(((labelAt - knobAt) / spread) ** 2));
       const shift = depth * 0.4 * bump;
       move(label, horizontal ? 0 : -shift, horizontal ? -shift : 0);
-      shade(label, bump);
+      shade(label, bump, peak);
     }
   }
   return radii;

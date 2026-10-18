@@ -18,6 +18,7 @@ interface PackageManifest {
 
 const PUBLIC_ENTRIES = {
   '.': 'src/index.ts',
+  './binding': 'src/binding/index.ts',
   './viewer': 'src/runtime/viewer/index.ts',
   './interaction': 'src/runtime/interaction/index.ts',
   './web-component': 'src/runtime/webComponent/index.ts',

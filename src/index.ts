@@ -8,13 +8,31 @@ export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { Shader, ShaderParameter } from './model/shader';
 export type {
+  RollingNumberComponent,
+  RollingNumberComponentStyle,
+  RulerComponent,
+  TickScaleComponent,
+  Component,
+  ComponentDescriptor,
+  ComponentGroup,
+  ComponentInteraction,
+  ComponentPropertyDescriptor,
+  ComponentSize,
+  ComponentType,
+  ComponentValue,
+  ComponentValueDescriptor,
+  ComponentValueType,
+  GenericComponent,
+} from './model/component';
+export { getComponentDescriptor, isGenericComponent } from './model/component';
+export type {
   RollingNumberWidget,
   RollingNumberWidgetStyle,
   RulerWidget,
   TickScaleWidget,
   Widget,
   WidgetType,
-} from './model/widget';
+} from './model/component/legacyNames';
 
 export { canonicalize, parse } from './sflLanguage';
 
@@ -53,8 +71,8 @@ export type {
 
 export { DOM_CONTRACT_VERSION } from './svg/domContract/version';
 
-export type { RenderOptions, RenderResult } from './render';
-export { render, renderCanvas } from './render';
+export type { ComponentDefinition, ComponentSceneContext, RenderOptions, RenderResult } from './render';
+export { defineComponent, render, renderCanvas } from './render';
 
 export type { SflImportJson } from './adapters/importJson';
 export { sflToImportJson } from './adapters/importJson';

@@ -1,3 +1,4 @@
+import { type ComponentValue, isBuiltInComponentType } from '../model/component';
 import { type RenderResult, renderCanvas } from '../render';
 import { APPLY, applyShader } from './applyValue';
 import { evaluate } from './expression';
@@ -10,6 +11,20 @@ function announce(state: RuntimeState, id: string, change: LiveChange): void {
   for (const listener of [...state.liveListeners]) {
     listener(change);
   }
+}
+
+function applyComponentValue(state: RuntimeState, binding: BoundProperty, value: ComponentValue): boolean {
+  const id = binding.ownerPath[0];
+  const element = state.elementState.get(id);
+  if (element) {
+    element.value = value;
+    markDirty(state, id);
+  }
+  if (!isBuiltInComponentType(state.graph.elements.get(id)?.componentType)) {
+    return true;
+  }
+  announce(state, binding.id, { kind: 'component', id, value: value as number });
+  return false;
 }
 
 function warnMissingSource(state: RuntimeState, binding: BoundProperty, missing: string): void {
@@ -51,16 +66,16 @@ function evaluateBinding(state: RuntimeState, binding: BoundProperty): boolean {
     binding.ownerPath,
     value,
   );
-  if (binding.ownerKind === 'Widget') {
-    announce(state, binding.id, { kind: 'widget', id: binding.ownerPath[0], value: value as number });
-    return false;
+  if (binding.ownerKind === 'Component' && binding.property === 'value') {
+    return applyComponentValue(state, binding, value as ComponentValue);
   }
   return true;
 }
 
 export function flush(state: RuntimeState): RenderResult | null {
   state.scheduled = false;
-  let changed = false;
+  let changed = state.renderNeeded;
+  state.renderNeeded = false;
   for (const binding of state.dirty) {
     changed = evaluateBinding(state, binding) || changed;
   }

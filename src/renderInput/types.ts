@@ -1,4 +1,5 @@
 import type { Chart } from '../model/chart';
+import type { Component } from '../model/component';
 import type { Diagnostic } from '../model/diagnostic';
 import type { Frame } from '../model/frame';
 import type { Point } from '../model/geometry/types';
@@ -7,7 +8,6 @@ import type { Link } from '../model/link';
 import type { FreeformPath } from '../model/path';
 import type { Shape } from '../model/shape';
 import type { Swimlane } from '../model/swimlane';
-import type { Widget } from '../model/widget';
 
 export interface RenderInputLink {
   link: Link;
@@ -23,7 +23,8 @@ export interface RenderInput {
   isometricObjects?: IsometricObject[];
   paths?: FreeformPath[];
   charts?: Chart[];
-  widgets?: Widget[];
+  components?: Component[];
+  widgets?: Component[];
   links: RenderInputLink[];
   diagnostics?: Diagnostic[];
 }

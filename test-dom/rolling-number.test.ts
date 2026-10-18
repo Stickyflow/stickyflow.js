@@ -35,6 +35,18 @@ describe('RollingNumber Widget viewer runtime', () => {
     expect(surface?.querySelectorAll('[data-sf-rolling-digit]')).toHaveLength(2);
   });
 
+  it('answers to both setComponentValue and its older name setWidgetValue', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const viewer = createViewer({ container, source: SOURCE });
+    const surface = viewer.svg.querySelector<SVGForeignObjectElement>('[data-sf-widget="rollingNumber"]');
+
+    expect(viewer.setComponentValue('speed', 21)).toBe(true);
+    expect(surface?.getAttribute('data-sf-widget-value')).toBe('21');
+    expect(viewer.setWidgetValue('speed', 33)).toBe(true);
+    expect(surface?.getAttribute('data-sf-widget-value')).toBe('33');
+  });
+
   it('keeps a live value override after a document update', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
