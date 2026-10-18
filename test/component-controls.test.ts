@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildBindingGraph,
-  createBindingRuntime,
-  createDataSource,
-  defineComponent,
-  parse,
-  type RenderNode,
-  render,
-} from '../src/index';
+import { buildBindingGraph, createBindingRuntime, createDataSource } from '../src/binding';
+import { defineComponent, parse, type RenderNode, render } from '../src/index';
 
 const model = (body: string, data = '') => `sfl 1.4
 ${data}

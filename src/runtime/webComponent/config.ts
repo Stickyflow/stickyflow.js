@@ -1,8 +1,11 @@
+import type { DataSource } from '../../binding';
+
 export interface DiagramConfig {
   source: string | null;
   interactive: boolean;
   padding?: number;
   diagramId?: string;
+  dataSources?: Record<string, DataSource>;
 }
 
 export const OBSERVED_ATTRS = ['source', 'interactive', 'padding', 'diagram-id'] as const;

@@ -17,6 +17,14 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- `<stickyflow-diagram>` takes data sources with the property `element.dataSources = { name: dataSource }`. An interactive diagram then follows the data and passes pointer and keyboard input on, like a viewer with a binding runtime.
+
+### Changed
+
+- **Breaking.** `createDataSource`, `createBindingRuntime`, `buildBindingGraph`, `renderBound`, `interactiveElements` and the binding types are no longer exported from `stickyflow`. Import them from `stickyflow/binding`.
+
 ## [0.5.0] - 2026-10-18
 
 ### Added

@@ -112,7 +112,7 @@ const { svg, width, height, diagnostics } = render(sfl)
 | `stickyflow/viewer` | Viewer in the DOM: select, hover, pan, zoom, typed events, and live input for components such as a switch or a button. |
 | `stickyflow/interaction` | Editing gestures on a viewer. Reports what changed; the host applies the patch to the SFL text. |
 | `stickyflow/binding` | Data sources, bindings and handlers. `createDataSource`, `createBindingRuntime`, `renderBound`. No DOM. |
-| `stickyflow/web-component` | `<stickyflow-diagram>` custom element in Shadow DOM, no build step. |
+| `stickyflow/web-component` | `<stickyflow-diagram>` custom element in Shadow DOM, no build step. Takes data sources with `element.dataSources`. |
 
 Each entry only depends on the ones below it; `test/architecture` enforces that.
 

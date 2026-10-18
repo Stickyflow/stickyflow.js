@@ -1,5 +1,6 @@
+import { createBindingRuntime } from '../../binding';
 import { render } from '../../render';
-import { createViewer, type Viewer } from '../viewer';
+import { connectInteraction, createViewer, type Viewer } from '../viewer';
 import type { DiagramConfig } from './config';
 
 const SHADOW_STYLE = `
@@ -14,7 +15,10 @@ const SHADOW_STYLE = `
 export interface ShadowDiagramMount {
   viewer: Viewer | null;
   rendered: boolean;
+  dispose: () => void;
 }
+
+const NOTHING = () => {};
 
 function createShadowContainer(root: ShadowRoot): HTMLDivElement {
   const style = document.createElement('style');
@@ -32,14 +36,39 @@ function showRenderError(container: HTMLDivElement, error: unknown): void {
   container.replaceChildren(box);
 }
 
-function mountInteractiveDiagram(container: HTMLDivElement, source: string, config: DiagramConfig): Viewer {
-  return createViewer({
+function bindSources(viewer: Viewer, source: string, config: DiagramConfig): () => void {
+  const sources = Object.entries(config.dataSources ?? {});
+  if (sources.length === 0) {
+    return NOTHING;
+  }
+  const runtime = createBindingRuntime(source, { renderOptions: { padding: config.padding } });
+  const unregister = sources
+    .filter(([name]) => runtime.graph.contracts.has(name))
+    .map(([name, dataSource]) => runtime.registerSource(name, dataSource));
+  const detach = runtime.attach(viewer);
+  const disconnect = connectInteraction(viewer, runtime);
+  return () => {
+    disconnect();
+    detach();
+    for (const off of unregister) {
+      off();
+    }
+  };
+}
+
+function mountInteractiveDiagram(
+  container: HTMLDivElement,
+  source: string,
+  config: DiagramConfig,
+): { viewer: Viewer; dispose: () => void } {
+  const viewer = createViewer({
     container,
     source,
     interactive: true,
     diagramId: config.diagramId,
     renderOptions: { padding: config.padding },
   });
+  return { viewer, dispose: bindSources(viewer, source, config) };
 }
 
 function mountStaticDiagram(container: HTMLDivElement, source: string, config: DiagramConfig): void {
@@ -49,17 +78,18 @@ function mountStaticDiagram(container: HTMLDivElement, source: string, config: D
 export function mountShadowDiagram(root: ShadowRoot, config: DiagramConfig): ShadowDiagramMount {
   const container = createShadowContainer(root);
   if (config.source === null) {
-    return { viewer: null, rendered: false };
+    return { viewer: null, rendered: false, dispose: NOTHING };
   }
 
   try {
-    const viewer = config.interactive ? mountInteractiveDiagram(container, config.source, config) : null;
     if (!config.interactive) {
       mountStaticDiagram(container, config.source, config);
+      return { viewer: null, rendered: true, dispose: NOTHING };
     }
-    return { viewer, rendered: true };
+    const { viewer, dispose } = mountInteractiveDiagram(container, config.source, config);
+    return { viewer, rendered: true, dispose };
   } catch (error) {
     showRenderError(container, error);
-    return { viewer: null, rendered: false };
+    return { viewer: null, rendered: false, dispose: NOTHING };
   }
 }

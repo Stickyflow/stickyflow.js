@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildBindingGraph, parse, render } from '../src/index';
+import { buildBindingGraph } from '../src/binding';
+import { parse, render } from '../src/index';
 import { applyMoveChange, applyResizeChange } from '../src/runtime/interaction/patchSfl';
 import type { OwnerRef } from '../src/runtime/viewer';
 import { sflToCanvasState } from '../src/sflSemantic/sflToCanvasState';

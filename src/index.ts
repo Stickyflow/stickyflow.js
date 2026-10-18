@@ -76,24 +76,3 @@ export { defineComponent, render, renderCanvas } from './render';
 
 export type { SflImportJson } from './adapters/importJson';
 export { sflToImportJson } from './adapters/importJson';
-
-export type {
-  BindingDiagnostic,
-  BindingGraph,
-  BindingRuntime,
-  BindingRuntimeOptions,
-  RenderBoundOptions,
-  BindingTarget,
-  BindingType,
-  BindingValue,
-  BoundAssignment,
-  BoundHandler,
-  BoundProperty,
-  DataSource,
-  DataSourceContract,
-  ElementInfo,
-  ElementState,
-  InteractiveElements,
-  MutableDataSource,
-} from './binding';
-export { buildBindingGraph, createBindingRuntime, createDataSource, interactiveElements, renderBound } from './binding';
