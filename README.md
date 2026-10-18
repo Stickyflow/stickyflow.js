@@ -104,17 +104,17 @@ const { svg, width, height, diagnostics } = render(sfl)
 // A complete, deterministic SVG string. render() never touches the DOM.
 ```
 
-## Four entry points
+## Five entry points
 
 | Import | What it is |
 |---|---|
 | `stickyflow` | Static tier. SFL text in, SVG string out. Node, SSR, CLI. |
-| `stickyflow/binding` | Data sources, bindings and handlers. `createDataSource`, `createBindingRuntime`, `renderBound`. No DOM. |
-| `stickyflow/viewer` | Read-only viewer in the DOM: select, hover, pan, zoom, typed events. |
+| `stickyflow/viewer` | Viewer in the DOM: select, hover, pan, zoom, typed events, and live input for components such as a switch or a button. |
 | `stickyflow/interaction` | Editing gestures on a viewer. Reports what changed; the host applies the patch to the SFL text. |
+| `stickyflow/binding` | Data sources, bindings and handlers. `createDataSource`, `createBindingRuntime`, `renderBound`. No DOM. |
 | `stickyflow/web-component` | `<stickyflow-diagram>` custom element in Shadow DOM, no build step. |
 
-Each tier only depends on the one below it; `test/boundary.test.ts` enforces that.
+Each entry only depends on the ones below it; `test/architecture` enforces that.
 
 ```ts
 import { createViewer } from 'stickyflow/viewer'
@@ -129,6 +129,49 @@ editing.on('moveChange', (event) => {
 })
 ```
 
+## Components and data binding
+
+A component is an interface element with a value, a look and a behavior. Seven are built in. RollingNumber, TickScale and Ruler show a value. Switch, Checkbox, ToggleButton and Button are operated by the user. An application adds its own type with `defineComponent()`.
+
+A document declares a data source and binds to it. `<-` makes a property follow the data. `<->` also writes the data when the user changes a component value, and `onChange` runs for each change by the user.
+
+```text
+DataSource lamp {
+  mode: record
+  fields {
+    on: boolean
+  }
+}
+
+Model demo {
+  Component power {
+    type: switch
+    value: <-> lamp.on
+    layout {
+      position: 0, 0
+      size: 104, 60
+    }
+  }
+}
+```
+
+```ts
+import { createBindingRuntime, createDataSource } from 'stickyflow/binding'
+import { connectInteraction, createViewer } from 'stickyflow/viewer'
+
+const viewer = createViewer({ container, source: sfl, interactive: true })
+const runtime = createBindingRuntime(sfl)
+const lamp = createDataSource({ on: false })
+
+runtime.registerSource('lamp', lamp)
+runtime.attach(viewer)
+connectInteraction(viewer, runtime)
+
+lamp.set({ on: true })   // the switch follows
+```
+
+Binding and live input need only `stickyflow/binding` and `stickyflow/viewer`. Editing with `stickyflow/interaction` is separate.
+
 ## What it draws
 
 Shapes, links, frames, swimlanes, paths and text. Fifteen chart types. Isometric objects. Shader surfaces and components. Data sources with bindings, and events with handlers, so a document can react to data and input.
@@ -141,11 +184,13 @@ Shapes, links, frames, swimlanes, paths and text. Fifteen chart types. Isometric
 
 ```
 src/
+  model/         types and registries for shapes, charts, components
   sflLanguage/   AST, lexer, parser, canonical emitter
   sflSemantic/   SFL AST to canvas state
   renderInput/   renderer contract and style decoding
   renderScene/   deterministic scene construction
   svg/           SVG serialization and the DOM contract
+  binding/       data sources, bindings and handlers
   runtime/       viewer, interaction, web component
 ```
 
@@ -156,7 +201,7 @@ npm run ci      # lint, typecheck, tests, build, smoke
 npm run build   # tsup
 ```
 
-How the package and its neighbours fit together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Adding a new placeable object: [docs/ADDING_CANVAS_OBJECT.md](docs/ADDING_CANVAS_OBJECT.md). Changes: [CHANGELOG.md](CHANGELOG.md).
+How the package and its neighbours fit together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Adding a new placeable object: [docs/ADDING_CANVAS_OBJECT.md](docs/ADDING_CANVAS_OBJECT.md). Adding a component: [docs/ADDING_COMPONENT.md](docs/ADDING_COMPONENT.md). Changes: [CHANGELOG.md](CHANGELOG.md).
 
 ## More
 
