@@ -51,8 +51,8 @@ function evaluateBinding(state: RuntimeState, binding: BoundProperty): boolean {
     binding.ownerPath,
     value,
   );
-  if (binding.ownerKind === 'Widget') {
-    announce(state, binding.id, { kind: 'widget', id: binding.ownerPath[0], value: value as number });
+  if (binding.ownerKind === 'Component') {
+    announce(state, binding.id, { kind: 'component', id: binding.ownerPath[0], value: value as number });
     return false;
   }
   return true;

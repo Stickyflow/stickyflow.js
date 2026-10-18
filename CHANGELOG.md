@@ -17,6 +17,14 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Changed
+
+- The `Widget` block is now called `Component`. Both names are read, so existing documents render as before. The types follow the new name (`Component`, `ComponentType`, `RollingNumberComponent`, `TickScaleComponent`, `RulerComponent`) and `viewer.setComponentValue()` replaces `viewer.setWidgetValue()`. `RenderInput` takes `components`. The old names remain as aliases for now.
+- The diagnostic `unsupported-widget-type` is now `unsupported-component-type`.
+- The component types are listed in one place, `COMPONENT_TYPES`, as the shape and chart types are, and no longer repeated in the code that reads them.
+
+The DOM contract is unchanged. The attributes `data-sf-widget*`, the role `widget` and the scene ids keep their names.
+
 ## [0.4.0] - 2026-10-17
 
 ### Added

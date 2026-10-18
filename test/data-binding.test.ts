@@ -346,7 +346,7 @@ Model dash {
     runtime.attach({
       update: () => (renders += 1),
       setShaderParameters: (id, parameters) => shader.push([id, parameters]),
-      setWidgetValue: (id, value) => widgets.push([id, value]),
+      setComponentValue: (id, value) => widgets.push([id, value]),
     });
     runtime.flush();
     expect(shader).toContainEqual(['dial', { progress: 0.5 }]);

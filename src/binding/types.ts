@@ -72,7 +72,7 @@ export interface BoundHandler {
 
 export interface ElementInfo {
   kind: BlockKind;
-  widgetType?: string;
+  componentType?: string;
 }
 
 export const POINTER_EVENTS = ['onPress', 'onRelease', 'onTap', 'onDrag'] as const;

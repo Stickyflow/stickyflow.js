@@ -14,10 +14,10 @@ export {
   isSwimlaneObject,
   type SflCanvasObject,
   type SflChartObject,
+  type SflComponentObject,
   type SflIsometricObject,
   type SflPathObject,
   type SflSwimlaneObject,
-  type SflWidgetObject,
 } from './canvasObjects/types';
 export type { SflGroupOut } from './groups/types';
 

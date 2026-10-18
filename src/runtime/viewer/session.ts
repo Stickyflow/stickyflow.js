@@ -1,4 +1,6 @@
 import type { ShaderParameter } from '../../model/shader';
+import { type DocumentComponentsHandle, mountDocumentComponents } from './components';
+import { placeRulerKnobs, rulerProgress } from './components/rulerKnob';
 import type { DisplayHandle, ViewBox } from './display';
 import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
@@ -7,15 +9,13 @@ import { bindInteraction, type InteractionHandle } from './interaction';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
 import type { Viewer, ViewerOptions, ViewerSource } from './types';
-import { type DocumentWidgetsHandle, mountDocumentWidgets } from './widgets';
-import { placeRulerKnobs, rulerProgress } from './widgets/rulerKnob';
 
 export class ViewerSession implements Viewer {
   private readonly emitter = new Emitter();
   private readonly display: DisplayHandle;
   private readonly interaction: InteractionHandle | null;
   private readonly shaderSurfaces: ShaderSurfaceHandle;
-  private readonly documentWidgets: DocumentWidgetsHandle;
+  private readonly documentComponents: DocumentComponentsHandle;
   private readonly shaderParameterOverrides = new Map<string, Record<string, ShaderParameter>>();
   private readonly rulerProgressOverrides = new Map<string, number>();
 
@@ -26,7 +26,7 @@ export class ViewerSession implements Viewer {
   ) {
     this.display = mountDisplay(options.container, initialSvg);
     this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
-    this.documentWidgets = mountDocumentWidgets(this.display.svg);
+    this.documentComponents = mountDocumentComponents(this.display.svg);
     this.interaction = options.interactive
       ? bindInteraction(this.display, this.emitter, diagramId, { selectable: options.selectable })
       : null;
@@ -79,22 +79,26 @@ export class ViewerSession implements Viewer {
     return this.shaderSurfaces.setParameters(ownerId, parameters);
   }
 
-  setWidgetValue(widgetId: string, value: string | number): boolean {
-    if (this.documentWidgets.setValue(widgetId, value)) {
+  setWidgetValue(componentId: string, value: string | number): boolean {
+    return this.setComponentValue(componentId, value);
+  }
+
+  setComponentValue(componentId: string, value: string | number): boolean {
+    if (this.documentComponents.setValue(componentId, value)) {
       return true;
     }
     const ruler = [...this.svg.querySelectorAll('foreignObject[data-sf-shader="ruler"]')].find(
-      element => element.getAttribute('data-sf-id') === widgetId,
+      element => element.getAttribute('data-sf-id') === componentId,
     );
     if (ruler) {
       const progress = rulerProgress(ruler, Number(value));
-      this.rulerProgressOverrides.set(widgetId, progress);
-      const applied = this.setShaderParameters(widgetId, { progress });
+      this.rulerProgressOverrides.set(componentId, progress);
+      const applied = this.setShaderParameters(componentId, { progress });
       this.placeKnobs();
       return applied;
     }
     const scale = [...this.svg.querySelectorAll('foreignObject[data-sf-shader="tickScale"]')].find(
-      element => element.getAttribute('data-sf-id') === widgetId,
+      element => element.getAttribute('data-sf-id') === componentId,
     );
     if (!scale) {
       return false;
@@ -105,7 +109,7 @@ export class ViewerSession implements Viewer {
     } catch {
       max = 100;
     }
-    return this.setShaderParameters(widgetId, { progress: Math.min(1, Math.max(0, Number(value) / max)) });
+    return this.setShaderParameters(componentId, { progress: Math.min(1, Math.max(0, Number(value) / max)) });
   }
 
   setPaused(paused: boolean): void {
@@ -115,7 +119,7 @@ export class ViewerSession implements Viewer {
   clearOverrides(): void {
     this.shaderParameterOverrides.clear();
     this.rulerProgressOverrides.clear();
-    this.documentWidgets.clearValues();
+    this.documentComponents.clearValues();
   }
 
   update(next: ViewerSource): void {
@@ -123,7 +127,7 @@ export class ViewerSession implements Viewer {
     assertViewerUpdateContract(svg);
     const diff = this.display.updateContent(svg);
     this.shaderSurfaces.refresh();
-    this.documentWidgets.refresh();
+    this.documentComponents.refresh();
     this.placeKnobs();
     for (const [ownerId, parameters] of this.shaderParameterOverrides) {
       this.shaderSurfaces.setParameters(ownerId, parameters);
@@ -149,7 +153,7 @@ export class ViewerSession implements Viewer {
   destroy(): void {
     this.interaction?.destroy();
     this.shaderSurfaces.destroy();
-    this.documentWidgets.destroy();
+    this.documentComponents.destroy();
     this.shaderParameterOverrides.clear();
     this.display.destroy();
     this.emitter.clear();

@@ -6,5 +6,5 @@ export const BINDABLE_PROPERTIES: Partial<Record<BlockKind, Record<string, Bindi
   Series: { values: { list: 'number' }, label: 'string' },
   Shape: { text: 'string', fill: 'string', stroke: 'string', textColor: 'string', opacity: 'number' },
   Text: { text: 'string', textColor: 'string', opacity: 'number' },
-  Widget: { value: 'number' },
+  Component: { value: 'number' },
 };

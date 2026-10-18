@@ -54,10 +54,10 @@ export const APPLY: Record<string, Apply> = {
   'Shape.stroke': (input, path, value) => setShape(input, path, shape => (shape.strokeColor = value as string)),
   'Shape.textColor': (input, path, value) => setShape(input, path, shape => (shape.textColor = value as string)),
   'Shape.opacity': (input, path, value) => setShape(input, path, shape => (shape.opacity = value as number)),
-  'Widget.value': (input, path, value) => {
-    const widget = input.widgets?.find(candidate => candidate.id === path[0]);
-    if (widget) {
-      widget.value = String(value);
+  'Component.value': (input, path, value) => {
+    const component = (input.components ?? input.widgets)?.find(candidate => candidate.id === path[0]);
+    if (component) {
+      component.value = String(value);
     }
   },
 };

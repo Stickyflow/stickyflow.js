@@ -38,8 +38,8 @@ function registerSource(state: RuntimeState, name: string, source: DataSource): 
 }
 
 function pushLiveChange(target: BindingTarget, change: LiveChange): void {
-  if (change.kind === 'widget') {
-    target.setWidgetValue?.(change.id, change.value);
+  if (change.kind === 'component') {
+    (target.setComponentValue ?? target.setWidgetValue)?.call(target, change.id, change.value);
     return;
   }
   for (const owner of change.owners) {

@@ -11,12 +11,13 @@ export interface BindingRuntimeOptions {
 
 export interface BindingTarget {
   update(next: { svg: string }): void;
-  setWidgetValue?(widgetId: string, value: string | number): unknown;
+  setComponentValue?(componentId: string, value: string | number): unknown;
+  setWidgetValue?(componentId: string, value: string | number): unknown;
   setShaderParameters?(ownerId: string, parameters: Record<string, number>): unknown;
 }
 
 export type LiveChange =
-  | { kind: 'widget'; id: string; value: number }
+  | { kind: 'component'; id: string; value: number }
   | { kind: 'shader'; owners: string[]; parameters: Record<string, number> };
 
 export interface ElementState {

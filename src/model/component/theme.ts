@@ -1,6 +1,6 @@
-import type { RollingNumberWidgetStyle } from './types';
+import type { RollingNumberComponentStyle } from './types';
 
-export const DEFAULT_ROLLING_NUMBER_STYLE: Required<RollingNumberWidgetStyle> = {
+export const DEFAULT_ROLLING_NUMBER_STYLE: Required<RollingNumberComponentStyle> = {
   color: '#000000',
   surface: 'rgba(255, 255, 255, 0.28)',
   divider: 'rgba(0, 0, 0, 0.2)',
@@ -12,7 +12,7 @@ export const DEFAULT_ROLLING_NUMBER_STYLE: Required<RollingNumberWidgetStyle> = 
   fontSize: 0,
 };
 
-export function resolveRollingNumberStyle(style: RollingNumberWidgetStyle): Required<RollingNumberWidgetStyle> {
+export function resolveRollingNumberStyle(style: RollingNumberComponentStyle): Required<RollingNumberComponentStyle> {
   return {
     color: style.color ?? DEFAULT_ROLLING_NUMBER_STYLE.color,
     surface: style.surface ?? DEFAULT_ROLLING_NUMBER_STYLE.surface,

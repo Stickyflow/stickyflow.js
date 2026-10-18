@@ -7,6 +7,7 @@ export const NAMED_BLOCK_KINDS = [
   'Path',
   'Chart',
   'Widget',
+  'Component',
   'Shape',
   'Text',
   'Isometric',
@@ -145,6 +146,8 @@ export interface SflEndpointValue {
 }
 
 export const isSide = (s: string): s is Side => (SIDES as readonly string[]).includes(s);
+export const isComponentBlockKind = (kind: string): boolean => kind === 'Component' || kind === 'Widget';
+
 export const isBlockKind = (s: string): s is BlockKind => (BLOCK_KINDS as readonly string[]).includes(s);
 export const isNamedBlockKind = (s: string): s is NamedBlockKind =>
   (NAMED_BLOCK_KINDS as readonly string[]).includes(s);

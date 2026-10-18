@@ -1,3 +1,4 @@
+import { isScaleComponentType } from '../model/component';
 import type { BlockKind, SflBinding, SflBlock, SflDocument, SflExpr, SflHandler } from '../sflLanguage/ast';
 import { collectContracts, visitBlocks } from './contract';
 import { collectRefs, inferType, type TypeScope } from './expression';
@@ -37,10 +38,10 @@ function collectSites(blocks: SflBlock[], chartPath: string[], sites: BindingSit
     const ownChart = block.kind === 'Chart' ? [block.name] : chartPath;
     for (const entry of block.entries) {
       if (entry.type === 'binding') {
-        sites.push({ kind: block.kind, path, binding: entry.binding });
+        sites.push({ kind: blockKind(block), path, binding: entry.binding });
       } else if (entry.type === 'style') {
         for (const binding of entry.style.bindings ?? []) {
-          sites.push({ kind: block.kind, path, binding });
+          sites.push({ kind: blockKind(block), path, binding });
         }
       } else if (entry.type === 'block') {
         collectSites([entry.block], ownChart, sites);
@@ -65,20 +66,20 @@ function fieldType(contract: DataSourceContract, field: string): BindingType | u
   return contract.mode === 'table' ? { list: type } : type;
 }
 
-const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Widget'];
-const SCALE_WIDGETS = ['ruler', 'tickScale'];
+const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component'];
+const blockKind = (block: SflBlock): BlockKind => (block.kind === 'Widget' ? 'Component' : block.kind);
 
 function collectElements(sflDocument: SflDocument): Map<string, ElementInfo> {
   const elements = new Map<string, ElementInfo>();
   visitBlocks(sflDocument.blocks, block => {
-    if (!INTERACTIVE_KINDS.includes(block.kind) || elements.has(block.name)) {
+    if (!INTERACTIVE_KINDS.includes(blockKind(block)) || elements.has(block.name)) {
       return;
     }
     const type = block.entries.find(entry => entry.type === 'property' && entry.property.key === 'type');
     const value = type?.type === 'property' ? type.property.value : undefined;
     elements.set(block.name, {
-      kind: block.kind,
-      widgetType: value?.type === 'ident' ? value.segments.join('.') : undefined,
+      kind: blockKind(block),
+      componentType: value?.type === 'ident' ? value.segments.join('.') : undefined,
     });
   });
   return elements;
@@ -88,7 +89,7 @@ function elementStateType(element: ElementInfo, state: string): BindingType | un
   if (state === 'pressed' || state === 'hovered') {
     return 'boolean';
   }
-  return state === 'pointer' && element.kind === 'Widget' && SCALE_WIDGETS.includes(element.widgetType ?? '')
+  return state === 'pointer' && element.kind === 'Component' && isScaleComponentType(element.componentType)
     ? 'number'
     : undefined;
 }
@@ -144,7 +145,7 @@ function collectHandlerSites(sflDocument: SflDocument): HandlerSite[] {
   visitBlocks(sflDocument.blocks, block => {
     for (const entry of block.entries) {
       if (entry.type === 'handler') {
-        sites.push({ kind: block.kind, name: block.name, handler: entry.handler });
+        sites.push({ kind: blockKind(block), name: block.name, handler: entry.handler });
       }
     }
   });
@@ -170,7 +171,7 @@ function eventIsKnown(site: HandlerSite, report: Report): boolean {
     'unknown-event',
     allowed.length
       ? `${kind} '${name}' has no event '${handler.event}' (events: ${allowed.join(', ')}).`
-      : `${kind} '${name}' has no events; handlers belong on a Shape, Text, Widget or DataSource.`,
+      : `${kind} '${name}' has no events; handlers belong on a Shape, Text, Component or DataSource.`,
   );
   return false;
 }

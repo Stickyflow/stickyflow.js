@@ -1,6 +1,4 @@
-export type WidgetType = 'rollingNumber' | 'tickScale' | 'ruler';
-
-export interface RollingNumberWidgetStyle {
+export interface RollingNumberComponentStyle {
   color?: string;
   surface?: string;
   divider?: string;
@@ -12,7 +10,7 @@ export interface RollingNumberWidgetStyle {
   fontSize?: number;
 }
 
-export interface RollingNumberWidget {
+export interface RollingNumberComponent {
   id: string;
   type: 'rollingNumber';
   value: string;
@@ -27,10 +25,10 @@ export interface RollingNumberWidget {
   order?: number;
   sourceIndex?: number;
   parentFrameId?: string;
-  style: RollingNumberWidgetStyle;
+  style: RollingNumberComponentStyle;
 }
 
-export interface TickScaleWidget {
+export interface TickScaleComponent {
   id: string;
   type: 'tickScale';
   value: string;
@@ -48,7 +46,7 @@ export interface TickScaleWidget {
   labels?: { size?: number; color?: string; offset?: number; weight?: string; fontFamily?: string };
 }
 
-export interface RulerWidget {
+export interface RulerComponent {
   id: string;
   type: 'ruler';
   value: string;
@@ -67,4 +65,4 @@ export interface RulerWidget {
   labels?: { size?: number; color?: string; offset?: number; weight?: string; fontFamily?: string };
 }
 
-export type Widget = RollingNumberWidget | TickScaleWidget | RulerWidget;
+export type Component = RollingNumberComponent | TickScaleComponent | RulerComponent;

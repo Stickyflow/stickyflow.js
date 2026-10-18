@@ -1,6 +1,6 @@
-import type { RollingNumberWidgetStyle } from '../../../model/widget';
+import type { RollingNumberComponentStyle } from '../../../model/component';
 
-type RollingNumberTheme = Required<RollingNumberWidgetStyle>;
+type RollingNumberTheme = Required<RollingNumberComponentStyle>;
 
 const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
 

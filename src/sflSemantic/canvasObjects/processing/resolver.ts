@@ -8,10 +8,10 @@ import { resolveSwimlaneObject } from '../artifacts/swimlane/resolver';
 import type {
   SflCanvasObject,
   SflCanvasObjectBase,
+  SflComponentObject,
   SflFrameObject,
   SflShapeObject,
   SflSymbolDefinition,
-  SflWidgetObject,
 } from '../types';
 import { classifyCanvasObject } from './classification';
 import { readCanvasObjectGeometry } from './layout/geometry';
@@ -55,11 +55,11 @@ export function resolveCanvasObject(
       return resolveSwimlaneObject(base, properties);
     case 'frame':
       return { ...base, objectType: 'frame' } satisfies SflFrameObject;
-    case 'widget':
+    case 'component':
       return {
         ...base,
-        objectType: 'widget',
-        widget: {
+        objectType: 'component',
+        component: {
           type: asString(properties.get('type')) ?? 'rollingNumber',
           value: asString(properties.get('value')) ?? '0',
           digits: asNumber(properties.get('digits')),
@@ -68,7 +68,7 @@ export function resolveCanvasObject(
           max: asNumber(properties.get('max')),
           label: asString(properties.get('label')),
         },
-      } satisfies SflWidgetObject;
+      } satisfies SflComponentObject;
     case 'shape':
       return {
         ...base,

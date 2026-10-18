@@ -1,5 +1,5 @@
-import type { RollingNumberWidget, RulerWidget, TickScaleWidget } from '../../../model/widget';
-import type { SflWidgetObject } from '../../../sflSemantic/canvasObjects/types';
+import type { RollingNumberComponent, RulerComponent, TickScaleComponent } from '../../../model/component';
+import type { SflComponentObject } from '../../../sflSemantic/canvasObjects/types';
 
 const CSS_COLOR = /^(?:#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\)|[a-z][\w-]*)$/i;
 const CSS_FONT_FAMILY = /^[\w\s,'"-]+$/;
@@ -44,7 +44,7 @@ const TICK_SCALE_NUMBERS = [
 ] as const;
 const TICK_SCALE_COLORS = ['color', 'accent'] as const;
 
-function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
+function tickScaleObject(canvasObject: SflComponentObject): TickScaleComponent {
   const properties = canvasObject.props;
   const parameters: Record<string, string | number> = {};
   for (const key of TICK_SCALE_NUMBERS) {
@@ -62,9 +62,9 @@ function tickScaleObject(canvasObject: SflWidgetObject): TickScaleWidget {
   return {
     id: canvasObject.id,
     type: 'tickScale',
-    value: canvasObject.widget.value,
-    max: canvasObject.widget.max,
-    label: canvasObject.widget.label,
+    value: canvasObject.component.value,
+    max: canvasObject.component.max,
+    label: canvasObject.component.label,
     x: canvasObject.x,
     y: canvasObject.y,
     width: canvasObject.width,
@@ -110,7 +110,7 @@ const RULER_COLORS = ['color', 'accent', 'glow'] as const;
 const RULER_DEFAULTS = { color: '#8f95c4', accent: '#d9f270', glow: '#3ddc84' };
 const RULER_OPTIONAL_COLORS = ['core', 'peak'] as const;
 
-function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
+function rulerObject(canvasObject: SflComponentObject): RulerComponent {
   const properties = canvasObject.props;
   const parameters: Record<string, string | number> = {};
   for (const key of RULER_NUMBERS) {
@@ -135,10 +135,10 @@ function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
   return {
     id: canvasObject.id,
     type: 'ruler',
-    value: canvasObject.widget.value,
-    min: canvasObject.widget.min,
-    max: canvasObject.widget.max,
-    label: canvasObject.widget.label,
+    value: canvasObject.component.value,
+    min: canvasObject.component.min,
+    max: canvasObject.component.max,
+    label: canvasObject.component.label,
     x: canvasObject.x,
     y: canvasObject.y,
     width: canvasObject.width,
@@ -167,21 +167,23 @@ function rulerObject(canvasObject: SflWidgetObject): RulerWidget {
   };
 }
 
-export function widgetObject(canvasObject: SflWidgetObject): RollingNumberWidget | TickScaleWidget | RulerWidget {
-  if (canvasObject.widget.type === 'tickScale') {
+export function componentObject(
+  canvasObject: SflComponentObject,
+): RollingNumberComponent | TickScaleComponent | RulerComponent {
+  if (canvasObject.component.type === 'tickScale') {
     return tickScaleObject(canvasObject);
   }
-  if (canvasObject.widget.type === 'ruler') {
+  if (canvasObject.component.type === 'ruler') {
     return rulerObject(canvasObject);
   }
   const properties = canvasObject.props;
   return {
     id: canvasObject.id,
     type: 'rollingNumber',
-    value: canvasObject.widget.value,
-    digits: canvasObject.widget.digits,
-    duration: canvasObject.widget.duration,
-    label: canvasObject.widget.label,
+    value: canvasObject.component.value,
+    digits: canvasObject.component.digits,
+    duration: canvasObject.component.duration,
+    label: canvasObject.component.label,
     x: canvasObject.x,
     y: canvasObject.y,
     width: canvasObject.width,

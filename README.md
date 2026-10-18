@@ -130,7 +130,7 @@ editing.on('moveChange', (event) => {
 
 ## What it draws
 
-Shapes, links, frames, swimlanes, paths and text. Fifteen chart types. Isometric objects. Shader surfaces and widgets. Data sources with bindings, and events with handlers, so a document can react to data and input.
+Shapes, links, frames, swimlanes, paths and text. Fifteen chart types. Isometric objects. Shader surfaces and components. Data sources with bindings, and events with handlers, so a document can react to data and input.
 
 ## Principles
 

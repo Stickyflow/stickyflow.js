@@ -1,20 +1,21 @@
-import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
+import { COMPONENT_TYPES, isComponentType } from '../../model/component';
+import { isComponentBlockKind, type SflBlock, type SflDocument } from '../../sflLanguage/ast';
 import { childBlocks, directProperties } from '../ast/blockEntries';
 import { asString } from '../ast/valueAccess';
 import type { SflDiagnostic } from '../types';
 
-export function collectUnsupportedWidgetTypes(sflDocument: SflDocument): SflDiagnostic[] {
+export function collectUnsupportedComponentTypes(sflDocument: SflDocument): SflDiagnostic[] {
   const diagnostics: SflDiagnostic[] = [];
 
   const visit = (block: SflBlock): void => {
-    if (block.kind === 'Widget') {
+    if (isComponentBlockKind(block.kind)) {
       const type = asString(directProperties(block).get('type')) ?? 'rollingNumber';
-      if (type !== 'rollingNumber' && type !== 'tickScale' && type !== 'ruler') {
+      if (!isComponentType(type)) {
         diagnostics.push({
           severity: 'warning',
-          code: 'unsupported-widget-type',
+          code: 'unsupported-component-type',
           ownerId: block.name,
-          message: `Unsupported widget type '${type}'. Supported: rollingNumber, tickScale, ruler.`,
+          message: `Unsupported component type '${type}'. Supported: ${COMPONENT_TYPES.join(', ')}.`,
         });
       }
     }

@@ -1,9 +1,9 @@
+import type { RollingNumberComponentStyle } from '../../model/component';
 import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
 import type { Shader } from '../../model/shader';
-import type { RollingNumberWidgetStyle } from '../../model/widget';
 
 export type RenderDiagnostic = Diagnostic;
 export type { Bounds, Point } from '../../model/geometry/types';
@@ -199,7 +199,7 @@ export interface SceneRollingNumber extends SceneBase {
   digits?: number;
   duration: number;
   label?: string;
-  widgetStyle: Required<RollingNumberWidgetStyle>;
+  componentStyle: Required<RollingNumberComponentStyle>;
 }
 
 export interface SceneImage extends SceneBase {

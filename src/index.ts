@@ -8,13 +8,21 @@ export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { Shader, ShaderParameter } from './model/shader';
 export type {
+  RollingNumberComponent,
+  RollingNumberComponentStyle,
+  RulerComponent,
+  TickScaleComponent,
+  Component,
+  ComponentType,
+} from './model/component';
+export type {
   RollingNumberWidget,
   RollingNumberWidgetStyle,
   RulerWidget,
   TickScaleWidget,
   Widget,
   WidgetType,
-} from './model/widget';
+} from './model/component/legacyNames';
 
 export { canonicalize, parse } from './sflLanguage';
 

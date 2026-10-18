@@ -1,10 +1,10 @@
 import type { RenderInput } from '../../renderInput/types';
+import { buildComponents } from '../artifacts/component';
 import { buildContainers } from '../artifacts/containers';
 import { buildIsometricObjects } from '../artifacts/isometric';
 import { buildLinks } from '../artifacts/link';
 import { buildFreeformPaths } from '../artifacts/path';
 import { buildShapes } from '../artifacts/shape';
-import { buildWidgets } from '../artifacts/widget';
 import { buildCharts } from '../charts';
 import { EMPTY_BOUNDS } from './bounds';
 import { stackRank, stackSequence } from './order';
@@ -45,7 +45,7 @@ function stackingOf(input: RenderInput): Map<string, Stacking> {
   add('frame', input.frames, 0);
   add('swimlane', input.swimlanes, 5_000);
   add('shape', input.shapes, 10_000);
-  add('widget', input.widgets ?? [], 10_000);
+  add('widget', input.components ?? input.widgets ?? [], 10_000);
   add('isometric', input.isometricObjects ?? [], 15_000);
   add(
     'link',
@@ -79,7 +79,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ...buildCharts(input.charts ?? [], diagnostics),
     ...buildLinks(input.links, measureText),
     ...buildShapes(input.shapes, diagnostics, measureText),
-    ...buildWidgets(input.widgets ?? []),
+    ...buildComponents(input.components ?? input.widgets ?? []),
     ...buildIsometricObjects(input.isometricObjects ?? []),
   ];
   stampStacking(nodes, input);

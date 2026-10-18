@@ -1,4 +1,5 @@
 import type { Chart } from '../../../model/chart';
+import { type Component, isComponentType } from '../../../model/component';
 import type { Connection } from '../../../model/connection';
 import type { Frame } from '../../../model/frame';
 import type { IsometricObject } from '../../../model/isometricObject';
@@ -6,9 +7,9 @@ import type { Link } from '../../../model/link';
 import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
-import type { Widget } from '../../../model/widget';
-import { isIsometricObject, type SflCanvasState, type SflWidgetObject } from '../../../sflSemantic/sflToCanvasState';
+import { isIsometricObject, type SflCanvasState, type SflComponentObject } from '../../../sflSemantic/sflToCanvasState';
 import { chartObject } from './chart';
+import { componentObject } from './component';
 import { connectionObject } from './connection';
 import { frameObject } from './frame';
 import { isometricObject } from './isometric';
@@ -16,7 +17,6 @@ import { linkObject } from './link';
 import { pathObject } from './path';
 import { shapeObject } from './shape';
 import { swimlaneObject } from './swimlane';
-import { widgetObject } from './widget';
 
 export interface CollectedCanvasObjects {
   shapes: Shape[];
@@ -25,7 +25,7 @@ export interface CollectedCanvasObjects {
   isometricObjects: IsometricObject[];
   paths: FreeformPath[];
   charts: Chart[];
-  widgets: Widget[];
+  components: Component[];
   links: Link[];
   connections: Connection[];
 }
@@ -45,13 +45,12 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     isometricObjects: canvasObjects.filter(isIsometricObject).map(isometricObject),
     paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
     charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
-    widgets: canvasObjects
+    components: canvasObjects
       .filter(
-        (canvasObject): canvasObject is SflWidgetObject =>
-          canvasObject.objectType === 'widget' &&
-          ['rollingNumber', 'tickScale', 'ruler'].includes(canvasObject.widget?.type ?? ''),
+        (canvasObject): canvasObject is SflComponentObject =>
+          canvasObject.objectType === 'component' && isComponentType(canvasObject.component?.type ?? ''),
       )
-      .map(widgetObject),
+      .map(componentObject),
     links: byOrder(state.links).map(linkObject),
     connections: byOrder(state.connections).map(connectionObject),
   };

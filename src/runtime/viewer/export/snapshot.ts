@@ -1,4 +1,4 @@
-import { DEFAULT_ROLLING_NUMBER_STYLE, type RollingNumberWidgetStyle } from '../../../model/widget';
+import { DEFAULT_ROLLING_NUMBER_STYLE, type RollingNumberComponentStyle } from '../../../model/component';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -26,11 +26,11 @@ function svgElement(document: Document, name: string, attributes: Record<string,
   return element;
 }
 
-function readWidgetStyle(surface: Element): Required<RollingNumberWidgetStyle> {
+function readComponentStyle(surface: Element): Required<RollingNumberComponentStyle> {
   try {
     return {
       ...DEFAULT_ROLLING_NUMBER_STYLE,
-      ...(JSON.parse(surface.getAttribute('data-sf-widget-style') ?? '{}') as RollingNumberWidgetStyle),
+      ...(JSON.parse(surface.getAttribute('data-sf-widget-style') ?? '{}') as RollingNumberComponentStyle),
     };
   } catch {
     return DEFAULT_ROLLING_NUMBER_STYLE;
@@ -63,7 +63,7 @@ function cellsOf(box: Box, plain: boolean, fontSize = 0): Cells {
   };
 }
 
-function groupOf(document: Document, surface: Element, style: Required<RollingNumberWidgetStyle>): SVGElement {
+function groupOf(document: Document, surface: Element, style: Required<RollingNumberComponentStyle>): SVGElement {
   const group = svgElement(document, 'g', { 'font-family': style.fontFamily });
   for (const attribute of ['id', 'transform', 'data-sf-id', 'data-sf-role', 'data-sf-kind']) {
     const attributeValue = surface.getAttribute(attribute);
@@ -80,7 +80,7 @@ function labelText(
   box: Box,
   top: number,
   cells: Cells,
-  style: Required<RollingNumberWidgetStyle>,
+  style: Required<RollingNumberComponentStyle>,
 ): SVGElement {
   const text = svgElement(document, 'text', {
     x: box.x + box.width / 2,
@@ -101,7 +101,7 @@ function digitCell(
   cellX: number,
   top: number,
   cells: Cells,
-  style: Required<RollingNumberWidgetStyle>,
+  style: Required<RollingNumberComponentStyle>,
 ): SVGElement[] {
   const { size, plain, cellWidth, cellHeight } = cells;
   const nodes: SVGElement[] = [];
@@ -155,7 +155,7 @@ function flattenRollingNumbers(svg: SVGSVGElement): void {
       height: Number(surface.getAttribute('height')),
     };
     const value = surface.getAttribute('data-sf-widget-value') ?? '';
-    const style = readWidgetStyle(surface);
+    const style = readComponentStyle(surface);
     const label = surface.querySelector('div > span:not([data-sf-rolling-digit])')?.textContent ?? '';
     const cells = cellsOf(box, style.variant === 'plain', style.fontSize);
     const labelBlock = label ? cells.size * 0.3 : 0;

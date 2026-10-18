@@ -13,7 +13,7 @@ export function sflToRenderInput(sfl: string): RenderInput {
     isometricObjects: canvasObjects.isometricObjects,
     paths: canvasObjects.paths,
     charts: canvasObjects.charts,
-    widgets: canvasObjects.widgets,
+    components: canvasObjects.components,
     links: createRenderInputLinks(canvasObjects),
     diagnostics: state.diagnostics,
   };
