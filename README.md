@@ -109,6 +109,7 @@ const { svg, width, height, diagnostics } = render(sfl)
 | Import | What it is |
 |---|---|
 | `stickyflow` | Static tier. SFL text in, SVG string out. Node, SSR, CLI. |
+| `stickyflow/binding` | Data sources, bindings and handlers. `createDataSource`, `createBindingRuntime`, `renderBound`. No DOM. |
 | `stickyflow/viewer` | Read-only viewer in the DOM: select, hover, pan, zoom, typed events. |
 | `stickyflow/interaction` | Editing gestures on a viewer. Reports what changed; the host applies the patch to the SFL text. |
 | `stickyflow/web-component` | `<stickyflow-diagram>` custom element in Shadow DOM, no build step. |

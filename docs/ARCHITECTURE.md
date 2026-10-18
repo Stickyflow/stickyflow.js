@@ -46,9 +46,9 @@ The binding folder lets a document react. A document can declare data sources an
 
 ## Entry points
 
-The package has four entries, and each one is a tier of the architecture.
+The package has five entries, and each one is a tier of the architecture.
 
-`stickyflow` holds the language, the semantic layer and `render`. `stickyflow/viewer` holds the viewer. `stickyflow/interaction` holds the editing. `stickyflow/web-component` holds the tag `stickyflow-diagram`.
+`stickyflow` holds the language, the semantic layer and `render`. `stickyflow/binding` holds the data sources and the binding runtime. `stickyflow/viewer` holds the viewer. `stickyflow/interaction` holds the editing. `stickyflow/web-component` holds the tag `stickyflow-diagram`.
 
 A consumer imports the entry it needs and nothing else. A page that only shows a diagram never loads the editing code.
 

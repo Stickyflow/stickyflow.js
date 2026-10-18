@@ -1,6 +1,6 @@
 {
   "name": "stickyflow",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Framework-independent SFL parser, render-scene, SVG runtime and interactive viewer.",
   "type": "module",
   "license": "Apache-2.0",
@@ -40,6 +40,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./binding": {
+      "types": "./dist/binding/index.d.ts",
+      "import": "./dist/binding/index.js",
+      "require": "./dist/binding/index.cjs"
     },
     "./viewer": {
       "types": "./dist/viewer/index.d.ts",
