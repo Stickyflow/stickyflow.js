@@ -1,12 +1,16 @@
-import type { RollingNumberComponent, RulerComponent, TickScaleComponent } from '../../../model/component';
+import {
+  type BuiltInComponentType,
+  type Component,
+  isBuiltInComponentType,
+  type RollingNumberComponent,
+  type RulerComponent,
+  type TickScaleComponent,
+} from '../../../model/component';
 import type { SflComponentObject } from '../../../sflSemantic/canvasObjects/types';
+import { genericComponentObject } from './genericComponent';
+import { cssColor } from './values';
 
-const CSS_COLOR = /^(?:#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\)|[a-z][\w-]*)$/i;
 const CSS_FONT_FAMILY = /^[\w\s,'"-]+$/;
-
-function color(value: string | undefined): string | undefined {
-  return value && CSS_COLOR.test(value) ? value : undefined;
-}
 
 function fontFamily(value: string | undefined): string | undefined {
   return value && CSS_FONT_FAMILY.test(value) ? value : undefined;
@@ -54,7 +58,7 @@ function tickScaleObject(canvasObject: SflComponentObject): TickScaleComponent {
     }
   }
   for (const key of TICK_SCALE_COLORS) {
-    const value = color(properties[key]);
+    const value = cssColor(properties[key]);
     if (value) {
       parameters[key] = value;
     }
@@ -81,7 +85,7 @@ function tickScaleObject(canvasObject: SflComponentObject): TickScaleComponent {
               Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined
                 ? Number(properties.labelSize)
                 : undefined,
-            color: color(properties.labelColor),
+            color: cssColor(properties.labelColor),
             offset:
               Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined
                 ? Number(properties.labelOffset)
@@ -120,10 +124,10 @@ function rulerObject(canvasObject: SflComponentObject): RulerComponent {
     }
   }
   for (const key of RULER_COLORS) {
-    parameters[key] = color(properties[key]) ?? RULER_DEFAULTS[key];
+    parameters[key] = cssColor(properties[key]) ?? RULER_DEFAULTS[key];
   }
   for (const key of RULER_OPTIONAL_COLORS) {
-    const value = color(properties[key]);
+    const value = cssColor(properties[key]);
     if (value) {
       parameters[key] = value;
     }
@@ -155,7 +159,7 @@ function rulerObject(canvasObject: SflComponentObject): RulerComponent {
               Number.isFinite(Number(properties.labelSize)) && properties.labelSize !== undefined
                 ? Number(properties.labelSize)
                 : undefined,
-            color: color(properties.labelColor),
+            color: cssColor(properties.labelColor),
             offset:
               Number.isFinite(Number(properties.labelOffset)) && properties.labelOffset !== undefined
                 ? Number(properties.labelOffset)
@@ -167,15 +171,7 @@ function rulerObject(canvasObject: SflComponentObject): RulerComponent {
   };
 }
 
-export function componentObject(
-  canvasObject: SflComponentObject,
-): RollingNumberComponent | TickScaleComponent | RulerComponent {
-  if (canvasObject.component.type === 'tickScale') {
-    return tickScaleObject(canvasObject);
-  }
-  if (canvasObject.component.type === 'ruler') {
-    return rulerObject(canvasObject);
-  }
+function rollingNumberObject(canvasObject: SflComponentObject): RollingNumberComponent {
   const properties = canvasObject.props;
   return {
     id: canvasObject.id,
@@ -193,10 +189,10 @@ export function componentObject(
     sourceIndex: canvasObject.sourceIndex,
     parentFrameId: canvasObject.parentFrameId,
     style: {
-      color: color(properties.color),
-      surface: color(properties.surface),
-      divider: color(properties.divider),
-      labelColor: color(properties.labelColor),
+      color: cssColor(properties.color),
+      surface: cssColor(properties.surface),
+      divider: cssColor(properties.divider),
+      labelColor: cssColor(properties.labelColor),
       fontFamily: fontFamily(properties.fontFamily),
       variant: variant(properties.variant),
       motion: motion(properties.motion),
@@ -204,4 +200,15 @@ export function componentObject(
       fontSize: positiveNumber(properties.fontSize),
     },
   };
+}
+
+const BUILT_IN_OBJECTS: Record<BuiltInComponentType, (canvasObject: SflComponentObject) => Component> = {
+  rollingNumber: rollingNumberObject,
+  tickScale: tickScaleObject,
+  ruler: rulerObject,
+};
+
+export function componentObject(canvasObject: SflComponentObject): Component {
+  const type = canvasObject.component.type;
+  return isBuiltInComponentType(type) ? BUILT_IN_OBJECTS[type](canvasObject) : genericComponentObject(canvasObject);
 }

@@ -1,4 +1,4 @@
-import { isComponentType } from '../../../model/component';
+import { isBuiltInComponentType } from '../../../model/component';
 import { isComponentBlockKind, type SflBlock, type SflValue } from '../../../sflLanguage/ast';
 import { asString } from '../../ast/valueAccess';
 import type { SflCanvasObjectType, SflSymbolDefinition } from '../types';
@@ -43,7 +43,7 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   if (kind === 'chart') {
     return 'chart';
   }
-  if (isComponentType(kind)) {
+  if (isBuiltInComponentType(kind)) {
     return 'component';
   }
   if (kind === 'isometric') {

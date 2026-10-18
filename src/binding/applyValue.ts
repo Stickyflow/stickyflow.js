@@ -1,3 +1,4 @@
+import { type Component, type ComponentValue, isGenericComponent } from '../model/component';
 import type { RenderInput } from '../renderInput/types';
 import type { BindingValue, BoundProperty } from './types';
 
@@ -20,6 +21,30 @@ function applyToSeries(
     chart.series.push(series);
   }
   change(series);
+}
+
+export function findComponent(input: RenderInput, id: string): Component | undefined {
+  return (input.components ?? input.widgets)?.find(candidate => candidate.id === id);
+}
+
+export function writeComponentValue(input: RenderInput, id: string, value: ComponentValue): void {
+  const component = findComponent(input, id);
+  if (!component) {
+    return;
+  }
+  component.value = isGenericComponent(component) ? value : String(value);
+}
+
+export function writeComponentDisabled(input: RenderInput, id: string, disabled: boolean): void {
+  const component = findComponent(input, id);
+  if (component && isGenericComponent(component)) {
+    component.disabled = disabled;
+  }
+}
+
+export function isComponentDisabled(input: RenderInput, id: string): boolean {
+  const component = findComponent(input, id);
+  return component !== undefined && isGenericComponent(component) && component.disabled;
 }
 
 function setShape(input: RenderInput, path: string[], change: (shape: RenderInput['shapes'][number]) => void): void {
@@ -54,12 +79,8 @@ export const APPLY: Record<string, Apply> = {
   'Shape.stroke': (input, path, value) => setShape(input, path, shape => (shape.strokeColor = value as string)),
   'Shape.textColor': (input, path, value) => setShape(input, path, shape => (shape.textColor = value as string)),
   'Shape.opacity': (input, path, value) => setShape(input, path, shape => (shape.opacity = value as number)),
-  'Component.value': (input, path, value) => {
-    const component = (input.components ?? input.widgets)?.find(candidate => candidate.id === path[0]);
-    if (component) {
-      component.value = String(value);
-    }
-  },
+  'Component.value': (input, path, value) => writeComponentValue(input, path[0], value as ComponentValue),
+  'Component.disabled': (input, path, value) => writeComponentDisabled(input, path[0], value === true),
 };
 
 export function applyShader(input: RenderInput, binding: BoundProperty, value: BindingValue): string[] {

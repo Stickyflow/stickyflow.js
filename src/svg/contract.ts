@@ -1,4 +1,4 @@
-import type { RenderNode, SceneDetail, SceneIdentity } from '../renderScene/scene';
+import type { RenderNode, SceneAria, SceneDetail, SceneIdentity } from '../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
   ISOMETRIC_LABEL_OFFSET_ATTR,
@@ -17,6 +17,15 @@ function domRole(identity: SceneIdentity): string {
   return identity.role === 'shape' ? 'entity' : identity.role;
 }
 
+function ariaAttrs(aria: SceneAria): Array<string | undefined> {
+  return [
+    `role="${xml(aria.role)}"`,
+    aria.checked === undefined ? undefined : `aria-checked="${aria.checked}"`,
+    aria.pressed === undefined ? undefined : `aria-pressed="${aria.pressed}"`,
+    aria.disabled ? 'aria-disabled="true"' : undefined,
+  ];
+}
+
 function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
   return [
     `data-sf-role="${domRole(identity)}"`,
@@ -24,6 +33,7 @@ function identityAttrs(identity: SceneIdentity): Array<string | undefined> {
     identity.kind ? `data-sf-kind="${xml(identity.kind)}"` : undefined,
     identity.primary ? 'data-sf-primary="true"' : undefined,
     identity.parentFrameId ? `data-sf-parent-frame="${xml(identity.parentFrameId)}"` : undefined,
+    ...(identity.aria ? ariaAttrs(identity.aria) : []),
   ];
 }
 

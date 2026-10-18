@@ -1,5 +1,5 @@
 import type { Chart } from '../../../model/chart';
-import { type Component, isComponentType } from '../../../model/component';
+import type { Component } from '../../../model/component';
 import type { Connection } from '../../../model/connection';
 import type { Frame } from '../../../model/frame';
 import type { IsometricObject } from '../../../model/isometricObject';
@@ -48,7 +48,7 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     components: canvasObjects
       .filter(
         (canvasObject): canvasObject is SflComponentObject =>
-          canvasObject.objectType === 'component' && isComponentType(canvasObject.component?.type ?? ''),
+          canvasObject.objectType === 'component' && canvasObject.component !== undefined,
       )
       .map(componentObject),
     links: byOrder(state.links).map(linkObject),

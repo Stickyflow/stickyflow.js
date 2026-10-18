@@ -12,6 +12,7 @@ export type {
   RenderDiagnostic,
   RenderNode,
   RenderScene,
+  SceneAria,
   SceneBase,
   SceneDetail,
   SceneEllipse,

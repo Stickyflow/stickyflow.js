@@ -17,10 +17,22 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The components `switch`, `checkbox`, `toggleButton` and `button`. A switch, a checkbox and a toggle button hold a boolean value, a button fires `onTap`. They are drawn from scene nodes, so they render without a DOM, and they carry `role`, `aria-checked` or `aria-pressed` and `aria-disabled`.
+- `value: <-> source.field` binds the value of a component to a field of a record source in both directions. A change by the user writes the field. A value bound with `<-` cannot be changed by the user.
+- `onChange` runs when the user changes the value of a component. A binding or another handler never fires it.
+- The states `focused` and `value` of a component are readable in expressions, and `disabled` can be set and bound. `runtime.change(id, value)` and `runtime.activate(id)` do from code what a tap and the keyboard do.
+- `onTap` also fires when a component that can take focus is activated with Enter or Space. `connectInteraction` handles focus and the keyboard.
+- `defineComponent()` adds a component type from outside the library, with its description and its drawing. `getComponentDescriptor()` reads a description.
+- A type of component that is not known draws a dashed placeholder with its name, and is reported as before.
+
 ### Changed
 
 - The `Widget` block is now called `Component`. Both names are read, so existing documents render as before. The types follow the new name (`Component`, `ComponentType`, `RollingNumberComponent`, `TickScaleComponent`, `RulerComponent`) and `viewer.setComponentValue()` replaces `viewer.setWidgetValue()`. `RenderInput` takes `components`. The old names remain as aliases for now.
 - The diagnostic `unsupported-widget-type` is now `unsupported-component-type`.
+- `sflToRenderInput()` returns the components as `components` and no longer as `widgets`. `BoundProperty.ownerKind` is `'Component'` for a `Component` and for a `Widget` block, and a binding is keyed `Component.value`.
+- `Component` now also covers components that are not one of the three built-in types. Narrow with `isGenericComponent()` before reading `parameters` or `style`.
 - The component types are listed in one place, `COMPONENT_TYPES`, as the shape and chart types are, and no longer repeated in the code that reads them.
 
 The DOM contract is unchanged. The attributes `data-sf-widget*`, the role `widget` and the scene ids keep their names.

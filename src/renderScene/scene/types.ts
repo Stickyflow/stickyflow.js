@@ -34,6 +34,13 @@ export interface SceneStyle {
 
 export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'path' | 'chart' | 'widget' | 'isometric';
 
+export interface SceneAria {
+  role: string;
+  checked?: boolean;
+  pressed?: boolean;
+  disabled?: boolean;
+}
+
 export interface SceneIdentity {
   role: SceneRole;
   id: string;
@@ -41,6 +48,7 @@ export interface SceneIdentity {
   primary?: boolean;
   label?: string;
   parentFrameId?: string;
+  aria?: SceneAria;
 }
 
 export interface SceneLinkSegment {

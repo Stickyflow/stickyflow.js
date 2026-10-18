@@ -1,3 +1,4 @@
+import { getComponentDescriptor } from '../model/component';
 import { collectRefs } from './expression';
 import type { BindingGraph } from './graph';
 
@@ -5,6 +6,8 @@ export interface InteractiveElements {
   pressable: ReadonlySet<string>;
   scales: ReadonlySet<string>;
 }
+
+const OPERATED = new Set(['toggle', 'press']);
 
 export function interactiveElements(graph: BindingGraph): InteractiveElements {
   const pressable = new Set<string>();
@@ -25,6 +28,12 @@ export function interactiveElements(graph: BindingGraph): InteractiveElements {
   }
   for (const binding of graph.bindings) {
     collectRefs(binding.expr).forEach(note);
+  }
+  for (const [name, info] of graph.elements) {
+    const interaction = getComponentDescriptor(info.componentType)?.interaction;
+    if (info.kind === 'Component' && interaction && OPERATED.has(interaction) && !graph.contracts.has(name)) {
+      pressable.add(name);
+    }
   }
   return { pressable, scales };
 }

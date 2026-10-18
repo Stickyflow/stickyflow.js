@@ -1,4 +1,5 @@
 import type { BindingRuntime } from '../../binding';
+import { connectKeyboard } from './connectKeyboard';
 import type { Viewer } from './types';
 
 export interface InteractionOptions {
@@ -184,12 +185,14 @@ export function connectInteraction(
   for (const [type, listener] of listeners) {
     window.addEventListener(type, listener as EventListener, true);
   }
+  const disconnectKeyboard = connectKeyboard(viewer, runtime, options);
   const stopTicks = startTicks(runtime, options);
 
   return () => {
     for (const [type, listener] of listeners) {
       window.removeEventListener(type, listener as EventListener, true);
     }
+    disconnectKeyboard();
     stopTicks();
     if (session.active) {
       runtime.release(session.active, false);

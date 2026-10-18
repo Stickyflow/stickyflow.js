@@ -1,3 +1,5 @@
+import type { ComponentValue } from './descriptor';
+
 export interface RollingNumberComponentStyle {
   color?: string;
   surface?: string;
@@ -65,4 +67,21 @@ export interface RulerComponent {
   labels?: { size?: number; color?: string; offset?: number; weight?: string; fontFamily?: string };
 }
 
-export type Component = RollingNumberComponent | TickScaleComponent | RulerComponent;
+export interface GenericComponent {
+  id: string;
+  type: string;
+  value: ComponentValue;
+  disabled: boolean;
+  label?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  order?: number;
+  sourceIndex?: number;
+  parentFrameId?: string;
+  properties: Record<string, ComponentValue>;
+}
+
+export type Component = RollingNumberComponent | TickScaleComponent | RulerComponent | GenericComponent;

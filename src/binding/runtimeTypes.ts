@@ -1,3 +1,4 @@
+import type { ComponentValue } from '../model/component';
 import type { RenderOptions, RenderResult } from '../render';
 import type { RenderInput } from '../renderInput/types';
 import type { DataSource } from './dataSource';
@@ -23,7 +24,9 @@ export type LiveChange =
 export interface ElementState {
   pressed: boolean;
   hovered: boolean;
+  focused: boolean;
   pointer: number;
+  value: ComponentValue;
 }
 
 export interface BindingRuntime {
@@ -35,6 +38,8 @@ export interface BindingRuntime {
   setElementState(id: string, state: Partial<ElementState>): void;
   press(id: string): void;
   release(id: string, tapped: boolean): void;
+  activate(id: string): void;
+  change(id: string, value: ComponentValue): boolean;
   drag(id: string, pointer?: number): void;
   tick(seconds: number): void;
   flush(): RenderResult | null;

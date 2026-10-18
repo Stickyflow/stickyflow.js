@@ -27,6 +27,12 @@ export function solidColor(value?: string): string | undefined {
   return typeof decoded === 'string' ? decoded : undefined;
 }
 
+const CSS_COLOR = /^(?:#[0-9a-f]{3,8}|rgba?\([\d.,%\s]+\)|[a-z][\w-]*)$/i;
+
+export function cssColor(value?: string): string | undefined {
+  return value && CSS_COLOR.test(value) ? value : undefined;
+}
+
 export function oneOf<T extends string>(value: string | undefined, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
 }

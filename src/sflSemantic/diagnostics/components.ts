@@ -1,4 +1,4 @@
-import { COMPONENT_TYPES, isComponentType } from '../../model/component';
+import { componentTypes, isComponentType } from '../../model/component';
 import { isComponentBlockKind, type SflBlock, type SflDocument } from '../../sflLanguage/ast';
 import { childBlocks, directProperties } from '../ast/blockEntries';
 import { asString } from '../ast/valueAccess';
@@ -15,7 +15,7 @@ export function collectUnsupportedComponentTypes(sflDocument: SflDocument): SflD
           severity: 'warning',
           code: 'unsupported-component-type',
           ownerId: block.name,
-          message: `Unsupported component type '${type}'. Supported: ${COMPONENT_TYPES.join(', ')}.`,
+          message: `Unsupported component type '${type}'. Supported: ${componentTypes().join(', ')}.`,
         });
       }
     }

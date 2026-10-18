@@ -1,6 +1,13 @@
+import {
+  type ComponentDescriptor,
+  componentRegistryVersion,
+  type GenericComponent,
+  registerComponentDescriptor,
+} from './model/component';
 import { sflToRenderInput } from './renderInput/fromSfl';
 import type { RenderInput } from './renderInput/types';
-import type { MeasureTextFactory, RenderDiagnostic, RenderScene } from './renderScene/scene';
+import { registerComponentBuilder } from './renderScene/artifacts/component';
+import type { MeasureTextFactory, RenderDiagnostic, RenderNode, RenderScene } from './renderScene/scene';
 import { buildRenderScene } from './renderScene/scene/build';
 import { renderSceneToSvg } from './svg';
 
@@ -28,8 +35,14 @@ export function renderCanvas(input: RenderInput, options: RenderOptions = {}): R
 
 const SCENE_CACHE_LIMIT = 50;
 const sceneCache = new Map<string, RenderScene>();
+let cachedForRegistry = componentRegistryVersion();
 
 function cachedRenderScene(source: string): RenderScene {
+  const registry = componentRegistryVersion();
+  if (registry !== cachedForRegistry) {
+    sceneCache.clear();
+    cachedForRegistry = registry;
+  }
   const cached = sceneCache.get(source);
   if (cached) {
     sceneCache.delete(source);
@@ -54,4 +67,26 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const scene = cachedRenderScene(source);
   const { svg, width, height, diagnostics } = renderSceneToSvg(scene, options);
   return { svg, width, height, diagnostics, scene };
+}
+
+export interface ComponentSceneContext {
+  order: number;
+}
+
+export interface ComponentDefinition extends ComponentDescriptor {
+  scene(component: GenericComponent, context: ComponentSceneContext): RenderNode[];
+}
+
+const SCENE_ORDER_BASE = 10_000;
+
+export function defineComponent(definition: ComponentDefinition): () => void {
+  const { scene, ...descriptor } = definition;
+  const unregisterDescriptor = registerComponentDescriptor(descriptor);
+  const unregisterBuilder = registerComponentBuilder(descriptor.type, (component, index) =>
+    scene(component as GenericComponent, { order: SCENE_ORDER_BASE + index }),
+  );
+  return () => {
+    unregisterBuilder();
+    unregisterDescriptor();
+  };
 }

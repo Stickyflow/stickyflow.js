@@ -1,5 +1,11 @@
-import { isScaleComponentType } from '../model/component';
 import type { BlockKind, SflBinding, SflBlock, SflDocument, SflExpr, SflHandler } from '../sflLanguage/ast';
+import {
+  acceptsUserChange,
+  BINDABLE_COMPONENT_PROPERTIES,
+  componentPropertyType,
+  componentStateType,
+  twoWayTargetProblem,
+} from './componentBinding';
 import { collectContracts, visitBlocks } from './contract';
 import { collectRefs, inferType, type TypeScope } from './expression';
 import { BINDABLE_PROPERTIES } from './targets';
@@ -9,6 +15,7 @@ import {
   type BoundAssignment,
   type BoundHandler,
   type BoundProperty,
+  CHANGE_EVENT,
   type DataSourceContract,
   type ElementInfo,
   POINTER_EVENTS,
@@ -89,9 +96,7 @@ function elementStateType(element: ElementInfo, state: string): BindingType | un
   if (state === 'pressed' || state === 'hovered') {
     return 'boolean';
   }
-  return state === 'pointer' && element.kind === 'Component' && isScaleComponentType(element.componentType)
-    ? 'number'
-    : undefined;
+  return element.kind === 'Component' ? componentStateType(element.componentType, state) : undefined;
 }
 
 function createScope(
@@ -154,16 +159,20 @@ function collectHandlerSites(sflDocument: SflDocument): HandlerSite[] {
 
 type Report = (code: string, message: string, line?: number, col?: number) => void;
 
-function allowedEvents(kind: BlockKind): readonly string[] {
+function allowedEvents(kind: BlockKind, componentType: string | undefined): readonly string[] {
   if (kind === 'DataSource') {
     return [TICK_EVENT];
   }
-  return INTERACTIVE_KINDS.includes(kind) ? POINTER_EVENTS : [];
+  if (!INTERACTIVE_KINDS.includes(kind)) {
+    return [];
+  }
+  const changes = kind === 'Component' && acceptsUserChange(componentType);
+  return changes ? [...POINTER_EVENTS, CHANGE_EVENT] : POINTER_EVENTS;
 }
 
-function eventIsKnown(site: HandlerSite, report: Report): boolean {
+function eventIsKnown(site: HandlerSite, componentType: string | undefined, report: Report): boolean {
   const { kind, name, handler } = site;
-  const allowed = allowedEvents(kind);
+  const allowed = allowedEvents(kind, componentType);
   if (allowed.includes(handler.event)) {
     return true;
   }
@@ -229,7 +238,7 @@ function bindHandler(
   const { kind, name, handler } = site;
   const report: Report = (code, message, line = handler.line, col = handler.col) =>
     diagnostics.push({ severity: 'error', code, message, line, col });
-  if (!eventIsKnown(site, report)) {
+  if (!eventIsKnown(site, elements.get(name)?.componentType, report)) {
     return undefined;
   }
   const ticking = kind === 'DataSource';
@@ -271,26 +280,65 @@ function warnNameCollisions(
   }
 }
 
+function expectedType(site: BindingSite, elements: Map<string, ElementInfo>): BindingType | undefined {
+  const { kind, path, binding } = site;
+  if (kind === 'Shader') {
+    return 'number';
+  }
+  if (kind === 'Component') {
+    return componentPropertyType(elements.get(path[0])?.componentType, binding.key);
+  }
+  return BINDABLE_PROPERTIES[kind]?.[binding.key];
+}
+
+function canBindTwoWay(site: BindingSite, elements: Map<string, ElementInfo>): boolean {
+  const { kind, path, binding } = site;
+  return kind === 'Component' && binding.key === 'value' && acceptsUserChange(elements.get(path[0])?.componentType);
+}
+
+interface RejectedOperator {
+  code: string;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+function rejectedOperator(
+  site: BindingSite,
+  elements: Map<string, ElementInfo>,
+  contracts: Map<string, DataSourceContract>,
+): RejectedOperator | undefined {
+  const { binding } = site;
+  const twoWay = binding.operator === '<->';
+  if (binding.operator === '->' || (twoWay && !canBindTwoWay(site, elements))) {
+    return {
+      code: 'binding-operator-unsupported',
+      message: `'${binding.operator}' on '${binding.key}' is parsed but not executed; '<->' works on the value of a component that the user can change, and '->' is not supported.`,
+      severity: 'warning',
+    };
+  }
+  const problem = twoWay ? twoWayTargetProblem(binding.key, binding.expr, contracts) : undefined;
+  return problem ? { code: 'two-way-target', message: problem, severity: 'error' } : undefined;
+}
+
 function bindProperty(
   site: BindingSite,
   scope: TypeScope,
+  elements: Map<string, ElementInfo>,
+  contracts: Map<string, DataSourceContract>,
   diagnostics: BindingDiagnostic[],
 ): BoundProperty | undefined {
   const { kind, path, binding } = site;
   const owner = path.join('.');
   const report = (code: string, message: string, severity: 'error' | 'warning' = 'error') =>
     diagnostics.push({ severity, code, message, line: binding.line, col: binding.col });
-  if (binding.operator !== '<-') {
-    report(
-      'binding-operator-unsupported',
-      `'${binding.operator}' on '${binding.key}' is parsed but not executed yet; only '<-' is supported.`,
-      'warning',
-    );
+  const rejected = rejectedOperator(site, elements, contracts);
+  if (rejected) {
+    report(rejected.code, rejected.message, rejected.severity);
     return undefined;
   }
-  const expected = kind === 'Shader' ? 'number' : BINDABLE_PROPERTIES[kind]?.[binding.key];
+  const expected = expectedType(site, elements);
   if (!expected) {
-    const allowed = Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
+    const allowed = kind === 'Component' ? BINDABLE_COMPONENT_PROPERTIES : Object.keys(BINDABLE_PROPERTIES[kind] ?? {});
     report(
       'unknown-bound-property',
       `${kind} '${owner}' has no bindable property '${binding.key}'${allowed.length ? ` (bindable: ${allowed.join(', ')})` : ''}.`,
@@ -337,7 +385,7 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
   const sites: BindingSite[] = [];
   collectSites(sflDocument.blocks, [], sites);
 
-  const bindings = sites.flatMap(site => bindProperty(site, scope, diagnostics) ?? []);
+  const bindings = sites.flatMap(site => bindProperty(site, scope, elements, contracts, diagnostics) ?? []);
   const handlers = collectHandlerSites(sflDocument).flatMap(
     site => bindHandler(site, contracts, elements, diagnostics) ?? [],
   );

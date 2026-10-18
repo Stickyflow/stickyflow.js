@@ -1,15 +1,13 @@
 import {
-  type Component,
   formatRollingNumber,
   type RollingNumberComponent,
   type RulerComponent,
   resolveRollingNumberStyle,
   type TickScaleComponent,
-} from '../../model/component';
-import { DEFAULT_FONT, finite, type RenderNode, rotatedBounds } from '../scene';
-import { tag } from '../scene/tagging';
+} from '../../../model/component';
+import { DEFAULT_FONT, finite, type RenderNode, rotatedBounds } from '../../scene';
 
-function buildRollingNumber(component: RollingNumberComponent, index: number): RenderNode[] {
+export function buildRollingNumber(component: RollingNumberComponent, index: number): RenderNode[] {
   const x = finite(component.x, 0);
   const y = finite(component.y, 0);
   const width = Math.max(0, finite(component.width, 160));
@@ -35,7 +33,7 @@ function buildRollingNumber(component: RollingNumberComponent, index: number): R
   ];
 }
 
-function buildTickScale(component: TickScaleComponent, index: number): RenderNode[] {
+export function buildTickScale(component: TickScaleComponent, index: number): RenderNode[] {
   const x = finite(component.x, 0);
   const y = finite(component.y, 0);
   const width = Math.max(0, finite(component.width, 200));
@@ -104,7 +102,7 @@ function buildTickLabels(
   return nodes;
 }
 
-function buildRuler(component: RulerComponent, index: number): RenderNode[] {
+export function buildRuler(component: RulerComponent, index: number): RenderNode[] {
   const x = finite(component.x, 0);
   const y = finite(component.y, 0);
   const width = Math.max(0, finite(component.width, 120));
@@ -179,21 +177,4 @@ function buildRulerLabels(
     });
   }
   return nodes;
-}
-
-export function buildComponents(components: readonly Component[]): RenderNode[] {
-  return components.flatMap((component, index) =>
-    tag(
-      component.type === 'tickScale'
-        ? buildTickScale(component, index)
-        : component.type === 'ruler'
-          ? buildRuler(component, index)
-          : buildRollingNumber(component, index),
-      'widget',
-      component.id,
-      component.type,
-      component.label ?? component.value,
-      component.parentFrameId,
-    ),
-  );
 }

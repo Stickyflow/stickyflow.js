@@ -76,4 +76,5 @@ export interface ElementInfo {
 }
 
 export const POINTER_EVENTS = ['onPress', 'onRelease', 'onTap', 'onDrag'] as const;
+export const CHANGE_EVENT = 'onChange';
 export const TICK_EVENT = 'onTick';
