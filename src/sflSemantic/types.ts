@@ -9,12 +9,14 @@ export type { SflConnectionOut } from './canvasObjects/artifacts/connections/typ
 export type { SflLinkOut } from './canvasObjects/artifacts/links/types';
 export {
   isChartObject,
+  isDimensionObject,
   isIsometricObject,
   isPathObject,
   isSwimlaneObject,
   type SflCanvasObject,
   type SflChartObject,
   type SflComponentObject,
+  type SflDimensionObject,
   type SflIsometricObject,
   type SflPathObject,
   type SflSwimlaneObject,

@@ -1,9 +1,18 @@
 import type { SflChartData } from './artifacts/chart/types';
+import type { SflDimensionData } from './artifacts/dimension/types';
 import type { SflIsometricData } from './artifacts/isometric/types';
 import type { SflPathData } from './artifacts/path/types';
 import type { SflSwimlaneData } from './artifacts/swimlane/types';
 
-export type SflCanvasObjectType = 'shape' | 'frame' | 'swimlane' | 'path' | 'chart' | 'component' | 'isometric';
+export type SflCanvasObjectType =
+  | 'shape'
+  | 'frame'
+  | 'swimlane'
+  | 'path'
+  | 'chart'
+  | 'component'
+  | 'isometric'
+  | 'dimension';
 
 export interface SflSymbolDefinition {
   name: string;
@@ -37,6 +46,7 @@ export interface SflCanvasObject extends SflCanvasObjectBase {
   chart?: SflChartData;
   component?: SflComponentData;
   isometric?: SflIsometricData;
+  dimension?: SflDimensionData;
 }
 
 export interface SflComponentData {
@@ -55,6 +65,8 @@ export type SflComponentObject = SflCanvasObject & { objectType: 'component'; co
 
 export type { SflChartObject } from './artifacts/chart/types';
 export { isChartObject } from './artifacts/chart/types';
+export type { SflDimensionObject } from './artifacts/dimension/types';
+export { isDimensionObject } from './artifacts/dimension/types';
 export type { SflIsometricObject } from './artifacts/isometric/types';
 export { isIsometricObject } from './artifacts/isometric/types';
 export type { SflPathObject } from './artifacts/path/types';

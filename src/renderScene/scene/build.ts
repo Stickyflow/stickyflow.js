@@ -1,6 +1,7 @@
 import type { RenderInput } from '../../renderInput/types';
 import { buildComponents } from '../artifacts/component';
 import { buildContainers } from '../artifacts/containers';
+import { buildDimensions } from '../artifacts/dimension';
 import { buildIsometricObjects } from '../artifacts/isometric';
 import { buildLinks } from '../artifacts/link';
 import { buildFreeformPaths } from '../artifacts/path';
@@ -54,6 +55,7 @@ function stackingOf(input: RenderInput): Map<string, Stacking> {
   );
   add('chart', input.charts ?? [], 20_000);
   add('path', input.paths ?? [], 30_000);
+  add('dimension', input.dimensions ?? [], 31_000);
   return stacking;
 }
 
@@ -81,6 +83,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ...buildShapes(input.shapes, diagnostics, measureText),
     ...buildComponents(input.components ?? input.widgets ?? []),
     ...buildIsometricObjects(input.isometricObjects ?? []),
+    ...buildDimensions(input.dimensions ?? []),
   ];
   stampStacking(nodes, input);
   nodes.sort(

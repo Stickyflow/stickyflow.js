@@ -12,6 +12,7 @@ export function sflToRenderInput(sfl: string): RenderInput {
     swimlanes: canvasObjects.swimlanes,
     isometricObjects: canvasObjects.isometricObjects,
     paths: canvasObjects.paths,
+    dimensions: canvasObjects.dimensions,
     charts: canvasObjects.charts,
     components: canvasObjects.components,
     links: createRenderInputLinks(canvasObjects),
