@@ -48,7 +48,7 @@ export function resolveCanvasObject(
     case 'chart':
       return resolveChartObject(base, block, properties, symbolDefs, mergedProps);
     case 'isometric':
-      return resolveIsometricObject(base, block, properties, layoutProp);
+      return resolveIsometricObject(base, block, properties, layoutProp, symbolDefs);
     case 'path':
       return resolvePathObject(base, properties, origin);
     case 'swimlane':

@@ -24,6 +24,10 @@ function multiply(hex: string, factor: number): string {
   return rgbToHex(r * factor, g * factor, b * factor);
 }
 
+export function shadeFill(fill: string, factor: number): string {
+  return multiply(fill, factor);
+}
+
 export interface IsometricFaceFills {
   topFill: string;
   frontFill: string;

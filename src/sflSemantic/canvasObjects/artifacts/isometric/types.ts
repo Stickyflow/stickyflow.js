@@ -3,6 +3,8 @@ import type { SflCanvasObject } from '../../types';
 export interface SflIsometricData {
   depth: number;
   icon?: string;
+  footprint?: Array<[number, number]>;
+  form: 'box' | 'sphere';
 }
 
 export type SflIsometricObject = SflCanvasObject & {
