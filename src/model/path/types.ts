@@ -1,7 +1,9 @@
 import type { Point } from '../geometry/types';
 import type { MarkerType } from '../link';
 
-export type PathPoint = Point;
+export interface PathPoint extends Point {
+  tension?: number;
+}
 
 export interface FreeformPath {
   id: string;

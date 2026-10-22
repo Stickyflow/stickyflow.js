@@ -5,21 +5,26 @@ import type { SflSymbolDefinition } from '../canvasObjects/types';
 
 type SymbolDefinition = SflSymbolDefinition;
 
-function readSymbolPoints(block: SflBlock): Array<[number, number]> {
+function readSymbolPoints(block: SflBlock): { points: Array<[number, number]>; tensions: Array<number | undefined> } {
   const value = directProperties(block).get('points');
+  const points: Array<[number, number]> = [];
+  const tensions: Array<number | undefined> = [];
   if (value?.type !== 'list') {
-    return [];
+    return { points, tensions };
   }
-
-  return value.values.flatMap(item => {
+  for (const item of value.values) {
     if (item.type !== 'list' || item.values.length < 2) {
-      return [];
+      continue;
     }
-
     const x = asNumber(item.values[0]);
     const y = asNumber(item.values[1]);
-    return x === undefined || y === undefined ? [] : [[x, y] as [number, number]];
-  });
+    if (x === undefined || y === undefined) {
+      continue;
+    }
+    points.push([x, y]);
+    tensions.push(item.values[2] === undefined ? undefined : asNumber(item.values[2]));
+  }
+  return { points, tensions };
 }
 
 function readSymbolPorts(block: SflBlock): SymbolDefinition['ports'] {
@@ -37,7 +42,7 @@ function readSymbolPorts(block: SflBlock): SymbolDefinition['ports'] {
 }
 
 export function readSymbolDefinition(block: SflBlock): SymbolDefinition | undefined {
-  const points = readSymbolPoints(block);
+  const { points, tensions } = readSymbolPoints(block);
   if (points.length < 2) {
     return undefined;
   }
@@ -45,6 +50,7 @@ export function readSymbolDefinition(block: SflBlock): SymbolDefinition | undefi
   return {
     name: block.name,
     points,
+    pointTensions: tensions.some(tension => tension !== undefined) ? tensions : undefined,
     tension: asNumber(directProperties(block).get('tension')),
     ports: readSymbolPorts(block),
   };

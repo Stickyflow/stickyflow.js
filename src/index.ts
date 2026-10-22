@@ -3,7 +3,8 @@ export type { Chart, ChartAxis, ChartRamp, ChartSeries, ChartType } from './mode
 export { CHART_TYPES } from './model/chart';
 export { AXIS_COS, AXIS_SIN } from './model/isometricObject';
 export type { IsometricFace, IsometricObject } from './model/isometricObject';
-export type { FreeformPath, PathPoint } from './model/path';
+export type { FreeformPath, PathFrame, PathPoint, PathSymbol } from './model/path';
+export { flattenPath, pathBounds, pathToSymbol, symbolToPath } from './model/path';
 export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { Shader, ShaderParameter } from './model/shader';

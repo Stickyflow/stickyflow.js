@@ -31,6 +31,10 @@ export function readSpan(lines: string[], span: PropertySpan): string {
   ].join('\n');
 }
 
-export function formatPoints(points: ReadonlyArray<{ x: number; y: number }>): string {
-  return `[${points.map(point => `[${round1(point.x)}, ${round1(point.y)}]`).join(', ')}]`;
+export function formatPoints(points: ReadonlyArray<{ x: number; y: number; tension?: number }>): string {
+  const one = (point: { x: number; y: number; tension?: number }) =>
+    point.tension === undefined
+      ? `[${round1(point.x)}, ${round1(point.y)}]`
+      : `[${round1(point.x)}, ${round1(point.y)}, ${round1(point.tension)}]`;
+  return `[${points.map(one).join(', ')}]`;
 }

@@ -17,7 +17,7 @@ export interface RemoveCanvasObjectOptions {
 
 export interface InsertPathOptions {
   id: string;
-  points: Array<{ x: number; y: number }>;
+  points: Array<{ x: number; y: number; tension?: number }>;
   closed?: boolean;
   tension?: number;
   parentId?: string;

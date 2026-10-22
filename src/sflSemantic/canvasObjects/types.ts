@@ -8,6 +8,7 @@ export type SflCanvasObjectType = 'shape' | 'frame' | 'swimlane' | 'path' | 'cha
 export interface SflSymbolDefinition {
   name: string;
   points: Array<[number, number]>;
+  pointTensions?: Array<number | undefined>;
   tension?: number;
   ports?: Array<{ name: string; at: [number, number] }>;
 }
