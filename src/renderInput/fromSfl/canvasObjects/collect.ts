@@ -1,16 +1,23 @@
 import type { Chart } from '../../../model/chart';
 import type { Component } from '../../../model/component';
 import type { Connection } from '../../../model/connection';
+import type { Dimension } from '../../../model/dimension';
 import type { Frame } from '../../../model/frame';
 import type { IsometricObject } from '../../../model/isometricObject';
 import type { Link } from '../../../model/link';
 import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
-import { isIsometricObject, type SflCanvasState, type SflComponentObject } from '../../../sflSemantic/sflToCanvasState';
+import {
+  isDimensionObject,
+  isIsometricObject,
+  type SflCanvasState,
+  type SflComponentObject,
+} from '../../../sflSemantic/sflToCanvasState';
 import { chartObject } from './chart';
 import { componentObject } from './component';
 import { connectionObject } from './connection';
+import { dimensionObject } from './dimension';
 import { frameObject } from './frame';
 import { isometricObject } from './isometric';
 import { linkObject } from './link';
@@ -24,6 +31,7 @@ export interface CollectedCanvasObjects {
   swimlanes: Swimlane[];
   isometricObjects: IsometricObject[];
   paths: FreeformPath[];
+  dimensions: Dimension[];
   charts: Chart[];
   components: Component[];
   links: Link[];
@@ -44,6 +52,7 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     swimlanes: canvasObjects.filter(canvasObject => canvasObject.objectType === 'swimlane').map(swimlaneObject),
     isometricObjects: canvasObjects.filter(isIsometricObject).map(isometricObject),
     paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
+    dimensions: canvasObjects.filter(isDimensionObject).map(dimensionObject),
     charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
     components: canvasObjects
       .filter(

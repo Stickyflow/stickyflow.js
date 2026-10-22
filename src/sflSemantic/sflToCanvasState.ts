@@ -9,6 +9,7 @@ export type {
   SflComponentObject,
   SflConnectionOut,
   SflDiagnostic,
+  SflDimensionObject,
   SflGroupOut,
   SflIsometricObject,
   SflLinkOut,
@@ -17,6 +18,7 @@ export type {
 } from './types';
 export {
   isChartObject,
+  isDimensionObject,
   isIsometricObject,
   isPathObject,
   isSwimlaneObject,

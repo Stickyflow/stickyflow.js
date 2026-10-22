@@ -14,7 +14,12 @@ export function readPath(p: Properties, origin: { x: number; y: number }): SflPa
           }
           const x = asNumber(value.values[0]);
           const y = asNumber(value.values[1]);
-          return x !== undefined && y !== undefined ? [{ x: origin.x + x, y: origin.y + y }] : [];
+          const tension = value.values[2] === undefined ? undefined : asNumber(value.values[2]);
+          if (x === undefined || y === undefined) {
+            return [];
+          }
+          const point = { x: origin.x + x, y: origin.y + y };
+          return [tension === undefined ? point : { ...point, tension }];
         })
       : [];
 

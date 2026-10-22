@@ -26,6 +26,9 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Isometric') {
     return 'isometric';
   }
+  if (block.kind === 'Dimension') {
+    return 'dimension';
+  }
 
   return asString(properties.get('kind')) ?? '';
 }
@@ -48,6 +51,9 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   }
   if (kind === 'isometric') {
     return 'isometric';
+  }
+  if (kind === 'dimension') {
+    return 'dimension';
   }
 
   return 'shape';

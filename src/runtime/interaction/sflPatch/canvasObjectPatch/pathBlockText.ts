@@ -8,7 +8,10 @@ export function buildPathBlock(
 ): string[] {
   const bodyIndent = `${baseIndent}    `;
   const points = options.points
-    .map(point => `[${round1(point.x - origin.x)}, ${round1(point.y - origin.y)}]`)
+    .map(point => {
+      const pair = `${round1(point.x - origin.x)}, ${round1(point.y - origin.y)}`;
+      return point.tension === undefined ? `[${pair}]` : `[${pair}, ${round1(point.tension)}]`;
+    })
     .join(', ');
   const block: string[] = [`${baseIndent}Path ${options.id} {`, `${bodyIndent}points: [${points}]`];
 

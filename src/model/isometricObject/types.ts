@@ -9,6 +9,8 @@ export interface IsometricObject {
   width: number;
   height: number;
   depth: number;
+  footprint?: Array<[number, number]>;
+  form?: 'box' | 'sphere';
   rotation?: number;
   order?: number;
   sourceIndex?: number;

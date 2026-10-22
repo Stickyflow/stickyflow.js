@@ -17,6 +17,22 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-22
+
+### Added
+
+- An `Isometric` block takes a `symbol`. The outline of the `Symbol` is extruded by the height, and every wall that faces the viewer is shaded on its own. It works for any closed outline of three or more points that does not cross itself.
+- `cornerRadius` in the style of an `Isometric` block rounds the vertical edges of the box or of an extruded symbol.
+- `shape: sphere` draws an `Isometric` block as a shaded ball that sits in the center of its box.
+- A point of a `Path` or a `Symbol` can carry a third value, its own tension. `0` makes the point a corner, so one outline can mix corners and curves. A point without one takes the `tension` of the whole path.
+- `pathToSymbol()` turns a `Path` into a `Symbol`, and `symbolToPath()` turns it back. `pathBounds()` and `flattenPath()` give the box of a path and the points of its curve as short straight edges. The types `PathFrame`, `PathPoint` and `PathSymbol` are exported.
+- The `Dimension` block draws a measure line with an arrow at each end, extension lines and a label. `start` and `end` are the two measured points, and `offset` is the distance of the line, positive to the left of the direction. Without `text` the label is the measured length, rounded to one decimal place, followed by `unit`. `isDimensionObject()` and the types `Dimension` and `SflDimensionObject` are exported, and `RenderInput` takes `dimensions`.
+
+### Changed
+
+- Moving a path through `applyMoveChange` keeps the tension of its points.
+- An `Isometric` block with a `symbol` that has curved points uses the curve as many short straight edges.
+
 ## [0.5.0] - 2026-10-18
 
 ### Added

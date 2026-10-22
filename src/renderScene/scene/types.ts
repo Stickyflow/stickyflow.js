@@ -32,7 +32,16 @@ export interface SceneStyle {
     | { type: 'path'; d: string };
 }
 
-export type SceneRole = 'shape' | 'link' | 'frame' | 'swimlane' | 'path' | 'chart' | 'widget' | 'isometric';
+export type SceneRole =
+  | 'shape'
+  | 'link'
+  | 'frame'
+  | 'swimlane'
+  | 'path'
+  | 'chart'
+  | 'widget'
+  | 'isometric'
+  | 'dimension';
 
 export interface SceneAria {
   role: string;

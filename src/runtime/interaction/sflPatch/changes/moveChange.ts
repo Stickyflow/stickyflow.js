@@ -6,7 +6,7 @@ import { setOrInsertLayoutTuples } from '../properties';
 import { findOwnerBlock, type LineRange } from '../scanner';
 import { pointsSpan, readSpan } from './pathPoints';
 
-const POINT_PAIR = /\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/g;
+const POINT_PAIR = /\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*(,\s*-?[\d.]+\s*)?\]/g;
 
 function movePathPoints(lines: string[], range: LineRange, dx: number, dy: number): void {
   const span = pointsSpan(lines, range);
@@ -15,7 +15,8 @@ function movePathPoints(lines: string[], range: LineRange, dx: number, dy: numbe
   }
   const shifted = readSpan(lines, span).replace(
     POINT_PAIR,
-    (_match, x: string, y: string) => `[${round1(Number(x) + dx)}, ${round1(Number(y) + dy)}]`,
+    (_match, x: string, y: string, rest?: string) =>
+      `[${round1(Number(x) + dx)}, ${round1(Number(y) + dy)}${rest ? `, ${rest.replace(/^,\s*/, '').trim()}` : ''}]`,
   );
   replacePropertyValue(lines, span, shifted);
 }

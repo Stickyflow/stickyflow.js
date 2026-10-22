@@ -24,7 +24,13 @@ export function applyPathPointChange(sfl: string, event: PathPointChangeEvent): 
   if (!span) {
     return sfl;
   }
-  const relative = event.points.map(point => ({ x: point.x - origin.x, y: point.y - origin.y }));
+  const kept = canvasObject.objectType === 'path' ? canvasObject.path?.points : undefined;
+  const sameCount = kept?.length === event.points.length;
+  const relative = event.points.map((point, index) => {
+    const tension = sameCount ? kept?.[index]?.tension : undefined;
+    const moved = { x: point.x - origin.x, y: point.y - origin.y };
+    return tension === undefined ? moved : { ...moved, tension };
+  });
   replacePropertyValue(lines, span, formatPoints(relative));
   return lines.join('\n');
 }

@@ -1,7 +1,7 @@
 import type { SflCanvasObject } from '../../types';
 
 export interface SflPathData {
-  points: Array<{ x: number; y: number }>;
+  points: Array<{ x: number; y: number; tension?: number }>;
   tension?: number;
   startMarker?: string;
   endMarker?: string;

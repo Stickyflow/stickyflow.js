@@ -2,6 +2,7 @@ import type { Shader } from '../../../model/shader';
 import type { SflBlock, SflValue } from '../../../sflLanguage/ast';
 import { asNumber, asString } from '../../ast/valueAccess';
 import { resolveChartObject } from '../artifacts/chart/resolver';
+import { resolveDimensionObject } from '../artifacts/dimension/resolver';
 import { resolveIsometricObject } from '../artifacts/isometric/resolver';
 import { resolvePathObject } from '../artifacts/path/resolver';
 import { resolveSwimlaneObject } from '../artifacts/swimlane/resolver';
@@ -48,9 +49,11 @@ export function resolveCanvasObject(
     case 'chart':
       return resolveChartObject(base, block, properties, symbolDefs, mergedProps);
     case 'isometric':
-      return resolveIsometricObject(base, block, properties, layoutProp);
+      return resolveIsometricObject(base, block, properties, layoutProp, symbolDefs);
     case 'path':
       return resolvePathObject(base, properties, origin);
+    case 'dimension':
+      return resolveDimensionObject(base, properties, origin);
     case 'swimlane':
       return resolveSwimlaneObject(base, properties);
     case 'frame':
