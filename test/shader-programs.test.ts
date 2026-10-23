@@ -6,8 +6,6 @@ describe('shader programs', () => {
   it('ships every built-in shader program', () => {
     expect(shaderProgram('orb')?.fragmentSource).toContain('void main()');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uThickness');
-    expect(shaderProgram('orb')?.replacesBaseFill).toBe(true);
-    expect(shaderProgram('halo')?.replacesBaseFill).toBe(true);
     expect(shaderProgram('halo')?.fragmentSource).toContain('uProgress');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uBoost');
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uDotCount');

@@ -38,5 +38,4 @@ void main() {
 export const orbProgram: ShaderProgram = {
   name: 'orb',
   fragmentSource,
-  replacesBaseFill: true,
 };
