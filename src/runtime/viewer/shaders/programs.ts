@@ -13,6 +13,7 @@ import { orbProgram } from './builtins/orb';
 import { pixelConstellationProgram } from './builtins/pixelConstellation';
 import { plasmaGaugeProgram } from './builtins/plasmaGauge';
 import { prismSlatsProgram } from './builtins/prismSlats';
+import { reactivePanelProgram } from './builtins/reactivePanel';
 import { rulerProgram } from './builtins/ruler';
 import { smearOrbProgram } from './builtins/smearOrb';
 import { tickScaleProgram } from './builtins/tickScale';
@@ -41,6 +42,7 @@ const builtins = [
   violetGlassLightProgram,
   lumenPortalProgram,
   lumenPortalLightProgram,
+  reactivePanelProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 

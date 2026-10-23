@@ -79,4 +79,50 @@ describe('shape shaders', () => {
       holeSize: 0.3,
     });
   });
+
+  it('emits padded shader surfaces for reactive rectangular panels', () => {
+    const source = `sfl 1.4
+
+Shader NeonPanel {
+  program: reactivePanel
+  surfacePadding: 24
+  cornerRadius: 18
+  emission: 1
+}
+
+Style Panel {
+  shape: rounded_rectangle
+  fill: "#08101d"
+  shader: NeonPanel
+}
+
+Model board {
+  Shape tile : Panel {
+    layout { position: 100, 80; size: 160, 100 }
+  }
+}`;
+
+    const { svg, scene } = render(source);
+    const [shader] = sflToCanvasState(source).shaders ?? [];
+    const surface = scene.nodes.find(node => node.type === 'shader-surface');
+    expect(shader).toMatchObject({
+      surfacePadding: 24,
+      parameters: {
+        cornerRadius: 18,
+        emission: 1,
+      },
+    });
+    expect(shader?.parameters).not.toHaveProperty('surfacePadding');
+    expect(surface).toMatchObject({
+      type: 'shader-surface',
+      x: 76,
+      y: 56,
+      width: 208,
+      height: 148,
+      mask: 'rect',
+    });
+    expect(svg).toContain('data-sf-shader="reactivePanel"');
+    expect(svg).toContain('data-sf-shader-mask="rect"');
+    expect(svg).toContain('data-sf-shader-padding="24"');
+  });
 });

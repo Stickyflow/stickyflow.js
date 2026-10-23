@@ -1,6 +1,7 @@
 import type { ShaderParameter } from '../../../model/shader';
 import { captureShaderBackdrop } from './backdrop';
 import { createSurface, releaseSurface } from './createSurface';
+import { updateReactiveLightFields } from './reactiveLightField';
 import { applyBackdrop, renderSurface } from './renderSurface';
 import { createSurfaceClock } from './surfaceClock';
 import type { Surface } from './surfaceTypes';
@@ -44,8 +45,13 @@ function updateParameters(
     }
     Object.assign(surface.parameters, parameters);
     surface.owner.setAttribute('data-sf-shader-params', JSON.stringify(surface.parameters));
-    renderSurface(surface, seconds);
     changed = true;
+  }
+  if (changed) {
+    updateReactiveLightFields(surfaces);
+    for (const surface of surfaces) {
+      renderSurface(surface, seconds);
+    }
   }
   return changed;
 }
@@ -78,6 +84,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
 
   const draw = (milliseconds: number) => {
     if (!clock.paused()) {
+      updateReactiveLightFields(surfaces);
       for (const surface of surfaces) {
         renderSurface(surface, milliseconds / 1000 - clock.spent());
       }
@@ -131,6 +138,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       const surface = createSurface(canvas);
       return surface ? [surface] : [];
     });
+    updateReactiveLightFields(surfaces);
     captureBackdrops(generation);
     if (surfaces.length > 0) {
       startFrames();

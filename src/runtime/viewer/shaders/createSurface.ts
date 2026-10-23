@@ -15,6 +15,11 @@ function parametersOf(owner: Element): Record<string, ShaderParameter> {
   }
 }
 
+function surfacePaddingOf(owner: Element): number {
+  const padding = Number(owner.getAttribute('data-sf-shader-padding'));
+  return Number.isFinite(padding) ? Math.max(0, padding) : 0;
+}
+
 function bindFullScreenQuad(gl: WebGLRenderingContext, program: WebGLProgram): WebGLBuffer | undefined {
   const buffer = gl.createBuffer();
   if (!buffer) {
@@ -69,7 +74,8 @@ export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
     gl,
     program,
     buffer,
-    parameters: parametersOf(owner),
+    parameters: { ...definition.defaultParameters, ...parametersOf(owner) },
+    surfacePadding: surfacePaddingOf(owner),
     smoothed: new Map(),
     backdropTexture: usesBackdrop ? transparentTexture(gl) : undefined,
     backdropOrigin: [0, 0],

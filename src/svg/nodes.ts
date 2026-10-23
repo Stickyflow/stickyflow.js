@@ -8,8 +8,9 @@ import { textSvg } from './text';
 function shaderSurfaceSvg(node: Extract<RenderNode, { type: 'shader-surface' }>, defs: SvgDefinitionRegistry): string {
   const rotation = transform(node.rotation, { x: node.x + node.width / 2, y: node.y + node.height / 2 });
   const parameters = xml(JSON.stringify(node.shader.parameters));
+  const surfacePadding = node.shader.surfacePadding ?? 0;
   const fillColor = node.fillColor ? ` data-sf-shader-fill="${xml(node.fillColor)}"` : '';
-  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-shader="${xml(node.shader.program)}" data-sf-shader-name="${xml(node.shader.name)}" data-sf-shader-params="${parameters}" data-sf-shader-mask="${node.mask}"${fillColor} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation} pointer-events="${node.shader.program === 'ruler' || node.identity?.role === 'widget' ? 'all' : 'none'}"><canvas xmlns="http://www.w3.org/1999/xhtml" data-sf-shader-canvas="true" style="display:block;width:100%;height:100%;pointer-events:none"></canvas></foreignObject>`;
+  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-shader="${xml(node.shader.program)}" data-sf-shader-name="${xml(node.shader.name)}" data-sf-shader-params="${parameters}" data-sf-shader-mask="${node.mask}" data-sf-shader-padding="${num(surfacePadding)}"${fillColor} x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation} pointer-events="${node.shader.program === 'ruler' || node.identity?.role === 'widget' ? 'all' : 'none'}"><canvas xmlns="http://www.w3.org/1999/xhtml" data-sf-shader-canvas="true" style="display:block;width:100%;height:100%;pointer-events:none"></canvas></foreignObject>`;
 }
 
 function rollingDigitSvg(character: string, node: Extract<RenderNode, { type: 'rolling-number' }>): string {

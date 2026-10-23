@@ -6,13 +6,14 @@ import { asNumber, asString } from '../ast/valueAccess';
 export function readShaderDefinition(block: SflBlock): Shader | undefined {
   const properties = directProperties(block);
   const program = asString(properties.get('program'));
+  const surfacePadding = asNumber(properties.get('surfacePadding'));
   if (!program) {
     return undefined;
   }
 
   const parameters: Record<string, ShaderParameter> = {};
   for (const [key, value] of properties) {
-    if (key === 'program') {
+    if (key === 'program' || key === 'surfacePadding') {
       continue;
     }
     const number = asNumber(value);
@@ -23,5 +24,10 @@ export function readShaderDefinition(block: SflBlock): Shader | undefined {
       parameters[key] = text === 'true' ? true : text === 'false' ? false : text;
     }
   }
-  return { name: block.name, program, parameters };
+  return {
+    name: block.name,
+    program,
+    ...(surfacePadding === undefined ? {} : { surfacePadding: Math.max(0, surfacePadding) }),
+    parameters,
+  };
 }

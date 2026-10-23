@@ -52,6 +52,12 @@ export function renderSurface(surface: Surface, seconds: number): void {
   if (resolution) {
     gl.uniform2f(resolution, width, height);
   }
+  const logicalWidth = Number(surface.owner.getAttribute('width'));
+  uniform1f(
+    surface,
+    'uPixelScale',
+    Number.isFinite(logicalWidth) && logicalWidth > 0 ? width / logicalWidth : density * fit,
+  );
   uniform1f(surface, 'uTime', seconds);
   if (surface.backdropTexture) {
     syncBackdropBounds(surface);
@@ -74,5 +80,13 @@ export function renderSurface(surface: Surface, seconds: number): void {
   const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
   surface.lastSeconds = seconds;
   applyParameters(surface, elapsed);
+  if (surface.reactiveLight) {
+    uniform1f(surface, 'uLightX', surface.reactiveLight.x);
+    uniform1f(surface, 'uLightY', surface.reactiveLight.y);
+    uniform1f(surface, 'uLightStrength', surface.reactiveLight.strength);
+    uniform1f(surface, 'uGlowRadius', surface.reactiveLight.radius);
+    uniform3f(surface, 'uLightColor', surface.reactiveLight.color);
+  }
+  uniform1f(surface, 'uSurfacePadding', surface.surfacePadding);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }

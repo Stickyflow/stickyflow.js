@@ -3,6 +3,7 @@ import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } fro
 import { finite, rotatedBounds } from '../scene';
 import { tag } from '../scene/tagging';
 import { renderShapeGeometry } from './shape/geometry';
+import { renderShapeShaderSurface } from './shape/shaderSurface';
 import { shapeStyle } from './shape/style';
 import { renderShapeText } from './shape/text';
 import type { ShapeRenderContext } from './shape/types';
@@ -69,26 +70,6 @@ function createRenderContext(
   };
 }
 
-function renderShaderSurface(context: ShapeRenderContext): RenderNode | undefined {
-  if (!context.shape.shader || (context.shape.shapeType !== 'circle' && context.shape.shapeType !== 'oval')) {
-    return undefined;
-  }
-  return {
-    id: `${context.id}-shader`,
-    type: 'shader-surface',
-    order: context.order,
-    bounds: context.bounds,
-    x: context.x,
-    y: context.y,
-    width: context.width,
-    height: context.height,
-    rotation: context.rotation,
-    shader: context.shape.shader,
-    mask: 'ellipse',
-    fillColor: context.style.fill?.kind === 'solid' ? context.style.fill.color : undefined,
-  };
-}
-
 export function buildShape(
   shape: Shape,
   index: number,
@@ -101,7 +82,7 @@ export function buildShape(
   const { context, strokeWidth } = createRenderContext(shape, index, diagnostics);
   const nodes =
     shape.strokeStyle === 'double' ? renderDoubleStroke(context, strokeWidth || 1) : renderShapeGeometry(context);
-  const shader = renderShaderSurface(context);
+  const shader = renderShapeShaderSurface(context);
   if (shader) {
     for (const node of nodes) {
       if (node.type === 'ellipse' || node.type === 'path' || node.type === 'rect') {

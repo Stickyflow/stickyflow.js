@@ -11,6 +11,17 @@ describe('shader programs', () => {
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uDotCount');
     expect(shaderProgram('halftoneHalo')?.fragmentSource).toContain('uRingRadius');
     expect(shaderProgram('chromaticHalo')?.fragmentSource).toContain('uBloom');
+    expect(shaderProgram('reactivePanel')).toMatchObject({
+      defaultParameters: {
+        emission: 0,
+        reception: 0.85,
+        cornerRadius: 18,
+      },
+      replacesBaseFill: true,
+    });
+    expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uEmission');
+    expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uReception');
+    expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uPixelScale');
     expect(shaderProgram('emberSlits')?.fragmentSource).toContain('uSlitCount');
     expect(shaderProgram('smearOrb')?.fragmentSource).toContain('uBlur');
     expect(shaderProgram('spectralDust')).toBeUndefined();
