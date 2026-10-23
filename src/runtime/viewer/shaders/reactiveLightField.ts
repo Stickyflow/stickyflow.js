@@ -63,30 +63,47 @@ export function updateReactiveLightFields(surfaces: Surface[]): void {
     });
 
   for (const receiver of reactive) {
-    let source: (typeof reactive)[number] | undefined;
-    let bestScore = 0;
+    const sources: Array<{ candidate: (typeof reactive)[number]; emission: number; weight: number }> = [];
     for (const candidate of reactive) {
       if (candidate.surface === receiver.surface) {
         continue;
       }
-      const emission = Math.max(0, parameter(candidate.surface.parameters, 'emission', 0));
+      const emission = Math.max(
+        0,
+        candidate.surface.smoothed.get('emission') ?? parameter(candidate.surface.parameters, 'emission', 0),
+      );
+      if (emission <= 0.0001) {
+        continue;
+      }
       const distance = Math.hypot(
         candidate.geometry.centerX - receiver.geometry.centerX,
         candidate.geometry.centerY - receiver.geometry.centerY,
       );
-      const score = emission / Math.max(distance, 1);
-      if (score > bestScore) {
-        bestScore = score;
-        source = candidate;
-      }
+      sources.push({ candidate, emission, weight: emission / Math.max(distance, 1) });
     }
-    if (!source) {
+    const totalWeight = sources.reduce((sum, source) => sum + source.weight, 0);
+    if (totalWeight <= 0) {
       receiver.surface.reactiveLight = undefined;
       continue;
     }
-    const sourceEmission = Math.max(0, parameter(source.surface.parameters, 'emission', 0));
+    let worldX = 0;
+    let worldY = 0;
+    let sourceEmission = 0;
+    let radius = 0;
+    const lightColor: [number, number, number] = [0, 0, 0];
+    for (const source of sources) {
+      const influence = source.weight / totalWeight;
+      worldX += source.candidate.geometry.centerX * influence;
+      worldY += source.candidate.geometry.centerY * influence;
+      sourceEmission += source.emission;
+      radius += Math.max(1, parameter(source.candidate.surface.parameters, 'glowRadius', 90)) * influence;
+      const sourceColor = color(source.candidate.surface.parameters.lightColor, [0.35, 0.82, 1]);
+      lightColor[0] += sourceColor[0] * influence;
+      lightColor[1] += sourceColor[1] * influence;
+      lightColor[2] += sourceColor[2] * influence;
+    }
     const receiverStrength = Math.max(0, parameter(receiver.surface.parameters, 'lightStrength', 1));
-    const [sourceX, sourceY] = receiver.geometry.localPoint(source.geometry.centerX, source.geometry.centerY);
+    const [sourceX, sourceY] = receiver.geometry.localPoint(worldX, worldY);
     const receiverX = Number(receiver.surface.owner.getAttribute('x'));
     const receiverY = Number(receiver.surface.owner.getAttribute('y'));
     const [lightX, lightY] = normalizedLightPosition(
@@ -101,8 +118,8 @@ export function updateReactiveLightFields(surfaces: Surface[]): void {
       x: lightX,
       y: lightY,
       strength: sourceEmission * receiverStrength * 1.8,
-      radius: Math.max(1, parameter(source.surface.parameters, 'glowRadius', 90)),
-      color: color(source.surface.parameters.lightColor, [0.35, 0.82, 1]),
+      radius,
+      color: lightColor,
     };
   }
 }

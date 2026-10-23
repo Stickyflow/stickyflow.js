@@ -132,10 +132,24 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   };
 
   const refresh = () => {
+    const previousState = new Map(
+      surfaces.flatMap(surface => {
+        const ownerId = surface.owner.getAttribute('data-sf-id');
+        return ownerId
+          ? [[ownerId, { smoothed: new Map(surface.smoothed), reactiveLight: surface.reactiveLight }]]
+          : [];
+      }),
+    );
     stop();
     const generation = ++backdropGeneration;
     surfaces = [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].flatMap(canvas => {
       const surface = createSurface(canvas);
+      const ownerId = surface?.owner.getAttribute('data-sf-id');
+      const previous = ownerId ? previousState.get(ownerId) : undefined;
+      if (surface && previous) {
+        surface.smoothed = previous.smoothed;
+        surface.reactiveLight = previous.reactiveLight;
+      }
       return surface ? [surface] : [];
     });
     updateReactiveLightFields(surfaces);
