@@ -83,10 +83,15 @@ export const APPLY: Record<string, Apply> = {
   'Component.disabled': (input, path, value) => writeComponentDisabled(input, path[0], value === true),
 };
 
-export function applyShader(input: RenderInput, binding: BoundProperty, value: BindingValue): string[] {
+export function applyShader(
+  input: RenderInput,
+  binding: BoundProperty,
+  value: BindingValue,
+  ownerId?: string,
+): string[] {
   const owners: string[] = [];
   for (const shape of input.shapes) {
-    if (shape.shader?.name === binding.ownerPath[0]) {
+    if (shape.shader?.name === binding.ownerPath[0] && (ownerId === undefined || shape.id === ownerId)) {
       shape.shader.parameters = { ...shape.shader.parameters, [binding.property]: value as number };
       owners.push(shape.id);
     }

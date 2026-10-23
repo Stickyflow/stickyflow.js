@@ -103,11 +103,15 @@ function createScope(
   contracts: Map<string, DataSourceContract>,
   elements: Map<string, ElementInfo>,
   ticking = false,
+  selfAvailable = false,
 ): TypeScope {
   return {
     resolve(path) {
       if (path.length !== 2) {
         return undefined;
+      }
+      if (selfAvailable && path[0] === 'self' && path[1] === 'id') {
+        return 'string';
       }
       const contract = contracts.get(path[0]);
       if (contract) {
@@ -247,7 +251,7 @@ function bindHandler(
     report('tick-needs-record', `DataSource '${name}' has to be a record source to change its fields on every tick.`);
     return undefined;
   }
-  const scope = createScope(contracts, elements, ticking);
+  const scope = createScope(contracts, elements, ticking, !ticking);
   const assignments = handler.assignments.flatMap(
     assignment => bindAssignment(assignment, name, own, contracts, scope, report) ?? [],
   );
@@ -381,7 +385,7 @@ export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
   const { contracts, diagnostics } = collectContracts(sflDocument);
   const elements = collectElements(sflDocument);
   warnNameCollisions(contracts, elements, diagnostics);
-  const scope = createScope(contracts, elements);
+  const scope = createScope(contracts, elements, false, true);
   const sites: BindingSite[] = [];
   collectSites(sflDocument.blocks, [], sites);
 

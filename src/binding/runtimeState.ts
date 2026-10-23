@@ -90,5 +90,5 @@ export function readValue(state: RuntimeState, path: string[]): BindingValue {
 export function missingSource(state: RuntimeState, binding: BoundProperty): string | undefined {
   return binding.dependencies
     .map(dependency => dependency.split('.')[0])
-    .find(name => !state.sources.has(name) && !state.elementState.has(name));
+    .find(name => name !== 'self' && !state.sources.has(name) && !state.elementState.has(name));
 }

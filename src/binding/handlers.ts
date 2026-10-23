@@ -6,14 +6,26 @@ import type { ElementState } from './runtimeTypes';
 import type { BoundHandler, Row } from './types';
 import { TICK_EVENT } from './types';
 
-export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: number): void {
+export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: number, selfId?: string): void {
   const env = {
-    read: (path: string[]) => (path[0] === 'time' && path[1] === 'delta' ? (delta ?? 0) : readValue(state, path)),
+    read: (path: string[]) => {
+      if (path[0] === 'time' && path[1] === 'delta') {
+        return delta ?? 0;
+      }
+      if (path[0] === 'self' && path[1] === 'id' && selfId) {
+        return selfId;
+      }
+      return readValue(state, path);
+    },
   };
   for (const assignment of handler.assignments) {
     const target = state.sources.get(assignment.source);
     const readable = collectRefs(assignment.expr).every(
-      ([name]) => name === 'time' || state.sources.has(name) || state.elementState.has(name),
+      ([name]) =>
+        name === 'time' ||
+        (name === 'self' && Boolean(selfId)) ||
+        state.sources.has(name) ||
+        state.elementState.has(name),
     );
     if (!target || !('set' in target) || !readable) {
       continue;
@@ -36,7 +48,7 @@ export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: n
 export function dispatch(state: RuntimeState, id: string, event: string): void {
   for (const handler of state.graph.handlers) {
     if (handler.event === event && handler.ownerKind !== 'DataSource' && handler.ownerPath[0] === id) {
-      runHandler(state, handler);
+      runHandler(state, handler, undefined, id);
     }
   }
 }

@@ -15,12 +15,17 @@ describe('shader programs', () => {
       defaultParameters: {
         emission: 0,
         reception: 0.85,
+        emitterFill: 0,
+        grain: 0,
         cornerRadius: 18,
       },
       replacesBaseFill: true,
     });
     expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uEmission');
     expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uReception');
+    expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uEmitterFill');
+    expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uGrain');
+    expect(shaderProgram('reactivePanel')?.fragmentSource).not.toContain('grainFrame');
     expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uPixelScale');
     expect(shaderProgram('emberSlits')?.fragmentSource).toContain('uSlitCount');
     expect(shaderProgram('smearOrb')?.fragmentSource).toContain('uBlur');

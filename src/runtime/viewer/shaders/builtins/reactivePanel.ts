@@ -8,6 +8,9 @@ uniform float uSpeed;
 uniform float uIntensity;
 uniform float uEmission;
 uniform float uReception;
+uniform float uEmitterFill;
+uniform float uGrain;
+uniform float uGrainScale;
 uniform float uCornerRadius;
 uniform float uBorderWidth;
 uniform float uGlowRadius;
@@ -26,6 +29,12 @@ varying vec2 vUv;
 float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
   vec2 offset = abs(point) - halfSize + radius;
   return min(max(offset.x, offset.y), 0.0) + length(max(offset, 0.0)) - radius;
+}
+
+float random(vec2 point) {
+  vec3 value = fract(vec3(point.xyx) * 0.1031);
+  value += dot(value, value.yzx + 33.33);
+  return fract((value.x + value.y) * value.z);
 }
 
 void main() {
@@ -60,6 +69,23 @@ void main() {
   vec3 edgeColor = dot(uEdgeColor, uEdgeColor) > 0.0 ? uEdgeColor : vec3(0.22, 0.72, 1.0);
   vec3 lightColor = dot(uLightColor, uLightColor) > 0.0 ? uLightColor : edgeColor;
   vec3 color = baseColor * (0.82 + receivedLight * 0.42);
+
+  // Emission lights the material itself instead of leaving a dark cutout behind.
+  // A soft centre bias keeps the fill dimensional while the edge remains crisp.
+  vec2 normalizedPoint = panelPoint / max(panelHalfSize, vec2(1.0));
+  float centreLight = 1.0 - smoothstep(0.05, 1.25, length(normalizedPoint));
+  float fillLight = clamp(emittedLight * max(uEmitterFill, 0.0), 0.0, 1.0) * body;
+  vec3 illuminatedFill = mix(edgeColor, lightColor, 0.62 + centreLight * 0.28);
+  color = mix(color, illuminatedFill * (0.72 + centreLight * 0.62), fillLight);
+
+  // Fine object-space luminance grain. It is intentionally emission-gated so
+  // receiver panels stay clean and the texture stays fixed on the active tile.
+  float grainScale = max(uGrainScale * pixelScale, 0.75);
+  vec2 grainCell = floor(pixel / grainScale);
+  float grainValue = random(grainCell);
+  float grainLight = (grainValue - 0.36) * max(uGrain, 0.0) * fillLight;
+  color += lightColor * grainLight * (0.5 + centreLight * 0.75);
+
   color += edgeColor * edge * (0.42 + emittedLight * 1.7);
   color += lightColor * edge * receivedLight * 2.5;
   color += lightColor * innerEdge * receivedLight * 1.25;
@@ -83,6 +109,9 @@ export const reactivePanelProgram: ShaderProgram = {
     speed: 0.18,
     emission: 0,
     reception: 0.85,
+    emitterFill: 0,
+    grain: 0,
+    grainScale: 1.5,
     cornerRadius: 18,
     borderWidth: 2,
     glowRadius: 90,

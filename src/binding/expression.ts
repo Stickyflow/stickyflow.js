@@ -166,7 +166,7 @@ export function inferType(expr: SflExpr, scope: TypeScope, report: Report): Bind
           'unknown-reference',
           name === 'time.delta'
             ? "'time.delta' is only available in an onTick handler."
-            : `Unknown reference '${name}'. Use <DataSource>.<field>, or <element>.pressed / hovered / pointer.`,
+            : `Unknown reference '${name}'. Use <DataSource>.<field>, self.id, or <element>.pressed / hovered / pointer.`,
         );
       }
       return type;

@@ -47,7 +47,32 @@ function evaluateBinding(state: RuntimeState, binding: BoundProperty): boolean {
     warnMissingSource(state, binding, missing);
     return false;
   }
-  const value = evaluate(binding.expr, { read: path => readValue(state, path) });
+  const readsSelf = binding.dependencies.includes('self.id');
+  if (binding.ownerKind === 'Shader' && readsSelf) {
+    const owners = state.input.shapes.filter(shape => shape.shader?.name === binding.ownerPath[0]);
+    for (const owner of owners) {
+      const value = evaluate(binding.expr, {
+        read: path => (path[0] === 'self' && path[1] === 'id' ? owner.id : readValue(state, path)),
+      });
+      const appliedId = `${binding.id}.${owner.id}`;
+      const key = JSON.stringify(value);
+      if (state.applied.get(appliedId) === key) {
+        continue;
+      }
+      state.applied.set(appliedId, key);
+      applyShader(state.input, binding, value, owner.id);
+      announce(state, appliedId, {
+        kind: 'shader',
+        owners: [owner.id],
+        parameters: { [binding.property]: value as number },
+      });
+    }
+    return false;
+  }
+  const selfId = binding.ownerKind === 'Shader' ? undefined : binding.ownerPath[0];
+  const value = evaluate(binding.expr, {
+    read: path => (path[0] === 'self' && path[1] === 'id' && selfId ? selfId : readValue(state, path)),
+  });
   const key = JSON.stringify(value);
   if (state.applied.get(binding.id) === key) {
     return false;

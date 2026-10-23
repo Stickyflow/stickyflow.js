@@ -77,4 +77,5 @@ void main() {
 export const haloProgram: ShaderProgram = {
   name: 'halo',
   fragmentSource,
+  replacesBaseFill: true,
 };
