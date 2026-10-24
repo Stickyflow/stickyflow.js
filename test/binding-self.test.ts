@@ -57,4 +57,18 @@ describe('self.id bindings', () => {
     expect(glow.get()).toEqual({ active: 'b' });
     expect(Object.fromEntries(parameters)).toEqual({ a: 0, b: 0.45 });
   });
+
+  it('keeps the value of every owner in the render input, not the last one written', () => {
+    const runtime = createBindingRuntime(source);
+    runtime.registerSource('glow', createDataSource({ active: 'a' }));
+    runtime.attach({ update: () => undefined, setShaderParameters: () => undefined });
+
+    runtime.release('b', true);
+    runtime.flush();
+
+    const emission = Object.fromEntries(
+      runtime.input.shapes.map(shape => [shape.id, shape.shader?.parameters.emission]),
+    );
+    expect(emission).toEqual({ a: 0, b: 0.45 });
+  });
 });

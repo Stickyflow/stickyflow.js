@@ -125,4 +125,22 @@ Model board {
     expect(svg).toContain('data-sf-shader-mask="rect"');
     expect(svg).toContain('data-sf-shader-padding="24"');
   });
+
+  it('leaves a shader on a rectangle alone when the program draws no rectangle', () => {
+    const source = `sfl 1.4
+
+Shader Ball {
+  program: orb
+}
+
+Model board {
+  Shape tile {
+    style { shape: rounded_rectangle; fill: "#08101d"; shader: Ball }
+    layout { position: 0, 0; size: 160, 100 }
+  }
+}`;
+
+    const { scene } = render(source);
+    expect(scene.nodes.some(node => node.type === 'shader-surface')).toBe(false);
+  });
 });

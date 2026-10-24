@@ -92,7 +92,11 @@ export function applyShader(
   const owners: string[] = [];
   for (const shape of input.shapes) {
     if (shape.shader?.name === binding.ownerPath[0] && (ownerId === undefined || shape.id === ownerId)) {
-      shape.shader.parameters = { ...shape.shader.parameters, [binding.property]: value as number };
+      // Shapes that use one Shader share its object, so each one gets its own copy to hold its own value.
+      shape.shader = {
+        ...shape.shader,
+        parameters: { ...shape.shader.parameters, [binding.property]: value as number },
+      };
       owners.push(shape.id);
     }
   }
