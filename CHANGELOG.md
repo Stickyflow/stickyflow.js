@@ -17,6 +17,17 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The shader program `reactivePanel` draws a rounded panel that can send light into the scene and receive it. A panel with `emission` lights the edges of the panels near it on the side that faces it. `reception` sets how much a panel takes in, `emitterFill`, `grain` and `grainScale` light and texture the inside of an emitter, and `glowRadius`, `borderWidth` and `cornerRadius` shape the glow and the border.
+- `surfacePadding` on a `Shader` adds room around the shape for an outer glow, in canvas units. It is not a parameter of the program.
+- A shader on a `rectangle` or a `rounded_rectangle` is drawn when its program draws a rectangle of its own. Today that is `reactivePanel`. Every other program still needs a `circle` or an `oval`.
+- `self.id` in an expression is the id of the element the expression belongs to. In a binding of a `Shader` it is read separately for every shape that uses the shader, so one shader can light the tapped panel and no other. In an element handler it is the element that was pressed, so `onTap: glow.active <- self.id` works for any number of elements.
+
+### Changed
+
+- Every shader surface in the SVG carries `data-sf-shader-padding`, `0` when there is no padding.
+
 ## [0.6.0] - 2026-10-22
 
 ### Added
