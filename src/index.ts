@@ -26,7 +26,8 @@ export type {
   ComponentValueType,
   GenericComponent,
 } from './model/component';
-export { getComponentDescriptor, isGenericComponent } from './model/component';
+export { COMPONENT_CATEGORIES, getComponentDescriptor, isGenericComponent } from './model/component';
+export type { ComponentCategory } from './model/component';
 export type {
   RollingNumberWidget,
   RollingNumberWidgetStyle,

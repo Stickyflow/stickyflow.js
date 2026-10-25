@@ -88,7 +88,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     release: (id, tapped) => releaseElement(state, id, tapped),
     activate: id => activateElement(state, id),
     change: (id, value) => changeComponentValue(state, id, value),
-    slide: (id, fraction) => slideElement(state, id, fraction),
+    slide: (id, x, y) => slideElement(state, id, x, y),
     drag(id, pointer) {
       if (pointer !== undefined) {
         setElementState(state, id, { pointer });

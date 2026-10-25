@@ -46,21 +46,26 @@ export function buildProgress(component: GenericComponent, index: number): Rende
       }),
     );
   } else {
-    const radius = round ? box.height / 2 : 0;
-    const bar = (part: string, order: number, width: number, color: string, opacity?: number): RenderNode => ({
-      id: `widget-${component.id}-${part}`,
-      type: 'rect',
-      order: box.order + order,
-      bounds: rotatedBounds({ x: box.x, y: box.y, width, height: box.height }, 0, 0),
-      x: box.x,
-      y: box.y,
-      width,
-      height: box.height,
-      rx: radius,
-      style: fade(component, { fill: solid(color), stroke: { kind: 'none' }, ...(opacity === undefined ? {} : { opacity }) }),
-    });
-    nodes.push(bar('track', 0.1, box.width, textProperty(component, 'track')));
-    nodes.push(bar('fill', 0.2, Math.max(0, fraction * box.width), textProperty(component, 'accent'), fraction > 0 ? 1 : 0));
+    const vertical = textProperty(component, 'direction') === 'vertical';
+    const radius = round ? (vertical ? box.width : box.height) / 2 : 0;
+    // Upright it fills from below.
+    const bar = (part: string, order: number, length: number, color: string, opacity?: number): RenderNode => {
+      const shape = vertical
+        ? { x: box.x, y: box.y + box.height - length, width: box.width, height: length }
+        : { x: box.x, y: box.y, width: length, height: box.height };
+      return {
+        id: `widget-${component.id}-${part}`,
+        type: 'rect',
+        order: box.order + order,
+        bounds: rotatedBounds(shape, 0, 0),
+        ...shape,
+        rx: radius,
+        style: fade(component, { fill: solid(color), stroke: { kind: 'none' }, ...(opacity === undefined ? {} : { opacity }) }),
+      };
+    };
+    const full = vertical ? box.height : box.width;
+    nodes.push(bar('track', 0.1, full, textProperty(component, 'track')));
+    nodes.push(bar('fill', 0.2, Math.max(0, fraction * full), textProperty(component, 'accent'), fraction > 0 ? 1 : 0));
   }
 
   const text = readout(component, fraction);

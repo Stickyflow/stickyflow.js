@@ -7,7 +7,7 @@ export interface InteractiveElements {
   scales: ReadonlySet<string>;
 }
 
-const OPERATED = new Set(['toggle', 'press', 'slide', 'pick']);
+const OPERATED = new Set(['toggle', 'press', 'slide', 'pick', 'turn']);
 
 export function interactiveElements(graph: BindingGraph): InteractiveElements {
   const pressable = new Set<string>();

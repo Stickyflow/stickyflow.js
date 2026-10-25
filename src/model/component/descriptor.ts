@@ -4,7 +4,7 @@ export type ComponentValueType = 'number' | 'string' | 'boolean';
 
 export type ComponentValue = number | string | boolean;
 
-export type ComponentInteraction = 'none' | 'toggle' | 'press' | 'scale' | 'slide' | 'pick';
+export type ComponentInteraction = 'none' | 'toggle' | 'press' | 'scale' | 'slide' | 'pick' | 'turn';
 
 export interface ComponentValueDescriptor {
   type: ComponentValueType;
@@ -30,6 +30,8 @@ export interface ComponentSize {
 export interface ComponentDescriptor {
   type: string;
   group: ComponentGroup;
+  // The shelf it is filed on in documentation and in the lists to pick from. See COMPONENT_CATEGORIES.
+  category?: string;
   value?: ComponentValueDescriptor;
   properties: Record<string, ComponentPropertyDescriptor>;
   interaction: ComponentInteraction;

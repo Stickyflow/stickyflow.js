@@ -19,6 +19,7 @@ export {
 } from './registry';
 export type { BuiltInComponentType, ComponentType } from './supportedTypes';
 export { BUILT_IN_COMPONENT_TYPES, isBuiltInComponentType } from './supportedTypes';
+export { COMPONENT_CATEGORIES, type ComponentCategory } from './categories';
 export { DEFAULT_ROLLING_NUMBER_STYLE, resolveRollingNumberStyle } from './theme';
 export type {
   Component,

@@ -4,6 +4,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'rollingNumber',
     group: 'readout',
+    category: 'indicator',
     value: { type: 'number', writable: false, default: 0 },
     properties: {},
     interaction: 'none',
@@ -13,6 +14,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'tickScale',
     group: 'readout',
+    category: 'instrument',
     value: { type: 'number', writable: false, default: 0 },
     properties: {},
     interaction: 'none',
@@ -22,6 +24,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'ruler',
     group: 'input',
+    category: 'instrument',
     value: { type: 'number', writable: false, default: 0 },
     properties: {},
     interaction: 'scale',
@@ -31,6 +34,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'switch',
     group: 'input',
+    category: 'selection',
     value: { type: 'boolean', writable: true, default: false },
     properties: {
       accent: { type: 'color', default: '#5a6bff' },
@@ -46,6 +50,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'checkbox',
     group: 'input',
+    category: 'selection',
     value: { type: 'boolean', writable: true, default: false },
     properties: {
       accent: { type: 'color', default: '#5a6bff' },
@@ -63,6 +68,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'toggleButton',
     group: 'input',
+    category: 'action',
     value: { type: 'boolean', writable: true, default: false },
     properties: {
       accent: { type: 'color', default: '#5a6bff' },
@@ -80,6 +86,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'button',
     group: 'action',
+    category: 'action',
     properties: {
       accent: { type: 'color', default: '#5a6bff' },
       textColor: { type: 'color', default: '#ffffff' },
@@ -95,9 +102,13 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'slider',
     group: 'input',
+    category: 'value',
     value: { type: 'number', writable: true, default: 40 },
     properties: {
       variant: { type: 'enum', default: 'line', options: ['line', 'field'] },
+      direction: { type: 'enum', default: 'horizontal', options: ['horizontal', 'vertical'] },
+      ticks: { type: 'number', default: 0, min: 0, max: 200 },
+      tickColor: { type: 'color', default: '#94a3b8' },
       min: { type: 'number', default: 0 },
       max: { type: 'number', default: 100 },
       step: { type: 'number', default: 0, min: 0 },
@@ -122,11 +133,13 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'progress',
     group: 'readout',
+    category: 'indicator',
     value: { type: 'number', writable: false, default: 60 },
     properties: {
       min: { type: 'number', default: 0 },
       max: { type: 'number', default: 100 },
       variant: { type: 'enum', default: 'bar', options: ['bar', 'ring'] },
+      direction: { type: 'enum', default: 'horizontal', options: ['horizontal', 'vertical'] },
       accent: { type: 'color', default: '#5a6bff' },
       track: { type: 'color', default: '#e2e8f0' },
       thickness: { type: 'number', default: 10, min: 1, max: 80 },
@@ -144,6 +157,7 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
   {
     type: 'segmented',
     group: 'input',
+    category: 'selection',
     value: { type: 'number', writable: true, default: 0 },
     properties: {
       options: { type: 'string', default: 'Day,Week,Month' },
@@ -160,5 +174,32 @@ export const BUILT_IN_DESCRIPTORS: readonly ComponentDescriptor[] = [
     pointerScale: false,
     size: { width: 300, height: 40, minWidth: 80, minHeight: 20 },
     role: 'radiogroup',
+  },
+  {
+    type: 'knob',
+    group: 'input',
+    category: 'value',
+    value: { type: 'number', writable: true, default: 40 },
+    properties: {
+      min: { type: 'number', default: 0 },
+      max: { type: 'number', default: 100 },
+      step: { type: 'number', default: 0, min: 0 },
+      start: { type: 'number', default: 225, min: 0, max: 360 },
+      sweep: { type: 'number', default: 270, min: 30, max: 360 },
+      accent: { type: 'color', default: '#5a6bff' },
+      track: { type: 'color', default: '#cbd5e1' },
+      face: { type: 'color', default: '#f1f5f9' },
+      dot: { type: 'color', default: '#0f172a' },
+      thickness: { type: 'number', default: 8, min: 1, max: 80 },
+      rounded: { type: 'boolean', default: true },
+      display: { type: 'enum', default: 'value', options: ['none', 'value', 'percent'] },
+      textColor: { type: 'color', default: '#0f172a' },
+      fontSize: { type: 'number', default: 16, min: 6, max: 200 },
+      animate: { type: 'number', default: 0, min: 0, max: 2000, step: 10 },
+    },
+    interaction: 'turn',
+    pointerScale: false,
+    size: { width: 96, height: 96, minWidth: 40, minHeight: 40, aspect: 1 },
+    role: 'slider',
   },
 ];

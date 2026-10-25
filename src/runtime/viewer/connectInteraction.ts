@@ -84,11 +84,11 @@ function trackScales(wiring: Wiring, event: PointerEvent): void {
   }
 }
 
-// A slider or a row of options takes its value from where along its width the pointer is, as a fraction of that width.
+// A slider, a knob or a row of options takes its value from where in the component the pointer is, as fractions of its width and height.
 function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
   const { runtime, svg } = wiring;
   const kind = getComponentDescriptor(runtime.graph.elements.get(id)?.componentType)?.interaction;
-  if (kind !== 'slide' && kind !== 'pick') {
+  if (kind !== 'slide' && kind !== 'pick' && kind !== 'turn') {
     return;
   }
   const node = svg.querySelector(`[data-sf-primary][data-sf-id="${CSS.escape(id)}"]`);
@@ -96,8 +96,9 @@ function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
     return;
   }
   const box = node.getBoundingClientRect();
-  if (box.width > 0) {
-    runtime.slide(id, Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)));
+  if (box.width > 0 && box.height > 0) {
+    const within = (value: number) => Math.min(1, Math.max(0, value));
+    runtime.slide(id, within((event.clientX - box.left) / box.width), within((event.clientY - box.top) / box.height));
   }
 }
 

@@ -56,8 +56,30 @@ export function changeComponentValue(state: RuntimeState, id: string, next: Comp
   return true;
 }
 
-// A pointer at a fraction of the width of a slider or a row of options becomes the value of the component.
-export function slideElement(state: RuntimeState, id: string, fraction: number): void {
+const TAU = Math.PI * 2;
+const within = (value: number): number => Math.min(1, Math.max(0, value));
+
+// How far along its range a slider is when the pointer is at a fraction of its width and of its height.
+function slideAlong(properties: Record<string, ComponentValue>, width: number, height: number, x: number, y: number): number {
+  const vertical = properties.direction === 'vertical';
+  const length = vertical ? height : width;
+  const reach = sliderReach(properties.variant, vertical ? width : height);
+  const position = vertical ? 1 - y : x;
+  return length > reach * 2 ? within((position * length - reach) / (length - reach * 2)) : position;
+}
+
+// How far round its range a knob is when the pointer is at a fraction of its width and of its height.
+function turnAlong(properties: Record<string, ComponentValue>, width: number, height: number, x: number, y: number): number {
+  const start = (Number(properties.start ?? 225) * Math.PI) / 180;
+  const sweep = (Number(properties.sweep ?? 270) * Math.PI) / 180;
+  const gap = TAU - sweep;
+  const angle = Math.atan2(-(y - 0.5) * height, (x - 0.5) * width);
+  const shifted = start - angle + gap / 2;
+  return within(((((shifted % TAU) + TAU) % TAU) - gap / 2) / sweep);
+}
+
+// A pointer in a slider, a knob or a row of options becomes the value of the component. It comes as fractions of the width and the height.
+export function slideElement(state: RuntimeState, id: string, x: number, y = 0): void {
   const component = findComponent(state.input, id);
   if (!component || !isGenericComponent(component)) {
     return;
@@ -69,13 +91,14 @@ export function slideElement(state: RuntimeState, id: string, fraction: number):
       .split(',')
       .filter(option => option.trim()).length;
     if (count > 0) {
-      changeComponentValue(state, id, Math.min(count - 1, Math.floor(fraction * count)));
+      changeComponentValue(state, id, Math.min(count - 1, Math.floor(x * count)));
     }
     return;
   }
-  // The thumb stays a little way from the ends, so the fraction of the width is turned into one of the way the thumb can go.
-  const reach = sliderReach(properties.variant, component.height);
-  const along = component.width > reach * 2 ? Math.min(1, Math.max(0, (fraction * component.width - reach) / (component.width - reach * 2))) : fraction;
+  const along =
+    kind === 'turn'
+      ? turnAlong(properties, component.width, component.height, x, y)
+      : slideAlong(properties, component.width, component.height, x, y);
   const min = Number(properties.min ?? 0);
   const max = Number(properties.max ?? 100);
   const step = Number(properties.step ?? 0);
