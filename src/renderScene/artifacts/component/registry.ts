@@ -29,6 +29,7 @@ const builders = new Map<ComponentType, ComponentBuilder>([
   ['progress', asComponentBuilder(buildProgress)],
   ['segmented', asComponentBuilder(buildSegmented)],
   ['knob', asComponentBuilder(buildKnob)],
+  ['range', asComponentBuilder(buildSlider)],
 ]);
 
 export function registerComponentBuilder(type: ComponentType, builder: ComponentBuilder): () => void {

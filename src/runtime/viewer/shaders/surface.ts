@@ -136,7 +136,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       surfaces.flatMap(surface => {
         const ownerId = surface.owner.getAttribute('data-sf-id');
         return ownerId
-          ? [[ownerId, { smoothed: new Map(surface.smoothed), reactiveLight: surface.reactiveLight }]]
+          ? [[ownerId, { smoothed: new Map(surface.smoothed), reactiveLight: surface.reactiveLight, pointer: surface.pointer, hover: surface.hover, hovering: surface.hovering }]]
           : [];
       }),
     );
@@ -149,6 +149,9 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       if (surface && previous) {
         surface.smoothed = previous.smoothed;
         surface.reactiveLight = previous.reactiveLight;
+        surface.pointer = previous.pointer;
+        surface.hover = previous.hover;
+        surface.hovering = previous.hovering;
       }
       return surface ? [surface] : [];
     });
@@ -170,11 +173,33 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   };
   const unwatch = watchSvgChanges(svg, view, scheduleRecapture);
 
+  // A shader that reacts to the pointer reads where it is over the surface, and how far it is over it.
+  const track = (event: PointerEvent) => {
+    for (const surface of surfaces) {
+      const box = surface.canvas.getBoundingClientRect();
+      const inside =
+        box.width > 0 && box.height > 0 && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+      surface.hovering = inside;
+      if (inside) {
+        surface.pointer = { x: (event.clientX - box.left) / box.width, y: 1 - (event.clientY - box.top) / box.height };
+      }
+    }
+  };
+  const leave = () => {
+    for (const surface of surfaces) {
+      surface.hovering = false;
+    }
+  };
+  svg.addEventListener('pointermove', track);
+  svg.addEventListener('pointerleave', leave);
+
   refresh();
 
   const destroy = () => {
     backdropGeneration += 1;
     unwatch();
+    svg.removeEventListener('pointermove', track);
+    svg.removeEventListener('pointerleave', leave);
     if (recapture !== undefined) {
       view?.clearTimeout(recapture);
     }

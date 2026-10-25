@@ -1,6 +1,6 @@
 import { type ComponentValue, getComponentDescriptor, isGenericComponent } from '../model/component';
 import { sliderReach } from '../model/component/sliderReach';
-import { findComponent, isComponentDisabled, writeComponentValue } from './applyValue';
+import { findComponent, isComponentDisabled, writeComponentValue, writeComponentValueEnd } from './applyValue';
 import type { MutableDataSource } from './dataSource';
 import { markDirty, schedule } from './evaluation';
 import { dispatch, setElementState } from './handlers';
@@ -12,9 +12,9 @@ function descriptorOf(state: RuntimeState, id: string) {
   return info?.kind === 'Component' ? getComponentDescriptor(info.componentType) : undefined;
 }
 
-function valueBinding(state: RuntimeState, id: string): BoundProperty | undefined {
+function valueBinding(state: RuntimeState, id: string, property = 'value'): BoundProperty | undefined {
   return state.graph.bindings.find(
-    binding => binding.ownerKind === 'Component' && binding.ownerPath[0] === id && binding.property === 'value',
+    binding => binding.ownerKind === 'Component' && binding.ownerPath[0] === id && binding.property === property,
   );
 }
 
@@ -30,7 +30,32 @@ function writeBack(state: RuntimeState, binding: BoundProperty, value: Component
   }
 }
 
-export function changeComponentValue(state: RuntimeState, id: string, next: ComponentValue): boolean {
+// The second value of a component that holds two, such as the upper end of a range.
+function changeValueEnd(state: RuntimeState, id: string, next: number): boolean {
+  const component = findComponent(state.input, id);
+  if (!component || !isGenericComponent(component) || component.properties.valueEnd === next || isComponentDisabled(state.input, id)) {
+    return false;
+  }
+  const binding = valueBinding(state, id, 'valueEnd');
+  if (binding && binding.operator !== '<->') {
+    return false;
+  }
+  writeComponentValueEnd(state.input, id, next);
+  state.renderNeeded = true;
+  if (binding) {
+    state.applied.set(binding.id, JSON.stringify(next));
+    writeBack(state, binding, next);
+  }
+  markDirty(state, id);
+  dispatch(state, id, CHANGE_EVENT);
+  schedule(state);
+  return true;
+}
+
+export function changeComponentValue(state: RuntimeState, id: string, next: ComponentValue, property: 'value' | 'valueEnd' = 'value'): boolean {
+  if (property === 'valueEnd') {
+    return typeof next === 'number' && changeValueEnd(state, id, next);
+  }
   const spec = descriptorOf(state, id)?.value;
   const element = state.elementState.get(id);
   if (!spec?.writable || !element || typeof next !== spec.type || element.value === next) {
@@ -57,6 +82,8 @@ export function changeComponentValue(state: RuntimeState, id: string, next: Comp
 }
 
 const TAU = Math.PI * 2;
+// Which thumb of a range a gesture holds: the one that was nearer where it began.
+const grabbed = new WeakMap<RuntimeState, Map<string, 'start' | 'end'>>();
 const within = (value: number): number => Math.min(1, Math.max(0, value));
 
 // How far along its range a slider is when the pointer is at a fraction of its width and of its height.
@@ -106,7 +133,24 @@ export function slideElement(state: RuntimeState, id: string, x: number, y = 0):
   if (step > 0) {
     value = min + Math.round((value - min) / step) * step;
   }
-  changeComponentValue(state, id, Number(Math.min(max, Math.max(min, value)).toFixed(6)));
+  const taken = Number(Math.min(max, Math.max(min, value)).toFixed(6));
+  if (kind !== 'range') {
+    changeComponentValue(state, id, taken);
+    return;
+  }
+  const low = Number(component.value);
+  const high = Number(properties.valueEnd ?? max);
+  const holds = grabbed.get(state) ?? new Map<string, 'start' | 'end'>();
+  grabbed.set(state, holds);
+  if (!holds.has(id)) {
+    holds.set(id, taken >= high || (taken > low && taken - low > high - taken) ? 'end' : 'start');
+  }
+  // The thumbs do not pass each other.
+  if (holds.get(id) === 'start') {
+    changeComponentValue(state, id, Math.min(taken, high));
+  } else {
+    changeComponentValue(state, id, Math.max(taken, low), 'valueEnd');
+  }
 }
 
 function reactToActivation(state: RuntimeState, id: string): void {
@@ -118,6 +162,7 @@ function reactToActivation(state: RuntimeState, id: string): void {
 }
 
 export function pressElement(state: RuntimeState, id: string): void {
+  grabbed.get(state)?.delete(id);
   if (isComponentDisabled(state.input, id)) {
     return;
   }
@@ -126,6 +171,7 @@ export function pressElement(state: RuntimeState, id: string): void {
 }
 
 export function releaseElement(state: RuntimeState, id: string, tapped: boolean): void {
+  grabbed.get(state)?.delete(id);
   setElementState(state, id, { pressed: false });
   if (isComponentDisabled(state.input, id)) {
     return;

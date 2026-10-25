@@ -88,7 +88,7 @@ function trackScales(wiring: Wiring, event: PointerEvent): void {
 function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
   const { runtime, svg } = wiring;
   const kind = getComponentDescriptor(runtime.graph.elements.get(id)?.componentType)?.interaction;
-  if (kind !== 'slide' && kind !== 'pick' && kind !== 'turn') {
+  if (kind !== 'slide' && kind !== 'pick' && kind !== 'turn' && kind !== 'range') {
     return;
   }
   const node = svg.querySelector(`[data-sf-primary][data-sf-id="${CSS.escape(id)}"]`);

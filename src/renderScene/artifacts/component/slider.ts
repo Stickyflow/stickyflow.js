@@ -16,16 +16,31 @@ interface Shape {
   rx: number;
 }
 
+// Where the thumbs are, as fractions of the range. A slider has one, and the fill runs from the start up to it. A range has two, and the
+// fill runs between them.
+interface Thumbs {
+  from: number;
+  to: number;
+  values: number[];
+  two: boolean;
+}
+
 function decimals(step: number): number {
   return step > 0 ? (String(step).split('.')[1]?.length ?? 0) : 0;
 }
 
-function readout(component: GenericComponent, fraction: number): string {
+function readout(component: GenericComponent, thumbs: Thumbs): string {
   const display = textProperty(component, 'display');
-  if (display === 'percent') {
-    return `${Math.round(fraction * 100)}%`;
-  }
-  return display === 'value' ? Number(component.value).toFixed(decimals(numberProperty(component, 'step'))) : '';
+  const places = decimals(numberProperty(component, 'step'));
+  const parts =
+    display === 'percent'
+      ? thumbs.two
+        ? [thumbs.from, thumbs.to].map(fraction => `${Math.round(fraction * 100)}%`)
+        : [`${Math.round(thumbs.to * 100)}%`]
+      : display === 'value'
+        ? thumbs.values.map(value => value.toFixed(places))
+        : [];
+  return parts.join(' – ');
 }
 
 const rect = (component: GenericComponent, box: ControlBox, part: string, order: number, shape: Shape, color: string, extra: object = {}): RenderNode =>
@@ -52,29 +67,29 @@ function ticks(component: GenericComponent, box: ControlBox, vertical: boolean, 
 }
 
 // A line with a round thumb on it, along the width or, upright, along the height.
-function buildLine(component: GenericComponent, box: ControlBox, fraction: number, vertical: boolean): RenderNode[] {
+function buildLine(component: GenericComponent, box: ControlBox, thumbs: Thumbs, vertical: boolean): RenderNode[] {
   const reach = sliderReach('line', vertical ? box.width : box.height);
   const radius = (reach * numberProperty(component, 'thumbSize')) / 100;
   const thickness = Math.min(numberProperty(component, 'trackHeight'), vertical ? box.width : box.height);
-  const centerX = vertical ? box.x + box.width / 2 : box.x + reach + fraction * (box.width - reach * 2);
-  const centerY = vertical ? box.y + box.height - reach - fraction * (box.height - reach * 2) : box.y + box.height / 2;
-  const line = (length: number, from: number): Shape =>
+  const mid = vertical ? box.x + box.width / 2 : box.y + box.height / 2;
+  // The position of a fraction along the line.
+  const along = (fraction: number) => (vertical ? box.y + box.height - reach - fraction * (box.height - reach * 2) : box.x + reach + fraction * (box.width - reach * 2));
+  const line = (start: number, end: number): Shape =>
     vertical
-      ? { x: centerX - thickness / 2, y: from, width: thickness, height: length, rx: thickness / 2 }
-      : { x: from, y: centerY - thickness / 2, width: length, height: thickness, rx: thickness / 2 };
-  const whole = vertical ? line(box.height, box.y) : line(box.width, box.x);
-  const filled = vertical ? line(box.y + box.height - centerY, centerY) : line(centerX - box.x, box.x);
-  return [
-    rect(component, box, 'track', 0.1, whole, textProperty(component, 'track')),
-    ...ticks(component, box, vertical, reach, vertical ? box.width / 2 + thickness / 2 + 5 : box.height / 2 + thickness / 2 + 5),
-    rect(component, box, 'fill', 0.2, filled, textProperty(component, 'accent')),
-    {
-      id: `widget-${component.id}-thumb`,
+      ? { x: mid - thickness / 2, y: Math.min(start, end), width: thickness, height: Math.abs(end - start), rx: thickness / 2 }
+      : { x: Math.min(start, end), y: mid - thickness / 2, width: Math.abs(end - start), height: thickness, rx: thickness / 2 };
+  const whole = vertical ? line(box.y, box.y + box.height) : line(box.x, box.x + box.width);
+  const filled = line(thumbs.two ? along(thumbs.from) : vertical ? box.y + box.height : box.x, along(thumbs.to));
+  const thumb = (part: string, fraction: number, order: number): RenderNode => {
+    const cx = vertical ? mid : along(fraction);
+    const cy = vertical ? along(fraction) : mid;
+    return {
+      id: `widget-${component.id}-${part}`,
       type: 'ellipse',
-      order: box.order + 0.3,
-      bounds: rotatedBounds({ x: centerX - radius, y: centerY - radius, width: radius * 2, height: radius * 2 }, 0, 0),
-      cx: centerX,
-      cy: centerY,
+      order: box.order + order,
+      bounds: rotatedBounds({ x: cx - radius, y: cy - radius, width: radius * 2, height: radius * 2 }, 0, 0),
+      cx,
+      cy,
       rx: radius,
       ry: radius,
       style: fade(component, {
@@ -82,31 +97,46 @@ function buildLine(component: GenericComponent, box: ControlBox, fraction: numbe
         stroke: { kind: 'none' },
         shadow: { color: '#000000', opacity: 0.25, blur: 3, dx: 0, dy: 1 },
       }),
-    },
+    };
+  };
+  return [
+    rect(component, box, 'track', 0.1, whole, textProperty(component, 'track')),
+    ...ticks(component, box, vertical, reach, vertical ? box.width / 2 + thickness / 2 + 5 : box.height / 2 + thickness / 2 + 5),
+    rect(component, box, 'fill', 0.2, filled, textProperty(component, 'accent')),
+    ...(thumbs.two ? [thumb('thumb-start', thumbs.from, 0.3)] : []),
+    thumb(thumbs.two ? 'thumb-end' : 'thumb', thumbs.to, 0.31),
   ];
 }
 
 // A field that fills up to the value, with a thin handle at its end. Along the width it has the label at the left and the value at the
 // right, upright it fills from below and has the value at the top.
-function buildField(component: GenericComponent, box: ControlBox, fraction: number, vertical: boolean): RenderNode[] {
+function buildField(component: GenericComponent, box: ControlBox, thumbs: Thumbs, vertical: boolean): RenderNode[] {
   const reach = sliderReach('field', vertical ? box.width : box.height);
   const radius = Math.min(numberProperty(component, 'radius'), Math.min(box.width, box.height) / 2);
   const whole: Shape = { x: box.x, y: box.y, width: box.width, height: box.height, rx: radius };
-  const handleAt = vertical ? box.y + box.height - reach - fraction * (box.height - reach * 2) : box.x + reach + fraction * (box.width - reach * 2);
+  const along = (fraction: number) => (vertical ? box.y + box.height - reach - fraction * (box.height - reach * 2) : box.x + reach + fraction * (box.width - reach * 2));
+  const start = thumbs.two ? along(thumbs.from) : vertical ? box.y + box.height : box.x;
+  const end = along(thumbs.to);
+  const first = Math.min(start, end) - (thumbs.two ? HANDLE_WIDTH / 2 : 0);
+  const last = Math.max(start, end) + HANDLE_WIDTH / 2;
   const filled: Shape = vertical
-    ? { ...whole, y: handleAt - HANDLE_WIDTH / 2, height: Math.max(0, box.y + box.height - handleAt + HANDLE_WIDTH / 2) }
-    : { ...whole, width: Math.max(0, handleAt + HANDLE_WIDTH / 2 - box.x) };
+    ? { ...whole, y: thumbs.two ? first : end - HANDLE_WIDTH / 2, height: thumbs.two ? last - first : Math.max(0, box.y + box.height - end + HANDLE_WIDTH / 2), rx: thumbs.two ? 0 : radius }
+    : { ...whole, x: thumbs.two ? first : box.x, width: thumbs.two ? last - first : Math.max(0, end + HANDLE_WIDTH / 2 - box.x), rx: thumbs.two ? 0 : radius };
   const handleLength = (vertical ? box.width : box.height) * 0.5;
-  const handle: Shape = vertical
-    ? { x: box.x + (box.width - handleLength) / 2, y: handleAt - HANDLE_WIDTH / 2, width: handleLength, height: HANDLE_WIDTH, rx: HANDLE_WIDTH / 2 }
-    : { x: handleAt - HANDLE_WIDTH / 2, y: box.y + (box.height - handleLength) / 2, width: HANDLE_WIDTH, height: handleLength, rx: HANDLE_WIDTH / 2 };
+  const handle = (part: string, at: number): RenderNode => {
+    const shape: Shape = vertical
+      ? { x: box.x + (box.width - handleLength) / 2, y: at - HANDLE_WIDTH / 2, width: handleLength, height: HANDLE_WIDTH, rx: HANDLE_WIDTH / 2 }
+      : { x: at - HANDLE_WIDTH / 2, y: box.y + (box.height - handleLength) / 2, width: HANDLE_WIDTH, height: handleLength, rx: HANDLE_WIDTH / 2 };
+    return rect(component, box, part, 0.3, shape, textProperty(component, 'accent'));
+  };
   const nodes = [
     rect(component, box, 'track', 0.1, whole, textProperty(component, 'surface')),
     rect(component, box, 'fill', 0.2, filled, textProperty(component, 'fill')),
-    rect(component, box, 'handle', 0.3, handle, textProperty(component, 'accent')),
+    ...(thumbs.two ? [handle('handle-start', start)] : []),
+    handle(thumbs.two ? 'handle-end' : 'handle', end),
   ];
   const text = { color: ink(component, textProperty(component, 'textColor')), fontSize: numberProperty(component, 'fontSize') };
-  const value = readout(component, fraction);
+  const value = readout(component, thumbs);
   if (vertical) {
     if (value) {
       nodes.push(labelText(component, 'value', { x: box.x, y: box.y + 6, width: box.width, height: 20 }, { ...text, text: value, align: 'center' }, box.order + 0.4));
@@ -124,6 +154,7 @@ function buildField(component: GenericComponent, box: ControlBox, fraction: numb
   return nodes;
 }
 
+// The `slider` and the `range` share their look: the range has a second thumb, which its property `valueEnd` sets.
 export function buildSlider(component: GenericComponent, index: number): RenderNode[] {
   const field = textProperty(component, 'variant') === 'field';
   const vertical = textProperty(component, 'direction') === 'vertical';
@@ -131,6 +162,10 @@ export function buildSlider(component: GenericComponent, index: number): RenderN
   const box = controlBox(component, index, fallback);
   const min = numberProperty(component, 'min');
   const max = numberProperty(component, 'max');
-  const fraction = Math.min(1, Math.max(0, (Number(component.value) - min) / (max - min || 1)));
-  return [hitArea(component, box), ...(field ? buildField(component, box, fraction, vertical) : buildLine(component, box, fraction, vertical))];
+  const fractionOf = (value: number) => Math.min(1, Math.max(0, (value - min) / (max - min || 1)));
+  const two = component.type === 'range';
+  const low = Number(component.value);
+  const high = two ? Number(component.properties.valueEnd ?? max) : low;
+  const thumbs: Thumbs = { from: fractionOf(two ? Math.min(low, high) : min), to: fractionOf(two ? Math.max(low, high) : low), values: two ? [Math.min(low, high), Math.max(low, high)] : [low], two };
+  return [hitArea(component, box), ...(field ? buildField(component, box, thumbs, vertical) : buildLine(component, box, thumbs, vertical))];
 }

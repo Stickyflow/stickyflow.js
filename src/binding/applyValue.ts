@@ -35,6 +35,13 @@ export function writeComponentValue(input: RenderInput, id: string, value: Compo
   component.value = isGenericComponent(component) ? value : String(value);
 }
 
+export function writeComponentValueEnd(input: RenderInput, id: string, value: number): void {
+  const component = findComponent(input, id);
+  if (component && isGenericComponent(component)) {
+    component.properties.valueEnd = value;
+  }
+}
+
 export function writeComponentDisabled(input: RenderInput, id: string, disabled: boolean): void {
   const component = findComponent(input, id);
   if (component && isGenericComponent(component)) {
@@ -80,6 +87,7 @@ export const APPLY: Record<string, Apply> = {
   'Shape.textColor': (input, path, value) => setShape(input, path, shape => (shape.textColor = value as string)),
   'Shape.opacity': (input, path, value) => setShape(input, path, shape => (shape.opacity = value as number)),
   'Component.value': (input, path, value) => writeComponentValue(input, path[0], value as ComponentValue),
+  'Component.valueEnd': (input, path, value) => writeComponentValueEnd(input, path[0], value as number),
   'Component.disabled': (input, path, value) => writeComponentDisabled(input, path[0], value === true),
 };
 

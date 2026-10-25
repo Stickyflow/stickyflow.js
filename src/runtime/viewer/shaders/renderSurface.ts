@@ -80,6 +80,9 @@ export function renderSurface(surface: Surface, seconds: number): void {
   const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
   surface.lastSeconds = seconds;
   applyParameters(surface, elapsed);
+  surface.hover += ((surface.hovering ? 1 : 0) - surface.hover) * (1 - Math.exp(-elapsed / 0.18));
+  uniform2f(surface, 'uPointer', [surface.pointer.x, surface.pointer.y]);
+  uniform1f(surface, 'uHover', surface.hover);
   if (surface.reactiveLight) {
     uniform1f(surface, 'uLightX', surface.reactiveLight.x);
     uniform1f(surface, 'uLightY', surface.reactiveLight.y);

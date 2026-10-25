@@ -7,6 +7,8 @@ import { emberSlitsProgram } from './builtins/emberSlits';
 import { glassRefractionProgram } from './builtins/glassRefraction';
 import { halftoneHaloProgram } from './builtins/halftoneHalo';
 import { haloProgram } from './builtins/halo';
+import { ledMatrixProgram } from './builtins/ledMatrix';
+import { lightBandProgram } from './builtins/lightBand';
 import { lumenPortalProgram } from './builtins/lumenPortal';
 import { lumenPortalLightProgram } from './builtins/lumenPortalLight';
 import { orbProgram } from './builtins/orb';
@@ -15,6 +17,7 @@ import { plasmaGaugeProgram } from './builtins/plasmaGauge';
 import { prismSlatsProgram } from './builtins/prismSlats';
 import { reactivePanelProgram } from './builtins/reactivePanel';
 import { rulerProgram } from './builtins/ruler';
+import { silkFoldsProgram } from './builtins/silkFolds';
 import { smearOrbProgram } from './builtins/smearOrb';
 import { tickScaleProgram } from './builtins/tickScale';
 import { violetGlassProgram } from './builtins/violetGlass';
@@ -43,6 +46,9 @@ const builtins = [
   lumenPortalProgram,
   lumenPortalLightProgram,
   reactivePanelProgram,
+  ledMatrixProgram,
+  lightBandProgram,
+  silkFoldsProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 

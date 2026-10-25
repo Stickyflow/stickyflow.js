@@ -297,7 +297,7 @@ function expectedType(site: BindingSite, elements: Map<string, ElementInfo>): Bi
 
 function canBindTwoWay(site: BindingSite, elements: Map<string, ElementInfo>): boolean {
   const { kind, path, binding } = site;
-  return kind === 'Component' && binding.key === 'value' && acceptsUserChange(elements.get(path[0])?.componentType);
+  return kind === 'Component' && (binding.key === 'value' || binding.key === 'valueEnd') && acceptsUserChange(elements.get(path[0])?.componentType);
 }
 
 interface RejectedOperator {

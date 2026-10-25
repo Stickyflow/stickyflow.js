@@ -16,6 +16,10 @@ export interface Surface {
   baseGeometry?: Element;
   baseFill?: string | null;
   smoothed: Map<string, number>;
+  // Where the pointer is over the surface, from 0 to 1 and counted from the lower left, and how far it is there: 1 while it is over it.
+  pointer: { x: number; y: number };
+  hovering: boolean;
+  hover: number;
   lastSeconds?: number;
   reactiveLight?: {
     x: number;
