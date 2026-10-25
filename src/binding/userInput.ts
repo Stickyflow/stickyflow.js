@@ -1,4 +1,5 @@
 import { type ComponentValue, getComponentDescriptor, isGenericComponent } from '../model/component';
+import { sliderReach } from '../model/component/sliderReach';
 import { findComponent, isComponentDisabled, writeComponentValue } from './applyValue';
 import type { MutableDataSource } from './dataSource';
 import { markDirty, schedule } from './evaluation';
@@ -72,10 +73,13 @@ export function slideElement(state: RuntimeState, id: string, fraction: number):
     }
     return;
   }
+  // The thumb stays a little way from the ends, so the fraction of the width is turned into one of the way the thumb can go.
+  const reach = sliderReach(properties.variant, component.height);
+  const along = component.width > reach * 2 ? Math.min(1, Math.max(0, (fraction * component.width - reach) / (component.width - reach * 2))) : fraction;
   const min = Number(properties.min ?? 0);
   const max = Number(properties.max ?? 100);
   const step = Number(properties.step ?? 0);
-  let value = min + fraction * (max - min);
+  let value = min + along * (max - min);
   if (step > 0) {
     value = min + Math.round((value - min) / step) * step;
   }

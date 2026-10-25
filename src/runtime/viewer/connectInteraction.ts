@@ -84,7 +84,7 @@ function trackScales(wiring: Wiring, event: PointerEvent): void {
   }
 }
 
-// A slider or a row of options takes its value from where along its width the pointer is.
+// A slider or a row of options takes its value from where along its width the pointer is, as a fraction of that width.
 function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
   const { runtime, svg } = wiring;
   const kind = getComponentDescriptor(runtime.graph.elements.get(id)?.componentType)?.interaction;
@@ -96,10 +96,8 @@ function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
     return;
   }
   const box = node.getBoundingClientRect();
-  const inset = kind === 'slide' ? box.height / 2 : 0;
-  const span = box.width - inset * 2;
-  if (span > 0) {
-    runtime.slide(id, Math.min(1, Math.max(0, (event.clientX - box.left - inset) / span)));
+  if (box.width > 0) {
+    runtime.slide(id, Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)));
   }
 }
 

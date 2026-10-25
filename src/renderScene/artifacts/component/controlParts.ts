@@ -59,7 +59,7 @@ export function labelText(
   component: GenericComponent,
   part: string,
   area: { x: number; y: number; width: number; height: number },
-  label: { text: string; color: string; fontSize: number; align: 'left' | 'center' },
+  label: { text: string; color: string; fontSize: number; align: 'left' | 'center' | 'right' },
   order: number,
 ): RenderNode {
   return {
