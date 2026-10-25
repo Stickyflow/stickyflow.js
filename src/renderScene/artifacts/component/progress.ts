@@ -60,7 +60,11 @@ export function buildProgress(component: GenericComponent, index: number): Rende
         bounds: rotatedBounds(shape, 0, 0),
         ...shape,
         rx: radius,
-        style: fade(component, { fill: solid(color), stroke: { kind: 'none' }, ...(opacity === undefined ? {} : { opacity }) }),
+        style: fade(component, {
+          fill: solid(color),
+          stroke: { kind: 'none' },
+          ...(opacity === undefined ? {} : { opacity }),
+        }),
       };
     };
     const full = vertical ? box.height : box.width;
@@ -70,7 +74,12 @@ export function buildProgress(component: GenericComponent, index: number): Rende
 
   const text = readout(component, fraction);
   if (text) {
-    const label = { text, color: ink(component, textProperty(component, 'textColor')), fontSize: numberProperty(component, 'fontSize'), align: 'center' } as const;
+    const label = {
+      text,
+      color: ink(component, textProperty(component, 'textColor')),
+      fontSize: numberProperty(component, 'fontSize'),
+      align: 'center',
+    } as const;
     nodes.push(labelText(component, 'value', box, label, box.order + 0.3));
   }
   return nodes;

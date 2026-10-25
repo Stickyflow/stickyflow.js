@@ -57,12 +57,18 @@ export function buildKnob(component: GenericComponent, index: number): RenderNod
   const nodes: RenderNode[] = [
     hitArea(component, box),
     arc('track', 0.1, textProperty(component, 'track'), (sweep / 360) * circumference),
-    arc('fill', 0.2, textProperty(component, 'accent'), (fraction * sweep / 360) * circumference, { opacity: fraction > 0 ? 1 : 0 }),
+    arc('fill', 0.2, textProperty(component, 'accent'), ((fraction * sweep) / 360) * circumference, {
+      opacity: fraction > 0 ? 1 : 0,
+    }),
     {
       id: `widget-${component.id}-face`,
       type: 'ellipse',
       order: box.order + 0.3,
-      bounds: rotatedBounds({ x: cx - faceRadius, y: cy - faceRadius, width: faceRadius * 2, height: faceRadius * 2 }, 0, 0),
+      bounds: rotatedBounds(
+        { x: cx - faceRadius, y: cy - faceRadius, width: faceRadius * 2, height: faceRadius * 2 },
+        0,
+        0,
+      ),
       cx,
       cy,
       rx: faceRadius,
@@ -73,7 +79,16 @@ export function buildKnob(component: GenericComponent, index: number): RenderNod
       id: `widget-${component.id}-dot`,
       type: 'ellipse',
       order: box.order + 0.4,
-      bounds: rotatedBounds({ x: cx + radius * Math.cos(angle) - dotRadius, y: cy - radius * Math.sin(angle) - dotRadius, width: dotRadius * 2, height: dotRadius * 2 }, 0, 0),
+      bounds: rotatedBounds(
+        {
+          x: cx + radius * Math.cos(angle) - dotRadius,
+          y: cy - radius * Math.sin(angle) - dotRadius,
+          width: dotRadius * 2,
+          height: dotRadius * 2,
+        },
+        0,
+        0,
+      ),
       cx: cx + radius * Math.cos(angle),
       cy: cy - radius * Math.sin(angle),
       rx: dotRadius,
@@ -83,8 +98,21 @@ export function buildKnob(component: GenericComponent, index: number): RenderNod
   ];
   const text = readout(component, fraction);
   if (text) {
-    const label = { text, color: ink(component, textProperty(component, 'textColor')), fontSize: numberProperty(component, 'fontSize'), align: 'center' } as const;
-    nodes.push(labelText(component, 'value', { x: cx - faceRadius, y: cy - faceRadius, width: faceRadius * 2, height: faceRadius * 2 }, label, box.order + 0.5));
+    const label = {
+      text,
+      color: ink(component, textProperty(component, 'textColor')),
+      fontSize: numberProperty(component, 'fontSize'),
+      align: 'center',
+    } as const;
+    nodes.push(
+      labelText(
+        component,
+        'value',
+        { x: cx - faceRadius, y: cy - faceRadius, width: faceRadius * 2, height: faceRadius * 2 },
+        label,
+        box.order + 0.5,
+      ),
+    );
   }
   return nodes;
 }

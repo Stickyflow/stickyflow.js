@@ -56,7 +56,9 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   }
   if (style.transition && style.transition > 0) {
     const time = `${num(style.transition)}ms ease`;
-    attrs.push(`style="transition: x ${time}, y ${time}, width ${time}, height ${time}, cx ${time}, cy ${time}, rx ${time}, ry ${time}, fill ${time}, stroke ${time}, stroke-width ${time}, stroke-dasharray ${time}, opacity ${time}"`);
+    attrs.push(
+      `style="transition: x ${time}, y ${time}, width ${time}, height ${time}, cx ${time}, cy ${time}, rx ${time}, ry ${time}, fill ${time}, stroke ${time}, stroke-width ${time}, stroke-dasharray ${time}, opacity ${time}"`,
+    );
   }
 }
 

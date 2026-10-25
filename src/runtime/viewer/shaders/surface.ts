@@ -139,7 +139,19 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       surfaces.flatMap(surface => {
         const ownerId = surface.owner.getAttribute('data-sf-id');
         return ownerId
-          ? [[ownerId, { smoothed: new Map(surface.smoothed), reactiveLight: surface.reactiveLight, pointer: surface.pointer, hover: surface.hover, hovering: surface.hovering, trail: surface.trail }]]
+          ? [
+              [
+                ownerId,
+                {
+                  smoothed: new Map(surface.smoothed),
+                  reactiveLight: surface.reactiveLight,
+                  pointer: surface.pointer,
+                  hover: surface.hover,
+                  hovering: surface.hovering,
+                  trail: surface.trail,
+                },
+              ],
+            ]
           : [];
       }),
     );
@@ -182,7 +194,12 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
     for (const surface of surfaces) {
       const box = surface.canvas.getBoundingClientRect();
       const inside =
-        box.width > 0 && box.height > 0 && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+        box.width > 0 &&
+        box.height > 0 &&
+        event.clientX >= box.left &&
+        event.clientX <= box.right &&
+        event.clientY >= box.top &&
+        event.clientY <= box.bottom;
       surface.hovering = inside;
       if (inside) {
         surface.pointer = { x: (event.clientX - box.left) / box.width, y: 1 - (event.clientY - box.top) / box.height };

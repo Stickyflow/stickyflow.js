@@ -25,7 +25,7 @@ export interface SceneStyle {
   pointerEvents?: 'none' | 'all' | 'stroke';
   // Milliseconds a change of position, size, color or opacity takes to show; the viewer patches the element in place, so the browser animates it.
   transition?: number;
-  shadow?:{ color: string; opacity: number; blur: number; dx: number; dy: number };
+  shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
   saturate?: number;

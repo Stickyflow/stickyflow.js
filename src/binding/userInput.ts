@@ -33,7 +33,12 @@ function writeBack(state: RuntimeState, binding: BoundProperty, value: Component
 // The second value of a component that holds two, such as the upper end of a range.
 function changeValueEnd(state: RuntimeState, id: string, next: number): boolean {
   const component = findComponent(state.input, id);
-  if (!component || !isGenericComponent(component) || component.properties.valueEnd === next || isComponentDisabled(state.input, id)) {
+  if (
+    !component ||
+    !isGenericComponent(component) ||
+    component.properties.valueEnd === next ||
+    isComponentDisabled(state.input, id)
+  ) {
     return false;
   }
   const binding = valueBinding(state, id, 'valueEnd');
@@ -52,7 +57,12 @@ function changeValueEnd(state: RuntimeState, id: string, next: number): boolean 
   return true;
 }
 
-export function changeComponentValue(state: RuntimeState, id: string, next: ComponentValue, property: 'value' | 'valueEnd' = 'value'): boolean {
+export function changeComponentValue(
+  state: RuntimeState,
+  id: string,
+  next: ComponentValue,
+  property: 'value' | 'valueEnd' = 'value',
+): boolean {
   if (property === 'valueEnd') {
     return typeof next === 'number' && changeValueEnd(state, id, next);
   }
@@ -87,7 +97,13 @@ const grabbed = new WeakMap<RuntimeState, Map<string, 'start' | 'end'>>();
 const within = (value: number): number => Math.min(1, Math.max(0, value));
 
 // How far along its range a slider is when the pointer is at a fraction of its width and of its height.
-function slideAlong(properties: Record<string, ComponentValue>, width: number, height: number, x: number, y: number): number {
+function slideAlong(
+  properties: Record<string, ComponentValue>,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+): number {
   const vertical = properties.direction === 'vertical';
   const length = vertical ? height : width;
   const reach = sliderReach(properties.variant, vertical ? width : height);
@@ -96,7 +112,13 @@ function slideAlong(properties: Record<string, ComponentValue>, width: number, h
 }
 
 // How far round its range a knob is when the pointer is at a fraction of its width and of its height.
-function turnAlong(properties: Record<string, ComponentValue>, width: number, height: number, x: number, y: number): number {
+function turnAlong(
+  properties: Record<string, ComponentValue>,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+): number {
   const start = (Number(properties.start ?? 225) * Math.PI) / 180;
   const sweep = (Number(properties.sweep ?? 270) * Math.PI) / 180;
   const gap = TAU - sweep;

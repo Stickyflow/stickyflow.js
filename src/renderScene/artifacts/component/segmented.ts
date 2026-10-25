@@ -49,7 +49,13 @@ export function buildSegmented(component: GenericComponent, index: number): Rend
     const area = { x: box.x + inset + position * cellWidth, width: cellWidth, ...cell };
     const color = ink(component, textProperty(component, position === active ? 'activeTextColor' : 'textColor'));
     nodes.push(
-      labelText(component, `option-${position}`, area, { text: option, color, fontSize: numberProperty(component, 'fontSize'), align: 'center' }, box.order + 0.3),
+      labelText(
+        component,
+        `option-${position}`,
+        area,
+        { text: option, color, fontSize: numberProperty(component, 'fontSize'), align: 'center' },
+        box.order + 0.3,
+      ),
     );
   });
   return nodes;

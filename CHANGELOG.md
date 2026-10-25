@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-25
+
 ### Added
 
 - The components `slider`, `progress` and `segmented`. A `slider` takes a value between `min` and `max` from the pointer, in steps of `step` if set. A `progress` shows a value as a bar or, with `variant: "ring"`, as a ring, and can write the share or the value into itself with `display`. A `segmented` shows the labels of `options`, separated by commas, and its value is the number of the chosen one, counted from 0.
@@ -259,4 +261,5 @@ First versioned release. Not yet published to npm.
   across machines. Now a locale-independent code-point compare.
 
 [Unreleased]: https://github.com/D-Queck/stickyflow.js/compare/v0.1.0...HEAD
+[0.7.0]: https://github.com/D-Queck/stickyflow.js/releases/tag/v0.7.0
 [0.1.0]: https://github.com/D-Queck/stickyflow.js/releases/tag/v0.1.0

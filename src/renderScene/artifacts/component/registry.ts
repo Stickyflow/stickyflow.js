@@ -3,11 +3,11 @@ import type { RenderNode } from '../../scene';
 import { buildRollingNumber, buildRuler, buildTickScale } from './builtIn';
 import { buildButton } from './button';
 import { buildCheckbox } from './checkbox';
-import { buildSwitch } from './switch';
 import { buildKnob } from './knob';
 import { buildProgress } from './progress';
 import { buildSegmented } from './segmented';
 import { buildSlider } from './slider';
+import { buildSwitch } from './switch';
 import { buildToggleButton } from './toggleButton';
 
 export type ComponentBuilder = (component: Component, index: number) => RenderNode[];
