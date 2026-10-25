@@ -80,6 +80,7 @@ export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
     pointer: { x: 0.5, y: 0.5 },
     hovering: false,
     hover: 0,
+    trail: [],
     backdropTexture: usesBackdrop ? transparentTexture(gl) : undefined,
     backdropOrigin: [0, 0],
     backdropScale: [1, 1],

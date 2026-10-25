@@ -32,6 +32,7 @@ export function applyBackdrop(surface: Surface, backdrop: ShaderBackdrop): void 
 }
 
 const MAX_SURFACE_PIXELS = 2560;
+const TRAIL_LENGTH = 16;
 
 export function renderSurface(surface: Surface, seconds: number): void {
   const { canvas, gl, parameters } = surface;
@@ -83,6 +84,18 @@ export function renderSurface(surface: Surface, seconds: number): void {
   surface.hover += ((surface.hovering ? 1 : 0) - surface.hover) * (1 - Math.exp(-elapsed / 0.18));
   uniform2f(surface, 'uPointer', [surface.pointer.x, surface.pointer.y]);
   uniform1f(surface, 'uHover', surface.hover);
+  // The trail: where the pointer has been, and how much of it is left. `trail` is how many seconds a place takes to fade out.
+  const fade = number(parameters.trail, 0);
+  const places = new Float32Array(TRAIL_LENGTH * 3);
+  if (fade > 0) {
+    surface.trail.slice(-TRAIL_LENGTH).forEach((place, index) => {
+      places.set([place.x, place.y, Math.exp(-Math.max(seconds - place.at, 0) / fade)], index * 3);
+    });
+  }
+  const trail = gl.getUniformLocation(surface.program, 'uWake[0]');
+  if (trail) {
+    gl.uniform3fv(trail, places);
+  }
   if (surface.reactiveLight) {
     uniform1f(surface, 'uLightX', surface.reactiveLight.x);
     uniform1f(surface, 'uLightY', surface.reactiveLight.y);

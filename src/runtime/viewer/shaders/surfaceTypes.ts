@@ -20,6 +20,8 @@ export interface Surface {
   pointer: { x: number; y: number };
   hovering: boolean;
   hover: number;
+  // Where the pointer has been, newest last, for a shader that lets the places it has been dim down. `at` is on the clock of the surface.
+  trail: Array<{ x: number; y: number; at: number }>;
   lastSeconds?: number;
   reactiveLight?: {
     x: number;

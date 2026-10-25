@@ -15,6 +15,9 @@ export interface ShaderSurfaceHandle {
 }
 
 const RECAPTURE_DELAY_MS = 120;
+// A new place of the trail after this many seconds of movement, and as many places as the shaders read.
+const TRAIL_SPACING = 0.055;
+const TRAIL_LENGTH = 16;
 
 function capturePngs(svg: SVGSVGElement, surfaces: Surface[], seconds: number): Array<string | undefined> {
   const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
@@ -136,7 +139,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       surfaces.flatMap(surface => {
         const ownerId = surface.owner.getAttribute('data-sf-id');
         return ownerId
-          ? [[ownerId, { smoothed: new Map(surface.smoothed), reactiveLight: surface.reactiveLight, pointer: surface.pointer, hover: surface.hover, hovering: surface.hovering }]]
+          ? [[ownerId, { smoothed: new Map(surface.smoothed), reactiveLight: surface.reactiveLight, pointer: surface.pointer, hover: surface.hover, hovering: surface.hovering, trail: surface.trail }]]
           : [];
       }),
     );
@@ -152,6 +155,7 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
         surface.pointer = previous.pointer;
         surface.hover = previous.hover;
         surface.hovering = previous.hovering;
+        surface.trail = previous.trail;
       }
       return surface ? [surface] : [];
     });
@@ -182,6 +186,14 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
       surface.hovering = inside;
       if (inside) {
         surface.pointer = { x: (event.clientX - box.left) / box.width, y: 1 - (event.clientY - box.top) / box.height };
+        const now = clock.now();
+        const last = surface.trail[surface.trail.length - 1];
+        if (!last || now - last.at >= TRAIL_SPACING) {
+          surface.trail.push({ ...surface.pointer, at: now });
+          if (surface.trail.length > TRAIL_LENGTH) {
+            surface.trail.shift();
+          }
+        }
       }
     }
   };
