@@ -36,7 +36,9 @@ export const solid = (color: string) => ({ kind: 'solid', color }) as const;
 export const ink = (component: GenericComponent, color: string): string => (component.disabled ? DISABLED_INK : color);
 
 export function fade(component: GenericComponent, style: SceneStyle): SceneStyle {
-  return component.disabled ? { ...style, opacity: 0.4 } : style;
+  const animate = Number(component.properties.animate ?? 0);
+  const shown = component.disabled ? { ...style, opacity: 0.4 } : style;
+  return animate > 0 ? { ...shown, transition: animate } : shown;
 }
 
 export function hitArea(component: GenericComponent, box: ControlBox): RenderNode {

@@ -54,6 +54,10 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   if (style.pointerEvents) {
     attrs.push(`pointer-events="${style.pointerEvents}"`);
   }
+  if (style.transition && style.transition > 0) {
+    const time = `${num(style.transition)}ms ease`;
+    attrs.push(`style="transition: x ${time}, y ${time}, width ${time}, height ${time}, cx ${time}, cy ${time}, rx ${time}, ry ${time}, fill ${time}, stroke ${time}, stroke-width ${time}, stroke-dasharray ${time}, opacity ${time}"`);
+  }
 }
 
 function elementSize(node: object): number | undefined {

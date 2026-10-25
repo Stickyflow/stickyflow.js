@@ -1,4 +1,5 @@
 import type { BindingRuntime } from '../../binding';
+import { getComponentDescriptor } from '../../model/component';
 import { connectKeyboard } from './connectKeyboard';
 import type { Viewer } from './types';
 
@@ -83,6 +84,25 @@ function trackScales(wiring: Wiring, event: PointerEvent): void {
   }
 }
 
+// A slider or a row of options takes its value from where along its width the pointer is.
+function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
+  const { runtime, svg } = wiring;
+  const kind = getComponentDescriptor(runtime.graph.elements.get(id)?.componentType)?.interaction;
+  if (kind !== 'slide' && kind !== 'pick') {
+    return;
+  }
+  const node = svg.querySelector(`[data-sf-primary][data-sf-id="${CSS.escape(id)}"]`);
+  if (!node) {
+    return;
+  }
+  const box = node.getBoundingClientRect();
+  const inset = kind === 'slide' ? box.height / 2 : 0;
+  const span = box.width - inset * 2;
+  if (span > 0) {
+    runtime.slide(id, Math.min(1, Math.max(0, (event.clientX - box.left - inset) / span)));
+  }
+}
+
 function updateHover(wiring: Wiring, event: PointerEvent): void {
   const { runtime, svg, options, session } = wiring;
   const over =
@@ -116,6 +136,7 @@ function pressStart(wiring: Wiring, event: PointerEvent): void {
   session.active = id;
   trackScales(wiring, event);
   runtime.press(id);
+  driveValue(wiring, id, event);
   runtime.drag(id);
 }
 
@@ -126,6 +147,7 @@ function pressMove(wiring: Wiring, event: PointerEvent): void {
     return;
   }
   trackScales(wiring, event);
+  driveValue(wiring, session.active, event);
   runtime.drag(session.active);
 }
 

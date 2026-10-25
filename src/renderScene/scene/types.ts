@@ -23,7 +23,9 @@ export interface SceneStyle {
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
   pointerEvents?: 'none' | 'all' | 'stroke';
-  shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
+  // Milliseconds a change of position, size, color or opacity takes to show; the viewer patches the element in place, so the browser animates it.
+  transition?: number;
+  shadow?:{ color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
   saturate?: number;

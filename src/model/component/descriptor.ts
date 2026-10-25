@@ -4,7 +4,7 @@ export type ComponentValueType = 'number' | 'string' | 'boolean';
 
 export type ComponentValue = number | string | boolean;
 
-export type ComponentInteraction = 'none' | 'toggle' | 'press' | 'scale';
+export type ComponentInteraction = 'none' | 'toggle' | 'press' | 'scale' | 'slide' | 'pick';
 
 export interface ComponentValueDescriptor {
   type: ComponentValueType;

@@ -4,6 +4,9 @@ import { buildRollingNumber, buildRuler, buildTickScale } from './builtIn';
 import { buildButton } from './button';
 import { buildCheckbox } from './checkbox';
 import { buildSwitch } from './switch';
+import { buildProgress } from './progress';
+import { buildSegmented } from './segmented';
+import { buildSlider } from './slider';
 import { buildToggleButton } from './toggleButton';
 
 export type ComponentBuilder = (component: Component, index: number) => RenderNode[];
@@ -21,6 +24,9 @@ const builders = new Map<ComponentType, ComponentBuilder>([
   ['checkbox', asComponentBuilder(buildCheckbox)],
   ['toggleButton', asComponentBuilder(buildToggleButton)],
   ['button', asComponentBuilder(buildButton)],
+  ['slider', asComponentBuilder(buildSlider)],
+  ['progress', asComponentBuilder(buildProgress)],
+  ['segmented', asComponentBuilder(buildSegmented)],
 ]);
 
 export function registerComponentBuilder(type: ComponentType, builder: ComponentBuilder): () => void {

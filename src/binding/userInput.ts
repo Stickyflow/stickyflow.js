@@ -1,5 +1,5 @@
-import { type ComponentValue, getComponentDescriptor } from '../model/component';
-import { isComponentDisabled, writeComponentValue } from './applyValue';
+import { type ComponentValue, getComponentDescriptor, isGenericComponent } from '../model/component';
+import { findComponent, isComponentDisabled, writeComponentValue } from './applyValue';
 import type { MutableDataSource } from './dataSource';
 import { markDirty, schedule } from './evaluation';
 import { dispatch, setElementState } from './handlers';
@@ -53,6 +53,33 @@ export function changeComponentValue(state: RuntimeState, id: string, next: Comp
   dispatch(state, id, CHANGE_EVENT);
   schedule(state);
   return true;
+}
+
+// A pointer at a fraction of the width of a slider or a row of options becomes the value of the component.
+export function slideElement(state: RuntimeState, id: string, fraction: number): void {
+  const component = findComponent(state.input, id);
+  if (!component || !isGenericComponent(component)) {
+    return;
+  }
+  const kind = descriptorOf(state, id)?.interaction;
+  const { properties } = component;
+  if (kind === 'pick') {
+    const count = String(properties.options ?? '')
+      .split(',')
+      .filter(option => option.trim()).length;
+    if (count > 0) {
+      changeComponentValue(state, id, Math.min(count - 1, Math.floor(fraction * count)));
+    }
+    return;
+  }
+  const min = Number(properties.min ?? 0);
+  const max = Number(properties.max ?? 100);
+  const step = Number(properties.step ?? 0);
+  let value = min + fraction * (max - min);
+  if (step > 0) {
+    value = min + Math.round((value - min) / step) * step;
+  }
+  changeComponentValue(state, id, Number(Math.min(max, Math.max(min, value)).toFixed(6)));
 }
 
 function reactToActivation(state: RuntimeState, id: string): void {

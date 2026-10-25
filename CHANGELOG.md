@@ -19,6 +19,9 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- The components `slider`, `progress` and `segmented`. A `slider` takes a value between `min` and `max` from the pointer, in steps of `step` if set. A `progress` shows a value as a bar or, with `variant: "ring"`, as a ring, and can write the share or the value into itself with `display`. A `segmented` shows the labels of `options`, separated by commas, and its value is the number of the chosen one, counted from 0.
+- The component interactions `slide` and `pick`, and `runtime.slide(id, fraction)` on a binding runtime, which turns a position along the width of a component into its value.
+- `animate` on `switch`, `checkbox`, `toggleButton` and `button`, and on the new components. It is the number of milliseconds a change of position, size, color or opacity takes to show. The default is 160 for the first four, 0 for `slider`, 300 for `progress` and 200 for `segmented`. A scene style can carry the same as `transition`, and the viewer patches the elements in place, so the browser does the animation.
 - The shader program `reactivePanel` draws a rounded panel that can send light into the scene and receive it. A panel with `emission` lights the edges of the panels near it on the side that faces it. `reception` sets how much a panel takes in, `emitterFill`, `grain` and `grainScale` light and texture the inside of an emitter, and `glowRadius`, `borderWidth` and `cornerRadius` shape the glow and the border.
 - `surfacePadding` on a `Shader` adds room around the shape for an outer glow, in canvas units. It is not a parameter of the program.
 - A shader on a `rectangle` or a `rounded_rectangle` is drawn when its program draws a rectangle of its own. Today that is `reactivePanel`. Every other program still needs a `circle` or an `oval`.

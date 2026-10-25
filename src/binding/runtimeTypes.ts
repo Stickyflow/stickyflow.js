@@ -40,6 +40,7 @@ export interface BindingRuntime {
   release(id: string, tapped: boolean): void;
   activate(id: string): void;
   change(id: string, value: ComponentValue): boolean;
+  slide(id: string, fraction: number): void;
   drag(id: string, pointer?: number): void;
   tick(seconds: number): void;
   flush(): RenderResult | null;
