@@ -1,7 +1,7 @@
 import type { Chart } from '../../../model/chart';
 import type { Bounds } from '../../scene';
 import { boxBounds, finite } from '../../scene';
-import { isHorizontalBar } from '../primitives';
+import { isHorizontalBar, labelTilt, tiltedLabelRoom } from '../primitives';
 import { isStackedLegendPosition, LEGEND_COLUMN_GAP, LEGEND_ROW_HEIGHT, stackedLegendColumnWidth } from './legend';
 
 export const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'field']);
@@ -69,6 +69,21 @@ function leftLabelWidth(chart: Chart): number {
   return chart.axisY.label ? 60 : 46;
 }
 
+// Labels that stand up under the plot need more room than the one line they replace.
+function tiltedBottomRoom(chart: Chart): number {
+  const tilt = labelTilt(chart);
+  if (tilt <= 0) {
+    return 0;
+  }
+  const labels =
+    chart.chartType === 'bar' && !isHorizontalBar(chart)
+      ? ((chart.config as { categories?: string[] } | undefined)?.categories ?? [])
+      : chart.chartType === 'boxplot' && !isHorizontalBoxplot(chart)
+        ? chart.series.map(series => series.label || series.id)
+        : [];
+  return labels.length > 0 ? Math.max(0, tiltedLabelRoom(chart, labels, tilt) - 18) : 0;
+}
+
 export function decorations(chart: Chart): ChartLayout {
   const showLabels = chart.showAxisLabels !== false;
   const showLegend = chart.showLegend !== false;
@@ -101,7 +116,7 @@ export function decorations(chart: Chart): ChartLayout {
     : 12;
   const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
-  const padBottom = tick + basePadBottom + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
+  const padBottom = tick + basePadBottom + (showLabels ? tiltedBottomRoom(chart) : 0) + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
   const titleHeight = chart.title ? Math.max(44, 20 + finite(chart.titleSize, 14) * 1.6) : 0;
   const padTop = titleHeight || (legendAtTop && hasLegendItems ? 44 : 24);
 

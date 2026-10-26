@@ -53,6 +53,8 @@ export interface ChartBase {
   axisLineStyle?: 'solid' | 'dashed' | 'dotted';
   tickLength?: number;
   axisFontSize?: number;
+  // How far the labels along the axes stand up, from 0 (flat) to 90 (upright).
+  axisLabelAngle?: number;
   axisFontFamily?: string;
   showValueAxis?: boolean;
   categoryAlign?: 'center' | 'left' | 'inside';

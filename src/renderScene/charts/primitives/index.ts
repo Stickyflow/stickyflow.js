@@ -13,6 +13,7 @@ export {
 export { createVerticalErrorWhiskerNode, errorBarRange } from './errors';
 export { formatFieldValue } from './format';
 export { CATEGORY_LABEL_ROW, horizontalRows, isHorizontalBar, rowTop } from './horizontalBars';
+export { labelAboveFrame, labelBelowFrame, labelTilt, tiltedLabelRoom } from './labelTilt';
 export { linePathData } from './linePath';
 export type { PieGeometry, PiePoint, PieSliceAngles } from './pieShape';
 export {

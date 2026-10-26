@@ -86,6 +86,7 @@ function axesOf(
   | 'axisLineStyle'
   | 'tickLength'
   | 'axisFontSize'
+  | 'axisLabelAngle'
   | 'axisFontFamily'
   | 'showValueAxis'
   | 'categoryAlign'
@@ -98,6 +99,7 @@ function axesOf(
     axisLineStyle: p.axisLineStyle === 'dashed' || p.axisLineStyle === 'dotted' ? p.axisLineStyle : undefined,
     tickLength: numOf(p.tickLength),
     axisFontSize: numOf(p.axisFontSize),
+    axisLabelAngle: numOf(p.axisLabelAngle),
     axisFontFamily: p.axisFontFamily,
     showValueAxis: p.showValueAxis !== 'false',
     categoryAlign: p.categoryAlign === 'left' || p.categoryAlign === 'inside' ? p.categoryAlign : undefined,

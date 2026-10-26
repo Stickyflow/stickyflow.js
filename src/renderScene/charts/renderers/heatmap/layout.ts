@@ -1,6 +1,6 @@
 import { finite } from '../../../scene';
 import { estimateTextWidth } from '../../../scene/textLayout';
-import { axisBands, DEFAULT_HEATMAP_ZONES } from '../../primitives';
+import { axisBands, DEFAULT_HEATMAP_ZONES, labelTilt, tiltedLabelRoom } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapGrid, HeatmapLayout, HeatmapReservedSpace } from './types';
 
@@ -36,9 +36,16 @@ function heatmapReservedSpace(context: ChartRenderContext): HeatmapReservedSpace
   );
   return {
     rowHeaders: context.showLabels ? Math.min(96, longestLabel + 12) : 0,
-    columnHeaders: context.showLabels ? 24 : 0,
+    columnHeaders: context.showLabels ? columnHeaderRoom(context) : 0,
     legend: context.showLegend ? 38 : 0,
   };
+}
+
+// Flat labels need one line; tilted ones need what they stand up to.
+function columnHeaderRoom(context: ChartRenderContext): number {
+  const { chart } = context;
+  const tilt = labelTilt(chart);
+  return tilt > 0 ? Math.min(160, tiltedLabelRoom(chart, heatmapColumns(context), tilt) + 8) : 24;
 }
 
 function createHeatmapGrid(

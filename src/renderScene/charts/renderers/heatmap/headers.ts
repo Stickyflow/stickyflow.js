@@ -1,6 +1,6 @@
 import type { ChartSeries } from '../../../../model/chart';
 import type { RenderNode } from '../../../scene';
-import { chartText } from '../../primitives';
+import { chartText, labelAboveFrame, labelTilt } from '../../primitives';
 import type { ChartRenderContext } from '../types';
 import type { HeatmapLayout } from './types';
 
@@ -51,6 +51,14 @@ function createColumnHeader(
   columnIndex: number,
 ): RenderNode {
   const { chart, plot, bounds, nextOrder } = context;
+  const tilt = labelTilt(chart);
+  if (tilt > 0) {
+    const { frame, rotation } = labelAboveFrame(chart, label, tilt, {
+      x: layout.grid.x + (columnIndex + 0.5) * layout.grid.cellWidth,
+      y: layout.grid.y - 4,
+    });
+    return chartText({ id: `chart-heatmap-col-${chart.id}-${columnIndex}`, order: nextOrder(), bounds, frame, text: label, chart, align: 'left', rotation });
+  }
   return chartText({
     id: `chart-heatmap-col-${chart.id}-${columnIndex}`,
     order: nextOrder(),
