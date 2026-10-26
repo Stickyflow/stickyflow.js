@@ -16,7 +16,7 @@ export function renderHeatmapLegend(context: ChartRenderContext, layout: Heatmap
   const barX = layout.grid.x;
   const barWidth = layout.grid.width;
   const labelHeight = layout.fontSize + 2;
-  const barY = layout.grid.y + layout.grid.height + 6;
+  const barY = layout.grid.y + layout.grid.height + layout.legendGap;
   const barBounds = boxBounds({ x: barX, y: barY, width: barWidth, height: BAR_HEIGHT });
 
   return [

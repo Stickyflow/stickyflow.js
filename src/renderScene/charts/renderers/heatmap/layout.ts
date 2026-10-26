@@ -15,10 +15,16 @@ export function createHeatmapLayout(context: ChartRenderContext): HeatmapLayout 
     bands: axisBands(chart.axisY),
     zones: chart.config?.zones?.length ? chart.config.zones : DEFAULT_HEATMAP_ZONES,
     fontSize: Math.max(9, finite(chart.fontSize, 12)),
+    headerFontSize: headerFontSize(chart),
+    legendGap: legendGap(chart),
     reservedSpace,
     grid: createHeatmapGrid(context, reservedSpace, columns.length),
   };
 }
+
+export const headerFontSize = (chart: ChartRenderContext['chart']) => Math.max(9, finite(chart.axisFontSize ?? chart.fontSize, 12));
+
+export const legendGap = (chart: ChartRenderContext['chart']) => Math.min(80, Math.max(0, finite(chart.legendGap, 6)));
 
 function heatmapColumns(context: ChartRenderContext): string[] {
   const { chart } = context;
@@ -29,15 +35,16 @@ function heatmapColumns(context: ChartRenderContext): string[] {
 
 function heatmapReservedSpace(context: ChartRenderContext): HeatmapReservedSpace {
   const { chart } = context;
-  const fontSize = Math.max(9, finite(chart.fontSize, 12));
+  const fontSize = headerFontSize(chart);
   const longestLabel = chart.series.reduce(
     (max, series) => Math.max(max, estimateTextWidth(series.label ?? '', fontSize, false)),
     0,
   );
   return {
-    rowHeaders: context.showLabels ? Math.min(96, longestLabel + 12) : 0,
+    // The names get the room they ask for, or as much as the longest needs. They never take more than most of the plot.
+    rowHeaders: context.showLabels ? Math.min(context.plot.width * 0.7, chart.axisLabelSpace && chart.axisLabelSpace > 0 ? chart.axisLabelSpace : longestLabel + 12) : 0,
     columnHeaders: context.showLabels ? columnHeaderRoom(context) : 0,
-    legend: context.showLegend ? 38 : 0,
+    legend: context.showLegend ? 32 + legendGap(chart) : 0,
   };
 }
 
@@ -45,7 +52,7 @@ function heatmapReservedSpace(context: ChartRenderContext): HeatmapReservedSpace
 function columnHeaderRoom(context: ChartRenderContext): number {
   const { chart } = context;
   const tilt = labelTilt(chart);
-  return tilt > 0 ? Math.min(160, tiltedLabelRoom(chart, heatmapColumns(context), tilt) + 8) : 24;
+  return tilt > 0 ? Math.min(context.plot.height * 0.4, tiltedLabelRoom(chart, heatmapColumns(context), tilt) + 8) : 24;
 }
 
 function createHeatmapGrid(

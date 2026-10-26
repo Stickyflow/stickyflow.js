@@ -57,6 +57,9 @@ function barCategoryLabelWidth(chart: Chart): number {
 }
 
 function leftLabelWidth(chart: Chart): number {
+  if (chart.axisLabelSpace && chart.axisLabelSpace > 0 && (isHorizontalBoxplot(chart) || isHorizontalBar(chart))) {
+    return chart.axisLabelSpace;
+  }
   if (isHorizontalBoxplot(chart)) {
     return boxplotCategoryLabelWidth(chart);
   }

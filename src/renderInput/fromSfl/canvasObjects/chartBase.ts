@@ -87,6 +87,7 @@ function axesOf(
   | 'tickLength'
   | 'axisFontSize'
   | 'axisLabelAngle'
+  | 'axisLabelSpace'
   | 'axisFontFamily'
   | 'showValueAxis'
   | 'categoryAlign'
@@ -100,6 +101,7 @@ function axesOf(
     tickLength: numOf(p.tickLength),
     axisFontSize: numOf(p.axisFontSize),
     axisLabelAngle: numOf(p.axisLabelAngle),
+    axisLabelSpace: numOf(p.axisLabelSpace),
     axisFontFamily: p.axisFontFamily,
     showValueAxis: p.showValueAxis !== 'false',
     categoryAlign: p.categoryAlign === 'left' || p.categoryAlign === 'inside' ? p.categoryAlign : undefined,
@@ -120,9 +122,10 @@ function textOf(
   };
 }
 
-function legendOf(p: Props): Pick<ChartBase, 'legendColor' | 'showLegend' | 'legendPosition'> {
+function legendOf(p: Props): Pick<ChartBase, 'legendColor' | 'legendGap' | 'showLegend' | 'legendPosition'> {
   return {
     legendColor: p.legendColor,
+    legendGap: numOf(p.legendGap),
     showLegend: p.showLegend === 'true',
     legendPosition: legendPositionOf(p.legendPosition),
   };

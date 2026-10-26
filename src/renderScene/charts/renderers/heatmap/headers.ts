@@ -28,12 +28,13 @@ function createRowHeader(
     bounds,
     frame: {
       x: plot.x,
-      y: layout.grid.y + rowIndex * layout.grid.cellHeight + layout.grid.cellHeight / 2 - layout.fontSize / 2,
+      y: layout.grid.y + rowIndex * layout.grid.cellHeight + layout.grid.cellHeight / 2 - layout.headerFontSize / 2,
       width: layout.reservedSpace.rowHeaders - 8,
-      height: layout.fontSize + 2,
+      height: layout.headerFontSize + 2,
     },
     text: series.label,
     chart,
+    role: 'axis',
   });
 }
 
@@ -57,7 +58,7 @@ function createColumnHeader(
       x: layout.grid.x + (columnIndex + 0.5) * layout.grid.cellWidth,
       y: layout.grid.y - 4,
     });
-    return chartText({ id: `chart-heatmap-col-${chart.id}-${columnIndex}`, order: nextOrder(), bounds, frame, text: label, chart, align: 'left', rotation });
+    return chartText({ id: `chart-heatmap-col-${chart.id}-${columnIndex}`, order: nextOrder(), bounds, frame, text: label, chart, align: 'left', rotation, role: 'axis' });
   }
   return chartText({
     id: `chart-heatmap-col-${chart.id}-${columnIndex}`,
@@ -67,10 +68,11 @@ function createColumnHeader(
       x: layout.grid.x + columnIndex * layout.grid.cellWidth,
       y: plot.y,
       width: layout.grid.cellWidth,
-      height: layout.fontSize + 2,
+      height: layout.headerFontSize + 2,
     },
     text: label,
     chart,
     align: 'center',
+    role: 'axis',
   });
 }

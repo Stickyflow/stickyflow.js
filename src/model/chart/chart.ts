@@ -48,6 +48,8 @@ export interface ChartBase {
   textColor?: string;
   axisLabelColor?: string;
   legendColor?: string;
+  // The space between the grid of a heatmap and its color bar, in pixels.
+  legendGap?: number;
   axisLineWidth?: number;
   axisLineColor?: string;
   axisLineStyle?: 'solid' | 'dashed' | 'dotted';
@@ -55,6 +57,8 @@ export interface ChartBase {
   axisFontSize?: number;
   // How far the labels along the axes stand up, from 0 (flat) to 90 (upright).
   axisLabelAngle?: number;
+  // The room for the names beside the data, in pixels. Left out, it is as much as the longest name needs.
+  axisLabelSpace?: number;
   axisFontFamily?: string;
   showValueAxis?: boolean;
   categoryAlign?: 'center' | 'left' | 'inside';
