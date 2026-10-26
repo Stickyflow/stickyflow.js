@@ -9,11 +9,10 @@ import {
   pxPerUnit,
 } from '../../dom';
 import { computeSnap, MOVE_ACTIVE_POINTS, nearestCandidates, snapIsometricDiagonal } from '../snapGeometry';
-import { isSnapDisabled, nearestIsometricLatticePoint, readIsometricSnapStep } from '../snapGrid';
+import { isSnapDisabled, nearestIsometricLatticePoint, readIsometricSnapStep, snapDistancePx } from '../snapGrid';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
 
-const SNAP_THRESHOLD_PX = 20;
 const GUIDE_OVERHANG = 10;
 
 export interface MoveDelta {
@@ -56,7 +55,7 @@ function snapIsometricMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: numbe
   }
   const excludedIds = new Set(drag.canvasObjects.map(canvasObject => canvasObject.owner.id));
   const candidates = findIsometricApexCandidates(svg, excludedIds);
-  const snap = snapIsometricDiagonal(apex, rawDx, rawDy, candidates, SNAP_THRESHOLD_PX / pxPerUnit(svg));
+  const snap = snapIsometricDiagonal(apex, rawDx, rawDy, candidates, snapDistancePx(svg) / pxPerUnit(svg));
   return snap ? { dx: snap.dx, dy: snap.dy, guides: [snap.guide] } : null;
 }
 
@@ -77,7 +76,7 @@ export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number,
   const excludedIds = new Set(drag.canvasObjects.map(canvasObject => canvasObject.owner.id));
   const candidates = nearestCandidates(leadBounds, findSnapCandidateBounds(svg, excludedIds));
   const snap = computeSnap(leadBounds, candidates, {
-    threshold: SNAP_THRESHOLD_PX / pxPerUnit(svg),
+    threshold: snapDistancePx(svg) / pxPerUnit(svg),
     activeX: MOVE_ACTIVE_POINTS,
     activeY: MOVE_ACTIVE_POINTS,
     guideOverhang: GUIDE_OVERHANG,

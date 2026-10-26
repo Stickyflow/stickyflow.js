@@ -7,7 +7,16 @@ export function isSnapDisabled(svg: SVGSVGElement): boolean {
   return svg.getAttribute(SNAP_ATTR) === 'off';
 }
 
-const ISOMETRIC_GRID = /^isometric:(\d+(?:\.\d+)?)$/;
+export const SNAP_DISTANCE_ATTR = 'data-sf-snap-distance';
+const DEFAULT_SNAP_DISTANCE_PX = 20;
+
+// How close, in screen pixels, a shape has to come to another before it snaps. The host can set it as a number on the svg.
+export function snapDistancePx(svg: SVGSVGElement): number {
+  const value = Number(svg.getAttribute(SNAP_DISTANCE_ATTR));
+  return value > 0 ? value : DEFAULT_SNAP_DISTANCE_PX;
+}
+
+const ISOMETRIC_GRID =/^isometric:(\d+(?:\.\d+)?)$/;
 
 export function readIsometricSnapStep(svg: SVGSVGElement): number | null {
   const match = ISOMETRIC_GRID.exec(svg.getAttribute(SNAP_GRID_ATTR) ?? '');

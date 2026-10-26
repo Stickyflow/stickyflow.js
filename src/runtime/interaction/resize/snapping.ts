@@ -3,11 +3,10 @@ import type { GuideLine } from '../../dom';
 import { findSnapCandidateBounds, pxPerUnit } from '../../dom';
 import { hasDerivedHeight } from '../geometryRoles';
 import { applyAxisSnap, computeSnap, nearestCandidates, resizeActivePoints } from '../snapGeometry';
-import { isSnapDisabled } from '../snapGrid';
+import { isSnapDisabled, snapDistancePx } from '../snapGrid';
 import { HANDLE_AXES, keepTextInside, lockDerivedHeight, MIN_SIZE, resizedBounds } from './geometry';
 import type { ResizeDragState } from './state';
 
-const SNAP_THRESHOLD_PX = 20;
 const GUIDE_OVERHANG = 10;
 
 export function snapResize(
@@ -30,7 +29,7 @@ export function snapResize(
   const axes = HANDLE_AXES[drag.handle];
   const candidates = nearestCandidates(proposed, findSnapCandidateBounds(svg, new Set([drag.owner.id])));
   const snap = computeSnap(proposed, candidates, {
-    threshold: SNAP_THRESHOLD_PX / pxPerUnit(svg),
+    threshold: snapDistancePx(svg) / pxPerUnit(svg),
     activeX: resizeActivePoints(axes.x),
     activeY: resizeActivePoints(axes.y),
     guideOverhang: GUIDE_OVERHANG,
