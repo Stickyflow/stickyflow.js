@@ -15,6 +15,35 @@ export const HANDLE_AXES: Record<ResizeHandle, { x: 'left' | 'right' | 'none'; y
   left: { x: 'left', y: 'none' },
 };
 
+// Charts that are drawn round keep their proportions on their own; every shape does while Shift is held.
+const ROUND_CHARTS: ReadonlySet<string> = new Set(['pie', 'radar', 'radial', 'radialBar', 'polarArea']);
+
+export function keepsProportions(drag: { owner: { role: string }; kind: string | null }, shift: boolean): boolean {
+  return shift || (drag.owner.role === 'chart' && drag.kind !== null && ROUND_CHARTS.has(drag.kind));
+}
+
+// The bounds with the proportions of the start; the edge or corner opposite the handle stays where it is.
+export function lockAspect(bounds: Rect, start: Rect, handle: ResizeHandle): Rect {
+  const ratio = start.width / start.height;
+  const axes = HANDLE_AXES[handle];
+  let width = bounds.width;
+  let height = bounds.height;
+  if (axes.x === 'none') {
+    width = height * ratio;
+  } else if (axes.y === 'none') {
+    height = width / ratio;
+  } else if (width / start.width > height / start.height) {
+    height = width / ratio;
+  } else {
+    width = height * ratio;
+  }
+  width = Math.max(MIN_SIZE, width);
+  height = Math.max(MIN_SIZE, height);
+  const x = axes.x === 'left' ? start.x + start.width - width : axes.x === 'none' ? start.x + (start.width - width) / 2 : start.x;
+  const y = axes.y === 'top' ? start.y + start.height - height : axes.y === 'none' ? start.y + (start.height - height) / 2 : start.y;
+  return { x, y, width, height };
+}
+
 export function resizedBounds(start: Rect, handle: ResizeHandle, pointer: { x: number; y: number }): Rect {
   const axes = HANDLE_AXES[handle];
   let x = start.x,

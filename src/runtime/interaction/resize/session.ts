@@ -1,7 +1,7 @@
 import { clearAlignmentGuides, isCameraGesture, updateAlignmentGuides } from '../../dom';
 import type { Emitter } from '../events';
 import { emitResizeCompletion } from './completion';
-import { clampResizeToChildren } from './geometry';
+import { clampResizeToChildren, keepsProportions, lockAspect } from './geometry';
 import { resizePointerPosition } from './pointer';
 import { applyResizePreview } from './preview';
 import { snapResize } from './snapping';
@@ -34,7 +34,9 @@ export class ResizeSession {
     }
 
     drag.moved = true;
-    const { bounds, guides } = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event));
+    const snapped = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event));
+    const bounds = keepsProportions(drag, event.shiftKey) ? lockAspect(snapped.bounds, drag.startBounds, drag.handle) : snapped.bounds;
+    const { guides } = snapped;
     applyResizePreview(drag, clampResizeToChildren(bounds, drag.childrenBounds));
     updateAlignmentGuides(this.#svg, guides, RESIZE_GUIDE_COLOR);
   };
@@ -52,7 +54,8 @@ export class ResizeSession {
       return;
     }
 
-    const { bounds } = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event));
+    const snapped = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event)).bounds;
+    const bounds = keepsProportions(drag, event.shiftKey) ? lockAspect(snapped, drag.startBounds, drag.handle) : snapped;
     emitResizeCompletion(this.#emitter, drag, clampResizeToChildren(bounds, drag.childrenBounds));
   };
 
