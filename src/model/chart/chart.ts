@@ -59,10 +59,21 @@ export interface ChartBase {
   axisLabelAngle?: number;
   // The room for the names beside the data, in pixels. Left out, it is as much as the longest name needs.
   axisLabelSpace?: number;
+  // How the names beside a heatmap sit in their room: against the data (right) or at the outer edge (left).
+  // Which side of a heatmap the names of its rows and of its columns, and its color bar, sit at.
+  rowLabelSide?: 'left' | 'right';
+  columnLabelSide?: 'top' | 'bottom';
+  legendSide?: 'top' | 'bottom' | 'left' | 'right';
+  // The distance between the labels and the graphic, in pixels: along the x axis and along the y axis.
+  xLabelGap?: number;
+  yLabelGap?: number;
+  axisLabelAlign?: 'left' | 'center' | 'right';
   axisFontFamily?: string;
   showValueAxis?: boolean;
   categoryAlign?: 'center' | 'left' | 'inside';
   titleSize?: number;
+  // Where the title stands over the chart.
+  titleAlign?: 'left' | 'center' | 'right';
   titleWeight?: 'normal' | 'bold';
   titleColor?: string;
   gridAxes?: 'both' | 'x' | 'y';

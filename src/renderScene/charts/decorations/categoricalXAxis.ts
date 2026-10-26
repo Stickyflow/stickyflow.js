@@ -3,7 +3,7 @@ import type { RenderNode } from '../../scene';
 import { finite } from '../../scene';
 import { barCategoryCount, chartText, labelBelowFrame, labelTilt } from '../primitives';
 import { categoryProp, seriesLabelProp } from '../propPath';
-import { type ChartLayout, tickOffset } from './layout';
+import { type ChartLayout, xLabelOffset } from './layout';
 
 function categoryLabels(chart: TypedChart, count: number): string[] {
   if (chart.config?.categories?.length) {
@@ -31,7 +31,7 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
     if (tilt > 0) {
       const text = labels[index] ?? String(index + 1);
-      const { frame, rotation } = labelBelowFrame(chart, text, tilt, { x: centerX, y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart) });
+      const { frame, rotation } = labelBelowFrame(chart, text, tilt, { x: centerX, y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart) });
       return {
         ...chartText({ role: 'axis', id: `chart-x-tick-${chart.id}-${index}`, order: order + index, bounds: layout.bounds, frame, text, chart, align: 'right', rotation }),
         prop: editable ? categoryProp(index) : undefined,
@@ -45,7 +45,7 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
         bounds: layout.bounds,
         frame: {
           x: left ? layout.plot.x + index * slotWidth + groupGap / 2 : centerX - slotWidth / 2,
-          y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
+          y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart),
           width: left ? slotWidth - groupGap : slotWidth,
           height: 18,
         },
@@ -67,7 +67,7 @@ export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, or
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
     if (tilt > 0) {
       const text = series.label || series.id;
-      const { frame, rotation } = labelBelowFrame(chart, text, tilt, { x: centerX, y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart) });
+      const { frame, rotation } = labelBelowFrame(chart, text, tilt, { x: centerX, y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart) });
       return {
         ...chartText({ role: 'axis', id: `chart-x-tick-${chart.id}-${index}`, order: order + index, bounds: layout.bounds, frame, text, chart, align: 'right', rotation }),
         prop: seriesLabelProp(series.id),
@@ -81,7 +81,7 @@ export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, or
         bounds: layout.bounds,
         frame: {
           x: centerX - slotWidth / 2,
-          y: layout.plot.y + layout.plot.height + 4 + tickOffset(chart),
+          y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart),
           width: slotWidth,
           height: 18,
         },

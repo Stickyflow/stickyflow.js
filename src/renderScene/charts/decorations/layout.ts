@@ -23,6 +23,15 @@ export function tickOffset(chart: Chart): number {
   return hasCartesianDecorations(chart) ? Math.max(0, finite(chart.tickLength, 0)) : 0;
 }
 
+// How far the labels stand from the plot: the length of the ticks and the distance that is asked for, along the x axis and along the y axis.
+export function xLabelOffset(chart: Chart): number {
+  return tickOffset(chart) + (hasCartesianDecorations(chart) ? Math.max(0, finite(chart.xLabelGap, 0)) : 0);
+}
+
+export function yLabelOffset(chart: Chart): number {
+  return tickOffset(chart) + (hasCartesianDecorations(chart) ? Math.max(0, finite(chart.yLabelGap, 0)) : 0);
+}
+
 function isHorizontalBoxplot(chart: Chart): boolean {
   return chart.chartType === 'boxplot' && chart.config?.orientation === 'horizontal';
 }
@@ -97,9 +106,10 @@ export function decorations(chart: Chart): ChartLayout {
   const sideColumnWidth = legendStacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0;
   const treemapSide = treemapSideLegendSide(chart, showLegend);
 
-  const tick = tickOffset(chart);
+  const tickX = xLabelOffset(chart);
+  const tickY = yLabelOffset(chart);
   const padLeft =
-    tick +
+    tickY +
     (showLabels ? leftLabelWidth(chart) : 12) +
     (legendPosition === 'bottomLeft' ? sideColumnWidth : 0) +
     (treemapSide === 'left' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
@@ -119,7 +129,7 @@ export function decorations(chart: Chart): ChartLayout {
     : 12;
   const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
-  const padBottom = tick + basePadBottom + (showLabels ? tiltedBottomRoom(chart) : 0) + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
+  const padBottom = tickX + basePadBottom + (showLabels ? tiltedBottomRoom(chart) : 0) + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
   const titleHeight = chart.title ? Math.max(44, 20 + finite(chart.titleSize, 14) * 1.6) : 0;
   const padTop = titleHeight || (legendAtTop && hasLegendItems ? 44 : 24);
 

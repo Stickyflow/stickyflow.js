@@ -24,6 +24,7 @@ export function buildChartTitle(
         frame: { x: plot.x, y: chart.y + 12, width: plot.width, height: 20 },
         text: chart.title,
         chart,
+        align: chart.titleAlign ?? 'left',
       }),
       ...(chart.titleColor ? { color: chart.titleColor } : {}),
       fontWeight: chart.titleWeight ?? 'bold',
