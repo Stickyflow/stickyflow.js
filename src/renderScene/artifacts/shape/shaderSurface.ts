@@ -3,7 +3,13 @@ import { rotatedBounds } from '../../scene';
 import type { ShapeRenderContext } from './types';
 
 // Programs that draw their own rectangle. Every other program still needs a circle or an oval.
-const RECT_PROGRAMS: ReadonlySet<string> = new Set(['reactivePanel', 'ledMatrix', 'lightBand', 'silkFolds']);
+const RECT_PROGRAMS: ReadonlySet<string> = new Set([
+  'reactivePanel',
+  'ledMatrix',
+  'lightBand',
+  'silkFolds',
+  'glowCard',
+]);
 
 function shaderMask(context: ShapeRenderContext): 'ellipse' | 'rect' | undefined {
   if (context.shape.shapeType === 'circle' || context.shape.shapeType === 'oval') {

@@ -5,6 +5,7 @@ import { eclipseOrbProgram } from './builtins/eclipseOrb';
 import { emberMatrixProgram } from './builtins/emberMatrix';
 import { emberSlitsProgram } from './builtins/emberSlits';
 import { glassRefractionProgram } from './builtins/glassRefraction';
+import { glowCardProgram } from './builtins/glowCard';
 import { halftoneHaloProgram } from './builtins/halftoneHalo';
 import { haloProgram } from './builtins/halo';
 import { ledMatrixProgram } from './builtins/ledMatrix';
@@ -49,6 +50,7 @@ const builtins = [
   ledMatrixProgram,
   lightBandProgram,
   silkFoldsProgram,
+  glowCardProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 

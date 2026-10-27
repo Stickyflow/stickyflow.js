@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The shader program `glowCard`, the surface of a card: dark glass with a thin edge and colored lights low in the card that curl like smoke, fade upward and turn white at the bottom edge, with grit in the lit parts. Parameters are `colorA`, `colorB`, `colorC`, `baseColor`, `glowHeight`, `glowSpread`, `core`, `rim`, `grain`, `warp`, `intensity`, `cornerRadius` and `speed`. It draws its own rectangle.
+
 ## [0.7.0] - 2026-10-25
 
 ### Added
