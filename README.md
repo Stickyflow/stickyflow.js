@@ -174,7 +174,7 @@ Binding and live input need only `stickyflow/binding` and `stickyflow/viewer`. E
 
 ## What it draws
 
-Shapes, links, frames, swimlanes, paths and text. Fifteen chart types. Isometric objects. A Repeat block puts many alike parts on a grid from a few lines. Shader surfaces and components. Data sources with bindings, and events with handlers, so a document can react to data and input.
+Shapes, links, frames, swimlanes, paths and text. Fifteen chart types. Isometric objects. A Repeat block puts many alike parts on a grid from a few lines. A Template describes a part once, and a Use sets it again with values of its own. Shader surfaces and components. Data sources with bindings, and events with handlers, so a document can react to data and input.
 
 ## Principles
 

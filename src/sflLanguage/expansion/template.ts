@@ -1,5 +1,9 @@
 import type { SflBlock, SflEntry } from '../ast';
-import { fail, instance, numbersOf, Random, resolveValue, type Scope } from './repeat';
+import { resolveValue } from './evaluation';
+import { instance } from './instance';
+import { numbersOf } from './properties';
+import { Random } from './random';
+import { fail, type Scope } from './scope';
 
 // A `Template` describes blocks once, and every `Use` of it makes them again at another place, with values of its own. This step turns every
 // Use into those plain blocks and takes the Templates out, so the rest of the package never sees either. The source text is not touched.
@@ -38,11 +42,19 @@ function collect(blocks: SflBlock[], into: Map<string, SflBlock>): void {
   }
 }
 
-interface Budget {
-  blocks: number;
+// The number of blocks that all the Uses of a document make, so a Template that makes more and more cannot fill the memory.
+class BlockBudget {
+  private made = 0;
+
+  take(count: number, scope: Scope): void {
+    this.made += count;
+    if (this.made > MAX_BLOCKS) {
+      fail(scope, 'too many blocks');
+    }
+  }
 }
 
-function expandUse(use: SflBlock, templates: Map<string, SflBlock>, depth: number, budget: Budget): SflBlock[] {
+function expandUse(use: SflBlock, templates: Map<string, SflBlock>, depth: number, budget: BlockBudget): SflBlock[] {
   const scope: Scope = { vars: new Map(), random: new Random(0), label: `Use ${use.name}`, substitute: true };
   if (depth > MAX_DEPTH) {
     fail(scope, `Templates are nested more than ${MAX_DEPTH} deep, which may be a Template that uses itself`);
@@ -97,14 +109,16 @@ function expandUse(use: SflBlock, templates: Map<string, SflBlock>, depth: numbe
   const made = template.entries.flatMap(entry =>
     entry.type === 'block' ? [instance(scope, entry.block, name => `${use.name}_${name}`)] : [],
   );
-  budget.blocks += made.length;
-  if (budget.blocks > MAX_BLOCKS) {
-    fail(scope, 'too many blocks');
-  }
+  budget.take(made.length, scope);
   return expandIn(made, templates, depth + 1, budget);
 }
 
-function expandIn(blocks: SflBlock[], templates: Map<string, SflBlock>, depth: number, budget: Budget): SflBlock[] {
+function expandIn(
+  blocks: SflBlock[],
+  templates: Map<string, SflBlock>,
+  depth: number,
+  budget: BlockBudget,
+): SflBlock[] {
   return blocks.flatMap(block => {
     if (block.kind === 'Template') {
       return [];
@@ -141,5 +155,5 @@ export function hasTemplates(blocks: SflBlock[]): boolean {
 export function expandUses(blocks: SflBlock[]): SflBlock[] {
   const templates = new Map<string, SflBlock>();
   collect(blocks, templates);
-  return expandIn(blocks, templates, 0, { blocks: 0 });
+  return expandIn(blocks, templates, 0, new BlockBudget());
 }

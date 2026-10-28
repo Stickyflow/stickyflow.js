@@ -1,7 +1,7 @@
 import { findOwnerBlock, type LineRange } from '../scanner';
 import { findReferencingLinkRanges } from './linkReferences';
+import { excludeRepeatCell, findUseBlock } from './madeBlocks';
 import { outermostRemovalRanges } from './removalRanges';
-import { excludeRepeatCell, findUseBlock } from './repeatCell';
 import type { RemoveCanvasObjectOptions } from './types';
 
 export function removeCanvasObject(sfl: string, id: string, options: RemoveCanvasObjectOptions = {}): string {

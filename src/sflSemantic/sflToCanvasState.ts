@@ -1,5 +1,5 @@
 import { parse } from '../sflLanguage';
-import { expandRepeats } from '../sflLanguage/expansion/repeat';
+import { expandDocument } from '../sflLanguage/expansion';
 import { resolveCanvasState } from './canvasState/resolver';
 import type { SflCanvasState } from './types';
 
@@ -26,5 +26,5 @@ export {
 } from './types';
 
 export function sflToCanvasState(source: string): SflCanvasState {
-  return resolveCanvasState(expandRepeats(parse(source)));
+  return resolveCanvasState(expandDocument(parse(source)));
 }

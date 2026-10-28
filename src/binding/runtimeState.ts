@@ -3,7 +3,7 @@ import type { RenderResult } from '../render';
 import { sflToRenderInput } from '../renderInput/fromSfl';
 import type { RenderInput } from '../renderInput/types';
 import { parse } from '../sflLanguage';
-import { expandRepeats } from '../sflLanguage/expansion/repeat';
+import { expandDocument } from '../sflLanguage/expansion';
 import { findComponent } from './applyValue';
 import type { DataSource } from './dataSource';
 import { type BindingGraph, buildBindingGraph } from './graph';
@@ -41,7 +41,7 @@ function initialValue(input: RenderInput, id: string, componentType: string | un
 }
 
 export function createRuntimeState(sfl: string, options: BindingRuntimeOptions): RuntimeState {
-  const graph = buildBindingGraph(expandRepeats(parse(sfl)));
+  const graph = buildBindingGraph(expandDocument(parse(sfl)));
   const input = structuredClone(sflToRenderInput(sfl));
   const elementState = new Map<string, ElementState>();
   for (const [name, info] of graph.elements) {

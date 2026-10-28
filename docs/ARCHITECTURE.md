@@ -2,7 +2,7 @@
 
 Stickyflow rests on one idea. A visual artifact is a plain text document written in SFL. People, language models and tools all read and write that same text. Everything else in the project either turns the text into a picture, turns a gesture on the picture back into an edit of the text, or measures how well that works.
 
-The diagram of this page is [Architecure.sfl](./Architecure.sfl). It is written in SFL itself and renders with the package it describes.
+The diagram of this page is [Architecture.sfl](./Architecture.sfl). It is written in SFL itself and renders with the package it describes.
 
 ## One document, edited from both sides
 
@@ -14,7 +14,7 @@ stickyflow.js is the only place where SFL is understood. It has six layers, numb
 
 L0, the model in `src/model`, holds the framework neutral types for charts, shapes, paths, shaders, components and isometric objects, and the geometry that needs no other layer.
 
-L1, the language in `src/sflLanguage`, reads text. It has a lexer, a parser that produces a syntax tree, and a canonical emitter that writes the tree back as text. It knows the grammar and nothing about meaning.
+L1, the language in `src/sflLanguage`, reads text. It has a lexer, a parser that produces a syntax tree, and a canonical emitter that writes the tree back as text. It knows the grammar and nothing about meaning. A step in `src/sflLanguage/expansion` sits behind the parser and turns the writing aids `Repeat`, `Template` and `Use` into the plain blocks they make, as a tree to a tree. The text, the parser and the emitter keep them as written, so a document survives a round trip, and the layers above never see them.
 
 L2, the semantic layer in `src/sflSemantic`, gives the syntax tree its meaning. It resolves styles and layouts, applies defaults and produces the canvas state, a list of canvas objects such as shapes, containers, links, charts and paths.
 
