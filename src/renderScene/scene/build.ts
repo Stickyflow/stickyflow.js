@@ -11,17 +11,34 @@ import { EMPTY_BOUNDS } from './bounds';
 import { applyFrameClips } from './frameClip';
 import { stackRank, stackSequence } from './order';
 import type { MeasureTextFactory } from './textMetrics';
-import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
+import type { Bounds, RenderDiagnostic, RenderNode, RenderScene, SceneClip } from './types';
+
+// What a clipping frame cuts off is not part of the picture, so it does not widen the bounds.
+function visibleBounds(node: RenderNode): Bounds {
+  let { minX, minY, maxX, maxY } = node.bounds;
+  let clip: SceneClip | undefined = 'style' in node ? node.style?.clip : undefined;
+  while (clip) {
+    if (clip.type === 'rect') {
+      minX = Math.max(minX, clip.x);
+      minY = Math.max(minY, clip.y);
+      maxX = Math.min(maxX, clip.x + clip.width);
+      maxY = Math.min(maxY, clip.y + clip.height);
+    }
+    clip = clip.within;
+  }
+  return minX <= maxX && minY <= maxY ? { minX, minY, maxX, maxY } : node.bounds;
+}
 
 function sceneBounds(nodes: RenderNode[]): Bounds {
   if (!nodes.length) {
     return EMPTY_BOUNDS;
   }
+  const all = nodes.map(visibleBounds);
   return {
-    minX: Math.min(...nodes.map(n => n.bounds.minX)),
-    minY: Math.min(...nodes.map(n => n.bounds.minY)),
-    maxX: Math.max(...nodes.map(n => n.bounds.maxX)),
-    maxY: Math.max(...nodes.map(n => n.bounds.maxY)),
+    minX: Math.min(...all.map(b => b.minX)),
+    minY: Math.min(...all.map(b => b.minY)),
+    maxX: Math.max(...all.map(b => b.maxX)),
+    maxY: Math.max(...all.map(b => b.maxY)),
   };
 }
 

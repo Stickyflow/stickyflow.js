@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-28
+
+### Fixed
+
+- The view of a document that fits to its content no longer counts what a frame with `clip` cuts off. A poster in a clipping frame, with a scene that runs past its edge, was shown very small because the view was fitted to the whole scene. It is now fitted to the frame. A frame that is turned is not yet taken into account.
+
 ## [0.9.0] - 2026-10-28
 
 ### Added
