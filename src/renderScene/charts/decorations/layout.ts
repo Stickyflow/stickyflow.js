@@ -1,7 +1,7 @@
 import type { Chart } from '../../../model/chart';
-import type { Bounds } from '../../scene';
 import { boxBounds, finite } from '../../scene';
 import { isHorizontalBar, labelTilt, tiltedLabelRoom } from '../primitives';
+import type { ChartLayout } from './chartLayout';
 import { isStackedLegendPosition, LEGEND_COLUMN_GAP, LEGEND_ROW_HEIGHT, stackedLegendColumnWidth } from './legend';
 
 export const CARTESIAN_VALUE_TYPES = new Set(['bar', 'line', 'scatter', 'boxplot', 'hexbin', 'custom', 'field']);
@@ -49,14 +49,6 @@ function treemapSideLegendSide(chart: Chart, showLegend: boolean): 'left' | 'rig
     return null;
   }
   return chart.legendPosition === 'left' ? 'left' : chart.legendPosition === 'right' ? 'right' : null;
-}
-
-export interface ChartLayout {
-  bounds: Bounds;
-  plot: { x: number; y: number; width: number; height: number };
-  showLabels: boolean;
-  showLegend: boolean;
-  padLeft: number;
 }
 
 function barCategoryLabelWidth(chart: Chart): number {
@@ -154,3 +146,5 @@ export function decorations(chart: Chart): ChartLayout {
     padLeft,
   };
 }
+
+export type { ChartLayout } from './chartLayout';

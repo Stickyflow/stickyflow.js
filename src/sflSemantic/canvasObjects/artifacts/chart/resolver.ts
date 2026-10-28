@@ -1,7 +1,7 @@
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
+import type { SflChartObject } from './object';
 import { readChart } from './reader';
-import type { SflChartObject } from './types';
 
 export function resolveChartObject(
   base: SflCanvasObjectBase,

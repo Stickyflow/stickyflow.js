@@ -1,7 +1,7 @@
 import type { SflValue } from '../../../../sflLanguage/ast';
 import type { SflCanvasObjectBase } from '../../types';
+import type { SflDimensionObject } from './object';
 import { readDimension } from './reader';
-import type { SflDimensionObject } from './types';
 
 export function resolveDimensionObject(
   base: SflCanvasObjectBase,

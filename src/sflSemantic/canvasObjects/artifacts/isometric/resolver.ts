@@ -1,8 +1,8 @@
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
+import type { SflIsometricObject } from './object';
 import { readIsometric } from './reader';
-import type { SflIsometricObject } from './types';
 
 export function resolveIsometricObject(
   base: SflCanvasObjectBase,

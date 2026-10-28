@@ -1,5 +1,4 @@
 import type { SflValue } from '../../../../sflLanguage/ast';
-import type { SflCanvasObject } from '../../types';
 
 export type ChartProperties = Map<string, SflValue>;
 
@@ -88,12 +87,3 @@ export interface SflChartSeries {
 
 export type ChartData = SflChartData;
 export type ChartSeries = SflChartSeries;
-
-export type SflChartObject = SflCanvasObject & {
-  objectType: 'chart';
-  chart: SflChartData;
-};
-
-export function isChartObject(canvasObject: SflCanvasObject): canvasObject is SflChartObject {
-  return canvasObject.objectType === 'chart' && canvasObject.chart !== undefined;
-}

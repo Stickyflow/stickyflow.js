@@ -1,6 +1,6 @@
 import type { IsometricFace } from '../../../../../model/isometricObject';
 import { AXIS_COS, AXIS_SIN } from '../../../../../model/isometricObject';
-import type { SflIsometricObject } from '../../../../../sflSemantic/canvasObjects/artifacts/isometric/types';
+import type { SflIsometricObject } from '../../../../../sflSemantic/canvasObjects/artifacts/isometric/object';
 import type { IsometricQuickDuplicateDirection, QuickDuplicateEvent } from '../../../events';
 import { insertCanvasObject } from '../../canvasObjectPatch/insert';
 import type { InsertCanvasObjectOptions } from '../../canvasObjectPatch/types';

@@ -1,7 +1,7 @@
 import type { ExpressionOperator, SflAssignment, SflBinding, SflExpr, SflHandler } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
-import { parsePathSegments } from './values';
+import { parsePathSegments } from './pathSegments';
 
 const COMPARISONS = new Set(['>', '<', '>=', '<=', '==', '!=']);
 

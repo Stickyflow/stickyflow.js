@@ -1,7 +1,7 @@
 import type { SflValue } from '../../../../sflLanguage/ast';
 import type { SflCanvasObjectBase } from '../../types';
+import type { SflPathObject } from './object';
 import { readPath } from './reader';
-import type { SflPathObject } from './types';
 
 export function resolvePathObject(
   base: SflCanvasObjectBase,

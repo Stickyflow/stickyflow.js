@@ -62,14 +62,3 @@ export interface SflComponentData {
 export type SflShapeObject = SflCanvasObject & { objectType: 'shape' };
 export type SflFrameObject = SflCanvasObject & { objectType: 'frame' };
 export type SflComponentObject = SflCanvasObject & { objectType: 'component'; component: SflComponentData };
-
-export type { SflChartObject } from './artifacts/chart/types';
-export { isChartObject } from './artifacts/chart/types';
-export type { SflDimensionObject } from './artifacts/dimension/types';
-export { isDimensionObject } from './artifacts/dimension/types';
-export type { SflIsometricObject } from './artifacts/isometric/types';
-export { isIsometricObject } from './artifacts/isometric/types';
-export type { SflPathObject } from './artifacts/path/types';
-export { isPathObject } from './artifacts/path/types';
-export type { SflSwimlaneObject } from './artifacts/swimlane/types';
-export { isSwimlaneObject } from './artifacts/swimlane/types';

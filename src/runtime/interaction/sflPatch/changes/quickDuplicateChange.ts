@@ -1,4 +1,4 @@
-import { isIsometricObject } from '../../../../sflSemantic/canvasObjects/artifacts/isometric/types';
+import { isIsometricObject } from '../../../../sflSemantic/canvasObjects/artifacts/isometric/object';
 import { sflToCanvasState } from '../../../../sflSemantic/sflToCanvasState';
 import type { QuickDuplicateEvent } from '../../events';
 import { duplicateIsometricObject, isIsometricDirection } from './quickDuplicate/isometricDuplicate';

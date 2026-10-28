@@ -1,5 +1,5 @@
 import type { SflAssignment, SflBinding, SflExpr, SflHandler } from '../ast';
-import { emitValue } from './values';
+import { emitString } from './literals';
 
 const PRECEDENCE: Record<string, number> = {
   '||': 1,
@@ -21,7 +21,7 @@ export function emitExpression(expr: SflExpr, parentPrecedence = 0): string {
     case 'number':
       return String(expr.value);
     case 'string':
-      return emitValue({ type: 'string', value: expr.value });
+      return emitString(expr.value);
     case 'boolean':
       return String(expr.value);
     case 'ref':

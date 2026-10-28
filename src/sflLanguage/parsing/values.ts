@@ -2,15 +2,7 @@ import { isSide, type SflExpr, type SflValue, type Side } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
 import { parseExpression } from './expressions';
-
-export function parsePathSegments(cursor: TokenCursor): string[] {
-  const segments = [cursor.expect('ident', 'path identifier').value];
-  while (cursor.at('dot')) {
-    cursor.next();
-    segments.push(cursor.expect('ident', 'identifier after "."').value);
-  }
-  return segments;
-}
+import { parsePathSegments } from './pathSegments';
 
 export function parseEndpoint(cursor: TokenCursor): SflValue {
   const segments = parsePathSegments(cursor);

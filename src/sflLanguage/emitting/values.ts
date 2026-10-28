@@ -1,22 +1,6 @@
 import type { SflProperty, SflValue } from '../ast';
 import { emitExpression } from './expressions';
-
-export function formatNumber(value: number): string {
-  if (Object.is(value, -0)) {
-    return '0';
-  }
-  return String(value);
-}
-
-function emitString(value: string): string {
-  const escaped = value
-    .replace(/\r\n?/g, '\n')
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\t/g, '\\t');
-  return `"${escaped}"`;
-}
+import { emitString, formatNumber } from './literals';
 
 export function emitValue(value: SflValue): string {
   switch (value.type) {

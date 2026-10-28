@@ -3,7 +3,7 @@ import type { Bounds, RenderDiagnostic, RenderNode } from '../../scene';
 import { finite, paint } from '../../scene';
 import { CHART_COLORS, chartText, representativeColor } from '../primitives';
 import { seriesColorProp, seriesLabelProp } from '../propPath';
-import type { ChartLayout } from './layout';
+import type { ChartLayout } from './chartLayout';
 
 export interface ChartLegendRender {
   chart: Chart;
