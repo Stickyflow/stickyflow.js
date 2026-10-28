@@ -19,6 +19,7 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- The shader program `dotSphere` fills a circle with a grid of round dots that cut each other where they touch, each dot with a slope of light of its own. `sphere` is how much the grid wraps a ball: `0` is flat, `1` is a ball whose dots lean against each other toward the rim and are lined up to its middle, like a colored golf ball. The colors come from `colorA` (the light side), `colorB` (the base), `colorC` (the cool side) and `colorD` (a hot patch), and `rimColor` and `rim` color and darken the dots at the rim. `dots`, `dotSize`, `stagger`, `shade`, `angle`, `grain`, `intensity` and `speed` set the rest.
 - `clip: true` in the style of a `Container` of `kind: frame` cuts everything that sits in it at the edge of the frame, with its rounded corners. It works for turned shapes too. Text is not cut, because a text has no style to carry the clip.
 - `blur` in the style of a `Shape` softens the whole shape. It is the spread in pixels, and `0` or no value keeps the edge sharp. A blurred shape keeps room around it, so the soft edge is not cut off.
 
