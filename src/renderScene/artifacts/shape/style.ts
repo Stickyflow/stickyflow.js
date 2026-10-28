@@ -101,6 +101,7 @@ export function shapeStyle(shape: Shape, diagnostics: RenderDiagnostic[]): Scene
     dash: shapeDash(shape, strokeWidth),
     lineCap: shape.strokeStyle === 'dotted' ? 'round' : 'butt',
     opacity: finite(shape.opacity, defaults.opacity),
+    blur: shape.blur !== undefined && shape.blur > 0 ? shape.blur : undefined,
     shadow: shadow?.enabled
       ? {
           color: shadow.color ?? '#000000',

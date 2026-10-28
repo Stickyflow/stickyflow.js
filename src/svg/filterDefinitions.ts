@@ -23,7 +23,8 @@ export class SvgFilterDefinitions {
       );
     }
     if (style.blur || style.saturate !== undefined) {
-      return this.define(nodeId, { blur: style.blur ?? 0, saturate: style.saturate ?? 1 }, blurPrimitives);
+      const margin = size && size > 0 && style.blur ? Math.max(0.5, (style.blur * 1.5) / size) : 0.5;
+      return this.define(nodeId, { blur: style.blur ?? 0, saturate: style.saturate ?? 1 }, blurPrimitives, margin);
     }
     return undefined;
   }

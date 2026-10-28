@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- `blur` in the style of a `Shape` softens the whole shape. It is the spread in pixels, and `0` or no value keeps the edge sharp. A blurred shape keeps room around it, so the soft edge is not cut off.
+
 ## [0.8.0] - 2026-10-28
 
 ### Added

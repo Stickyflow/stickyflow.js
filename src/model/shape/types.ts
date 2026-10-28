@@ -53,6 +53,8 @@ export interface Shape {
   dash?: number[];
   strokeStyle?: ShapeStrokeStyle;
   opacity?: number;
+  // Softens the whole shape, in pixels of spread; 0 or left out keeps its edge sharp.
+  blur?: number;
 
   hasShadow?: boolean;
   shadowStyle?: ShadowStyle;

@@ -51,6 +51,7 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     dash: dashArray(p.dash),
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
     opacity: numOf(p.opacity),
+    blur: numOf(p.blur),
     parentFrameId: e.parentFrameId,
     order: e.order,
     sourceIndex: e.sourceIndex,

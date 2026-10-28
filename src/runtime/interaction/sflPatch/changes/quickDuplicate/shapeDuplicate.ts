@@ -21,6 +21,7 @@ const SHAPE_STYLE_KEYS = [
   'fontFamily',
   'cornerRadius',
   'opacity',
+  'blur',
   'shadow',
 ];
 const LINK_STYLE_KEYS = ['stroke', 'strokeWidth', 'strokeStyle', 'markerStart', 'markerEnd', 'route'];

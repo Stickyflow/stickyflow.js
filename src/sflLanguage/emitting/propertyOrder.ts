@@ -17,6 +17,7 @@ const STYLE_ORDER = [
   'dash',
   'shadow',
   'opacity',
+  'blur',
   'icon',
   'route',
   'marker',
