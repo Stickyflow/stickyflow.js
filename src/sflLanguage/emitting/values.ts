@@ -1,4 +1,5 @@
 import type { SflProperty, SflValue } from '../ast';
+import { emitExpression } from './expressions';
 
 export function formatNumber(value: number): string {
   if (Object.is(value, -0)) {
@@ -29,6 +30,8 @@ export function emitValue(value: SflValue): string {
       return `[${value.values.map(emitValue).join(', ')}]`;
     case 'ident':
       return value.segments.join('.');
+    case 'expr':
+      return value.items.map(item => emitExpression(item)).join(', ');
     case 'endpoint': {
       let output = value.segments.join('.');
       if (value.side) {

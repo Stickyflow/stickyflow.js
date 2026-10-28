@@ -24,6 +24,7 @@ export const NAMED_BLOCK_KINDS = [
   'Symbol',
   'Port',
   'DataSource',
+  'Repeat',
 ] as const;
 
 export type NamedBlockKind = (typeof NAMED_BLOCK_KINDS)[number];
@@ -112,7 +113,14 @@ export type SflValue =
   | SflTupleValue
   | SflListValue
   | SflIdentValue
-  | SflEndpointValue;
+  | SflEndpointValue
+  | SflExprValue;
+
+// A value that is computed, like `col * 25, row * 12`. It is only valid inside a `Repeat`, which works it out for every cell.
+export interface SflExprValue {
+  type: 'expr';
+  items: SflExpr[];
+}
 
 export interface SflStringValue {
   type: 'string';
