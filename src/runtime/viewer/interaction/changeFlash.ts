@@ -38,7 +38,7 @@ export function createChangeFlash(svg: SVGSVGElement): ChangeFlash {
       }
       const overlay =
         primary.getAttribute('data-sf-role') === 'link'
-          ? linkChangeOverlay(doc, primary as unknown as SVGPathElement, id, color)
+          ? linkChangeOverlay(doc, primary as SVGPathElement, id, color)
           : shapeChangeOverlay(doc, primary, id, color);
       svg.appendChild(overlay);
       startChangeFade(overlay, reducedMotion);

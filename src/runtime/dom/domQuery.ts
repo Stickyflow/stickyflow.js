@@ -1,22 +1,22 @@
 import { AXIS_COS } from '../../model/isometricObject';
 import { isometricGeometryOf } from './contract';
 
-export function findOwnerNode(
+export function findOwnerNode<Node extends SVGGraphicsElement = SVGGraphicsElement>(
   svg: SVGSVGElement,
   id: string,
   predicate: (el: Element) => boolean,
-): SVGGraphicsElement | null {
-  const nodes = svg.querySelectorAll(`[data-sf-id="${CSS.escape(id)}"]`);
+): Node | null {
+  const nodes = svg.querySelectorAll<Node>(`[data-sf-id="${CSS.escape(id)}"]`);
   for (const el of nodes) {
     if (predicate(el)) {
-      return el as unknown as SVGGraphicsElement;
+      return el;
     }
   }
   return null;
 }
 
 export function findAllOwnerNodes(svg: SVGSVGElement, id: string): SVGGraphicsElement[] {
-  return Array.from(svg.querySelectorAll(`[data-sf-id="${CSS.escape(id)}"]`)) as unknown as SVGGraphicsElement[];
+  return Array.from(svg.querySelectorAll<SVGGraphicsElement>(`[data-sf-id="${CSS.escape(id)}"]`));
 }
 
 export const isPrimary = (el: Element): boolean => el.hasAttribute('data-sf-primary');
@@ -58,13 +58,13 @@ export function findIsometricApexCandidates(
   excludeIds: Set<string>,
 ): Array<{ id: string; apex: { x: number; y: number } }> {
   const results: Array<{ id: string; apex: { x: number; y: number } }> = [];
-  svg.querySelectorAll('[data-sf-primary][data-sf-id][data-sf-role="isometric"]').forEach(node => {
+  svg.querySelectorAll<SVGGraphicsElement>('[data-sf-primary][data-sf-id][data-sf-role="isometric"]').forEach(node => {
     const id = node.getAttribute('data-sf-id');
     if (!id || excludeIds.has(id)) {
       return;
     }
     const geometry = isometricGeometryOf(node);
-    const bounds = geometry?.bounds ?? (node as unknown as SVGGraphicsElement).getBBox();
+    const bounds = geometry?.bounds ?? node.getBBox();
     results.push({ id, apex: { x: bounds.x + (geometry?.depth ?? 0) * AXIS_COS, y: bounds.y } });
   });
   return results;
@@ -75,13 +75,13 @@ export function findSnapCandidateBounds(
   excludeIds: Set<string>,
 ): Array<{ x: number; y: number; width: number; height: number }> {
   const results: Array<{ x: number; y: number; width: number; height: number }> = [];
-  svg.querySelectorAll('[data-sf-primary][data-sf-id]').forEach(node => {
+  svg.querySelectorAll<SVGGraphicsElement>('[data-sf-primary][data-sf-id]').forEach(node => {
     const id = node.getAttribute('data-sf-id');
     const role = node.getAttribute('data-sf-role');
     if (!id || role === 'link' || excludeIds.has(id)) {
       return;
     }
-    const bbox = (node as unknown as SVGGraphicsElement).getBBox();
+    const bbox = node.getBBox();
     results.push({ x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height });
   });
   return results;

@@ -2,6 +2,7 @@ import type { Viewer } from '../viewer';
 import { type DiagramConfig, OBSERVED_ATTRS, readConfig } from './config';
 import { mountShadowDiagram } from './shadowView';
 
+// Where there is no DOM, as on a server, the class is only a placeholder that is never made, and the cast says that it stands for the real one.
 const ElementBase: typeof HTMLElement =
   typeof HTMLElement === 'undefined' ? (class {} as unknown as typeof HTMLElement) : HTMLElement;
 

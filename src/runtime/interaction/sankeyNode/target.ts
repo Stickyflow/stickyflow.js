@@ -24,7 +24,7 @@ function parseRibbonLink(element: SVGGraphicsElement, endsAtSource: boolean): Sa
   if (!d || !match) {
     return null;
   }
-  const [, sx, sTop, tTop, tx, tBottom, sBottom] = match.map(Number) as unknown as [
+  const [, sx, sTop, tTop, tx, tBottom, sBottom] = match.map(Number) as [
     number,
     number,
     number,

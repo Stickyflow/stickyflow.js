@@ -21,7 +21,7 @@ export function selectLinkEndpoint(svg: SVGSVGElement, event: PointerEvent): Sel
     return null;
   }
 
-  const path = findOwnerNode(svg, linkId, isPrimary) as unknown as SVGPathElement | null;
+  const path = findOwnerNode<SVGPathElement>(svg, linkId, isPrimary);
   const linkOwner = path && resolveOwner(path);
   if (!path || !linkOwner) {
     return null;

@@ -21,7 +21,7 @@ export function resolvePathReshapeTarget(svg: SVGSVGElement, event: PointerEvent
     return null;
   }
 
-  const pathNode = findOwnerNode(svg, ownerId, isPrimary) as unknown as SVGPathElement | null;
+  const pathNode = findOwnerNode<SVGPathElement>(svg, ownerId, isPrimary);
   const owner = pathNode && resolveOwner(pathNode);
   const geometry = pathNode && pathGeometryOf(pathNode);
   if (!pathNode || !owner || !geometry || pointIndex < 0 || pointIndex >= geometry.points.length) {

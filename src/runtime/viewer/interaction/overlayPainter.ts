@@ -27,9 +27,9 @@ export function paintSelectionOverlays(
     const owner = owners.get(id);
     const overlay =
       owner?.role === 'link'
-        ? linkSelectionOverlay(document, primary as unknown as SVGPathElement, id, svg)
+        ? linkSelectionOverlay(document, primary as SVGPathElement, id, svg)
         : owner?.role === 'path'
-          ? pathSelectionOverlay(document, primary as unknown as SVGPathElement, id, svg)
+          ? pathSelectionOverlay(document, primary as SVGPathElement, id, svg)
           : owner?.role === 'isometric'
             ? isometricSelectionOverlay(document, primary, id, svg)
             : shapeSelectionOverlay(document, primary, id, svg, owner ? DERIVED_HEIGHT_ROLES.has(owner.role) : false);

@@ -49,12 +49,12 @@ function parseSegments(path: SVGPathElement): SegmentData[] {
 
 function snapCandidates(svg: SVGSVGElement, axis: 'x' | 'y', excludeIds: Set<string>): number[] {
   const values: number[] = [];
-  svg.querySelectorAll('[data-sf-primary][data-sf-id]').forEach(node => {
+  svg.querySelectorAll<SVGGraphicsElement>('[data-sf-primary][data-sf-id]').forEach(node => {
     const id = node.getAttribute('data-sf-id');
     if (!id || node.getAttribute('data-sf-role') === 'link' || excludeIds.has(id)) {
       return;
     }
-    const box = (node as unknown as SVGGraphicsElement).getBBox();
+    const box = node.getBBox();
     if (axis === 'y') {
       values.push(box.y, box.y + box.height / 2, box.y + box.height);
     } else {
@@ -127,7 +127,7 @@ export class LinkSegmentSession {
     if (!handle || !overlay || !linkId) {
       return;
     }
-    const path = findOwnerNode(this.#svg, linkId, isPrimary) as unknown as SVGPathElement | null;
+    const path = findOwnerNode<SVGPathElement>(this.#svg, linkId, isPrimary);
     const owner = path && resolveOwner(path);
     const index = Number(handle.getAttribute('data-sf-link-segment'));
     const segments = path ? parseSegments(path) : [];
@@ -204,7 +204,7 @@ export class LinkSegmentSession {
   readonly doubleClick = (event: MouseEvent): void => {
     const handle = (event.target as Element | null)?.closest('[data-sf-link-segment]');
     const linkId = handle?.closest('[data-sf-selection-overlay]')?.getAttribute('data-sf-selection-overlay');
-    const path = linkId ? (findOwnerNode(this.#svg, linkId, isPrimary) as unknown as SVGPathElement | null) : null;
+    const path = linkId ? findOwnerNode<SVGPathElement>(this.#svg, linkId, isPrimary) : null;
     const owner = path && resolveOwner(path);
     if (!handle || !owner) {
       return;
