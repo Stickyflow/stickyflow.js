@@ -31,7 +31,7 @@ export function excludeRepeatCell(lines: string[], id: string): string[] | null 
         const template = masked[i].match(TEMPLATE_HEADER);
         if (template) {
           seenTemplate = true;
-          const made = id.match(new RegExp(`^${escaped(template[1])}_(\\d+)(?:_(\\d+))?$`));
+          const made = id.match(new RegExp(`^${escaped(template[1])}_(\\d+)(?:_(\\d+))?(?:_[A-Za-z]\\w*)?$`));
           if (made) {
             cell = { col: Number(made[1]), row: made[2] === undefined ? 0 : Number(made[2]) };
           }
@@ -59,4 +59,22 @@ export function excludeRepeatCell(lines: string[], id: string): string[] | null 
     return out;
   }
   return null;
+}
+
+const USE_HEADER = /^\s*Use\s+([A-Za-z_]\w*)\s*:/;
+
+// The Use that made a block, as the blocks of a Use are named after it: `oak_trunk` is made by `Use oak`.
+export function findUseBlock(lines: string[], id: string): { start: number; end: number } | null {
+  const masked = maskLines(lines);
+  if (masked === null) {
+    return null;
+  }
+  let found: { start: number; end: number; length: number } | null = null;
+  for (let start = 0; start < masked.length; start++) {
+    const header = masked[start].match(USE_HEADER);
+    if (header && id.startsWith(`${header[1]}_`) && (found === null || header[1].length > found.length)) {
+      found = { start, end: blockEndLine(lines, start), length: header[1].length };
+    }
+  }
+  return found && { start: found.start, end: found.end };
 }

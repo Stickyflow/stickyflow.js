@@ -25,6 +25,8 @@ export const NAMED_BLOCK_KINDS = [
   'Port',
   'DataSource',
   'Repeat',
+  'Template',
+  'Use',
 ] as const;
 
 export type NamedBlockKind = (typeof NAMED_BLOCK_KINDS)[number];

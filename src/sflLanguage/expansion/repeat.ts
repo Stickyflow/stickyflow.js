@@ -1,4 +1,5 @@
 import type { SflBlock, SflDocument, SflEntry, SflExpr, SflProperty, SflValue } from '../ast';
+import { expandUses, hasTemplates } from './template';
 
 // A `Repeat` block puts the blocks in it on a grid, once for every cell. This step turns it into those plain blocks, so the rest of the
 // package never sees a Repeat. The source text is not touched: the parser and the emitter keep the Repeat as it was written.
@@ -11,7 +12,7 @@ const MAX_VALUES = 1_000_000;
 
 type Scalar = number | string | boolean;
 
-class Random {
+export class Random {
   private state: number;
 
   constructor(seed: number) {
@@ -28,14 +29,17 @@ class Random {
   }
 }
 
-interface Scope {
+export interface Scope {
   vars: Map<string, Scalar>;
   random: Random;
-  repeat: string;
+  // What the messages of an error start with, as `Repeat trees` or `Use oak`.
+  label: string;
+  // A bare name that is one of the variables stands for its value, as the color of a Template written as `fill: color`.
+  substitute?: boolean;
 }
 
-function fail(scope: Scope, message: string): never {
-  throw new Error(`Repeat ${scope.repeat}: ${message}`);
+export function fail(scope: Scope, message: string): never {
+  throw new Error(`${scope.label}: ${message}`);
 }
 
 function numberOf(scope: Scope, value: Scalar, what: string): number {
@@ -182,20 +186,29 @@ function evaluate(scope: Scope, expr: SflExpr): Scalar {
 
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
-function resolveValue(scope: Scope, value: SflValue): SflValue {
+function scalarValue(scope: Scope, only: Scalar): SflValue {
+  if (typeof only === 'number') {
+    return { type: 'number', value: round(numberOf(scope, only, 'a value')) };
+  }
+  if (typeof only === 'string') {
+    return { type: 'string', value: only };
+  }
+  return { type: 'ident', segments: [String(only)] };
+}
+
+export function resolveValue(scope: Scope, value: SflValue): SflValue {
+  if (scope.substitute && value.type === 'ident' && value.segments.length === 1) {
+    const known = scope.vars.get(value.segments[0]);
+    if (known !== undefined) {
+      return scalarValue(scope, known);
+    }
+  }
   if (value.type !== 'expr') {
     return value;
   }
   const results = value.items.map(item => evaluate(scope, item));
   if (results.length === 1) {
-    const [only] = results;
-    if (typeof only === 'number') {
-      return { type: 'number', value: round(numberOf(scope, only, 'a value')) };
-    }
-    if (typeof only === 'string') {
-      return { type: 'string', value: only };
-    }
-    return { type: 'ident', segments: [String(only)] };
+    return scalarValue(scope, results[0]);
   }
   return { type: 'tuple', values: results.map(result => round(numberOf(scope, result, 'a tuple'))) };
 }
@@ -204,7 +217,7 @@ function propertiesOf(scope: Scope, properties: SflProperty[]): SflProperty[] {
   return properties.map(property => ({ key: property.key, value: resolveValue(scope, property.value) }));
 }
 
-function entryOf(scope: Scope, entry: SflEntry, suffix: string): SflEntry {
+function entryOf(scope: Scope, entry: SflEntry, rename: (name: string) => string): SflEntry {
   switch (entry.type) {
     case 'property':
       return {
@@ -216,21 +229,22 @@ function entryOf(scope: Scope, entry: SflEntry, suffix: string): SflEntry {
     case 'style':
       return { type: 'style', style: { ...entry.style, properties: propertiesOf(scope, entry.style.properties) } };
     case 'block':
-      return { type: 'block', block: instance(scope, entry.block, suffix) };
+      return { type: 'block', block: instance(scope, entry.block, rename) };
     default:
       return entry;
   }
 }
 
-function instance(scope: Scope, block: SflBlock, suffix: string): SflBlock {
+// A copy of a block with its computed values worked out and its name, and the names of the blocks in it, changed by `rename`.
+export function instance(scope: Scope, block: SflBlock, rename: (name: string) => string): SflBlock {
   return {
     ...block,
-    name: `${block.name}${suffix}`,
-    entries: block.entries.map(entry => entryOf(scope, entry, suffix)),
+    name: rename(block.name),
+    entries: block.entries.map(entry => entryOf(scope, entry, rename)),
   };
 }
 
-function propertyOf(block: SflBlock, key: string): SflValue | undefined {
+export function propertyOf(block: SflBlock, key: string): SflValue | undefined {
   for (const entry of block.entries) {
     if (entry.type === 'property' && entry.property.key === key) {
       return entry.property.value;
@@ -239,7 +253,7 @@ function propertyOf(block: SflBlock, key: string): SflValue | undefined {
   return undefined;
 }
 
-function numbersOf(block: SflBlock, key: string): number[] | undefined {
+export function numbersOf(block: SflBlock, key: string): number[] | undefined {
   for (const entry of block.entries) {
     if (entry.type === 'property' && entry.property.key === key) {
       const value = entry.property.value;
@@ -255,7 +269,7 @@ function numbersOf(block: SflBlock, key: string): number[] | undefined {
 }
 
 function expandRepeat(block: SflBlock): SflBlock[] {
-  const scope: Scope = { vars: new Map(), random: new Random(0), repeat: block.name };
+  const scope: Scope = { vars: new Map(), random: new Random(0), label: `Repeat ${block.name}` };
   const count = numbersOf(block, 'count')?.[0];
   const columns = Math.max(1, Math.floor(count ?? numbersOf(block, 'columns')?.[0] ?? 1));
   const rows = count === undefined ? Math.max(1, Math.floor(numbersOf(block, 'rows')?.[0] ?? 1)) : 1;
@@ -333,7 +347,7 @@ function expandRepeat(block: SflBlock): SflBlock[] {
       }
       const suffix = rows === 1 ? `_${col}` : `_${col}_${row}`;
       for (const template of templates) {
-        out.push(instance(scope, template, suffix));
+        out.push(instance(scope, template, name => `${name}${suffix}`));
       }
     }
   }
@@ -345,7 +359,8 @@ function expandBlocks(blocks: SflBlock[]): SflBlock[] {
     if (block.kind === 'Repeat') {
       return expandRepeat(block);
     }
-    if (!block.entries.some(entry => entry.type === 'block')) {
+    // What a Template holds is worked out by the Use, with its parameters, and not here.
+    if (block.kind === 'Template' || !block.entries.some(entry => entry.type === 'block')) {
       return [block];
     }
     return [
@@ -389,18 +404,20 @@ function checkNoComputed(blocks: SflBlock[]): void {
   }
 }
 
-// A document in which every Repeat is replaced by the blocks it makes. A document without a Repeat is returned as it is.
+// A document in which every Repeat and every Use is replaced by the blocks it makes, and the Templates are taken out. A document without
+// any of them is returned as it is.
 export function expandRepeats(doc: SflDocument): SflDocument {
   const has = (blocks: SflBlock[]): boolean =>
     blocks.some(
       block =>
         block.kind === 'Repeat' || block.entries.some(entry => (entry.type === 'block' ? has([entry.block]) : false)),
     );
-  if (!has(doc.blocks)) {
+  const repeats = has(doc.blocks);
+  if (!repeats && !hasTemplates(doc.blocks)) {
     checkNoComputed(doc.blocks);
     return doc;
   }
-  const expanded = { ...doc, blocks: expandBlocks(doc.blocks) };
+  const expanded = { ...doc, blocks: expandUses(repeats ? expandBlocks(doc.blocks) : doc.blocks) };
   checkNoComputed(expanded.blocks);
   return expanded;
 }

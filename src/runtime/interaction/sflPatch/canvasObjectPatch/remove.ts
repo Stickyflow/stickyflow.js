@@ -1,14 +1,23 @@
 import { findOwnerBlock, type LineRange } from '../scanner';
 import { findReferencingLinkRanges } from './linkReferences';
 import { outermostRemovalRanges } from './removalRanges';
-import { excludeRepeatCell } from './repeatCell';
+import { excludeRepeatCell, findUseBlock } from './repeatCell';
 import type { RemoveCanvasObjectOptions } from './types';
 
 export function removeCanvasObject(sfl: string, id: string, options: RemoveCanvasObjectOptions = {}): string {
   const lines = sfl.split('\n');
   const canvasObjectRange = findOwnerBlock(lines, id);
   if (!canvasObjectRange) {
-    return excludeRepeatCell(lines, id)?.join('\n') ?? sfl;
+    const cell = excludeRepeatCell(lines, id);
+    if (cell) {
+      return cell.join('\n');
+    }
+    const use = findUseBlock(lines, id);
+    if (use) {
+      lines.splice(use.start, use.end - use.start + 1);
+      return lines.join('\n');
+    }
+    return sfl;
   }
 
   const ranges: LineRange[] = [canvasObjectRange];
