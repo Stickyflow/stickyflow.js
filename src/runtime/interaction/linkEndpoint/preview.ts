@@ -1,22 +1,8 @@
 import type { Side } from '../../../model/geometry/types';
-import type { Link } from '../../../model/link';
 import { calculateLinkRoute } from '../../../renderScene/artifacts/link/geometry';
 import { previewPathData } from '../linkPreview';
+import { previewLink } from '../linkPreview/geometry';
 import type { LinkEndpointDragState } from './state';
-
-function previewLink(fromSide: Side, toSide: Side): Link {
-  return {
-    id: 'preview',
-    fromId: '',
-    toId: '',
-    layerGroup: '',
-    orderKey: '',
-    isVisible: true,
-    isLocked: false,
-    fromPoint: { kind: 'side', side: fromSide, offset: 0.5 },
-    toPoint: { kind: 'side', side: toSide, offset: 0.5 },
-  };
-}
 
 export function updateEndpointPreview(
   drag: LinkEndpointDragState,

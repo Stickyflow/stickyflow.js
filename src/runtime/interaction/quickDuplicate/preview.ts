@@ -1,8 +1,9 @@
 import type { Side } from '../../../model/geometry/types';
-import type { Link, PathType } from '../../../model/link';
+import type { PathType } from '../../../model/link';
 import { calculateLinkRoute } from '../../../renderScene/artifacts/link/geometry';
 import { pxPerUnit, SVG_NAMESPACE } from '../../dom';
 import { previewPathData } from '../linkPreview';
+import { previewLink } from '../linkPreview/geometry';
 import type { QuickDuplicateDragState } from './state';
 
 const PREVIEW_STROKE_PX = 2;
@@ -14,20 +15,6 @@ export function createDuplicatePreviewPath(svg: SVGSVGElement): SVGPathElement {
   path.setAttribute('stroke-width', String(PREVIEW_STROKE_PX / pxPerUnit(svg)));
   path.style.pointerEvents = 'none';
   return path;
-}
-
-function previewLink(fromSide: Side, toSide: Side): Link {
-  return {
-    id: 'preview',
-    fromId: '',
-    toId: '',
-    layerGroup: '',
-    orderKey: '',
-    isVisible: true,
-    isLocked: false,
-    fromPoint: { kind: 'side', side: fromSide, offset: 0.5 },
-    toPoint: { kind: 'side', side: toSide, offset: 0.5 },
-  };
 }
 
 export function updateDuplicatePreview(

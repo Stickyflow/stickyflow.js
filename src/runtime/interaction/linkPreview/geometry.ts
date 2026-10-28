@@ -43,7 +43,8 @@ export function previewPathData(
   return polylinePathData(points);
 }
 
-function previewLink(fromSide: Side | null, toSide: Side | null): Link {
+// The link that stands in for the one being drawn, with its ends on a side of a block or loose in the air when there is no side yet.
+export function previewLink(fromSide: Side | null, toSide: Side | null): Link {
   return {
     id: 'preview',
     fromId: '',
