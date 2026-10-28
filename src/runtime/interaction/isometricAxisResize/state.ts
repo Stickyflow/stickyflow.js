@@ -65,20 +65,54 @@ function collectNodes(svg: SVGSVGElement, ownerId: string): IsometricGeometryNod
   };
 }
 
-export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerEvent): IsometricAxisDragState | null {
+interface ResizeHandle {
+  captureTarget: SVGGraphicsElement;
+  axis: IsometricAxis;
+  overlay: Element;
+  ownerId: string;
+}
+
+// The arrow of the selection overlay that the pointer went down on, with the axis it stands for and the object the overlay belongs to.
+function findResizeHandle(event: PointerEvent): ResizeHandle | null {
   const target = event.target as Element | null;
   const captureTarget = target?.closest?.('[data-sf-resize-handle]') as SVGGraphicsElement | null;
   const handleAttr = captureTarget?.getAttribute('data-sf-resize-handle');
   if (!captureTarget || !handleAttr?.startsWith('iso-')) {
     return null;
   }
-  const axis = handleAttr.slice(4) as IsometricAxis;
-
   const overlay = captureTarget.closest('[data-sf-selection-overlay]');
   const ownerId = overlay?.getAttribute('data-sf-selection-overlay');
-  if (!ownerId) {
+  if (!overlay || !ownerId) {
     return null;
   }
+  return { captureTarget, axis: handleAttr.slice(4) as IsometricAxis, overlay, ownerId };
+}
+
+// The parts of the overlay that follow the drag. The bubbles that duplicate the object are hidden while it is dragged.
+function overlayPartsOf(
+  overlay: Element,
+): Pick<IsometricAxisDragState, 'overlayHalo' | 'overlayArrows' | 'overlayDuplicateBubbles'> {
+  const overlayHalo = (overlay.querySelector(`[${ISO_HALO_ATTR}]`) as SVGPathElement | null) ?? null;
+  const overlayArrows = Object.fromEntries(
+    AXES.map(axis => [
+      axis,
+      (overlay.querySelector(`[data-sf-resize-handle="iso-${axis}"]`) as SVGGElement | null) ?? null,
+    ]),
+  ) as Record<IsometricAxis, SVGGElement | null>;
+  const overlayDuplicateBubbles =
+    (overlay.querySelector(`[${ISO_DUPLICATE_BUBBLES_ATTR}]`) as SVGGElement | null) ?? null;
+  if (overlayDuplicateBubbles) {
+    overlayDuplicateBubbles.style.display = 'none';
+  }
+  return { overlayHalo, overlayArrows, overlayDuplicateBubbles };
+}
+
+export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerEvent): IsometricAxisDragState | null {
+  const handle = findResizeHandle(event);
+  if (!handle) {
+    return null;
+  }
+  const { captureTarget, axis, overlay, ownerId } = handle;
 
   const primary = findOwnerNode(svg, ownerId, isPrimary);
   const owner = primary && resolveOwner(primary);
@@ -100,19 +134,6 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
 
   captureTarget.setPointerCapture?.(event.pointerId);
 
-  const overlayHalo = (overlay?.querySelector(`[${ISO_HALO_ATTR}]`) as SVGPathElement | null) ?? null;
-  const overlayArrows = Object.fromEntries(
-    AXES.map(axis => [
-      axis,
-      (overlay?.querySelector(`[data-sf-resize-handle="iso-${axis}"]`) as SVGGElement | null) ?? null,
-    ]),
-  ) as Record<IsometricAxis, SVGGElement | null>;
-  const overlayDuplicateBubbles =
-    (overlay?.querySelector(`[${ISO_DUPLICATE_BUBBLES_ATTR}]`) as SVGGElement | null) ?? null;
-  if (overlayDuplicateBubbles) {
-    overlayDuplicateBubbles.style.display = 'none';
-  }
-
   const start: IsometricObjectSize = {
     x: bounds.x,
     y: bounds.y,
@@ -129,9 +150,7 @@ export function createIsometricAxisDragState(svg: SVGSVGElement, event: PointerE
     start,
     cornerRadius: geometry?.cornerRadius ?? Number(primary.getAttribute(CORNER_RADIUS_ATTR)) ?? 0,
     nodes,
-    overlayHalo,
-    overlayArrows,
-    overlayDuplicateBubbles,
+    ...overlayPartsOf(overlay),
     liveFaceLinks: findLiveFaceLinks(svg, ownerId),
     moved: false,
     current: start,
