@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Changed
+
+- The language is version 1.6, which is the version that has the `Repeat` block. Documents that declare an earlier version are read as before, as the reader takes the version number as it is written.
+
 ## [0.9.2] - 2026-10-28
 
 ### Added
