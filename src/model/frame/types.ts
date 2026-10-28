@@ -18,6 +18,8 @@ export interface Frame {
   showLabel: boolean;
   labelPosition?: 'top' | 'bottom' | 'left' | 'right';
   shadow?: boolean;
+  // What lies inside the frame is cut at its edge, with its rounded corners.
+  clip?: boolean;
   layerGroup?: string;
   orderKey?: string;
   order?: number;

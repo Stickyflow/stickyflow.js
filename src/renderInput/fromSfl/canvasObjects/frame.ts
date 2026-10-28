@@ -23,6 +23,7 @@ export function frameObject(e: SflCanvasObject): Frame {
     showLabel: p.showLabel !== 'false',
     labelPosition: oneOf(p.labelPosition, LABEL_POSITIONS, 'top'),
     shadow: p.shadow !== 'false',
+    clip: p.clip === 'true' || undefined,
     order: e.order,
     sourceIndex: e.sourceIndex,
   };

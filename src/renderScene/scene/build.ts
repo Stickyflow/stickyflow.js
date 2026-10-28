@@ -8,6 +8,7 @@ import { buildFreeformPaths } from '../artifacts/path';
 import { buildShapes } from '../artifacts/shape';
 import { buildCharts } from '../charts';
 import { EMPTY_BOUNDS } from './bounds';
+import { applyFrameClips } from './frameClip';
 import { stackRank, stackSequence } from './order';
 import type { MeasureTextFactory } from './textMetrics';
 import type { Bounds, RenderDiagnostic, RenderNode, RenderScene } from './types';
@@ -85,6 +86,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
     ...buildIsometricObjects(input.isometricObjects ?? []),
     ...buildDimensions(input.dimensions ?? []),
   ];
+  applyFrameClips(nodes, input.frames);
   stampStacking(nodes, input);
   nodes.sort(
     (a, b) =>

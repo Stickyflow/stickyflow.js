@@ -19,6 +19,7 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- `clip: true` in the style of a `Container` of `kind: frame` cuts everything that sits in it at the edge of the frame, with its rounded corners. It works for turned shapes too. Text is not cut, because a text has no style to carry the clip.
 - `blur` in the style of a `Shape` softens the whole shape. It is the spread in pixels, and `0` or no value keeps the edge sharp. A blurred shape keeps room around it, so the soft edge is not cut off.
 
 ## [0.8.0] - 2026-10-28
