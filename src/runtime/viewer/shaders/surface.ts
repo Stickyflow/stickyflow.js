@@ -3,7 +3,7 @@ import { captureShaderBackdrop } from './backdrop';
 import { createSurface, releaseSurface } from './createSurface';
 import { updateReactiveLightFields } from './reactiveLightField';
 import { applyBackdrop, renderSurface } from './renderSurface';
-import { createSurfaceClock } from './surfaceClock';
+import { createSurfaceClock, type SurfaceClock } from './surfaceClock';
 import type { Surface } from './surfaceTypes';
 
 export interface ShaderSurfaceHandle {
@@ -139,118 +139,134 @@ function followPointer(surface: Surface, event: PointerEvent, now: number): void
   }
 }
 
-export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
-  let surfaces: Surface[] = [];
-  let frame: number | undefined;
-  let backdropGeneration = 0;
-  let recapture: number | undefined;
-  const view = svg.ownerDocument.defaultView;
-  const clock = createSurfaceClock(view);
+// The shader surfaces of one drawing: it makes them from the canvases in it, draws them every frame, keeps their backdrops up to date and
+// lets them follow the pointer.
+class ShaderSurfaces implements ShaderSurfaceHandle {
+  private surfaces: Surface[] = [];
+  private frame: number | undefined;
+  private backdropGeneration = 0;
+  private recapture: number | undefined;
+  private readonly view: (Window & typeof globalThis) | null;
+  private readonly clock: SurfaceClock;
+  private readonly unwatch: () => void;
 
-  const draw = (milliseconds: number) => {
-    if (!clock.paused()) {
-      updateReactiveLightFields(surfaces);
-      for (const surface of surfaces) {
-        renderSurface(surface, milliseconds / 1000 - clock.spent());
+  constructor(private readonly svg: SVGSVGElement) {
+    this.view = svg.ownerDocument.defaultView;
+    this.clock = createSurfaceClock(this.view);
+    this.unwatch = watchSvgChanges(svg, this.view, this.scheduleRecapture);
+    svg.addEventListener('pointermove', this.track);
+    svg.addEventListener('pointerleave', this.leave);
+    this.refresh();
+  }
+
+  capture(): Array<string | undefined> {
+    return capturePngs(this.svg, this.surfaces, this.clock.now());
+  }
+
+  setParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean {
+    return updateParameters(this.surfaces, ownerId, parameters, this.clock.now());
+  }
+
+  setPaused(paused: boolean): void {
+    this.clock.setPaused(paused);
+  }
+
+  refresh(): void {
+    const memory = rememberSurfaces(this.surfaces);
+    this.stop();
+    const generation = ++this.backdropGeneration;
+    this.surfaces = createSurfaces(this.svg, memory);
+    updateReactiveLightFields(this.surfaces);
+    this.captureBackdrops(generation);
+    if (this.surfaces.length > 0) {
+      this.startFrames();
+    }
+  }
+
+  destroy(): void {
+    this.backdropGeneration += 1;
+    this.unwatch();
+    this.svg.removeEventListener('pointermove', this.track);
+    this.svg.removeEventListener('pointerleave', this.leave);
+    if (this.recapture !== undefined) {
+      this.view?.clearTimeout(this.recapture);
+    }
+    this.stop();
+  }
+
+  private readonly draw = (milliseconds: number): void => {
+    if (!this.clock.paused()) {
+      updateReactiveLightFields(this.surfaces);
+      for (const surface of this.surfaces) {
+        renderSurface(surface, milliseconds / 1000 - this.clock.spent());
       }
     }
-    frame = view?.requestAnimationFrame(draw);
+    this.frame = this.view?.requestAnimationFrame(this.draw);
   };
 
-  const stop = () => {
-    if (frame !== undefined) {
-      view?.cancelAnimationFrame(frame);
-      frame = undefined;
+  private stop(): void {
+    if (this.frame !== undefined) {
+      this.view?.cancelAnimationFrame(this.frame);
+      this.frame = undefined;
     }
-    for (const surface of surfaces) {
+    for (const surface of this.surfaces) {
       releaseSurface(surface);
     }
-    surfaces = [];
-  };
+    this.surfaces = [];
+  }
 
-  const captureBackdrops = (generation: number) => {
-    for (const surface of surfaces) {
+  private captureBackdrops(generation: number): void {
+    for (const surface of this.surfaces) {
       if (!surface.usesBackdrop) {
         continue;
       }
-      void captureShaderBackdrop(svg, surface.owner).then(backdrop => {
-        if (backdrop && generation === backdropGeneration) {
+      void captureShaderBackdrop(this.svg, surface.owner).then(backdrop => {
+        if (backdrop && generation === this.backdropGeneration) {
           applyBackdrop(surface, backdrop);
         }
       });
     }
-  };
+  }
 
-  const startFrames = () => {
-    if (!view?.requestAnimationFrame) {
-      for (const surface of surfaces) {
+  private startFrames(): void {
+    if (!this.view?.requestAnimationFrame) {
+      for (const surface of this.surfaces) {
         renderSurface(surface, 0);
       }
       return;
     }
-    if (clock.paused()) {
-      for (const surface of surfaces) {
-        renderSurface(surface, clock.now());
+    if (this.clock.paused()) {
+      for (const surface of this.surfaces) {
+        renderSurface(surface, this.clock.now());
       }
     }
-    frame = view.requestAnimationFrame(draw);
-  };
+    this.frame = this.view.requestAnimationFrame(this.draw);
+  }
 
-  const refresh = () => {
-    const memory = rememberSurfaces(surfaces);
-    stop();
-    const generation = ++backdropGeneration;
-    surfaces = createSurfaces(svg, memory);
-    updateReactiveLightFields(surfaces);
-    captureBackdrops(generation);
-    if (surfaces.length > 0) {
-      startFrames();
+  private readonly scheduleRecapture = (): void => {
+    if (this.recapture !== undefined) {
+      this.view?.clearTimeout(this.recapture);
     }
-  };
-
-  const scheduleRecapture = () => {
-    if (recapture !== undefined) {
-      view?.clearTimeout(recapture);
-    }
-    recapture = view?.setTimeout(() => {
-      recapture = undefined;
-      captureBackdrops(backdropGeneration);
+    this.recapture = this.view?.setTimeout(() => {
+      this.recapture = undefined;
+      this.captureBackdrops(this.backdropGeneration);
     }, RECAPTURE_DELAY_MS);
   };
-  const unwatch = watchSvgChanges(svg, view, scheduleRecapture);
 
-  const track = (event: PointerEvent) => {
-    const now = clock.now();
-    for (const surface of surfaces) {
+  private readonly track = (event: PointerEvent): void => {
+    const now = this.clock.now();
+    for (const surface of this.surfaces) {
       followPointer(surface, event, now);
     }
   };
-  const leave = () => {
-    for (const surface of surfaces) {
+
+  private readonly leave = (): void => {
+    for (const surface of this.surfaces) {
       surface.hovering = false;
     }
   };
-  svg.addEventListener('pointermove', track);
-  svg.addEventListener('pointerleave', leave);
+}
 
-  refresh();
-
-  const destroy = () => {
-    backdropGeneration += 1;
-    unwatch();
-    svg.removeEventListener('pointermove', track);
-    svg.removeEventListener('pointerleave', leave);
-    if (recapture !== undefined) {
-      view?.clearTimeout(recapture);
-    }
-    stop();
-  };
-
-  return {
-    capture: () => capturePngs(svg, surfaces, clock.now()),
-    setParameters: (ownerId, parameters) => updateParameters(surfaces, ownerId, parameters, clock.now()),
-    setPaused: clock.setPaused,
-    refresh,
-    destroy,
-  };
+export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
+  return new ShaderSurfaces(svg);
 }
