@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-10-28
+
+### Fixed
+
+- A block that a `Repeat` made could be selected but not removed, as it has no lines of its own and the removal found nothing to cut. `removeCanvasObject` now keeps the cell of that block out of the Repeat, by adding it to the `where` of the Repeat, so the block and the other blocks of that cell are gone and every other cell is as it was. Moving, resizing and styling a made block still change nothing, as they have to change the Repeat.
+
 ### Changed
 
 - The language is version 1.6, which is the version that has the `Repeat` block. Documents that declare an earlier version are read as before, as the reader takes the version number as it is written.
