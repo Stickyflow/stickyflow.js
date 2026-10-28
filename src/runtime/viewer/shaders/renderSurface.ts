@@ -34,8 +34,8 @@ export function applyBackdrop(surface: Surface, backdrop: ShaderBackdrop): void 
 const MAX_SURFACE_PIXELS = 2560;
 const TRAIL_LENGTH = 16;
 
-export function renderSurface(surface: Surface, seconds: number): void {
-  const { canvas, gl, parameters } = surface;
+// The canvas gets the pixels it is shown with, up to a limit, and the number of canvas pixels for one pixel of the picture is returned.
+function fitCanvas(canvas: HTMLCanvasElement): { width: number; height: number; density: number; fit: number } {
   const shown = canvas.getBoundingClientRect();
   const density = Math.min(globalThis.devicePixelRatio || 1, 3);
   const fit = Math.min(1, MAX_SURFACE_PIXELS / Math.max(1, shown.width * density, shown.height * density));
@@ -45,6 +45,67 @@ export function renderSurface(surface: Surface, seconds: number): void {
     canvas.width = width;
     canvas.height = height;
   }
+  return { width, height, density, fit };
+}
+
+function bindBackdrop(surface: Surface, texture: WebGLTexture): void {
+  const { gl } = surface;
+  syncBackdropBounds(surface);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  const sampler = gl.getUniformLocation(surface.program, 'uBackdrop');
+  if (sampler) {
+    gl.uniform1i(sampler, 0);
+  }
+  uniform2f(surface, 'uBackdropOrigin', surface.backdropOrigin);
+  uniform2f(surface, 'uBackdropScale', surface.backdropScale);
+}
+
+function uploadParameters(surface: Surface): void {
+  const { parameters } = surface;
+  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.numbers)) {
+    uniform1f(surface, uniformName(key), number(parameters[key], fallback));
+  }
+  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.colors)) {
+    uniform3f(surface, uniformName(key), color(parameters[key], [...fallback] as [number, number, number]));
+  }
+  uniform3f(surface, 'uShapeColor', surface.shapeColor);
+}
+
+// The pointer, how far the surface is hovered, and the trail: where the pointer has been, and how much of it is left. `trail` is how many
+// seconds a place takes to fade out.
+function uploadPointer(surface: Surface, seconds: number, elapsed: number): void {
+  const { gl, parameters } = surface;
+  surface.hover += ((surface.hovering ? 1 : 0) - surface.hover) * (1 - Math.exp(-elapsed / 0.18));
+  uniform2f(surface, 'uPointer', [surface.pointer.x, surface.pointer.y]);
+  uniform1f(surface, 'uHover', surface.hover);
+  const fade = number(parameters.trail, 0);
+  const places = new Float32Array(TRAIL_LENGTH * 3);
+  if (fade > 0) {
+    surface.trail.slice(-TRAIL_LENGTH).forEach((place, index) => {
+      places.set([place.x, place.y, Math.exp(-Math.max(seconds - place.at, 0) / fade)], index * 3);
+    });
+  }
+  const trail = gl.getUniformLocation(surface.program, 'uWake[0]');
+  if (trail) {
+    gl.uniform3fv(trail, places);
+  }
+}
+
+function uploadReactiveLight(surface: Surface): void {
+  if (!surface.reactiveLight) {
+    return;
+  }
+  uniform1f(surface, 'uLightX', surface.reactiveLight.x);
+  uniform1f(surface, 'uLightY', surface.reactiveLight.y);
+  uniform1f(surface, 'uLightStrength', surface.reactiveLight.strength);
+  uniform1f(surface, 'uGlowRadius', surface.reactiveLight.radius);
+  uniform3f(surface, 'uLightColor', surface.reactiveLight.color);
+}
+
+export function renderSurface(surface: Surface, seconds: number): void {
+  const { canvas, gl } = surface;
+  const { width, height, density, fit } = fitCanvas(canvas);
   gl.viewport(0, 0, width, height);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -61,48 +122,14 @@ export function renderSurface(surface: Surface, seconds: number): void {
   );
   uniform1f(surface, 'uTime', seconds);
   if (surface.backdropTexture) {
-    syncBackdropBounds(surface);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, surface.backdropTexture);
-    const sampler = gl.getUniformLocation(surface.program, 'uBackdrop');
-    if (sampler) {
-      gl.uniform1i(sampler, 0);
-    }
-    uniform2f(surface, 'uBackdropOrigin', surface.backdropOrigin);
-    uniform2f(surface, 'uBackdropScale', surface.backdropScale);
+    bindBackdrop(surface, surface.backdropTexture);
   }
-  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.numbers)) {
-    uniform1f(surface, uniformName(key), number(parameters[key], fallback));
-  }
-  for (const [key, fallback] of Object.entries(SHADER_DEFAULTS.colors)) {
-    uniform3f(surface, uniformName(key), color(parameters[key], [...fallback] as [number, number, number]));
-  }
-  uniform3f(surface, 'uShapeColor', surface.shapeColor);
+  uploadParameters(surface);
   const elapsed = surface.lastSeconds === undefined ? 0 : Math.max(0, Math.min(seconds - surface.lastSeconds, 0.1));
   surface.lastSeconds = seconds;
   applyParameters(surface, elapsed);
-  surface.hover += ((surface.hovering ? 1 : 0) - surface.hover) * (1 - Math.exp(-elapsed / 0.18));
-  uniform2f(surface, 'uPointer', [surface.pointer.x, surface.pointer.y]);
-  uniform1f(surface, 'uHover', surface.hover);
-  // The trail: where the pointer has been, and how much of it is left. `trail` is how many seconds a place takes to fade out.
-  const fade = number(parameters.trail, 0);
-  const places = new Float32Array(TRAIL_LENGTH * 3);
-  if (fade > 0) {
-    surface.trail.slice(-TRAIL_LENGTH).forEach((place, index) => {
-      places.set([place.x, place.y, Math.exp(-Math.max(seconds - place.at, 0) / fade)], index * 3);
-    });
-  }
-  const trail = gl.getUniformLocation(surface.program, 'uWake[0]');
-  if (trail) {
-    gl.uniform3fv(trail, places);
-  }
-  if (surface.reactiveLight) {
-    uniform1f(surface, 'uLightX', surface.reactiveLight.x);
-    uniform1f(surface, 'uLightY', surface.reactiveLight.y);
-    uniform1f(surface, 'uLightStrength', surface.reactiveLight.strength);
-    uniform1f(surface, 'uGlowRadius', surface.reactiveLight.radius);
-    uniform3f(surface, 'uLightColor', surface.reactiveLight.color);
-  }
+  uploadPointer(surface, seconds, elapsed);
+  uploadReactiveLight(surface);
   uniform1f(surface, 'uSurfacePadding', surface.surfacePadding);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }

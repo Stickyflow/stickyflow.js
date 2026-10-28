@@ -77,6 +77,68 @@ function watchSvgChanges(
   };
 }
 
+// What a surface has gathered while it ran, which a refresh gives to the new surface of the same owner so the picture does not start over.
+type SurfaceMemory = Pick<Surface, 'smoothed' | 'reactiveLight' | 'pointer' | 'hover' | 'hovering' | 'trail'>;
+
+function rememberSurfaces(surfaces: Surface[]): Map<string, SurfaceMemory> {
+  return new Map(
+    surfaces.flatMap(surface => {
+      const ownerId = surface.owner.getAttribute('data-sf-id');
+      return ownerId
+        ? [
+            [
+              ownerId,
+              {
+                smoothed: new Map(surface.smoothed),
+                reactiveLight: surface.reactiveLight,
+                pointer: surface.pointer,
+                hover: surface.hover,
+                hovering: surface.hovering,
+                trail: surface.trail,
+              },
+            ],
+          ]
+        : [];
+    }),
+  );
+}
+
+function createSurfaces(svg: SVGSVGElement, memory: Map<string, SurfaceMemory>): Surface[] {
+  return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].flatMap(canvas => {
+    const surface = createSurface(canvas);
+    const ownerId = surface?.owner.getAttribute('data-sf-id');
+    const previous = ownerId ? memory.get(ownerId) : undefined;
+    if (surface && previous) {
+      Object.assign(surface, previous);
+    }
+    return surface ? [surface] : [];
+  });
+}
+
+// A shader that reacts to the pointer reads where it is over the surface, and how far it is over it.
+function followPointer(surface: Surface, event: PointerEvent, now: number): void {
+  const box = surface.canvas.getBoundingClientRect();
+  const inside =
+    box.width > 0 &&
+    box.height > 0 &&
+    event.clientX >= box.left &&
+    event.clientX <= box.right &&
+    event.clientY >= box.top &&
+    event.clientY <= box.bottom;
+  surface.hovering = inside;
+  if (!inside) {
+    return;
+  }
+  surface.pointer = { x: (event.clientX - box.left) / box.width, y: 1 - (event.clientY - box.top) / box.height };
+  const last = surface.trail[surface.trail.length - 1];
+  if (!last || now - last.at >= TRAIL_SPACING) {
+    surface.trail.push({ ...surface.pointer, at: now });
+    if (surface.trail.length > TRAIL_LENGTH) {
+      surface.trail.shift();
+    }
+  }
+}
+
 export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   let surfaces: Surface[] = [];
   let frame: number | undefined;
@@ -135,42 +197,10 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   };
 
   const refresh = () => {
-    const previousState = new Map(
-      surfaces.flatMap(surface => {
-        const ownerId = surface.owner.getAttribute('data-sf-id');
-        return ownerId
-          ? [
-              [
-                ownerId,
-                {
-                  smoothed: new Map(surface.smoothed),
-                  reactiveLight: surface.reactiveLight,
-                  pointer: surface.pointer,
-                  hover: surface.hover,
-                  hovering: surface.hovering,
-                  trail: surface.trail,
-                },
-              ],
-            ]
-          : [];
-      }),
-    );
+    const memory = rememberSurfaces(surfaces);
     stop();
     const generation = ++backdropGeneration;
-    surfaces = [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].flatMap(canvas => {
-      const surface = createSurface(canvas);
-      const ownerId = surface?.owner.getAttribute('data-sf-id');
-      const previous = ownerId ? previousState.get(ownerId) : undefined;
-      if (surface && previous) {
-        surface.smoothed = previous.smoothed;
-        surface.reactiveLight = previous.reactiveLight;
-        surface.pointer = previous.pointer;
-        surface.hover = previous.hover;
-        surface.hovering = previous.hovering;
-        surface.trail = previous.trail;
-      }
-      return surface ? [surface] : [];
-    });
+    surfaces = createSurfaces(svg, memory);
     updateReactiveLightFields(surfaces);
     captureBackdrops(generation);
     if (surfaces.length > 0) {
@@ -189,29 +219,10 @@ export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
   };
   const unwatch = watchSvgChanges(svg, view, scheduleRecapture);
 
-  // A shader that reacts to the pointer reads where it is over the surface, and how far it is over it.
   const track = (event: PointerEvent) => {
+    const now = clock.now();
     for (const surface of surfaces) {
-      const box = surface.canvas.getBoundingClientRect();
-      const inside =
-        box.width > 0 &&
-        box.height > 0 &&
-        event.clientX >= box.left &&
-        event.clientX <= box.right &&
-        event.clientY >= box.top &&
-        event.clientY <= box.bottom;
-      surface.hovering = inside;
-      if (inside) {
-        surface.pointer = { x: (event.clientX - box.left) / box.width, y: 1 - (event.clientY - box.top) / box.height };
-        const now = clock.now();
-        const last = surface.trail[surface.trail.length - 1];
-        if (!last || now - last.at >= TRAIL_SPACING) {
-          surface.trail.push({ ...surface.pointer, at: now });
-          if (surface.trail.length > TRAIL_LENGTH) {
-            surface.trail.shift();
-          }
-        }
-      }
+      followPointer(surface, event, now);
     }
   };
   const leave = () => {
