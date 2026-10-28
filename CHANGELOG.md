@@ -17,9 +17,17 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-28
+
 ### Added
 
 - The shader program `glowCard`, the surface of a card: dark glass with a thin edge and colored lights low in the card that curl like smoke, fade out from the side set by `angle` and turn white at that edge, with grit in the lit parts. Parameters are `colorA`, `colorB`, `colorC`, `baseColor`, `glowHeight`, `glowSpread`, `angle`, `core`, `rim`, `grain`, `warp`, `intensity`, `cornerRadius` and `speed`. It draws its own rectangle.
+- The names and the color bar of a heatmap can stand on any side of its grid. `rowLabelSide` is `left` or `right`, `columnLabelSide` is `top` or `bottom`, and `legendSide` is `top`, `bottom`, `left` or `right`. `legendGap` sets the distance between the grid and the color bar, and `axisLabelSpace` sets how much room the names get beside the data. Left out, the room is as much as the longest name needs. The names of a heatmap follow the font, size and color of the axis.
+- `xLabelGap` and `yLabelGap` set how far the labels stand from the graphic, in pixels, along the x axis and along the y axis.
+- `titleAlign` and `axisLabelAlign` align the title over a chart and the names beside the data to `left`, `center` or `right`.
+- `axisLabelAngle` stands the labels of heatmap columns, bar categories and boxplot boxes up, from `0` for flat to `90` for upright.
+- `data-sf-snap-distance` on the svg sets in pixels how close a shape has to come to another before it snaps. Without it the distance stays 20.
+- Round charts (`pie`, `radar`, `radial`, `radialBar` and `polarArea`) keep their proportions while they are resized, and any shape does while Shift is held.
 
 ## [0.7.0] - 2026-10-25
 
