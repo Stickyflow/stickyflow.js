@@ -29,7 +29,7 @@ class Random {
 }
 
 interface Scope {
-  vars: Map<string, number>;
+  vars: Map<string, Scalar>;
   random: Random;
   repeat: string;
 }
@@ -44,6 +44,24 @@ function numberOf(scope: Scope, value: Scalar, what: string): number {
   }
   return value;
 }
+
+function rgbOf(scope: Scope, value: Scalar): [number, number, number] {
+  const match = typeof value === 'string' ? /^#([0-9a-f]{6})$/i.exec(value) : null;
+  if (!match) {
+    fail(scope, 'a color has to be written as "#rrggbb"');
+  }
+  const n = Number.parseInt(match[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+const hexOf = (rgb: number[]): string =>
+  `#${rgb
+    .map(channel =>
+      Math.round(Math.max(0, Math.min(255, channel)))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
 
 function callFunction(scope: Scope, name: string, args: Scalar[]): Scalar {
   const number = (index: number) => numberOf(scope, args[index], `${name}()`);
@@ -61,6 +79,22 @@ function callFunction(scope: Scope, name: string, args: Scalar[]): Scalar {
         fail(scope, 'pick() needs at least one value');
       }
       return args[Math.floor(scope.random.next() * args.length)];
+    }
+    case 'exp':
+      return Math.exp(number(0));
+    case 'pow':
+      return number(0) ** number(1);
+    case 'dist':
+      return Math.hypot(number(0) - number(2), number(1) - number(3));
+    case 'mix': {
+      const from = rgbOf(scope, args[0]);
+      const to = rgbOf(scope, args[1]);
+      const amount = Math.max(0, Math.min(1, number(2)));
+      return hexOf(from.map((channel, index) => channel + (to[index] - channel) * amount));
+    }
+    case 'shade': {
+      const factor = number(1);
+      return hexOf(rgbOf(scope, args[0]).map(channel => channel * factor));
     }
     case 'floor':
       return Math.floor(number(0));
@@ -268,7 +302,7 @@ function expandRepeat(block: SflBlock): SflBlock[] {
         continue;
       }
       const spread = () => (jitter > 0 ? (scope.random.next() * 2 - 1) * jitter : 0);
-      scope.vars = new Map<string, number>([
+      scope.vars = new Map<string, Scalar>([
         ['col', col],
         ['row', row],
         ['index', index],
@@ -280,7 +314,7 @@ function expandRepeat(block: SflBlock): SflBlock[] {
       ]);
       for (const helper of helpers) {
         const value = valueOf(scope, helper.value);
-        if (value.type === 'number') {
+        if (value.type === 'number' || value.type === 'string') {
           scope.vars.set(helper.key, value.value);
         } else if (value.type === 'ident') {
           scope.vars.set(helper.key, value.segments[0] === 'true' ? 1 : 0);
