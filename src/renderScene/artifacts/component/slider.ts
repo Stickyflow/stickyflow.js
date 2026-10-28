@@ -102,17 +102,21 @@ function ticks(
   });
 }
 
+// The position of a fraction along a slider: from the bottom up when it stands upright, from the left otherwise.
+function alongOf(box: ControlBox, reach: number, vertical: boolean): (fraction: number) => number {
+  return fraction =>
+    vertical
+      ? box.y + box.height - reach - fraction * (box.height - reach * 2)
+      : box.x + reach + fraction * (box.width - reach * 2);
+}
+
 // A line with a round thumb on it, along the width or, upright, along the height.
 function buildLine(component: GenericComponent, box: ControlBox, thumbs: Thumbs, vertical: boolean): RenderNode[] {
   const reach = sliderReach('line', vertical ? box.width : box.height);
   const radius = (reach * numberProperty(component, 'thumbSize')) / 100;
   const thickness = Math.min(numberProperty(component, 'trackHeight'), vertical ? box.width : box.height);
   const mid = vertical ? box.x + box.width / 2 : box.y + box.height / 2;
-  // The position of a fraction along the line.
-  const along = (fraction: number) =>
-    vertical
-      ? box.y + box.height - reach - fraction * (box.height - reach * 2)
-      : box.x + reach + fraction * (box.width - reach * 2);
+  const along = alongOf(box, reach, vertical);
   const line = (start: number, end: number): Shape =>
     vertical
       ? {
@@ -165,78 +169,81 @@ function buildLine(component: GenericComponent, box: ControlBox, thumbs: Thumbs,
   ];
 }
 
-// A field that fills up to the value, with a thin handle at its end. Along the width it has the label at the left and the value at the
-// right, upright it fills from below and has the value at the top.
-function buildField(component: GenericComponent, box: ControlBox, thumbs: Thumbs, vertical: boolean): RenderNode[] {
-  const reach = sliderReach('field', vertical ? box.width : box.height);
-  const radius = Math.min(numberProperty(component, 'radius'), Math.min(box.width, box.height) / 2);
-  const whole: Shape = { x: box.x, y: box.y, width: box.width, height: box.height, rx: radius };
-  const along = (fraction: number) =>
-    vertical
-      ? box.y + box.height - reach - fraction * (box.height - reach * 2)
-      : box.x + reach + fraction * (box.width - reach * 2);
-  const start = thumbs.two ? along(thumbs.from) : vertical ? box.y + box.height : box.x;
-  const end = along(thumbs.to);
+// The part of the field that is filled: from its start to the thumb, or between the two thumbs of a range.
+function fieldFill(
+  whole: Shape,
+  box: ControlBox,
+  thumbs: Thumbs,
+  vertical: boolean,
+  start: number,
+  end: number,
+): Shape {
   const first = Math.min(start, end) - (thumbs.two ? HANDLE_WIDTH / 2 : 0);
   const last = Math.max(start, end) + HANDLE_WIDTH / 2;
-  const filled: Shape = vertical
+  return vertical
     ? {
         ...whole,
         y: thumbs.two ? first : end - HANDLE_WIDTH / 2,
         height: thumbs.two ? last - first : Math.max(0, box.y + box.height - end + HANDLE_WIDTH / 2),
-        rx: thumbs.two ? 0 : radius,
+        rx: thumbs.two ? 0 : whole.rx,
       }
     : {
         ...whole,
         x: thumbs.two ? first : box.x,
         width: thumbs.two ? last - first : Math.max(0, end + HANDLE_WIDTH / 2 - box.x),
-        rx: thumbs.two ? 0 : radius,
+        rx: thumbs.two ? 0 : whole.rx,
       };
+}
+
+// The thin handle at the end of the fill, across half of the field.
+function fieldHandle(
+  component: GenericComponent,
+  box: ControlBox,
+  vertical: boolean,
+  part: string,
+  at: number,
+): RenderNode {
   const handleLength = (vertical ? box.width : box.height) * 0.5;
-  const handle = (part: string, at: number): RenderNode => {
-    const shape: Shape = vertical
-      ? {
-          x: box.x + (box.width - handleLength) / 2,
-          y: at - HANDLE_WIDTH / 2,
-          width: handleLength,
-          height: HANDLE_WIDTH,
-          rx: HANDLE_WIDTH / 2,
-        }
-      : {
-          x: at - HANDLE_WIDTH / 2,
-          y: box.y + (box.height - handleLength) / 2,
-          width: HANDLE_WIDTH,
-          height: handleLength,
-          rx: HANDLE_WIDTH / 2,
-        };
-    return rect(component, box, part, 0.3, shape, textProperty(component, 'accent'));
-  };
-  const nodes = [
-    rect(component, box, 'track', 0.1, whole, textProperty(component, 'surface')),
-    rect(component, box, 'fill', 0.2, filled, textProperty(component, 'fill')),
-    ...(thumbs.two ? [handle('handle-start', start)] : []),
-    handle(thumbs.two ? 'handle-end' : 'handle', end),
-  ];
+  const shape: Shape = vertical
+    ? {
+        x: box.x + (box.width - handleLength) / 2,
+        y: at - HANDLE_WIDTH / 2,
+        width: handleLength,
+        height: HANDLE_WIDTH,
+        rx: HANDLE_WIDTH / 2,
+      }
+    : {
+        x: at - HANDLE_WIDTH / 2,
+        y: box.y + (box.height - handleLength) / 2,
+        width: HANDLE_WIDTH,
+        height: handleLength,
+        rx: HANDLE_WIDTH / 2,
+      };
+  return rect(component, box, part, 0.3, shape, textProperty(component, 'accent'));
+}
+
+// The value, at the top of an upright field, and the label at the left and the value at the right of one along the width.
+function fieldTexts(component: GenericComponent, box: ControlBox, thumbs: Thumbs, vertical: boolean): RenderNode[] {
   const text = {
     color: ink(component, textProperty(component, 'textColor')),
     fontSize: numberProperty(component, 'fontSize'),
   };
   const value = readout(component, thumbs);
   if (vertical) {
-    if (value) {
-      nodes.push(
-        labelText(
-          component,
-          'value',
-          { x: box.x, y: box.y + 6, width: box.width, height: 20 },
-          { ...text, text: value, align: 'center' },
-          box.order + 0.4,
-        ),
-      );
-    }
-    return nodes;
+    return value
+      ? [
+          labelText(
+            component,
+            'value',
+            { x: box.x, y: box.y + 6, width: box.width, height: 20 },
+            { ...text, text: value, align: 'center' },
+            box.order + 0.4,
+          ),
+        ]
+      : [];
   }
   const inner = { y: box.y, height: box.height, width: Math.max(0, box.width / 2 - TEXT_PADDING) };
+  const nodes: RenderNode[] = [];
   if (component.label) {
     nodes.push(
       labelText(
@@ -259,8 +266,33 @@ function buildField(component: GenericComponent, box: ControlBox, thumbs: Thumbs
       ),
     );
   }
-  nodes.push(...ticks(component, box, false, reach, box.height - TICK_LENGTH - 5));
   return nodes;
+}
+
+// A field that fills up to the value, with a thin handle at its end. Along the width it has the label at the left and the value at the
+// right, upright it fills from below and has the value at the top.
+function buildField(component: GenericComponent, box: ControlBox, thumbs: Thumbs, vertical: boolean): RenderNode[] {
+  const reach = sliderReach('field', vertical ? box.width : box.height);
+  const radius = Math.min(numberProperty(component, 'radius'), Math.min(box.width, box.height) / 2);
+  const whole: Shape = { x: box.x, y: box.y, width: box.width, height: box.height, rx: radius };
+  const along = alongOf(box, reach, vertical);
+  const start = thumbs.two ? along(thumbs.from) : vertical ? box.y + box.height : box.x;
+  const end = along(thumbs.to);
+  return [
+    rect(component, box, 'track', 0.1, whole, textProperty(component, 'surface')),
+    rect(
+      component,
+      box,
+      'fill',
+      0.2,
+      fieldFill(whole, box, thumbs, vertical, start, end),
+      textProperty(component, 'fill'),
+    ),
+    ...(thumbs.two ? [fieldHandle(component, box, vertical, 'handle-start', start)] : []),
+    fieldHandle(component, box, vertical, thumbs.two ? 'handle-end' : 'handle', end),
+    ...fieldTexts(component, box, thumbs, vertical),
+    ...(vertical ? [] : ticks(component, box, false, reach, box.height - TICK_LENGTH - 5)),
+  ];
 }
 
 // The `slider` and the `range` share their look: the range has a second thumb, which its property `valueEnd` sets.
