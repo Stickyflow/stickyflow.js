@@ -15,6 +15,8 @@ uniform float uAngle;
 uniform float uSpread;
 uniform float uWarp;
 uniform float uGlow;
+uniform float uRound;
+uniform float uScatter;
 uniform float uLens;
 uniform float uGrain;
 uniform vec3 uBaseColor;
@@ -54,11 +56,12 @@ float stretch(float r, float sphere) {
 
 // The color under the dots: an uneven cloud of color whose edge bleeds out into the dark, with a red glow around it.
 // body is how much of the cloud is there, from 1 inside to 0 far outside.
-vec3 field(vec2 q, float angle, float t, out float body) {
+vec3 field(vec2 q, float angle, float t, out float body, out float distance) {
   vec2 p = turn(q, -angle);
   vec2 bend = vec2(fbm(p * 2.2 + vec2(t * 0.3, 1.7)), fbm(p * 2.2 + vec2(8.3, -t * 0.25))) - 0.35;
   vec2 w = p + bend * max(uWarp, 0.0) * 0.4;
   float rr = length(w) / max(uSpread, 0.2);
+  distance = rr;
   body = 1.0 - smoothstep(0.78, 1.22, rr);
 
   vec3 c = uColorB;
@@ -74,7 +77,8 @@ void main() {
   float side = min(uResolution.x, uResolution.y);
   vec2 q = (vUv * uResolution - uResolution * 0.5) / (side * 0.5);
   float r = length(q);
-  float edge = 1.0 - smoothstep(0.985, 1.0, r);
+  // On a circle the picture ends at its edge; on a rectangle the dots run on over the whole surface and may lie beyond the cloud.
+  float edge = uRound > 0.5 ? 1.0 - smoothstep(0.985, 1.0, r) : 1.0;
   if (edge <= 0.0) discard;
 
   float t = uTime * max(uSpeed, 0.0);
@@ -116,8 +120,10 @@ void main() {
 
   float bodyHere;
   float bodyDot;
-  vec3 colorHere = field(q, angle, t, bodyHere);
-  field(qc, angle, t, bodyDot);
+  float farHere;
+  float farDot;
+  vec3 colorHere = field(q, angle, t, bodyHere, farHere);
+  field(qc, angle, t, bodyDot, farDot);
 
   // Between the dots the cloud is darker, so the dots read as glass lying on it.
   vec3 gap = colorHere * mix(0.3, 0.9, bodyHere);
@@ -133,6 +139,13 @@ void main() {
   float darken = lens * (0.1 + 0.9 * edgeness) * smoothstep(-0.55, 1.0, along);
   float lift = lens * 0.09 * (1.0 - edgeness) * (-along);
   vec3 glass = colorHere * (1.0 + lift) * (1.0 - clamp(darken, 0.0, 0.96));
+
+  // A dot beyond the cloud is drawn in the dark glow color when the dice fall that way, more of them close to the cloud than far from it.
+  float luck = hash(centre + 17.0);
+  float shown = step(luck, clamp(uScatter, 0.0, 1.0) * (1.0 - smoothstep(1.0, 2.0, farDot))) * (1.0 - bodyDot);
+  vec3 outer = mix(uRimColor, mix(uColorD, uColorC, hash(centre + 5.0)), 0.35 * hash(centre + 9.0)) * (0.25 + 0.4 * hash(centre + 3.0));
+  outer *= 1.0 - 0.8 * smoothstep(-0.55, 1.0, along);
+  glass = mix(glass, outer, shown);
 
   vec3 color = mix(gap, glass, inside);
   color *= max(uIntensity, 0.0);
@@ -155,6 +168,8 @@ export const glassDotsProgram: ShaderProgram = {
     spread: 0.86,
     warp: 1,
     glow: 0.75,
+    round: 0,
+    scatter: 0.45,
     lens: 0.75,
     grain: 0.06,
     baseColor: '#121212',
