@@ -52,12 +52,12 @@ export function buildBox(object: IsometricObject, index: number): RenderNode[] {
   const hullClip: HullClip = { type: 'path', d: hullPath };
 
   const groundShadow = groundShadowNode(context, faces.top);
-  const seams = seamsNode(context, faces, hullClip);
+  const seams = object.seams === false ? undefined : seamsNode(context, faces, hullClip);
   const hull = hullNode(context, hullPath, cornerRadius);
   const facesNodes = faceNodes(context, faces, hullClip);
   const objectNodes: RenderNode[] = groundShadow
-    ? [hull, ...facesNodes, groundShadow, seams]
-    : [hull, ...facesNodes, seams];
+    ? [hull, ...facesNodes, groundShadow, ...(seams ? [seams] : [])]
+    : [hull, ...facesNodes, ...(seams ? [seams] : [])];
 
   return object.text ? [...objectNodes, ...labelNodes(context, object.text)] : objectNodes;
 }

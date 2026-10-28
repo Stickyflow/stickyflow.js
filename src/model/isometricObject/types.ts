@@ -22,6 +22,8 @@ export interface IsometricObject {
   strokeColor?: string;
   strokeWidth?: number;
   cornerRadius?: number;
+  // The light lines along the edges of a box. They are drawn unless this is false.
+  seams?: boolean;
   hasShadow?: boolean;
   shadowStyle?: ShadowStyle;
   labelOffsetX?: number;

@@ -1,5 +1,5 @@
 import type { Frame } from '../../model/frame';
-import type { RenderNode, SceneStyle } from './types';
+import type { RenderNode, SceneClip, SceneStyle } from './types';
 
 interface Turn {
   angle: number;
@@ -61,7 +61,7 @@ function roundedRectPoints(frame: Frame): Array<[number, number]> {
   );
 }
 
-function clipFor(frame: Frame, turn: Turn | undefined): NonNullable<SceneStyle['clip']> {
+function clipFor(frame: Frame, turn: Turn | undefined): SceneClip {
   if (!turn) {
     return { type: 'rect', x: frame.x, y: frame.y, width: frame.width, height: frame.height, rx: frame.cornerRadius };
   }
@@ -94,8 +94,10 @@ export function applyFrameClips(nodes: RenderNode[], frames: readonly Frame[]): 
   for (const node of nodes) {
     const frame = node.identity ? inside.get(`${node.identity.role}:${node.identity.id}`) : undefined;
     const styled = node as { style?: SceneStyle };
-    if (frame && styled.style && !styled.style.clip) {
-      styled.style = { ...styled.style, clip: clipFor(frame, turnOf(node)) };
+    if (frame && styled.style) {
+      const edge = clipFor(frame, turnOf(node));
+      // An element that has a clip of its own, like the hull of a block, keeps it and is cut by the frame as well.
+      styled.style = { ...styled.style, clip: styled.style.clip ? { ...styled.style.clip, within: edge } : edge };
     }
   }
 }

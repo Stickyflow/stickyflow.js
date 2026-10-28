@@ -30,10 +30,14 @@ export interface SceneStyle {
   blur?: number;
   blend?: string;
   saturate?: number;
-  clip?:
-    | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
-    | { type: 'path'; d: string };
+  clip?: SceneClip;
 }
+
+// An area that cuts what is drawn. `within` is a second area it is cut by in turn, as the edge of a frame cuts the faces of a block.
+export type SceneClip = (
+  | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }
+  | { type: 'path'; d: string }
+) & { within?: SceneClip };
 
 export type SceneRole =
   | 'shape'

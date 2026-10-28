@@ -25,6 +25,7 @@ export function isometricObject(canvasObject: SflIsometricObject): IsometricObje
     strokeColor: solidColor(presentation.stroke) ?? '#111827',
     strokeWidth: numOf(presentation.strokeWidth) ?? 1,
     cornerRadius: numOf(presentation.cornerRadius) ?? (canvasObject.isometric.footprint ? 0 : 8),
+    seams: presentation.seams === 'false' ? false : undefined,
     hasShadow: shadowStyle?.enabled ?? false,
     shadowStyle,
     labelOffsetX: numOf(presentation.labelOffsetX) ?? 0,
