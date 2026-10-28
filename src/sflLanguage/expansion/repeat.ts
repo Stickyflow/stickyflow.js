@@ -361,6 +361,31 @@ function expandBlocks(blocks: SflBlock[]): SflBlock[] {
   });
 }
 
+function checkNoComputed(blocks: SflBlock[]): void {
+  for (const block of blocks) {
+    for (const entry of block.entries) {
+      const properties =
+        entry.type === 'property'
+          ? [entry.property]
+          : entry.type === 'layout'
+            ? entry.layout.properties
+            : entry.type === 'style'
+              ? entry.style.properties
+              : [];
+      for (const property of properties) {
+        if (property.value.type === 'expr') {
+          throw new Error(
+            `${block.kind} ${block.name}: ${property.key} is computed, and only a Repeat can work out a computed value`,
+          );
+        }
+      }
+      if (entry.type === 'block') {
+        checkNoComputed([entry.block]);
+      }
+    }
+  }
+}
+
 // A document in which every Repeat is replaced by the blocks it makes. A document without a Repeat is returned as it is.
 export function expandRepeats(doc: SflDocument): SflDocument {
   const has = (blocks: SflBlock[]): boolean =>
@@ -368,5 +393,11 @@ export function expandRepeats(doc: SflDocument): SflDocument {
       block =>
         block.kind === 'Repeat' || block.entries.some(entry => (entry.type === 'block' ? has([entry.block]) : false)),
     );
-  return has(doc.blocks) ? { ...doc, blocks: expandBlocks(doc.blocks) } : doc;
+  if (!has(doc.blocks)) {
+    checkNoComputed(doc.blocks);
+    return doc;
+  }
+  const expanded = { ...doc, blocks: expandBlocks(doc.blocks) };
+  checkNoComputed(expanded.blocks);
+  return expanded;
 }
