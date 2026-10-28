@@ -3,14 +3,14 @@ import { defineStickyflowDiagram, type StickyflowDiagram } from '../src/runtime/
 defineStickyflowDiagram();
 
 const query = new URLSearchParams(location.search);
-const sphere = Number(query.get('sphere') ?? 1);
+const sphere = Number(query.get('sphere') ?? 0);
 
 const SFL = `sfl 1.5
 
 Style tpl_canvas { fill: "#141414" }
 
 Shader Ball {
-  program: dotSphere
+  program: glassDots
   sphere: ${sphere}
 }
 
