@@ -281,34 +281,39 @@ function labelPlacement(
   return { point, color, outside, mid, tickStart };
 }
 
-function createWedgeLabel(
-  context: ChartRenderContext<PolarAreaChart>,
-  geometry: WedgeGeometry,
-  angles: Angles,
-  series: ChartSeries,
-  value: number,
-  fillColor: FillColor,
-): RenderNode[] {
-  const placement = labelPlacement(context, geometry, angles, series, fillColor);
-  if (!placement) {
-    return [];
-  }
-  const { chart, bounds, nextOrder } = context;
-  const { point, color, outside, mid, tickStart } = placement;
-  const { nameSize, valueSize } = labelSizes(chart);
-  const lineHeight = Math.max(nameSize, valueSize) * 1.2;
+type WedgePlacement = NonNullable<ReturnType<typeof labelPlacement>>;
 
+// The short line from the wedge to its label, which is only drawn when the label is pulled out of the wedge.
+function labelTick(
+  context: ChartRenderContext<PolarAreaChart>,
+  series: ChartSeries,
+  placement: WedgePlacement,
+  lineHeight: number,
+): RenderNode {
+  const { point, color, outside, tickStart } = placement;
   const tickEnd = outside ? clipSegmentToRect(tickStart, point, LABEL_WIDTH / 2, lineHeight) : tickStart;
-  const tick: RenderNode = {
+  return {
     type: 'path',
-    id: `chart-polar-area-label-tick-${chart.id}-${series.id}`,
-    order: nextOrder(),
-    bounds,
+    id: `chart-polar-area-label-tick-${context.chart.id}-${series.id}`,
+    order: context.nextOrder(),
+    bounds: context.bounds,
     d: `M ${tickStart.x} ${tickStart.y} L ${tickEnd.x} ${tickEnd.y}`,
     detail: { of: 'chartSeries', series: series.id, mark: 'polar-area-label-tick' },
     style: outside ? { stroke: { kind: 'solid', color }, strokeWidth: 1.5 } : { stroke: { kind: 'none' } },
   };
+}
 
+// The name of the series and its value, one above the other, in the order the chart asks for.
+function labelTexts(
+  context: ChartRenderContext<PolarAreaChart>,
+  geometry: WedgeGeometry,
+  series: ChartSeries,
+  value: number,
+  placement: WedgePlacement,
+): SceneText[] {
+  const { chart, bounds, nextOrder } = context;
+  const { point, color, outside, mid } = placement;
+  const { nameSize, valueSize } = labelSizes(chart);
   const detail = {
     of: 'chartSeries' as const,
     series: series.id,
@@ -360,7 +365,25 @@ function createWedgeLabel(
     prop: seriesValueProp(series.id, 0),
     propKind: 'value',
   };
-  return [tick, nameText, valueText];
+  return [nameText, valueText];
+}
+
+function createWedgeLabel(
+  context: ChartRenderContext<PolarAreaChart>,
+  geometry: WedgeGeometry,
+  angles: Angles,
+  series: ChartSeries,
+  value: number,
+  fillColor: FillColor,
+): RenderNode[] {
+  const placement = labelPlacement(context, geometry, angles, series, fillColor);
+  if (!placement) {
+    return [];
+  }
+  const { nameSize, valueSize } = labelSizes(context.chart);
+  // The tick takes its order before the texts do.
+  const tick = labelTick(context, series, placement, Math.max(nameSize, valueSize) * 1.2);
+  return [tick, ...labelTexts(context, geometry, series, value, placement)];
 }
 
 function addOffset(point: { x: number; y: number }, dx: number, dy: number): { x: number; y: number } {

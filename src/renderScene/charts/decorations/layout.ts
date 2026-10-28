@@ -88,47 +88,85 @@ function tiltedBottomRoom(chart: Chart): number {
   return labels.length > 0 ? Math.max(0, tiltedLabelRoom(chart, labels, tilt) - 18) : 0;
 }
 
-export function decorations(chart: Chart): ChartLayout {
-  const showLabels = chart.showAxisLabels !== false;
-  const showLegend = chart.showLegend !== false;
-  const legendPosition = chart.legendPosition ?? 'top';
-  const legendAtTop = legendPosition === 'top';
-  const hasLegendItems = showLegend && chart.series.length > 0;
-  const legendStacked = hasLegendItems && isStackedLegendPosition(legendPosition);
-  const sideColumnWidth = legendStacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0;
-  const treemapSide = treemapSideLegendSide(chart, showLegend);
+// Where the legend is and how much room it takes, which the padding on every side depends on.
+interface LegendPlace {
+  showLegend: boolean;
+  position: NonNullable<Chart['legendPosition']>;
+  atTop: boolean;
+  hasItems: boolean;
+  stacked: boolean;
+  sideColumnWidth: number;
+  treemapSide: ReturnType<typeof treemapSideLegendSide>;
+}
 
-  const tickX = xLabelOffset(chart);
-  const tickY = yLabelOffset(chart);
-  const padLeft =
-    tickY +
+function legendPlaceOf(chart: Chart): LegendPlace {
+  const showLegend = chart.showLegend !== false;
+  const position = chart.legendPosition ?? 'top';
+  const hasItems = showLegend && chart.series.length > 0;
+  const stacked = hasItems && isStackedLegendPosition(position);
+  return {
+    showLegend,
+    position,
+    atTop: position === 'top',
+    hasItems,
+    stacked,
+    sideColumnWidth: stacked ? stackedLegendColumnWidth(chart) + LEGEND_COLUMN_GAP : 0,
+    treemapSide: treemapSideLegendSide(chart, showLegend),
+  };
+}
+
+function padLeftOf(chart: Chart, showLabels: boolean, legend: LegendPlace): number {
+  return (
+    yLabelOffset(chart) +
     (showLabels ? leftLabelWidth(chart) : 12) +
-    (legendPosition === 'bottomLeft' ? sideColumnWidth : 0) +
-    (treemapSide === 'left' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
-  const padRight =
+    (legend.position === 'bottomLeft' ? legend.sideColumnWidth : 0) +
+    (legend.treemapSide === 'left' ? TREEMAP_SIDE_LEGEND_WIDTH : 0)
+  );
+}
+
+function padRightOf(legend: LegendPlace): number {
+  return (
     24 +
-    (legendPosition === 'bottomRight' ? sideColumnWidth : 0) +
-    (treemapSide === 'right' ? TREEMAP_SIDE_LEGEND_WIDTH : 0);
+    (legend.position === 'bottomRight' ? legend.sideColumnWidth : 0) +
+    (legend.treemapSide === 'right' ? TREEMAP_SIDE_LEGEND_WIDTH : 0)
+  );
+}
+
+// The room under the plot for the axis, its labels, the color bar and a legend that stands in a row at the bottom.
+function padBottomOf(chart: Chart, showLabels: boolean, legend: LegendPlace): number {
   const valueRow =
     chart.chartType === 'bar' && chart.config?.showBarLabels === true && chart.config.barLabelPosition === 'axis';
   const horizontalValueAxis = isHorizontalBar(chart) && chart.showValueAxis !== false;
-  const basePadBottom = showLabels
+  const base = showLabels
     ? isHorizontalBar(chart)
       ? horizontalValueAxis
         ? 34
         : 12
       : (chart.axisX.label ? 52 : 34) + (valueRow ? 18 : 0)
     : 12;
-  const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
-  const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
-  const padBottom =
-    tickX +
-    basePadBottom +
+  const hasColorBar = chart.chartType === 'field' && legend.showLegend && Boolean(chart.config?.scale?.stops.length);
+  const legendInRow = legend.hasItems && !legend.atTop && !legend.stacked;
+  return (
+    xLabelOffset(chart) +
+    base +
     (showLabels ? tiltedBottomRoom(chart) : 0) +
     (hasColorBar ? 44 : 0) +
-    (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
+    (legendInRow ? 16 + LEGEND_ROW_HEIGHT : 0)
+  );
+}
+
+function padTopOf(chart: Chart, legend: LegendPlace): number {
   const titleHeight = chart.title ? Math.max(44, 20 + finite(chart.titleSize, 14) * 1.6) : 0;
-  const padTop = titleHeight || (legendAtTop && hasLegendItems ? 44 : 24);
+  return titleHeight || (legend.atTop && legend.hasItems ? 44 : 24);
+}
+
+export function decorations(chart: Chart): ChartLayout {
+  const showLabels = chart.showAxisLabels !== false;
+  const legend = legendPlaceOf(chart);
+  const padLeft = padLeftOf(chart, showLabels, legend);
+  const padRight = padRightOf(legend);
+  const padBottom = padBottomOf(chart, showLabels, legend);
+  const padTop = padTopOf(chart, legend);
 
   return {
     bounds: boxBounds(
@@ -142,7 +180,7 @@ export function decorations(chart: Chart): ChartLayout {
       height: Math.max(1, chart.height - padTop - padBottom),
     },
     showLabels,
-    showLegend,
+    showLegend: legend.showLegend,
     padLeft,
   };
 }
