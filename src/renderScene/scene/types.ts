@@ -28,6 +28,7 @@ export interface SceneStyle {
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
+  blend?: string;
   saturate?: number;
   clip?:
     | { type: 'rect'; x: number; y: number; width: number; height: number; rx: number }

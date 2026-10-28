@@ -54,11 +54,18 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   if (style.pointerEvents) {
     attrs.push(`pointer-events="${style.pointerEvents}"`);
   }
+  const css: string[] = [];
   if (style.transition && style.transition > 0) {
     const time = `${num(style.transition)}ms ease`;
-    attrs.push(
-      `style="transition: x ${time}, y ${time}, width ${time}, height ${time}, cx ${time}, cy ${time}, rx ${time}, ry ${time}, fill ${time}, stroke ${time}, stroke-width ${time}, stroke-dasharray ${time}, opacity ${time}"`,
+    css.push(
+      `transition: x ${time}, y ${time}, width ${time}, height ${time}, cx ${time}, cy ${time}, rx ${time}, ry ${time}, fill ${time}, stroke ${time}, stroke-width ${time}, stroke-dasharray ${time}, opacity ${time}`,
     );
+  }
+  if (style.blend) {
+    css.push(`mix-blend-mode: ${xml(style.blend)}`);
+  }
+  if (css.length > 0) {
+    attrs.push(`style="${css.join('; ')}"`);
   }
 }
 

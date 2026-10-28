@@ -72,6 +72,26 @@ export function optionalOneOf<T extends string>(value: string | undefined, allow
   return value !== undefined && allowed.includes(value as T) ? (value as T) : undefined;
 }
 
+// How a shape mixes with what lies under it. They are the blend modes of CSS.
+export const BLEND_MODES = [
+  'multiply',
+  'screen',
+  'overlay',
+  'darken',
+  'lighten',
+  'color-dodge',
+  'color-burn',
+  'hard-light',
+  'soft-light',
+  'difference',
+  'exclusion',
+  'hue',
+  'saturation',
+  'color',
+  'luminosity',
+] as const;
+export type BlendMode = (typeof BLEND_MODES)[number];
+
 export const SHAPE_STROKE_STYLES = ['solid', 'dashed', 'dotted', 'double'] as const;
 export const MARKER_TYPES = [
   'none',

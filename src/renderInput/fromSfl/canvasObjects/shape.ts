@@ -3,6 +3,7 @@ import type { ShapeType } from '../../../model/shape';
 import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeShadow } from '../../styleDecoding';
 import {
+  BLEND_MODES,
   dashArray,
   numOf,
   oneOf,
@@ -52,6 +53,7 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     strokeStyle: optionalOneOf(p.strokeStyle, SHAPE_STROKE_STYLES),
     opacity: numOf(p.opacity),
     blur: numOf(p.blur),
+    blend: optionalOneOf(p.blend, BLEND_MODES),
     parentFrameId: e.parentFrameId,
     order: e.order,
     sourceIndex: e.sourceIndex,

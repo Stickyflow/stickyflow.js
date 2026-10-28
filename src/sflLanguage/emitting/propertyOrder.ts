@@ -18,6 +18,7 @@ const STYLE_ORDER = [
   'shadow',
   'opacity',
   'blur',
+  'blend',
   'icon',
   'route',
   'marker',
