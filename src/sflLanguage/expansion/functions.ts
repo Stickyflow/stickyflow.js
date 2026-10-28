@@ -10,6 +10,7 @@ function rgbOf(scope: Scope, value: Scalar): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+// The language layer stands on its own and does not use the color conversions of the model.
 const hexOf = (rgb: number[]): string =>
   `#${rgb
     .map(channel =>

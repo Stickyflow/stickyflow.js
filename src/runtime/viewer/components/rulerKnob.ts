@@ -1,3 +1,5 @@
+import { parseHexRgb } from '../../../model/color';
+
 const bases = new WeakMap<Element, string>();
 const written = new WeakMap<Element, string>();
 const fills = new WeakMap<Element, string>();
@@ -34,21 +36,12 @@ function move(node: Element, dx: number, dy: number): void {
   node.setAttribute('transform', next);
 }
 
-function hexToRgb(value: string): [number, number, number] | null {
-  const match = /^#([0-9a-f]{6})$/i.exec(value.trim());
-  if (!match) {
-    return null;
-  }
-  const number = parseInt(match[1], 16);
-  return [(number >> 16) & 255, (number >> 8) & 255, number & 255];
-}
-
 const WHITE: [number, number, number] = [255, 255, 255];
 
 function shade(node: SVGElement, bump: number, target: [number, number, number]): void {
   const base = fills.get(node) ?? node.getAttribute('fill') ?? '';
   fills.set(node, base);
-  const rgb = hexToRgb(base);
+  const rgb = parseHexRgb(base);
   if (!rgb) {
     return;
   }
@@ -67,7 +60,7 @@ export function placeRulerKnobs(
   const radii = new Map<string, number>();
   for (const surface of svg.querySelectorAll('foreignObject[data-sf-shader="ruler"]')) {
     const params = parameters(surface);
-    const peak = (typeof params.peak === 'string' ? hexToRgb(params.peak) : null) ?? WHITE;
+    const peak = (typeof params.peak === 'string' ? parseHexRgb(params.peak) : null) ?? WHITE;
     const id = surface.getAttribute('data-sf-id') ?? '';
     const x = Number(surface.getAttribute('x'));
     const y = Number(surface.getAttribute('y'));

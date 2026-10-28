@@ -1,22 +1,7 @@
-function clamp255(value: number): number {
-  return Math.max(0, Math.min(255, Math.round(value)));
-}
-
-function hexToRgb(hex: string): [number, number, number] | null {
-  const match = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
-  if (!match) {
-    return null;
-  }
-  const n = Number.parseInt(match[1], 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return `#${[r, g, b].map(channel => clamp255(channel).toString(16).padStart(2, '0')).join('')}`;
-}
+import { parseHexRgb, rgbToHex } from '../color';
 
 function multiply(hex: string, factor: number): string {
-  const rgb = hexToRgb(hex);
+  const rgb = parseHexRgb(hex);
   if (!rgb) {
     return hex;
   }

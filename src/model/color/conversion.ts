@@ -24,6 +24,17 @@ export const hexToRgb = (hex: string): RGB => {
   };
 };
 
+// The channels of a hex color, written with or without the leading '#', in the short or in the long form. Null for anything else.
+export const parseHexRgb = (value: string): [number, number, number] | null => {
+  const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+  const digits = match[1].length === 3 ? [...match[1]].map(digit => digit + digit).join('') : match[1];
+  const n = Number.parseInt(digits, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
 export const rgbToHex = (r: number, g: number, b: number, a?: number): string => {
   const channel = (x: number) => {
     const hex = Math.max(0, Math.min(255, Math.round(x))).toString(16);

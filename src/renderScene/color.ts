@@ -1,16 +1,8 @@
+import { parseHexRgb, rgbToHex } from '../model/color';
+
+// A color of a scene is written with its '#', and anything else is not a color to work out.
 function hexToRgb(hex: string | undefined): [number, number, number] | undefined {
-  if (hex?.[0] !== '#') {
-    return undefined;
-  }
-  const channels =
-    hex.length === 4
-      ? hex
-          .slice(1)
-          .split('')
-          .map(channel => parseInt(channel + channel, 16))
-      : [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16));
-  const [red, green, blue] = channels;
-  return [red, green, blue].some(channel => Number.isNaN(channel)) ? undefined : [red, green, blue];
+  return hex?.startsWith('#') ? (parseHexRgb(hex) ?? undefined) : undefined;
 }
 
 export function colorWithAlpha(hex: string | undefined, alpha: number): string {
@@ -21,14 +13,6 @@ export function colorWithAlpha(hex: string | undefined, alpha: number): string {
   }
   const [red, green, blue] = rgb;
   return `rgba(${red}, ${green}, ${blue}, ${clamped})`;
-}
-
-function rgbToHex(red: number, green: number, blue: number): string {
-  const channel = (value: number) =>
-    Math.round(Math.max(0, Math.min(255, value)))
-      .toString(16)
-      .padStart(2, '0');
-  return `#${channel(red)}${channel(green)}${channel(blue)}`;
 }
 
 function rgbToHsl(red: number, green: number, blue: number): [number, number, number] {

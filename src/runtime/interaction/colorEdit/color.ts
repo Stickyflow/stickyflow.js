@@ -1,3 +1,10 @@
+import {
+  rgbToHex as modelHex,
+  hsvToRgb as modelHsvToRgb,
+  rgbToHsv as modelRgbToHsv,
+  parseHexRgb,
+} from '../../../model/color';
+
 export interface Rgb {
   r: number;
   g: number;
@@ -10,23 +17,9 @@ export interface Hsv {
   v: number;
 }
 
-const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
 export function normalizeHex(value: string): string | null {
-  const raw = value.trim();
-  const withHash = raw.startsWith('#') ? raw : `#${raw}`;
-  if (!HEX.test(withHash)) {
-    return null;
-  }
-  const body = withHash.slice(1);
-  const full =
-    body.length === 3
-      ? body
-          .split('')
-          .map(char => char + char)
-          .join('')
-      : body;
-  return `#${full.toLowerCase()}`;
+  const channels = parseHexRgb(value);
+  return channels && modelHex(...channels);
 }
 
 const COLOR_FUNCTION =
@@ -82,62 +75,26 @@ export function clampChannel(value: number): number {
 }
 
 export function hexToRgb(hex: string): Rgb {
-  const normalized = normalizeHex(hex) ?? '#000000';
-  return {
-    r: Number.parseInt(normalized.slice(1, 3), 16),
-    g: Number.parseInt(normalized.slice(3, 5), 16),
-    b: Number.parseInt(normalized.slice(5, 7), 16),
-  };
+  const [r, g, b] = parseHexRgb(hex) ?? [0, 0, 0];
+  return { r, g, b };
 }
 
 export function rgbToHex(rgb: Rgb): string {
-  const channel = (value: number) => clampChannel(value).toString(16).padStart(2, '0');
-  return `#${channel(rgb.r)}${channel(rgb.g)}${channel(rgb.b)}`;
+  return modelHex(clampChannel(rgb.r), clampChannel(rgb.g), clampChannel(rgb.b));
 }
 
+// The picker may be given a hue that has turned around or a part that is out of its range, which the conversion of the model does not take.
 export function hsvToRgb(hsv: Hsv): Rgb {
-  const h = ((hsv.h % 360) + 360) % 360;
-  const s = Math.max(0, Math.min(1, hsv.s));
-  const v = Math.max(0, Math.min(1, hsv.v));
-  const c = v * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = v - c;
-  const sector = Math.floor(h / 60);
-  const table: readonly (readonly [number, number, number])[] = [
-    [c, x, 0],
-    [x, c, 0],
-    [0, c, x],
-    [0, x, c],
-    [x, 0, c],
-    [c, 0, x],
-  ];
-  const [r, g, b] = table[sector] ?? table[0];
-  return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
+  const { r, g, b } = modelHsvToRgb(
+    ((hsv.h % 360) + 360) % 360,
+    Math.max(0, Math.min(1, hsv.s)),
+    Math.max(0, Math.min(1, hsv.v)),
+  );
+  return { r, g, b };
 }
 
 export function rgbToHsv(rgb: Rgb): Hsv {
-  const r = clampChannel(rgb.r) / 255;
-  const g = clampChannel(rgb.g) / 255;
-  const b = clampChannel(rgb.b) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const delta = max - min;
-
-  let h = 0;
-  if (delta !== 0) {
-    if (max === r) {
-      h = 60 * (((g - b) / delta) % 6);
-    } else if (max === g) {
-      h = 60 * ((b - r) / delta + 2);
-    } else {
-      h = 60 * ((r - g) / delta + 4);
-    }
-  }
-  if (h < 0) {
-    h += 360;
-  }
-
-  return { h, s: max === 0 ? 0 : delta / max, v: max };
+  return modelRgbToHsv(clampChannel(rgb.r), clampChannel(rgb.g), clampChannel(rgb.b));
 }
 
 export function hexToHsv(hex: string): Hsv {
