@@ -182,7 +182,7 @@ function evaluate(scope: Scope, expr: SflExpr): Scalar {
 
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
-function valueOf(scope: Scope, value: SflValue): SflValue {
+function resolveValue(scope: Scope, value: SflValue): SflValue {
   if (value.type !== 'expr') {
     return value;
   }
@@ -201,13 +201,16 @@ function valueOf(scope: Scope, value: SflValue): SflValue {
 }
 
 function propertiesOf(scope: Scope, properties: SflProperty[]): SflProperty[] {
-  return properties.map(property => ({ key: property.key, value: valueOf(scope, property.value) }));
+  return properties.map(property => ({ key: property.key, value: resolveValue(scope, property.value) }));
 }
 
 function entryOf(scope: Scope, entry: SflEntry, suffix: string): SflEntry {
   switch (entry.type) {
     case 'property':
-      return { type: 'property', property: { key: entry.property.key, value: valueOf(scope, entry.property.value) } };
+      return {
+        type: 'property',
+        property: { key: entry.property.key, value: resolveValue(scope, entry.property.value) },
+      };
     case 'layout':
       return { type: 'layout', layout: { properties: propertiesOf(scope, entry.layout.properties) } };
     case 'style':
@@ -313,7 +316,7 @@ function expandRepeat(block: SflBlock): SflBlock[] {
         ['y', round(originY + row * stepY + spread())],
       ]);
       for (const helper of helpers) {
-        const value = valueOf(scope, helper.value);
+        const value = resolveValue(scope, helper.value);
         if (value.type === 'number' || value.type === 'string') {
           scope.vars.set(helper.key, value.value);
         } else if (value.type === 'ident') {

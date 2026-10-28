@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-28
+
 ### Added
 
 - The `Repeat` block puts the blocks in it on a grid, one set for every cell, so a scene of hundreds of equal parts is a few lines. `columns` and `rows` (or `count`) set the grid, `step` the distance between cells and `origin` where it starts. In the blocks inside, a value can be computed: `col`, `row`, `index`, `x` and `y` are the cell, and `+ - * /`, comparisons, `floor`, `round`, `abs`, `min`, `max`, `sin`, `cos`, `sqrt`, `when(condition, a, b)`, `random(low, high)` and `pick(a, b, c)` work out the rest, as in `position: (x - y) * 0.866, (x + y) * 0.5` and `fill: pick("#79b04c", "#6aa84a")`. `seed` makes `random` and `pick` give the same result every time, `jitter` shifts every cell by up to that many units, `chance` keeps only that share of the cells, `where` keeps the cells for which an expression is true, and `order: diagonal` makes the cells from the back to the front of an isometric scene. Any other computed property of the Repeat is a name for the blocks in it, like a height worked out once. `mix(color, color, amount)` blends two colors and `shade(color, factor)` makes one lighter or darker, and `exp`, `pow` and `dist` give soft patches of color. A Repeat is turned into plain blocks when a document is read. The text is not changed, and a document without a Repeat reads exactly as before.
