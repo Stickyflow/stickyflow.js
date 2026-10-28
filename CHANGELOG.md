@@ -17,6 +17,16 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-10-28
+
+### Added
+
+- A document that uses one name for two objects, or two links, now has a `duplicate-name` warning. Two Repeat blocks that make blocks from templates of the same name cause it too, because each makes a block `name_0_0`.
+
+### Fixed
+
+- A document that has two blocks of the same name left the second of them behind in the viewer when the source was changed to another document, as ghost shapes that were not part of the new document. The viewer now matches elements of one id one by one, so every one is patched, kept or dropped, and what is on the canvas is always what a fresh render of the source has.
+
 ## [0.9.1] - 2026-10-28
 
 ### Fixed

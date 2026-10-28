@@ -7,12 +7,19 @@ function ownerIdOf(element: Element): string {
   return element.getAttribute('data-sf-id') ?? element.id;
 }
 
+// A document may have the same name twice, as two Repeat blocks do with templates of one name. Elements are matched by id and by how many of that
+// id came before, so every one of them is patched, kept or dropped on its own and none is left behind.
+function keyedElements(svg: SVGSVGElement): Array<[string, Element]> {
+  const seen = new Map<string, number>();
+  return Array.from(svg.querySelectorAll(':scope > [id]'), (element): [string, Element] => {
+    const count = seen.get(element.id) ?? 0;
+    seen.set(element.id, count + 1);
+    return [`${element.id}#${count}`, element];
+  });
+}
+
 function currentElementsById(svg: SVGSVGElement): Map<string, Element> {
-  const elements = new Map<string, Element>();
-  for (const element of svg.querySelectorAll(':scope > [id]')) {
-    elements.set(element.id, element);
-  }
-  return elements;
+  return new Map(keyedElements(svg));
 }
 
 function reusableElement(current: Element | undefined, next: Element, markTouched: (ownerId: string) => void): Element {
@@ -50,16 +57,16 @@ export function patchSceneNodes(svg: SVGSVGElement, next: SVGSVGElement): SceneD
   };
 
   let previousSibling: Node | null = definitions;
-  for (const nextElement of next.querySelectorAll(':scope > [id]')) {
-    retainedIds.add(nextElement.id);
+  for (const [key, nextElement] of keyedElements(next)) {
+    retainedIds.add(key);
     newOwnerIds.add(ownerIdOf(nextElement));
-    const liveElement = reusableElement(currentById.get(nextElement.id), nextElement, markTouched);
+    const liveElement = reusableElement(currentById.get(key), nextElement, markTouched);
     placeAfter(svg, liveElement, previousSibling);
     previousSibling = liveElement;
   }
 
-  for (const [id, element] of currentById) {
-    if (!retainedIds.has(id)) {
+  for (const [key, element] of currentById) {
+    if (!retainedIds.has(key)) {
       touchedOwnerIds.add(ownerIdOf(element));
       element.remove();
     }
