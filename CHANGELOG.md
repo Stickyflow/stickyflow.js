@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-28
+
 ### Added
 
 - The `Template` and `Use` blocks describe blocks once and set them again and again. A `Template` holds the blocks, and its own properties are the parameters with their default values, as `color: "#c4315f"`. A `Use` names the Template after the colon, as in `Use oak : tree`, and gives `at` for the place and a value for any parameter. In the blocks of the Template, `x` and `y` are the place of the Use, the parameters are names, and the computed values of `Repeat` work, so `size: 12, height * 1.6, 12` is valid. The blocks that a Use makes are named after it, as `oak_trunk`. A `Use` can be in a `Repeat`, so a wood is a Repeat of Uses, and a Template can use another one up to four deep. Both are worked out when a document is read, as `Repeat` is, and the text is not changed. Removing a block that a Use made removes the Use, or the cell of the Repeat that holds it.
