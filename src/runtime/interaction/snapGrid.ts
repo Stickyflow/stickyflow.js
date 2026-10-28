@@ -16,7 +16,7 @@ export function snapDistancePx(svg: SVGSVGElement): number {
   return value > 0 ? value : DEFAULT_SNAP_DISTANCE_PX;
 }
 
-const ISOMETRIC_GRID =/^isometric:(\d+(?:\.\d+)?)$/;
+const ISOMETRIC_GRID = /^isometric:(\d+(?:\.\d+)?)$/;
 
 export function readIsometricSnapStep(svg: SVGSVGElement): number | null {
   const match = ISOMETRIC_GRID.exec(svg.getAttribute(SNAP_GRID_ATTR) ?? '');

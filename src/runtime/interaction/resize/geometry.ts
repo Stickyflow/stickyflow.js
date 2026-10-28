@@ -39,8 +39,18 @@ export function lockAspect(bounds: Rect, start: Rect, handle: ResizeHandle): Rec
   }
   width = Math.max(MIN_SIZE, width);
   height = Math.max(MIN_SIZE, height);
-  const x = axes.x === 'left' ? start.x + start.width - width : axes.x === 'none' ? start.x + (start.width - width) / 2 : start.x;
-  const y = axes.y === 'top' ? start.y + start.height - height : axes.y === 'none' ? start.y + (start.height - height) / 2 : start.y;
+  const x =
+    axes.x === 'left'
+      ? start.x + start.width - width
+      : axes.x === 'none'
+        ? start.x + (start.width - width) / 2
+        : start.x;
+  const y =
+    axes.y === 'top'
+      ? start.y + start.height - height
+      : axes.y === 'none'
+        ? start.y + (start.height - height) / 2
+        : start.y;
   return { x, y, width, height };
 }
 

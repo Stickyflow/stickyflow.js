@@ -68,7 +68,17 @@ function createColumnHeader(
     const { frame, rotation } = above
       ? labelAboveFrame(chart, label, tilt, { x: centerX, y: layout.grid.y - gap })
       : labelBelowFrame(chart, label, tilt, { x: centerX, y: layout.grid.y + layout.grid.height + gap });
-    return chartText({ id, order: nextOrder(), bounds, frame, text: label, chart, align: above ? 'left' : 'right', rotation, role: 'axis' });
+    return chartText({
+      id,
+      order: nextOrder(),
+      bounds,
+      frame,
+      text: label,
+      chart,
+      align: above ? 'left' : 'right',
+      rotation,
+      role: 'axis',
+    });
   }
   return chartText({
     id,

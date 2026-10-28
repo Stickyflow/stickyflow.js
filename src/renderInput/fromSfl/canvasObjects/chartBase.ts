@@ -110,10 +110,16 @@ function axesOf(
     axisLabelSpace: numOf(p.axisLabelSpace),
     rowLabelSide: p.rowLabelSide === 'left' || p.rowLabelSide === 'right' ? p.rowLabelSide : undefined,
     columnLabelSide: p.columnLabelSide === 'top' || p.columnLabelSide === 'bottom' ? p.columnLabelSide : undefined,
-    legendSide: p.legendSide === 'top' || p.legendSide === 'bottom' || p.legendSide === 'left' || p.legendSide === 'right' ? p.legendSide : undefined,
+    legendSide:
+      p.legendSide === 'top' || p.legendSide === 'bottom' || p.legendSide === 'left' || p.legendSide === 'right'
+        ? p.legendSide
+        : undefined,
     xLabelGap: numOf(p.xLabelGap),
     yLabelGap: numOf(p.yLabelGap),
-    axisLabelAlign: p.axisLabelAlign === 'left' || p.axisLabelAlign === 'center' || p.axisLabelAlign === 'right' ? p.axisLabelAlign : undefined,
+    axisLabelAlign:
+      p.axisLabelAlign === 'left' || p.axisLabelAlign === 'center' || p.axisLabelAlign === 'right'
+        ? p.axisLabelAlign
+        : undefined,
     axisFontFamily: p.axisFontFamily,
     showValueAxis: p.showValueAxis !== 'false',
     categoryAlign: p.categoryAlign === 'left' || p.categoryAlign === 'inside' ? p.categoryAlign : undefined,
@@ -123,11 +129,15 @@ function axesOf(
 
 function textOf(
   p: Props,
-): Pick<ChartBase, 'textColor' | 'titleSize' | 'titleAlign' | 'titleWeight' | 'titleColor' | 'fontSize' | 'fontFamily'> {
+): Pick<
+  ChartBase,
+  'textColor' | 'titleSize' | 'titleAlign' | 'titleWeight' | 'titleColor' | 'fontSize' | 'fontFamily'
+> {
   return {
     textColor: p.textColor ?? '#0f172a',
     titleSize: numOf(p.titleSize),
-    titleAlign: p.titleAlign === 'left' || p.titleAlign === 'center' || p.titleAlign === 'right' ? p.titleAlign : undefined,
+    titleAlign:
+      p.titleAlign === 'left' || p.titleAlign === 'center' || p.titleAlign === 'right' ? p.titleAlign : undefined,
     titleWeight: p.titleWeight === 'normal' ? ('normal' as const) : undefined,
     titleColor: p.titleColor,
     fontSize: numOf(p.fontSize) ?? 12,

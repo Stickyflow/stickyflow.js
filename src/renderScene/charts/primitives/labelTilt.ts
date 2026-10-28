@@ -27,7 +27,12 @@ export function labelAboveFrame(chart: Chart, label: string, tilt: number, ancho
   const width = Math.ceil(estimateTextWidth(label, fontSize, false)) + 4;
   const angle = radians(tilt);
   return {
-    frame: { x: anchor.x - (height / 2) * Math.sin(angle), y: anchor.y - (height / 2) * Math.cos(angle), width, height },
+    frame: {
+      x: anchor.x - (height / 2) * Math.sin(angle),
+      y: anchor.y - (height / 2) * Math.cos(angle),
+      width,
+      height,
+    },
     rotation: -tilt,
   };
 }

@@ -35,7 +35,9 @@ export class ResizeSession {
 
     drag.moved = true;
     const snapped = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event));
-    const bounds = keepsProportions(drag, event.shiftKey) ? lockAspect(snapped.bounds, drag.startBounds, drag.handle) : snapped.bounds;
+    const bounds = keepsProportions(drag, event.shiftKey)
+      ? lockAspect(snapped.bounds, drag.startBounds, drag.handle)
+      : snapped.bounds;
     const { guides } = snapped;
     applyResizePreview(drag, clampResizeToChildren(bounds, drag.childrenBounds));
     updateAlignmentGuides(this.#svg, guides, RESIZE_GUIDE_COLOR);
@@ -55,7 +57,9 @@ export class ResizeSession {
     }
 
     const snapped = snapResize(this.#svg, drag, resizePointerPosition(this.#svg, event)).bounds;
-    const bounds = keepsProportions(drag, event.shiftKey) ? lockAspect(snapped, drag.startBounds, drag.handle) : snapped;
+    const bounds = keepsProportions(drag, event.shiftKey)
+      ? lockAspect(snapped, drag.startBounds, drag.handle)
+      : snapped;
     emitResizeCompletion(this.#emitter, drag, clampResizeToChildren(bounds, drag.childrenBounds));
   };
 

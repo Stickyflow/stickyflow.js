@@ -129,7 +129,12 @@ export function decorations(chart: Chart): ChartLayout {
     : 12;
   const hasColorBar = chart.chartType === 'field' && showLegend && Boolean(chart.config?.scale?.stops.length);
   const legendAtBottomRow = hasLegendItems && !legendAtTop && !legendStacked;
-  const padBottom = tickX + basePadBottom + (showLabels ? tiltedBottomRoom(chart) : 0) + (hasColorBar ? 44 : 0) + (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
+  const padBottom =
+    tickX +
+    basePadBottom +
+    (showLabels ? tiltedBottomRoom(chart) : 0) +
+    (hasColorBar ? 44 : 0) +
+    (legendAtBottomRow ? 16 + LEGEND_ROW_HEIGHT : 0);
   const titleHeight = chart.title ? Math.max(44, 20 + finite(chart.titleSize, 14) * 1.6) : 0;
   const padTop = titleHeight || (legendAtTop && hasLegendItems ? 44 : 24);
 

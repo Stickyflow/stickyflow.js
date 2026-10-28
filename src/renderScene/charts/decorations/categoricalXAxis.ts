@@ -31,9 +31,22 @@ export function buildCategoricalXAxisTicks(chart: TypedChart, layout: ChartLayou
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
     if (tilt > 0) {
       const text = labels[index] ?? String(index + 1);
-      const { frame, rotation } = labelBelowFrame(chart, text, tilt, { x: centerX, y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart) });
+      const { frame, rotation } = labelBelowFrame(chart, text, tilt, {
+        x: centerX,
+        y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart),
+      });
       return {
-        ...chartText({ role: 'axis', id: `chart-x-tick-${chart.id}-${index}`, order: order + index, bounds: layout.bounds, frame, text, chart, align: 'right', rotation }),
+        ...chartText({
+          role: 'axis',
+          id: `chart-x-tick-${chart.id}-${index}`,
+          order: order + index,
+          bounds: layout.bounds,
+          frame,
+          text,
+          chart,
+          align: 'right',
+          rotation,
+        }),
         prop: editable ? categoryProp(index) : undefined,
       };
     }
@@ -67,9 +80,22 @@ export function buildSeriesXAxisTicks(chart: TypedChart, layout: ChartLayout, or
     const centerX = layout.plot.x + (index + 0.5) * slotWidth;
     if (tilt > 0) {
       const text = series.label || series.id;
-      const { frame, rotation } = labelBelowFrame(chart, text, tilt, { x: centerX, y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart) });
+      const { frame, rotation } = labelBelowFrame(chart, text, tilt, {
+        x: centerX,
+        y: layout.plot.y + layout.plot.height + 4 + xLabelOffset(chart),
+      });
       return {
-        ...chartText({ role: 'axis', id: `chart-x-tick-${chart.id}-${index}`, order: order + index, bounds: layout.bounds, frame, text, chart, align: 'right', rotation }),
+        ...chartText({
+          role: 'axis',
+          id: `chart-x-tick-${chart.id}-${index}`,
+          order: order + index,
+          bounds: layout.bounds,
+          frame,
+          text,
+          chart,
+          align: 'right',
+          rotation,
+        }),
         prop: seriesLabelProp(series.id),
       };
     }

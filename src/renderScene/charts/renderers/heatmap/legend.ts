@@ -28,19 +28,47 @@ function barPlace(layout: HeatmapLayout): BarPlace {
   switch (sides.legend) {
     case 'top': {
       const edge = grid.y - (sides.columns === 'top' ? columnRoom : 0);
-      return { x: grid.x, y: edge - legendGap - BAR_THICKNESS, width: grid.width, height: BAR_THICKNESS, vertical: false, numbers: 'top' };
+      return {
+        x: grid.x,
+        y: edge - legendGap - BAR_THICKNESS,
+        width: grid.width,
+        height: BAR_THICKNESS,
+        vertical: false,
+        numbers: 'top',
+      };
     }
     case 'left': {
       const edge = grid.x - (sides.rows === 'left' ? rowRoom : 0);
-      return { x: edge - legendGap - BAR_THICKNESS, y: grid.y, width: BAR_THICKNESS, height: grid.height, vertical: true, numbers: 'left' };
+      return {
+        x: edge - legendGap - BAR_THICKNESS,
+        y: grid.y,
+        width: BAR_THICKNESS,
+        height: grid.height,
+        vertical: true,
+        numbers: 'left',
+      };
     }
     case 'right': {
       const edge = grid.x + grid.width + (sides.rows === 'right' ? rowRoom : 0);
-      return { x: edge + legendGap, y: grid.y, width: BAR_THICKNESS, height: grid.height, vertical: true, numbers: 'right' };
+      return {
+        x: edge + legendGap,
+        y: grid.y,
+        width: BAR_THICKNESS,
+        height: grid.height,
+        vertical: true,
+        numbers: 'right',
+      };
     }
     default: {
       const edge = grid.y + grid.height + (sides.columns === 'bottom' ? columnRoom : 0);
-      return { x: grid.x, y: edge + legendGap, width: grid.width, height: BAR_THICKNESS, vertical: false, numbers: 'bottom' };
+      return {
+        x: grid.x,
+        y: edge + legendGap,
+        width: grid.width,
+        height: BAR_THICKNESS,
+        vertical: false,
+        numbers: 'bottom',
+      };
     }
   }
 }
@@ -62,7 +90,12 @@ function bandRatio(layout: HeatmapLayout, value: number): number {
   return last === first ? 0 : (value - first) / (last - first);
 }
 
-function createGradientBar(context: ChartRenderContext, layout: HeatmapLayout, place: BarPlace, barBounds: RenderNode['bounds']): RenderNode {
+function createGradientBar(
+  context: ChartRenderContext,
+  layout: HeatmapLayout,
+  place: BarPlace,
+  barBounds: RenderNode['bounds'],
+): RenderNode {
   const { chart, nextOrder } = context;
   const bandCount = Math.max(0, layout.bands.length - 1);
   const zones = layout.zones.slice(0, bandCount);
@@ -83,7 +116,9 @@ function createGradientBar(context: ChartRenderContext, layout: HeatmapLayout, p
     zoneGradient: { axis: 'y', min: chart.axisY.min, max: chart.axisY.max },
     style: {
       // Across the grid it runs from the lowest value on the left; beside it from the lowest at the bottom.
-      fill: stops.length ? { kind: 'linear-gradient', angle: place.vertical ? 270 : 0, stops } : { kind: 'solid', color: DEFAULT_ZONE_FILL },
+      fill: stops.length
+        ? { kind: 'linear-gradient', angle: place.vertical ? 270 : 0, stops }
+        : { kind: 'solid', color: DEFAULT_ZONE_FILL },
       stroke: { kind: 'solid', color: chart.gridColor ?? '#e2e8f0' },
       strokeWidth: 1,
     },
@@ -145,7 +180,10 @@ function labelAt(place: BarPlace, at: number, first: boolean, last: boolean, lab
       align: onRight ? ('left' as const) : ('right' as const),
     };
   }
-  const y = place.numbers === 'bottom' ? place.y + place.height + TICK_LENGTH + ROW_GAP : place.y - TICK_LENGTH - ROW_GAP - labelHeight;
+  const y =
+    place.numbers === 'bottom'
+      ? place.y + place.height + TICK_LENGTH + ROW_GAP
+      : place.y - TICK_LENGTH - ROW_GAP - labelHeight;
   const x = first ? at : last ? at - LABEL_WIDTH : at - LABEL_WIDTH / 2;
   return {
     frame: { x, y, width: LABEL_WIDTH, height: labelHeight },

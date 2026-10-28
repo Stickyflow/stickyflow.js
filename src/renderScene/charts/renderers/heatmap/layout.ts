@@ -24,7 +24,8 @@ export function createHeatmapLayout(context: ChartRenderContext): HeatmapLayout 
   };
 }
 
-export const headerFontSize = (chart: ChartRenderContext['chart']) => Math.max(9, finite(chart.axisFontSize ?? chart.fontSize, 12));
+export const headerFontSize = (chart: ChartRenderContext['chart']) =>
+  Math.max(9, finite(chart.axisFontSize ?? chart.fontSize, 12));
 
 // How far the names stand from the grid: the rows along the y axis, the columns along the x axis.
 export const rowGap = (chart: ChartRenderContext['chart']) => Math.min(120, Math.max(0, finite(chart.yLabelGap, 6)));
@@ -65,7 +66,10 @@ function heatmapReservedSpace(context: ChartRenderContext, sides: HeatmapSides):
   return {
     // The names get the room they ask for, or as much as the longest needs. They never take more than most of the plot.
     rowHeaders: context.showLabels
-      ? Math.min(context.plot.width * 0.7, chart.axisLabelSpace && chart.axisLabelSpace > 0 ? chart.axisLabelSpace : longestLabel + 6 + rowGap(chart))
+      ? Math.min(
+          context.plot.width * 0.7,
+          chart.axisLabelSpace && chart.axisLabelSpace > 0 ? chart.axisLabelSpace : longestLabel + 6 + rowGap(chart),
+        )
       : 0,
     columnHeaders: context.showLabels ? columnHeaderRoom(context) : 0,
     legend: context.showLegend ? (vertical ? LEGEND_BESIDE : LEGEND_ACROSS) + legendGap(chart) : 0,
@@ -89,11 +93,15 @@ function createHeatmapGrid(
 ): HeatmapGrid {
   const { chart } = context;
   // What the names and the color bar take from each edge of the plot.
-  const left = (sides.rows === 'left' ? reservedSpace.rowHeaders : 0) + (sides.legend === 'left' ? reservedSpace.legend : 0);
-  const right = (sides.rows === 'right' ? reservedSpace.rowHeaders : 0) + (sides.legend === 'right' ? reservedSpace.legend : 0);
-  const top = (sides.columns === 'top' ? reservedSpace.columnHeaders : 0) + (sides.legend === 'top' ? reservedSpace.legend : 0);
+  const left =
+    (sides.rows === 'left' ? reservedSpace.rowHeaders : 0) + (sides.legend === 'left' ? reservedSpace.legend : 0);
+  const right =
+    (sides.rows === 'right' ? reservedSpace.rowHeaders : 0) + (sides.legend === 'right' ? reservedSpace.legend : 0);
+  const top =
+    (sides.columns === 'top' ? reservedSpace.columnHeaders : 0) + (sides.legend === 'top' ? reservedSpace.legend : 0);
   const bottom =
-    (sides.columns === 'bottom' ? reservedSpace.columnHeaders : 0) + (sides.legend === 'bottom' ? reservedSpace.legend : 0);
+    (sides.columns === 'bottom' ? reservedSpace.columnHeaders : 0) +
+    (sides.legend === 'bottom' ? reservedSpace.legend : 0);
   const width = Math.max(1, context.plot.width - left - right);
   const height = Math.max(1, context.plot.height - top - bottom);
   const rowCount = chart.series.length;
