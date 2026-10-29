@@ -16,7 +16,8 @@ export type ComponentPropertyDescriptor =
   | { type: 'number'; default: number; min?: number; max?: number; step?: number }
   | { type: 'boolean'; default: boolean }
   | { type: 'string'; default: string }
-  | { type: 'color'; default: string }
+  // An optional color can be switched off with `none`.
+  | { type: 'color'; default: string; optional?: boolean }
   | { type: 'enum'; default: string; options: readonly string[] };
 
 export interface ComponentSize {

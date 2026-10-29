@@ -41,7 +41,7 @@ export function fade(component: GenericComponent, style: SceneStyle): SceneStyle
   return animate > 0 ? { ...shown, transition: animate } : shown;
 }
 
-export function hitArea(component: GenericComponent, box: ControlBox): RenderNode {
+export function hitArea(component: GenericComponent, box: ControlBox, takesClicks = true): RenderNode {
   return {
     id: `widget-${component.id}`,
     type: 'rect',
@@ -51,7 +51,7 @@ export function hitArea(component: GenericComponent, box: ControlBox): RenderNod
     y: box.y,
     width: box.width,
     height: box.height,
-    style: { fill: { kind: 'none' }, stroke: { kind: 'none' }, pointerEvents: 'all' },
+    style: { fill: { kind: 'none' }, stroke: { kind: 'none' }, pointerEvents: takesClicks ? 'all' : 'none' },
   };
 }
 

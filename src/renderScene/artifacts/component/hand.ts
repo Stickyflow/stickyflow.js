@@ -13,6 +13,11 @@ function withAlpha(color: string, alpha: number): string {
 
 const num = (value: number): string => String(Number(value.toFixed(3)));
 
+// A color that is set to `none` is off: no glow, no light, no fill.
+const isOff = (component: GenericComponent, key: string): boolean => textProperty(component, key) === 'none';
+const colorOr = (component: GenericComponent, key: string, fallback: string): string =>
+  isOff(component, key) ? fallback : textProperty(component, key) || fallback;
+
 interface Hand {
   cx: number;
   cy: number;
@@ -79,6 +84,8 @@ interface Layer {
   color: string;
   root: string;
   tipFade?: number;
+  // The layer starts clear at the pivot, whatever the hand does.
+  clear?: boolean;
 }
 
 function shaped(hand: Hand, layer: Layer): Hand {
@@ -88,7 +95,7 @@ function shaped(hand: Hand, layer: Layer): Hand {
 }
 
 // The gradient of a layer that has stops of its own. Behind the pivot it fades by `fade`, so a tail dissolves at its end.
-function stopsPaint(hand: Hand, stops: Stop[], fadeOut: number): ScenePaint {
+function stopsPaint(hand: Hand, stops: Stop[], fadeOut: number, clear: boolean): ScenePaint {
   const tail = hand.gap > 0 ? 0 : hand.tail;
   const offset = (along: number) => ((tail + along * hand.length) / (hand.length + tail)) * 100;
   const [, firstColor, firstAlpha] = stops[0];
@@ -96,21 +103,24 @@ function stopsPaint(hand: Hand, stops: Stop[], fadeOut: number): ScenePaint {
     kind: 'linear-gradient',
     angle: -90,
     stops: [
-      ...(tail > 0 ? [{ offset: 0, color: withAlpha(firstColor, firstAlpha * (1 - fadeOut)) }] : []),
-      ...stops.map(([along, color, alpha]) => ({ offset: offset(along), color: withAlpha(color, alpha) })),
+      ...(tail > 0 ? [{ offset: 0, color: withAlpha(firstColor, firstAlpha * (clear ? 0 : 1 - fadeOut)) }] : []),
+      ...stops.map(([along, color, alpha], position) => ({
+        offset: offset(along),
+        color: withAlpha(color, clear && position === 0 ? 0 : alpha),
+      })),
     ],
   };
 }
 
 function plainPaint(hand: Hand, layer: Layer, fadeOut: number, tipFade: number): ScenePaint {
-  if (fadeOut <= 0 && tipFade <= 0) {
+  if (fadeOut <= 0 && tipFade <= 0 && !layer.clear) {
     return solid(layer.color);
   }
   return {
     kind: 'linear-gradient',
     angle: -90,
     stops: [
-      { offset: 0, color: withAlpha(layer.root, 1 - fadeOut) },
+      { offset: 0, color: withAlpha(layer.root, layer.clear ? 0 : 1 - fadeOut) },
       // A tail is lit at the pivot and dissolves at its end.
       ...(hand.gap === 0 && hand.tail > 0
         ? [{ offset: (hand.tail / (hand.length + hand.tail)) * 100, color: layer.root }]
@@ -146,13 +156,15 @@ function handLayer(
     rotationCenter: { x: hand.cx, y: hand.cy },
     style: fade(component, {
       // The gradient runs from the tail to the tip, and turns with the hand.
-      fill: layer.stops ? stopsPaint(hand, layer.stops, fadeOut) : plainPaint(hand, layer, fadeOut, tipFade),
+      fill: layer.stops
+        ? stopsPaint(hand, layer.stops, fadeOut, Boolean(layer.clear))
+        : plainPaint(hand, layer, fadeOut, tipFade),
       stroke: { kind: 'none' },
       ...(soft ? { blur: layer.blur, opacity: layer.opacity } : {}),
-      ...(!soft && glow > 0
+      ...(!soft && glow > 0 && !isOff(component, 'glowColor')
         ? {
             shadow: {
-              color: textProperty(component, 'glowColor') || layer.color,
+              color: colorOr(component, 'glowColor', layer.color),
               opacity: 1,
               blur: glow,
               dx: 0,
@@ -165,8 +177,8 @@ function handLayer(
 }
 
 // The three layers of a trail of light.
-function trailLayers(color: string, root: string, light: string, soft: number): Layer[] {
-  return [
+function trailLayers(color: string, root: string, light: string, soft: number, clear: boolean, lit: boolean): Layer[] {
+  const trail: Layer[] = [
     {
       part: 'hand-light',
       scale: 4.5,
@@ -190,6 +202,7 @@ function trailLayers(color: string, root: string, light: string, soft: number): 
       opacity: 1,
       color,
       root,
+      clear,
       stops: [
         [0, root, 1],
         [0.18, color, 1],
@@ -206,6 +219,7 @@ function trailLayers(color: string, root: string, light: string, soft: number): 
       opacity: 1,
       color: root,
       root,
+      clear,
       stops: [
         [0, root, 1],
         [0.45, root, 0.6],
@@ -213,22 +227,26 @@ function trailLayers(color: string, root: string, light: string, soft: number): 
       ],
     },
   ];
+  // Without a light the trail is its body and its core.
+  return lit ? trail : trail.slice(1);
 }
 
 function handLayers(component: GenericComponent, box: ControlBox, hand: Hand, angle: number): RenderNode[] {
   const color = textProperty(component, 'color');
-  const root = textProperty(component, 'root') || color;
-  const light = textProperty(component, 'glowColor') || color;
+  const root = colorOr(component, 'root', color);
+  const light = colorOr(component, 'glowColor', color);
+  const lit = !isOff(component, 'glowColor');
+  const clear = isOff(component, 'root');
   const soft = numberProperty(component, 'soft');
   const bloom = numberProperty(component, 'bloom');
   if (soft > 0) {
-    return trailLayers(color, root, light, soft).map((layer, position) =>
+    return trailLayers(color, root, light, soft, clear, lit).map((layer, position) =>
       handLayer(component, box, hand, angle, layer, 0.26 + position * 0.02),
     );
   }
   return [
     // A blurred light under the hand, bright at the pivot and dark at the tip.
-    ...(bloom > 0
+    ...(bloom > 0 && lit
       ? [
           handLayer(
             component,
@@ -240,7 +258,7 @@ function handLayers(component: GenericComponent, box: ControlBox, hand: Hand, an
           ),
         ]
       : []),
-    handLayer(component, box, hand, angle, { part: 'hand', scale: 1, blur: 0, opacity: 1, color, root }, 0.3),
+    handLayer(component, box, hand, angle, { part: 'hand', scale: 1, blur: 0, opacity: 1, color, root, clear }, 0.3),
   ];
 }
 
@@ -261,13 +279,13 @@ function hubNode(component: GenericComponent, box: ControlBox, hand: Hand, radiu
     rx: Math.max(0.5, radius - ringWidth / 2),
     ry: Math.max(0.5, radius - ringWidth / 2),
     style: fade(component, {
-      fill: solid(textProperty(component, 'hubFill')),
+      fill: isOff(component, 'hubFill') ? { kind: 'none' } : solid(textProperty(component, 'hubFill')),
       stroke: ringWidth > 0 ? solid(textProperty(component, 'color')) : { kind: 'none' },
       strokeWidth: ringWidth,
-      ...(numberProperty(component, 'glow') > 0
+      ...(numberProperty(component, 'glow') > 0 && !isOff(component, 'glowColor')
         ? {
             shadow: {
-              color: textProperty(component, 'glowColor') || textProperty(component, 'color'),
+              color: colorOr(component, 'glowColor', textProperty(component, 'color')),
               opacity: 1,
               blur: numberProperty(component, 'glow'),
               dx: 0,
@@ -279,6 +297,34 @@ function hubNode(component: GenericComponent, box: ControlBox, hand: Hand, radiu
   };
 }
 
+const HIT_HALF = 8;
+
+// The box is the face, so it must not take the clicks of everything behind it. The hand is picked along its own shape, at least as wide as
+// a finger, and the box stays for the frame of the selection.
+function pickNodes(component: GenericComponent, box: ControlBox, hand: Hand, angle: number): RenderNode[] {
+  const reach = { ...hand, rootHalf: Math.max(hand.rootHalf, HIT_HALF), tipHalf: Math.max(hand.tipHalf, HIT_HALF) };
+  const near = reach.gap > 0 ? -reach.gap : reach.tail;
+  const extent = {
+    x: reach.cx - HIT_HALF,
+    y: reach.cy - reach.length,
+    width: HIT_HALF * 2,
+    height: reach.length + near,
+  };
+  return [
+    hitArea(component, box, false),
+    {
+      id: `widget-${component.id}-pick`,
+      type: 'path',
+      order: box.order + 0.5,
+      bounds: rotatedBounds(extent, 0, 0),
+      d: outline(reach),
+      rotation: angle,
+      rotationCenter: { x: reach.cx, y: reach.cy },
+      style: { fill: { kind: 'none' }, stroke: { kind: 'none' }, pointerEvents: 'all' },
+    },
+  ];
+}
+
 // A hand of a clock or a gauge: it turns about the middle of its box, clockwise from the top, as far as the value is of `max`. The box is
 // the face, so every hand of a clock has the same box and the same pivot.
 export function buildHand(component: GenericComponent, index: number): RenderNode[] {
@@ -288,7 +334,7 @@ export function buildHand(component: GenericComponent, index: number): RenderNod
   const angle = numberProperty(component, 'start') + (Number(component.value) / max) * 360;
   const hub = numberProperty(component, 'hub');
   return [
-    hitArea(component, box),
+    ...pickNodes(component, box, hand, angle),
     ...handLayers(component, box, hand, angle),
     ...(hub > 0 ? [hubNode(component, box, hand, hub)] : []),
   ];

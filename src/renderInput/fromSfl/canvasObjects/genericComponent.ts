@@ -28,7 +28,7 @@ function readProperty(descriptor: ComponentPropertyDescriptor, raw: string | und
     case 'boolean':
       return raw === undefined ? descriptor.default : raw === 'true';
     case 'color':
-      return cssColor(raw) ?? descriptor.default;
+      return descriptor.optional && raw === 'none' ? 'none' : (cssColor(raw) ?? descriptor.default);
     case 'enum':
       return raw !== undefined && descriptor.options.includes(raw) ? raw : descriptor.default;
     case 'string':

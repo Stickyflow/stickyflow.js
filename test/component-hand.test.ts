@@ -108,6 +108,28 @@ describe('the hand component', () => {
     expect(stops[stops.length - 1].color).toBe('rgba(47, 69, 255, 0)');
   });
 
+  it('switches its optional colors off with none', () => {
+    expect(handOf(clock('glow: 12\n    glowColor: none'))?.style.shadow).toBeUndefined();
+    expect(handOf(clock('glow: 12'))?.style.shadow).toBeDefined();
+    const hub = render(clock('hub: 6\n    hubFill: none')).scene.nodes.find(node => node.id === 'widget-minute-hub') as
+      | Extract<RenderNode, { type: 'ellipse' }>
+      | undefined;
+    expect(hub?.style.fill).toEqual({ kind: 'none' });
+    const ids = render(clock('soft: 4\n    glowColor: none')).scene.nodes.map(node => node.id);
+    expect(ids).not.toContain('widget-minute-hand-light');
+    const clear = handOf(clock('color: "#ffffff"\n    root: none'))?.style.fill as { stops: Array<{ color: string }> };
+    expect(clear.stops[0].color).toBe('rgba(255, 255, 255, 0)');
+  });
+
+  it('is picked along its own shape, and its box does not take the clicks of what lies behind', () => {
+    const nodes = render(clock('width: 2')).scene.nodes as Array<RenderNode & { style?: { pointerEvents?: string } }>;
+    expect(nodes.find(node => node.id === 'widget-minute')?.style?.pointerEvents).toBe('none');
+    const pick = nodes.find(node => node.id === 'widget-minute-pick') as PathNode | undefined;
+    expect(pick?.style.pointerEvents).toBe('all');
+    expect(pick?.rotation).toBe(90);
+    expect(pick?.d).toContain('L92 ');
+  });
+
   it('draws in the svg without diagnostics', () => {
     const result = render(clock('glow: 8\n    fade: 0.5'));
     expect(result.diagnostics).toEqual([]);
