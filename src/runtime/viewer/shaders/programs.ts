@@ -24,6 +24,8 @@ import { smearOrbProgram } from './builtins/smearOrb';
 import { tickScaleProgram } from './builtins/tickScale';
 import { violetGlassProgram } from './builtins/violetGlass';
 import { violetGlassLightProgram } from './builtins/violetGlassLight';
+import { vortexProgram } from './builtins/vortex';
+import { wavesProgram } from './builtins/waves';
 import type { ShaderProgram } from './types';
 
 const builtins = [
@@ -53,6 +55,8 @@ const builtins = [
   silkFoldsProgram,
   glowCardProgram,
   glassDotsProgram,
+  vortexProgram,
+  wavesProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 

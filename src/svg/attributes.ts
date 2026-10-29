@@ -70,12 +70,24 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
 }
 
 function elementSize(node: object): number | undefined {
-  const shape = node as { type?: string; rx?: number; ry?: number; width?: number; height?: number };
+  const shape = node as {
+    type?: string;
+    rx?: number;
+    ry?: number;
+    width?: number;
+    height?: number;
+    bounds?: { minX: number; minY: number; maxX: number; maxY: number };
+  };
   if (shape.type === 'ellipse' && shape.rx !== undefined && shape.ry !== undefined) {
     return Math.min(shape.rx, shape.ry) * 2;
   }
   if (shape.type === 'rect' && shape.width !== undefined && shape.height !== undefined) {
     return Math.min(shape.width, shape.height);
+  }
+  // A thin path, such as a hand, has a filter region of its own size, so a light round it needs room in proportion to its smaller side.
+  if (shape.type === 'path' && shape.bounds) {
+    const side = Math.min(shape.bounds.maxX - shape.bounds.minX, shape.bounds.maxY - shape.bounds.minY);
+    return side > 0 ? side : undefined;
   }
   return undefined;
 }

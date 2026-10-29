@@ -1,6 +1,8 @@
 import type { ShaderParameter } from '../../../model/shader';
 
 export interface Surface {
+  // The program the surface was made for, so a change of the program makes a new surface.
+  programName: string;
   owner: Element;
   canvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;

@@ -5,6 +5,10 @@ import { shaderProgram } from '../src/runtime/viewer/shaders/programs';
 describe('shader programs', () => {
   it('ships every built-in shader program', () => {
     expect(shaderProgram('orb')?.fragmentSource).toContain('void main()');
+    expect(shaderProgram('vortex')?.fragmentSource).toContain('uTwist');
+    expect(shaderProgram('waves')?.fragmentSource).toContain('uAmplitude');
+    expect(shaderProgram('waves')?.defaultParameters).toMatchObject({ layers: 5, tilt: -12 });
+    expect(shaderProgram('vortex')?.defaultParameters).toMatchObject({ rings: 12, twist: 0.6 });
     expect(shaderProgram('halo')?.fragmentSource).toContain('uThickness');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uProgress');
     expect(shaderProgram('halo')?.fragmentSource).toContain('uBoost');

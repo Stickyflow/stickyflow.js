@@ -17,6 +17,18 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-28
+
+### Added
+
+- The component `hand`, a hand of a clock or a gauge. It turns about the middle of its box, clockwise from the top, by `value / max` of a full circle, so every hand of a face has the same box and the same pivot. `length`, `tail` and `gap` are shares of the radius, `width` and `taper` give its shape, and `color`, `root`, `fade` and `tipFade` give a gradient along it, as the tail of a comet. `tipFade` dissolves it towards its tip, and `fade` towards its root or, with a `tail`, towards the end of the tail. `soft` makes it a trail of light that runs out from the pivot, of three blurred layers that are brightest at the pivot (a wide short glow, a tapering body and a thin core), and `bloom` puts a blurred light under a crisp hand that is brightest at the pivot and runs out along the hand. `glow` is a light round it, and `hub` with `hubFill` and `hubRing` is a cap on the pivot. It is drawn as SVG, without a shader. It has no interaction.
+- The shader program `waves`, a round face of layered waves that drift. Its parameters are `layers`, `level`, `amplitude`, `frequency`, `tilt`, `softness`, `edge`, `shade`, `glow`, `vignette`, `grain`, `speed` and `intensity`, with the colors `color`, `accent`, `cool` and `highlight`. It needs a `circle` or an `oval`.
+- The shader program `vortex`, a round face of soft rings around a dark eye. Its parameters are `rings`, `ringWidth`, `variation`, `twist`, `arms`, `wobble`, `offsetX`, `offsetY`, `squash`, `eye`, `angle`, `spread`, `glow`, `gloss`, `glossHeight`, `vignette`, `grain`, `speed` and `intensity`, with the colors `color`, `accent` and `cool`. It needs a `circle` or an `oval`.
+
+### Changed
+
+- A shader surface is no longer built again when the drawing is patched. It keeps its compiled program and takes the new parameters, so a slider that moves a parameter and a source that changes every second do not compile the shader each time. A shader that replaces the fill of its shape (`tickScale`, `ruler`, `button`, `plasmaGauge`, `reactivePanel`, `smearOrb`, `chromaticGlassPlate`) is still built again.
+
 ## [0.10.0] - 2026-10-28
 
 ### Added

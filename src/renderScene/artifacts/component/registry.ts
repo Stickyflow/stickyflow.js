@@ -3,6 +3,7 @@ import type { RenderNode } from '../../scene';
 import { buildRollingNumber, buildRuler, buildTickScale } from './builtIn';
 import { buildButton } from './button';
 import { buildCheckbox } from './checkbox';
+import { buildHand } from './hand';
 import { buildKnob } from './knob';
 import { buildProgress } from './progress';
 import { buildSegmented } from './segmented';
@@ -29,6 +30,7 @@ const builders = new Map<ComponentType, ComponentBuilder>([
   ['progress', asComponentBuilder(buildProgress)],
   ['segmented', asComponentBuilder(buildSegmented)],
   ['knob', asComponentBuilder(buildKnob)],
+  ['hand', asComponentBuilder(buildHand)],
   ['range', asComponentBuilder(buildSlider)],
 ]);
 

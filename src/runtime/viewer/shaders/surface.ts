@@ -1,6 +1,6 @@
 import type { ShaderParameter } from '../../../model/shader';
 import { captureShaderBackdrop } from './backdrop';
-import { createSurface, releaseSurface } from './createSurface';
+import { createSurface, refreshSurface, releaseSurface } from './createSurface';
 import { updateReactiveLightFields } from './reactiveLightField';
 import { applyBackdrop, renderSurface } from './renderSurface';
 import { createSurfaceClock, type SurfaceClock } from './surfaceClock';
@@ -103,8 +103,16 @@ function rememberSurfaces(surfaces: Surface[]): Map<string, SurfaceMemory> {
   );
 }
 
-function createSurfaces(svg: SVGSVGElement, memory: Map<string, SurfaceMemory>): Surface[] {
+function createSurfaces(
+  svg: SVGSVGElement,
+  memory: Map<string, SurfaceMemory>,
+  kept: Map<HTMLCanvasElement, Surface>,
+): Surface[] {
   return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].flatMap(canvas => {
+    const keptSurface = kept.get(canvas);
+    if (keptSurface) {
+      return [keptSurface];
+    }
     const surface = createSurface(canvas);
     const ownerId = surface?.owner.getAttribute('data-sf-id');
     const previous = ownerId ? memory.get(ownerId) : undefined;
@@ -173,9 +181,20 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
 
   refresh(): void {
     const memory = rememberSurfaces(this.surfaces);
-    this.stop();
+    this.cancelFrame();
+    const kept = new Map<HTMLCanvasElement, Surface>();
+    for (const surface of this.surfaces) {
+      if (refreshSurface(surface, this.svg)) {
+        kept.set(surface.canvas, surface);
+      }
+    }
+    for (const surface of this.surfaces) {
+      if (!kept.has(surface.canvas)) {
+        releaseSurface(surface);
+      }
+    }
     const generation = ++this.backdropGeneration;
-    this.surfaces = createSurfaces(this.svg, memory);
+    this.surfaces = createSurfaces(this.svg, memory, kept);
     updateReactiveLightFields(this.surfaces);
     this.captureBackdrops(generation);
     if (this.surfaces.length > 0) {
@@ -204,11 +223,15 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
     this.frame = this.view?.requestAnimationFrame(this.draw);
   };
 
-  private stop(): void {
+  private cancelFrame(): void {
     if (this.frame !== undefined) {
       this.view?.cancelAnimationFrame(this.frame);
       this.frame = undefined;
     }
+  }
+
+  private stop(): void {
+    this.cancelFrame();
     for (const surface of this.surfaces) {
       releaseSurface(surface);
     }

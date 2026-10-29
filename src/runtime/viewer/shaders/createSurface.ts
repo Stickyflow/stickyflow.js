@@ -69,6 +69,7 @@ export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
   const baseFill = baseGeometry?.getAttribute('fill');
   baseGeometry?.setAttribute('fill', 'none');
   return {
+    programName: definition.name,
     owner,
     canvas,
     gl,
@@ -105,4 +106,24 @@ export function releaseSurface(surface: Surface): void {
   } else {
     surface.baseGeometry.setAttribute('fill', surface.baseFill);
   }
+}
+
+// A surface that is still on the page, for the same shader, is kept when the drawing is patched, so the shader is not compiled again for
+// every small change, such as a slider that moves a parameter. It takes the parameters the drawing has now. A shader that replaces the fill
+// of its shape is made again, as the shape was patched.
+export function refreshSurface(surface: Surface, svg: SVGSVGElement): boolean {
+  const owner = surface.canvas.closest('[data-sf-shader]');
+  const name = owner?.getAttribute('data-sf-shader');
+  const definition = name ? shaderProgram(name) : undefined;
+  if (!owner || !svg.contains(surface.canvas) || !definition) {
+    return false;
+  }
+  if (definition.name !== surface.programName || definition.replacesBaseFill || surface.baseGeometry) {
+    return false;
+  }
+  surface.owner = owner;
+  surface.parameters = { ...definition.defaultParameters, ...parametersOf(owner) };
+  surface.surfacePadding = surfacePaddingOf(owner);
+  surface.shapeColor = color(owner.getAttribute('data-sf-shader-fill') ?? undefined, [1, 1, 1]);
+  return true;
 }
