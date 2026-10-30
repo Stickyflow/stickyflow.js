@@ -25,6 +25,8 @@ Two things count as breaking here that are easy to overlook:
 - The shader program `waves`, a round face of layered waves that drift. Its parameters are `layers`, `level`, `amplitude`, `frequency`, `tilt`, `softness`, `edge`, `shade`, `glow`, `vignette`, `grain`, `speed` and `intensity`, with the colors `color`, `accent`, `cool` and `highlight`. It needs a `circle` or an `oval`.
 - The shader program `vortex`, a round face of soft rings around a dark eye. Its parameters are `rings`, `ringWidth`, `variation`, `twist`, `arms`, `wobble`, `offsetX`, `offsetY`, `squash`, `eye`, `angle`, `spread`, `glow`, `gloss`, `glossHeight`, `vignette`, `grain`, `speed` and `intensity`, with the colors `color`, `accent` and `cool`. It needs a `circle` or an `oval`.
 
+- The block `Image`, a picture on the canvas. `src` is the address of the file, `fit` is `cover`, `contain` or `fill`, and `imageSize` with `crop` (both in pixels of the file) show only a part of it. It moves, scales, turns and layers like a shape, and `shape`, `cornerRadius`, `stroke`, `opacity`, `blur` and `blend` work on it. `insertCanvasObject` takes the kind `image`.
+
 ### Changed
 
 - A shader surface is no longer built again when the drawing is patched. It keeps its compiled program and takes the new parameters, so a slider that moves a parameter and a source that changes every second do not compile the shader each time. A shader that replaces the fill of its shape (`tickScale`, `ruler`, `button`, `plasmaGauge`, `reactivePanel`, `smearOrb`, `chromaticGlassPlate`) is still built again.
