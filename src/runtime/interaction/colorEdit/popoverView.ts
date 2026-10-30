@@ -37,6 +37,7 @@ export interface PickerView {
   alphaRange: HTMLInputElement;
   alphaNumber: HTMLInputElement;
   hexInput: HTMLInputElement;
+  eyedropper?: HTMLButtonElement;
   section: HTMLDivElement;
   preview: HTMLDivElement;
   angleRange: HTMLInputElement;
@@ -67,9 +68,21 @@ type SolidControls = Pick<
   | 'alphaRange'
   | 'alphaNumber'
   | 'hexInput'
+  | 'eyedropper'
 >;
 
 type GradientControls = Pick<PickerView, 'section' | 'preview' | 'angleRange' | 'angleNumber' | 'addStop' | 'stopList'>;
+
+// The pipette takes a color from anywhere on the screen. Only some browsers can do that, the others do not show it.
+function buildEyedropper(parent: HTMLElement): HTMLButtonElement {
+  const button = el('button', 'sf-cp-eyedropper', parent);
+  button.type = 'button';
+  button.title = 'Pick a color from the screen';
+  button.setAttribute('aria-label', 'Pick a color from the screen');
+  button.innerHTML =
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 22l1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="M15 6l3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4z"/></svg>';
+  return button;
+}
 
 function buildSolidControls(root: HTMLElement): SolidControls {
   const area = el('div', 'sf-cp-area', root);
@@ -95,6 +108,7 @@ function buildSolidControls(root: HTMLElement): SolidControls {
   const hexInput = el('input', 'sf-cp-text', hexRow);
   hexInput.type = 'text';
   hexInput.spellcheck = false;
+  const eyedropper = 'EyeDropper' in window ? buildEyedropper(hexRow) : undefined;
   return {
     matrix,
     matrixCursor,
@@ -106,6 +120,7 @@ function buildSolidControls(root: HTMLElement): SolidControls {
     alphaRange,
     alphaNumber,
     hexInput,
+    eyedropper,
   };
 }
 

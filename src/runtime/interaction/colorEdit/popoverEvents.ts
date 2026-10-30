@@ -99,6 +99,23 @@ function bindAngle(picker: Picker): void {
   angleNumber.addEventListener('change', () => commit(picker));
 }
 
+function bindEyedropper(picker: Picker): void {
+  const { eyedropper } = picker.view;
+  eyedropper?.addEventListener('click', async () => {
+    const Dropper = (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } })
+      .EyeDropper;
+    try {
+      const hex = normalizeHex((await new Dropper().open()).sRGBHex);
+      if (hex) {
+        applyHex(picker, hex);
+        commit(picker);
+      }
+    } catch {
+      // Escape ends the picking, which leaves the color as it is.
+    }
+  });
+}
+
 export function bindPickerEvents(picker: Picker): Array<() => void> {
   const { view } = picker;
   const disposers = bindAreas(picker);
@@ -110,6 +127,7 @@ export function bindPickerEvents(picker: Picker): Array<() => void> {
   }
   bindAlpha(picker);
   bindHex(picker);
+  bindEyedropper(picker);
   bindAngle(picker);
   return disposers;
 }

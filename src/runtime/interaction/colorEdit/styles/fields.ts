@@ -122,6 +122,25 @@ export const FIELDS_CSS = `
 }
 
 .sf-cp-number,
+.sf-cp-eyedropper {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--sf-cp-field-border);
+  border-radius: 6px;
+  background: var(--sf-cp-field-bg);
+  color: var(--sf-cp-fg);
+  cursor: pointer;
+}
+
+.sf-cp-eyedropper:hover {
+  background: var(--sf-cp-hover);
+}
+
 .sf-cp-text {
   flex: none;
   width: 52px;

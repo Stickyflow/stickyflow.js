@@ -19,6 +19,11 @@ function applyGeometryPreview(drag: ResizeDragState, bounds: Rect): void {
   }
 
   drag.geometryNodes.forEach((node, index) => {
+    // A picture is scaled as it is, so that its crop and its clip go along.
+    if (node.tagName.toLowerCase() === 'image') {
+      applyCompositeScale([node], drag.startBounds, bounds, [drag.baseTransforms[index]]);
+      return;
+    }
     applySingleNodeBounds(node, drag.kind, applyInset(bounds, drag.insets[index] ?? NO_INSET));
   });
 }
