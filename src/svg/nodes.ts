@@ -46,7 +46,7 @@ export function nodeSvg(node: RenderNode, defs: SvgDefinitionRegistry): string {
     return rollingNumberSvg(node, defs);
   }
   if (node.type === 'image') {
-    return `<image id="${defs.elementId(node.id)}"${contractAttrs(node)} ${imageAttrs(node, defs)} href="${xml(node.href)}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}" preserveAspectRatio="xMidYMid slice"/>`;
+    return `<image id="${defs.elementId(node.id)}"${contractAttrs(node)} ${imageAttrs(node, defs)} href="${xml(node.href)}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}" preserveAspectRatio="${node.aspect === 'none' ? 'none' : `xMidYMid ${node.aspect ?? 'slice'}`}"${transform(node.rotation, node.rotationCenter)}/>`;
   }
   const attrs = `id="${defs.elementId(node.id)}"${contractAttrs(node)} ${styleAttrs(node, defs)}`;
   if (node.type === 'rect') {

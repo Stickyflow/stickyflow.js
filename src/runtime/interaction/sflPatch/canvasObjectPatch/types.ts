@@ -1,6 +1,6 @@
 export interface InsertCanvasObjectOptions {
   id: string;
-  kind: 'shape' | 'text' | 'frame' | 'swimlane' | 'isometric';
+  kind: 'shape' | 'text' | 'image' | 'frame' | 'swimlane' | 'isometric';
   text?: string;
   x: number;
   y: number;

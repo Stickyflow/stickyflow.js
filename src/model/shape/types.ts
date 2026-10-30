@@ -25,6 +25,14 @@ export type ShapeType =
   | 'predefined_process'
   | 'symbol';
 
+// A picture that fills a shape. pixels is the size of the file, which a crop needs, and crop is the part of the file to show, in its pixels.
+export interface ShapeImage {
+  src: string;
+  fit: 'cover' | 'contain' | 'fill';
+  pixels?: [number, number];
+  crop?: { x: number; y: number; width: number; height: number };
+}
+
 export interface Shape {
   id: string;
   name?: string;
@@ -74,6 +82,7 @@ export interface Shape {
 
   symbol?: SymbolDef | null;
   shader?: Shader;
+  image?: ShapeImage;
 }
 
 export interface SymbolDef {

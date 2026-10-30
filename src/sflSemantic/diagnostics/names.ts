@@ -5,6 +5,7 @@ import type { SflDiagnostic } from '../types';
 const OBJECTS = new Set([
   'Shape',
   'Text',
+  'Image',
   'Container',
   'Chart',
   'Path',

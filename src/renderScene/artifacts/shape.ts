@@ -3,6 +3,7 @@ import type { MeasureTextFactory, RenderDiagnostic, RenderNode, SceneStyle } fro
 import { finite, rotatedBounds } from '../scene';
 import { tag } from '../scene/tagging';
 import { renderShapeGeometry } from './shape/geometry';
+import { renderShapeImage } from './shape/image';
 import { renderShapeShaderSurface } from './shape/shaderSurface';
 import { shapeStyle } from './shape/style';
 import { renderShapeText } from './shape/text';
@@ -90,6 +91,16 @@ export function buildShape(
       }
     }
     nodes.push(shader);
+  }
+  // The outline stays under the picture and still takes the pointer, also where the picture is transparent.
+  const image = renderShapeImage(context, nodes[0], diagnostics);
+  if (image) {
+    for (const node of nodes) {
+      if (node.type === 'ellipse' || node.type === 'path' || node.type === 'rect') {
+        node.style = { ...node.style, pointerEvents: 'all' };
+      }
+    }
+    nodes.push(image);
   }
   const text = renderShapeText(context, strokeWidth, measureText);
   if (text) {

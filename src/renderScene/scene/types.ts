@@ -233,6 +233,10 @@ export interface SceneImage extends SceneBase {
   width: number;
   height: number;
   href: string;
+  // How the picture sits in its box; left out, it covers the box.
+  aspect?: 'slice' | 'meet' | 'none';
+  rotation?: number;
+  rotationCenter?: Point;
   style: SceneStyle;
 }
 

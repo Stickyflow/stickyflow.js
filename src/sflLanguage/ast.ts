@@ -10,6 +10,7 @@ export const NAMED_BLOCK_KINDS = [
   'Component',
   'Shape',
   'Text',
+  'Image',
   'Isometric',
   'Dimension',
   'Link',

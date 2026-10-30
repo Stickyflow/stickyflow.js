@@ -1,5 +1,5 @@
 import type { Shader } from '../../../model/shader';
-import type { ShapeType } from '../../../model/shape';
+import type { ShapeImage, ShapeType } from '../../../model/shape';
 import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { decodeColor, decodeShadow } from '../../styleDecoding';
 import {
@@ -15,13 +15,33 @@ import {
   VERTICAL_ALIGNS,
 } from './values';
 
+const IMAGE_FITS = ['cover', 'contain', 'fill'] as const;
+
 function shapeTypeOf(value: string | undefined): ShapeType {
   return (value || 'rectangle') as ShapeType;
+}
+
+function numbers(value: string | undefined, count: number): number[] | undefined {
+  const parts = value?.split(',').map(Number);
+  return parts?.length === count && parts.every(Number.isFinite) ? parts : undefined;
+}
+
+function imageOf(p: Record<string, string>): ShapeImage {
+  const size = numbers(p.imageSize, 2);
+  const crop = numbers(p.crop, 4);
+  return {
+    src: p.src,
+    fit: oneOf(p.fit, IMAGE_FITS, 'cover'),
+    pixels: size && size[0] > 0 && size[1] > 0 ? [size[0], size[1]] : undefined,
+    crop: crop && crop[2] > 0 && crop[3] > 0 ? { x: crop[0], y: crop[1], width: crop[2], height: crop[3] } : undefined,
+  };
 }
 
 export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Shader>) {
   const p = e.props;
   const isText = e.kind === 'text';
+  const isImage = e.kind === 'image';
+  const unpainted = isText || isImage;
   return {
     id: e.id,
     type: 'shape',
@@ -35,8 +55,8 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     w: e.width,
     h: e.height,
     rotation: e.rotation ?? 0,
-    fillColor: decodeColor(p.fill ?? (isText ? 'none' : undefined)),
-    strokeColor: strokePaint(p.stroke ?? (isText ? 'none' : undefined)),
+    fillColor: decodeColor(p.fill ?? (unpainted ? 'none' : undefined)),
+    strokeColor: strokePaint(p.stroke ?? (unpainted ? 'none' : undefined)),
     isText: isText || undefined,
     strokeWidth: numOf(p.strokeWidth),
     textColor: p.textColor,
@@ -58,5 +78,6 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     order: e.order,
     sourceIndex: e.sourceIndex,
     shader: p.shader ? shaders.get(p.shader) : undefined,
+    image: isImage && p.src ? imageOf(p) : undefined,
   };
 }

@@ -23,6 +23,9 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Text') {
     return 'text';
   }
+  if (block.kind === 'Image') {
+    return 'image';
+  }
   if (block.kind === 'Isometric') {
     return 'isometric';
   }

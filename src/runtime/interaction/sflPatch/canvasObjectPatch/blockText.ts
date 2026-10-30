@@ -1,12 +1,17 @@
 import { escapeSflString, indentBlock, round1 } from '../format';
 import type { InsertCanvasObjectOptions } from './types';
 
-function canvasObjectBlockKind(kind: InsertCanvasObjectOptions['kind']): 'Shape' | 'Text' | 'Isometric' | 'Container' {
+function canvasObjectBlockKind(
+  kind: InsertCanvasObjectOptions['kind'],
+): 'Shape' | 'Text' | 'Image' | 'Isometric' | 'Container' {
   if (kind === 'shape') {
     return 'Shape';
   }
   if (kind === 'text') {
     return 'Text';
+  }
+  if (kind === 'image') {
+    return 'Image';
   }
   if (kind === 'isometric') {
     return 'Isometric';
