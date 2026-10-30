@@ -36,7 +36,7 @@ function collectBlockDiagnostics(
         severity: 'warning',
         code: 'unresolved-style-or-layout',
         ownerId: block.name,
-        message: `"${reference}" is not a Style or Layout defined at the top level of the document Ã¢â‚¬â€ "${block.name}" gets no shape, fill, or stroke from it.`,
+        message: `"${reference}" is not a Style or Layout defined at the top level of the document — "${block.name}" gets no shape, fill, or stroke from it.`,
       });
     }
   }

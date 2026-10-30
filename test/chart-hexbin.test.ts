@@ -82,7 +82,7 @@ describe('Hexbin chart', () => {
   });
 });
 
-describe('Hexbin chart â€” binning is anchored to the plot, not the canvas', () => {
+describe('Hexbin chart — binning is anchored to the plot, not the canvas', () => {
   const at = (x: number, y: number, width = 400, height = 260) => `sfl 1.4
 
 Model M {

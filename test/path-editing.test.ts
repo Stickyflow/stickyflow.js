@@ -6,7 +6,7 @@ import type { OwnerRef } from '../src/runtime/viewer';
 const owner = (id: string): OwnerRef => ({ role: 'path', id });
 
 describe('applyPathPointChange', () => {
-  it('rewrites a top-level pathâ€™s points to the new absolute coordinates', () => {
+  it('rewrites a top-level path’s points to the new absolute coordinates', () => {
     const sfl = `sfl 1.4\n\nModel M {\n  Path p {\n    points: [[10, 10], [50, 10], [50, 50]]\n  }\n}\n`;
     const next = applyPathPointChange(sfl, {
       owner: owner('p'),
@@ -23,7 +23,7 @@ describe('applyPathPointChange', () => {
     ]);
   });
 
-  it('subtracts the parent frameâ€™s origin, so a nested path keeps its declared points relative', () => {
+  it('subtracts the parent frame’s origin, so a nested path keeps its declared points relative', () => {
     const sfl = `sfl 1.4\n\nModel M {\n  Container f {\n    kind: frame\n    layout { position: 200, 100; size: 400, 300 }\n\n    Path p {\n      points: [[0, 0], [40, 0]]\n    }\n  }\n}\n`;
     const before = sflToCanvasState(sfl).canvasObjects.find(e => e.id === 'p');
     expect(before?.path?.points).toEqual([

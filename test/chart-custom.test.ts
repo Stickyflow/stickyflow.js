@@ -135,7 +135,7 @@ Model board {
   }
 }`;
 
-describe('Custom chart â€” connectPoints (dumbbell) mode', () => {
+describe('Custom chart — connectPoints (dumbbell) mode', () => {
   it('renders one connector line, one hollow before-point, and one filled after-point per row, without a diagnostic', () => {
     const { diagnostics, svg } = render(DUMBBELL_SFL);
     expect(diagnostics).toEqual([]);
@@ -219,7 +219,7 @@ describe('Custom chart â€” connectPoints (dumbbell) mode', () => {
   });
 });
 
-describe('Custom chart â€” named Symbol reference on Series.symbol', () => {
+describe('Custom chart — named Symbol reference on Series.symbol', () => {
   it('resolves a bare Symbol name against the document Symbol definitions, normalized', () => {
     const state = sflToCanvasState(NAMED_SYMBOL_SFL);
     const symbol = state.canvasObjects.find(e => e.id === 'marks')?.chart?.series[0].symbol;
@@ -232,7 +232,7 @@ describe('Custom chart â€” named Symbol reference on Series.symbol', () => 
     ]);
   });
 
-  it('scales a named symbol by size*2, centered on the point â€” unlike an inline symbol, which stays raw pixel offsets', () => {
+  it('scales a named symbol by size*2, centered on the point — unlike an inline symbol, which stays raw pixel offsets', () => {
     const { diagnostics, scene } = render(NAMED_SYMBOL_SFL);
     expect(diagnostics).toEqual([]);
     const namedMark = scene.nodes.find(node => node.id === 'chart-custom-mark-marks-a-0');

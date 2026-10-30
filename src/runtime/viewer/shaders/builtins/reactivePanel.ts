@@ -32,9 +32,7 @@ float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
 }
 
 float random(vec2 point) {
-  vec3 value = fract(vec3(point.xyx) * 0.1031);
-  value += dot(value, value.yzx + 33.33);
-  return fract((value.x + value.y) * value.z);
+  return fract(sin(dot(mod(point, 289.0), vec2(127.1, 311.7))) * 43758.5453123);
 }
 
 void main() {
