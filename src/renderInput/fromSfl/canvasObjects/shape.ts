@@ -46,7 +46,8 @@ export function shapeObject(e: SflCanvasObject, shaders: ReadonlyMap<string, Sha
     id: e.id,
     type: 'shape',
     text: e.text ?? null,
-    shapeType: shapeTypeOf(e.shapeType),
+    // A picture with a corner radius and no form of its own is a rounded one, or the radius would do nothing.
+    shapeType: shapeTypeOf(e.shapeType ?? (isImage && p.cornerRadius ? 'rounded_rectangle' : undefined)),
     symbol: e.symbol,
     x: e.x,
     y: e.y,

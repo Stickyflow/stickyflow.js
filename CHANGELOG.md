@@ -19,6 +19,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [0.11.3] - 2026-10-31
 
+### Fixed
+
+- `cornerRadius` rounds an `Image` that names no `shape`.
+
 ### Added
 
 - Smart snap keeps gaps equal: an object that is moved in a row snaps halfway between its neighbors, or as far from a neighbor as two others of the row are from each other, and guides show the gaps.
