@@ -135,6 +135,7 @@ export {
   applyLinkReconnectChange,
   applyLinkSegmentChange,
   applyMoveChange,
+  applyMoveChanges,
   applyPathPointChange,
   applyPropertyChange,
   applyQuickDuplicateChange,

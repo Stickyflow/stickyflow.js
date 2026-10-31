@@ -102,6 +102,14 @@ export function buildShape(
     }
     nodes.push(image);
   }
+  // A text is taken by its whole box, not only by its letters.
+  if (shape.isText) {
+    for (const node of nodes) {
+      if (node.type === 'ellipse' || node.type === 'path' || node.type === 'rect') {
+        node.style = { ...node.style, pointerEvents: 'all' };
+      }
+    }
+  }
   const text = renderShapeText(context, strokeWidth, measureText);
   if (text) {
     nodes.push(text);

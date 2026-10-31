@@ -21,10 +21,12 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- `applyMoveChanges` writes the objects of one drag at once and reads the document one time.
 - The color popover has a pipette next to the hex field, in browsers that offer the EyeDropper API.
 
 ### Fixed
 
+- A `Text` is picked and dragged by its whole box, not only by its letters. The rendered SVG of a text changes by a `pointer-events` attribute.
 - An `Image` follows the pointer while it is resized, instead of jumping to its new size at the end.
 
 ## [0.11.0] - 2026-10-28

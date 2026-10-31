@@ -1,7 +1,7 @@
 export { applyChartValueChange } from './changes/chartValueChange';
 export { applyLinkReconnectChange } from './changes/linkReconnectChange';
 export { applyLinkSegmentChange } from './changes/linkSegmentChange';
-export { applyMoveChange } from './changes/moveChange';
+export { applyMoveChange, applyMoveChanges } from './changes/moveChange';
 export { applyPathPointChange } from './changes/pathPointChange';
 export { applyPropertyChange } from './changes/propertyChange';
 export type { QuickDuplicateOptions } from './changes/quickDuplicateChange';

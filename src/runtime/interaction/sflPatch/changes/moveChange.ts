@@ -21,28 +21,30 @@ function movePathPoints(lines: string[], range: LineRange, dx: number, dy: numbe
   replacePropertyValue(lines, span, shifted);
 }
 
-export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
+// Several objects of one drag at once: the document is read one time, however many there are.
+export function applyMoveChanges(sfl: string, events: readonly MoveChangeEvent[]): string {
   const state = sflToCanvasState(sfl);
-  const canvasObject = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
-  if (!canvasObject) {
-    return sfl;
-  }
-  const parent = canvasObject.parentFrameId
-    ? state.canvasObjects.find(candidate => candidate.id === canvasObject.parentFrameId)
-    : undefined;
-  const originX = parent?.x ?? 0;
-  const originY = parent?.y ?? 0;
   const lines = sfl.split('\n');
-  const range = findOwnerBlock(lines, event.owner.id);
-  if (!range) {
-    return sfl;
+  for (const event of events) {
+    const canvasObject = state.canvasObjects.find(candidate => candidate.id === event.owner.id);
+    const range = canvasObject ? findOwnerBlock(lines, event.owner.id) : null;
+    if (!canvasObject || !range) {
+      continue;
+    }
+    if (event.owner.role === 'path') {
+      movePathPoints(lines, range, event.dx, event.dy);
+      continue;
+    }
+    const parent = canvasObject.parentFrameId
+      ? state.canvasObjects.find(candidate => candidate.id === canvasObject.parentFrameId)
+      : undefined;
+    setOrInsertLayoutTuples(lines, range, [
+      ['position', canvasObject.x - (parent?.x ?? 0) + event.dx, canvasObject.y - (parent?.y ?? 0) + event.dy],
+    ]);
   }
-  if (event.owner.role === 'path') {
-    movePathPoints(lines, range, event.dx, event.dy);
-    return lines.join('\n');
-  }
-  setOrInsertLayoutTuples(lines, range, [
-    ['position', canvasObject.x - originX + event.dx, canvasObject.y - originY + event.dy],
-  ]);
   return lines.join('\n');
+}
+
+export function applyMoveChange(sfl: string, event: MoveChangeEvent): string {
+  return applyMoveChanges(sfl, [event]);
 }
