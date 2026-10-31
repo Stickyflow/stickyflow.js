@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.11.4] - 2026-10-31
+
+### Fixed
+
+- `removeCanvasObject` also removes a `Group` that holds no object any more, and any group around it that is left empty by that.
+
 ## [0.11.3] - 2026-10-31
 
 ### Fixed
