@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-10-31
+
+### Fixed
+
+- A `tickScale` on a full circle no longer splits its first tick in two halves with different colors.
+
 ## [0.12.1] - 2026-10-31
 
 ### Fixed

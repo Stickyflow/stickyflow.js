@@ -36,6 +36,8 @@ void main() {
   float inArc = step(-0.25 / count, fraction) * step(fraction, 1.0 + 0.25 / count);
   float phase = fraction * count;
   float index = floor(phase + 0.5);
+  // On a full circle the last tick lies on the first, so they are one tick.
+  if (gap < 0.001) index = mod(index, count);
   float arcDistance = abs(fract(phase + 0.5) - 0.5) / count * sweep * radius;
   float every = max(uMajor, 1.0);
   float major = 1.0 - step(0.5, mod(index, every));
