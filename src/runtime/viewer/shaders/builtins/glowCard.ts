@@ -15,6 +15,8 @@ uniform float uGrain;
 uniform float uWarp;
 uniform float uAngle;
 uniform float uCornerRadius;
+uniform float uPulse;
+uniform float uBpm;
 uniform vec3 uBaseColor;
 uniform vec3 uColorA;
 uniform vec3 uColorB;
@@ -62,7 +64,11 @@ void main() {
   float aspect = reachAcross / reachAlong;
 
   float t = uTime * max(uSpeed, 0.0);
-  float height = clamp(uGlowHeight, 0.05, 1.0);
+  // A heartbeat: one soft swell at the rate of bpm that rises a little faster than it falls. Without pulse the light stays even.
+  float beatPhase = fract(uTime * max(uBpm, 1.0) / 60.0);
+  float swell = sin(3.14159265 * pow(beatPhase, 0.7));
+  float beat = max(uPulse, 0.0) * swell * swell;
+  float height = clamp(uGlowHeight * (1.0 + 0.16 * beat), 0.05, 1.0);
   float spread = max(uGlowSpread, 0.05);
   // The body is the base color with a faint lift toward the far side, like glass that catches the light.
   vec3 color = uBaseColor + vec3(0.035) * smoothstep(0.55, 1.0, 1.0 - depth);
@@ -86,7 +92,7 @@ void main() {
   // A haze reaches higher than the lights, so the color fades out into the body.
   float haze = smoothstep(height, 0.0, depth);
   glow += mix(uColorB, uColorA, side) * haze * haze * 0.35;
-  color += glow * max(uIntensity, 0.0);
+  color += glow * max(uIntensity, 0.0) * (1.0 + 0.3 * beat);
 
   // Near the exit edge the lights are so strong that they turn white.
   float hot = smoothstep(height * 0.38, 0.0, depth) * (a + b + c) * clamp(uCore, 0.0, 1.0);
@@ -119,6 +125,8 @@ export const glowCardProgram: ShaderProgram = {
     warp: 1,
     angle: 0,
     cornerRadius: 0.08,
+    pulse: 0,
+    bpm: 60,
     baseColor: '#0b0b12',
     colorA: '#2f6bff',
     colorB: '#9d5cff',

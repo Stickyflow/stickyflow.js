@@ -46,7 +46,7 @@ const TICK_SCALE_NUMBERS = [
   'sweep',
   'intensity',
 ] as const;
-const TICK_SCALE_COLORS = ['color', 'accent'] as const;
+const TICK_SCALE_COLORS = ['color', 'accent', 'lowColor', 'highColor'] as const;
 
 function tickScaleObject(canvasObject: SflComponentObject): TickScaleComponent {
   const properties = canvasObject.props;

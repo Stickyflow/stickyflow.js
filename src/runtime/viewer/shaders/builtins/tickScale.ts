@@ -16,6 +16,8 @@ uniform float uThickness;
 uniform float uRound;
 uniform vec3 uColor;
 uniform vec3 uAccent;
+uniform vec3 uLowColor;
+uniform vec3 uHighColor;
 varying vec2 vUv;
 
 const float TAU = 6.28318530718;
@@ -54,7 +56,10 @@ void main() {
   float progress = uProgress < 0.0 ? 1.0 : clamp(uProgress, 0.0, 1.0);
   float lit = clamp(progress * count - index + 1.0, 0.0, 1.0);
   vec3 base = uColor;
-  vec3 color = mix(base, uAccent, lit);
+  // With lowColor and highColor the lit ticks run from the one to the other along the scale.
+  bool ramped = dot(uLowColor + uHighColor, vec3(1.0)) > 0.0;
+  vec3 accent = ramped ? mix(uLowColor, uHighColor, clamp(index / count, 0.0, 1.0)) : uAccent;
+  vec3 color = mix(base, accent, lit);
   float alpha = tick * mix(0.32, 1.0, lit) * max(uIntensity, 0.0);
   gl_FragColor = vec4(color * alpha, clamp(alpha, 0.0, 1.0));
 }

@@ -17,6 +17,13 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-10-31
+
+### Added
+
+- `pulse` and `bpm` on the shader `glowCard`, which make its light beat like a heart.
+- `lowColor` and `highColor` on the shader `plasmaGauge` and on a `tickScale`. The gauge takes the color of its value between the two, and the lit ticks run from the one to the other along the scale.
+
 ## [0.12.2] - 2026-10-31
 
 ### Fixed

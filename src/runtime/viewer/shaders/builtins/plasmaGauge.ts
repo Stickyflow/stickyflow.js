@@ -16,6 +16,8 @@ uniform float uSweep;
 uniform vec3 uColor;
 uniform vec3 uAccent;
 uniform vec3 uHot;
+uniform vec3 uLowColor;
+uniform vec3 uHighColor;
 varying vec2 vUv;
 
 float bell(float value, float width) {
@@ -46,8 +48,12 @@ void main() {
   float level = (uFlare > 0.0 ? uFlare : 1.0) * engage * (0.45 + 0.5 * energy + 0.3 * boost);
 
   float heat = smoothstep(0.15, 1.0, clamp(0.75 * energy + 0.5 * boost, 0.0, 1.0));
-  vec3 cool = mix(uAccent, vec3(0.18, 0.28, 0.95), 0.55);
-  vec3 hot = uHot;
+  // With lowColor and highColor the whole gauge takes the color of its value.
+  bool ramped = dot(uLowColor + uHighColor, vec3(1.0)) > 0.0;
+  vec3 ramp = mix(uLowColor, uHighColor, progress);
+  vec3 accent = ramped ? ramp : uAccent;
+  vec3 cool = ramped ? ramp : mix(uAccent, vec3(0.18, 0.28, 0.95), 0.55);
+  vec3 hot = ramped ? mix(ramp, vec3(1.0), 0.2) : uHot;
   vec3 tint = mix(cool, hot, heat);
 
   float ripple = 0.5 + 0.5 * sin(delta * 9.0 - time * 1.4);
@@ -71,7 +77,7 @@ void main() {
   float local = clamp(heat * (0.7 + 0.3 * bell(delta, 0.9)) + 0.25 * heat * bell(delta, 0.3), 0.0, 1.0);
   vec3 rim = mix(cool, hot, local);
   vec3 bodyColor = mix(uColor, rim * (0.5 + 0.25 * energy), pow(roundDepth, 2.6));
-  bodyColor += mix(uAccent, hot, local) * (0.26 + 0.3 * energy) * bell(roundDepth - 0.93, 0.13);
+  bodyColor += mix(accent, hot, local) * (0.26 + 0.3 * energy) * bell(roundDepth - 0.93, 0.13);
   bodyColor *= (0.82 + 0.18 * smoothstep(-0.5, 0.5, -p.x)) * (0.9 + 0.6 * energy * energy);
 
   float ribbons = 0.5 + 0.5 * sin(depth * 24.0 - delta * 8.0 + time * 1.1);
