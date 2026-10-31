@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-10-31
+
+### Fixed
+
+- `applyMoveChanges` skips an object whose frame moves in the same drag. Its position is relative to the frame, so it moved twice before.
+
 ## [0.11.1] - 2026-10-30
 
 ### Added
