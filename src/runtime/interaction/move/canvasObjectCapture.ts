@@ -28,7 +28,7 @@ function parentContainerBounds(
     return undefined;
   }
   const container = findOwnerNode(svg, parentId, isPrimary);
-  if (!container) {
+  if (!container || container.getAttribute('data-sf-kind') === 'screen') {
     return undefined;
   }
   const bbox = container.getBBox();

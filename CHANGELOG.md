@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-10-31
+
+### Fixed
+
+- An object in a `Screen` can be dragged beyond its edge. In a frame it still stays inside.
+
 ## [0.12.0] - 2026-10-31
 
 ### Added

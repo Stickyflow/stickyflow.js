@@ -17,7 +17,7 @@ export { buildSwimlane } from './container/swimlane';
 export function buildContainers(input: Pick<RenderInput, 'frames' | 'swimlanes'>): RenderNode[] {
   return [
     ...input.frames.flatMap((frame, index) =>
-      tag(buildFrame(frame, index), 'frame', frame.id, undefined, frame.title ?? undefined),
+      tag(buildFrame(frame, index), 'frame', frame.id, frame.screen ? 'screen' : undefined, frame.title ?? undefined),
     ),
     ...input.swimlanes.flatMap((swimlane, index) => tag(buildSwimlane(swimlane, index), 'swimlane', swimlane.id)),
   ];

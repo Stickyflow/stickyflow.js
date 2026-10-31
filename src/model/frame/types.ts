@@ -20,6 +20,8 @@ export interface Frame {
   shadow?: boolean;
   // What lies inside the frame is cut at its edge, with its rounded corners.
   clip?: boolean;
+  // A block Screen, whose objects can leave it when they are dragged.
+  screen?: boolean;
   layerGroup?: string;
   orderKey?: string;
   order?: number;
