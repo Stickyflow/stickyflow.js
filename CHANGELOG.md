@@ -17,6 +17,17 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-31
+
+### Added
+
+- The block `Screen` of sfl 1.7, a container with a position and a size that shows nothing but its area unless the code gives it a `fill`, a `stroke`, a label or a shadow. It carries an optional `device`, and with `clip: true` what lies inside is cut at its edge. Positions inside it are relative to it, and a document can hold several.
+- A warning for `device`, `screen`, `screenColor` and `at` on a `Model` from sfl 1.7 on. Up to sfl 1.6 they stay valid.
+
+### Fixed
+
+- Only the main mouse button selects. The right button no longer replaces a selection of several objects.
+
 ## [0.11.4] - 2026-10-31
 
 ### Fixed

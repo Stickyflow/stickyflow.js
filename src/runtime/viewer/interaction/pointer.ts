@@ -62,7 +62,8 @@ class PointerInteractionSession {
   readonly #onPointerUp = (event: PointerEvent): void => {
     const wasDrag = this.#down?.moved ?? false;
     this.#down = null;
-    if (!wasDrag && this.#selectable) {
+    // Only the main button selects: the right one opens a menu for what is already selected.
+    if (!wasDrag && this.#selectable && event.button === 0) {
       this.#ownerPointer.select(event);
     }
   };

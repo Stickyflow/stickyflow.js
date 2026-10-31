@@ -60,7 +60,7 @@ class CanvasTreeResolver {
 
   #resolveChild(child: SflBlock, location: CanvasLocation, nextFlowPosition: FlowPositioner): SflGroupOut[] {
     const sourceIndex = this.#sequence++;
-    if (child.kind === 'Container') {
+    if (child.kind === 'Container' || child.kind === 'Screen') {
       return this.#resolveContainer(child, location, nextFlowPosition, sourceIndex);
     }
     if (isCanvasObjectBlockKind(child.kind)) {

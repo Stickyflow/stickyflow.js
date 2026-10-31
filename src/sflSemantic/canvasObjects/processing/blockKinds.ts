@@ -6,6 +6,7 @@ export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Text',
   'Image',
   'Container',
+  'Screen',
   'Path',
   'Chart',
   'Widget',

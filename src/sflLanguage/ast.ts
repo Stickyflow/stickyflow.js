@@ -4,6 +4,7 @@ export const NAMED_BLOCK_KINDS = [
   'Group',
   'Entity',
   'Container',
+  'Screen',
   'Path',
   'Chart',
   'Widget',

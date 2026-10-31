@@ -7,6 +7,7 @@ const OBJECTS = new Set([
   'Text',
   'Image',
   'Container',
+  'Screen',
   'Chart',
   'Path',
   'Widget',

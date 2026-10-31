@@ -11,6 +11,9 @@ export interface CanvasObjectClassification {
 }
 
 function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflValue>): string {
+  if (block.kind === 'Screen') {
+    return 'screen';
+  }
   if (block.kind === 'Path') {
     return 'path';
   }
@@ -37,7 +40,7 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
 }
 
 function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
-  if (kind === 'frame') {
+  if (kind === 'frame' || kind === 'screen') {
     return 'frame';
   }
   if (kind === 'swimlane') {
