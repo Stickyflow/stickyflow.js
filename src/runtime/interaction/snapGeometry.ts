@@ -1,5 +1,6 @@
 export { computeSnap } from './snapping/alignment';
 export { nearestCandidates } from './snapping/candidates';
+export { computeGapSnap, type GapSnap } from './snapping/gaps';
 export type { IsometricApexCandidate, IsometricDiagonalSnap } from './snapping/isometricDiagonal';
 export { snapIsometricDiagonal } from './snapping/isometricDiagonal';
 export { applyAxisSnap, resizeActivePoints } from './snapping/resize';

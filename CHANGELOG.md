@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.11.3] - 2026-10-31
+
+### Added
+
+- Smart snap keeps gaps equal: an object that is moved in a row snaps halfway between its neighbors, or as far from a neighbor as two others of the row are from each other, and guides show the gaps.
+
 ## [0.11.2] - 2026-10-31
 
 ### Fixed

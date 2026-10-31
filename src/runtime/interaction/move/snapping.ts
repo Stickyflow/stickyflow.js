@@ -8,7 +8,14 @@ import {
   isPrimary,
   pxPerUnit,
 } from '../../dom';
-import { computeSnap, MOVE_ACTIVE_POINTS, nearestCandidates, snapIsometricDiagonal } from '../snapGeometry';
+import type { AxisSnap, GapSnap } from '../snapGeometry';
+import {
+  computeGapSnap,
+  computeSnap,
+  MOVE_ACTIVE_POINTS,
+  nearestCandidates,
+  snapIsometricDiagonal,
+} from '../snapGeometry';
 import { isSnapDisabled, nearestIsometricLatticePoint, readIsometricSnapStep, snapDistancePx } from '../snapGrid';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
@@ -75,15 +82,22 @@ export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number,
   const leadBounds = offsetBounds(drag.canvasObjects[0].draggedBounds, rawDx, rawDy);
   const excludedIds = new Set(drag.canvasObjects.map(canvasObject => canvasObject.owner.id));
   const candidates = nearestCandidates(leadBounds, findSnapCandidateBounds(svg, excludedIds));
+  const threshold = snapDistancePx(svg) / pxPerUnit(svg);
   const snap = computeSnap(leadBounds, candidates, {
-    threshold: snapDistancePx(svg) / pxPerUnit(svg),
+    threshold,
     activeX: MOVE_ACTIVE_POINTS,
     activeY: MOVE_ACTIVE_POINTS,
     guideOverhang: GUIDE_OVERHANG,
   });
-  return {
-    dx: rawDx + snap.x.delta,
-    dy: rawDy + snap.y.delta,
-    guides: [snap.x.guide, snap.y.guide].filter(guide => guide !== null),
+  // On each axis the nearer of the two wins: lining up with an edge, or keeping the gaps of a row equal.
+  const gaps = computeGapSnap(leadBounds, candidates, threshold);
+  const pick = (align: AxisSnap, gap: GapSnap | null): GapSnap => {
+    if (gap && (!align.guide || Math.abs(gap.delta) < Math.abs(align.delta))) {
+      return gap;
+    }
+    return { delta: align.delta, guides: align.guide ? [align.guide] : [] };
   };
+  const x = pick(snap.x, gaps.x);
+  const y = pick(snap.y, gaps.y);
+  return { dx: rawDx + x.delta, dy: rawDy + y.delta, guides: [...x.guides, ...y.guides] };
 }
