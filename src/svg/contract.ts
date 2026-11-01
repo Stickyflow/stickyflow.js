@@ -4,6 +4,7 @@ import {
   ISOMETRIC_LABEL_OFFSET_ATTR,
   ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
+  PATH_CORNERS_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
   SQUARE_CORNER_ATTR,
@@ -122,6 +123,7 @@ function pathGeometryAttrs(detail: Extract<SceneDetail, { of: 'pathGeometry' }>)
     `${PATH_POINTS_ATTR}="${xml(JSON.stringify(detail.points))}"`,
     `${PATH_TENSION_ATTR}="${num(detail.tension)}"`,
     `${PATH_CLOSED_ATTR}="${detail.closed}"`,
+    ...(detail.cornerRadii ? [`${PATH_CORNERS_ATTR}="${xml(JSON.stringify(detail.cornerRadii))}"`] : []),
   ];
 }
 

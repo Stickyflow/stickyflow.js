@@ -1,10 +1,16 @@
 import { isStraight, type PathPoint, pathSegments } from '../../model/path';
+import { cornerFillet } from '../../model/path/fillet';
 
 export interface FreeformPathGeometry {
   points: PathPoint[];
   tension: number;
   closed: boolean;
   cornerRadius?: number;
+  cornerRadii?: number[];
+}
+
+export function radiusAt(geometry: Pick<FreeformPathGeometry, 'cornerRadius' | 'cornerRadii'>, index: number): number {
+  return geometry.cornerRadii?.[index] ?? geometry.cornerRadius ?? 0;
 }
 
 export function freeformPathData(geometry: FreeformPathGeometry): string {
@@ -12,7 +18,7 @@ export function freeformPathData(geometry: FreeformPathGeometry): string {
     return '';
   }
   if (isStraight(geometry)) {
-    return (geometry.cornerRadius ?? 0) > 0 && geometry.points.length > 2
+    return geometry.points.length > 2 && geometry.points.some((_, index) => radiusAt(geometry, index) > 0)
       ? roundedPathData(geometry)
       : linearPathData(geometry);
   }
@@ -31,16 +37,10 @@ export function freeformPathData(geometry: FreeformPathGeometry): string {
   return commands.join(' ');
 }
 
-// Each corner becomes a curve that starts and ends on its two sides, and takes at most half of each side.
+// Each corner with a radius becomes a circular arc that touches both of its sides.
 function roundedPathData(geometry: FreeformPathGeometry): string {
   const { points, closed } = geometry;
-  const radius = geometry.cornerRadius ?? 0;
   const count = points.length;
-  const near = (from: PathPoint, to: PathPoint, distance: number) => {
-    const length = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-    const share = Math.min(distance, length / 2) / length;
-    return { x: from.x + (to.x - from.x) * share, y: from.y + (to.y - from.y) * share };
-  };
   const corners = closed ? points.map((_, index) => index) : points.slice(1, -1).map((_, index) => index + 1);
   const commands: string[] = [];
   if (!closed) {
@@ -48,12 +48,21 @@ function roundedPathData(geometry: FreeformPathGeometry): string {
   }
   corners.forEach((index, order) => {
     const point = points[index];
-    const start = near(point, points[(index + count - 1) % count], radius);
-    const end = near(point, points[(index + 1) % count], radius);
-    commands.push(
-      `${order === 0 && closed ? 'M' : 'L'} ${start.x} ${start.y}`,
-      `Q ${point.x} ${point.y} ${end.x} ${end.y}`,
+    const fillet = cornerFillet(
+      points[(index + count - 1) % count],
+      point,
+      points[(index + 1) % count],
+      radiusAt(geometry, index),
     );
+    const move = order === 0 && closed ? 'M' : 'L';
+    if (fillet) {
+      commands.push(
+        `${move} ${fillet.start.x} ${fillet.start.y}`,
+        `A ${fillet.radius} ${fillet.radius} 0 0 ${fillet.sweep} ${fillet.end.x} ${fillet.end.y}`,
+      );
+    } else {
+      commands.push(`${move} ${point.x} ${point.y}`);
+    }
   });
   const last = points[count - 1];
   commands.push(closed ? 'Z' : `L ${last.x} ${last.y}`);

@@ -2,6 +2,11 @@ import type { FreeformPath } from '../../../model/path';
 import type { SflCanvasObject } from '../../../sflSemantic/sflToCanvasState';
 import { dashArray, numOf, oneOf, PATH_MARKERS, solidColor } from './values';
 
+function numberList(value: unknown): number[] | undefined {
+  const numbers = value === undefined ? null : String(value).match(/-?\d+(?:\.\d+)?/g);
+  return numbers?.map(Number);
+}
+
 export function pathObject(e: SflCanvasObject): FreeformPath {
   const p = e.props;
   return {
@@ -14,6 +19,7 @@ export function pathObject(e: SflCanvasObject): FreeformPath {
     value: e.path?.value,
     tension: e.path?.tension ?? 0,
     cornerRadius: numOf(p.cornerRadius) ?? 0,
+    cornerRadii: numberList(p.cornerRadii),
     startMarker: oneOf(e.path?.startMarker, PATH_MARKERS, 'none'),
     endMarker: oneOf(e.path?.endMarker, PATH_MARKERS, 'none'),
     closed: e.path?.closed ?? false,

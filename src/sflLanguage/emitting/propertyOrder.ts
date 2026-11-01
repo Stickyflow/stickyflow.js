@@ -14,6 +14,7 @@ const STYLE_ORDER = [
   'textAlign',
   'verticalAlign',
   'cornerRadius',
+  'cornerRadii',
   'dash',
   'shadow',
   'opacity',

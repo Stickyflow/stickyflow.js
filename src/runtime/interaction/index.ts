@@ -11,6 +11,7 @@ import { bindLinkEndpointDrag, type LinkEndpointDragHandle } from './linkEndpoin
 import { bindLinkSegmentDrag, type LinkSegmentDragHandle } from './linkSegmentDrag';
 import { bindShapeMovement, type MoveDragHandle } from './moveDrag';
 import { bindNudgeSelection, type NudgeSelectionHandle } from './nudgeSelection';
+import { bindPathCornerDrag, type PathCornerDragHandle } from './pathCornerDrag';
 import { bindPathDraw, type PathDrawDragHandle, type PathDrawOptions } from './pathDrawDrag';
 import { bindPathReshape, type PathReshapeDragHandle } from './pathReshapeDrag';
 import { bindPieLabelDrag, type PieLabelDragHandle } from './pieLabelDrag/binding';
@@ -41,6 +42,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const resize: ResizeDragHandle = bindShapeResize(viewer, emitter);
   const isometricAxisResize: IsometricAxisResizeDragHandle = bindIsometricAxisResize(viewer, emitter);
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
+  const pathCorners: PathCornerDragHandle = bindPathCornerDrag(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const linkSegments: LinkSegmentDragHandle = bindLinkSegmentDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
@@ -73,6 +75,7 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       resize.destroy();
       isometricAxisResize.destroy();
       pathReshape.destroy();
+      pathCorners.destroy();
       linkEndpoints.destroy();
       linkSegments.destroy();
       quickDuplicate.destroy();
@@ -111,6 +114,7 @@ export type {
   LinkSegmentChangeEvent,
   LinkToEvent,
   MoveChangeEvent,
+  PathCornerChangeEvent,
   PathDrawCompleteEvent,
   PathPoint,
   PathPointChangeEvent,

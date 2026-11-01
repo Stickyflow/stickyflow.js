@@ -7,5 +7,7 @@ export const PATH_POINTS_ATTR = 'data-sf-path-points';
 export const PATH_TENSION_ATTR = 'data-sf-path-tension';
 export const PATH_CLOSED_ATTR = 'data-sf-path-closed';
 export const PATH_POINT_INDEX_ATTR = 'data-sf-path-point';
+export const PATH_CORNERS_ATTR = 'data-sf-path-corners';
+export const PATH_CORNER_INDEX_ATTR = 'data-sf-path-corner';
 export const ISOMETRIC_SIZE_ATTR = 'data-sf-isometric-size';
 export const ISOMETRIC_LABEL_OFFSET_ATTR = 'data-sf-isometric-label-offset';

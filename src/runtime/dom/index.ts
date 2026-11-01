@@ -37,6 +37,7 @@ export {
 } from './domQuery';
 export {
   axisArrowPlacements,
+  cornerHandleOffset,
   ISO_DUPLICATE_BUBBLES_ATTR,
   ISO_HALO_ATTR,
   type IsometricAxis,

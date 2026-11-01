@@ -10,6 +10,7 @@ export interface PathReshapeTarget {
   points: Array<[number, number]>;
   tension: number;
   closed: boolean;
+  cornerRadii: number[];
 }
 
 export function resolvePathReshapeTarget(svg: SVGSVGElement, event: PointerEvent): PathReshapeTarget | null {
@@ -36,5 +37,6 @@ export function resolvePathReshapeTarget(svg: SVGSVGElement, event: PointerEvent
     points: geometry.points,
     tension: geometry.tension,
     closed: geometry.closed,
+    cornerRadii: geometry.cornerRadii,
   };
 }

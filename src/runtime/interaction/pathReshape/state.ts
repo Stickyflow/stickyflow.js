@@ -10,6 +10,7 @@ export interface PathReshapeDragState {
   points: Array<[number, number]>;
   tension: number;
   closed: boolean;
+  cornerRadii: number[];
   pointerId: number;
   startScreen: { x: number; y: number };
   moved: boolean;

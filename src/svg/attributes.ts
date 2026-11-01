@@ -51,6 +51,9 @@ function addStrokeAttrs(attrs: string[], style: SceneStyle): void {
   if (style.opacity !== undefined) {
     attrs.push(`opacity="${num(style.opacity)}"`);
   }
+  if (style.nonScalingStroke) {
+    attrs.push('vector-effect="non-scaling-stroke"');
+  }
   if (style.pointerEvents) {
     attrs.push(`pointer-events="${style.pointerEvents}"`);
   }

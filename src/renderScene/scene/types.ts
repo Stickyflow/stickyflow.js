@@ -23,6 +23,7 @@ export interface SceneStyle {
   lineJoin?: 'miter' | 'round' | 'bevel';
   opacity?: number;
   pointerEvents?: 'none' | 'all' | 'stroke';
+  nonScalingStroke?: boolean;
   // Milliseconds a change of position, size, color or opacity takes to show; the viewer patches the element in place, so the browser animates it.
   transition?: number;
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
@@ -122,7 +123,7 @@ export type SceneDetail =
       declaredBounds: { x: number; y: number; width: number; height: number };
     }
   | { of: 'declaredBounds'; bounds: { x: number; y: number; width: number; height: number } }
-  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean }
+  | { of: 'pathGeometry'; points: Array<[number, number]>; tension: number; closed: boolean; cornerRadii?: number[] }
   | {
       of: 'isometricGeometry';
       width: number;

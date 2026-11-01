@@ -17,6 +17,22 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-01
+
+### Added
+
+- `cornerRadii` on a `Path` gives each corner of a straight path its own radius, by the index of its point.
+- A selected straight path has a handle inside each corner, and the event `pathCornerChange` reports the new radii.
+- In the viewer a line without a fill can be taken 7 pixels to each side of it, at any zoom.
+
+### Changed
+
+- **Rendered output:** a rounded corner of a `Path` is now a circular arc of that radius. It was a curve that touched its sides but was not part of a circle.
+
+### Fixed
+
+- A rounded path keeps its corners while one of its points is dragged.
+
 ## [0.13.1] - 2026-11-01
 
 ### Added

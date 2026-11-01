@@ -98,6 +98,12 @@ export interface PathPointChangeEvent {
   points: PathPoint[];
 }
 
+export interface PathCornerChangeEvent {
+  owner: OwnerRef;
+  // The radius of every corner, by the index of its point.
+  cornerRadii: number[];
+}
+
 export interface PathDrawCompleteEvent {
   points: PathPoint[];
   closed: boolean;
@@ -130,6 +136,7 @@ export interface InteractionEventMap {
   chartValuePreview: ChartValuePreviewEvent;
   propertyChange: PropertyChangeEvent;
   pathPointChange: PathPointChangeEvent;
+  pathCornerChange: PathCornerChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;
   sankeyNodeMove: SankeyNodeMoveEvent;
   sankeyNodeRename: SankeyNodeRenameEvent;

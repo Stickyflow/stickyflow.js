@@ -4,6 +4,7 @@ import {
   ISOMETRIC_LABEL_OFFSET_ATTR,
   ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
+  PATH_CORNERS_ATTR,
   PATH_POINTS_ATTR,
   PATH_TENSION_ATTR,
   SYMBOL_BOUNDS_ATTR,
@@ -61,6 +62,7 @@ export interface PathGeometry {
   points: Array<[number, number]>;
   tension: number;
   closed: boolean;
+  cornerRadii: number[];
 }
 
 export function pathGeometryOf(el: { getAttribute(name: string): string | null }): PathGeometry | null {
@@ -81,6 +83,7 @@ export function pathGeometryOf(el: { getAttribute(name: string): string | null }
     points: points as Array<[number, number]>,
     tension: Number(el.getAttribute(PATH_TENSION_ATTR)) || 0,
     closed: el.getAttribute(PATH_CLOSED_ATTR) === 'true',
+    cornerRadii: JSON.parse(el.getAttribute(PATH_CORNERS_ATTR) ?? '[]') as number[],
   };
 }
 

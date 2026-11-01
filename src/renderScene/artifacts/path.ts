@@ -1,6 +1,7 @@
 import type { FreeformPath } from '../../model/path';
 import type { RenderNode } from '../scene';
 import { finite, freeformPathData } from '../scene';
+import { radiusAt } from '../scene/freeformPath';
 import { tag } from '../scene/tagging';
 
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
@@ -17,13 +18,15 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
   };
   const tension = finite(path.tension, 0);
   const closed = path.closed === true;
+  const corners = { cornerRadius: finite(path.cornerRadius, 0), cornerRadii: path.cornerRadii };
+  const radii = path.points.map((_, position) => radiusAt(corners, position));
   return [
     {
       type: 'path',
       id: `path-${path.id}`,
       order: 30_000 + index,
       bounds,
-      d: freeformPathData({ points: path.points, tension, closed, cornerRadius: finite(path.cornerRadius, 0) }),
+      d: freeformPathData({ points: path.points, tension, closed, ...corners }),
       markerStart: path.startMarker,
       markerEnd: path.endMarker,
       detail: {
@@ -31,6 +34,7 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
         points: path.points.map(point => [point.x, point.y]),
         tension,
         closed,
+        ...(radii.some(radius => radius > 0) ? { cornerRadii: radii } : {}),
       },
       style: {
         fill: path.closed ? { kind: 'solid', color: path.fillColor ?? 'transparent' } : { kind: 'none' },

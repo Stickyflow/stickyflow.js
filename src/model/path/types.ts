@@ -20,6 +20,8 @@ export interface FreeformPath {
   tension?: number;
   // Rounds the corners of a straight path, each as far as its two sides allow.
   cornerRadius?: number;
+  // The radius of each corner by the index of its point. Where it has no number, cornerRadius counts.
+  cornerRadii?: number[];
   startMarker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
   endMarker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
   closed?: boolean;
