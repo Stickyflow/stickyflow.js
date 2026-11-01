@@ -59,10 +59,71 @@ function lineHitArea(node: RenderNode): RenderNode | null {
   } as RenderNode;
 }
 
+const DIMENSION_LINE_HIT_WIDTH_PX = 20;
+const LABEL_MARGIN = 4;
+
+// A dimension is taken anywhere: on its line, its extension lines and its number.
+function dimensionHitArea(node: RenderNode): RenderNode | null {
+  if (node.identity?.role !== 'dimension') {
+    return null;
+  }
+  const identity = { role: 'dimension' as const, id: node.identity.id };
+  if (node.type === 'path') {
+    return {
+      ...node,
+      id: `line-hit-${node.id}`,
+      identity,
+      detail: undefined,
+      markerStart: undefined,
+      markerEnd: undefined,
+      style: {
+        fill: { kind: 'none' },
+        stroke: { kind: 'solid', color: '#000000' },
+        strokeWidth: DIMENSION_LINE_HIT_WIDTH_PX,
+        nonScalingStroke: true,
+        opacity: 0,
+        pointerEvents: 'stroke',
+      },
+    } as RenderNode;
+  }
+  if (node.type !== 'text') {
+    return null;
+  }
+  const { x, y, width, height, rotation = 0, rotationCenter } = node;
+  const center = rotationCenter ?? { x: x + width / 2, y: y + height / 2 };
+  const angle = (rotation * Math.PI) / 180;
+  const corner = (px: number, py: number) => {
+    const dx = px - center.x;
+    const dy = py - center.y;
+    return `${center.x + dx * Math.cos(angle) - dy * Math.sin(angle)} ${center.y + dx * Math.sin(angle) + dy * Math.cos(angle)}`;
+  };
+  const [left, top, right, bottom] = [
+    x - LABEL_MARGIN,
+    y - LABEL_MARGIN,
+    x + width + LABEL_MARGIN,
+    y + height + LABEL_MARGIN,
+  ];
+  return {
+    type: 'path',
+    id: `line-hit-${node.id}`,
+    order: node.order,
+    rank: node.rank,
+    sequence: node.sequence,
+    bounds: node.bounds,
+    d: `M ${corner(left, top)} L ${corner(right, top)} L ${corner(right, bottom)} L ${corner(left, bottom)} Z`,
+    identity,
+    style: { fill: { kind: 'solid', color: '#000000' }, opacity: 0, pointerEvents: 'all' },
+  } as RenderNode;
+}
+
 export function withLinkHitAreas(nodes: RenderNode[]): RenderNode[] {
   return nodes.flatMap(node => {
     if (node.type === 'path' && node.identity?.role === 'link' && node.identity.primary) {
       return [node, hitAreaFor(node, node.identity.id)];
+    }
+    const dimension = dimensionHitArea(node);
+    if (dimension) {
+      return [node, dimension];
     }
     const line = lineHitArea(node);
     return line ? [node, line] : [node];
