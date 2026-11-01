@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-01
+
 ### Added
 
 - SFL 1.8: the block `Parameters` names the numbers of a document. They count in every computed value, in the grid of a `Repeat`, in points of a list and in texts, and a `Use` can name them as values.
