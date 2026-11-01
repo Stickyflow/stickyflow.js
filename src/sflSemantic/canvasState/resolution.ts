@@ -5,6 +5,7 @@ import { collectUnresolvedCompositionReferences } from '../definitions/compositi
 import { createCanvasObjectPropertyReaders } from '../definitions/propertyReaders';
 import { collectEmptySeries, collectUnsupportedChartTypes, collectUnsupportedGridShapes } from '../diagnostics/charts';
 import { collectUnsupportedComponentTypes } from '../diagnostics/components';
+import { collectMeshProblems } from '../diagnostics/meshes';
 import { collectDuplicateNames } from '../diagnostics/names';
 import { collectModelScreenLines } from '../diagnostics/screens';
 import type { SflDiagnostic } from '../types';
@@ -28,6 +29,7 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectUnsupportedComponentTypes(doc),
       ...collectDuplicateNames(doc),
       ...collectModelScreenLines(doc),
+      ...collectMeshProblems(doc),
     ],
     canvasObjectResolutionContext: createCanvasObjectPropertyReaders(definitions),
   };

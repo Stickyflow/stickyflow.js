@@ -152,6 +152,7 @@ export {
   applyDimensionChange,
   applyLinkReconnectChange,
   applyLinkSegmentChange,
+  applyMeshChange,
   applyMoveChange,
   applyMoveChanges,
   applyPathPointChange,
@@ -165,6 +166,7 @@ export {
   insertConnection,
   insertLink,
   insertPath,
+  type MeshChange,
   removeCanvasObject,
   removeLink,
 } from './patchSfl';

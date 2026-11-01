@@ -92,8 +92,10 @@ function setLayoutTuple(lines: string[], layout: LineRange, tuple: LayoutTuple):
 }
 
 function layoutTupleValue(tuple: LayoutTuple): string {
-  const base = `${round1(tuple[1])}, ${round1(tuple[2])}`;
-  return tuple[3] === undefined ? base : `${base}, ${round1(tuple[3])}`;
+  // A third value that is no depth is a place in a 3D world, where a tenth is a long way.
+  const round = tuple[3] !== undefined && tuple[0] !== 'size' ? (n: number) => Math.round(n * 1000) / 1000 : round1;
+  const base = `${round(tuple[1])}, ${round(tuple[2])}`;
+  return tuple[3] === undefined ? base : `${base}, ${round(tuple[3])}`;
 }
 
 export function setEndpoint(lines: string[], range: LineRange, patch: LinkEndpointPatch): void {

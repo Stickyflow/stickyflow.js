@@ -13,6 +13,8 @@ export const NAMED_BLOCK_KINDS = [
   'Text',
   'Image',
   'Isometric',
+  'Mesh',
+  'Canvas',
   'Dimension',
   'Link',
   'Connection',
@@ -105,6 +107,7 @@ export interface SflProperty {
 
 export interface SflLayout {
   properties: SflProperty[];
+  bindings?: SflBinding[];
 }
 
 export interface SflStyle {

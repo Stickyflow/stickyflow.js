@@ -1,6 +1,7 @@
 import type { SflChartData } from './artifacts/chart/types';
 import type { SflDimensionData } from './artifacts/dimension/types';
 import type { SflIsometricData } from './artifacts/isometric/types';
+import type { SflAnchorData, SflMeshCanvasData, SflMeshData } from './artifacts/mesh/types';
 import type { SflPathData } from './artifacts/path/types';
 import type { SflSwimlaneData } from './artifacts/swimlane/types';
 
@@ -12,7 +13,9 @@ export type SflCanvasObjectType =
   | 'chart'
   | 'component'
   | 'isometric'
-  | 'dimension';
+  | 'dimension'
+  | 'mesh'
+  | 'meshCanvas';
 
 export interface SflSymbolDefinition {
   name: string;
@@ -34,6 +37,7 @@ export interface SflCanvasObjectBase {
   order?: number;
   sourceIndex?: number;
   parentFrameId?: string;
+  anchor?: SflAnchorData;
   props: Record<string, string>;
 }
 
@@ -47,6 +51,8 @@ export interface SflCanvasObject extends SflCanvasObjectBase {
   component?: SflComponentData;
   isometric?: SflIsometricData;
   dimension?: SflDimensionData;
+  mesh?: SflMeshData;
+  meshCanvas?: SflMeshCanvasData;
 }
 
 export interface SflComponentData {

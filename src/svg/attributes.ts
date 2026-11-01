@@ -22,7 +22,7 @@ function strokeColorAt(style: SceneStyle, edge: 'start' | 'end'): string {
 
 type StyledRenderNode = Exclude<
   RenderNode,
-  SceneText | SceneShaderSurface | Extract<RenderNode, { type: 'rolling-number' | 'image' }>
+  SceneText | SceneShaderSurface | Extract<RenderNode, { type: 'mesh-stage' | 'rolling-number' | 'image' }>
 >;
 
 export function styleAttrs(node: StyledRenderNode, defs: SvgDefinitionRegistry): string {

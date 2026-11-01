@@ -98,7 +98,9 @@ function emitPrimaryBlockEntries(entries: BlockEntries, properties: SflProperty[
 function emitAttachedPropertyBlocks(entries: BlockEntries, depth: number): string {
   const fields = entries.fields.map(properties => emitFieldsBlock(properties, depth + 1));
   const dataBlocks = entries.dataBlocks.map(data => emitDataBlock(data, depth + 1));
-  const layouts = entries.layouts.map(layout => emitPropertyBlock('layout', layout.properties, depth + 1));
+  const layouts = entries.layouts.map(layout =>
+    emitPropertyBlock('layout', layout.properties, depth + 1, layout.bindings),
+  );
   const styles = entries.styles.map(style => emitPropertyBlock('style', style.properties, depth + 1, style.bindings));
   return [...fields, ...dataBlocks, ...layouts, ...styles].join('\n');
 }

@@ -6,6 +6,7 @@ import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
 import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
+import { type MeshStagesHandle, mountMeshStages } from './mesh/stage';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
 import type { Viewer, ViewerOptions, ViewerSource } from './types';
@@ -15,6 +16,7 @@ export class ViewerSession implements Viewer {
   private readonly display: DisplayHandle;
   private readonly interaction: InteractionHandle | null;
   private readonly shaderSurfaces: ShaderSurfaceHandle;
+  private readonly meshStages: MeshStagesHandle;
   private readonly documentComponents: DocumentComponentsHandle;
   private readonly shaderParameterOverrides = new Map<string, Record<string, ShaderParameter>>();
   private readonly rulerProgressOverrides = new Map<string, number>();
@@ -26,6 +28,13 @@ export class ViewerSession implements Viewer {
   ) {
     this.display = mountDisplay(options.container, initialSvg);
     this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
+    this.meshStages = mountMeshStages(this.display.svg, {
+      interactive: Boolean(options.interactive),
+      events: {
+        select: id => this.emitter.emit('meshSelect', { diagramId, id }),
+        change: (id, change) => this.emitter.emit('meshChange', { diagramId, id, ...change }),
+      },
+    });
     this.documentComponents = mountDocumentComponents(this.display.svg);
     this.interaction = options.interactive
       ? bindInteraction(this.display, this.emitter, diagramId, { selectable: options.selectable })
@@ -66,7 +75,7 @@ export class ViewerSession implements Viewer {
   }
 
   exportSvg(): string {
-    return serializeSvgSnapshot(this.svg, this.shaderSurfaces.capture());
+    return serializeSvgSnapshot(this.svg, this.shaderSurfaces.capture(), this.meshStages.capture());
   }
 
   exportImage(options?: ViewerImageExportOptions): Promise<Blob> {
@@ -127,6 +136,7 @@ export class ViewerSession implements Viewer {
     assertViewerUpdateContract(svg);
     const diff = this.display.updateContent(svg);
     this.shaderSurfaces.refresh();
+    this.meshStages.refresh();
     this.documentComponents.refresh();
     this.placeKnobs();
     for (const [ownerId, parameters] of this.shaderParameterOverrides) {
@@ -153,6 +163,7 @@ export class ViewerSession implements Viewer {
   destroy(): void {
     this.interaction?.destroy();
     this.shaderSurfaces.destroy();
+    this.meshStages.destroy();
     this.documentComponents.destroy();
     this.shaderParameterOverrides.clear();
     this.display.destroy();

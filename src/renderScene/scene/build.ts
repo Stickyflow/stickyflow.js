@@ -4,6 +4,7 @@ import { buildContainers } from '../artifacts/containers';
 import { buildDimensions } from '../artifacts/dimension';
 import { buildIsometricObjects } from '../artifacts/isometric';
 import { buildLinks } from '../artifacts/link';
+import { buildMeshStages } from '../artifacts/meshStage';
 import { buildFreeformPaths } from '../artifacts/path';
 import { buildShapes } from '../artifacts/shape';
 import { buildCharts } from '../charts';
@@ -94,6 +95,7 @@ export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOp
   const { measureText } = options;
   const diagnostics: RenderDiagnostic[] = [...(input.diagnostics ?? [])];
   const nodes: RenderNode[] = [
+    ...buildMeshStages(input.meshes ?? [], input.meshCanvases ?? [], input.meshAnchors ?? []),
     ...buildContainers(input),
     ...buildFreeformPaths(input.paths ?? []),
     ...buildCharts(input.charts ?? [], diagnostics),

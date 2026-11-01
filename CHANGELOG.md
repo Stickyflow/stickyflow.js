@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The block `Mesh` in a `Model` draws a GLB or glTF file with WebGL2. Its layout has `position`, `rotation` and `scale` in three axes, its style `color`, `opacity`, `roughness` and `metallic`, and all of them can be bound to data, in the layout as `rotationY`, `positionX` and so on.
+- The block `Canvas` in a `Model` holds a 3D world with a place, a size and a camera (`orbit`). A viewer drags it to orbit, a click selects a mesh, and its handles move and turn it, with `meshSelect`, `meshChange` and `applyMeshChange`.
+- `anchor` and `anchorAt` make any 2D object follow a point of a mesh, so a component can hang on it.
+
 ## [0.15.0] - 2026-11-01
 
 ### Added
