@@ -47,6 +47,16 @@ export function applyMoveChanges(sfl: string, events: readonly MoveChangeEvent[]
     if (!canvasObject || !range) {
       continue;
     }
+    if (event.owner.role === 'dimension') {
+      for (let row = range.start; row <= range.end; row++) {
+        lines[row] = (lines[row] ?? '').replace(
+          /^(\s*(?:start|end):\s*)(-?[\d.]+)(\s*,\s*)(-?[\d.]+)/,
+          (_match, key: string, x: string, comma: string, y: string) =>
+            `${key}${round1(Number(x) + event.dx)}${comma}${round1(Number(y) + event.dy)}`,
+        );
+      }
+      continue;
+    }
     if (event.owner.role === 'path') {
       movePathPoints(lines, range, event.dx, event.dy);
       continue;

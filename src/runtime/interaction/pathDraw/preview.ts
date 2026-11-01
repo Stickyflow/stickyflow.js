@@ -54,4 +54,7 @@ export function updatePathDrawPreview(svg: SVGSVGElement, state: PathDrawState):
   state.points.forEach((point, index) => {
     previewGroup.appendChild(pointMarker(svg, point, index === 0 && state.willClose));
   });
+  if (state.onPoint && state.cursor) {
+    previewGroup.appendChild(pointMarker(svg, state.cursor, true));
+  }
 }

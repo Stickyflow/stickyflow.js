@@ -3,6 +3,7 @@ import type { PathPointChangeEvent } from '../../events';
 import { replacePropertyValue } from '../edits/propertyValues';
 import { findOwnerBlock } from '../scanner';
 import { formatPoints, pointsSpan } from './pathPoints';
+import { applyPropertyChange } from './propertyChange';
 
 export function applyPathPointChange(sfl: string, event: PathPointChangeEvent): string {
   const canvasObjects = sflToCanvasState(sfl).canvasObjects;
@@ -32,5 +33,13 @@ export function applyPathPointChange(sfl: string, event: PathPointChangeEvent): 
     return tension === undefined ? moved : { ...moved, tension };
   });
   replacePropertyValue(lines, span, formatPoints(relative));
-  return lines.join('\n');
+  const next = lines.join('\n');
+  return event.cornerRadii
+    ? applyPropertyChange(next, {
+        owner: event.owner,
+        path: 'style.cornerRadii',
+        value: `[${event.cornerRadii.join(', ')}]`,
+        quote: false,
+      })
+    : next;
 }

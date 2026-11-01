@@ -1,6 +1,7 @@
 import type { Viewer } from '../viewer';
 import type { Emitter } from './events';
 import { hasMovableGeometry } from './geometryRoles';
+import { selectedPathPoints, toEventPoints } from './pathPointSelection';
 
 export interface NudgeSelectionHandle {
   destroy(): void;
@@ -26,6 +27,20 @@ export function bindNudgeSelection(viewer: Viewer, emitter: Emitter): NudgeSelec
   const onKeyDown = (e: KeyboardEvent) => {
     const direction = DIRECTIONS[e.key];
     if (!direction || e.altKey || e.ctrlKey || e.metaKey || typingInField(e)) {
+      return;
+    }
+    const picked = selectedPathPoints(svg);
+    if (picked) {
+      e.preventDefault();
+      const step = e.shiftKey ? SHIFT_STEP : STEP;
+      emitter.emit('pathPointChange', {
+        owner: picked.owner,
+        points: toEventPoints(
+          picked.geometry.points.map(([x, y], index) =>
+            picked.indices.includes(index) ? [x + direction.x * step, y + direction.y * step] : [x, y],
+          ) as Array<[number, number]>,
+        ),
+      });
       return;
     }
     const owners = viewer.getSelection().filter(hasMovableGeometry);

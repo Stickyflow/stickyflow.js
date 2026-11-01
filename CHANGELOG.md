@@ -17,6 +17,16 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- A click picks a point of a selected path, and Shift adds more. Picked points move together, follow the arrow keys and can be deleted.
+- While a path is drawn it snaps to the points of other paths. From an end of an open path the drawing goes on as that path, and `pathDrawComplete` then has `continues` and all of its points.
+- `pathPointChange` can carry `cornerRadii` when points came or went.
+- `startDimensionDraw` places a `Dimension` with three clicks. Its points catch corners, edge middles and path points, and `dimensionDrawComplete` reports the result.
+- A `Dimension` can be selected, moved and deleted. A selected one has a handle on each measured point and on its line, and `dimensionChange` with `applyDimensionChange` writes the result.
+- A selected path has a small handle in the middle of each section, which adds a point there by a click or a drag.
+- A drawing that reaches an end of another open path joins both into one path (`pathDrawComplete` then has `absorbs`). One that reaches the other end of its own path closes it.
+
 ## [0.14.0] - 2026-11-01
 
 ### Added

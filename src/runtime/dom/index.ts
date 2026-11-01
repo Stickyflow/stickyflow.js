@@ -14,6 +14,7 @@ export {
 } from './changeOverlay';
 export {
   type AttrElement,
+  dimensionGeometryOf,
   type IsometricGeometry,
   isCameraGesture,
   isContractCompatible,
@@ -38,6 +39,7 @@ export {
 export {
   axisArrowPlacements,
   cornerHandleOffset,
+  dimensionSelectionOverlay,
   ISO_DUPLICATE_BUBBLES_ATTR,
   ISO_HALO_ATTR,
   type IsometricAxis,

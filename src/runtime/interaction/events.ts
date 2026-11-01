@@ -96,6 +96,18 @@ export interface PathPoint {
 export interface PathPointChangeEvent {
   owner: OwnerRef;
   points: PathPoint[];
+  // When points came or went, the radius of every corner by its new index.
+  cornerRadii?: number[];
+}
+
+export interface DimensionDrawCompleteEvent {
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  offset: number;
+}
+
+export interface DimensionChangeEvent extends DimensionDrawCompleteEvent {
+  owner: OwnerRef;
 }
 
 export interface PathCornerChangeEvent {
@@ -108,6 +120,11 @@ export interface PathDrawCompleteEvent {
   points: PathPoint[];
   closed: boolean;
   tension: number;
+  // The path that was drawn further: points are then all of its points.
+  continues?: OwnerRef;
+  // The other path that was reached at its end: its points are now part of this one, and it is to be removed.
+  absorbs?: OwnerRef;
+  cornerRadii?: number[];
 }
 
 export interface SankeyNodeMoveEvent {
@@ -137,6 +154,8 @@ export interface InteractionEventMap {
   propertyChange: PropertyChangeEvent;
   pathPointChange: PathPointChangeEvent;
   pathCornerChange: PathCornerChangeEvent;
+  dimensionDrawComplete: DimensionDrawCompleteEvent;
+  dimensionChange: DimensionChangeEvent;
   pathDrawComplete: PathDrawCompleteEvent;
   sankeyNodeMove: SankeyNodeMoveEvent;
   sankeyNodeRename: SankeyNodeRenameEvent;

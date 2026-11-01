@@ -1,5 +1,6 @@
 import {
   DERIVED_HEIGHT_ROLES,
+  dimensionSelectionOverlay,
   findOwnerNode,
   isometricSelectionOverlay,
   isPrimary,
@@ -28,11 +29,13 @@ export function paintSelectionOverlays(
     const overlay =
       owner?.role === 'link'
         ? linkSelectionOverlay(document, primary as SVGPathElement, id, svg)
-        : owner?.role === 'path'
-          ? pathSelectionOverlay(document, primary as SVGPathElement, id, svg)
-          : owner?.role === 'isometric'
-            ? isometricSelectionOverlay(document, primary, id, svg)
-            : shapeSelectionOverlay(document, primary, id, svg, owner ? DERIVED_HEIGHT_ROLES.has(owner.role) : false);
+        : owner?.role === 'dimension'
+          ? dimensionSelectionOverlay(document, primary, id, svg)
+          : owner?.role === 'path'
+            ? pathSelectionOverlay(document, primary as SVGPathElement, id, svg)
+            : owner?.role === 'isometric'
+              ? isometricSelectionOverlay(document, primary, id, svg)
+              : shapeSelectionOverlay(document, primary, id, svg, owner ? DERIVED_HEIGHT_ROLES.has(owner.role) : false);
     svg.appendChild(overlay);
     if (owner?.role === 'shape' && selectedIds.size === 1) {
       svg.appendChild(quickDuplicateBubbles(document, primary, id, svg));

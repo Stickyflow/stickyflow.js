@@ -1,6 +1,7 @@
 import type { SceneRole } from '../../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
+  DIMENSION_ATTR,
   ISOMETRIC_LABEL_OFFSET_ATTR,
   ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
@@ -37,6 +38,7 @@ const ROLES: ReadonlySet<string> = new Set([
   'swimlane',
   'chart',
   'path',
+  'dimension',
   'widget',
   'isometric',
 ]);
@@ -56,6 +58,20 @@ export function symbolDeclaredBounds(el: {
   return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(width) && Number.isFinite(height)
     ? { x, y, width, height }
     : null;
+}
+
+export interface DimensionGeometryAttrs {
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  offset: number;
+}
+
+export function dimensionGeometryOf(el: { getAttribute(name: string): string | null }): DimensionGeometryAttrs | null {
+  const values = el.getAttribute(DIMENSION_ATTR)?.split(',').map(Number);
+  if (values?.length !== 5 || values.some(Number.isNaN)) {
+    return null;
+  }
+  return { start: { x: values[0], y: values[1] }, end: { x: values[2], y: values[3] }, offset: values[4] };
 }
 
 export interface PathGeometry {

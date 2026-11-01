@@ -1,4 +1,5 @@
 export { applyChartValueChange } from './changes/chartValueChange';
+export { applyDimensionChange } from './changes/dimensionChange';
 export { applyLinkReconnectChange } from './changes/linkReconnectChange';
 export { applyLinkSegmentChange } from './changes/linkSegmentChange';
 export { applyMoveChange, applyMoveChanges } from './changes/moveChange';

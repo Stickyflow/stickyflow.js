@@ -1,6 +1,7 @@
 import type { RenderNode, SceneAria, SceneDetail, SceneIdentity } from '../renderScene/scene';
 import {
   CORNER_RADIUS_ATTR,
+  DIMENSION_ATTR,
   ISOMETRIC_LABEL_OFFSET_ATTR,
   ISOMETRIC_SIZE_ATTR,
   PATH_CLOSED_ATTR,
@@ -58,6 +59,8 @@ function detailAttrs(detail: SceneDetail): Array<string | undefined> {
       return symbolGeometryAttrs(detail);
     case 'declaredBounds':
       return [declaredBoundsAttr(detail.bounds)];
+    case 'dimensionGeometry':
+      return [`${DIMENSION_ATTR}="${[...detail.start, ...detail.end, detail.offset].map(num).join(',')}"`];
     case 'pathGeometry':
       return pathGeometryAttrs(detail);
     case 'isometricGeometry':

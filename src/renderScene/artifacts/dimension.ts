@@ -73,11 +73,17 @@ export function buildDimension(dimension: Dimension, index: number): RenderNode[
     ...pathNode(dimension, 'line', order + 0.1, [geometry.line]),
     markerStart: 'filled_arrow',
     markerEnd: 'filled_arrow',
+    detail: {
+      of: 'dimensionGeometry',
+      start: [dimension.start.x, dimension.start.y],
+      end: [dimension.end.x, dimension.end.y],
+      offset: dimension.offset,
+    },
   };
   const extensions =
     geometry.extensions.length > 0 ? [pathNode(dimension, 'extensions', order, geometry.extensions)] : [];
   const text = dimensionText(dimension);
-  return [...extensions, line, labelNode(dimension, order + 0.2, text, geometry.label.center, geometry.label.angle)];
+  return [line, ...extensions, labelNode(dimension, order + 0.2, text, geometry.label.center, geometry.label.angle)];
 }
 
 export function buildDimensions(dimensions: readonly Dimension[]): RenderNode[] {

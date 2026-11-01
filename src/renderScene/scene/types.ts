@@ -79,6 +79,7 @@ export interface SceneLinkSegment {
 }
 
 export type SceneDetail =
+  | { of: 'dimensionGeometry'; start: [number, number]; end: [number, number]; offset: number }
   | {
       of: 'link';
       fromId?: string;

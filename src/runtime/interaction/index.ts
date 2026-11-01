@@ -3,6 +3,8 @@ import type { Viewer } from '../viewer';
 import { bindChartValueDrag, type ChartValueDragHandle } from './chartValueDrag';
 import { bindColorEdit, type ColorEditHandle } from './colorEdit/binding';
 import { bindDeleteSelection, type DeleteSelectionHandle } from './deleteSelection';
+import { bindDimensionDraw, type DimensionDrawHandle, type DimensionDrawOptions } from './dimensionDraw';
+import { bindDimensionEdit, type DimensionEditHandle } from './dimensionEdit';
 import { Emitter, type InteractionEventMap, type InteractionEventName } from './events';
 import { bindIsometricAxisResize, type IsometricAxisResizeDragHandle } from './isometricAxisResizeDrag';
 import { bindIsometricLabelDrag, type IsometricLabelDragHandle } from './isometricLabelDrag/binding';
@@ -26,6 +28,8 @@ import { bindTextEditing, type TextEditingHandle } from './textEdit';
 export interface Interaction {
   on<T extends InteractionEventName>(name: T, handler: (event: InteractionEventMap[T]) => void): Unsubscribe;
   startPathDraw(options?: PathDrawOptions): void;
+  startDimensionDraw(options?: DimensionDrawOptions): void;
+  cancelDimensionDraw(): void;
   cancelPathDraw(): void;
   destroy(): void;
 }
@@ -43,6 +47,8 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
   const isometricAxisResize: IsometricAxisResizeDragHandle = bindIsometricAxisResize(viewer, emitter);
   const pathReshape: PathReshapeDragHandle = bindPathReshape(viewer, emitter);
   const pathCorners: PathCornerDragHandle = bindPathCornerDrag(viewer, emitter);
+  const dimensionDraw: DimensionDrawHandle = bindDimensionDraw(viewer, emitter);
+  const dimensionEdit: DimensionEditHandle = bindDimensionEdit(viewer, emitter);
   const linkEndpoints: LinkEndpointDragHandle = bindLinkEndpointDrag(viewer, emitter);
   const linkSegments: LinkSegmentDragHandle = bindLinkSegmentDrag(viewer, emitter);
   const quickDuplicate: QuickDuplicateHandle = bindQuickDuplicate(viewer, emitter);
@@ -68,6 +74,8 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
     on: (name, handler) => emitter.on(name, handler),
     startPathDraw: startOptions => pathDraw.start(startOptions),
     cancelPathDraw: () => pathDraw.cancel(),
+    startDimensionDraw: startOptions => dimensionDraw.start(startOptions),
+    cancelDimensionDraw: () => dimensionDraw.cancel(),
     destroy() {
       pathDraw.destroy();
       textEditing.destroy();
@@ -76,6 +84,8 @@ export function bindEditing(viewer: Viewer, options: EditingOptions = {}): Inter
       isometricAxisResize.destroy();
       pathReshape.destroy();
       pathCorners.destroy();
+      dimensionDraw.destroy();
+      dimensionEdit.destroy();
       linkEndpoints.destroy();
       linkSegments.destroy();
       quickDuplicate.destroy();
@@ -104,9 +114,12 @@ export type { ColorPickerTheme, ColorPickerThemeOption } from './colorEdit/theme
 export { resolveTheme } from './colorEdit/theme';
 export type { PickerValue } from './colorEdit/value';
 export { cssBackground, formatPickerValue, seedFrom } from './colorEdit/value';
+export type { DimensionDrawOptions } from './dimensionDraw';
 export type {
   ChartValueChangeEvent,
   DeleteEvent,
+  DimensionChangeEvent,
+  DimensionDrawCompleteEvent,
   InteractionEventMap,
   InteractionEventName,
   IsometricQuickDuplicateDirection,
@@ -136,6 +149,7 @@ export type {
 } from './patchSfl';
 export {
   applyChartValueChange,
+  applyDimensionChange,
   applyLinkReconnectChange,
   applyLinkSegmentChange,
   applyMoveChange,

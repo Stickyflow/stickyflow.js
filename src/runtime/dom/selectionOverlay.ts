@@ -1,3 +1,4 @@
+export { dimensionSelectionOverlay } from './selectionOverlay/dimension';
 export {
   axisArrowPlacements,
   ISO_DUPLICATE_BUBBLES_ATTR,

@@ -3,7 +3,7 @@ import type { OwnerRef } from '../viewer';
 
 const GEOMETRY_ROLES: ReadonlySet<string> = new Set(['shape', 'chart', 'frame', 'swimlane', 'isometric', 'widget']);
 const COMPOSITE_ROLES: ReadonlySet<string> = new Set(['chart']);
-const MOVABLE_ROLES: ReadonlySet<string> = new Set([...GEOMETRY_ROLES, 'path']);
+const MOVABLE_ROLES: ReadonlySet<string> = new Set([...GEOMETRY_ROLES, 'path', 'dimension']);
 
 export function hasEditableGeometry(owner: OwnerRef | null | undefined): owner is OwnerRef {
   return owner !== null && owner !== undefined && GEOMETRY_ROLES.has(owner.role);
