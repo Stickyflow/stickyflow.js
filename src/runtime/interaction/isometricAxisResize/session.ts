@@ -23,7 +23,9 @@ function nextGeometry(
     return { ...start, width: length(start.width + delta, MIN_SIZE) };
   }
   if (axis === 'height') {
-    return { ...start, height: length(start.height + dy, MIN_SIZE) };
+    // The arrow points up, so the roof follows the pointer and the foot stays on the ground.
+    const height = length(start.height - dy, MIN_SIZE);
+    return { ...start, y: start.y + start.height - height, height };
   }
   const delta = -dx * AXIS_COS + dy * AXIS_SIN;
   const depth = length(start.depth + delta, 0);

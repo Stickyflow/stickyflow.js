@@ -50,7 +50,13 @@ export function emitBlock(block: SflBlock, depth: number): string {
   return emitExpandedBlock(pad, header, body);
 }
 
+// In these blocks a value can use the names before it, so their lines stay in the order they were written.
+const WRITTEN_ORDER: ReadonlySet<BlockKind> = new Set<BlockKind>(['Parameters', 'Repeat', 'Template']);
+
 function orderedProperties(kind: BlockKind, properties: SflProperty[]): SflProperty[] {
+  if (WRITTEN_ORDER.has(kind)) {
+    return properties;
+  }
   return [...properties].sort((left, right) => propertyComparator(kind)(left.key, right.key));
 }
 

@@ -19,6 +19,8 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- SFL 1.8: the block `Parameters` names the numbers of a document. They count in every computed value, in the grid of a `Repeat`, in points of a list and in texts, and a `Use` can name them as values.
+- Inside a `Repeat`, a `Template` or a document with `Parameters`, a binding can use their names, so every cell can have a threshold of its own.
 - A click picks a point of a selected path, and Shift adds more. Picked points move together, follow the arrow keys and can be deleted.
 - While a path is drawn it snaps to the points of other paths. From an end of an open path the drawing goes on as that path, and `pathDrawComplete` then has `continues` and all of its points.
 - `pathPointChange` can carry `cornerRadii` when points came or went.
@@ -26,6 +28,15 @@ Two things count as breaking here that are easy to overlook:
 - A `Dimension` can be selected, moved and deleted. A selected one has a handle on each measured point and on its line, and `dimensionChange` with `applyDimensionChange` writes the result.
 - A selected path has a small handle in the middle of each section, which adds a point there by a click or a drag.
 - A drawing that reaches an end of another open path joins both into one path (`pathDrawComplete` then has `absorbs`). One that reaches the other end of its own path closes it.
+
+### Changed
+
+- The height arrow of a selected isometric object sits on its roof and points up. The foot stays where it is while the object is dragged taller.
+
+### Fixed
+
+- A name of a `Repeat` alone in a list, as in `[wx, 10]`, was dropped without a word. It now stands for its value.
+- Formatting kept `Parameters`, `Repeat` and `Template` in alphabetical order, which could put a value before the name it uses. Their lines now stay as written.
 
 ## [0.14.0] - 2026-11-01
 

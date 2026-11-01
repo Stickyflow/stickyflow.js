@@ -149,10 +149,9 @@ export function axisArrowPlacements(object: IsometricSize): Record<IsometricAxis
   const apex = faces.top[0];
   const right = faces.top[1];
   const left = faces.top[3];
-  const bottom = faces.front[2];
   return {
     width: { origin: centroid(faces.right), direction: normalizeVec({ x: right.x - apex.x, y: right.y - apex.y }) },
-    height: { origin: bottom, direction: { x: 0, y: 1 } },
+    height: { origin: centroid(faces.top), direction: { x: 0, y: -1 } },
     depth: { origin: centroid(faces.front), direction: normalizeVec({ x: left.x - apex.x, y: left.y - apex.y }) },
   };
 }
@@ -176,6 +175,7 @@ export function quickDuplicatePlacements(
 ): Record<IsometricQuickDuplicateDirection, { origin: Vec; direction: Vec }> {
   const faces = isometricFaces(object);
   const placements = axisArrowPlacements(object);
+  const below = { origin: faces.front[2], direction: { x: 0, y: 1 } };
   const visualCenter = centroid([
     faces.top[0],
     faces.top[1],
@@ -196,10 +196,10 @@ export function quickDuplicatePlacements(
       origin: reflect(placements.depth.origin, visualCenter),
       direction: { x: -placements.depth.direction.x, y: -placements.depth.direction.y },
     },
-    'iso-height-pos': placements.height,
+    'iso-height-pos': below,
     'iso-height-neg': {
-      origin: reflect(placements.height.origin, visualCenter),
-      direction: { x: -placements.height.direction.x, y: -placements.height.direction.y },
+      origin: reflect(below.origin, visualCenter),
+      direction: { x: 0, y: -1 },
     },
   };
 }
