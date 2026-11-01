@@ -6,6 +6,7 @@ import {
   pxPerUnit,
   updateAlignmentGuides,
 } from '../../dom';
+import { snapPointToGrid } from '../snapGrid';
 import type { Emitter } from '../events';
 import {
   type DrawPoint,
@@ -69,7 +70,7 @@ export class PathDrawSession {
     event.stopPropagation();
     event.preventDefault();
 
-    const point = pointerUserPoint(this.#svg, event);
+    const point = snapPointToGrid(this.#svg, pointerUserPoint(this.#svg, event));
     if (!point) {
       return;
     }
@@ -103,7 +104,7 @@ export class PathDrawSession {
       return;
     }
     event.stopPropagation();
-    const point = pointerUserPoint(this.#svg, event);
+    const point = snapPointToGrid(this.#svg, pointerUserPoint(this.#svg, event));
     if (!point) {
       return;
     }

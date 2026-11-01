@@ -1,5 +1,6 @@
 import { isCameraGesture, pointerUserPoint } from '../../dom';
 import type { Emitter } from '../events';
+import { snapPointToGrid } from '../snapGrid';
 import { applyPathReshapePreview } from './preview';
 import { createPathReshapeDragState, type PathReshapeDragState } from './state';
 
@@ -26,7 +27,7 @@ export class PathReshapeSession {
       return;
     }
     drag.moved = true;
-    const point = pointerUserPoint(this.#svg, event);
+    const point = snapPointToGrid(this.#svg, pointerUserPoint(this.#svg, event));
     if (point) {
       applyPathReshapePreview(drag, point);
     }
@@ -42,7 +43,7 @@ export class PathReshapeSession {
     if (!drag.moved) {
       return;
     }
-    const point = pointerUserPoint(this.#svg, event) ?? {
+    const point = snapPointToGrid(this.#svg, pointerUserPoint(this.#svg, event)) ?? {
       x: drag.points[drag.pointIndex][0],
       y: drag.points[drag.pointIndex][1],
     };

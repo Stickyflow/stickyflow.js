@@ -24,6 +24,26 @@ export function readIsometricSnapStep(svg: SVGSVGElement): number | null {
   return step > 0 ? step : null;
 }
 
+const SQUARE_GRID = /^square:(\d+(?:\.\d+)?)$/;
+
+export function readSquareSnapStep(svg: SVGSVGElement): number | null {
+  if (isSnapDisabled(svg)) {
+    return null;
+  }
+  const match = SQUARE_GRID.exec(svg.getAttribute(SNAP_GRID_ATTR) ?? '');
+  const step = match ? Number(match[1]) : 0;
+  return step > 0 ? step : null;
+}
+
+export function nearestLine(value: number, step: number): number {
+  return Math.round(value / step) * step;
+}
+
+export function snapPointToGrid<T extends { x: number; y: number }>(svg: SVGSVGElement, point: T | null): T | null {
+  const step = point ? readSquareSnapStep(svg) : null;
+  return point && step ? { ...point, x: nearestLine(point.x, step), y: nearestLine(point.y, step) } : point;
+}
+
 export function nearestIsometricLatticePoint(point: { x: number; y: number }, step: number): { x: number; y: number } {
   const u = point.x / (AXIS_COS * step);
   const v = point.y / (AXIS_SIN * step);

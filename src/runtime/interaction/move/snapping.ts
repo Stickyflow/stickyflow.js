@@ -16,7 +16,7 @@ import {
   nearestCandidates,
   snapIsometricDiagonal,
 } from '../snapGeometry';
-import { isSnapDisabled, nearestIsometricLatticePoint, readIsometricSnapStep, snapDistancePx } from '../snapGrid';
+import { isSnapDisabled, nearestIsometricLatticePoint, nearestLine, readIsometricSnapStep, readSquareSnapStep, snapDistancePx } from '../snapGrid';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
 
@@ -99,5 +99,15 @@ export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number,
   };
   const x = pick(snap.x, gaps.x);
   const y = pick(snap.y, gaps.y);
-  return { dx: rawDx + x.delta, dy: rawDy + y.delta, guides: [...x.guides, ...y.guides] };
+  // On each axis the nearer of the two wins: another object, or the line of the grid.
+  const step = readSquareSnapStep(svg);
+  const lead = drag.canvasObjects[0].draggedBounds;
+  const onGrid = (start: number, raw: number, axis: GapSnap): GapSnap => {
+    if (!step) return axis;
+    const toLine = nearestLine(start + raw, step) - (start + raw);
+    return axis.guides.length > 0 && Math.abs(axis.delta) <= Math.abs(toLine) ? axis : { delta: toLine, guides: [] };
+  };
+  const gridX = onGrid(lead.x, rawDx, x);
+  const gridY = onGrid(lead.y, rawDy, y);
+  return { dx: rawDx + gridX.delta, dy: rawDy + gridY.delta, guides: [...gridX.guides, ...gridY.guides] };
 }
