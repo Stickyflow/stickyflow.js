@@ -6,8 +6,8 @@ import {
   pxPerUnit,
   updateAlignmentGuides,
 } from '../../dom';
-import { snapPointToGrid } from '../snapGrid';
 import type { Emitter } from '../events';
+import { snapPointToGrid } from '../snapGrid';
 import {
   type DrawPoint,
   isCloseToStart,

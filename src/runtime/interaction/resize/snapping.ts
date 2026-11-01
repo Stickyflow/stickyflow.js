@@ -10,7 +10,13 @@ import type { ResizeDragState } from './state';
 const GUIDE_OVERHANG = 10;
 
 // The edge that is dragged goes to the nearest line of the grid, unless another object holds it and is nearer.
-function snapEdgesToGrid(bounds: Rect, axes: (typeof HANDLE_AXES)[keyof typeof HANDLE_AXES], step: number, heldX: boolean, heldY: boolean): Rect {
+function snapEdgesToGrid(
+  bounds: Rect,
+  axes: (typeof HANDLE_AXES)[keyof typeof HANDLE_AXES],
+  step: number,
+  heldX: boolean,
+  heldY: boolean,
+): Rect {
   const next = { ...bounds };
   if (!heldX && axes.x === 'left') {
     const left = nearestLine(next.x, step);
@@ -20,7 +26,9 @@ function snapEdgesToGrid(bounds: Rect, axes: (typeof HANDLE_AXES)[keyof typeof H
     }
   } else if (!heldX && axes.x === 'right') {
     const width = nearestLine(next.x + next.width, step) - next.x;
-    if (width >= MIN_SIZE) next.width = width;
+    if (width >= MIN_SIZE) {
+      next.width = width;
+    }
   }
   if (!heldY && axes.y === 'top') {
     const top = nearestLine(next.y, step);
@@ -30,7 +38,9 @@ function snapEdgesToGrid(bounds: Rect, axes: (typeof HANDLE_AXES)[keyof typeof H
     }
   } else if (!heldY && axes.y === 'bottom') {
     const height = nearestLine(next.y + next.height, step) - next.y;
-    if (height >= MIN_SIZE) next.height = height;
+    if (height >= MIN_SIZE) {
+      next.height = height;
+    }
   }
   return next;
 }
@@ -63,7 +73,9 @@ export function snapResize(
 
   const step = readSquareSnapStep(svg);
   const nearer = <T extends { delta: number; guide: unknown }>(axis: T, edge: number): T =>
-    step && axis.guide && Math.abs(axis.delta) > Math.abs(nearestLine(edge, step) - edge) ? { ...axis, delta: 0, guide: null } : axis;
+    step && axis.guide && Math.abs(axis.delta) > Math.abs(nearestLine(edge, step) - edge)
+      ? { ...axis, delta: 0, guide: null }
+      : axis;
   const snap = {
     x: nearer(found.x, axes.x === 'left' ? proposed.x : proposed.x + proposed.width),
     y: nearer(found.y, axes.y === 'top' ? proposed.y : proposed.y + proposed.height),

@@ -12,7 +12,9 @@ export function freeformPathData(geometry: FreeformPathGeometry): string {
     return '';
   }
   if (isStraight(geometry)) {
-    return (geometry.cornerRadius ?? 0) > 0 && geometry.points.length > 2 ? roundedPathData(geometry) : linearPathData(geometry);
+    return (geometry.cornerRadius ?? 0) > 0 && geometry.points.length > 2
+      ? roundedPathData(geometry)
+      : linearPathData(geometry);
   }
   const first = geometry.points[0];
   const commands = [`M ${first.x} ${first.y}`];
@@ -48,7 +50,10 @@ function roundedPathData(geometry: FreeformPathGeometry): string {
     const point = points[index];
     const start = near(point, points[(index + count - 1) % count], radius);
     const end = near(point, points[(index + 1) % count], radius);
-    commands.push(`${order === 0 && closed ? 'M' : 'L'} ${start.x} ${start.y}`, `Q ${point.x} ${point.y} ${end.x} ${end.y}`);
+    commands.push(
+      `${order === 0 && closed ? 'M' : 'L'} ${start.x} ${start.y}`,
+      `Q ${point.x} ${point.y} ${end.x} ${end.y}`,
+    );
   });
   const last = points[count - 1];
   commands.push(closed ? 'Z' : `L ${last.x} ${last.y}`);

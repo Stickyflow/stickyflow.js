@@ -16,7 +16,14 @@ import {
   nearestCandidates,
   snapIsometricDiagonal,
 } from '../snapGeometry';
-import { isSnapDisabled, nearestIsometricLatticePoint, nearestLine, readIsometricSnapStep, readSquareSnapStep, snapDistancePx } from '../snapGrid';
+import {
+  isSnapDisabled,
+  nearestIsometricLatticePoint,
+  nearestLine,
+  readIsometricSnapStep,
+  readSquareSnapStep,
+  snapDistancePx,
+} from '../snapGrid';
 import { offsetBounds } from './geometry';
 import type { MoveDragState } from './state';
 
@@ -103,7 +110,9 @@ export function snapMove(svg: SVGSVGElement, drag: MoveDragState, rawDx: number,
   const step = readSquareSnapStep(svg);
   const lead = drag.canvasObjects[0].draggedBounds;
   const onGrid = (start: number, raw: number, axis: GapSnap): GapSnap => {
-    if (!step) return axis;
+    if (!step) {
+      return axis;
+    }
     const toLine = nearestLine(start + raw, step) - (start + raw);
     return axis.guides.length > 0 && Math.abs(axis.delta) <= Math.abs(toLine) ? axis : { delta: toLine, guides: [] };
   };

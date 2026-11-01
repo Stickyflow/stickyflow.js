@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-01
+
+### Added
+
+- `data-sf-snap-grid="square:N"` on the svg snaps moving, resizing and path points to a square grid. On each axis the nearer of a grid line and a guide of another object wins.
+
 ## [0.13.0] - 2026-11-01
 
 ### Added
