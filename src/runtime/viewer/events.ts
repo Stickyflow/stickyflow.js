@@ -22,6 +22,18 @@ export interface ViewerErrorEvent {
   message: string;
 }
 
+export interface MeshSelectEvent {
+  diagramId: string;
+  id: string | null;
+}
+
+export interface MeshChangeEvent {
+  diagramId: string;
+  id: string;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+}
+
 export interface SceneDiffEvent {
   diagramId: string;
   added: string[];
@@ -36,6 +48,8 @@ export interface ViewerEventMap {
   ownerHover: OwnerPointerEvent | { diagramId: string; owner: null };
   selectionChange: SelectionChangeEvent;
   sceneDiff: SceneDiffEvent;
+  meshSelect: MeshSelectEvent;
+  meshChange: MeshChangeEvent;
   error: ViewerErrorEvent;
 }
 

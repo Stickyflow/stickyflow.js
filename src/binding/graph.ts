@@ -46,8 +46,8 @@ function collectSites(blocks: SflBlock[], chartPath: string[], sites: BindingSit
     for (const entry of block.entries) {
       if (entry.type === 'binding') {
         sites.push({ kind: blockKind(block), path, binding: entry.binding });
-      } else if (entry.type === 'style') {
-        for (const binding of entry.style.bindings ?? []) {
+      } else if (entry.type === 'style' || entry.type === 'layout') {
+        for (const binding of (entry.type === 'style' ? entry.style : entry.layout).bindings ?? []) {
           sites.push({ kind: blockKind(block), path, binding });
         }
       } else if (entry.type === 'block') {

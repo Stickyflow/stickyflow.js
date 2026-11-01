@@ -43,7 +43,15 @@ function entryOf(scope: Scope, entry: SflEntry, rename: (name: string) => string
         property: { key: entry.property.key, value: resolveValue(scope, entry.property.value) },
       };
     case 'layout':
-      return { type: 'layout', layout: { properties: propertiesOf(scope, entry.layout.properties) } };
+      return {
+        type: 'layout',
+        layout: {
+          properties: propertiesOf(scope, entry.layout.properties),
+          ...(entry.layout.bindings
+            ? { bindings: entry.layout.bindings.map(binding => bindingOf(scope, binding)) }
+            : {}),
+        },
+      };
     case 'style':
       return {
         type: 'style',

@@ -5,12 +5,15 @@ import type { Dimension } from '../../../model/dimension';
 import type { Frame } from '../../../model/frame';
 import type { IsometricObject } from '../../../model/isometricObject';
 import type { Link } from '../../../model/link';
+import type { Mesh, MeshAnchor, MeshCanvas } from '../../../model/mesh';
 import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
 import {
   isDimensionObject,
   isIsometricObject,
+  isMeshCanvasObject,
+  isMeshObject,
   type SflCanvasState,
   type SflComponentObject,
 } from '../../../sflSemantic/sflToCanvasState';
@@ -21,6 +24,7 @@ import { dimensionObject } from './dimension';
 import { frameObject } from './frame';
 import { isometricObject } from './isometric';
 import { linkObject } from './link';
+import { meshCanvasObject, meshObject } from './mesh';
 import { pathObject } from './path';
 import { shapeObject } from './shape';
 import { swimlaneObject } from './swimlane';
@@ -32,6 +36,9 @@ export interface CollectedCanvasObjects {
   isometricObjects: IsometricObject[];
   paths: FreeformPath[];
   dimensions: Dimension[];
+  meshes: Mesh[];
+  meshCanvases: MeshCanvas[];
+  meshAnchors: MeshAnchor[];
   charts: Chart[];
   components: Component[];
   links: Link[];
@@ -44,6 +51,7 @@ const byOrder = <T extends { order?: number }>(items: readonly T[]): T[] =>
 export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObjects {
   const canvasObjects = byOrder(state.canvasObjects);
   const shaders = new Map((state.shaders ?? []).map(shader => [shader.name, shader]));
+  const canvasIds = new Set(canvasObjects.filter(isMeshCanvasObject).map(object => object.id));
   return {
     shapes: canvasObjects
       .filter(canvasObject => canvasObject.objectType === 'shape')
@@ -53,6 +61,9 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     isometricObjects: canvasObjects.filter(isIsometricObject).map(isometricObject),
     paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
     dimensions: canvasObjects.filter(isDimensionObject).map(dimensionObject),
+    meshes: canvasObjects.filter(isMeshObject).map(object => meshObject(object, canvasIds)),
+    meshCanvases: canvasObjects.filter(isMeshCanvasObject).map(meshCanvasObject),
+    meshAnchors: canvasObjects.flatMap(object => (object.anchor ? [{ objectId: object.id, ...object.anchor }] : [])),
     charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
     components: canvasObjects
       .filter(

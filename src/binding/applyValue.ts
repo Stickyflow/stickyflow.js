@@ -1,4 +1,5 @@
 import { type Component, type ComponentValue, isGenericComponent } from '../model/component';
+import type { Mesh } from '../model/mesh';
 import type { RenderInput } from '../renderInput/types';
 import type { BindingValue, BoundProperty } from './types';
 
@@ -61,7 +62,38 @@ function setShape(input: RenderInput, path: string[], change: (shape: RenderInpu
   }
 }
 
+function setMesh(input: RenderInput, path: string[], change: (mesh: Mesh) => void): void {
+  const mesh = input.meshes?.find(candidate => candidate.id === path[0]);
+  if (mesh) {
+    change(mesh);
+  }
+}
+
+const meshAxis =
+  (vector: 'position' | 'rotation' | 'scale', index: number): Apply =>
+  (input, path, value) =>
+    setMesh(input, path, mesh => {
+      mesh[vector][index] = value as number;
+    });
+
 export const APPLY: Record<string, Apply> = {
+  'Mesh.color': (input, path, value) => setMesh(input, path, mesh => (mesh.color = value as string)),
+  'Mesh.opacity': (input, path, value) => setMesh(input, path, mesh => (mesh.opacity = value as number)),
+  'Mesh.roughness': (input, path, value) => setMesh(input, path, mesh => (mesh.roughness = value as number)),
+  'Mesh.metallic': (input, path, value) => setMesh(input, path, mesh => (mesh.metallic = value as number)),
+  'Mesh.positionX': meshAxis('position', 0),
+  'Mesh.positionY': meshAxis('position', 1),
+  'Mesh.positionZ': meshAxis('position', 2),
+  'Mesh.rotationX': meshAxis('rotation', 0),
+  'Mesh.rotationY': meshAxis('rotation', 1),
+  'Mesh.rotationZ': meshAxis('rotation', 2),
+  'Mesh.scale': (input, path, value) =>
+    setMesh(input, path, mesh => {
+      mesh.scale = [value as number, value as number, value as number];
+    }),
+  'Mesh.scaleX': meshAxis('scale', 0),
+  'Mesh.scaleY': meshAxis('scale', 1),
+  'Mesh.scaleZ': meshAxis('scale', 2),
   'Chart.categories': (input, path, value) => {
     const chart = findChart(input, path[0]);
     if (chart) {

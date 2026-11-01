@@ -19,6 +19,7 @@ export type {
   SceneEllipse,
   SceneIdentity,
   SceneLinkSegment,
+  SceneMeshStage,
   ScenePaint,
   ScenePath,
   SceneRect,

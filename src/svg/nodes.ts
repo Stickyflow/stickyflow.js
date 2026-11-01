@@ -35,7 +35,15 @@ function rollingNumberSvg(node: Extract<RenderNode, { type: 'rolling-number' }>,
   return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-widget="rollingNumber" data-sf-widget-value="${xml(node.value)}" data-sf-widget-digits="${node.digits ?? ''}" data-sf-widget-duration="${num(node.duration)}" data-sf-widget-style="${componentStyle}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}"${rotation}><div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:${xml(node.componentStyle.fontFamily)};font-size:${num(fontSize)}px">${label}<div data-sf-rolling-digits="true" aria-label="${xml(node.value)}" style="display:flex;gap:${node.componentStyle.variant === 'plain' ? '.02em' : '.1em'};font-size:1em">${digits}</div></div></foreignObject>`;
 }
 
+function meshStageSvg(node: Extract<RenderNode, { type: 'mesh-stage' }>, defs: SvgDefinitionRegistry): string {
+  const data = xml(JSON.stringify({ id: node.stageId, orbit: node.orbit, meshes: node.meshes, anchors: node.anchors }));
+  return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-mesh-stage="${data}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}" pointer-events="all"><canvas xmlns="http://www.w3.org/1999/xhtml" style="display:block;width:100%;height:100%"></canvas></foreignObject>`;
+}
+
 export function nodeSvg(node: RenderNode, defs: SvgDefinitionRegistry): string {
+  if (node.type === 'mesh-stage') {
+    return meshStageSvg(node, defs);
+  }
   if (node.type === 'text') {
     return textSvg(node, defs);
   }

@@ -1,0 +1,56 @@
+import { DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
+import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
+import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
+import type { SflCanvasObjectBase } from '../../types';
+import type { SflMeshCanvasObject, SflMeshObject } from './object';
+import type { SflAnchorData } from './types';
+
+type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
+
+function vector(block: SflBlock, layoutProp: LayoutProp, key: string, fallback: number): Vec3 {
+  const value = layoutProp(block, key);
+  const single = asNumber(value);
+  const [x = single ?? fallback, y = single ?? fallback, z = single ?? fallback] = tupleValues(value) ?? [];
+  const axis = (name: string, plain: number) => asNumber(layoutProp(block, `${key}${name}`)) ?? plain;
+  return [axis('X', x), axis('Y', y), axis('Z', z)];
+}
+
+export function resolveMeshObject(
+  base: SflCanvasObjectBase,
+  block: SflBlock,
+  properties: Map<string, SflValue>,
+  layoutProp: LayoutProp,
+): SflMeshObject {
+  return {
+    ...base,
+    objectType: 'mesh',
+    mesh: {
+      asset: asString(properties.get('asset')) ?? '',
+      role: asString(properties.get('role')),
+      color: asString(properties.get('color')),
+      opacity: asNumber(properties.get('opacity')),
+      roughness: asNumber(properties.get('roughness')),
+      metallic: asNumber(properties.get('metallic')),
+      position: vector(block, layoutProp, 'position', 0),
+      rotation: vector(block, layoutProp, 'rotation', 0),
+      scale: vector(block, layoutProp, 'scale', 1),
+    },
+  };
+}
+
+export function resolveMeshCanvasObject(
+  base: SflCanvasObjectBase,
+  properties: Map<string, SflValue>,
+): SflMeshCanvasObject {
+  const [yaw = DEFAULT_ORBIT[0], pitch = DEFAULT_ORBIT[1]] = tupleValues(properties.get('orbit')) ?? [];
+  return { ...base, objectType: 'meshCanvas', meshCanvas: { orbit: [yaw, pitch] } };
+}
+
+export function readAnchor(properties: Map<string, SflValue>): SflAnchorData | undefined {
+  const mesh = asString(properties.get('anchor'));
+  if (!mesh) {
+    return undefined;
+  }
+  const [x = 0, y = 0, z = 0] = tupleValues(properties.get('anchorAt')) ?? [];
+  return { mesh, point: [x, y, z] };
+}

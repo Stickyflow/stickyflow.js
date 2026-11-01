@@ -3,6 +3,7 @@ import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
+import type { Mesh, MeshAnchor } from '../../model/mesh';
 import type { Shader } from '../../model/shader';
 
 export type RenderDiagnostic = Diagnostic;
@@ -202,6 +203,19 @@ export interface SceneText extends SceneBase {
   richLines?: Array<Array<{ text: string; bold: boolean }>>;
 }
 
+// The place of the 3D world in the scene. A runtime draws the models into it.
+export interface SceneMeshStage extends SceneBase {
+  type: 'mesh-stage';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  stageId: string;
+  orbit: [number, number];
+  meshes: Mesh[];
+  anchors: MeshAnchor[];
+}
+
 export interface SceneShaderSurface extends SceneBase {
   type: 'shader-surface';
   x: number;
@@ -248,6 +262,7 @@ export type RenderNode =
   | ScenePath
   | SceneText
   | SceneShaderSurface
+  | SceneMeshStage
   | SceneRollingNumber
   | SceneImage;
 

@@ -202,6 +202,35 @@ export function freezeShaderSurfaces(svg: SVGSVGElement, captures: readonly (str
   return clone;
 }
 
-export function serializeSvgSnapshot(svg: SVGSVGElement, captures: readonly (string | undefined)[]): string {
-  return new XMLSerializer().serializeToString(freezeShaderSurfaces(svg, captures));
+function freezeMeshStages(clone: SVGSVGElement, captures: readonly (string | undefined)[]): void {
+  for (const handles of clone.querySelectorAll('[data-sf-mesh-handles]')) {
+    handles.remove();
+  }
+  [...clone.querySelectorAll('foreignObject[data-sf-mesh-stage]')].forEach((host, index) => {
+    const capture = captures[index];
+    if (!capture) {
+      host.remove();
+      return;
+    }
+    host.replaceWith(
+      svgElement(host.ownerDocument, 'image', {
+        href: capture,
+        x: host.getAttribute('x') ?? 0,
+        y: host.getAttribute('y') ?? 0,
+        width: host.getAttribute('width') ?? 0,
+        height: host.getAttribute('height') ?? 0,
+        preserveAspectRatio: 'none',
+      }),
+    );
+  });
+}
+
+export function serializeSvgSnapshot(
+  svg: SVGSVGElement,
+  captures: readonly (string | undefined)[],
+  meshStages: readonly (string | undefined)[] = [],
+): string {
+  const clone = freezeShaderSurfaces(svg, captures);
+  freezeMeshStages(clone, meshStages);
+  return new XMLSerializer().serializeToString(clone);
 }

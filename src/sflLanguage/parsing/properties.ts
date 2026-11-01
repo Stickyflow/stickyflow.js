@@ -8,11 +8,14 @@ export class PropertyParser {
   constructor(private readonly cursor: TokenCursor) {}
 
   parseLayout(): SflLayout {
-    this.cursor.next();
-    return { properties: this.parsePropertyBlock('layout') };
+    return this.parseBoundBlock('layout');
   }
 
   parseStyle(): SflStyle {
+    return this.parseBoundBlock('style');
+  }
+
+  private parseBoundBlock(kind: 'layout' | 'style'): SflStyle {
     this.cursor.next();
     this.cursor.skipNewlines();
     this.cursor.expect('lbrace', "'{'");
@@ -22,7 +25,7 @@ export class PropertyParser {
     while (!this.cursor.at('rbrace')) {
       if (this.cursor.at('eof')) {
         const token = this.cursor.peek();
-        throw new SflParseError('unterminated style block', token.line, token.col);
+        throw new SflParseError(`unterminated ${kind} block`, token.line, token.col);
       }
       if (atBinding(this.cursor)) {
         bindings.push(parseBinding(this.cursor));
