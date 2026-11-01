@@ -1,5 +1,5 @@
 import type { SflBlock, SflEntry } from '../ast';
-import { resolveValue } from './evaluation';
+import { resolveNumeric } from './evaluation';
 import { instance } from './instance';
 import { numbersOf } from './properties';
 import { Random } from './random';
@@ -94,7 +94,7 @@ function expandUse(
     if (PLACE.has(key) || OWN.has(key)) {
       fail(scope, `${key} is the name of something a Use sets, so it cannot be a parameter`);
     }
-    const chosen = resolveValue(scope, given.get(key) ?? value);
+    const chosen = resolveNumeric(scope, given.get(key) ?? value);
     given.delete(key);
     if (chosen.type === 'number' || chosen.type === 'string') {
       scope.vars.set(key, chosen.value);
