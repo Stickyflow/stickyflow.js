@@ -29,12 +29,34 @@ export function parseEndpoint(cursor: TokenCursor): SflValue {
   return { type: 'endpoint', segments, side, fraction };
 }
 
+// An item of a list is computed when it has an operator or a call before the next comma, as in `[col * 20, 0]`. A number alone stays a number.
+function listItemIsComputed(cursor: TokenCursor): boolean {
+  const start = cursor.peek().type === 'op' && cursor.peek().value === '-' ? 1 : 0;
+  const first = cursor.peek(start);
+  if (first.type !== 'number' && first.type !== 'ident' && first.type !== 'lparen') {
+    return false;
+  }
+  for (let offset = start; ; offset++) {
+    const token = cursor.peek(offset);
+    if (token.type === 'comma' || token.type === 'rbracket' || token.type === 'newline' || token.type === 'eof') {
+      return false;
+    }
+    if (token.type === 'lparen' || (token.type === 'op' && ARITHMETIC.has(token.value))) {
+      return true;
+    }
+  }
+}
+
+function parseListItem(cursor: TokenCursor): SflValue {
+  return listItemIsComputed(cursor) ? { type: 'expr', items: [parseExpression(cursor)] } : parseValue(cursor, false);
+}
+
 function parseList(cursor: TokenCursor): SflValue {
   cursor.expect('lbracket', "'['");
   const values: SflValue[] = [];
   cursor.skipNewlines();
   if (!cursor.at('rbracket')) {
-    values.push(parseValue(cursor, false));
+    values.push(parseListItem(cursor));
     cursor.skipNewlines();
     while (cursor.at('comma')) {
       cursor.next();
@@ -42,7 +64,7 @@ function parseList(cursor: TokenCursor): SflValue {
       if (cursor.at('rbracket')) {
         break;
       }
-      values.push(parseValue(cursor, false));
+      values.push(parseListItem(cursor));
       cursor.skipNewlines();
     }
   }
@@ -57,6 +79,9 @@ const ARITHMETIC = new Set(['+', '-', '*', '/', '>', '<', '>=', '<=', '==', '!='
 function startsComputed(cursor: TokenCursor): boolean {
   const first = cursor.peek();
   if (first.type === 'op' && first.value === '-') {
+    return true;
+  }
+  if (first.type === 'string' && cursor.peek(1).type === 'op') {
     return true;
   }
   if (first.type !== 'number' && first.type !== 'ident' && first.type !== 'lparen') {

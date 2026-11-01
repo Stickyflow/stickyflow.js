@@ -29,6 +29,7 @@ export const NAMED_BLOCK_KINDS = [
   'Repeat',
   'Template',
   'Use',
+  'Parameters',
 ] as const;
 
 export type NamedBlockKind = (typeof NAMED_BLOCK_KINDS)[number];

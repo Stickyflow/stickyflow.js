@@ -3,7 +3,7 @@ import { resolveValue } from './evaluation';
 import { instance } from './instance';
 import { numbersOf } from './properties';
 import { Random } from './random';
-import { fail, type Scope } from './scope';
+import { fail, type Scalar, type Scope } from './scope';
 
 // A `Template` describes blocks once, and every `Use` of it makes them again at another place, with values of its own. This step turns every
 // Use into those plain blocks and takes the Templates out, so the rest of the package never sees either. The source text is not touched.
@@ -54,8 +54,14 @@ class BlockBudget {
   }
 }
 
-function expandUse(use: SflBlock, templates: Map<string, SflBlock>, depth: number, budget: BlockBudget): SflBlock[] {
-  const scope: Scope = { vars: new Map(), random: new Random(0), label: `Use ${use.name}`, substitute: true };
+function expandUse(
+  use: SflBlock,
+  templates: Map<string, SflBlock>,
+  depth: number,
+  budget: BlockBudget,
+  params: ReadonlyMap<string, Scalar>,
+): SflBlock[] {
+  const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Use ${use.name}`, substitute: true };
   if (depth > MAX_DEPTH) {
     fail(scope, `Templates are nested more than ${MAX_DEPTH} deep, which may be a Template that uses itself`);
   }
@@ -67,9 +73,9 @@ function expandUse(use: SflBlock, templates: Map<string, SflBlock>, depth: numbe
     fail(scope, `there is no Template ${use.composition[0]}`);
   }
 
-  const seed = numbersOf(use, 'seed')?.[0] ?? 0;
+  const seed = numbersOf(scope, use, 'seed')?.[0] ?? 0;
   scope.random = new Random(Math.imul(seed + 1, 0x9e3779b1) ^ hashOf(use.name));
-  const [x = 0, y = 0] = numbersOf(use, 'at') ?? [];
+  const [x = 0, y = 0] = numbersOf(scope, use, 'at') ?? [];
   scope.vars.set('x', x);
   scope.vars.set('y', y);
 
@@ -110,7 +116,7 @@ function expandUse(use: SflBlock, templates: Map<string, SflBlock>, depth: numbe
     entry.type === 'block' ? [instance(scope, entry.block, name => `${use.name}_${name}`)] : [],
   );
   budget.take(made.length, scope);
-  return expandIn(made, templates, depth + 1, budget);
+  return expandIn(made, templates, depth + 1, budget, params);
 }
 
 function expandIn(
@@ -118,13 +124,14 @@ function expandIn(
   templates: Map<string, SflBlock>,
   depth: number,
   budget: BlockBudget,
+  params: ReadonlyMap<string, Scalar>,
 ): SflBlock[] {
   return blocks.flatMap(block => {
     if (block.kind === 'Template') {
       return [];
     }
     if (block.kind === 'Use') {
-      return expandUse(block, templates, depth, budget);
+      return expandUse(block, templates, depth, budget, params);
     }
     if (!block.entries.some(entry => entry.type === 'block')) {
       return [block];
@@ -134,7 +141,10 @@ function expandIn(
         ...block,
         entries: block.entries.flatMap((entry): SflEntry[] =>
           entry.type === 'block'
-            ? expandIn([entry.block], templates, depth, budget).map(child => ({ type: 'block' as const, block: child }))
+            ? expandIn([entry.block], templates, depth, budget, params).map(child => ({
+                type: 'block' as const,
+                block: child,
+              }))
             : [entry],
         ),
       },
@@ -152,8 +162,8 @@ export function hasTemplates(blocks: SflBlock[]): boolean {
 }
 
 // The blocks with every Use replaced by what its Template makes, and the Templates taken out.
-export function expandUses(blocks: SflBlock[]): SflBlock[] {
+export function expandUses(blocks: SflBlock[], params: ReadonlyMap<string, Scalar> = new Map()): SflBlock[] {
   const templates = new Map<string, SflBlock>();
   collect(blocks, templates);
-  return expandIn(blocks, templates, 0, new BlockBudget());
+  return expandIn(blocks, templates, 0, new BlockBudget(), params);
 }

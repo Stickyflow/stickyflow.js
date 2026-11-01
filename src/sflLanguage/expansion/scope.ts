@@ -5,6 +5,8 @@ export type Scalar = number | string | boolean;
 // The names and the random numbers that the computed values of a Repeat cell or a Use are worked out with.
 export interface Scope {
   vars: Map<string, Scalar>;
+  // The values of the Parameters blocks, which every computed value can use.
+  params: ReadonlyMap<string, Scalar>;
   random: Random;
   // What the messages of an error start with, as `Repeat trees` or `Use oak`.
   label: string;

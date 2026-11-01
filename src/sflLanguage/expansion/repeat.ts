@@ -29,14 +29,14 @@ interface Grid {
 }
 
 function readGrid(block: SflBlock, scope: Scope): Grid {
-  const count = numbersOf(block, 'count')?.[0];
-  const columns = Math.max(1, Math.floor(count ?? numbersOf(block, 'columns')?.[0] ?? 1));
-  const rows = count === undefined ? Math.max(1, Math.floor(numbersOf(block, 'rows')?.[0] ?? 1)) : 1;
+  const count = numbersOf(scope, block, 'count')?.[0];
+  const columns = Math.max(1, Math.floor(count ?? numbersOf(scope, block, 'columns')?.[0] ?? 1));
+  const rows = count === undefined ? Math.max(1, Math.floor(numbersOf(scope, block, 'rows')?.[0] ?? 1)) : 1;
   if (columns * rows > MAX_CELLS) {
     fail(scope, `${columns * rows} cells are too many, the limit is ${MAX_CELLS}`);
   }
-  const [stepX = 0, stepY = stepX] = numbersOf(block, 'step') ?? [];
-  const [originX = 0, originY = 0] = numbersOf(block, 'origin') ?? [];
+  const [stepX = 0, stepY = stepX] = numbersOf(scope, block, 'step') ?? [];
+  const [originX = 0, originY = 0] = numbersOf(scope, block, 'origin') ?? [];
   const order = propertyOf(block, 'order');
   const templates = block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
   if (templates.some(template => template.kind === 'Repeat')) {
@@ -50,9 +50,9 @@ function readGrid(block: SflBlock, scope: Scope): Grid {
     rows,
     step: [stepX, stepY],
     origin: [originX, originY],
-    seed: numbersOf(block, 'seed')?.[0] ?? 0,
-    jitter: numbersOf(block, 'jitter')?.[0] ?? 0,
-    chance: numbersOf(block, 'chance')?.[0] ?? 1,
+    seed: numbersOf(scope, block, 'seed')?.[0] ?? 0,
+    jitter: numbersOf(scope, block, 'jitter')?.[0] ?? 0,
+    chance: numbersOf(scope, block, 'chance')?.[0] ?? 1,
     diagonal: order?.type === 'ident' && order.segments[0] === 'diagonal',
     condition: propertyOf(block, 'where'),
     helpers: block.entries.flatMap(entry =>
@@ -113,8 +113,8 @@ function keepsCell(scope: Scope, condition: SflValue | undefined): boolean {
   return condition?.type !== 'expr' || Boolean(condition.items.map(item => evaluate(scope, item))[0]);
 }
 
-function expandRepeat(block: SflBlock): SflBlock[] {
-  const scope: Scope = { vars: new Map(), random: new Random(0), label: `Repeat ${block.name}` };
+function expandRepeat(block: SflBlock, params: ReadonlyMap<string, Scalar>): SflBlock[] {
+  const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Repeat ${block.name}` };
   const grid = readGrid(block, scope);
   const made: SflBlock[] = [];
   for (const [col, row] of cellsOf(grid)) {
@@ -134,10 +134,10 @@ function expandRepeat(block: SflBlock): SflBlock[] {
 }
 
 // The blocks with every Repeat replaced by the blocks it makes. What a Template holds is worked out by its Use, with its parameters.
-export function expandRepeatBlocks(blocks: SflBlock[]): SflBlock[] {
+export function expandRepeatBlocks(blocks: SflBlock[], params: ReadonlyMap<string, Scalar> = new Map()): SflBlock[] {
   return blocks.flatMap(block => {
     if (block.kind === 'Repeat') {
-      return expandRepeat(block);
+      return expandRepeat(block, params);
     }
     if (block.kind === 'Template' || !block.entries.some(entry => entry.type === 'block')) {
       return [block];
@@ -147,7 +147,7 @@ export function expandRepeatBlocks(blocks: SflBlock[]): SflBlock[] {
         ...block,
         entries: block.entries.flatMap((entry): SflEntry[] =>
           entry.type === 'block'
-            ? expandRepeatBlocks([entry.block]).map(child => ({ type: 'block' as const, block: child }))
+            ? expandRepeatBlocks([entry.block], params).map(child => ({ type: 'block' as const, block: child }))
             : [entry],
         ),
       },

@@ -1,6 +1,13 @@
-import type { SflBlock, SflDocument } from '../ast';
+import type { SflBlock, SflDocument, SflEntry, SflValue } from '../ast';
+import { resolveNumeric } from './evaluation';
+import { instance } from './instance';
+import { Random } from './random';
 import { expandRepeatBlocks, hasRepeats } from './repeat';
+import { fail, type Scalar, type Scope } from './scope';
 import { expandUses, hasTemplates } from './template';
+
+const isComputed = (value: SflValue): boolean =>
+  value.type === 'expr' || (value.type === 'list' && value.values.some(isComputed));
 
 // A computed value is worked out for a cell of a Repeat or for a Use, so one that is left over has no cell to be worked out for.
 function checkNoComputed(blocks: SflBlock[]): void {
@@ -15,7 +22,7 @@ function checkNoComputed(blocks: SflBlock[]): void {
               ? entry.style.properties
               : [];
       for (const property of properties) {
-        if (property.value.type === 'expr') {
+        if (isComputed(property.value)) {
           throw new Error(
             `${block.kind} ${block.name}: ${property.key} is computed, and only a Repeat can work out a computed value`,
           );
@@ -28,15 +35,77 @@ function checkNoComputed(blocks: SflBlock[]): void {
   }
 }
 
-// A document in which every Repeat and every Use is replaced by the blocks it makes, and the Templates are taken out. A document without
-// any of them is returned as it is.
+function parameterBlocks(blocks: SflBlock[]): SflBlock[] {
+  return blocks.flatMap(block => [
+    ...(block.kind === 'Parameters' ? [block] : []),
+    ...parameterBlocks(block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []))),
+  ]);
+}
+
+function withoutParameters(blocks: SflBlock[]): SflBlock[] {
+  return blocks.flatMap(block =>
+    block.kind === 'Parameters'
+      ? []
+      : [
+          {
+            ...block,
+            entries: block.entries.flatMap((entry): SflEntry[] =>
+              entry.type !== 'block'
+                ? [entry]
+                : entry.block.kind === 'Parameters'
+                  ? []
+                  : [{ type: 'block' as const, block: withoutParameters([entry.block])[0] }],
+            ),
+          },
+        ],
+  );
+}
+
+// The values of the Parameters blocks. A parameter can be computed from the ones before it.
+function readParameters(blocks: SflBlock[]): Map<string, Scalar> {
+  const params = new Map<string, Scalar>();
+  for (const block of parameterBlocks(blocks)) {
+    const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Parameters ${block.name}` };
+    for (const entry of block.entries) {
+      if (entry.type !== 'property') {
+        fail(scope, 'Parameters hold only properties');
+      }
+      const value = resolveNumeric(scope, entry.property.value);
+      if (value.type === 'number' || value.type === 'string') {
+        params.set(entry.property.key, value.value);
+      } else if (value.type === 'ident') {
+        params.set(entry.property.key, value.segments.join('.'));
+      } else {
+        fail(scope, `${entry.property.key} needs a number, a text or a name`);
+      }
+    }
+  }
+  return params;
+}
+
+// What is left outside a Repeat or a Use is worked out with the Parameters alone.
+function resolveWithParameters(blocks: SflBlock[], params: ReadonlyMap<string, Scalar>): SflBlock[] {
+  return blocks.map(block =>
+    instance(
+      { vars: new Map(), params, random: new Random(0), label: `${block.kind} ${block.name}` },
+      block,
+      name => name,
+    ),
+  );
+}
+
+// A document in which every Repeat and every Use is replaced by the blocks it makes, and the Templates and Parameters are taken out. A
+// document without any of them is returned as it is.
 export function expandDocument(doc: SflDocument): SflDocument {
+  const params = readParameters(doc.blocks);
   const repeats = hasRepeats(doc.blocks);
-  if (!repeats && !hasTemplates(doc.blocks)) {
+  if (!repeats && !hasTemplates(doc.blocks) && params.size === 0 && parameterBlocks(doc.blocks).length === 0) {
     checkNoComputed(doc.blocks);
     return doc;
   }
-  const expanded = { ...doc, blocks: expandUses(repeats ? expandRepeatBlocks(doc.blocks) : doc.blocks) };
-  checkNoComputed(expanded.blocks);
-  return expanded;
+  const source = withoutParameters(doc.blocks);
+  const expanded = expandUses(repeats ? expandRepeatBlocks(source, params) : source, params);
+  const blocks = params.size > 0 ? resolveWithParameters(expanded, params) : expanded;
+  checkNoComputed(blocks);
+  return { ...doc, blocks };
 }

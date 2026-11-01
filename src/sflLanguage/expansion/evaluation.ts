@@ -10,7 +10,7 @@ export function evaluate(scope: Scope, expr: SflExpr): Scalar {
       return expr.value;
     case 'ref': {
       const name = expr.path.join('.');
-      const value = scope.vars.get(name);
+      const value = scope.vars.get(name) ?? scope.params.get(name);
       if (value === undefined) {
         fail(scope, `unknown name ${name}`);
       }
@@ -73,12 +73,21 @@ function scalarValue(scope: Scope, only: Scalar): SflValue {
   return { type: 'ident', segments: [String(only)] };
 }
 
+// Where only a number can stand, a bare name is a parameter. Elsewhere it stays a word, so a parameter called left does not change `textAlign: left`.
+export function resolveNumeric(scope: Scope, value: SflValue): SflValue {
+  const known = value.type === 'ident' && value.segments.length === 1 ? scope.params.get(value.segments[0]) : undefined;
+  return known === undefined ? resolveValue(scope, value) : scalarValue(scope, known);
+}
+
 export function resolveValue(scope: Scope, value: SflValue): SflValue {
   if (scope.substitute && value.type === 'ident' && value.segments.length === 1) {
     const known = scope.vars.get(value.segments[0]);
     if (known !== undefined) {
       return scalarValue(scope, known);
     }
+  }
+  if (value.type === 'list') {
+    return { type: 'list', values: value.values.map(item => resolveNumeric(scope, item)) };
   }
   if (value.type !== 'expr') {
     return value;
