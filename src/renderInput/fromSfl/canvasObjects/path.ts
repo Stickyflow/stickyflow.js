@@ -13,6 +13,7 @@ export function pathObject(e: SflCanvasObject): FreeformPath {
     points: e.path?.points ?? [],
     value: e.path?.value,
     tension: e.path?.tension ?? 0,
+    cornerRadius: numOf(p.cornerRadius) ?? 0,
     startMarker: oneOf(e.path?.startMarker, PATH_MARKERS, 'none'),
     endMarker: oneOf(e.path?.endMarker, PATH_MARKERS, 'none'),
     closed: e.path?.closed ?? false,

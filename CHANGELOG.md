@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-01
+
+### Added
+
+- `cornerRadius` on a `Path` rounds the corners of a straight path, each as far as its two sides allow.
+
 ## [0.12.3] - 2026-10-31
 
 ### Added

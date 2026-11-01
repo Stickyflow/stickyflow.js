@@ -18,6 +18,8 @@ export interface FreeformPath {
   dash?: number[];
   opacity?: number;
   tension?: number;
+  // Rounds the corners of a straight path, each as far as its two sides allow.
+  cornerRadius?: number;
   startMarker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
   endMarker?: Extract<MarkerType, 'none' | 'arrow' | 'filled_arrow'>;
   closed?: boolean;
