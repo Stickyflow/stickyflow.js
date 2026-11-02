@@ -77,4 +77,5 @@ export interface ElementInfo {
 
 export const POINTER_EVENTS = ['onPress', 'onRelease', 'onTap', 'onDrag'] as const;
 export const CHANGE_EVENT = 'onChange';
+export const TEXT_EVENTS = ['onFocus', 'onBlur', 'onSubmit'] as const;
 export const TICK_EVENT = 'onTick';

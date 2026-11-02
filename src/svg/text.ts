@@ -40,12 +40,18 @@ function richLineTspans(
     .join('');
 }
 
+function textFade(node: SceneText): string {
+  const opacity = node.opacity !== undefined && node.opacity < 1 ? ` opacity="${num(node.opacity)}"` : '';
+  const time = node.transition && node.transition > 0 ? `${num(node.transition)}ms ease` : '';
+  return `${opacity}${time ? ` style="transition: fill ${time}, opacity ${time}"` : ''}`;
+}
+
 export function textSvg(node: SceneText, defs: SvgDefinitionRegistry): string {
   const position = textPosition(node);
   const fontSize = `${num(node.fontSize)}px`;
   const content = textContent(node, position, fontSize);
   const preserve = node.richLines ? ' xml:space="preserve"' : '';
-  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(position.x)}" y="${num(position.firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}"${node.letterSpacing ? ` letter-spacing="${num(node.letterSpacing)}"` : ''} fill="${xml(node.color)}" text-anchor="${position.anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${preserve}${transform(node.rotation, node.rotationCenter)}>${content}</text>`;
+  return `<text id="${defs.elementId(node.id)}"${contractAttrs(node)} x="${num(position.x)}" y="${num(position.firstY)}" font-family="${xml(node.fontFamily)}" font-size="${fontSize}" font-weight="${node.fontWeight}"${node.letterSpacing ? ` letter-spacing="${num(node.letterSpacing)}"` : ''} fill="${xml(node.color)}"${textFade(node)} text-anchor="${position.anchor}" data-sf-valign="${node.verticalAlign}" data-sf-line-height="${num(node.lineHeight)}"${preserve}${transform(node.rotation, node.rotationCenter)}>${content}</text>`;
 }
 
 function textPosition(node: SceneText): TextPosition {

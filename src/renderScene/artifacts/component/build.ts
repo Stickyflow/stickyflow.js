@@ -23,6 +23,9 @@ function labelOf(component: Component): string {
 
 export function buildComponents(components: readonly Component[]): RenderNode[] {
   return components.flatMap((component, index) => {
+    if (isGenericComponent(component) && component.isVisible === false) {
+      return [];
+    }
     const build = getComponentBuilder(component.type) ?? buildPlaceholder;
     const nodes = tag(
       build(component, index),

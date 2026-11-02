@@ -22,11 +22,22 @@ export class SvgFilterDefinitions {
         size && size > 0 ? Math.max(0.5, reach / size) : 0.5,
       );
     }
+    if (style.blur && style.blurArea) {
+      return this.defineInArea(nodeId, style.blur, style.blurArea);
+    }
     if (style.blur || style.saturate !== undefined) {
       const margin = size && size > 0 && style.blur ? Math.max(0.5, (style.blur * 1.5) / size) : 0.5;
       return this.define(nodeId, { blur: style.blur ?? 0, saturate: style.saturate ?? 1 }, blurPrimitives, margin);
     }
     return undefined;
+  }
+
+  private defineInArea(nodeId: string, blur: number, area: NonNullable<SceneStyle['blurArea']>): string {
+    const id = safeId(`${this.prefix}glow-${nodeId}`);
+    this.addDefinition(
+      `<filter id="${id}" filterUnits="userSpaceOnUse" x="${num(area.x)}" y="${num(area.y)}" width="${num(area.width)}" height="${num(area.height)}">${blurPrimitives({ blur, saturate: 1 })}</filter>`,
+    );
+    return id;
   }
 
   private define<T>(nodeId: string, value: T, primitives: (value: T) => string, margin = 0.5): string {

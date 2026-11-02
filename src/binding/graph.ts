@@ -1,4 +1,6 @@
+import { getComponentDescriptor } from '../model/component';
 import type { BlockKind, SflBinding, SflBlock, SflDocument, SflExpr, SflHandler } from '../sflLanguage/ast';
+import { expandDocument } from '../sflLanguage/expansion';
 import {
   acceptsUserChange,
   BINDABLE_COMPONENT_PROPERTIES,
@@ -20,6 +22,7 @@ import {
   type ElementInfo,
   POINTER_EVENTS,
   sameType,
+  TEXT_EVENTS,
   TICK_EVENT,
   typeName,
 } from './types';
@@ -171,7 +174,8 @@ function allowedEvents(kind: BlockKind, componentType: string | undefined): read
     return [];
   }
   const changes = kind === 'Component' && acceptsUserChange(componentType);
-  return changes ? [...POINTER_EVENTS, CHANGE_EVENT] : POINTER_EVENTS;
+  const typed = kind === 'Component' && getComponentDescriptor(componentType)?.interaction === 'type';
+  return [...POINTER_EVENTS, ...(changes ? [CHANGE_EVENT] : []), ...(typed ? TEXT_EVENTS : [])];
 }
 
 function eventIsKnown(site: HandlerSite, componentType: string | undefined, report: Report): boolean {
@@ -385,7 +389,9 @@ function indexByField(bindings: BoundProperty[]): Map<string, BoundProperty[]> {
   return byField;
 }
 
-export function buildBindingGraph(sflDocument: SflDocument): BindingGraph {
+export function buildBindingGraph(source: SflDocument): BindingGraph {
+  // Names of a Repeat or a Template, like col, are only filled in when these are made.
+  const sflDocument = expandDocument(source);
   const { contracts, diagnostics } = collectContracts(sflDocument);
   const elements = collectElements(sflDocument);
   warnNameCollisions(contracts, elements, diagnostics);

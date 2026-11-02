@@ -4,6 +4,12 @@ import { finite, freeformPathData } from '../scene';
 import { radiusAt } from '../scene/freeformPath';
 import { tag } from '../scene/tagging';
 
+// Each layer of the light: its place, its blur and its width as parts of the glow, and its strength.
+const GLOW_LAYERS = [
+  [0, 1, 0.5, 0.55],
+  [1, 0.3, 0.15, 0.8],
+] as const;
+
 export function buildFreeformPath(path: FreeformPath, index: number): RenderNode[] {
   if (path.isVisible === false || path.points.length < 2) {
     return [];
@@ -20,7 +26,7 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
   const closed = path.closed === true;
   const corners = { cornerRadius: finite(path.cornerRadius, 0), cornerRadii: path.cornerRadii };
   const radii = path.points.map((_, position) => radiusAt(corners, position));
-  return [
+  const nodes: RenderNode[] = [
     {
       type: 'path',
       id: `path-${path.id}`,
@@ -44,9 +50,45 @@ export function buildFreeformPath(path: FreeformPath, index: number): RenderNode
         lineCap: 'round',
         lineJoin: 'round',
         opacity: finite(path.opacity, 1),
+        transition: path.transition,
       },
     },
   ];
+  const glow = finite(path.glow, 0);
+  if (glow > 0) {
+    const d = freeformPathData({ points: path.points, tension, closed, ...corners });
+    const color = path.glowColor ?? path.strokeColor ?? '#7c3aed';
+    const reach = glow * 4 + strokeWidth;
+    const blurArea = {
+      x: bounds.minX + extra - reach,
+      y: bounds.minY + extra - reach,
+      width: bounds.maxX - bounds.minX - extra * 2 + reach * 2,
+      height: bounds.maxY - bounds.minY - extra * 2 + reach * 2,
+    };
+    // A wide soft light, and a tight bright one under the line itself.
+    for (const [part, blur, width, strength] of GLOW_LAYERS) {
+      nodes.push({
+        type: 'path',
+        id: `path-${path.id}-glow-${part}`,
+        order: 30_000 + index - 0.3 + part * 0.1,
+        bounds,
+        d,
+        style: {
+          fill: { kind: 'none' },
+          stroke: { kind: 'solid', color },
+          strokeWidth: strokeWidth + glow * width,
+          lineCap: 'round',
+          lineJoin: 'round',
+          opacity: finite(path.opacity, 1) * strength,
+          blur: glow * blur,
+          blurArea,
+          pointerEvents: 'none',
+          transition: path.transition,
+        },
+      });
+    }
+  }
+  return nodes;
 }
 
 export function buildFreeformPaths(paths: readonly FreeformPath[]): RenderNode[] {

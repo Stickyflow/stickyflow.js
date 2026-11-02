@@ -1,4 +1,5 @@
 import type { ShaderParameter } from '../../../model/shader';
+import type { BackdropLayer } from './backdrop';
 
 export interface Surface {
   // The program the surface was made for, so a change of the program makes a new surface.
@@ -11,6 +12,9 @@ export interface Surface {
   parameters: Record<string, ShaderParameter>;
   surfacePadding: number;
   backdropTexture?: WebGLTexture;
+  // The drawing behind the surface in parts, and the picture of these with the running shaders in between.
+  backdropLayers?: BackdropLayer[];
+  liveBackdrop?: HTMLCanvasElement;
   backdropOrigin: [number, number];
   backdropScale: [number, number];
   usesBackdrop: boolean;

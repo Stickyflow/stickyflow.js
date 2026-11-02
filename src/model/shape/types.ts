@@ -61,6 +61,7 @@ export interface Shape {
   dash?: number[];
   strokeStyle?: ShapeStrokeStyle;
   opacity?: number;
+  transition?: number;
   // Softens the whole shape, in pixels of spread; 0 or left out keeps its edge sharp.
   blur?: number;
   // How the shape mixes with what lies under it: multiply, screen, overlay and the other blend modes of CSS. Left out, it covers it.

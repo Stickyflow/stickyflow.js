@@ -183,6 +183,17 @@ function reactToActivation(state: RuntimeState, id: string): void {
   }
 }
 
+export function focusElement(state: RuntimeState, id: string, focused: boolean): void {
+  const component = findComponent(state.input, id);
+  if (component && isGenericComponent(component)) {
+    component.properties.focused = focused;
+    state.renderNeeded = true;
+  }
+  setElementState(state, id, { focused });
+  dispatch(state, id, focused ? 'onFocus' : 'onBlur');
+  schedule(state);
+}
+
 export function pressElement(state: RuntimeState, id: string): void {
   grabbed.get(state)?.delete(id);
   if (isComponentDisabled(state.input, id)) {

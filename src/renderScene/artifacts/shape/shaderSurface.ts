@@ -10,7 +10,14 @@ const RECT_PROGRAMS: ReadonlySet<string> = new Set([
   'silkFolds',
   'glowCard',
   'glassDots',
+  'horizonGlow',
+  'lightStreaks',
+  'pulseLine',
+  'glassRefraction',
 ]);
+
+// Programs that fill their whole surface, so the corners of the shape have to be cut from it.
+const FILLING_PROGRAMS: ReadonlySet<string> = new Set(['horizonGlow', 'lightStreaks']);
 
 function shaderMask(context: ShapeRenderContext): 'ellipse' | 'rect' | undefined {
   if (context.shape.shapeType === 'circle' || context.shape.shapeType === 'oval') {
@@ -45,8 +52,23 @@ export function renderShapeShaderSurface(context: ShapeRenderContext): RenderNod
     bounds: rotatedBounds(surfaceBounds, context.rotation, 0),
     ...surfaceBounds,
     rotation: context.rotation,
-    shader: context.shape.shader,
+    // On a rectangle glass is a pane with the corners of its shape.
+    shader:
+      mask === 'rect' && context.shape.shader.program === 'glassRefraction'
+        ? {
+            ...context.shape.shader,
+            parameters: {
+              panel: 1,
+              cornerRadius: context.shape.shapeType === 'rounded_rectangle' ? (context.shape.cornerRadius ?? 8) : 0,
+              ...context.shape.shader.parameters,
+            },
+          }
+        : context.shape.shader,
     mask,
     fillColor: context.style.fill?.kind === 'solid' ? context.style.fill.color : undefined,
+    cornerRadius:
+      context.shape.shapeType === 'rounded_rectangle' && FILLING_PROGRAMS.has(context.shape.shader.program)
+        ? (context.shape.cornerRadius ?? 8)
+        : undefined,
   };
 }

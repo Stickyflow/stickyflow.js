@@ -115,6 +115,55 @@ function inferMath(
   return types.some(type => isList(type as BindingType)) ? { list: 'number' } : 'number';
 }
 
+// The first characters of a text, as for a text that is being typed.
+function inferLeft(
+  expr: Extract<SflExpr, { kind: 'call' }>,
+  scope: TypeScope,
+  report: Report,
+): BindingType | undefined {
+  if (expr.args.length !== 2) {
+    report('wrong-arguments', 'left(text, count) takes exactly two arguments.');
+    return undefined;
+  }
+  const [text, count] = expr.args.map(arg => inferType(arg, scope, report));
+  if (!text || !count) {
+    return undefined;
+  }
+  if (text !== 'string' || !isNumeric(count) || isList(count)) {
+    report('type-mismatch', `left() needs a string and a number, got ${typeName(text)} and ${typeName(count)}.`);
+    return undefined;
+  }
+  return 'string';
+}
+
+function inferTextQuestion(
+  name: 'length' | 'contains',
+  expr: Extract<SflExpr, { kind: 'call' }>,
+  scope: TypeScope,
+  report: Report,
+): BindingType | undefined {
+  const wanted = name === 'length' ? 1 : 2;
+  if (expr.args.length !== wanted) {
+    report(
+      'wrong-arguments',
+      name === 'length' ? 'length(text) takes one argument.' : 'contains(text, part) takes two arguments.',
+    );
+    return undefined;
+  }
+  const types = expr.args.map(arg => inferType(arg, scope, report));
+  if (types.some(type => !type)) {
+    return undefined;
+  }
+  if (types.some(type => type !== 'string')) {
+    report(
+      'type-mismatch',
+      `${name}() needs text, got ${types.map(type => typeName(type as BindingType)).join(', ')}.`,
+    );
+    return undefined;
+  }
+  return name === 'length' ? 'number' : 'boolean';
+}
+
 function inferCall(
   expr: Extract<SflExpr, { kind: 'call' }>,
   scope: TypeScope,
@@ -124,8 +173,17 @@ function inferCall(
   if (name in MATH) {
     return inferMath(name, expr, scope, report);
   }
+  if (name === 'left') {
+    return inferLeft(expr, scope, report);
+  }
+  if (name === 'length' || name === 'contains') {
+    return inferTextQuestion(name, expr, scope, report);
+  }
   if (name !== 'when') {
-    report('unknown-function', `Unknown function '${name}'. Available: when, ${Object.keys(MATH).join(', ')}.`);
+    report(
+      'unknown-function',
+      `Unknown function '${name}'. Available: when, left, length, contains, ${Object.keys(MATH).join(', ')}.`,
+    );
     return undefined;
   }
   if (expr.args.length !== 3) {
@@ -268,6 +326,16 @@ export function evaluate(expr: SflExpr, env: ValueEnv): BindingValue {
         return Array.from({ length }, (_value, index) =>
           MATH[name].apply(values.map(value => (Array.isArray(value) ? (value[index] as number) : (value as number)))),
         );
+      }
+      if (name === 'length') {
+        return [...String(evaluate(expr.args[0], env))].length;
+      }
+      if (name === 'contains') {
+        return String(evaluate(expr.args[0], env)).includes(String(evaluate(expr.args[1], env)));
+      }
+      if (name === 'left') {
+        const count = Math.max(0, Math.floor(evaluate(expr.args[1], env) as number));
+        return [...String(evaluate(expr.args[0], env))].slice(0, count).join('');
       }
       const [condition, whenTrue, whenFalse] = expr.args;
       return evaluate(condition, env) ? evaluate(whenTrue, env) : evaluate(whenFalse, env);

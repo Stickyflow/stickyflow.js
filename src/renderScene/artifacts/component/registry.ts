@@ -9,6 +9,7 @@ import { buildProgress } from './progress';
 import { buildSegmented } from './segmented';
 import { buildSlider } from './slider';
 import { buildSwitch } from './switch';
+import { buildTextField } from './textField';
 import { buildToggleButton } from './toggleButton';
 
 export type ComponentBuilder = (component: Component, index: number) => RenderNode[];
@@ -27,6 +28,7 @@ const builders = new Map<ComponentType, ComponentBuilder>([
   ['toggleButton', asComponentBuilder(buildToggleButton)],
   ['button', asComponentBuilder(buildButton)],
   ['slider', asComponentBuilder(buildSlider)],
+  ['textField', asComponentBuilder(buildTextField)],
   ['progress', asComponentBuilder(buildProgress)],
   ['segmented', asComponentBuilder(buildSegmented)],
   ['knob', asComponentBuilder(buildKnob)],
