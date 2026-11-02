@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-02
+
 ### Added
 
 - SFL 1.9: the blocks `Scene`, `Mesh`, `Canvas` and `Light`.
