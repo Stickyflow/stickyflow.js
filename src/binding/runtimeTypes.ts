@@ -41,6 +41,8 @@ export interface BindingRuntime {
   press(id: string): void;
   release(id: string, tapped: boolean): void;
   activate(id: string): void;
+  focus(id: string, focused: boolean): void;
+  submit(id: string): void;
   change(id: string, value: ComponentValue): boolean;
   slide(id: string, x: number, y?: number): void;
   drag(id: string, pointer?: number): void;

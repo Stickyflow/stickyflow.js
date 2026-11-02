@@ -1,6 +1,7 @@
 import type { ShaderParameter } from '../../../model/shader';
-import { captureShaderBackdrop } from './backdrop';
+import { captureBackdropLayers, captureShaderBackdrop } from './backdrop';
 import { createSurface, refreshSurface, releaseSurface } from './createSurface';
+import { drawLiveBackdrop } from './liveBackdrop';
 import { updateReactiveLightFields } from './reactiveLightField';
 import { applyBackdrop, renderSurface } from './renderSurface';
 import { createSurfaceClock, type SurfaceClock } from './surfaceClock';
@@ -19,7 +20,17 @@ const RECAPTURE_DELAY_MS = 120;
 const TRAIL_SPACING = 0.055;
 const TRAIL_LENGTH = 16;
 
+function renderSurfaces(surfaces: Surface[], seconds: number): void {
+  surfaces.forEach((surface, index) => {
+    if (surface.usesBackdrop && index > 0) {
+      drawLiveBackdrop(surface, surfaces.slice(0, index));
+    }
+    renderSurface(surface, seconds);
+  });
+}
+
 function capturePngs(svg: SVGSVGElement, surfaces: Surface[], seconds: number): Array<string | undefined> {
+  renderSurfaces(surfaces, seconds);
   const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
   return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].map(canvas => {
     const surface = surfaceByCanvas.get(canvas);
@@ -27,7 +38,6 @@ function capturePngs(svg: SVGSVGElement, surfaces: Surface[], seconds: number): 
       return undefined;
     }
     try {
-      renderSurface(surface, seconds);
       return surface.canvas.toDataURL('image/png');
     } catch {
       return undefined;
@@ -52,9 +62,7 @@ function updateParameters(
   }
   if (changed) {
     updateReactiveLightFields(surfaces);
-    for (const surface of surfaces) {
-      renderSurface(surface, seconds);
-    }
+    renderSurfaces(surfaces, seconds);
   }
   return changed;
 }
@@ -216,9 +224,7 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
   private readonly draw = (milliseconds: number): void => {
     if (!this.clock.paused()) {
       updateReactiveLightFields(this.surfaces);
-      for (const surface of this.surfaces) {
-        renderSurface(surface, milliseconds / 1000 - this.clock.spent());
-      }
+      renderSurfaces(this.surfaces, milliseconds / 1000 - this.clock.spent());
     }
     this.frame = this.view?.requestAnimationFrame(this.draw);
   };
@@ -248,20 +254,21 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
           applyBackdrop(surface, backdrop);
         }
       });
+      void captureBackdropLayers(this.svg, surface.owner).then(layers => {
+        if (generation === this.backdropGeneration) {
+          surface.backdropLayers = layers;
+        }
+      });
     }
   }
 
   private startFrames(): void {
     if (!this.view?.requestAnimationFrame) {
-      for (const surface of this.surfaces) {
-        renderSurface(surface, 0);
-      }
+      renderSurfaces(this.surfaces, 0);
       return;
     }
     if (this.clock.paused()) {
-      for (const surface of this.surfaces) {
-        renderSurface(surface, this.clock.now());
-      }
+      renderSurfaces(this.surfaces, this.clock.now());
     }
     this.frame = this.view.requestAnimationFrame(this.draw);
   }

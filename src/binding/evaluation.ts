@@ -96,11 +96,8 @@ function evaluateBinding(state: RuntimeState, binding: BoundProperty): boolean {
     });
     return false;
   }
-  APPLY[`${binding.ownerKind === 'Text' ? 'Shape' : binding.ownerKind}.${binding.property}`]?.(
-    state.input,
-    binding.ownerPath,
-    value,
-  );
+  const applyAs = binding.ownerKind === 'Text' || binding.ownerKind === 'Image' ? 'Shape' : binding.ownerKind;
+  APPLY[`${applyAs}.${binding.property}`]?.(state.input, binding.ownerPath, value);
   if (binding.ownerKind === 'Component' && binding.property === 'value') {
     return applyComponentValue(state, binding, value as ComponentValue);
   }

@@ -69,6 +69,7 @@ export interface RulerComponent {
 
 export interface GenericComponent {
   id: string;
+  isVisible?: boolean;
   type: string;
   value: ComponentValue;
   disabled: boolean;

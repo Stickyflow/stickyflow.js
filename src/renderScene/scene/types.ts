@@ -30,6 +30,8 @@ export interface SceneStyle {
   shadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   innerShadow?: { color: string; opacity: number; blur: number; dx: number; dy: number };
   blur?: number;
+  // The area a blur may reach, for a thin path whose own box has no height or width to measure it by.
+  blurArea?: { x: number; y: number; width: number; height: number };
   blend?: string;
   saturate?: number;
   clip?: SceneClip;
@@ -201,6 +203,8 @@ export interface SceneText extends SceneBase {
   rotation?: number;
   rotationCenter?: Point;
   richLines?: Array<Array<{ text: string; bold: boolean }>>;
+  opacity?: number;
+  transition?: number;
 }
 
 // The place of the 3D world in the scene. A runtime draws the models into it.
@@ -234,6 +238,7 @@ export interface SceneShaderSurface extends SceneBase {
   shader: Shader;
   mask: 'ellipse' | 'rect';
   fillColor?: string;
+  cornerRadius?: number;
 }
 
 export interface SceneRollingNumber extends SceneBase {

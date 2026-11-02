@@ -1,4 +1,4 @@
-import { type Component, type ComponentValue, isGenericComponent } from '../model/component';
+import { type Component, type ComponentValue, type GenericComponent, isGenericComponent } from '../model/component';
 import { setMeshValue } from '../model/mesh';
 import type { RenderInput } from '../renderInput/types';
 import type { BindingValue, BoundProperty } from './types';
@@ -55,6 +55,24 @@ export function isComponentDisabled(input: RenderInput, id: string): boolean {
   return component !== undefined && isGenericComponent(component) && component.disabled;
 }
 
+function setPath(
+  input: RenderInput,
+  path: string[],
+  change: (item: NonNullable<RenderInput['paths']>[number]) => void,
+) {
+  const item = input.paths?.find(candidate => candidate.id === path[0]);
+  if (item) {
+    change(item);
+  }
+}
+
+function setComponent(input: RenderInput, id: string, change: (component: GenericComponent) => void): void {
+  const component = findComponent(input, id);
+  if (component && isGenericComponent(component)) {
+    change(component);
+  }
+}
+
 function setShape(input: RenderInput, path: string[], change: (shape: RenderInput['shapes'][number]) => void): void {
   const shape = input.shapes.find(candidate => candidate.id === path[0]);
   if (shape) {
@@ -87,6 +105,20 @@ export const APPLY: Record<string, Apply> = {
   'Shape.stroke': (input, path, value) => setShape(input, path, shape => (shape.strokeColor = value as string)),
   'Shape.textColor': (input, path, value) => setShape(input, path, shape => (shape.textColor = value as string)),
   'Shape.opacity': (input, path, value) => setShape(input, path, shape => (shape.opacity = value as number)),
+  'Shape.x': (input, path, value) => setShape(input, path, shape => (shape.x = value as number)),
+  'Shape.y': (input, path, value) => setShape(input, path, shape => (shape.y = value as number)),
+  'Shape.width': (input, path, value) => setShape(input, path, shape => (shape.width = value as number)),
+  'Shape.height': (input, path, value) => setShape(input, path, shape => (shape.height = value as number)),
+  'Shape.visible': (input, path, value) => setShape(input, path, shape => (shape.isVisible = value === true)),
+  'Path.stroke': (input, path, value) => setPath(input, path, item => (item.strokeColor = value as string)),
+  'Path.opacity': (input, path, value) => setPath(input, path, item => (item.opacity = value as number)),
+  'Path.visible': (input, path, value) => setPath(input, path, item => (item.isVisible = value === true)),
+  'Component.visible': (input, path, value) =>
+    setComponent(input, path[0], component => (component.isVisible = value === true)),
+  'Component.x': (input, path, value) => setComponent(input, path[0], component => (component.x = value as number)),
+  'Component.y': (input, path, value) => setComponent(input, path[0], component => (component.y = value as number)),
+  'Component.format': (input, path, value) =>
+    setComponent(input, path[0], component => (component.properties.format = value as string)),
   'Component.value': (input, path, value) => writeComponentValue(input, path[0], value as ComponentValue),
   'Component.valueEnd': (input, path, value) => writeComponentValueEnd(input, path[0], value as number),
   'Component.disabled': (input, path, value) => writeComponentDisabled(input, path[0], value === true),

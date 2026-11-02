@@ -36,7 +36,7 @@ describe('shader programs', () => {
     expect(shaderProgram('iridescentOrb')?.fragmentSource).toContain('uFlow');
     expect(shaderProgram('pointSphere')?.fragmentSource).toContain('uDensity');
     expect(shaderProgram('horizonGlow')?.fragmentSource).toContain('uBowl');
-    expect(shaderProgram('lightStreaks')?.fragmentSource).toContain('uGlassBlur');
+    expect(shaderProgram('lightStreaks')?.fragmentSource).toContain('uWarp');
     expect(shaderProgram('spectralDust')).toBeUndefined();
     expect(shaderProgram('solarSlices')).toBeUndefined();
     expect(shaderProgram('glassRefraction')).toMatchObject({

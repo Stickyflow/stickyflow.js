@@ -3,7 +3,7 @@ import type { SflExpr } from '../sflLanguage/ast';
 import type { BindingType, DataSourceContract } from './types';
 
 // `valueEnd` is the second value of a component that holds two, such as the upper end of a range.
-export const BINDABLE_COMPONENT_PROPERTIES = ['value', 'valueEnd', 'disabled'];
+export const BINDABLE_COMPONENT_PROPERTIES = ['value', 'valueEnd', 'disabled', 'visible', 'x', 'y', 'format'];
 
 export function acceptsUserChange(componentType: string | undefined): boolean {
   return getComponentDescriptor(componentType)?.value?.writable === true;
@@ -21,8 +21,14 @@ export function componentStateType(componentType: string | undefined, state: str
 }
 
 export function componentPropertyType(componentType: string | undefined, property: string): BindingType | undefined {
-  if (property === 'disabled') {
+  if (property === 'disabled' || property === 'visible') {
     return 'boolean';
+  }
+  if (property === 'x' || property === 'y') {
+    return 'number';
+  }
+  if (property === 'format') {
+    return getComponentDescriptor(componentType)?.properties.format ? 'string' : undefined;
   }
   if (property === 'valueEnd') {
     return getComponentDescriptor(componentType)?.properties.valueEnd?.type === 'number' ? 'number' : undefined;

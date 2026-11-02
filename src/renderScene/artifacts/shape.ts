@@ -112,7 +112,11 @@ export function buildShape(
   }
   const text = renderShapeText(context, strokeWidth, measureText);
   if (text) {
-    nodes.push(text);
+    nodes.push(
+      text.type === 'text'
+        ? { ...text, transition: shape.transition, opacity: shape.isText ? context.style.opacity : undefined }
+        : text,
+    );
   }
   return nodes;
 }

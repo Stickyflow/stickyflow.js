@@ -17,6 +17,10 @@ export interface FreeformPath {
   strokeWidth?: number;
   dash?: number[];
   opacity?: number;
+  transition?: number;
+  // How far the path shines around itself, and in which color. Without a color it shines in that of its stroke.
+  glow?: number;
+  glowColor?: string;
   tension?: number;
   // Rounds the corners of a straight path, each as far as its two sides allow.
   cornerRadius?: number;

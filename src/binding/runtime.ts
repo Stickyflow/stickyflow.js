@@ -7,7 +7,14 @@ import { interactiveElements } from './interactive';
 import { createRuntimeState, type RuntimeState } from './runtimeState';
 import type { BindingRuntime, BindingRuntimeOptions, BindingTarget, LiveChange } from './runtimeTypes';
 import type { Row } from './types';
-import { activateElement, changeComponentValue, pressElement, releaseElement, slideElement } from './userInput';
+import {
+  activateElement,
+  changeComponentValue,
+  focusElement,
+  pressElement,
+  releaseElement,
+  slideElement,
+} from './userInput';
 
 function registerSource(state: RuntimeState, name: string, source: DataSource): () => void {
   const contract = state.graph.contracts.get(name);
@@ -91,6 +98,8 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     press: id => pressElement(state, id),
     release: (id, tapped) => releaseElement(state, id, tapped),
     activate: id => activateElement(state, id),
+    focus: (id, focused) => focusElement(state, id, focused),
+    submit: id => dispatch(state, id, 'onSubmit'),
     change: (id, value) => changeComponentValue(state, id, value),
     slide: (id, x, y) => slideElement(state, id, x, y),
     drag(id, pointer) {

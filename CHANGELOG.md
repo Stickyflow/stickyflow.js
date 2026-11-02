@@ -19,7 +19,20 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
-- The shader programs `iridescentOrb`, `pointSphere`, `horizonGlow` and `lightStreaks`, the last with a pane of frosted glass of its own.
+- The shader programs `iridescentOrb`, `pointSphere`, `horizonGlow` and `lightStreaks`.
+- `glassRefraction` on a rectangle or rounded rectangle is a pane of frosted glass, with the corners of its shape, and `distortion` makes it uneven.
+- Shaders that read their backdrop also see the shaders behind them, live.
+- `textField`, a component to type in. In the viewer it holds a real input of the browser, and it has the events `onFocus`, `onBlur` and `onSubmit`.
+- Binding expressions have `left(text, count)`, `length(text)` and `contains(text, part)`.
+- Bindings reach further: `x`, `y`, `width`, `height` and `visible` on a Shape, Text and Image, `stroke`, `opacity` and `visible` on a Path, and `visible`, `x` and `y` on a Component.
+- The shader program `pulseLine`, a heartbeat that is written live by a running head.
+- `glow` and `glowColor` in the style of a Path let it shine softly around itself.
+- `transition` in the style of a Shape, Text or Path lets a bound change take that many milliseconds.
+
+### Fixed
+
+- `opacity` on a Text now reaches its letters.
+- `buildBindingGraph` reads a document with its Repeats made, so `col` and `row` in a binding are no error.
 
 ## [0.16.0] - 2026-11-02
 

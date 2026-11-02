@@ -21,6 +21,7 @@ import { pixelConstellationProgram } from './builtins/pixelConstellation';
 import { plasmaGaugeProgram } from './builtins/plasmaGauge';
 import { pointSphereProgram } from './builtins/pointSphere';
 import { prismSlatsProgram } from './builtins/prismSlats';
+import { pulseLineProgram } from './builtins/pulseLine';
 import { reactivePanelProgram } from './builtins/reactivePanel';
 import { rulerProgram } from './builtins/ruler';
 import { silkFoldsProgram } from './builtins/silkFolds';
@@ -65,6 +66,7 @@ const builtins = [
   pointSphereProgram,
   horizonGlowProgram,
   lightStreaksProgram,
+  pulseLineProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 
