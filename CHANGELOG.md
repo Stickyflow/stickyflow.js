@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The shader programs `iridescentOrb`, `pointSphere`, `horizonGlow` and `lightStreaks`, the last with a pane of frosted glass of its own.
+
 ## [0.16.0] - 2026-11-02
 
 ### Added

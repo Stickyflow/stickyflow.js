@@ -33,6 +33,10 @@ describe('shader programs', () => {
     expect(shaderProgram('reactivePanel')?.fragmentSource).toContain('uPixelScale');
     expect(shaderProgram('emberSlits')?.fragmentSource).toContain('uSlitCount');
     expect(shaderProgram('smearOrb')?.fragmentSource).toContain('uBlur');
+    expect(shaderProgram('iridescentOrb')?.fragmentSource).toContain('uFlow');
+    expect(shaderProgram('pointSphere')?.fragmentSource).toContain('uDensity');
+    expect(shaderProgram('horizonGlow')?.fragmentSource).toContain('uBowl');
+    expect(shaderProgram('lightStreaks')?.fragmentSource).toContain('uGlassBlur');
     expect(shaderProgram('spectralDust')).toBeUndefined();
     expect(shaderProgram('solarSlices')).toBeUndefined();
     expect(shaderProgram('glassRefraction')).toMatchObject({

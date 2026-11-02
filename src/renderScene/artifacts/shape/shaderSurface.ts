@@ -10,6 +10,8 @@ const RECT_PROGRAMS: ReadonlySet<string> = new Set([
   'silkFolds',
   'glowCard',
   'glassDots',
+  'horizonGlow',
+  'lightStreaks',
 ]);
 
 function shaderMask(context: ShapeRenderContext): 'ellipse' | 'rect' | undefined {
