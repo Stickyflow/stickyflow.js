@@ -353,11 +353,91 @@ describe('the reader of glTF', () => {
 
   it('says so when a file is none, or needs what is not there', async () => {
     await expect(parseMeshAsset(new TextEncoder().encode('nope').buffer as ArrayBuffer)).rejects.toThrow(
-      'neither a GLB nor a glTF',
+      'neither GLB, glTF, STL nor OBJ',
     );
     await expect(
       parseMeshAsset(bytes({ ...triangle(), extensionsRequired: ['KHR_draco_mesh_compression'] })),
     ).rejects.toThrow('not supported');
+  });
+});
+
+describe('materials and other formats', () => {
+  const buffer = () => {
+    const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+    return `data:application/octet-stream;base64,${Buffer.from(positions.buffer).toString('base64')}`;
+  };
+  const text = (value: string) => new TextEncoder().encode(value).buffer as ArrayBuffer;
+
+  it('keeps every map of a material, with its numbers', async () => {
+    const file = {
+      asset: { version: '2.0' },
+      buffers: [{ uri: buffer(), byteLength: 36 }],
+      bufferViews: [{ buffer: 0, byteLength: 36 }],
+      accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3' }],
+      images: [{ uri: 'a.png' }, { uri: 'b.png' }, { uri: 'c.png' }, { uri: 'd.png' }, { uri: 'e.png' }],
+      samplers: [{ wrapS: 33071 }],
+      textures: [{ source: 0, sampler: 0 }, { source: 1 }, { source: 2 }, { source: 3 }, { source: 4 }],
+      materials: [
+        {
+          pbrMetallicRoughness: { baseColorTexture: { index: 0 }, metallicRoughnessTexture: { index: 2 } },
+          normalTexture: { index: 1, scale: 0.5 },
+          occlusionTexture: { index: 3, strength: 0.25 },
+          emissiveTexture: { index: 4 },
+          emissiveFactor: [1, 0.5, 0],
+        },
+      ],
+      meshes: [{ primitives: [{ attributes: { POSITION: 0 }, material: 0 }] }],
+      nodes: [{ mesh: 0 }],
+    };
+    const { primitives } = await parseMeshAsset(
+      new TextEncoder().encode(JSON.stringify(file)).buffer as ArrayBuffer,
+      '/m/',
+    );
+    const { maps, normalScale, occlusionStrength, emissive } = primitives[0].material;
+    expect(maps.base).toEqual({ image: '/m/a.png', sampler: { wrapS: 33071 } });
+    expect(maps.normal?.image).toBe('/m/b.png');
+    expect(maps.surface?.image).toBe('/m/c.png');
+    expect(maps.occlusion?.image).toBe('/m/d.png');
+    expect(maps.emissive?.image).toBe('/m/e.png');
+    expect({ normalScale, occlusionStrength, emissive }).toEqual({
+      normalScale: 0.5,
+      occlusionStrength: 0.25,
+      emissive: [1, 0.5, 0],
+    });
+  });
+
+  it('reads a binary STL', async () => {
+    const data = new ArrayBuffer(84 + 50);
+    const view = new DataView(data);
+    view.setUint32(80, 1, true);
+    [1, 0, 0, 0, 1, 0].forEach((value, index) => {
+      view.setFloat32(84 + 12 + 12 + index * 4, value, true);
+    });
+    const { primitives } = await parseMeshAsset(data);
+    expect([...primitives[0].positions]).toEqual([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+    expect([...primitives[0].normals.slice(0, 3)]).toEqual([0, 0, 1]);
+    expect(primitives[0].material.metallic).toBe(0);
+  });
+
+  it('reads an STL in text', async () => {
+    const stl =
+      'solid a\n facet normal 0 0 1\n  outer loop\n   vertex 0 0 0\n   vertex 1 0 0\n   vertex 0 1 0\n  endloop\n endfacet\nendsolid a\n';
+    const { primitives } = await parseMeshAsset(text(stl));
+    expect(primitives[0].positions).toHaveLength(9);
+  });
+
+  it('reads an OBJ, with a face of four corners and counting from the end', async () => {
+    const obj =
+      'mtllib a.mtl\nv 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nvt 0 0\nvn 0 0 1\nf 1/1/1 2/1/1 3/1/1 4/1/1\nf -4 -3 -2\n';
+    const { primitives, skipped } = await parseMeshAsset(text(obj));
+    expect(primitives[0].positions).toHaveLength(27);
+    expect(primitives[0].uvs).toBeUndefined();
+    expect([...primitives[0].normals.slice(0, 3)]).toEqual([0, 0, 1]);
+    expect(skipped).toEqual(['materials']);
+  });
+
+  it('says so when an OBJ names a vertex that is not there', async () => {
+    await expect(parseMeshAsset(text('v 0 0 0\nf 1 2 3\n'))).rejects.toThrow('not there');
   });
 });
 

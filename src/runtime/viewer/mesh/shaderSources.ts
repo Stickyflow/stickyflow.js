@@ -55,6 +55,17 @@ uniform float uRoughness;
 uniform vec3 uEye;
 uniform bool uHasTexture;
 uniform sampler2D uTexture;
+uniform bool uHasNormal;
+uniform sampler2D uNormalMap;
+uniform float uNormalScale;
+uniform bool uHasSurface;
+uniform sampler2D uSurfaceMap;
+uniform bool uHasOcclusion;
+uniform sampler2D uOcclusionMap;
+uniform float uOcclusionStrength;
+uniform bool uHasEmissive;
+uniform sampler2D uEmissiveMap;
+uniform vec3 uEmissive;
 out vec4 fragment;
 ${SHADOW_LOOKUP}
 const float PI = 3.14159265;
@@ -90,6 +101,25 @@ vec3 light(vec3 n, vec3 v, vec3 l, vec3 radiance, vec3 albedo, vec3 f0, float ro
   return (diffuse + specular) * radiance * nl;
 }
 
+// The file need not say how its pictures lie on the surface, as that follows from how they change across a pixel.
+vec3 bumped(vec3 n) {
+  vec3 dx = dFdx(vWorld);
+  vec3 dy = dFdy(vWorld);
+  vec2 ux = dFdx(vUv);
+  vec2 uy = dFdy(vUv);
+  vec3 alongY = cross(dy, n);
+  vec3 alongX = cross(n, dx);
+  vec3 t = alongY * ux.x + alongX * uy.x;
+  vec3 b = alongY * ux.y + alongX * uy.y;
+  float size = max(dot(t, t), dot(b, b));
+  if (size <= 0.0) {
+    return n;
+  }
+  vec3 m = texture(uNormalMap, vUv).xyz * 2.0 - 1.0;
+  m.xy *= uNormalScale;
+  return normalize(mat3(t / sqrt(size), b / sqrt(size), n) * m);
+}
+
 void main() {
   vec4 base = uBase;
   if (uHasTexture) {
@@ -100,8 +130,13 @@ void main() {
   if (dot(n, v) < 0.0) {
     n = -n;
   }
-  float roughness = clamp(uRoughness, 0.04, 1.0);
-  float metallic = clamp(uMetallic, 0.0, 1.0);
+  if (uHasNormal) {
+    n = bumped(n);
+  }
+  vec2 surface = uHasSurface ? texture(uSurfaceMap, vUv).gb : vec2(1.0);
+  float roughness = clamp(uRoughness * surface.x, 0.04, 1.0);
+  float metallic = clamp(uMetallic * surface.y, 0.0, 1.0);
+  float occlusion = uHasOcclusion ? mix(1.0, texture(uOcclusionMap, vUv).r, uOcclusionStrength) : 1.0;
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
   vec3 color = light(n, v, uKey, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
@@ -111,8 +146,9 @@ void main() {
   float a004 = min(r.x * r.x, pow(2.0, -9.28 * nv)) * r.x + r.y;
   vec2 ab = vec2(-1.04, 1.04) * a004 + r.zw;
   vec3 fresnel = f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - nv, 5.0);
-  color += room(reflect(-v, n), roughness) * (fresnel * ab.x + ab.y);
-  color += room(n, 1.0) * base.rgb * (1.0 - metallic) * 0.55;
+  color += room(reflect(-v, n), roughness) * (fresnel * ab.x + ab.y) * occlusion;
+  color += room(n, 1.0) * base.rgb * (1.0 - metallic) * 0.55 * occlusion;
+  color += uEmissive * (uHasEmissive ? texture(uEmissiveMap, vUv).rgb : vec3(1.0));
   color = filmic(color);
   color = pow(color, vec3(1.0 / 2.2));
   fragment = vec4(color * base.a, base.a);

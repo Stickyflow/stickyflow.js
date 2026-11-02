@@ -10,7 +10,7 @@ import {
   project,
   toWindow,
 } from './camera';
-import type { MeshAsset, MeshPrimitive } from './glb';
+import type { MaterialMapName, MeshAsset, MeshPrimitive } from './glb';
 import { colorOf, type Lighting, lightingOf } from './lighting';
 import {
   identity,
@@ -53,7 +53,7 @@ interface GpuPrimitive {
   transform: Mat4;
   source: MeshPrimitive;
   bounds: Box;
-  texture?: WebGLTexture;
+  textures: Partial<Record<MaterialMapName, WebGLTexture>>;
 }
 
 // One part of one mesh at its place in the world.
@@ -71,6 +71,16 @@ interface Program {
 const WORLD_UP: Vec3 = [0, 1, 0];
 const SHADOW_SIZE = 2048;
 const OCCLUSION_MARGIN = 0.004;
+// Unit 1 holds the shadow map.
+const MAP_SLOTS: ReadonlyArray<{ name: MaterialMapName; unit: number; has: string; sampler: string }> = [
+  { name: 'base', unit: 0, has: 'uHasTexture', sampler: 'uTexture' },
+  { name: 'normal', unit: 2, has: 'uHasNormal', sampler: 'uNormalMap' },
+  { name: 'surface', unit: 3, has: 'uHasSurface', sampler: 'uSurfaceMap' },
+  { name: 'occlusion', unit: 4, has: 'uHasOcclusion', sampler: 'uOcclusionMap' },
+  { name: 'emissive', unit: 5, has: 'uHasEmissive', sampler: 'uEmissiveMap' },
+];
+const MAP_UNIFORMS = MAP_SLOTS.filter(slot => slot.name !== 'base').flatMap(slot => [slot.has, slot.sampler]);
+const COLOR_MAPS: ReadonlySet<MaterialMapName> = new Set(['base', 'emissive']);
 const QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
 function compile(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
@@ -168,6 +178,10 @@ export class MeshRenderer {
       'uEye',
       'uHasTexture',
       'uTexture',
+      ...MAP_UNIFORMS,
+      'uNormalScale',
+      'uOcclusionStrength',
+      'uEmissive',
     ]);
     this.depth = link(gl, DEPTH_FRAGMENT, common);
     this.probing = link(gl, PROBE_FRAGMENT, [...common, 'uEye', 'uRange', 'uId']);
@@ -270,23 +284,30 @@ export class MeshRenderer {
     );
   }
 
-  setTexture(asset: string, primitiveIndex: number, image: ImageBitmap): void {
+  setTexture(asset: string, primitiveIndex: number, name: MaterialMapName, image: ImageBitmap): void {
     const primitive = this.assets.get(asset)?.[primitiveIndex];
     if (!primitive) {
       return;
     }
     const { gl } = this;
-    const { sampler } = primitive.source.material;
-    const texture = gl.createTexture();
+    const sampler = primitive.source.material.maps[name]?.sampler;
+    const texture = requireObject(gl.createTexture(), 'texture');
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      COLOR_MAPS.has(name) ? gl.SRGB8_ALPHA8 : gl.RGBA8,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      image,
+    );
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, sampler?.magFilter ?? gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, sampler?.minFilter ?? gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, sampler?.wrapS ?? gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, sampler?.wrapT ?? gl.REPEAT);
-    primitive.texture = texture ?? undefined;
+    primitive.textures[name] = texture;
   }
 
   private upload(source: MeshPrimitive): GpuPrimitive {
@@ -332,6 +353,7 @@ export class MeshRenderer {
       transform: source.transform,
       source,
       bounds,
+      textures: {},
     };
   }
 
@@ -569,7 +591,9 @@ export class MeshRenderer {
     gl.uniformMatrix4fv(uniforms.uViewProjection, false, camera.viewProjection);
     gl.uniformMatrix4fv(uniforms.uLight, false, lightMatrix);
     gl.uniform3fv(uniforms.uEye, camera.eye);
-    gl.uniform1i(uniforms.uTexture, 0);
+    for (const { unit, sampler } of MAP_SLOTS) {
+      gl.uniform1i(uniforms[sampler], unit);
+    }
     gl.uniform1i(uniforms.uShadow, 1);
     gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
     gl.uniform3fv(uniforms.uKey, lighting.direction);
@@ -658,8 +682,18 @@ export class MeshRenderer {
       gl.uniform4f(uniforms.uBase, r, g, b, material.baseColor[3] * mesh.opacity);
       gl.uniform1f(uniforms.uMetallic, mesh.metallic ?? material.metallic);
       gl.uniform1f(uniforms.uRoughness, mesh.roughness ?? material.roughness);
-      gl.uniform1i(uniforms.uHasTexture, primitive.texture ? 1 : 0);
-      gl.bindTexture(gl.TEXTURE_2D, primitive.texture ?? null);
+      gl.uniform1f(uniforms.uNormalScale, material.normalScale);
+      gl.uniform1f(uniforms.uOcclusionStrength, material.occlusionStrength);
+      gl.uniform3fv(uniforms.uEmissive, material.emissive);
+      for (const { name, unit, has } of MAP_SLOTS) {
+        // What the document says about a surface counts over the picture of the file.
+        const overruled = name === 'surface' && (mesh.metallic !== undefined || mesh.roughness !== undefined);
+        const texture = overruled ? undefined : primitive.textures[name];
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        gl.bindTexture(gl.TEXTURE_2D, texture ?? null);
+        gl.uniform1i(uniforms[has], texture ? 1 : 0);
+      }
+      gl.activeTexture(gl.TEXTURE0);
       this.drawPrimitive(primitive);
     }
   }
@@ -672,8 +706,8 @@ export class MeshRenderer {
         for (const buffer of primitive.buffers) {
           gl.deleteBuffer(buffer);
         }
-        if (primitive.texture) {
-          gl.deleteTexture(primitive.texture);
+        for (const texture of Object.values(primitive.textures)) {
+          gl.deleteTexture(texture);
         }
       }
     }

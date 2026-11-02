@@ -19,6 +19,7 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- SFL 1.9: the blocks `Scene`, `Mesh`, `Canvas` and `Light`.
 - The block `Mesh` in a `Model` draws a GLB or glTF file with WebGL2. Its layout has `position`, `rotation` and `scale` in three axes, its style `color`, `opacity`, `roughness` and `metallic`, and all of them can be bound to data, in the layout as `rotationY`, `positionX` and so on.
 - The block `Scene` in a `Model` holds a 3D world with a place, a size and a camera (`orbit`). A viewer drags it to orbit, a click selects a mesh, and its handles move, turn and scale it, with `meshSelect`, `meshChange` and `applyMeshChange`.
 - The block `Canvas` in a `Scene` is a flat surface in that world, with ordinary SFL on it. It is drawn as a texture, so meshes hide it and it casts a shadow. Shaders on it run in the 3D context, between what lies under and over them. Sliders and other components on it work with the pointer, its position, rotation and scale can be bound, and its handles write to its layout.
@@ -30,7 +31,7 @@ Two things count as breaking here that are easy to overlook:
 - An anchored object fades while a mesh stands between it and the camera.
 - The viewer option `resolveAsset` decides what address an asset is loaded from, or that it is not loaded. By default only http, https, blob and data addresses and relative paths load.
 - The viewer event `meshError` reports a file that could not be loaded.
-- The loader honours the samplers of a glTF texture.
+- The reader of a `Mesh` also takes STL and OBJ, told by what is in the file. Of glTF it now also uses normal, metallic and roughness, occlusion and emissive maps, and it honours the samplers of a texture.
 - `setMeshEditing` of the viewer switches off selection and handles in a `Scene`, for trying it out. On a `Canvas` a second click selects an object, which can then be moved and resized there, with the event `meshObjectChange` and `applyMeshObjectChange`.
 - `setMeshFlags` and `selectMeshItem` of the viewer let a host hide, lock and select what is in a `Scene`.
 - The block `Light` in a `Scene` is its sun, with `turn`, `height`, `color`, `intensity` and `ambient`, all of which can be bound. The sky and the floor in reflections follow it, so a low sun is warm all over. Colors go through a filmic curve.
