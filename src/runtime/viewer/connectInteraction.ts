@@ -46,7 +46,8 @@ function pointerValue(svg: SVGSVGElement, id: string, x: number, y: number): num
   return fraction * finite(params.max, 100);
 }
 
-function hit(svg: SVGSVGElement, ids: ReadonlySet<string>, x: number, y: number): string | null {
+function hit(viewer: Viewer, ids: ReadonlySet<string>, x: number, y: number): string | null {
+  const { svg } = viewer;
   let found: string | null = null;
   for (const node of svg.querySelectorAll('[data-sf-primary][data-sf-id]')) {
     const id = node.getAttribute('data-sf-id') ?? '';
@@ -58,7 +59,7 @@ function hit(svg: SVGSVGElement, ids: ReadonlySet<string>, x: number, y: number)
       found = id;
     }
   }
-  return found;
+  return found ?? viewer.meshObjectAt(x, y, { among: ids })?.id ?? null;
 }
 
 interface Session {
@@ -69,6 +70,7 @@ interface Session {
 
 interface Wiring {
   runtime: BindingRuntime;
+  viewer: Viewer;
   svg: SVGSVGElement;
   options: InteractionOptions;
   session: Session;
@@ -93,6 +95,11 @@ function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
   }
   const node = svg.querySelector(`[data-sf-primary][data-sf-id="${CSS.escape(id)}"]`);
   if (!node) {
+    // It lies on a Canvas in a Scene, so it is not in the drawing.
+    const onSurface = wiring.viewer.meshObjectAt(event.clientX, event.clientY, { holding: id });
+    if (onSurface) {
+      runtime.slide(id, onSurface.x, onSurface.y);
+    }
     return;
   }
   const box = node.getBoundingClientRect();
@@ -103,9 +110,9 @@ function driveValue(wiring: Wiring, id: string, event: PointerEvent): void {
 }
 
 function updateHover(wiring: Wiring, event: PointerEvent): void {
-  const { runtime, svg, options, session } = wiring;
+  const { runtime, viewer, options, session } = wiring;
   const over =
-    options.enabled?.() === false ? null : hit(svg, runtime.interactive.pressable, event.clientX, event.clientY);
+    options.enabled?.() === false ? null : hit(viewer, runtime.interactive.pressable, event.clientX, event.clientY);
   if (over === session.hovered) {
     return;
   }
@@ -119,13 +126,13 @@ function updateHover(wiring: Wiring, event: PointerEvent): void {
 }
 
 function pressStart(wiring: Wiring, event: PointerEvent): void {
-  const { runtime, svg, options, session } = wiring;
+  const { runtime, svg, viewer, options, session } = wiring;
   session.swallowClick = false;
   const inside = event.target instanceof Node && svg.contains(event.target);
   if (event.button !== 0 || options.enabled?.() === false || !inside) {
     return;
   }
-  const id = hit(svg, runtime.interactive.pressable, event.clientX, event.clientY);
+  const id = hit(viewer, runtime.interactive.pressable, event.clientX, event.clientY);
   if (!id) {
     return;
   }
@@ -151,14 +158,14 @@ function pressMove(wiring: Wiring, event: PointerEvent): void {
 }
 
 function pressEnd(wiring: Wiring, event: PointerEvent, tapOnElement: boolean): void {
-  const { runtime, svg, session } = wiring;
+  const { runtime, viewer, session } = wiring;
   if (!session.active) {
     return;
   }
   event.stopPropagation();
   const id = session.active;
   session.active = null;
-  const tapped = tapOnElement && hit(svg, runtime.interactive.pressable, event.clientX, event.clientY) === id;
+  const tapped = tapOnElement && hit(viewer, runtime.interactive.pressable, event.clientX, event.clientY) === id;
   runtime.release(id, tapped);
   updateHover(wiring, event);
 }
@@ -195,7 +202,7 @@ export function connectInteraction(
   options: InteractionOptions = {},
 ): () => void {
   const session: Session = { active: null, hovered: null, swallowClick: false };
-  const wiring: Wiring = { runtime, svg: viewer.svg, options, session };
+  const wiring: Wiring = { runtime, viewer, svg: viewer.svg, options, session };
   const listeners: Array<[string, (event: never) => void]> = [
     ['click', (event: MouseEvent) => swallowClick(session, event)],
     ['pointerdown', (event: PointerEvent) => pressStart(wiring, event)],

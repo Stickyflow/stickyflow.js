@@ -6,7 +6,7 @@ import type { Frame } from '../model/frame';
 import type { Point } from '../model/geometry/types';
 import type { IsometricObject } from '../model/isometricObject';
 import type { Link } from '../model/link';
-import type { Mesh, MeshAnchor, MeshCanvas } from '../model/mesh';
+import type { Mesh, MeshAnchor, MeshScene, MeshSurface } from '../model/mesh';
 import type { FreeformPath } from '../model/path';
 import type { Shape } from '../model/shape';
 import type { Swimlane } from '../model/swimlane';
@@ -26,7 +26,8 @@ export interface RenderInput {
   paths?: FreeformPath[];
   dimensions?: Dimension[];
   meshes?: Mesh[];
-  meshCanvases?: MeshCanvas[];
+  meshScenes?: MeshScene[];
+  meshSurfaces?: MeshSurface[];
   meshAnchors?: MeshAnchor[];
   charts?: Chart[];
   components?: Component[];

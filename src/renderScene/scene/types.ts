@@ -3,7 +3,7 @@ import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
-import type { Mesh, MeshAnchor } from '../../model/mesh';
+import type { Mesh, MeshAnchor, MeshSurface } from '../../model/mesh';
 import type { Shader } from '../../model/shader';
 
 export type RenderDiagnostic = Diagnostic;
@@ -204,6 +204,11 @@ export interface SceneText extends SceneBase {
 }
 
 // The place of the 3D world in the scene. A runtime draws the models into it.
+export interface SceneMeshSurface extends MeshSurface {
+  scene: RenderScene;
+  svg?: string;
+}
+
 export interface SceneMeshStage extends SceneBase {
   type: 'mesh-stage';
   x: number;
@@ -212,7 +217,9 @@ export interface SceneMeshStage extends SceneBase {
   height: number;
   stageId: string;
   orbit: [number, number];
+  shadow: boolean;
   meshes: Mesh[];
+  surfaces: SceneMeshSurface[];
   anchors: MeshAnchor[];
 }
 

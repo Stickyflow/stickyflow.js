@@ -4,7 +4,7 @@ export { CHART_TYPES } from './model/chart';
 export { AXIS_COS, AXIS_SIN } from './model/isometricObject';
 export type { IsometricFace, IsometricObject } from './model/isometricObject';
 export type { Dimension } from './model/dimension';
-export type { Mesh, MeshAnchor, MeshCanvas, Vec3 } from './model/mesh';
+export type { Mesh, MeshAnchor, MeshScene, Vec3 } from './model/mesh';
 export type { FreeformPath, PathFrame, PathPoint, PathSymbol } from './model/path';
 export { flattenPath, pathBounds, pathToSymbol, symbolToPath } from './model/path';
 export type { ShapeType } from './model/shape';

@@ -5,6 +5,18 @@ export const BINDABLE_PROPERTIES: Partial<Record<BlockKind, Record<string, Bindi
   Chart: { categories: { list: 'string' }, text: 'string' },
   Series: { values: { list: 'number' }, label: 'string' },
   Shape: { text: 'string', fill: 'string', stroke: 'string', textColor: 'string', opacity: 'number' },
+  Canvas: {
+    positionX: 'number',
+    positionY: 'number',
+    positionZ: 'number',
+    rotationX: 'number',
+    rotationY: 'number',
+    rotationZ: 'number',
+    scale: 'number',
+    scaleX: 'number',
+    scaleY: 'number',
+    scaleZ: 'number',
+  },
   Mesh: {
     color: 'string',
     opacity: 'number',

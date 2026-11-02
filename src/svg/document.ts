@@ -12,7 +12,17 @@ export function renderSvgDocument(scene: RenderScene, options: SvgRenderOptions 
   const height = Math.max(1, scene.bounds.maxY - scene.bounds.minY + padding * 2);
   const viewBox = `${num(scene.bounds.minX - padding)} ${num(scene.bounds.minY - padding)} ${num(width)} ${num(height)}`;
   const defs = new SvgDefinitionRegistry(options.idPrefix ? `${options.idPrefix}-` : '');
-  const nodes = options.linkHitAreas ? withLinkHitAreas(scene.nodes) : scene.nodes;
+  const nodes = (options.linkHitAreas ? withLinkHitAreas(scene.nodes) : scene.nodes).map(node =>
+    node.type === 'mesh-stage' && node.surfaces.length
+      ? {
+          ...node,
+          surfaces: node.surfaces.map(surface => ({
+            ...surface,
+            svg: renderSvgDocument(surface.scene, { padding: 0, includeXmlDeclaration: false }).svg,
+          })),
+        }
+      : node,
+  );
   const body = nodes.map(node => nodeSvg(node, defs)).join('\n  ');
   const declaration = options.includeXmlDeclaration === false ? '' : '<?xml version="1.0" encoding="UTF-8"?>\n';
   const svg = `${declaration}<svg xmlns="http://www.w3.org/2000/svg" width="${num(width)}px" height="${num(height)}px" viewBox="${viewBox}" role="img" data-sf-contract="${DOM_CONTRACT_VERSION}">\n  <defs>${defs.entries.join('')}</defs>\n  ${body}\n</svg>`;

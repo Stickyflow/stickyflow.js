@@ -13,10 +13,14 @@ function meshesIn(block: SflBlock): SflBlock[] {
   return childBlocks(block).flatMap(child => (child.kind === 'Mesh' ? [child, ...meshesIn(child)] : meshesIn(child)));
 }
 
+function blocksIn(block: SflBlock): SflBlock[] {
+  return [block, ...childBlocks(block).flatMap(blocksIn)];
+}
+
 // A Mesh draws only inside a Model, and a Model is never a mesh itself.
 export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
   const outside = sflDocument.blocks.flatMap(block => {
-    if (block.kind === 'Mesh' || block.kind === 'Canvas') {
+    if (block.kind === 'Mesh' || block.kind === 'Scene' || block.kind === 'Canvas') {
       return [
         warning(
           'mesh-outside-model',
@@ -43,5 +47,16 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
     .map(mesh =>
       warning('mesh-without-asset', mesh.name, `Mesh '${mesh.name}' has no asset, so there is nothing to draw.`),
     );
-  return [...outside, ...missing];
+  const onSurface = sflDocument.blocks
+    .flatMap(blocksIn)
+    .filter(block => block.kind === 'Canvas')
+    .flatMap(meshesIn)
+    .map(mesh =>
+      warning(
+        'mesh-on-canvas',
+        mesh.name,
+        `Mesh '${mesh.name}' lies on a Canvas, which is a flat surface. Put it into the Scene next to the Canvas.`,
+      ),
+    );
+  return [...outside, ...missing, ...onSurface];
 }

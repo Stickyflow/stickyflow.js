@@ -110,16 +110,31 @@ export function renderSurface(surface: Surface, seconds: number): void {
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.useProgram(surface.program);
+  const logicalWidth = Number(surface.owner.getAttribute('width'));
+  uploadSurface(
+    surface,
+    width,
+    height,
+    Number.isFinite(logicalWidth) && logicalWidth > 0 ? width / logicalWidth : density * fit,
+    seconds,
+  );
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+// All a program reads, with the program in use.
+export function uploadSurface(
+  surface: Surface,
+  width: number,
+  height: number,
+  pixelScale: number,
+  seconds: number,
+): void {
+  const { gl } = surface;
   const resolution = gl.getUniformLocation(surface.program, 'uResolution');
   if (resolution) {
     gl.uniform2f(resolution, width, height);
   }
-  const logicalWidth = Number(surface.owner.getAttribute('width'));
-  uniform1f(
-    surface,
-    'uPixelScale',
-    Number.isFinite(logicalWidth) && logicalWidth > 0 ? width / logicalWidth : density * fit,
-  );
+  uniform1f(surface, 'uPixelScale', pixelScale);
   uniform1f(surface, 'uTime', seconds);
   if (surface.backdropTexture) {
     bindBackdrop(surface, surface.backdropTexture);
@@ -131,5 +146,4 @@ export function renderSurface(surface: Surface, seconds: number): void {
   uploadPointer(surface, seconds, elapsed);
   uploadReactiveLight(surface);
   uniform1f(surface, 'uSurfacePadding', surface.surfacePadding);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
 }

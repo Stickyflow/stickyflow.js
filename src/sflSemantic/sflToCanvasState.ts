@@ -14,8 +14,9 @@ export type {
   SflGroupOut,
   SflIsometricObject,
   SflLinkOut,
-  SflMeshCanvasObject,
   SflMeshObject,
+  SflMeshSceneObject,
+  SflMeshSurfaceObject,
   SflPathObject,
   SflSwimlaneObject,
 } from './types';
@@ -23,8 +24,9 @@ export {
   isChartObject,
   isDimensionObject,
   isIsometricObject,
-  isMeshCanvasObject,
   isMeshObject,
+  isMeshSceneObject,
+  isMeshSurfaceObject,
   isPathObject,
   isSwimlaneObject,
 } from './types';

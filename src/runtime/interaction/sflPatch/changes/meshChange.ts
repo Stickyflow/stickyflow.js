@@ -5,6 +5,7 @@ export interface MeshChange {
   id: string;
   position?: [number, number, number];
   rotation?: [number, number, number];
+  scale?: [number, number, number];
 }
 
 const rounded = (value: number) => Math.round(value * 1000) / 1000;
@@ -22,6 +23,9 @@ export function applyMeshChange(sfl: string, change: MeshChange): string {
   }
   if (change.rotation) {
     tuples.push(['rotation', ...(change.rotation.map(rounded) as [number, number, number])]);
+  }
+  if (change.scale) {
+    tuples.push(['scale', ...(change.scale.map(rounded) as [number, number, number])]);
   }
   setOrInsertLayoutTuples(lines, range, tuples);
   return lines.join('\n');

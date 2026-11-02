@@ -52,7 +52,8 @@ interface Gltf {
   bufferViews?: GltfBufferView[];
   buffers?: Array<{ uri?: string; byteLength: number }>;
   images?: Array<{ uri?: string; bufferView?: number; mimeType?: string }>;
-  textures?: Array<{ source?: number }>;
+  textures?: Array<{ source?: number; sampler?: number }>;
+  samplers?: TextureSampler[];
   materials?: GltfMaterial[];
   meshes?: Array<{ primitives: GltfPrimitive[] }>;
   nodes?: GltfNode[];
@@ -63,11 +64,19 @@ interface Gltf {
   skins?: unknown[];
 }
 
+export interface TextureSampler {
+  magFilter?: number;
+  minFilter?: number;
+  wrapS?: number;
+  wrapT?: number;
+}
+
 export interface MeshMaterial {
   baseColor: [number, number, number, number];
   metallic: number;
   roughness: number;
   image?: Blob | string;
+  sampler?: TextureSampler;
   blend: boolean;
   doubleSided: boolean;
 }
@@ -255,6 +264,7 @@ function materialOf(gltf: Gltf, buffers: ArrayBuffer[], index: number | undefine
     metallic: pbr?.metallicFactor ?? 1,
     roughness: pbr?.roughnessFactor ?? 1,
     image: pbr?.baseColorTexture ? imageOf(gltf, buffers, pbr.baseColorTexture.index, base) : undefined,
+    sampler: gltf.samplers?.[gltf.textures?.[pbr?.baseColorTexture?.index ?? -1]?.sampler ?? -1],
     blend: material.alphaMode === 'BLEND',
     doubleSided: material.doubleSided === true,
   };

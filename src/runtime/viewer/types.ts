@@ -3,6 +3,7 @@ import type { RenderOptions } from '../../render';
 import type { ViewBox } from './display';
 import type { OwnerRef, Unsubscribe, ViewerEventHandler, ViewerEventName } from './events';
 import type { ViewerImageExportOptions } from './export';
+import type { MeshObjectPoint, MeshObjectQuery } from './mesh/stage';
 
 export interface ViewerOptions {
   container: HTMLElement;
@@ -12,6 +13,8 @@ export interface ViewerOptions {
   selectable?: boolean;
   diagramId?: string;
   renderOptions?: RenderOptions;
+  // Decides what address the asset of a Mesh is loaded from, or null to not load it.
+  resolveAsset?: (asset: string) => string | null;
 }
 
 export interface ViewerSource {
@@ -33,6 +36,8 @@ export interface Viewer {
   exportImage(options?: ViewerImageExportOptions): Promise<Blob>;
   setShaderParameters(ownerId: string, parameters: Record<string, ShaderParameter>): boolean;
   setComponentValue(componentId: string, value: string | number): boolean;
+  setMeshValue(meshId: string, property: string, value: number | string): boolean;
+  meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
   setWidgetValue(componentId: string, value: string | number): boolean;
   setPaused(paused: boolean): void;
   clearOverrides(): void;

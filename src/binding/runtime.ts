@@ -43,6 +43,10 @@ function pushLiveChange(target: BindingTarget, change: LiveChange): void {
     (target.setComponentValue ?? target.setWidgetValue)?.call(target, change.id, change.value);
     return;
   }
+  if (change.kind === 'mesh') {
+    target.setMeshValue?.(change.id, change.property, change.value);
+    return;
+  }
   for (const owner of change.owners) {
     target.setShaderParameters?.(owner, change.parameters);
   }

@@ -97,6 +97,27 @@ export function normalize(v: readonly number[]): Vec3 {
   return [v[0] / length, v[1] / length, v[2] / length];
 }
 
+export function orthographic(half: number, near: number, far: number): Mat4 {
+  return new Float32Array([
+    1 / half,
+    0,
+    0,
+    0,
+    0,
+    1 / half,
+    0,
+    0,
+    0,
+    0,
+    2 / (near - far),
+    0,
+    0,
+    0,
+    (far + near) / (near - far),
+    1,
+  ]);
+}
+
 export function lookAt(eye: Vec3, target: Vec3, up: Vec3): Mat4 {
   const z = normalize(subtract(eye, target));
   const x = normalize(cross(up, z));

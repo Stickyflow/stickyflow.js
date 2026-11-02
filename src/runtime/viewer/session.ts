@@ -6,6 +6,7 @@ import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
 import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
+import type { MeshObjectPoint, MeshObjectQuery } from './mesh/stage';
 import { type MeshStagesHandle, mountMeshStages } from './mesh/stage';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
@@ -30,9 +31,11 @@ export class ViewerSession implements Viewer {
     this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
     this.meshStages = mountMeshStages(this.display.svg, {
       interactive: Boolean(options.interactive),
+      resolveAsset: options.resolveAsset,
       events: {
         select: id => this.emitter.emit('meshSelect', { diagramId, id }),
         change: (id, change) => this.emitter.emit('meshChange', { diagramId, id, ...change }),
+        error: message => this.emitter.emit('meshError', { diagramId, message }),
       },
     });
     this.documentComponents = mountDocumentComponents(this.display.svg);
@@ -92,6 +95,14 @@ export class ViewerSession implements Viewer {
     return this.setComponentValue(componentId, value);
   }
 
+  meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {
+    return this.meshStages.objectAt(clientX, clientY, options);
+  }
+
+  setMeshValue(meshId: string, property: string, value: number | string): boolean {
+    return this.meshStages.setValue(meshId, property, value);
+  }
+
   setComponentValue(componentId: string, value: string | number): boolean {
     if (this.documentComponents.setValue(componentId, value)) {
       return true;
@@ -129,6 +140,7 @@ export class ViewerSession implements Viewer {
     this.shaderParameterOverrides.clear();
     this.rulerProgressOverrides.clear();
     this.documentComponents.clearValues();
+    this.meshStages.clearValues();
   }
 
   update(next: ViewerSource): void {
