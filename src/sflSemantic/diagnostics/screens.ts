@@ -6,7 +6,8 @@ const MODEL_SCREEN_LINES = ['device', 'screen', 'screenColor', 'at'];
 
 // From version 1.7 a screen is a block of its own, so these lines of the Model do nothing there.
 export function collectModelScreenLines(sflDocument: SflDocument): SflDiagnostic[] {
-  if (Number(sflDocument.version) < 1.7) {
+  const [major = 0, minor = 0] = String(sflDocument.version).split('.').map(Number);
+  if (major < 1 || (major === 1 && minor < 7)) {
     return [];
   }
   return sflDocument.blocks

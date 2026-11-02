@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-11-02
+
+### Fixed
+
+- `sfl 1.10` counts as later than `sfl 1.9`, so the lines of a Model that do nothing are reported there too.
+
 ## [0.17.0] - 2026-11-02
 
 ### Added
