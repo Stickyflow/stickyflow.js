@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-02
+
 ### Added
 
 - The shader programs `iridescentOrb`, `pointSphere`, `horizonGlow` and `lightStreaks`.
