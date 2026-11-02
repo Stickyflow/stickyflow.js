@@ -23,7 +23,7 @@ Two things count as breaking here that are easy to overlook:
 - The block `Scene` in a `Model` holds a 3D world with a place, a size and a camera (`orbit`). A viewer drags it to orbit, a click selects a mesh, and its handles move, turn and scale it, with `meshSelect`, `meshChange` and `applyMeshChange`.
 - The block `Canvas` in a `Scene` is a flat surface in that world, with ordinary SFL on it. It is drawn as a texture, so meshes hide it and it casts a shadow. Shaders on it run in the 3D context, between what lies under and over them. Sliders and other components on it work with the pointer, its position, rotation and scale can be bound, and its handles write to its layout.
 - `anchor` and `anchorAt` make any 2D object follow a point of a mesh, so a component can hang on it.
-- `shadow: true` on a `Scene` lays the shadow of the meshes on the ground, and meshes also shade each other. Surfaces reflect a soft room worked out in the shader.
+- `shadow: true` on a `Scene` switches on all shadows: on the ground and of meshes on each other. Surfaces reflect a soft room worked out in the shader.
 - `order` in the layout of a `Scene` puts it above or under the 2D objects. Without it the stage stays under them.
 - A bound value of a `Mesh` reaches the stage directly through the new `setMeshValue` of the viewer, without a new drawing of the SVG.
 - A third handle scales a mesh, and `applyMeshChange` and `meshChange` carry `scale`.
@@ -32,6 +32,7 @@ Two things count as breaking here that are easy to overlook:
 - The viewer event `meshError` reports a file that could not be loaded.
 - The loader honours the samplers of a glTF texture.
 - `setMeshEditing` of the viewer switches off selection and handles in a `Scene`, for trying it out. On a `Canvas` a second click selects an object, which can then be moved and resized there, with the event `meshObjectChange` and `applyMeshObjectChange`.
+- `setMeshFlags` and `selectMeshItem` of the viewer let a host hide, lock and select what is in a `Scene`.
 - The stage draws only the part of itself on the screen, so it stays sharp at any zoom.
 
 ## [0.15.0] - 2026-11-01

@@ -43,6 +43,7 @@ in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vUv;
 uniform vec4 uBase;
+uniform float uShadows;
 uniform float uMetallic;
 uniform float uRoughness;
 uniform vec3 uEye;
@@ -92,7 +93,7 @@ void main() {
   float metallic = clamp(uMetallic, 0.0, 1.0);
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
-  vec3 color = light(n, v, normalize(KEY), vec3(2.8), base.rgb, f0, roughness, metallic) * lit();
+  vec3 color = light(n, v, normalize(KEY), vec3(2.8), base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
   color += light(n, v, normalize(FILL), vec3(0.5), base.rgb, f0, roughness, metallic);
   // What the room gives, by a short form of the usual table of how a rough surface reflects.
   vec4 r = roughness * vec4(-1.0, -0.0275, -0.572, 0.022) + vec4(1.0, 0.0425, 1.04, -0.04);

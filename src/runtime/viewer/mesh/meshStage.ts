@@ -21,6 +21,7 @@ import {
   type MeshHandleChange,
   type MeshObjectPoint,
   type MeshObjectQuery,
+  type MeshStageFlags,
   type MeshStageOptions,
   type Placement,
   type StageData,
@@ -70,6 +71,8 @@ export class MeshStage {
   // Values that came from data while the drawing stayed as it was. They last until the data says otherwise.
   private readonly live = new Map<string, Map<string, number | string>>();
   private readonly errors = new Set<string>();
+  private hidden: ReadonlySet<string> = new Set();
+  private locked: ReadonlySet<string> = new Set();
   private readonly originals = new WeakMap<Element, { written: string; original: string | null }>();
   // Whether each anchored object is behind a mesh, for the view it was last worked out in.
   private readonly hiddenAnchors = new Map<string, boolean>();
@@ -238,10 +241,18 @@ export class MeshStage {
     return placed;
   }
 
+  // A hidden Scene hides all that stands in it.
+  private visible<T extends { id: string }>(items: readonly T[]): T[] {
+    return this.hidden.has(this.data.id) ? [] : items.filter(item => !this.hidden.has(item.id));
+  }
+
   private placed(): Placement {
     this.placement ??= {
-      meshes: this.data.meshes.map(mesh => this.placedValues(mesh)),
-      surfaces: (this.data.surfaces ?? []).map(surface => this.placedValues(surface)),
+      meshes: this.visible(this.data.meshes).map(mesh => this.placedValues(mesh)),
+      surfaces: this.visible(this.data.surfaces ?? []).map(surface => ({
+        ...this.placedValues(surface),
+        members: surface.members.filter(member => !this.hidden.has(member.id)),
+      })),
     };
     return this.placement;
   }
@@ -250,7 +261,7 @@ export class MeshStage {
     return this.placed().surfaces.map(surface => ({
       id: surface.id,
       matrix: surfaceMatrix(surface),
-      layers: this.textures?.layers(surface) ?? [],
+      layers: this.textures?.layers(surface, this.hidden) ?? [],
     }));
   }
 
@@ -297,8 +308,11 @@ export class MeshStage {
     const { meshes } = this.placed();
     const planes = this.planes();
     // The camera is framed when what stands on the stage changes, not when a mesh moves, so a mesh that moves is seen moving.
-    const loaded = meshes.filter(mesh => renderer.hasAsset(mesh.asset));
-    const framing = `${aspect.toFixed(2)}|${loaded.map(mesh => mesh.id).join('|')}|${planes.map(plane => plane.id).join('|')}`;
+    // Hiding something is no reason to move the camera, so this counts all that the document has.
+    const framing = `${aspect.toFixed(2)}|${this.data.meshes
+      .filter(mesh => renderer.hasAsset(mesh.asset))
+      .map(mesh => mesh.id)
+      .join('|')}|${(this.data.surfaces ?? []).map(surface => surface.id).join('|')}`;
     if (framing !== this.framedAssets) {
       const box = renderer.box(meshes, planes);
       this.frame = box && frameBox(box, this.yaw, this.pitch, aspect, this.data.shadow);
@@ -306,7 +320,7 @@ export class MeshStage {
     }
     this.camera = this.frame ? makeCamera(this.frame, this.yaw, this.pitch, aspect, window) : undefined;
     this.keepSurfacesSharp(planes);
-    renderer.draw(meshes, this.camera, { groundShadow: this.data.shadow, planes });
+    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes });
     this.placeAnchors();
     this.drawHandles();
     if (planes.some(plane => plane.layers.some(layer => 'rect' in layer))) {
@@ -633,14 +647,20 @@ export class MeshStage {
     }
     const found = this.surfaceAt(clientX, clientY);
     if (!found) {
-      this.select(renderer.pick(this.placed().meshes, camera, ...this.canvasPoint(clientX, clientY)));
+      const hit = renderer.pick(this.placed().meshes, camera, ...this.canvasPoint(clientX, clientY));
+      this.select(hit && !this.locked.has(hit) ? hit : null);
       return;
     }
     const { surface } = found;
+    if (this.locked.has(surface.id)) {
+      this.select(null);
+      return;
+    }
     // The first click takes the Canvas, the next what lies on it.
     const open = this.selected === surface.id || surface.members.some(member => member.id === this.selectedObject);
     if (open) {
-      this.selectObject(topmostAt(surface, found.x * surface.width, found.y * surface.height)?.id ?? null);
+      const free = { ...surface, members: surface.members.filter(member => !this.locked.has(member.id)) };
+      this.selectObject(topmostAt(free, found.x * surface.width, found.y * surface.height)?.id ?? null);
     } else {
       this.select(surface.id);
     }
@@ -663,6 +683,36 @@ export class MeshStage {
   clearValues(): void {
     this.live.clear();
     this.schedule();
+  }
+
+  setFlags({ hidden, locked }: MeshStageFlags): void {
+    this.hidden = new Set(hidden);
+    this.locked = new Set(locked);
+    for (const id of [this.selected, this.selectedObject]) {
+      if (id && (this.hidden.has(id) || this.locked.has(id))) {
+        this.select(null);
+      }
+    }
+    this.schedule();
+  }
+
+  // Whether this stage has the name, as a mesh, a Canvas, what lies on one, or itself.
+  selectItem(id: string): boolean {
+    if (id === this.data.id) {
+      this.select(null);
+      return true;
+    }
+    if (this.hasMesh(id)) {
+      this.select(id);
+      return true;
+    }
+    const surface = this.data.surfaces?.find(item => item.members.some(member => member.id === id));
+    if (!surface) {
+      return false;
+    }
+    this.select(surface.id);
+    this.selectObject(id);
+    return true;
   }
 
   setEditing(editing: boolean): void {

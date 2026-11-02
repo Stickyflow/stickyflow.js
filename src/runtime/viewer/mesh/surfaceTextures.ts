@@ -22,7 +22,7 @@ export function surfaceMatrix({ position, rotation, scale, width, height }: Stag
 }
 
 interface SurfaceState {
-  svg: string;
+  content: string;
   level: number;
   layers: PlaneLayer[];
 }
@@ -30,6 +30,7 @@ interface SurfaceState {
 // The pictures of the surfaces of a stage. They are made while the old ones stay on show, so a change never leaves a gap.
 export class SurfaceTextures {
   private readonly states = new Map<string, SurfaceState>();
+  private readonly hiddenOn = new Map<string, string[]>();
   private readonly renderer: MeshRenderer;
   private readonly canvas: HTMLCanvasElement;
   private readonly changed: () => void;
@@ -47,8 +48,13 @@ export class SurfaceTextures {
     this.failed = failed;
   }
 
-  layers(surface: StageSurface): readonly PlaneLayer[] {
+  // What is hidden on a surface is left out of its picture.
+  layers(surface: StageSurface, hidden: ReadonlySet<string>): readonly PlaneLayer[] {
     const known = this.states.get(surface.id);
+    this.hiddenOn.set(
+      surface.id,
+      [...hidden].filter(id => surface.svg.includes(`data-sf-id="${id}"`)),
+    );
     this.sync(surface, known?.level ?? START_LEVEL);
     return this.states.get(surface.id)?.layers ?? [];
   }
@@ -82,12 +88,14 @@ export class SurfaceTextures {
 
   private sync(surface: StageSurface, level: number): void {
     const known = this.states.get(surface.id);
-    if (known && known.svg === surface.svg && known.level === level) {
+    const hidden = this.hiddenOn.get(surface.id) ?? [];
+    const content = `${hidden.join()}|${surface.svg}`;
+    if (known && known.content === content && known.level === level) {
       return;
     }
-    const state: SurfaceState = { svg: surface.svg, level, layers: known?.layers ?? [] };
+    const state: SurfaceState = { content, level, layers: known?.layers ?? [] };
     this.states.set(surface.id, state);
-    this.make(surface, level, () => this.states.get(surface.id) === state)
+    this.make(surface, hidden, level, () => this.states.get(surface.id) === state)
       .then(made => {
         if (this.states.get(surface.id) !== state) {
           this.free(made);
@@ -102,9 +110,19 @@ export class SurfaceTextures {
       });
   }
 
-  private async make(surface: StageSurface, level: number, current: () => boolean): Promise<PlaneLayer[]> {
+  private async make(
+    surface: StageSurface,
+    hidden: readonly string[],
+    level: number,
+    current: () => boolean,
+  ): Promise<PlaneLayer[]> {
     const page = this.canvas.ownerDocument;
     const parts = await surfaceLayers(surface.svg, surface.width, surface.height, page, root => {
+      for (const id of hidden) {
+        for (const node of root.querySelectorAll(`[data-sf-id="${id}"]`)) {
+          node.remove();
+        }
+      }
       for (const shader of root.querySelectorAll('foreignObject[data-sf-shader]')) {
         hideBaseGeometry(shader);
       }

@@ -5,6 +5,7 @@ import {
   MESH_STAGE_ATTR,
   type MeshObjectPoint,
   type MeshObjectQuery,
+  type MeshStageFlags,
   type MeshStageOptions,
   type MeshStagesHandle,
 } from './stageTypes';
@@ -15,6 +16,7 @@ export type {
   MeshObjectPoint,
   MeshObjectQuery,
   MeshStageEvents,
+  MeshStageFlags,
   MeshStageOptions,
   MeshStagesHandle,
 } from './stageTypes';
@@ -24,6 +26,7 @@ class MeshStages implements MeshStagesHandle {
   private readonly stages = new Map<string, MeshStage>();
   private readonly pending = new Map<string, number | string>();
   private editing = true;
+  private flags: MeshStageFlags = { hidden: [], locked: [] };
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
 
@@ -54,6 +57,7 @@ class MeshStages implements MeshStagesHandle {
       } else {
         const created = new MeshStage(host, this.svg, this.options);
         created.setEditing(this.editing);
+        created.setFlags(this.flags);
         this.stages.set(id, created);
       }
     }
@@ -106,6 +110,25 @@ class MeshStages implements MeshStagesHandle {
     for (const stage of this.stages.values()) {
       stage.clearValues();
     }
+  }
+
+  setFlags(flags: MeshStageFlags): void {
+    this.flags = flags;
+    for (const stage of this.stages.values()) {
+      stage.setFlags(flags);
+    }
+  }
+
+  selectItem(id: string | null): boolean {
+    let found = false;
+    for (const stage of this.stages.values()) {
+      if (id && !found && stage.selectItem(id)) {
+        found = true;
+      } else {
+        stage.select(null);
+      }
+    }
+    return found;
   }
 
   setEditing(editing: boolean): void {

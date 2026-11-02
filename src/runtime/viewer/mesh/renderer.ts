@@ -13,6 +13,7 @@ import {
 } from './camera';
 import type { MeshAsset, MeshPrimitive } from './glb';
 import {
+  identity,
   lookAt,
   type Mat4,
   modelMatrix,
@@ -168,6 +169,7 @@ export class MeshRenderer {
     this.main = link(gl, FRAGMENT, [
       ...common,
       'uShadow',
+      'uShadows',
       'uBase',
       'uMetallic',
       'uRoughness',
@@ -547,7 +549,7 @@ export class MeshRenderer {
   draw(
     meshes: readonly Mesh[],
     camera: Camera | undefined,
-    options: { groundShadow?: boolean; planes?: readonly Plane[] } = {},
+    options: { shadows?: boolean; planes?: readonly Plane[] } = {},
   ): void {
     const planes = options.planes ?? [];
     const { gl } = this;
@@ -563,7 +565,7 @@ export class MeshRenderer {
     }
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
-    const lightMatrix = this.shadowMatrix(instances, planes, box);
+    const lightMatrix = options.shadows ? this.shadowMatrix(instances, planes, box) : identity();
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.shadowMap);
@@ -575,13 +577,14 @@ export class MeshRenderer {
     gl.uniform3fv(uniforms.uEye, camera.eye);
     gl.uniform1i(uniforms.uTexture, 0);
     gl.uniform1i(uniforms.uShadow, 1);
+    gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
     gl.activeTexture(gl.TEXTURE0);
 
     const seeThrough = ({ mesh, primitive }: Instance) => mesh.opacity < 1 || primitive.source.material.blend;
     this.drawInstances(instances.filter(instance => !seeThrough(instance)));
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    if (options.groundShadow) {
+    if (options.shadows) {
       this.drawGround(camera, lightMatrix, box);
     }
     this.drawPlanes(camera, planes);

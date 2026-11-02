@@ -26,6 +26,11 @@ export interface MeshStageOptions {
   events: MeshStageEvents;
 }
 
+export interface MeshStageFlags {
+  hidden: readonly string[];
+  locked: readonly string[];
+}
+
 export interface MeshStagesHandle {
   // The pictures of the stages in the order of the document, for exports.
   capture(): Array<string | undefined>;
@@ -33,6 +38,10 @@ export interface MeshStagesHandle {
   setValue(meshId: string, property: string, value: number | string): boolean;
   clearValues(): void;
   setEditing(editing: boolean): void;
+  // What the layers of a host have hidden or locked, by name.
+  setFlags(flags: MeshStageFlags): void;
+  // Selects a mesh, a Canvas or what lies on one, from outside the stage. False when no stage knows the name.
+  selectItem(id: string | null): boolean;
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
   destroy(): void;
 }
