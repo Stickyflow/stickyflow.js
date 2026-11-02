@@ -4,7 +4,13 @@ import { asNumber, asString } from '../../ast/valueAccess';
 import { resolveChartObject } from '../artifacts/chart/resolver';
 import { resolveDimensionObject } from '../artifacts/dimension/resolver';
 import { resolveIsometricObject } from '../artifacts/isometric/resolver';
-import { readAnchor, resolveMeshCanvasObject, resolveMeshObject } from '../artifacts/mesh/resolver';
+import {
+  readAnchor,
+  resolveMeshLightObject,
+  resolveMeshObject,
+  resolveMeshSceneObject,
+  resolveMeshSurfaceObject,
+} from '../artifacts/mesh/resolver';
 import { resolvePathObject } from '../artifacts/path/resolver';
 import { resolveSwimlaneObject } from '../artifacts/swimlane/resolver';
 import type {
@@ -58,8 +64,12 @@ export function resolveCanvasObject(
       return resolveDimensionObject(base, properties, origin);
     case 'mesh':
       return resolveMeshObject(base, block, properties, layoutProp);
-    case 'meshCanvas':
-      return resolveMeshCanvasObject(base, properties);
+    case 'meshScene':
+      return resolveMeshSceneObject(base, properties);
+    case 'meshLight':
+      return resolveMeshLightObject(base, properties);
+    case 'meshSurface':
+      return resolveMeshSurfaceObject(base, block, layoutProp);
     case 'swimlane':
       return resolveSwimlaneObject(base, properties);
     case 'frame':

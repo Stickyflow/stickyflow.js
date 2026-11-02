@@ -2,7 +2,7 @@ export { applyChartValueChange } from './changes/chartValueChange';
 export { applyDimensionChange } from './changes/dimensionChange';
 export { applyLinkReconnectChange } from './changes/linkReconnectChange';
 export { applyLinkSegmentChange } from './changes/linkSegmentChange';
-export { applyMeshChange, type MeshChange } from './changes/meshChange';
+export { applyMeshChange, applyMeshObjectChange, type MeshChange, type MeshObjectChange } from './changes/meshChange';
 export { applyMoveChange, applyMoveChanges } from './changes/moveChange';
 export { applyPathPointChange } from './changes/pathPointChange';
 export { applyPropertyChange } from './changes/propertyChange';

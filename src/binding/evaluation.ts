@@ -1,6 +1,6 @@
 import { type ComponentValue, isBuiltInComponentType } from '../model/component';
 import { type RenderResult, renderCanvas } from '../render';
-import { APPLY, applyShader } from './applyValue';
+import { APPLY, applyMesh, applyShader } from './applyValue';
 import { evaluate } from './expression';
 import { missingSource, type RuntimeState, readValue } from './runtimeState';
 import type { LiveChange } from './runtimeTypes';
@@ -83,6 +83,16 @@ function evaluateBinding(state: RuntimeState, binding: BoundProperty): boolean {
       kind: 'shader',
       owners: applyShader(state.input, binding, value),
       parameters: { [binding.property]: value as number },
+    });
+    return false;
+  }
+  if (binding.ownerKind === 'Mesh' || binding.ownerKind === 'Canvas' || binding.ownerKind === 'Light') {
+    applyMesh(state.input, binding.ownerPath[0], binding.property, value);
+    announce(state, binding.id, {
+      kind: 'mesh',
+      id: binding.ownerPath[0],
+      property: binding.property,
+      value: value as number | string,
     });
     return false;
   }

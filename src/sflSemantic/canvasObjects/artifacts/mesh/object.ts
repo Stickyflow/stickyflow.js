@@ -1,20 +1,38 @@
 import type { SflCanvasObject } from '../../types';
-import type { SflMeshCanvasData, SflMeshData } from './types';
+import type { SflMeshData, SflMeshLightData, SflMeshSceneData, SflMeshSurfaceData } from './types';
 
 export type SflMeshObject = SflCanvasObject & {
   objectType: 'mesh';
   mesh: SflMeshData;
 };
 
-export type SflMeshCanvasObject = SflCanvasObject & {
-  objectType: 'meshCanvas';
-  meshCanvas: SflMeshCanvasData;
+export type SflMeshSceneObject = SflCanvasObject & {
+  objectType: 'meshScene';
+  meshScene: SflMeshSceneData;
 };
+
+export type SflMeshSurfaceObject = SflCanvasObject & {
+  objectType: 'meshSurface';
+  meshSurface: SflMeshSurfaceData;
+};
+
+export function isMeshSurfaceObject(canvasObject: SflCanvasObject): canvasObject is SflMeshSurfaceObject {
+  return canvasObject.objectType === 'meshSurface' && canvasObject.meshSurface !== undefined;
+}
+
+export type SflMeshLightObject = SflCanvasObject & {
+  objectType: 'meshLight';
+  meshLight: SflMeshLightData;
+};
+
+export function isMeshLightObject(canvasObject: SflCanvasObject): canvasObject is SflMeshLightObject {
+  return canvasObject.objectType === 'meshLight' && canvasObject.meshLight !== undefined;
+}
 
 export function isMeshObject(canvasObject: SflCanvasObject): canvasObject is SflMeshObject {
   return canvasObject.objectType === 'mesh' && canvasObject.mesh !== undefined;
 }
 
-export function isMeshCanvasObject(canvasObject: SflCanvasObject): canvasObject is SflMeshCanvasObject {
-  return canvasObject.objectType === 'meshCanvas' && canvasObject.meshCanvas !== undefined;
+export function isMeshSceneObject(canvasObject: SflCanvasObject): canvasObject is SflMeshSceneObject {
+  return canvasObject.objectType === 'meshScene' && canvasObject.meshScene !== undefined;
 }

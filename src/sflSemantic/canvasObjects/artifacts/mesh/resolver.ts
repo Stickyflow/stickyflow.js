@@ -1,8 +1,8 @@
-import { DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
+import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase } from '../../types';
-import type { SflMeshCanvasObject, SflMeshObject } from './object';
+import type { SflMeshLightObject, SflMeshObject, SflMeshSceneObject, SflMeshSurfaceObject } from './object';
 import type { SflAnchorData } from './types';
 
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
@@ -38,12 +38,52 @@ export function resolveMeshObject(
   };
 }
 
-export function resolveMeshCanvasObject(
+export function resolveMeshSceneObject(
   base: SflCanvasObjectBase,
   properties: Map<string, SflValue>,
-): SflMeshCanvasObject {
+): SflMeshSceneObject {
   const [yaw = DEFAULT_ORBIT[0], pitch = DEFAULT_ORBIT[1]] = tupleValues(properties.get('orbit')) ?? [];
-  return { ...base, objectType: 'meshCanvas', meshCanvas: { orbit: [yaw, pitch] } };
+  return {
+    ...base,
+    objectType: 'meshScene',
+    meshScene: { orbit: [yaw, pitch], shadow: asString(properties.get('shadow')) === 'true' },
+  };
+}
+
+// Its position is in the world, so it says nothing about the drawing: what lies on it counts from its own corner.
+export function resolveMeshSurfaceObject(
+  base: SflCanvasObjectBase,
+  block: SflBlock,
+  layoutProp: LayoutProp,
+): SflMeshSurfaceObject {
+  return {
+    ...base,
+    x: 0,
+    y: 0,
+    objectType: 'meshSurface',
+    meshSurface: {
+      position: vector(block, layoutProp, 'position', 0),
+      rotation: vector(block, layoutProp, 'rotation', 0),
+      scale: vector(block, layoutProp, 'scale', 1),
+    },
+  };
+}
+
+export function resolveMeshLightObject(
+  base: SflCanvasObjectBase,
+  properties: Map<string, SflValue>,
+): SflMeshLightObject {
+  return {
+    ...base,
+    objectType: 'meshLight',
+    meshLight: {
+      turn: asNumber(properties.get('turn')) ?? DEFAULT_LIGHT.turn,
+      height: asNumber(properties.get('height')) ?? DEFAULT_LIGHT.height,
+      color: asString(properties.get('color')),
+      intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
+      ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
+    },
+  };
 }
 
 export function readAnchor(properties: Map<string, SflValue>): SflAnchorData | undefined {

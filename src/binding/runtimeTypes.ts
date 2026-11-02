@@ -15,11 +15,13 @@ export interface BindingTarget {
   setComponentValue?(componentId: string, value: string | number): unknown;
   setWidgetValue?(componentId: string, value: string | number): unknown;
   setShaderParameters?(ownerId: string, parameters: Record<string, number>): unknown;
+  setMeshValue?(meshId: string, property: string, value: number | string): unknown;
 }
 
 export type LiveChange =
   | { kind: 'component'; id: string; value: number }
-  | { kind: 'shader'; owners: string[]; parameters: Record<string, number> };
+  | { kind: 'shader'; owners: string[]; parameters: Record<string, number> }
+  | { kind: 'mesh'; id: string; property: string; value: number | string };
 
 export interface ElementState {
   pressed: boolean;

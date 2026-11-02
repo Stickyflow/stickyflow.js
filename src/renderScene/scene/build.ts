@@ -5,6 +5,7 @@ import { buildDimensions } from '../artifacts/dimension';
 import { buildIsometricObjects } from '../artifacts/isometric';
 import { buildLinks } from '../artifacts/link';
 import { buildMeshStages } from '../artifacts/meshStage';
+import { splitMeshSurfaces } from '../artifacts/meshSurfaces';
 import { buildFreeformPaths } from '../artifacts/path';
 import { buildShapes } from '../artifacts/shape';
 import { buildCharts } from '../charts';
@@ -75,13 +76,19 @@ function stackingOf(input: RenderInput): Map<string, Stacking> {
   add('chart', input.charts ?? [], 20_000);
   add('path', input.paths ?? [], 30_000);
   add('dimension', input.dimensions ?? [], 31_000);
+  add('mesh-stage', input.meshScenes ?? [], -1_000);
   return stacking;
 }
 
 function stampStacking(nodes: RenderNode[], input: RenderInput): void {
   const stacking = stackingOf(input);
   for (const node of nodes) {
-    const stack = node.identity ? stacking.get(`${node.identity.role}:${node.identity.id}`) : undefined;
+    const stack =
+      node.type === 'mesh-stage'
+        ? stacking.get(`mesh-stage:${node.stageId}`)
+        : node.identity
+          ? stacking.get(`${node.identity.role}:${node.identity.id}`)
+          : undefined;
     node.rank = stack?.rank ?? 0;
     node.sequence = stack?.sequence ?? 0;
   }
@@ -91,11 +98,18 @@ export interface BuildRenderSceneOptions {
   measureText?: MeasureTextFactory;
 }
 
-export function buildRenderScene(input: RenderInput, options: BuildRenderSceneOptions = {}): RenderScene {
+export function buildRenderScene(whole: RenderInput, options: BuildRenderSceneOptions = {}): RenderScene {
   const { measureText } = options;
+  const { input, surfaces } = splitMeshSurfaces(whole, part => buildRenderScene(part, options));
   const diagnostics: RenderDiagnostic[] = [...(input.diagnostics ?? [])];
   const nodes: RenderNode[] = [
-    ...buildMeshStages(input.meshes ?? [], input.meshCanvases ?? [], input.meshAnchors ?? []),
+    ...buildMeshStages(
+      input.meshes ?? [],
+      input.meshScenes ?? [],
+      input.meshAnchors ?? [],
+      surfaces,
+      input.meshLights ?? [],
+    ),
     ...buildContainers(input),
     ...buildFreeformPaths(input.paths ?? []),
     ...buildCharts(input.charts ?? [], diagnostics),

@@ -36,7 +36,17 @@ function rollingNumberSvg(node: Extract<RenderNode, { type: 'rolling-number' }>,
 }
 
 function meshStageSvg(node: Extract<RenderNode, { type: 'mesh-stage' }>, defs: SvgDefinitionRegistry): string {
-  const data = xml(JSON.stringify({ id: node.stageId, orbit: node.orbit, meshes: node.meshes, anchors: node.anchors }));
+  const data = xml(
+    JSON.stringify({
+      id: node.stageId,
+      orbit: node.orbit,
+      shadow: node.shadow,
+      light: node.light,
+      meshes: node.meshes,
+      surfaces: node.surfaces.map(({ scene: _scene, ...surface }) => surface),
+      anchors: node.anchors,
+    }),
+  );
   return `<foreignObject id="${defs.elementId(node.id)}"${contractAttrs(node)} data-sf-mesh-stage="${data}" x="${num(node.x)}" y="${num(node.y)}" width="${num(node.width)}" height="${num(node.height)}" pointer-events="all"><canvas xmlns="http://www.w3.org/1999/xhtml" style="display:block;width:100%;height:100%"></canvas></foreignObject>`;
 }
 

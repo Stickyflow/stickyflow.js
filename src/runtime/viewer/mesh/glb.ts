@@ -1,6 +1,7 @@
 import { fromQuaternionTrs, identity, type Mat4, multiply } from './matrix';
+import { computeNormals, isBinaryStl, looksLikeObj, type PlainGeometry, parseObj, parseStl } from './meshFormats';
 
-// A small reader for glTF 2.0, as a binary .glb or as a .gltf with its buffers. It keeps what a static mesh needs and reports the rest in `skipped`.
+// A small reader for glTF 2.0, as a binary .glb or as a .gltf with its buffers, and for STL and OBJ. It keeps what a static mesh needs and reports the rest in `skipped`.
 
 interface GltfAccessor {
   bufferView?: number;
@@ -41,9 +42,14 @@ interface GltfMaterial {
   pbrMetallicRoughness?: {
     baseColorFactor?: number[];
     baseColorTexture?: { index: number };
+    metallicRoughnessTexture?: { index: number };
     metallicFactor?: number;
     roughnessFactor?: number;
   };
+  normalTexture?: { index: number; scale?: number };
+  occlusionTexture?: { index: number; strength?: number };
+  emissiveTexture?: { index: number };
+  emissiveFactor?: number[];
 }
 
 interface Gltf {
@@ -52,7 +58,8 @@ interface Gltf {
   bufferViews?: GltfBufferView[];
   buffers?: Array<{ uri?: string; byteLength: number }>;
   images?: Array<{ uri?: string; bufferView?: number; mimeType?: string }>;
-  textures?: Array<{ source?: number }>;
+  textures?: Array<{ source?: number; sampler?: number }>;
+  samplers?: TextureSampler[];
   materials?: GltfMaterial[];
   meshes?: Array<{ primitives: GltfPrimitive[] }>;
   nodes?: GltfNode[];
@@ -63,11 +70,28 @@ interface Gltf {
   skins?: unknown[];
 }
 
+export interface TextureSampler {
+  magFilter?: number;
+  minFilter?: number;
+  wrapS?: number;
+  wrapT?: number;
+}
+
+export type MaterialMapName = 'base' | 'normal' | 'surface' | 'occlusion' | 'emissive';
+
+export interface MaterialMap {
+  image: Blob | string;
+  sampler?: TextureSampler;
+}
+
 export interface MeshMaterial {
   baseColor: [number, number, number, number];
   metallic: number;
   roughness: number;
-  image?: Blob | string;
+  emissive: [number, number, number];
+  normalScale: number;
+  occlusionStrength: number;
+  maps: Partial<Record<MaterialMapName, MaterialMap>>;
   blend: boolean;
   doubleSided: boolean;
 }
@@ -93,10 +117,17 @@ const TRIANGLES = 4;
 const COMPONENTS: Record<string, number> = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 };
 const SIZES: Record<number, number> = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 };
 const NORMALIZE_BY: Record<number, number> = { 5120: 127, 5121: 255, 5122: 32767, 5123: 65535 };
+// A file that brings no material of its own looks like matte clay.
+const PLAIN_MATERIAL_COLOR: [number, number, number, number] = [0.72, 0.72, 0.72, 1];
+const PLAIN_ROUGHNESS = 0.65;
 const DEFAULT_MATERIAL: MeshMaterial = {
   baseColor: [1, 1, 1, 1],
   metallic: 1,
   roughness: 1,
+  emissive: [0, 0, 0],
+  normalScale: 1,
+  occlusionStrength: 1,
+  maps: {},
   blend: false,
   doubleSided: false,
 };
@@ -136,7 +167,7 @@ function readGltf(data: ArrayBuffer): Gltf {
   try {
     return JSON.parse(new TextDecoder().decode(data)) as Gltf;
   } catch {
-    throw new Error('neither a GLB nor a glTF file');
+    throw new Error('neither GLB, glTF, STL nor OBJ');
   }
 }
 
@@ -199,31 +230,6 @@ function accessorIndices(gltf: Gltf, buffers: ArrayBuffer[], index: number): Uin
   return accessor.componentType === 5123 ? new Uint16Array(bytes) : new Uint8Array(bytes);
 }
 
-// For a mesh that brings no normals: flat ones, face by face, added up where a vertex is shared.
-function computeNormals(positions: Float32Array, indices?: ArrayLike<number>): Float32Array {
-  const normals = new Float32Array(positions.length);
-  const count = indices ? indices.length : positions.length / 3;
-  for (let i = 0; i + 2 < count; i += 3) {
-    const [a, b, c] = indices ? [indices[i], indices[i + 1], indices[i + 2]] : [i, i + 1, i + 2];
-    const [ax, ay, az] = [positions[a * 3], positions[a * 3 + 1], positions[a * 3 + 2]];
-    const [ux, uy, uz] = [positions[b * 3] - ax, positions[b * 3 + 1] - ay, positions[b * 3 + 2] - az];
-    const [vx, vy, vz] = [positions[c * 3] - ax, positions[c * 3 + 1] - ay, positions[c * 3 + 2] - az];
-    const [nx, ny, nz] = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
-    for (const vertex of [a, b, c]) {
-      normals[vertex * 3] += nx;
-      normals[vertex * 3 + 1] += ny;
-      normals[vertex * 3 + 2] += nz;
-    }
-  }
-  for (let i = 0; i < normals.length; i += 3) {
-    const length = Math.hypot(normals[i], normals[i + 1], normals[i + 2]) || 1;
-    normals[i] /= length;
-    normals[i + 1] /= length;
-    normals[i + 2] /= length;
-  }
-  return normals;
-}
-
 function imageOf(gltf: Gltf, buffers: ArrayBuffer[], textureIndex: number, base: string): Blob | string | undefined {
   const source = gltf.textures?.[textureIndex]?.source;
   const image = source === undefined ? undefined : gltf.images?.[source];
@@ -250,11 +256,32 @@ function materialOf(gltf: Gltf, buffers: ArrayBuffer[], index: number | undefine
   }
   const pbr = material.pbrMetallicRoughness;
   const [r = 1, g = 1, b = 1, a = 1] = pbr?.baseColorFactor ?? [];
+  const emissive = material.emissiveFactor ?? [];
+  if (material.emissiveTexture && !material.emissiveFactor) {
+    emissive.push(0, 0, 0);
+  }
   return {
     baseColor: [r, g, b, a],
     metallic: pbr?.metallicFactor ?? 1,
     roughness: pbr?.roughnessFactor ?? 1,
-    image: pbr?.baseColorTexture ? imageOf(gltf, buffers, pbr.baseColorTexture.index, base) : undefined,
+    emissive: [emissive[0] ?? 0, emissive[1] ?? 0, emissive[2] ?? 0],
+    normalScale: material.normalTexture?.scale ?? 1,
+    occlusionStrength: material.occlusionTexture?.strength ?? 1,
+    maps: Object.fromEntries(
+      (
+        [
+          ['base', pbr?.baseColorTexture],
+          ['normal', material.normalTexture],
+          ['surface', pbr?.metallicRoughnessTexture],
+          ['occlusion', material.occlusionTexture],
+          ['emissive', material.emissiveTexture],
+        ] as const
+      ).flatMap(([name, texture]) => {
+        const image = texture && imageOf(gltf, buffers, texture.index, base);
+        const sampler = texture && gltf.samplers?.[gltf.textures?.[texture.index]?.sampler ?? -1];
+        return image ? [[name, { image, sampler }]] : [];
+      }),
+    ),
     blend: material.alphaMode === 'BLEND',
     doubleSided: material.doubleSided === true,
   };
@@ -320,12 +347,56 @@ function readMeshes(gltf: Gltf, buffers: ArrayBuffer[], base: string): MeshAsset
   return { primitives, skipped: [...skipped] };
 }
 
+function plainAsset(geometry: PlainGeometry, skipped: string[]): MeshAsset {
+  return {
+    primitives: [
+      {
+        ...geometry,
+        transform: identity(),
+        material: {
+          ...DEFAULT_MATERIAL,
+          baseColor: PLAIN_MATERIAL_COLOR,
+          metallic: 0,
+          roughness: PLAIN_ROUGHNESS,
+        },
+      },
+    ],
+    skipped,
+  };
+}
+
+// STL and OBJ are told by what is in the file, as an address need not have an ending.
+function readPlainFormat(data: ArrayBuffer): MeshAsset | undefined {
+  if (isBinaryStl(data)) {
+    return plainAsset(parseStl(data), []);
+  }
+  const text = new TextDecoder().decode(data.slice(0, 1 << 20));
+  const start = text.trimStart();
+  if (start.startsWith('{')) {
+    return undefined;
+  }
+  if (start.startsWith('solid') && /\bfacet\b/.test(text)) {
+    return plainAsset(parseStl(data), []);
+  }
+  if (looksLikeObj(text)) {
+    return plainAsset(
+      parseObj(new TextDecoder().decode(data)),
+      /^\s*(mtllib|usemtl)\s/m.test(text) ? ['materials'] : [],
+    );
+  }
+  return undefined;
+}
+
 export async function parseMeshAsset(
   data: ArrayBuffer,
   base = '',
   load: (uri: string) => Promise<ArrayBuffer> = fetchBytes,
 ): Promise<MeshAsset> {
   const isGlb = data.byteLength >= 4 && new DataView(data).getUint32(0, true) === GLB_MAGIC;
+  const plain = isGlb ? undefined : readPlainFormat(data);
+  if (plain) {
+    return plain;
+  }
   const { json, bin } = isGlb ? readGlb(data) : { json: readGltf(data), bin: undefined };
   const unsupported = json.extensionsRequired ?? [];
   if (unsupported.length) {

@@ -15,6 +15,8 @@ export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Dimension',
   'Mesh',
   'Canvas',
+  'Scene',
+  'Light',
 ] as const satisfies readonly BlockKind[];
 
 export type CanvasObjectBlockKind = (typeof CANVAS_OBJECT_BLOCK_KINDS)[number];

@@ -32,6 +32,26 @@ export interface MeshChangeEvent {
   id: string;
   position?: [number, number, number];
   rotation?: [number, number, number];
+  scale?: [number, number, number];
+}
+
+export interface MeshObjectSelectEvent {
+  diagramId: string;
+  id: string | null;
+}
+
+export interface MeshObjectChangeEvent {
+  diagramId: string;
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface MeshErrorEvent {
+  diagramId: string;
+  message: string;
 }
 
 export interface SceneDiffEvent {
@@ -50,6 +70,9 @@ export interface ViewerEventMap {
   sceneDiff: SceneDiffEvent;
   meshSelect: MeshSelectEvent;
   meshChange: MeshChangeEvent;
+  meshError: MeshErrorEvent;
+  meshObjectSelect: MeshObjectSelectEvent;
+  meshObjectChange: MeshObjectChangeEvent;
   error: ViewerErrorEvent;
 }
 

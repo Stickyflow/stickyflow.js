@@ -46,24 +46,14 @@ function findBaseGeometry(owner: Element, definition: ShaderProgram): Element | 
   return candidates.find(element => element !== owner && element.getAttribute('data-sf-id') === ownerId);
 }
 
-export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
-  const owner = canvas.closest('[data-sf-shader]');
-  const name = owner?.getAttribute('data-sf-shader');
-  const definition = name ? shaderProgram(name) : undefined;
-  const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
-  if (!owner || !definition || !gl) {
-    return undefined;
-  }
-  const program = linkProgram(gl, definition.fragmentSource);
-  if (!program) {
-    return undefined;
-  }
-  gl.useProgram(program);
-  const buffer = bindFullScreenQuad(gl, program);
-  if (!buffer) {
-    gl.deleteProgram(program);
-    return undefined;
-  }
+function describeSurface(
+  owner: Element,
+  definition: ShaderProgram,
+  canvas: HTMLCanvasElement,
+  gl: WebGLRenderingContext,
+  program: WebGLProgram,
+  buffer: WebGLBuffer,
+): Surface {
   const usesBackdrop = definition.usesBackdrop === true;
   const baseGeometry = findBaseGeometry(owner, definition);
   const baseFill = baseGeometry?.getAttribute('fill');
@@ -90,6 +80,46 @@ export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
     baseGeometry,
     baseFill,
   };
+}
+
+// A shader can stand in for the fill of its shape, also where the shape is drawn to a picture.
+export function hideBaseGeometry(owner: Element): void {
+  const definition = shaderProgram(owner.getAttribute('data-sf-shader') ?? '');
+  const geometry = definition && findBaseGeometry(owner, definition);
+  geometry?.setAttribute('fill', 'none');
+}
+
+// A shader that is drawn on a surface in a 3D world, in the context of that world, which also owns the program and the quad.
+export function planeSurface(
+  owner: Element,
+  canvas: HTMLCanvasElement,
+  gl: WebGLRenderingContext,
+  program: WebGLProgram,
+  buffer: WebGLBuffer,
+): Surface | undefined {
+  const definition = shaderProgram(owner.getAttribute('data-sf-shader') ?? '');
+  return definition && describeSurface(owner, definition, canvas, gl, program, buffer);
+}
+
+export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
+  const owner = canvas.closest('[data-sf-shader]');
+  const name = owner?.getAttribute('data-sf-shader');
+  const definition = name ? shaderProgram(name) : undefined;
+  const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
+  if (!owner || !definition || !gl) {
+    return undefined;
+  }
+  const program = linkProgram(gl, definition.fragmentSource);
+  if (!program) {
+    return undefined;
+  }
+  gl.useProgram(program);
+  const buffer = bindFullScreenQuad(gl, program);
+  if (!buffer) {
+    gl.deleteProgram(program);
+    return undefined;
+  }
+  return describeSurface(owner, definition, canvas, gl, program, buffer);
 }
 
 export function releaseSurface(surface: Surface): void {

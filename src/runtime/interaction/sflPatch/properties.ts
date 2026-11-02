@@ -5,7 +5,7 @@ import { escapeSflString, round1 } from './format';
 import { formatLinkEndpoint } from './linkPatch/endpointText';
 import { findChildBlock, findDirectProperty, type LineRange, maskLines } from './scanner';
 
-type LayoutTuple = readonly [key: string, first: number, second: number, third?: number];
+export type LayoutTuple = readonly [key: string, first: number, second: number, third?: number];
 
 export interface LinkEndpointPatch {
   end: 'from' | 'to';

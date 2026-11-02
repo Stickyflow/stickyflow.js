@@ -12,8 +12,23 @@ export interface SflMeshData {
   scale: Vec3;
 }
 
-export interface SflMeshCanvasData {
+export interface SflMeshSceneData {
   orbit: [number, number];
+  shadow: boolean;
+}
+
+export interface SflMeshSurfaceData {
+  position: Vec3;
+  rotation: Vec3;
+  scale: Vec3;
+}
+
+export interface SflMeshLightData {
+  turn: number;
+  height: number;
+  color?: string;
+  intensity: number;
+  ambient: number;
 }
 
 export interface SflAnchorData {
