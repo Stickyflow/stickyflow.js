@@ -41,6 +41,7 @@ function meshStageSvg(node: Extract<RenderNode, { type: 'mesh-stage' }>, defs: S
       id: node.stageId,
       orbit: node.orbit,
       shadow: node.shadow,
+      light: node.light,
       meshes: node.meshes,
       surfaces: node.surfaces.map(({ scene: _scene, ...surface }) => surface),
       anchors: node.anchors,

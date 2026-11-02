@@ -86,7 +86,7 @@ function evaluateBinding(state: RuntimeState, binding: BoundProperty): boolean {
     });
     return false;
   }
-  if (binding.ownerKind === 'Mesh' || binding.ownerKind === 'Canvas') {
+  if (binding.ownerKind === 'Mesh' || binding.ownerKind === 'Canvas' || binding.ownerKind === 'Light') {
     applyMesh(state.input, binding.ownerPath[0], binding.property, value);
     announce(state, binding.id, {
       kind: 'mesh',

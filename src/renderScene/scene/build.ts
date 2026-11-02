@@ -103,7 +103,13 @@ export function buildRenderScene(whole: RenderInput, options: BuildRenderSceneOp
   const { input, surfaces } = splitMeshSurfaces(whole, part => buildRenderScene(part, options));
   const diagnostics: RenderDiagnostic[] = [...(input.diagnostics ?? [])];
   const nodes: RenderNode[] = [
-    ...buildMeshStages(input.meshes ?? [], input.meshScenes ?? [], input.meshAnchors ?? [], surfaces),
+    ...buildMeshStages(
+      input.meshes ?? [],
+      input.meshScenes ?? [],
+      input.meshAnchors ?? [],
+      surfaces,
+      input.meshLights ?? [],
+    ),
     ...buildContainers(input),
     ...buildFreeformPaths(input.paths ?? []),
     ...buildCharts(input.charts ?? [], diagnostics),

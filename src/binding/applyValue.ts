@@ -93,7 +93,10 @@ export const APPLY: Record<string, Apply> = {
 };
 
 export function applyMesh(input: RenderInput, id: string, property: string, value: BindingValue): void {
-  const mesh = input.meshes?.find(candidate => candidate.id === id) ?? input.meshSurfaces?.find(item => item.id === id);
+  const mesh =
+    input.meshes?.find(candidate => candidate.id === id) ??
+    input.meshSurfaces?.find(item => item.id === id) ??
+    input.meshLights?.find(item => item.id === id);
   if (mesh) {
     setMeshValue(mesh, property, value);
   }

@@ -1,4 +1,4 @@
-import type { Mesh, MeshAnchor, Vec3 } from '../../../model/mesh';
+import type { Mesh, MeshAnchor, MeshLight, Vec3 } from '../../../model/mesh';
 import type { MeshObjectBox } from './handles';
 import type { StageSurface } from './surfaceTextures';
 
@@ -65,6 +65,7 @@ export interface StageData {
   shadow: boolean;
   meshes: Mesh[];
   surfaces?: StageSurface[];
+  light?: MeshLight;
   anchors: MeshAnchor[];
 }
 
@@ -72,6 +73,7 @@ export interface StageData {
 export interface Placement {
   meshes: Mesh[];
   surfaces: StageSurface[];
+  light: MeshLight;
 }
 
 export function dataOf(host: Element): StageData | undefined {

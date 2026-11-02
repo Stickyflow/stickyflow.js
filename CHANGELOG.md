@@ -33,6 +33,7 @@ Two things count as breaking here that are easy to overlook:
 - The loader honours the samplers of a glTF texture.
 - `setMeshEditing` of the viewer switches off selection and handles in a `Scene`, for trying it out. On a `Canvas` a second click selects an object, which can then be moved and resized there, with the event `meshObjectChange` and `applyMeshObjectChange`.
 - `setMeshFlags` and `selectMeshItem` of the viewer let a host hide, lock and select what is in a `Scene`.
+- The block `Light` in a `Scene` is its sun, with `turn`, `height`, `color`, `intensity` and `ambient`, all of which can be bound. The sky and the floor in reflections follow it, so a low sun is warm all over. Colors go through a filmic curve.
 - The stage draws only the part of itself on the screen, so it stays sharp at any zoom.
 
 ## [0.15.0] - 2026-11-01

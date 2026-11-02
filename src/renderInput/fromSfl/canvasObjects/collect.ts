@@ -5,13 +5,14 @@ import type { Dimension } from '../../../model/dimension';
 import type { Frame } from '../../../model/frame';
 import type { IsometricObject } from '../../../model/isometricObject';
 import type { Link } from '../../../model/link';
-import type { Mesh, MeshAnchor, MeshScene, MeshSurface } from '../../../model/mesh';
+import type { Mesh, MeshAnchor, MeshLight, MeshScene, MeshSurface } from '../../../model/mesh';
 import type { FreeformPath } from '../../../model/path';
 import type { Shape } from '../../../model/shape';
 import type { Swimlane } from '../../../model/swimlane';
 import {
   isDimensionObject,
   isIsometricObject,
+  isMeshLightObject,
   isMeshObject,
   isMeshSceneObject,
   type SflCanvasState,
@@ -24,7 +25,7 @@ import { dimensionObject } from './dimension';
 import { frameObject } from './frame';
 import { isometricObject } from './isometric';
 import { linkObject } from './link';
-import { meshObject, meshSceneObject, meshSurfaces } from './mesh';
+import { meshLightObject, meshObject, meshSceneObject, meshSurfaces } from './mesh';
 import { pathObject } from './path';
 import { shapeObject } from './shape';
 import { swimlaneObject } from './swimlane';
@@ -39,6 +40,7 @@ export interface CollectedCanvasObjects {
   meshes: Mesh[];
   meshScenes: MeshScene[];
   meshSurfaces: MeshSurface[];
+  meshLights: MeshLight[];
   meshAnchors: MeshAnchor[];
   charts: Chart[];
   components: Component[];
@@ -65,6 +67,7 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     meshes: canvasObjects.filter(isMeshObject).map(object => meshObject(object, sceneIds)),
     meshScenes: canvasObjects.filter(isMeshSceneObject).map(meshSceneObject),
     meshSurfaces: meshSurfaces(canvasObjects, sceneIds),
+    meshLights: canvasObjects.filter(isMeshLightObject).map(object => meshLightObject(object, sceneIds)),
     meshAnchors: canvasObjects.flatMap(object => (object.anchor ? [{ objectId: object.id, ...object.anchor }] : [])),
     charts: canvasObjects.filter(canvasObject => canvasObject.objectType === 'chart').map(chartObject),
     components: canvasObjects

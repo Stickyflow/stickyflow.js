@@ -1,4 +1,4 @@
-import { DEFAULT_MESH_SCENE, type Mesh, type MeshAnchor, type MeshScene } from '../../model/mesh';
+import { DEFAULT_MESH_SCENE, type Mesh, type MeshAnchor, type MeshLight, type MeshScene } from '../../model/mesh';
 import type { RenderNode } from '../scene';
 import type { SceneMeshSurface } from '../scene/types';
 
@@ -8,6 +8,7 @@ export function buildMeshStages(
   canvases: MeshScene[],
   anchors: MeshAnchor[],
   surfaces: SceneMeshSurface[],
+  lights: MeshLight[],
 ): RenderNode[] {
   const loose = meshes.some(mesh => !mesh.sceneId) || surfaces.some(surface => !surface.sceneId);
   return [...canvases, ...(loose ? [DEFAULT_MESH_SCENE] : [])].map((canvas, index) => {
@@ -26,6 +27,7 @@ export function buildMeshStages(
       orbit,
       shadow,
       meshes: own,
+      light: lights.find(light => (light.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id),
       surfaces: surfaces.filter(surface => (surface.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id),
       anchors: anchors.filter(anchor => own.some(mesh => mesh.id === anchor.mesh)),
     };

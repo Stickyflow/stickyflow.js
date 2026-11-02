@@ -20,7 +20,7 @@ function blocksIn(block: SflBlock): SflBlock[] {
 // A Mesh draws only inside a Model, and a Model is never a mesh itself.
 export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
   const outside = sflDocument.blocks.flatMap(block => {
-    if (block.kind === 'Mesh' || block.kind === 'Scene' || block.kind === 'Canvas') {
+    if (block.kind === 'Mesh' || block.kind === 'Scene' || block.kind === 'Canvas' || block.kind === 'Light') {
       return [
         warning(
           'mesh-outside-model',
@@ -58,5 +58,20 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
         `Mesh '${mesh.name}' lies on a Canvas, which is a flat surface. Put it into the Scene next to the Canvas.`,
       ),
     );
-  return [...outside, ...missing, ...onSurface];
+  const extraLights = sflDocument.blocks
+    .flatMap(blocksIn)
+    .filter(block => block.kind === 'Scene')
+    .flatMap(scene =>
+      childBlocks(scene)
+        .filter(child => child.kind === 'Light')
+        .slice(1),
+    )
+    .map(light =>
+      warning(
+        'extra-light',
+        light.name,
+        `Light '${light.name}' does nothing: a Scene has one sun, and the first counts.`,
+      ),
+    );
+  return [...outside, ...missing, ...onSurface, ...extraLights];
 }

@@ -44,6 +44,12 @@ in vec3 vNormal;
 in vec2 vUv;
 uniform vec4 uBase;
 uniform float uShadows;
+uniform vec3 uKey;
+uniform vec3 uSun;
+uniform vec3 uGlare;
+uniform vec3 uSky;
+uniform vec3 uFloor;
+uniform float uFill;
 uniform float uMetallic;
 uniform float uRoughness;
 uniform vec3 uEye;
@@ -52,15 +58,20 @@ uniform sampler2D uTexture;
 out vec4 fragment;
 ${SHADOW_LOOKUP}
 const float PI = 3.14159265;
-const vec3 KEY = vec3(0.55, 0.75, 0.35);
 const vec3 FILL = vec3(-0.6, 0.3, 0.7);
 
-// A room worked out from a direction: a bright sky, a dark floor and one soft window, blurrier the rougher the surface is.
+// A filmic curve, which keeps colors in what is bright where a simple one turns them pale.
+vec3 filmic(vec3 x) {
+  x *= 0.45;
+  return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+
+// A room worked out from a direction: the sky, the floor and the sun, blurrier the rougher the surface is.
 vec3 room(vec3 d, float roughness) {
   float blur = 0.08 + roughness * 0.6;
-  vec3 color = mix(vec3(0.16, 0.15, 0.14), vec3(0.78, 0.82, 0.9), smoothstep(-blur, blur, d.y));
-  float window = pow(max(dot(d, normalize(KEY)), 0.0), mix(160.0, 3.0, roughness));
-  return color + vec3(1.0, 0.97, 0.92) * window * mix(3.0, 0.25, roughness);
+  vec3 color = mix(uFloor, uSky, smoothstep(-blur, blur, d.y));
+  float window = pow(max(dot(d, uKey), 0.0), mix(160.0, 3.0, roughness));
+  return color + uGlare * window * mix(3.0, 0.25, roughness);
 }
 
 vec3 light(vec3 n, vec3 v, vec3 l, vec3 radiance, vec3 albedo, vec3 f0, float roughness, float metallic) {
@@ -93,8 +104,8 @@ void main() {
   float metallic = clamp(uMetallic, 0.0, 1.0);
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
-  vec3 color = light(n, v, normalize(KEY), vec3(2.8), base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
-  color += light(n, v, normalize(FILL), vec3(0.5), base.rgb, f0, roughness, metallic);
+  vec3 color = light(n, v, uKey, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
+  color += light(n, v, normalize(FILL), vec3(uFill), base.rgb, f0, roughness, metallic);
   // What the room gives, by a short form of the usual table of how a rough surface reflects.
   vec4 r = roughness * vec4(-1.0, -0.0275, -0.572, 0.022) + vec4(1.0, 0.0425, 1.04, -0.04);
   float a004 = min(r.x * r.x, pow(2.0, -9.28 * nv)) * r.x + r.y;
@@ -102,7 +113,7 @@ void main() {
   vec3 fresnel = f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - nv, 5.0);
   color += room(reflect(-v, n), roughness) * (fresnel * ab.x + ab.y);
   color += room(n, 1.0) * base.rgb * (1.0 - metallic) * 0.55;
-  color = color / (color + vec3(1.0));
+  color = filmic(color);
   color = pow(color, vec3(1.0 / 2.2));
   fragment = vec4(color * base.a, base.a);
 }`;
@@ -130,11 +141,12 @@ precision highp float;
 in vec3 vWorld;
 uniform vec3 uCenter;
 uniform float uFade;
+uniform float uStrength;
 out vec4 fragment;
 ${SHADOW_LOOKUP}
 void main() {
   float fade = 1.0 - smoothstep(uFade * 0.6, uFade, length(vWorld.xz - uCenter.xz));
-  fragment = vec4(0.0, 0.0, 0.0, (1.0 - lit()) * 0.32 * fade);
+  fragment = vec4(0.0, 0.0, 0.0, (1.0 - lit()) * 0.32 * fade * uStrength);
 }`;
 
 export const PLANE_VERTEX = `attribute vec2 aPosition;

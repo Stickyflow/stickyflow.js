@@ -1,7 +1,8 @@
-import type { Mesh, MeshScene, MeshSurface } from '../../../model/mesh';
+import type { Mesh, MeshLight, MeshScene, MeshSurface } from '../../../model/mesh';
 import {
   isMeshSurfaceObject,
   type SflCanvasObject,
+  type SflMeshLightObject,
   type SflMeshObject,
   type SflMeshSceneObject,
 } from '../../../sflSemantic/sflToCanvasState';
@@ -23,6 +24,11 @@ export function meshObject(canvasObject: SflMeshObject, scenes: ReadonlySet<stri
     sceneId: parent && scenes.has(parent) ? parent : undefined,
     sourceIndex: canvasObject.sourceIndex,
   };
+}
+
+export function meshLightObject(canvasObject: SflMeshLightObject, scenes: ReadonlySet<string>): MeshLight {
+  const parent = canvasObject.parentFrameId;
+  return { id: canvasObject.id, sceneId: parent && scenes.has(parent) ? parent : undefined, ...canvasObject.meshLight };
 }
 
 export function meshSurfaces(canvasObjects: SflCanvasObject[], scenes: ReadonlySet<string>): MeshSurface[] {

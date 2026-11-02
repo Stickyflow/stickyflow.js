@@ -16,6 +16,7 @@ export const NAMED_BLOCK_KINDS = [
   'Mesh',
   'Canvas',
   'Scene',
+  'Light',
   'Dimension',
   'Link',
   'Connection',

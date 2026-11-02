@@ -1,11 +1,10 @@
 import type { Vec3 } from '../../../model/mesh';
 import { cross, dot, lookAt, type Mat4, multiply, normalize, perspective, windowMatrix } from './matrix';
 
-export const LIGHT_DIRECTION = normalize([0.55, 0.75, 0.35]);
-
 const FOV = (32 * Math.PI) / 180;
 const WORLD_UP: Vec3 = [0, 1, 0];
 const FRAME_MARGIN = 1.04;
+const LOWEST_FOLLOWED = 0.5;
 
 export interface Box {
   min: Vec3;
@@ -74,13 +73,16 @@ function eyeDirection(yawDegrees: number, pitchDegrees: number): Vec3 {
 }
 
 // Where the camera stands to show a box from this side: as near as its corners allow.
-export function frameBox(box: Box, yaw: number, pitch: number, aspect: number, groundShadow: boolean): MeshFrame {
+export function frameBox(box: Box, yaw: number, pitch: number, aspect: number, shadowFrom?: Vec3): MeshFrame {
   const framed: Box = { min: [...box.min], max: [...box.max] };
-  if (groundShadow) {
-    // The shadow falls away from the light, as far as the scene is high.
+  if (shadowFrom) {
+    // The shadow falls away from the light, as far as the scene is high. A low sun is not followed to the horizon.
     const height = framed.max[1] - framed.min[1];
-    framed.min[0] -= (height * LIGHT_DIRECTION[0]) / LIGHT_DIRECTION[1];
-    framed.min[2] -= (height * LIGHT_DIRECTION[2]) / LIGHT_DIRECTION[1];
+    for (const axis of [0, 2]) {
+      const reach = -(height * shadowFrom[axis]) / Math.max(shadowFrom[1], LOWEST_FOLLOWED);
+      framed.min[axis] += Math.min(reach, 0);
+      framed.max[axis] += Math.max(reach, 0);
+    }
   }
   const center = boxCenter(framed);
   const tanV = Math.tan(FOV / 2);

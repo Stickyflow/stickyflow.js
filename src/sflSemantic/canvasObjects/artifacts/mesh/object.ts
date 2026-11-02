@@ -1,5 +1,5 @@
 import type { SflCanvasObject } from '../../types';
-import type { SflMeshData, SflMeshSceneData, SflMeshSurfaceData } from './types';
+import type { SflMeshData, SflMeshLightData, SflMeshSceneData, SflMeshSurfaceData } from './types';
 
 export type SflMeshObject = SflCanvasObject & {
   objectType: 'mesh';
@@ -18,6 +18,15 @@ export type SflMeshSurfaceObject = SflCanvasObject & {
 
 export function isMeshSurfaceObject(canvasObject: SflCanvasObject): canvasObject is SflMeshSurfaceObject {
   return canvasObject.objectType === 'meshSurface' && canvasObject.meshSurface !== undefined;
+}
+
+export type SflMeshLightObject = SflCanvasObject & {
+  objectType: 'meshLight';
+  meshLight: SflMeshLightData;
+};
+
+export function isMeshLightObject(canvasObject: SflCanvasObject): canvasObject is SflMeshLightObject {
+  return canvasObject.objectType === 'meshLight' && canvasObject.meshLight !== undefined;
 }
 
 export function isMeshObject(canvasObject: SflCanvasObject): canvasObject is SflMeshObject {

@@ -1,8 +1,8 @@
-import { DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
+import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase } from '../../types';
-import type { SflMeshObject, SflMeshSceneObject, SflMeshSurfaceObject } from './object';
+import type { SflMeshLightObject, SflMeshObject, SflMeshSceneObject, SflMeshSurfaceObject } from './object';
 import type { SflAnchorData } from './types';
 
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
@@ -65,6 +65,23 @@ export function resolveMeshSurfaceObject(
       position: vector(block, layoutProp, 'position', 0),
       rotation: vector(block, layoutProp, 'rotation', 0),
       scale: vector(block, layoutProp, 'scale', 1),
+    },
+  };
+}
+
+export function resolveMeshLightObject(
+  base: SflCanvasObjectBase,
+  properties: Map<string, SflValue>,
+): SflMeshLightObject {
+  return {
+    ...base,
+    objectType: 'meshLight',
+    meshLight: {
+      turn: asNumber(properties.get('turn')) ?? DEFAULT_LIGHT.turn,
+      height: asNumber(properties.get('height')) ?? DEFAULT_LIGHT.height,
+      color: asString(properties.get('color')),
+      intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
+      ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
     },
   };
 }

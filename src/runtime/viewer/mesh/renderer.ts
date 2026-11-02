@@ -1,4 +1,4 @@
-import type { Mesh, Vec3 } from '../../../model/mesh';
+import { DEFAULT_LIGHT, type Mesh, type Vec3 } from '../../../model/mesh';
 import {
   type Box,
   boxCenter,
@@ -7,11 +7,11 @@ import {
   type Camera,
   emptyBox,
   growBox,
-  LIGHT_DIRECTION,
   project,
   toWindow,
 } from './camera';
 import type { MeshAsset, MeshPrimitive } from './glb';
+import { colorOf, type Lighting, lightingOf } from './lighting';
 import {
   identity,
   lookAt,
@@ -122,20 +122,6 @@ function requireObject<T>(value: T | null, what: string): T {
   return value;
 }
 
-export function colorOf(hex: string | undefined): [number, number, number] | undefined {
-  const digits = hex?.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)?.[1];
-  if (!digits) {
-    return undefined;
-  }
-  const full = digits.length === 3 ? [...digits].map(digit => digit + digit).join('') : digits;
-  // sRGB to linear, as the lights work in linear values.
-  return [0, 2, 4].map(start => (Number.parseInt(full.slice(start, start + 2), 16) / 255) ** 2.2) as [
-    number,
-    number,
-    number,
-  ];
-}
-
 // Draws meshes with WebGL2. It knows nothing of SFL or SVG: it gets assets, and what the document says about each mesh.
 export class MeshRenderer {
   private readonly gl: WebGL2RenderingContext;
@@ -170,6 +156,12 @@ export class MeshRenderer {
       ...common,
       'uShadow',
       'uShadows',
+      'uKey',
+      'uSun',
+      'uGlare',
+      'uSky',
+      'uFloor',
+      'uFill',
       'uBase',
       'uMetallic',
       'uRoughness',
@@ -179,7 +171,7 @@ export class MeshRenderer {
     ]);
     this.depth = link(gl, DEPTH_FRAGMENT, common);
     this.probing = link(gl, PROBE_FRAGMENT, [...common, 'uEye', 'uRange', 'uId']);
-    this.ground = link(gl, GROUND_FRAGMENT, [...common, 'uShadow', 'uCenter', 'uFade']);
+    this.ground = link(gl, GROUND_FRAGMENT, [...common, 'uShadow', 'uCenter', 'uFade', 'uStrength']);
 
     this.picture = this.linkPlane(PLANE_FRAGMENT);
     this.pictureSampler = gl.getUniformLocation(this.picture, 'uPicture');
@@ -506,13 +498,14 @@ export class MeshRenderer {
   }
 
   // The scene seen from the light, as a picture of how far away everything is. It stays as long as nothing that casts a shadow has moved.
-  private shadowMatrix(instances: readonly Instance[], planes: readonly Plane[], box: Box): Mat4 {
+  private shadowMatrix(instances: readonly Instance[], planes: readonly Plane[], box: Box, direction: Vec3): Mat4 {
     const casting = instances.filter(({ mesh }) => mesh.opacity >= 0.5);
     const key = [
       ...casting.map(({ world, primitive }) => `${primitive.count}:${world.join()}`),
       ...planes.map(plane => plane.matrix.join()),
       box.min.join(),
       box.max.join(),
+      direction.join(),
     ].join('|');
     if (key === this.shadowKey && this.lightMatrix) {
       return this.lightMatrix;
@@ -521,7 +514,7 @@ export class MeshRenderer {
     const { gl } = this;
     const center = boxCenter(box);
     const radius = Math.max(boxDiagonal(box) / 2, 1e-3) * 1.6;
-    const eye = center.map((value, axis) => value + LIGHT_DIRECTION[axis] * radius * 2) as Vec3;
+    const eye = center.map((value, axis) => value + direction[axis] * radius * 2) as Vec3;
     const lightMatrix = multiply(orthographic(radius, 0.01, radius * 4), lookAt(eye, center, WORLD_UP));
     const { program, uniforms } = this.depth;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowBuffer);
@@ -549,9 +542,10 @@ export class MeshRenderer {
   draw(
     meshes: readonly Mesh[],
     camera: Camera | undefined,
-    options: { shadows?: boolean; planes?: readonly Plane[] } = {},
+    options: { shadows?: boolean; planes?: readonly Plane[]; lighting?: Lighting } = {},
   ): void {
     const planes = options.planes ?? [];
+    const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
     const { gl } = this;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -565,7 +559,7 @@ export class MeshRenderer {
     }
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
-    const lightMatrix = options.shadows ? this.shadowMatrix(instances, planes, box) : identity();
+    const lightMatrix = options.shadows ? this.shadowMatrix(instances, planes, box, lighting.direction) : identity();
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.shadowMap);
@@ -578,6 +572,12 @@ export class MeshRenderer {
     gl.uniform1i(uniforms.uTexture, 0);
     gl.uniform1i(uniforms.uShadow, 1);
     gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
+    gl.uniform3fv(uniforms.uKey, lighting.direction);
+    gl.uniform3fv(uniforms.uSun, lighting.sun);
+    gl.uniform3fv(uniforms.uGlare, lighting.glare);
+    gl.uniform3fv(uniforms.uSky, lighting.sky);
+    gl.uniform3fv(uniforms.uFloor, lighting.floor);
+    gl.uniform1f(uniforms.uFill, lighting.fill);
     gl.activeTexture(gl.TEXTURE0);
 
     const seeThrough = ({ mesh, primitive }: Instance) => mesh.opacity < 1 || primitive.source.material.blend;
@@ -585,7 +585,7 @@ export class MeshRenderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     if (options.shadows) {
-      this.drawGround(camera, lightMatrix, box);
+      this.drawGround(camera, lightMatrix, box, lighting.groundShadow);
     }
     this.drawPlanes(camera, planes);
     gl.useProgram(program);
@@ -627,7 +627,7 @@ export class MeshRenderer {
     gl.bindVertexArray(null);
   }
 
-  private drawGround(camera: Camera, lightMatrix: Mat4, box: Box): void {
+  private drawGround(camera: Camera, lightMatrix: Mat4, box: Box, strength: number): void {
     const { gl } = this;
     const { program, uniforms } = this.ground;
     const middle = boxCenter(box);
@@ -640,6 +640,7 @@ export class MeshRenderer {
     gl.uniform1i(uniforms.uShadow, 1);
     gl.uniform3fv(uniforms.uCenter, center);
     gl.uniform1f(uniforms.uFade, reach);
+    gl.uniform1f(uniforms.uStrength, strength);
     gl.depthMask(false);
     gl.bindVertexArray(this.groundQuad);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

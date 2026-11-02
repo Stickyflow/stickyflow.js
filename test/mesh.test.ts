@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createBindingRuntime, createDataSource } from '../src/binding';
 import { canonicalize, render, sflToCanvasState } from '../src/index';
-import { setMeshValue } from '../src/model/mesh';
+import { DEFAULT_LIGHT, setMeshValue } from '../src/model/mesh';
 import { applyMeshChange, applyMeshObjectChange, insertCanvasObject } from '../src/runtime/interaction';
 import { parseMeshAsset } from '../src/runtime/viewer/mesh/glb';
+import { lightingOf } from '../src/runtime/viewer/mesh/lighting';
 import { modelMatrix, transformPoint } from '../src/runtime/viewer/mesh/matrix';
 
 const scene = `sfl 1.8
@@ -242,6 +243,83 @@ Model m {
     const plain =
       'sfl 1.8\n\nModel m {\n  Shape a {\n    layout {\n      position: 0, 0\n      size: 10, 10\n    }\n  }\n}\n';
     expect(render(plain).svg).not.toContain('data-sf-mesh-stage');
+  });
+});
+
+describe('a Light in a Scene', () => {
+  const sunny = `sfl 1.8
+
+DataSource day {
+  mode: record
+  fields {
+    sun: number
+  }
+}
+
+Model m {
+  Scene world {
+    layout {
+      position: 0, 0
+      size: 400, 300
+    }
+    Light sun {
+      turn: 120
+      height: <- day.sun
+      color: "#ffcc88"
+      intensity: 1.5
+      ambient: 0.5
+    }
+    Mesh a {
+      asset: "a.glb"
+    }
+  }
+}
+`;
+
+  it('reaches the stage, and only that', () => {
+    const { svg, diagnostics } = render(sunny);
+    expect(diagnostics).toEqual([]);
+    expect(stageOf(svg).light).toMatchObject({
+      id: 'sun',
+      sceneId: 'world',
+      turn: 120,
+      color: '#ffcc88',
+      intensity: 1.5,
+      ambient: 0.5,
+    });
+  });
+
+  it('moves live', () => {
+    const runtime = createBindingRuntime(sunny);
+    expect(runtime.diagnostics).toEqual([]);
+    const live: unknown[] = [];
+    runtime.attach({ update: () => undefined, setMeshValue: (...change: unknown[]) => live.push(change) });
+    runtime.registerSource('day', createDataSource({ sun: 12 } as never));
+    runtime.flush();
+    expect(live).toEqual([['sun', 'height', 12]]);
+  });
+
+  it('warns about a second one', () => {
+    const source = 'sfl 1.8\n\nModel m {\n  Scene s {\n    Light a {\n    }\n    Light b {\n    }\n  }\n}\n';
+    expect(render(source).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['extra-light']);
+  });
+});
+
+describe('what the sun does to the light', () => {
+  it('is warm and weak when low, and gone below the horizon', () => {
+    const noon = lightingOf({ ...DEFAULT_LIGHT, height: 80 });
+    const dusk = lightingOf({ ...DEFAULT_LIGHT, height: 5 });
+    const night = lightingOf({ ...DEFAULT_LIGHT, height: -30 });
+    expect(dusk.sun[0] / dusk.sun[2]).toBeGreaterThan(noon.sun[0] / noon.sun[2]);
+    expect(dusk.sky[2]).toBeLessThan(noon.sky[2]);
+    expect(night.sun).toEqual([0, 0, 0]);
+    expect(night.shadow).toBe(0);
+  });
+
+  it('turns from the front toward x', () => {
+    const [x, , z] = lightingOf({ ...DEFAULT_LIGHT, turn: 90, height: 0 }).direction;
+    expect(x).toBeCloseTo(1);
+    expect(z).toBeCloseTo(0);
   });
 });
 

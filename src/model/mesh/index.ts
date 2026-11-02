@@ -35,9 +35,13 @@ export interface MeshAnchor {
   point: Vec3;
 }
 
-// What a binding can reach on a Mesh or on a Canvas in a Scene.
-type MeshValues = Pick<Mesh, 'position' | 'rotation' | 'scale'> &
-  Partial<Pick<Mesh, 'color' | 'opacity' | 'roughness' | 'metallic'>>;
+// What a binding can reach on a Mesh, a Canvas in a Scene or a Light.
+type MeshValues = Partial<
+  Pick<Mesh, 'position' | 'rotation' | 'scale' | 'color' | 'opacity' | 'roughness' | 'metallic'> &
+    Pick<MeshLight, 'turn' | 'height' | 'intensity' | 'ambient'>
+>;
+
+const NUMBERS = ['opacity', 'roughness', 'metallic', 'turn', 'height', 'intensity', 'ambient'] as const;
 
 const AXES: Record<string, ['position' | 'rotation' | 'scale', number]> = {
   positionX: ['position', 0],
@@ -54,14 +58,16 @@ const AXES: Record<string, ['position' | 'rotation' | 'scale', number]> = {
 // Writes one value that a binding can reach. A renderer and a live update use the same rule.
 export function setMeshValue(mesh: MeshValues, property: string, value: unknown): void {
   const axis = AXES[property];
-  if (axis) {
-    mesh[axis[0]][axis[1]] = value as number;
+  const number = NUMBERS.find(name => name === property);
+  const vector = axis && mesh[axis[0]];
+  if (vector) {
+    vector[axis[1]] = value as number;
   } else if (property === 'scale') {
     mesh.scale = [value as number, value as number, value as number];
   } else if (property === 'color') {
     mesh.color = value as string;
-  } else if (property === 'opacity' || property === 'roughness' || property === 'metallic') {
-    mesh[property] = value as number;
+  } else if (number) {
+    mesh[number] = value as number;
   }
 }
 
@@ -85,6 +91,19 @@ export interface MeshSurface {
   scale: Vec3;
   members: MeshSurfaceMember[];
 }
+
+// The sun of a Scene. Its turn goes round from the front and its height up from the horizon, both in degrees.
+export interface MeshLight {
+  id: string;
+  sceneId?: string;
+  turn: number;
+  height: number;
+  color?: string;
+  intensity: number;
+  ambient: number;
+}
+
+export const DEFAULT_LIGHT: MeshLight = { id: 'light-default', turn: 57.5, height: 49, intensity: 1, ambient: 1 };
 
 export const DEFAULT_ORBIT: [number, number] = [45, 27];
 export const DEFAULT_MESH_SCENE: MeshScene = {

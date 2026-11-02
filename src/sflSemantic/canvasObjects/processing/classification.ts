@@ -44,6 +44,9 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Canvas') {
     return 'meshSurface';
   }
+  if (block.kind === 'Light') {
+    return 'meshLight';
+  }
 
   return asString(properties.get('kind')) ?? '';
 }
@@ -78,6 +81,9 @@ function canvasObjectTypeForKind(kind: string): SflCanvasObjectType {
   }
   if (kind === 'meshSurface') {
     return 'meshSurface';
+  }
+  if (kind === 'meshLight') {
+    return 'meshLight';
   }
 
   return 'shape';

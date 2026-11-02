@@ -1,4 +1,4 @@
-import { type Mesh, setMeshValue, type Vec3 } from '../../../model/mesh';
+import { DEFAULT_LIGHT, type Mesh, type MeshLight, setMeshValue, type Vec3 } from '../../../model/mesh';
 import { isCameraGesture } from '../../dom';
 import {
   type Box,
@@ -11,6 +11,7 @@ import {
   type StageWindow,
 } from './camera';
 import { draggedBox, handleDrag, type MeshObjectBox, meshHandlesMarkup, objectOutlineMarkup } from './handles';
+import { lightingOf } from './lighting';
 import { loadAssetInto } from './loadAsset';
 import { modelMatrix, transformPoint } from './matrix';
 import { MeshRenderer, type Plane } from './renderer';
@@ -241,6 +242,14 @@ export class MeshStage {
     return placed;
   }
 
+  private placedLight(): MeshLight {
+    const light = { ...(this.data.light ?? DEFAULT_LIGHT) };
+    for (const [property, value] of this.live.get(light.id) ?? []) {
+      setMeshValue(light, property, value);
+    }
+    return this.hidden.has(light.id) ? { ...light, intensity: 0 } : light;
+  }
+
   // A hidden Scene hides all that stands in it.
   private visible<T extends { id: string }>(items: readonly T[]): T[] {
     return this.hidden.has(this.data.id) ? [] : items.filter(item => !this.hidden.has(item.id));
@@ -253,6 +262,7 @@ export class MeshStage {
         ...this.placedValues(surface),
         members: surface.members.filter(member => !this.hidden.has(member.id)),
       })),
+      light: this.placedLight(),
     };
     return this.placement;
   }
@@ -305,7 +315,8 @@ export class MeshStage {
       return;
     }
     const { aspect, window } = this.fitCanvas(canvas, wholeStage);
-    const { meshes } = this.placed();
+    const { meshes, light } = this.placed();
+    const lighting = lightingOf(light);
     const planes = this.planes();
     // The camera is framed when what stands on the stage changes, not when a mesh moves, so a mesh that moves is seen moving.
     // Hiding something is no reason to move the camera, so this counts all that the document has.
@@ -315,12 +326,13 @@ export class MeshStage {
       .join('|')}|${(this.data.surfaces ?? []).map(surface => surface.id).join('|')}`;
     if (framing !== this.framedAssets) {
       const box = renderer.box(meshes, planes);
-      this.frame = box && frameBox(box, this.yaw, this.pitch, aspect, this.data.shadow);
+      this.frame =
+        box && frameBox(box, this.yaw, this.pitch, aspect, this.data.shadow ? lighting.direction : undefined);
       this.framedAssets = framing;
     }
     this.camera = this.frame ? makeCamera(this.frame, this.yaw, this.pitch, aspect, window) : undefined;
     this.keepSurfacesSharp(planes);
-    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes });
+    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes, lighting });
     this.placeAnchors();
     this.drawHandles();
     if (planes.some(plane => plane.layers.some(layer => 'rect' in layer))) {
@@ -667,7 +679,11 @@ export class MeshStage {
   }
 
   hasMesh(id: string): boolean {
-    return this.data.meshes.some(mesh => mesh.id === id) || Boolean(this.data.surfaces?.some(item => item.id === id));
+    return (
+      this.data.meshes.some(mesh => mesh.id === id) ||
+      this.data.light?.id === id ||
+      Boolean(this.data.surfaces?.some(item => item.id === id))
+    );
   }
 
   setValue(id: string, property: string, value: number | string): void {
@@ -698,7 +714,7 @@ export class MeshStage {
 
   // Whether this stage has the name, as a mesh, a Canvas, what lies on one, or itself.
   selectItem(id: string): boolean {
-    if (id === this.data.id) {
+    if (id === this.data.id || id === this.data.light?.id) {
       this.select(null);
       return true;
     }

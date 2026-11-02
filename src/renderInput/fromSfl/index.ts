@@ -16,6 +16,7 @@ export function sflToRenderInput(sfl: string): RenderInput {
     meshes: canvasObjects.meshes,
     meshScenes: canvasObjects.meshScenes,
     meshSurfaces: canvasObjects.meshSurfaces,
+    meshLights: canvasObjects.meshLights,
     meshAnchors: canvasObjects.meshAnchors,
     charts: canvasObjects.charts,
     components: canvasObjects.components,

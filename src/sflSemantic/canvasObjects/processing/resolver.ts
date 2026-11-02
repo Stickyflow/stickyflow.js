@@ -6,6 +6,7 @@ import { resolveDimensionObject } from '../artifacts/dimension/resolver';
 import { resolveIsometricObject } from '../artifacts/isometric/resolver';
 import {
   readAnchor,
+  resolveMeshLightObject,
   resolveMeshObject,
   resolveMeshSceneObject,
   resolveMeshSurfaceObject,
@@ -65,6 +66,8 @@ export function resolveCanvasObject(
       return resolveMeshObject(base, block, properties, layoutProp);
     case 'meshScene':
       return resolveMeshSceneObject(base, properties);
+    case 'meshLight':
+      return resolveMeshLightObject(base, properties);
     case 'meshSurface':
       return resolveMeshSurfaceObject(base, block, layoutProp);
     case 'swimlane':
