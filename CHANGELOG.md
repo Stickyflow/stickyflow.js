@@ -31,6 +31,7 @@ Two things count as breaking here that are easy to overlook:
 - The viewer option `resolveAsset` decides what address an asset is loaded from, or that it is not loaded. By default only http, https, blob and data addresses and relative paths load.
 - The viewer event `meshError` reports a file that could not be loaded.
 - The loader honours the samplers of a glTF texture.
+- `setMeshEditing` of the viewer switches off selection and handles in a `Scene`, for trying it out. On a `Canvas` a second click selects an object, which can then be moved and resized there, with the event `meshObjectChange` and `applyMeshObjectChange`.
 - The stage draws only the part of itself on the screen, so it stays sharp at any zoom.
 
 ## [0.15.0] - 2026-11-01

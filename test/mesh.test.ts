@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createBindingRuntime, createDataSource } from '../src/binding';
 import { canonicalize, render, sflToCanvasState } from '../src/index';
 import { setMeshValue } from '../src/model/mesh';
-import { applyMeshChange, insertCanvasObject } from '../src/runtime/interaction';
+import { applyMeshChange, applyMeshObjectChange, insertCanvasObject } from '../src/runtime/interaction';
 import { parseMeshAsset } from '../src/runtime/viewer/mesh/glb';
 import { modelMatrix, transformPoint } from '../src/runtime/viewer/mesh/matrix';
 
@@ -223,6 +223,13 @@ Model m {
 
   it('writes what the handles did into its layout', () => {
     expect(applyMeshChange(panel, { id: 'board', position: [4, 5, 6] })).toContain('position: 4, 5, 6');
+  });
+
+  it('writes what is moved on it into the layout of that object', () => {
+    const moved = applyMeshObjectChange(panel, { id: 'title', x: 25, y: 40, width: 120, height: 32 });
+    expect(moved).toContain('position: 25, 40');
+    expect(moved).toContain('size: 120, 32');
+    expect(moved).toContain('position: 1, 2, 3');
   });
 
   it('warns about a Mesh on it, which is flat', () => {

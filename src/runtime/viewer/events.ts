@@ -35,6 +35,20 @@ export interface MeshChangeEvent {
   scale?: [number, number, number];
 }
 
+export interface MeshObjectSelectEvent {
+  diagramId: string;
+  id: string | null;
+}
+
+export interface MeshObjectChangeEvent {
+  diagramId: string;
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface MeshErrorEvent {
   diagramId: string;
   message: string;
@@ -57,6 +71,8 @@ export interface ViewerEventMap {
   meshSelect: MeshSelectEvent;
   meshChange: MeshChangeEvent;
   meshError: MeshErrorEvent;
+  meshObjectSelect: MeshObjectSelectEvent;
+  meshObjectChange: MeshObjectChangeEvent;
   error: ViewerErrorEvent;
 }
 

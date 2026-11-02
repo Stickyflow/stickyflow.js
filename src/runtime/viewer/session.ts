@@ -36,6 +36,8 @@ export class ViewerSession implements Viewer {
         select: id => this.emitter.emit('meshSelect', { diagramId, id }),
         change: (id, change) => this.emitter.emit('meshChange', { diagramId, id, ...change }),
         error: message => this.emitter.emit('meshError', { diagramId, message }),
+        objectSelect: id => this.emitter.emit('meshObjectSelect', { diagramId, id }),
+        objectChange: (id, box) => this.emitter.emit('meshObjectChange', { diagramId, id, ...box }),
       },
     });
     this.documentComponents = mountDocumentComponents(this.display.svg);
@@ -93,6 +95,10 @@ export class ViewerSession implements Viewer {
 
   setWidgetValue(componentId: string, value: string | number): boolean {
     return this.setComponentValue(componentId, value);
+  }
+
+  setMeshEditing(editing: boolean): void {
+    this.meshStages.setEditing(editing);
   }
 
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {

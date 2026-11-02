@@ -44,6 +44,7 @@ export function createFakeViewer(): FakeViewer {
     setComponentValue: () => false,
     setMeshValue: () => false,
     meshObjectAt: () => null,
+    setMeshEditing: () => undefined,
     setWidgetValue: () => false,
     setPaused: () => undefined,
     clearOverrides: () => undefined,

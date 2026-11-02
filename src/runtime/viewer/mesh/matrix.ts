@@ -168,3 +168,13 @@ export function normalMatrix(m: Mat4): Float32Array {
     (a * e - b * d) / determinant,
   ]);
 }
+
+// Scales and moves x and y, as for a part of a square or the part of a picture that is shown.
+export function windowMatrix(scaleX: number, scaleY: number, moveX: number, moveY: number): Mat4 {
+  const m = identity();
+  m[0] = scaleX;
+  m[5] = scaleY;
+  m[12] = moveX;
+  m[13] = moveY;
+  return m;
+}
