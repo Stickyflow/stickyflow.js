@@ -1,9 +1,10 @@
 import { type RenderOptions, type RenderResult, renderCanvas } from '../render';
 import { checkData } from './checkData';
-import type { DataSource } from './dataSource';
+import { createDataSource, type DataSource } from './dataSource';
 import { flush, markDirty, schedule } from './evaluation';
 import { dispatch, runTick, setElementState } from './handlers';
 import { interactiveElements } from './interactive';
+import { requestRemake } from './remake';
 import { createRuntimeState, type RuntimeState } from './runtimeState';
 import type { BindingRuntime, BindingRuntimeOptions, BindingTarget, LiveChange } from './runtimeTypes';
 import type { Row } from './types';
@@ -16,7 +17,7 @@ import {
   slideElement,
 } from './userInput';
 
-function registerSource(state: RuntimeState, name: string, source: DataSource): () => void {
+function registerSource(state: RuntimeState, name: string, source: DataSource, own = false): () => void {
   const contract = state.graph.contracts.get(name);
   if (!contract) {
     throw new Error(`No DataSource '${name}' is declared in the SFL.`);
@@ -38,7 +39,18 @@ function registerSource(state: RuntimeState, name: string, source: DataSource): 
     }
   };
   adopt();
-  const unsubscribe = source.subscribe(adopt);
+  // New values of parameters change what the document makes, so it is made again; the source the runtime made itself holds the values the
+  // document already has.
+  const parameters = Boolean(contract.parameters);
+  if (parameters && !own) {
+    requestRemake(state);
+  }
+  const unsubscribe = source.subscribe(() => {
+    adopt();
+    if (parameters) {
+      requestRemake(state);
+    }
+  });
   return () => {
     unsubscribe();
     state.sources.delete(name);
@@ -79,6 +91,12 @@ function attach(state: RuntimeState, target: BindingTarget): () => void {
 
 export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions = {}): BindingRuntime {
   const state = createRuntimeState(sfl, options);
+  // Each Parameters block is a record that starts with the values in the file, for controls to write and bindings to read.
+  for (const contract of state.graph.contracts.values()) {
+    if (contract.parameters) {
+      registerSource(state, contract.name, createDataSource({ ...contract.parameters }), true);
+    }
+  }
   for (const binding of state.graph.bindings) {
     if (binding.dependencies.length === 0) {
       state.dirty.add(binding);
@@ -88,11 +106,23 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
     schedule(state);
   }
 
+  const interactiveOf = { graph: state.graph, value: interactiveElements(state.graph) };
   return {
     diagnostics: state.diagnostics,
-    graph: state.graph,
-    interactive: interactiveElements(state.graph),
-    input: state.input,
+    // Read anew, as the document is made again when a parameter changes.
+    get graph() {
+      return state.graph;
+    },
+    get interactive() {
+      if (interactiveOf.graph !== state.graph) {
+        interactiveOf.graph = state.graph;
+        interactiveOf.value = interactiveElements(state.graph);
+      }
+      return interactiveOf.value;
+    },
+    get input() {
+      return state.input;
+    },
     registerSource: (name, source) => registerSource(state, name, source),
     setElementState: (id, patch) => setElementState(state, id, patch),
     press: id => pressElement(state, id),
