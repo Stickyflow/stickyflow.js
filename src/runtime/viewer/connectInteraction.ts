@@ -114,6 +114,8 @@ function updateHover(wiring: Wiring, event: PointerEvent): void {
   const { runtime, viewer, options, session } = wiring;
   const over =
     options.enabled?.() === false ? null : hit(viewer, runtime.interactive.pressable, event.clientX, event.clientY);
+  // A control shows that it can be taken, also on a drawing that was made again under the pointer.
+  viewer.svg.style.cursor = over ? 'pointer' : '';
   if (over === session.hovered) {
     return;
   }
