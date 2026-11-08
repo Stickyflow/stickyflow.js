@@ -1,4 +1,22 @@
+// Most elements are the same after a change, so they are compared first without touching anything.
+function sameAttributes(current: Element, next: Element): boolean {
+  const attributes = next.attributes;
+  if (current.attributes.length !== attributes.length) {
+    return false;
+  }
+  for (let index = 0; index < attributes.length; index++) {
+    const attribute = attributes[index];
+    if (current.getAttribute(attribute.name) !== attribute.value) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function patchAttributes(current: Element, next: Element): boolean {
+  if (sameAttributes(current, next)) {
+    return false;
+  }
   let changed = false;
   for (const attribute of Array.from(current.attributes)) {
     if (!next.hasAttribute(attribute.name)) {
