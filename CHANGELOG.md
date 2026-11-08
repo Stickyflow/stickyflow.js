@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-11-08
+
+### Changed
+
+- The viewer reads a new drawing about three times as fast, and leaves an element alone when its attributes are the same. A control that makes a large drawing again follows the pointer about a quarter faster.
+
 ## [0.18.0] - 2026-11-08
 
 ### Added
