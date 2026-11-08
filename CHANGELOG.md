@@ -17,6 +17,18 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-08
+
+### Added
+
+- A `Parameters` block is a record source with the name of the block (SFL 1.11). Its plain numbers are its fields: bindings read them with `<-`, and a component writes them with `<->`.
+- When a field of a Parameters block changes, the runtime makes the document again with the new value, with every Repeat, computed parameter and binding, at most once a frame.
+- The viewer shows a pointer cursor over a control that can be taken.
+
+### Changed
+
+- A Parameters block and a DataSource with the same name are reported as `duplicate-data-source`.
+
 ## [0.17.1] - 2026-11-02
 
 ### Fixed
