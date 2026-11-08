@@ -28,6 +28,8 @@ export interface DataSourceContract {
   mode: SourceMode;
   fields: Record<string, ScalarType>;
   declared: Record<string, string>;
+  // For the record of a Parameters block: the values its parameters have in the file.
+  parameters?: Record<string, number>;
 }
 
 export interface BindingDiagnostic {

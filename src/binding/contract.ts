@@ -43,6 +43,26 @@ export function visitBlocks(blocks: SflBlock[], visit: (block: SflBlock) => void
   }
 }
 
+// Each Parameters block, with the parameters that are plain numbers as its fields.
+export function collectParameterContracts(sflDocument: SflDocument): DataSourceContract[] {
+  const contracts: DataSourceContract[] = [];
+  visitBlocks(sflDocument.blocks, block => {
+    if (block.kind !== 'Parameters') {
+      return;
+    }
+    const contract: DataSourceContract = { name: block.name, mode: 'record', fields: {}, declared: {}, parameters: {} };
+    for (const entry of block.entries) {
+      if (entry.type === 'property' && entry.property.value.type === 'number') {
+        contract.fields[entry.property.key] = 'number';
+        contract.declared[entry.property.key] = 'number';
+        (contract.parameters as Record<string, number>)[entry.property.key] = entry.property.value.value;
+      }
+    }
+    contracts.push(contract);
+  });
+  return contracts;
+}
+
 export function collectContracts(sflDocument: SflDocument): {
   contracts: Map<string, DataSourceContract>;
   diagnostics: BindingDiagnostic[];

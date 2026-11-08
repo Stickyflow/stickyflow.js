@@ -8,7 +8,7 @@ import {
   componentStateType,
   twoWayTargetProblem,
 } from './componentBinding';
-import { collectContracts, visitBlocks } from './contract';
+import { collectContracts, collectParameterContracts, visitBlocks } from './contract';
 import { collectRefs, inferType, type TypeScope } from './expression';
 import { BINDABLE_PROPERTIES } from './targets';
 import {
@@ -393,6 +393,20 @@ export function buildBindingGraph(source: SflDocument): BindingGraph {
   // Names of a Repeat or a Template, like col, are only filled in when these are made.
   const sflDocument = expandDocument(source);
   const { contracts, diagnostics } = collectContracts(sflDocument);
+  // The Parameters are gone once the document is made, so they are read from the document as it was written.
+  for (const contract of collectParameterContracts(source)) {
+    if (contracts.has(contract.name)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'duplicate-data-source',
+        message: `'${contract.name}' is a DataSource and a Parameters block; give one of them another name.`,
+        line: 0,
+        col: 0,
+      });
+    } else {
+      contracts.set(contract.name, contract);
+    }
+  }
   const elements = collectElements(sflDocument);
   warnNameCollisions(contracts, elements, diagnostics);
   const scope = createScope(contracts, elements, false, true);

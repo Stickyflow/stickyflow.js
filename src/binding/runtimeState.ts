@@ -1,9 +1,9 @@
 import { type ComponentValue, getComponentDescriptor } from '../model/component';
 import type { RenderResult } from '../render';
-import { sflToRenderInput } from '../renderInput/fromSfl';
+import { documentToRenderInput } from '../renderInput/fromSfl';
 import type { RenderInput } from '../renderInput/types';
 import { parse } from '../sflLanguage';
-import { expandDocument } from '../sflLanguage/expansion';
+import type { SflDocument } from '../sflLanguage/ast';
 import { findComponent } from './applyValue';
 import type { DataSource } from './dataSource';
 import { type BindingGraph, buildBindingGraph } from './graph';
@@ -25,6 +25,9 @@ export interface RuntimeState {
   elementState: Map<string, ElementState>;
   scheduled: boolean;
   renderNeeded: boolean;
+  // The document as it was written, made again with the values of its parameters whenever they change.
+  document: SflDocument;
+  remakePending: boolean;
 }
 
 function initialValue(input: RenderInput, id: string, componentType: string | undefined): ComponentValue {
@@ -41,20 +44,11 @@ function initialValue(input: RenderInput, id: string, componentType: string | un
 }
 
 export function createRuntimeState(sfl: string, options: BindingRuntimeOptions): RuntimeState {
-  const graph = buildBindingGraph(expandDocument(parse(sfl)));
-  const input = structuredClone(sflToRenderInput(sfl));
+  const document = parse(sfl);
+  const graph = buildBindingGraph(document);
+  const input = structuredClone(documentToRenderInput(document));
   const elementState = new Map<string, ElementState>();
-  for (const [name, info] of graph.elements) {
-    if (!graph.contracts.has(name)) {
-      elementState.set(name, {
-        pressed: false,
-        hovered: false,
-        focused: false,
-        pointer: 0,
-        value: initialValue(input, name, info.componentType),
-      });
-    }
-  }
+  addElementStates(graph, input, elementState);
   return {
     options,
     graph,
@@ -70,7 +64,28 @@ export function createRuntimeState(sfl: string, options: BindingRuntimeOptions):
     elementState,
     scheduled: false,
     renderNeeded: false,
+    document,
+    remakePending: false,
   };
+}
+
+// Every element gets its state, and one that is new after the document was made again starts at rest.
+export function addElementStates(
+  graph: BindingGraph,
+  input: RenderInput,
+  elementState: Map<string, ElementState>,
+): void {
+  for (const [name, info] of graph.elements) {
+    if (!graph.contracts.has(name) && !elementState.has(name)) {
+      elementState.set(name, {
+        pressed: false,
+        hovered: false,
+        focused: false,
+        pointer: 0,
+        value: initialValue(input, name, info.componentType),
+      });
+    }
+  }
 }
 
 export function readValue(state: RuntimeState, path: string[]): BindingValue {
