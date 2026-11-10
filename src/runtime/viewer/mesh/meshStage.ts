@@ -5,6 +5,7 @@ import {
   type Camera,
   frameBox,
   type MeshFrame,
+  FOV,
   makeCamera,
   planeHit,
   project,
@@ -62,8 +63,9 @@ export class MeshStage {
   private camera: Camera | undefined;
   private yaw = 45;
   private pitch = 27;
-  // How much nearer or farther the camera is than the framing puts it.
+  // How much nearer or farther the camera is than the framing puts it, and how far it is moved sideways.
   private zoom = 1;
+  private pan: [number, number, number] = [0, 0, 0];
   private selected: string | null = null;
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
   private editing = true;
@@ -86,7 +88,7 @@ export class MeshStage {
   private observer: ResizeObserver | undefined;
   private zoomObserver: MutationObserver | undefined;
   private destroyed = false;
-  private gesture: { x: number; y: number; moved: boolean } | null = null;
+  private gesture: { x: number; y: number; moved: boolean; pan?: boolean } | null = null;
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
   private host: Element;
@@ -348,7 +350,13 @@ export class MeshStage {
       this.framedAssets = framing;
     }
     this.camera = this.frame
-      ? makeCamera({ ...this.frame, distance: this.frame.distance * this.zoom }, this.yaw, this.pitch, aspect, window)
+      ? makeCamera(
+          { ...this.frame, center: this.frame.center.map((value, axis) => value + this.pan[axis]) as typeof this.frame.center, distance: this.frame.distance * this.zoom },
+          this.yaw,
+          this.pitch,
+          aspect,
+          window,
+        )
       : undefined;
     this.keepSurfacesSharp(planes);
     renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes, lighting, grid: this.grid && !wholeStage });
@@ -639,11 +647,21 @@ export class MeshStage {
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {
-    if (event.button !== 0 || isCameraGesture(event)) {
+    // Ctrl or Cmd with a drag, or the middle button, moves the camera of the Scene sideways. The page around it stays.
+    const pan = event.button === 1 || (event.button === 0 && isCameraGesture(event));
+    if (event.button !== 0 && !pan) {
       return;
     }
-    this.gesture = { x: event.clientX, y: event.clientY, moved: false };
-    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+    if (pan) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.gesture = { x: event.clientX, y: event.clientY, moved: false, pan };
+    try {
+      (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+    } catch {
+      // A pointer that is gone already cannot be held.
+    }
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {
@@ -658,6 +676,19 @@ export class MeshStage {
     gesture.moved = true;
     gesture.x = event.clientX;
     gesture.y = event.clientY;
+    if (gesture.pan) {
+      event.stopPropagation();
+      const { camera, frame } = this;
+      if (!camera || !frame) {
+        return;
+      }
+      // What a pixel spans at the distance of what the camera looks at.
+      const height = this.host.getBoundingClientRect().height || 1;
+      const perPixel = (2 * frame.distance * this.zoom * Math.tan(FOV / 2)) / height;
+      this.pan = this.pan.map((value, axis) => value - camera.right[axis] * dx * perPixel + camera.up[axis] * dy * perPixel) as [number, number, number];
+      this.schedule();
+      return;
+    }
     this.yaw -= dx * ORBIT_PER_PIXEL;
     this.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.pitch + dy * ORBIT_PER_PIXEL));
     this.schedule();
@@ -666,7 +697,7 @@ export class MeshStage {
   private readonly onPointerUp = (event: PointerEvent): void => {
     const gesture = this.gesture;
     this.gesture = null;
-    if (gesture && !gesture.moved) {
+    if (gesture && !gesture.moved && !gesture.pan) {
       this.clickAt(event.clientX, event.clientY);
     }
   };
