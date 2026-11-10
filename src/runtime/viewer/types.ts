@@ -39,6 +39,8 @@ export interface Viewer {
   setMeshValue(meshId: string, property: string, value: number | string): boolean;
   // Off, a Scene is only looked at and used: no selection and no handles.
   setMeshEditing(editing: boolean): void;
+  // A grid on the floor of a Scene while it is edited, as in a modeling program. It is never in an exported picture.
+  setMeshGrid(grid: boolean): void;
   // What layers have hidden or locked in a Scene, by name. Meshes and what lies on a Canvas are not in the drawing, so CSS does not reach them.
   setMeshFlags(flags: MeshStageFlags): void;
   // Selects a mesh, a Canvas or what lies on one. False when no Scene has that name.

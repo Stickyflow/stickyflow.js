@@ -185,7 +185,7 @@ export class MeshRenderer {
     ]);
     this.depth = link(gl, DEPTH_FRAGMENT, common);
     this.probing = link(gl, PROBE_FRAGMENT, [...common, 'uEye', 'uRange', 'uId']);
-    this.ground = link(gl, GROUND_FRAGMENT, [...common, 'uShadow', 'uCenter', 'uFade', 'uStrength']);
+    this.ground = link(gl, GROUND_FRAGMENT, [...common, 'uShadow', 'uCenter', 'uFade', 'uStrength', 'uGrid', 'uCell', 'uReach', 'uStage']);
 
     this.picture = this.linkPlane(PLANE_FRAGMENT);
     this.pictureSampler = gl.getUniformLocation(this.picture, 'uPicture');
@@ -564,7 +564,7 @@ export class MeshRenderer {
   draw(
     meshes: readonly Mesh[],
     camera: Camera | undefined,
-    options: { shadows?: boolean; planes?: readonly Plane[]; lighting?: Lighting } = {},
+    options: { shadows?: boolean; planes?: readonly Plane[]; lighting?: Lighting; grid?: boolean } = {},
   ): void {
     const planes = options.planes ?? [];
     const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
@@ -608,8 +608,8 @@ export class MeshRenderer {
     this.drawInstances(instances.filter(instance => !seeThrough(instance)));
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    if (options.shadows) {
-      this.drawGround(camera, lightMatrix, box, lighting.groundShadow);
+    if (options.shadows || options.grid) {
+      this.drawGround(camera, lightMatrix, box, options.shadows ? lighting.groundShadow : 0, options.grid ?? false);
     }
     this.drawPlanes(camera, planes);
     gl.useProgram(program);
@@ -651,20 +651,27 @@ export class MeshRenderer {
     gl.bindVertexArray(null);
   }
 
-  private drawGround(camera: Camera, lightMatrix: Mat4, box: Box, strength: number): void {
+  private drawGround(camera: Camera, lightMatrix: Mat4, box: Box, strength: number, grid: boolean): void {
     const { gl } = this;
     const { program, uniforms } = this.ground;
     const middle = boxCenter(box);
     const center: Vec3 = [middle[0], box.min[1], middle[2]];
-    const reach = Math.max(boxDiagonal(box), 1e-3) * 1.4;
+    const diagonal = Math.max(boxDiagonal(box), 1e-3);
+    const fade = diagonal * 1.4;
+    // The grid reaches further than the shadow and fades out, so it seems to go on. A cell is a power of ten that suits the size of the scene.
+    const reach = grid ? diagonal * 3 : fade;
     gl.useProgram(program);
     gl.uniformMatrix4fv(uniforms.uViewProjection, false, camera.viewProjection);
     gl.uniformMatrix4fv(uniforms.uLight, false, lightMatrix);
     gl.uniformMatrix4fv(uniforms.uModel, false, modelMatrix(center, [0, 0, 0], [reach, 1, reach]));
     gl.uniform1i(uniforms.uShadow, 1);
     gl.uniform3fv(uniforms.uCenter, center);
-    gl.uniform1f(uniforms.uFade, reach);
+    gl.uniform1f(uniforms.uFade, fade);
     gl.uniform1f(uniforms.uStrength, strength);
+    gl.uniform1f(uniforms.uGrid, grid ? 1 : 0);
+    gl.uniform1f(uniforms.uCell, Math.pow(10, Math.floor(Math.log10(diagonal / 4))));
+    gl.uniform1f(uniforms.uReach, reach);
+    gl.uniformMatrix4fv(uniforms.uStage, false, camera.stage);
     gl.depthMask(false);
     gl.bindVertexArray(this.groundQuad);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

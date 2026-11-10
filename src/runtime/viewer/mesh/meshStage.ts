@@ -62,9 +62,12 @@ export class MeshStage {
   private camera: Camera | undefined;
   private yaw = 45;
   private pitch = 27;
+  // How much nearer or farther the camera is than the framing puts it.
+  private zoom = 1;
   private selected: string | null = null;
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
   private editing = true;
+  private grid = false;
   private selectedObject: string | null = null;
   private objectDraft: MeshObjectBox | null = null;
   private handles: SVGGElement | null = null;
@@ -174,6 +177,7 @@ export class MeshStage {
       this.host.addEventListener('mousedown', keepTextUnselected);
       this.host.addEventListener('pointermove', this.onPointerMove as EventListener);
       this.host.addEventListener('pointerup', this.onPointerUp as EventListener);
+      this.host.addEventListener('wheel', this.onWheel as EventListener, { passive: false });
     }
   }
 
@@ -182,7 +186,20 @@ export class MeshStage {
     this.host.removeEventListener('mousedown', keepTextUnselected);
     this.host.removeEventListener('pointermove', this.onPointerMove as EventListener);
     this.host.removeEventListener('pointerup', this.onPointerUp as EventListener);
+    this.host.removeEventListener('wheel', this.onWheel as EventListener);
   }
+
+  // Ctrl or Cmd with the wheel over a Scene, or a pinch, moves its camera nearer or farther. The page around it stays as it is. A wheel
+  // made by a program, as when a page turns the plain wheel into its own zoom, is left to the page.
+  private readonly onWheel = (event: WheelEvent): void => {
+    if (!event.isTrusted || !isCameraGesture(event) || !this.frame) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.zoom = Math.min(4, Math.max(0.15, this.zoom * Math.exp(event.deltaY * 0.002)));
+    this.schedule();
+  };
 
   private load(asset: string): void {
     const renderer = this.renderer;
@@ -330,9 +347,11 @@ export class MeshStage {
         box && frameBox(box, this.yaw, this.pitch, aspect, this.data.shadow ? lighting.direction : undefined);
       this.framedAssets = framing;
     }
-    this.camera = this.frame ? makeCamera(this.frame, this.yaw, this.pitch, aspect, window) : undefined;
+    this.camera = this.frame
+      ? makeCamera({ ...this.frame, distance: this.frame.distance * this.zoom }, this.yaw, this.pitch, aspect, window)
+      : undefined;
     this.keepSurfacesSharp(planes);
-    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes, lighting });
+    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes, lighting, grid: this.grid && !wholeStage });
     this.placeAnchors();
     this.drawHandles();
     if (planes.some(plane => plane.layers.some(layer => 'rect' in layer))) {
@@ -736,6 +755,11 @@ export class MeshStage {
     if (!editing) {
       this.select(null);
     }
+    this.schedule();
+  }
+
+  setGrid(grid: boolean): void {
+    this.grid = grid;
     this.schedule();
   }
 
