@@ -112,6 +112,7 @@ export function resolveMeshGroundObject(
       height: asNumber(properties.get('height')),
       color: color === 'none' ? undefined : color,
       reflection: Math.min(1, Math.max(0, asNumber(properties.get('reflection')) ?? 0)),
+      roughness: Math.min(1, Math.max(0, asNumber(properties.get('roughness')) ?? 0)),
     },
   };
 }

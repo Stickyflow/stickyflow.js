@@ -22,6 +22,9 @@ float random() {
 }`;
 
 const RAYS = `
+// Whether anything in the scene is partly see-through, which makes shadows cost more.
+uniform bool uSeeThrough;
+
 struct Hit {
   float distance;
   int triangle;
@@ -105,9 +108,24 @@ bool trace(vec3 origin, vec3 direction, float reach, bool anyOne, out Hit hit) {
   return hit.triangle >= 0;
 }
 
+// Whether something stands between a point and a light. What is partly see-through lets that part of the rays pass, so over
+// many frames it throws a lighter shadow.
 bool blocked(vec3 origin, vec3 direction) {
   Hit hit;
-  return trace(origin, direction, 1e30, true, hit);
+  if (!uSeeThrough) {
+    return trace(origin, direction, 1e30, true, hit);
+  }
+  for (int layer = 0; layer < 6; layer++) {
+    if (!trace(origin, direction, 1e30, false, hit)) {
+      return false;
+    }
+    float opacity = fetch(uMaterials, int(fetch(uTriangles, hit.triangle * 7).w) * 3).a;
+    if (random() < opacity) {
+      return true;
+    }
+    origin += direction * (hit.distance + uLift);
+  }
+  return true;
 }`;
 
 const SURFACE = `
@@ -117,6 +135,8 @@ struct Surface {
   vec3 face;
   vec3 normal;
   vec3 color;
+  // How much of the light that meets the surface it takes: the rest passes straight through.
+  float opacity;
   float metallic;
   float roughness;
   vec3 emissive;
@@ -170,7 +190,9 @@ Surface surfaceOf(Hit hit, vec3 origin, vec3 direction) {
       s.normal = dot(bent, s.face) > 0.0 ? bent : s.normal;
     }
   }
-  s.color = base.rgb * ((maps & 1) != 0 ? textureLod(uColorMaps, vec3(uv, layer), 0.0).rgb : vec3(1.0));
+  vec4 picture = (maps & 1) != 0 ? textureLod(uColorMaps, vec3(uv, layer), 0.0) : vec4(1.0);
+  s.color = base.rgb * picture.rgb;
+  s.opacity = base.a < 1.0 ? base.a * picture.a : 1.0;
   vec2 surface = (maps & 2) != 0 ? textureLod(uDataMaps, vec3(uv, layer), 0.0).gb : vec2(1.0);
   s.roughness = clamp(look.y * surface.x, 0.04, 1.0);
   s.metallic = clamp(look.x * surface.y, 0.0, 1.0);
@@ -288,6 +310,7 @@ const GROUND = `
 uniform float uFloor;
 // How much of what stands on it the ground reflects, and the color it throws light back with.
 uniform float uReflection;
+uniform float uGroundRoughness;
 uniform vec3 uGroundColor;
 // The shadows on the ground as the page shows them: what the shadow of the light of this frame counts for, how dark the shadow
 // of the sun is, around which point they lie and how far they reach.
@@ -349,7 +372,10 @@ void main() {
   // Whether the path has only seen through the eye so far, and how likely its last turn was.
   bool seeing = true;
   float chance = 0.0;
-  for (int bounce = 0; bounce < 5; bounce++) {
+  // A path turns at most five times. Passing through what is see-through is no turn, but it ends somewhere too.
+  int bounce = 0;
+  bool mirrored = false;
+  for (int visit = 0; visit < 16 && bounce < 5; visit++) {
     Hit hit;
     bool found = trace(origin, direction, 1e30, false, hit);
     float toGround = direction.y < 0.0 && origin.y > uFloor ? (uFloor - origin.y) / direction.y : -1.0;
@@ -358,15 +384,25 @@ void main() {
       vec3 at = origin + direction * toGround;
       if (seeing) {
         // The ground as the eye sees it: the page with its shadows, and what the ground reflects.
-        if (bounce == 0) {
+        if (!mirrored) {
           shadow = groundShadow(at, uLift);
         }
-        if (uReflection <= 0.0 || bounce > 0) {
+        if (uReflection <= 0.0 || mirrored) {
           break;
         }
+        mirrored = true;
         reflected = uReflection;
         origin = at + vec3(0.0, uLift, 0.0);
-        direction = reflect(direction, vec3(0.0, 1.0, 0.0));
+        // A rough ground is many small mirrors that lean a little, each its own way.
+        float lean = uGroundRoughness * uGroundRoughness;
+        float turn = 2.0 * PI * random();
+        float pick = random();
+        float cosTheta = sqrt((1.0 - pick) / (1.0 + (lean * lean - 1.0) * pick));
+        float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
+        direction = reflect(direction, vec3(cos(turn) * sinTheta, cosTheta, sin(turn) * sinTheta));
+        if (direction.y <= 0.0) {
+          break;
+        }
         continue;
       }
       // The ground as light finds it on its way: a matte surface that throws light back.
@@ -374,6 +410,7 @@ void main() {
       s.face = vec3(0.0, 1.0, 0.0);
       s.normal = s.face;
       s.color = uGroundColor;
+      s.opacity = 1.0;
       s.metallic = 0.0;
       s.roughness = 1.0;
       s.emissive = vec3(0.0);
@@ -385,6 +422,10 @@ void main() {
       break;
     } else {
       s = surfaceOf(hit, origin, direction);
+      if (s.opacity < 1.0 && random() > s.opacity) {
+        origin = s.position + direction * uLift;
+        continue;
+      }
     }
     if (seeing) {
       cover = reflected;
@@ -408,6 +449,7 @@ void main() {
     }
     origin = s.position + s.face * uLift;
     direction = next;
+    bounce++;
   }
   // One bright path would stay as a speck for a long time, so no path counts for more than this.
   light = min(light, vec3(24.0)) * uExposure;

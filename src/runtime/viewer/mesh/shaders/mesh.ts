@@ -63,6 +63,9 @@ uniform vec3 uIrradiance[9];
 uniform float uExposure;
 // A frame of a still picture stays light, as the frames are added up before they are shown.
 uniform bool uStill;
+// When the meshes are drawn turned over, as what the ground reflects: the height of the ground, over what height above it the
+// picture fades, and how strong it is. Zero when they are drawn as themselves.
+uniform vec3 uMirror;
 ${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
@@ -180,7 +183,11 @@ void main() {
   if (!uStill) {
     color = toScreen(color);
   }
-  fragment = vec4(color * base.a, base.a);
+  float seen = base.a;
+  if (uMirror.z > 0.0) {
+    seen *= uMirror.z * (1.0 - smoothstep(0.0, uMirror.y, uMirror.x - vWorld.y));
+  }
+  fragment = vec4(color * seen, seen);
 }`;
 
 export const DEPTH_FRAGMENT = `#version 300 es

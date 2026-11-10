@@ -174,6 +174,7 @@ export class MeshRenderer {
       ...ENVIRONMENT_UNIFORMS,
       ...SCREEN_OCCLUSION_UNIFORMS,
       'uExposure',
+      'uMirror',
     ]);
     this.ground = link(gl, GROUND_FRAGMENT, [
       ...common,
@@ -535,7 +536,7 @@ export class MeshRenderer {
         options.environmentTurn ?? 0,
       ),
     };
-    // A scene of solid meshes is traced, path by path. Anything else is drawn as while it moves, light by light.
+    // A scene of meshes is traced, path by path. One with a Canvas is drawn as while it moves, light by light.
     const traced = this.traceFrame(meshes, camera, options, target, frame);
     const under = traced ? traced.under : this.drawFrame(meshes, camera, options, target, frame);
     this.accumulation.add(index >= STILL_SHOWN_FROM, under);
@@ -669,7 +670,10 @@ export class MeshRenderer {
       gl.useProgram(program);
     }
     if (reflection > 0) {
-      this.drawReflection(opaque, floor, reflection, lightMatrix, environmentMatrix);
+      // The rougher the ground, the nearer to it the reflection ends.
+      const roughness = options.ground?.roughness ?? 0;
+      const reach = roughness > 0 ? boxDiagonal(box) * (0.08 + 0.9 * (1 - roughness) ** 2) : 1e9;
+      this.drawReflection(opaque, floor, [reflection, reach], lightMatrix, environmentMatrix);
       this.occlusion.bind(uniforms, occlusion);
     }
     this.drawInstances(opaque);
@@ -690,8 +694,8 @@ export class MeshRenderer {
     return groundColor && still ? () => this.drawGroundBase(plain, box, floor, wide, groundColor) : null;
   }
 
-  // A frame of a still picture by following paths of light: for a scene of solid meshes in an environment, which is all the
-  // tracer knows. Null when the scene has more, and it is drawn the other way.
+  // A frame of a still picture by following paths of light: for a scene of meshes in an environment, which is all the tracer
+  // knows. Null when the scene has a Canvas too, and it is drawn the other way.
   private traceFrame(
     meshes: readonly Mesh[],
     camera: Camera,
@@ -702,9 +706,9 @@ export class MeshRenderer {
     const picture = this.environment.picture;
     const light = still.light;
     const instances = this.instances(meshes);
-    const solid = instances.every(({ mesh, primitive }) => mesh.opacity >= 1 && !primitive.source.material.blend);
+    const seeThrough = instances.some(({ mesh, primitive }) => mesh.opacity < 1 || primitive.source.material.blend);
     const measured = this.boxOf(instances, []);
-    if (!picture || !light || !solid || !measured || (options.planes ?? []).length > 0 || !this.tracer.possible) {
+    if (!picture || !light || !measured || (options.planes ?? []).length > 0 || !this.tracer.possible) {
       return null;
     }
     const { gl } = this;
@@ -712,7 +716,7 @@ export class MeshRenderer {
     const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
     const key = `${this.generation}|${instances
       .map(({ mesh, primitive, world }) =>
-        [primitive.count, world.join(), mesh.color, mesh.metallic, mesh.roughness].join(':'),
+        [primitive.count, world.join(), mesh.color, mesh.metallic, mesh.roughness, mesh.opacity].join(':'),
       )
       .join('|')}`;
     this.tracer.load(key, () => instances.map(instance => this.tracePart(instance)));
@@ -727,6 +731,7 @@ export class MeshRenderer {
       seed: still.index,
       exposure: ENVIRONMENT_EXPOSURE * 2 ** (options.exposure ?? 0),
       lift: boxDiagonal(box) * 1e-4,
+      seeThrough,
       environment: {
         ...picture,
         turn: options.environmentTurn ?? 0,
@@ -745,6 +750,7 @@ export class MeshRenderer {
       ground: {
         floor,
         reflection: options.ground?.reflection ?? 0,
+        roughness: options.ground?.roughness ?? 0,
         color: groundColor ?? PAGE_COLOR,
         environmentShadow: light.ground,
         sunShadow: options.shadows ? lighting.groundShadow * this.groundDarkness(lighting) : 0,
@@ -776,7 +782,8 @@ export class MeshRenderer {
       normals: source.normals,
       uvs: source.uvs,
       indices: source.indices,
-      base: [r, g, b, 1],
+      // Only a material that is meant to be seen through is: the alpha of others means nothing.
+      base: [r, g, b, mesh.opacity * (material.blend ? material.baseColor[3] : 1)],
       metallic: mesh.metallic ?? material.metallic,
       roughness: mesh.roughness ?? material.roughness,
       emissive: material.emissive,
@@ -925,7 +932,7 @@ export class MeshRenderer {
   private drawReflection(
     instances: readonly Instance[],
     floor: number,
-    strength: number,
+    [strength, reach]: readonly [number, number],
     lightMatrix: Mat4,
     environmentMatrix: Mat4,
   ): void {
@@ -942,9 +949,10 @@ export class MeshRenderer {
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
     gl.enable(gl.BLEND);
-    gl.blendColor(0, 0, 0, strength);
-    gl.blendFunc(gl.CONSTANT_ALPHA, gl.ONE_MINUS_CONSTANT_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform3f(uniforms.uMirror, floor, reach, strength);
     this.drawInstances(instances, mirror);
+    gl.uniform3f(uniforms.uMirror, 0, 0, 0);
     gl.disable(gl.BLEND);
     gl.depthMask(true);
     gl.depthFunc(gl.LESS);

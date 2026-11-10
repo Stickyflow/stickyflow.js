@@ -36,8 +36,8 @@ void main() {
   vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
   float inside = (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
   if (uBasePass) {
-    // A ground with a color fills the Scene to its edges, and runs out far away.
-    float cover = 1.0 - smoothstep(uReach * 0.45, uReach * 0.95, distance);
+    // A ground with a color is a round place under the meshes that runs out softly, also before the edges of the Scene.
+    float cover = (1.0 - smoothstep(uFade * 0.3, uFade * 0.95, distance)) * inside;
     fragment = vec4(uGroundColor * cover, cover);
     return;
   }

@@ -39,6 +39,7 @@ export interface SflMeshGroundData {
   height?: number;
   color?: string;
   reflection: number;
+  roughness: number;
 }
 
 export interface SflAnchorData {

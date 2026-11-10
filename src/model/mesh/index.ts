@@ -36,12 +36,14 @@ export interface MeshScene {
 }
 
 // The ground of a Scene. Without a height it lies under the meshes as they stand; without a color it is not seen itself, only
-// the shadows on it and what it reflects, from 0 for nothing to 1 for a mirror.
+// the shadows on it and what it reflects, from 0 for nothing to 1 for a mirror. A rough ground reflects blurred, and less of
+// what is far from it.
 export interface MeshGround {
   id: string;
   height?: number;
   color?: string;
   reflection: number;
+  roughness: number;
 }
 
 // A 2D object that follows a point of a mesh. Its own position is then its distance from that point.

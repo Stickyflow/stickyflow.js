@@ -31,6 +31,7 @@ const UNIFORMS = [
   'uSunShadows',
   'uFloor',
   'uReflection',
+  'uGroundRoughness',
   'uGroundColor',
   'uEnvGround',
   'uSunGround',
@@ -42,6 +43,7 @@ const UNIFORMS = [
   'uSeed',
   'uExposure',
   'uLift',
+  'uSeeThrough',
 ];
 
 // What one frame of a traced picture is drawn with.
@@ -51,6 +53,8 @@ export interface TraceFrame {
   exposure: number;
   // A small step off a surface, for the size of the scene.
   lift: number;
+  // Whether anything in the scene is partly see-through.
+  seeThrough: boolean;
   environment: {
     texture: WebGLTexture;
     skyLevel: number;
@@ -65,6 +69,7 @@ export interface TraceFrame {
   ground: {
     floor: number;
     reflection: number;
+    roughness: number;
     color: Vec3;
     // What the shadow of the light of this frame counts for on the page, and how dark the shadow of the sun is there.
     environmentShadow: number;
@@ -202,6 +207,7 @@ export class PathTracer {
     gl.uniform1i(uniforms.uSunShadows, sun.shadows ? 1 : 0);
     gl.uniform1f(uniforms.uFloor, ground.floor);
     gl.uniform1f(uniforms.uReflection, ground.reflection);
+    gl.uniform1f(uniforms.uGroundRoughness, ground.roughness);
     gl.uniform3fv(uniforms.uGroundColor, ground.color);
     gl.uniform1f(uniforms.uEnvGround, ground.environmentShadow);
     gl.uniform1f(uniforms.uSunGround, ground.sunShadow);
@@ -213,6 +219,7 @@ export class PathTracer {
     gl.uniform1f(uniforms.uSeed, frame.seed);
     gl.uniform1f(uniforms.uExposure, frame.exposure);
     gl.uniform1f(uniforms.uLift, frame.lift);
+    gl.uniform1i(uniforms.uSeeThrough, frame.seeThrough ? 1 : 0);
     gl.bindVertexArray(this.quad);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     gl.bindVertexArray(null);
