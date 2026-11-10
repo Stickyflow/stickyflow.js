@@ -17,6 +17,10 @@ interface Targets {
   width: number;
   height: number;
   frame: WebGLTexture;
+  // What the first frame saw at each pixel, when it says so: the way the surface faces with its distance, and its color with
+  // its roughness. They tell the noise of a traced picture from what it shows.
+  guide: WebGLTexture;
+  look: WebGLTexture;
   depth: WebGLRenderbuffer;
   sum: WebGLTexture;
   frameBuffer: WebGLFramebuffer;
@@ -30,6 +34,7 @@ export class Accumulation {
   private programs: { add: Program; show: Program } | false | null = null;
   private targets: Targets | null = null;
   private frames = 0;
+  private guided = false;
 
   constructor(gl: WebGL2RenderingContext, quad: WebGLVertexArrayObject) {
     this.gl = gl;
@@ -46,7 +51,7 @@ export class Accumulation {
       const gl = this.gl;
       this.programs = canDrawFloats(gl) && {
         add: link(gl, ADD_FRAGMENT, ['uFrame'], SCREEN_VERTEX),
-        show: link(gl, SHOW_FRAGMENT, ['uSum', 'uCount'], SCREEN_VERTEX),
+        show: link(gl, SHOW_FRAGMENT, ['uSum', 'uCount', 'uGuide', 'uLook', 'uGuided'], SCREEN_VERTEX),
       };
     }
     return this.programs !== false;
@@ -63,12 +68,28 @@ export class Accumulation {
     if (!targets) {
       return null;
     }
+    if (this.frames === 0) {
+      this.guided = false;
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, targets.frameBuffer);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
     gl.viewport(0, 0, targets.width, targets.height);
     gl.clearColor(0, 0, 0, 0);
     gl.depthMask(true);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     return targets.frameBuffer;
+  }
+
+  // Lets the first frame, whose target is bound, also say what it sees at each pixel. Later frames only add their light.
+  takeGuides(): void {
+    const gl = this.gl;
+    if (this.frames !== 0) {
+      return;
+    }
+    this.guided = true;
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
   // Adds the frame that was drawn to the sum, and shows the mean on the canvas when asked to, over what `under` draws there.
@@ -110,17 +131,26 @@ export class Accumulation {
       under();
       gl.disable(gl.DEPTH_TEST);
       gl.bindVertexArray(this.quad);
-      gl.activeTexture(gl.TEXTURE0);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     }
+    const { uniforms } = programs.show;
     gl.useProgram(programs.show.program);
-    gl.bindTexture(gl.TEXTURE_2D, targets.sum);
-    gl.uniform1i(programs.show.uniforms.uSum, 0);
-    gl.uniform1f(programs.show.uniforms.uCount, this.frames);
+    [targets.sum, targets.guide, targets.look].forEach((texture, unit) => {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+    });
+    gl.uniform1i(uniforms.uSum, 0);
+    gl.uniform1i(uniforms.uGuide, 1);
+    gl.uniform1i(uniforms.uLook, 2);
+    gl.uniform1i(uniforms.uGuided, this.guided ? 1 : 0);
+    gl.uniform1f(uniforms.uCount, this.frames);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     gl.disable(gl.BLEND);
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    for (const unit of [2, 1, 0]) {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+    }
     gl.bindVertexArray(null);
     gl.enable(gl.DEPTH_TEST);
   }
@@ -143,6 +173,8 @@ export class Accumulation {
     };
     // Frames hold light, not what a screen shows, so they add up as light does.
     const frame = picture(gl.RGBA16F);
+    const guide = picture(gl.RGBA16F);
+    const look = picture(gl.RGBA8);
     const sum = picture(gl.RGBA16F);
     gl.bindTexture(gl.TEXTURE_2D, null);
     const depth = requireObject(gl.createRenderbuffer(), 'renderbuffer');
@@ -151,7 +183,9 @@ export class Accumulation {
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
     const frameBuffer = requireObject(gl.createFramebuffer(), 'framebuffer');
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, frame, 0);
+    [frame, guide, look].forEach((texture, index) => {
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + index, gl.TEXTURE_2D, texture, 0);
+    });
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
     const frameComplete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
     const sumBuffer = requireObject(gl.createFramebuffer(), 'framebuffer');
@@ -159,7 +193,7 @@ export class Accumulation {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, sum, 0);
     const sumComplete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    this.targets = { width, height, frame, depth, sum, frameBuffer, sumBuffer };
+    this.targets = { width, height, frame, guide, look, depth, sum, frameBuffer, sumBuffer };
     this.frames = 0;
     if (!frameComplete || !sumComplete) {
       this.release();
@@ -173,8 +207,9 @@ export class Accumulation {
     if (!targets) {
       return;
     }
-    gl.deleteTexture(targets.frame);
-    gl.deleteTexture(targets.sum);
+    for (const texture of [targets.frame, targets.guide, targets.look, targets.sum]) {
+      gl.deleteTexture(texture);
+    }
     gl.deleteRenderbuffer(targets.depth);
     gl.deleteFramebuffer(targets.frameBuffer);
     gl.deleteFramebuffer(targets.sumBuffer);

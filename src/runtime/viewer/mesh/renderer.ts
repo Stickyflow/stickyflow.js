@@ -722,6 +722,7 @@ export class MeshRenderer {
     this.tracer.load(key, () => instances.map(instance => this.tracePart(instance)));
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    this.accumulation.takeGuides();
     const shift = windowMatrix(1, 1, still.shift[0], still.shift[1]);
     const ground = this.groundOf(box, floor, wide);
     const groundColor = colorOf(options.ground?.color);

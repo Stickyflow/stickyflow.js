@@ -348,7 +348,11 @@ uniform float uSeed;
 uniform float uExposure;
 // A small step off a surface, so a ray that starts on it does not meet it again.
 uniform float uLift;
-out vec4 fragment;
+layout(location = 0) out vec4 fragment;
+// What the eye sees first at this pixel, for telling the grain of the picture from what it shows: the way the surface faces with
+// its distance, and its color with how rough it is. Nothing where it sees no surface, or one in the ground.
+layout(location = 1) out vec4 guide;
+layout(location = 2) out vec4 look;
 ${DATA}
 ${RANDOM}
 ${RAYS}
@@ -372,6 +376,8 @@ void main() {
   // Whether the path has only seen through the eye so far, and how likely its last turn was.
   bool seeing = true;
   float chance = 0.0;
+  guide = vec4(0.0);
+  look = vec4(0.0);
   // A path turns at most five times. Passing through what is see-through is no turn, but it ends somewhere too.
   int bounce = 0;
   bool mirrored = false;
@@ -430,6 +436,12 @@ void main() {
     if (seeing) {
       cover = reflected;
       seeing = false;
+      if (!mirrored) {
+        // What glows keeps its own pattern, so it counts as glossy and is not smoothed.
+        bool glows = s.emissive.r + s.emissive.g + s.emissive.b > 0.05;
+        guide = vec4(s.normal, distance(s.position, uEye));
+        look = vec4(s.color, glows ? 0.0 : s.roughness);
+      }
     }
     vec3 v = -direction;
     light += through * (s.emissive + direct(s, v, uLift));
