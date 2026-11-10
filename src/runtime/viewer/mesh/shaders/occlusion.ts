@@ -25,6 +25,8 @@ uniform mat4 uViewProjection;
 uniform vec3 uEye;
 uniform float uRadius;
 uniform vec3 uKernel[16];
+// Changes the pattern of the noise, so the frames of a still picture add up to a smooth result.
+uniform float uSeed;
 out vec4 fragment;
 
 float hash(vec2 p) {
@@ -41,7 +43,7 @@ void main() {
   vec3 ray = normalize(far.xyz / far.w - uEye);
   vec3 p = uEye + ray * here.a;
   vec3 n = here.xyz;
-  float angle = hash(gl_FragCoord.xy) * 6.2831853;
+  float angle = hash(gl_FragCoord.xy + uSeed * 17.31) * 6.2831853;
   vec3 turn = vec3(cos(angle), sin(angle), cos(angle * 1.7));
   vec3 t = turn - n * dot(turn, n);
   t = dot(t, t) < 1e-4 ? normalize(cross(n, vec3(0.0, 0.0, 1.0))) : normalize(t);

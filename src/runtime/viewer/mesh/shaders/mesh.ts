@@ -1,4 +1,4 @@
-import { ENVIRONMENT_LOOKUP, ENVIRONMENT_SHADOW_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP } from './chunks';
+import { ENVIRONMENT_LOOKUP, ENVIRONMENT_SHADOW_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP, TONE_CURVE } from './chunks';
 
 export const VERTEX = `#version 300 es
 layout(location = 0) in vec3 aPosition;
@@ -61,6 +61,8 @@ uniform vec2 uEnvironmentTurn;
 uniform vec3 uIrradiance[9];
 // How much the light is scaled before the filmic curve.
 uniform float uExposure;
+// A frame of a still picture stays light, as the frames are added up before they are shown.
+uniform bool uStill;
 ${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
@@ -88,11 +90,7 @@ vec3 irradiance(vec3 n) {
   return max(e, vec3(0.0)) * uEnvironmentStrength;
 }
 
-// A filmic curve, which keeps colors in what is bright where a simple one turns them pale.
-vec3 filmic(vec3 x) {
-  x *= uExposure;
-  return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
-}
+${TONE_CURVE}
 
 // A room worked out from a direction: the sky, the floor and the sun, blurrier the rougher the surface is.
 vec3 room(vec3 d, float roughness) {
@@ -153,9 +151,8 @@ void main() {
   vec2 surface = uHasSurface ? texture(uSurfaceMap, vUv).gb : vec2(1.0);
   float roughness = clamp(uRoughness * surface.x, 0.04, 1.0);
   float metallic = clamp(uMetallic * surface.y, 0.0, 1.0);
-  float occlusion = uHasOcclusion ? mix(1.0, texture(uOcclusionMap, vUv).r, uOcclusionStrength) : 1.0;
-  occlusion *= screenOcclusion();
-  float sky = envVisible(n);
+  float baked = uHasOcclusion ? mix(1.0, texture(uOcclusionMap, vUv).r, uOcclusionStrength) : 1.0;
+  float occlusion = baked * screenOcclusion();
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
   vec3 color = light(n, v, uKey, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
@@ -166,13 +163,23 @@ void main() {
   vec2 ab = vec2(-1.04, 1.04) * a004 + r.zw;
   vec3 fresnel = f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - nv, 5.0);
   vec3 mirrored = uHasEnvironment ? environment(reflect(-v, n), roughness) : room(reflect(-v, n), roughness);
-  vec3 around = uHasEnvironment ? irradiance(n) : room(n, 1.0) * 0.55;
-  // A rough reflection gathers light from as many sides as a matte surface does, so it is shadowed alike.
-  color += mirrored * (fresnel * ab.x + ab.y) * occlusion * mix(1.0, sky, roughness);
-  color += around * base.rgb * (1.0 - metallic) * occlusion * sky;
+  vec3 around = (uHasEnvironment ? irradiance(n) : room(n, 1.0) * 0.55) * occlusion;
+  float toLight = dot(n, uEnvDirection);
+  if (uEnvMode == 1) {
+    // One large light stands for the environment, so its shadow takes only a part of the light away.
+    around *= 1.0 - 0.6 * (1.0 - envShadow()) * smoothstep(0.0, 0.2, toLight);
+  } else if (uEnvMode == 2) {
+    // The light of this frame, where it reaches the surface, and what the ground throws back onto what faces down.
+    around = uEnvLightColor * (toLight > 0.0 ? toLight * envShadow() : 0.0) * baked;
+    around += irradiance(vec3(0.0, 1.0, 0.0)) * 0.7 * (0.5 - 0.5 * n.y) * occlusion;
+  }
+  color += mirrored * (fresnel * ab.x + ab.y) * occlusion;
+  color += around * base.rgb * (1.0 - metallic);
   color += uEmissive * (uHasEmissive ? texture(uEmissiveMap, vUv).rgb : vec3(1.0));
-  color = filmic(color);
-  color = pow(color, vec3(1.0 / 2.2));
+  color *= uExposure;
+  if (!uStill) {
+    color = toScreen(color);
+  }
   fragment = vec4(color * base.a, base.a);
 }`;
 

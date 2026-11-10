@@ -132,7 +132,8 @@ export class Accumulation {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       return texture;
     };
-    const frame = picture(gl.RGBA8);
+    // Frames hold light, not what a screen shows, so they add up as light does.
+    const frame = picture(gl.RGBA16F);
     const sum = picture(gl.RGBA16F);
     gl.bindTexture(gl.TEXTURE_2D, null);
     const depth = requireObject(gl.createRenderbuffer(), 'renderbuffer');

@@ -7,6 +7,7 @@ import {
   type LightPicker,
   lightPicker,
   mipChain,
+  type SkyLight,
 } from './environment';
 import { canDrawFloats, link, type Program, requireObject } from './gl';
 import { PREFILTER_FRAGMENT } from './shaders/prefilter';
@@ -113,12 +114,13 @@ export class EnvironmentMap {
     this.dominant = dominantLight(image);
   }
 
-  // A direction toward the light of the environment in the world, picked by how bright it is, for three numbers from 0 to 1.
-  lightDirection(row: number, column: number, within: number, turnDegrees: number): Vec3 | null {
+  // One light of the environment for a frame of a still picture, in the world, for four numbers from 0 to 1.
+  pickLight(numbers: readonly [number, number, number, number], turnDegrees: number): SkyLight | null {
     if (!this.picker || !this.texture) {
       return null;
     }
-    return toWorld(this.picker(row, column, within), turnDegrees);
+    const light = this.picker(...numbers);
+    return { ...light, direction: toWorld(light.direction, turnDegrees) };
   }
 
   // The one large light that stands for the whole environment while the picture moves, and its size in degrees.

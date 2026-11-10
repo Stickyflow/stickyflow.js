@@ -1,4 +1,4 @@
-import { ENVIRONMENT_SHADOW_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP } from './chunks';
+import { ENVIRONMENT_SHADOW_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP, TONE_CURVE } from './chunks';
 
 // Only the shadow is drawn, so the page stays visible where there is none.
 export const GROUND_FRAGMENT = `#version 300 es
@@ -17,6 +17,8 @@ ${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
 ${ENVIRONMENT_SHADOW_LOOKUP}
+${TONE_CURVE}
+uniform bool uStill;
 // Lines one pixel wide at every cell, whatever the distance.
 float lines(vec2 at, float cell) {
   vec2 cells = at / cell;
@@ -37,8 +39,12 @@ void main() {
   vec4 seen = uStage * vec4(vWorld, 1.0);
   vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
   float inside = (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
-  // The share of the lights that a point does not see is the share of their light it lacks, so the shadow is nearly as dark.
-  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - envVisible(vec3(0.0, 1.0, 0.0))) * 0.92 * near * inside);
+  // While the picture moves, the one large light takes a part of the light away. In a still picture each light counts for its
+  // share of the light from above, so the frames add up to the share of the light a point lacks.
+  float weight = uEnvMode == 2 ? uEnvGround * 0.92 : 0.6;
+  if (uEnvMode != 0) {
+    shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - envShadow()) * weight * near * inside);
+  }
   float grid = 0.0;
   if (uGrid > 0.5) {
     vec2 at = vWorld.xz;
@@ -47,6 +53,6 @@ void main() {
   }
   // Grey lines under the shadow, with the alpha premultiplied as the page expects.
   float alpha = shadow + grid * (1.0 - shadow);
-  vec3 color = vec3(0.5) * grid * (1.0 - shadow);
-  fragment = vec4(color, alpha);
+  vec3 line = uStill ? fromScreen(vec3(0.5)) : vec3(0.5);
+  fragment = vec4(line * grid * (1.0 - shadow), alpha);
 }`;

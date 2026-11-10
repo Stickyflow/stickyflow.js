@@ -63,28 +63,29 @@ float lit() {
   return uShadowSoftness > 0.0 ? softVisible(uShadow, uShadowDepth, p, uShadowSoftness) : sharpLit(p);
 }`;
 
-// The shadow of the light of the environment, from a map of its own. While the picture moves, one large light stands for the whole
-// environment and its shadow is soft. In a still picture each frame stands for one direction, picked by how bright it is, with a
-// sharp shadow; the frames added up give the soft shadow of all of them. A surface that faces away from the direction learns
-// nothing from it. It needs the shadow lookup of the sun before it.
+// The shadow of the light of the environment, from a map of its own. While the picture moves (mode 1), one large light stands for
+// the whole environment and its shadow is soft. In a still picture (mode 2) each frame shows one light of the environment, picked
+// as often as it is bright, and the frames added up give the light and the shadows of all of them. It needs the shadow lookup of
+// the sun before it.
 export const ENVIRONMENT_SHADOW_LOOKUP = `
-uniform bool uHasEnvShadow;
+uniform int uEnvMode;
 uniform highp sampler2DShadow uEnvShadow;
 uniform highp sampler2D uEnvShadowDepth;
 uniform float uEnvShadowSoftness;
 uniform vec3 uEnvDirection;
+// In a still picture: what the light of this frame gives a matte surface that faces it.
+uniform vec3 uEnvLightColor;
+// How much the shadow of this light counts on the ground.
+uniform float uEnvGround;
 in vec4 vEnvShadow;
-float envVisible(vec3 n) {
-  float facing = smoothstep(0.0, 0.2, dot(n, uEnvDirection));
-  if (!uHasEnvShadow || facing <= 0.0) {
-    return 1.0;
-  }
+// How much of the light of this frame reaches the point: 1 where nothing is in the way, or where the map does not reach.
+float envShadow() {
   vec3 p = vEnvShadow.xyz / vEnvShadow.w * 0.5 + 0.5;
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) {
     return 1.0;
   }
   if (uEnvShadowSoftness > 0.0) {
-    return mix(1.0, softVisible(uEnvShadow, uEnvShadowDepth, p, uEnvShadowSoftness), facing);
+    return softVisible(uEnvShadow, uEnvShadowDepth, p, uEnvShadowSoftness);
   }
   vec2 step = 1.0 / vec2(textureSize(uEnvShadow, 0));
   float sum = 0.0;
@@ -93,7 +94,23 @@ float envVisible(vec3 n) {
       sum += texture(uEnvShadow, vec3(p.xy + vec2(x, y) * step, p.z - 0.002));
     }
   }
-  return mix(1.0, sum / 9.0, facing);
+  return sum / 9.0;
+}`;
+
+// From light to what a screen shows: a filmic curve, which keeps colors in what is bright where a simple one turns them pale, and
+// the way back, for colors that are put among light. Written so that the older form of the language reads it too.
+export const TONE_CURVE = `
+vec3 toneCurve(vec3 x) {
+  return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+vec3 toScreen(vec3 light) {
+  return pow(toneCurve(max(light, vec3(0.0))), vec3(1.0 / 2.2));
+}
+vec3 fromScreen(vec3 color) {
+  vec3 y = min(pow(color, vec3(2.2)), vec3(0.999));
+  vec3 a = 2.51 - 2.43 * y;
+  vec3 b = 0.03 - 0.59 * y;
+  return (-b + sqrt(b * b + 0.56 * a * y)) / (2.0 * a);
 }`;
 
 // How much of the sky a pixel sees, worked out for the whole picture before the meshes are drawn. 1 where nothing is near.

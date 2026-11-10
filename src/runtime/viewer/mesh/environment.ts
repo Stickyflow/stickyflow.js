@@ -250,44 +250,67 @@ export function irradiance(image: EnvironmentImage): Float32Array {
   return result;
 }
 
-// How much light each part of the sky half of the environment throws on a surface facing up, on a small copy of the picture.
+// The sky half of the environment on a small copy of the picture: how much light comes from each part, counted by how large the
+// part is on the sphere.
 interface Sky {
   width: number;
   height: number;
   rows: number;
+  // Brightness times the size of the part on the sphere, for each part.
   weights: Float64Array;
+  colors: Float32Array;
+  // All the light of the sky, added up over the sphere.
+  total: number;
 }
+
+const brightness = (data: ArrayLike<number>, at: number) =>
+  0.2126 * data[at] + 0.7152 * data[at + 1] + 0.0722 * data[at + 2];
 
 function skyOf(image: EnvironmentImage): Sky {
   let source = image;
-  while (source.width > 64) {
+  while (source.width > 128) {
     source = half(source);
   }
   const { width, height, data } = source;
-  // Rows down to some 35 degrees above the horizon: lower lights throw long streaks across the page.
-  const rows = Math.max(1, Math.floor(height * 0.3));
+  // Down to just above the horizon. What lies under it is behind the ground the meshes stand on.
+  const rows = Math.max(1, Math.floor(height * 0.5) - 1);
   const weights = new Float64Array(width * rows);
+  const cell = (Math.PI / height) * ((2 * Math.PI) / width);
+  let total = 0;
   for (let y = 0; y < rows; y++) {
-    const theta = ((y + 0.5) / height) * Math.PI;
-    const share = Math.sin(theta) * Math.cos(theta);
+    const size = Math.sin(((y + 0.5) / height) * Math.PI) * cell;
     for (let x = 0; x < width; x++) {
-      const at = (y * width + x) * 3;
-      weights[y * width + x] = (0.2126 * data[at] + 0.7152 * data[at + 1] + 0.0722 * data[at + 2]) * share;
+      const weight = brightness(data, (y * width + x) * 3) * size;
+      weights[y * width + x] = weight;
+      total += weight;
     }
   }
-  return { width, height, rows, weights };
+  return { width, height, rows, weights, colors: data, total: total || 1 };
 }
 
-// Picks directions of light from the sky half of the environment, as often as each throws light on a surface facing up. Three
-// numbers from 0 to 1 give one direction, in the frame of the picture.
-export type LightPicker = (row: number, column: number, within: number) => [number, number, number];
+// One light of the sky for a frame of a still picture. Lights are picked as often as they are bright, so each stands for the
+// same share of all the light: `color` is that share in the color of the light, already divided by pi as a matte surface wants
+// it, and `ground` is what its shadow counts for on a surface facing up, where the mean over all lights is 1.
+export interface SkyLight {
+  direction: [number, number, number];
+  color: [number, number, number];
+  ground: number;
+}
+
+// Four numbers from 0 to 1 give one light: two pick the part of the sky, two the place within it.
+export type LightPicker = (row: number, column: number, across: number, down: number) => SkyLight;
 
 export function lightPicker(image: EnvironmentImage): LightPicker {
-  const { width, height, rows, weights } = skyOf(image);
+  const { width, height, rows, weights, colors, total } = skyOf(image);
   const rowTotals = Array.from({ length: rows }, (_, y) =>
     weights.subarray(y * width, (y + 1) * width).reduce((a, b) => a + b, 0),
   );
-  const total = rowTotals.reduce((a, b) => a + b, 0) || 1;
+  // How much of the light a surface facing up gets, as a share of all of it.
+  let upward = 0;
+  for (let y = 0; y < rows; y++) {
+    upward += rowTotals[y] * Math.cos(((y + 0.5) / height) * Math.PI);
+  }
+  upward = upward / total || 1;
   const pick = (values: ArrayLike<number>, sum: number, at: number) => {
     let left = at * sum;
     for (let i = 0; i < values.length; i++) {
@@ -298,15 +321,22 @@ export function lightPicker(image: EnvironmentImage): LightPicker {
     }
     return values.length - 1;
   };
-  return (row, column, within) => {
+  return (row, column, across, down) => {
     const y = pick(rowTotals, total, row);
     const x = pick(weights.subarray(y * width, (y + 1) * width), rowTotals[y] || 1, column);
-    return direction((x + within) / width, (y + ((within * 7.31) % 1)) / height);
+    const at = (y * width + x) * 3;
+    const scale = total / Math.PI / (brightness(colors, at) || 1);
+    const towards = direction((x + across) / width, (y + down) / height);
+    return {
+      direction: towards,
+      color: [colors[at] * scale, colors[at + 1] * scale, colors[at + 2] * scale],
+      ground: Math.max(0, towards[1]) / upward,
+    };
   };
 }
 
-// One large light that stands for the whole sky: where it is on the mean, and how wide, in degrees, so that its soft shadow lies
-// where the shadows of all the lights together would.
+// One large light that stands for the whole sky while the picture moves: where it is on the mean, as a surface facing up sees
+// the lights, and how wide, in degrees, so that its soft shadow lies where the shadows of all the lights together would.
 export interface DominantLight {
   direction: [number, number, number];
   size: number;
@@ -318,8 +348,8 @@ export function dominantLight(image: EnvironmentImage): DominantLight {
   let total = 0;
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < width; x++) {
-      const weight = weights[y * width + x];
       const [dx, dy, dz] = direction((x + 0.5) / width, (y + 0.5) / height);
+      const weight = weights[y * width + x] * dy;
       sum[0] += dx * weight;
       sum[1] += dy * weight;
       sum[2] += dz * weight;

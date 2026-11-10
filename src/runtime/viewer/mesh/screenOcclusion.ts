@@ -52,7 +52,7 @@ export class ScreenOcclusion {
   }
 
   // Draws the occlusion for the solid things and the ground. False when it cannot be had, and then nothing is darker.
-  draw(camera: Camera, solids: readonly Drawable[], radius: number, ground: Mat4 | null): boolean {
+  draw(camera: Camera, solids: readonly Drawable[], radius: number, ground: Mat4 | null, seed = 0): boolean {
     const { gl } = this;
     const programs = this.ready();
     const width = Math.max(1, gl.drawingBufferWidth >> 1);
@@ -100,6 +100,7 @@ export class ScreenOcclusion {
     gl.uniformMatrix4fv(occlusion.uniforms.uViewProjection, false, camera.viewProjection);
     gl.uniform3fv(occlusion.uniforms.uEye, camera.eye);
     gl.uniform1f(occlusion.uniforms.uRadius, radius);
+    gl.uniform1f(occlusion.uniforms.uSeed, seed);
     gl.uniform3fv(occlusion.uniforms.uKernel, KERNEL);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -143,7 +144,7 @@ export class ScreenOcclusion {
         occlusion: link(
           gl,
           OCCLUSION_FRAGMENT,
-          ['uGeometry', 'uInverse', 'uViewProjection', 'uEye', 'uRadius', 'uKernel'],
+          ['uGeometry', 'uInverse', 'uViewProjection', 'uEye', 'uRadius', 'uKernel', 'uSeed'],
           SCREEN_VERTEX,
         ),
         blur: link(gl, OCCLUSION_BLUR_FRAGMENT, ['uRaw', 'uGeometry', 'uTexel'], SCREEN_VERTEX),

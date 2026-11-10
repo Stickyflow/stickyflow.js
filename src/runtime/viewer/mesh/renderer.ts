@@ -11,7 +11,7 @@ import {
   project,
   toWindow,
 } from './camera';
-import type { EnvironmentImage } from './environment';
+import type { EnvironmentImage, SkyLight } from './environment';
 import { ENVIRONMENT_UNIFORMS, EnvironmentMap } from './environmentMap';
 import { link, linkProgram, type Program, QUAD, requireObject } from './gl';
 import type { MaterialMapName, MeshAsset, MeshPrimitive } from './glb';
@@ -79,10 +79,21 @@ const STILL_SHOWN_FROM = 8;
 const SHADOW_NAMES = [
   ...shadowUniforms(SUN_SHADOW),
   ...shadowUniforms(ENVIRONMENT_SHADOW),
-  'uHasEnvShadow',
+  'uEnvMode',
   'uEnvDirection',
   'uEnvLight',
+  'uEnvLightColor',
+  'uEnvGround',
+  'uStill',
 ];
+// Two numbers that fill a square evenly, however many are taken: the steps of the R2 sequence.
+const R2 = [0.7548776662466927, 0.5698402909980532];
+
+// The light of the environment that a frame shows: none, the one large light of a moving picture, or one light of a still one.
+type EnvironmentLight =
+  | { mode: 0 }
+  | { mode: 1; direction: Vec3; softness: number }
+  | { mode: 2; direction: Vec3; color: Vec3; ground: number };
 
 export interface DrawOptions {
   shadows?: boolean;
@@ -98,8 +109,9 @@ export interface DrawOptions {
 
 // What a frame of a still picture changes: where the camera stands within a pixel, and which light of the environment it shows.
 interface StillFrame {
+  index: number;
   shift: [number, number];
-  light: Vec3 | null;
+  light: SkyLight | null;
 }
 
 // Draws meshes with WebGL2. It knows nothing of SFL or SVG: it gets assets, and what the document says about each mesh.
@@ -113,6 +125,7 @@ export class MeshRenderer {
   private readonly planeTextures = new Set<WebGLTexture>();
   private readonly picture: WebGLProgram;
   private readonly pictureSampler: WebGLUniformLocation | null;
+  private readonly pictureStill: WebGLUniformLocation | null;
   private readonly planeQuad: WebGLVertexArrayObject;
   readonly planeBuffer: WebGLBuffer;
   private readonly assets = new Map<string, GpuPrimitive[]>();
@@ -171,6 +184,7 @@ export class MeshRenderer {
 
     this.picture = this.linkPlane(PLANE_FRAGMENT);
     this.pictureSampler = gl.getUniformLocation(this.picture, 'uPicture');
+    this.pictureStill = gl.getUniformLocation(this.picture, 'uStill');
     this.planeQuad = requireObject(gl.createVertexArray(), 'vertex array');
     this.planeBuffer = requireObject(gl.createBuffer(), 'buffer');
     gl.bindVertexArray(this.planeQuad);
@@ -473,14 +487,13 @@ export class MeshRenderer {
     const index = this.accumulation.count + 1;
     const { gl } = this;
     const frame: StillFrame = {
+      index,
       shift: [
         ((halton(index, 2) - 0.5) * 2) / gl.drawingBufferWidth,
         ((halton(index, 3) - 0.5) * 2) / gl.drawingBufferHeight,
       ],
-      light: this.environment.lightDirection(
-        halton(index, 5),
-        halton(index, 7),
-        halton(index, 11),
+      light: this.environment.pickLight(
+        [(0.5 + index * R2[0]) % 1, (0.5 + index * R2[1]) % 1, halton(index, 5), halton(index, 7)],
         options.environmentTurn ?? 0,
       ),
     };
@@ -541,11 +554,15 @@ export class MeshRenderer {
     const lightMatrix = options.shadows ? this.shadows.update(casters, box, lighting.direction) : identity();
     // While the picture moves, one large light stands for the environment, so its shadow already lies where the still picture puts it.
     const main = still ? null : this.environment.mainLight(options.environmentTurn ?? 0);
-    const environmentLight = still ? still.light : (main?.direction ?? null);
-    const environmentSoftness = main?.size ?? 0;
-    const environmentMatrix = environmentLight
-      ? this.environmentShadows.update(casters, box, environmentLight)
-      : identity();
+    const environmentLight: EnvironmentLight = still?.light
+      ? { mode: 2, direction: still.light.direction, color: still.light.color, ground: still.light.ground }
+      : main
+        ? { mode: 1, direction: main.direction, softness: main.size }
+        : { mode: 0 };
+    const environmentMatrix =
+      environmentLight.mode === 0
+        ? identity()
+        : this.environmentShadows.update(casters, box, environmentLight.direction);
     const seeThrough = ({ mesh, primitive }: Instance) => mesh.opacity < 1 || primitive.source.material.blend;
     const solids = instances
       .filter(instance => !seeThrough(instance))
@@ -553,7 +570,13 @@ export class MeshRenderer {
     // The occlusion comes with an environment, as without one the light of the sky is too plain to need it.
     const occlusion =
       this.environment.present &&
-      this.occlusion.draw(camera, solids, boxDiagonal(box) * 0.08, this.groundOf(box, options.grid ?? false).matrix);
+      this.occlusion.draw(
+        camera,
+        solids,
+        boxDiagonal(box) * 0.08,
+        this.groundOf(box, options.grid ?? false).matrix,
+        still?.index ?? 0,
+      );
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     // With an environment the sun is a disc, not a point, unless the document says how large it is.
@@ -568,7 +591,8 @@ export class MeshRenderer {
       gl.uniform1i(uniforms[sampler], unit);
     }
     this.shadows.bind(uniforms, softness);
-    this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix, environmentSoftness);
+    this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix, lighting.ambient);
+    gl.uniform1i(uniforms.uStill, still ? 1 : 0);
     gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
     gl.uniform3fv(uniforms.uKey, lighting.direction);
     gl.uniform3fv(uniforms.uSun, lighting.sun);
@@ -584,17 +608,18 @@ export class MeshRenderer {
     this.drawInstances(instances.filter(instance => !seeThrough(instance)));
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    if (options.shadows || options.grid || occlusion || environmentLight) {
+    if (options.shadows || options.grid || occlusion || environmentLight.mode !== 0) {
       const shadow = {
         strength: options.shadows ? lighting.groundShadow : 0,
         darkness: this.groundDarkness(lighting),
         softness,
       };
       this.drawGround(camera, lightMatrix, box, shadow, options.grid ?? false, occlusion);
-      this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, environmentSoftness);
+      this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
+      gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
       this.drawGroundQuad();
     }
-    this.drawPlanes(camera, planes);
+    this.drawPlanes(camera, planes, still !== null);
     gl.useProgram(program);
     // What is seen through lies over what the occlusion was worked out for, so it takes none.
     this.occlusion.bind(uniforms, false);
@@ -605,7 +630,7 @@ export class MeshRenderer {
   }
 
   // The layers of a surface lie in one plane, so each is pulled a little toward the camera over the one before.
-  private drawPlanes(camera: Camera, planes: readonly Plane[]): void {
+  private drawPlanes(camera: Camera, planes: readonly Plane[], still: boolean): void {
     const { gl } = this;
     gl.bindVertexArray(this.planeQuad);
     gl.enable(gl.POLYGON_OFFSET_FILL);
@@ -627,6 +652,7 @@ export class MeshRenderer {
         } else {
           gl.bindTexture(gl.TEXTURE_2D, layer.texture);
           gl.uniform1i(this.pictureSampler, 0);
+          gl.uniform1i(this.pictureStill, still ? 1 : 0);
         }
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       });
@@ -699,15 +725,22 @@ export class MeshRenderer {
   // unit, even when nothing is read.
   private bindEnvironmentShadow(
     uniforms: Program['uniforms'],
-    light: Vec3 | null,
+    light: EnvironmentLight,
     matrix: Mat4,
-    softness: number,
+    strength: number,
   ): void {
     const { gl } = this;
-    this.environmentShadows.bind(uniforms, softness);
-    gl.uniform1i(uniforms.uHasEnvShadow, light ? 1 : 0);
-    gl.uniform3fv(uniforms.uEnvDirection, light ?? [0, 1, 0]);
+    this.environmentShadows.bind(uniforms, light.mode === 1 ? light.softness : 0);
+    gl.uniform1i(uniforms.uEnvMode, light.mode);
+    gl.uniform3fv(uniforms.uEnvDirection, light.mode === 0 ? [0, 1, 0] : light.direction);
     gl.uniformMatrix4fv(uniforms.uEnvLight, false, matrix);
+    if (light.mode === 2) {
+      gl.uniform3fv(
+        uniforms.uEnvLightColor,
+        light.color.map(value => value * strength),
+      );
+      gl.uniform1f(uniforms.uEnvGround, light.ground);
+    }
   }
 
   private drawInstances(instances: readonly Instance[]): void {
