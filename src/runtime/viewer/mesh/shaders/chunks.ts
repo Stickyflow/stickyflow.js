@@ -28,15 +28,16 @@ float sharpLit(vec3 p) {
   return sum / 25.0;
 }
 
-float softLit(vec3 p) {
-  float texel = 1.0 / float(textureSize(uShadow, 0).x);
+// A shadow whose edge widens with the distance to what casts it, read from a map and the same map as plain distances.
+float softVisible(highp sampler2DShadow map, highp sampler2D depths, vec3 p, float softness) {
+  float texel = 1.0 / float(textureSize(map, 0).x);
   // A noise that changes in a fine, even pattern from pixel to pixel, so the turned discs blur into a smooth edge.
   float angle = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2831853;
-  float search = clamp(uShadowSoftness * p.z, texel * 2.0, 0.08);
+  float search = clamp(softness * p.z, texel * 2.0, 0.08);
   float blockers = 0.0;
   float found = 0.0;
   for (int i = 0; i < 16; i++) {
-    float depth = texture(uShadowDepth, p.xy + spiral(i, 16, angle) * search).r;
+    float depth = texture(depths, p.xy + spiral(i, 16, angle) * search).r;
     if (depth < p.z - SHADOW_BIAS) {
       blockers += depth;
       found += 1.0;
@@ -45,11 +46,11 @@ float softLit(vec3 p) {
   if (found == 0.0) {
     return 1.0;
   }
-  float width = max((p.z - blockers / found) * uShadowSoftness, texel * 1.5);
+  float width = max((p.z - blockers / found) * softness, texel * 1.5);
   float bias = SHADOW_BIAS + width * 0.5;
   float sum = 0.0;
   for (int i = 0; i < 32; i++) {
-    sum += texture(uShadow, vec3(p.xy + spiral(i, 32, angle) * width, p.z - bias));
+    sum += texture(map, vec3(p.xy + spiral(i, 32, angle) * width, p.z - bias));
   }
   return sum / 32.0;
 }
@@ -59,15 +60,18 @@ float lit() {
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) {
     return 1.0;
   }
-  return uShadowSoftness > 0.0 ? softLit(p) : sharpLit(p);
+  return uShadowSoftness > 0.0 ? softVisible(uShadow, uShadowDepth, p, uShadowSoftness) : sharpLit(p);
 }`;
 
-// In a still picture each frame stands for one direction of the light of the environment, picked by how bright it is. Whether that
-// light reaches a point is read from a map of its own; frames added up give the soft shadow of the whole environment. A surface
-// that faces away from the direction learns nothing from it.
+// The shadow of the light of the environment, from a map of its own. While the picture moves, one large light stands for the whole
+// environment and its shadow is soft. In a still picture each frame stands for one direction, picked by how bright it is, with a
+// sharp shadow; the frames added up give the soft shadow of all of them. A surface that faces away from the direction learns
+// nothing from it. It needs the shadow lookup of the sun before it.
 export const ENVIRONMENT_SHADOW_LOOKUP = `
 uniform bool uHasEnvShadow;
 uniform highp sampler2DShadow uEnvShadow;
+uniform highp sampler2D uEnvShadowDepth;
+uniform float uEnvShadowSoftness;
 uniform vec3 uEnvDirection;
 in vec4 vEnvShadow;
 float envVisible(vec3 n) {
@@ -78,6 +82,9 @@ float envVisible(vec3 n) {
   vec3 p = vEnvShadow.xyz / vEnvShadow.w * 0.5 + 0.5;
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) {
     return 1.0;
+  }
+  if (uEnvShadowSoftness > 0.0) {
+    return mix(1.0, softVisible(uEnvShadow, uEnvShadowDepth, p, uEnvShadowSoftness), facing);
   }
   vec2 step = 1.0 / vec2(textureSize(uEnvShadow, 0));
   float sum = 0.0;

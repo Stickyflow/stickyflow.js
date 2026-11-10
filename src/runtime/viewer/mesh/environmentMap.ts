@@ -1,5 +1,13 @@
 import type { Vec3 } from '../../../model/mesh';
-import { type EnvironmentImage, irradiance, type LightPicker, lightPicker, mipChain } from './environment';
+import {
+  type DominantLight,
+  dominantLight,
+  type EnvironmentImage,
+  irradiance,
+  type LightPicker,
+  lightPicker,
+  mipChain,
+} from './environment';
 import { canDrawFloats, link, type Program, requireObject } from './gl';
 import { PREFILTER_FRAGMENT } from './shaders/prefilter';
 import { SCREEN_VERTEX } from './shaders/screen';
@@ -37,6 +45,13 @@ function floatTexture(gl: WebGL2RenderingContext): WebGLTexture {
   return texture;
 }
 
+// The shaders turn a direction of the world into the picture; this turns it back.
+function toWorld([x, y, z]: readonly number[], turnDegrees: number): Vec3 {
+  const turn = (turnDegrees * Math.PI) / 180;
+  const [c, s] = [Math.cos(turn), Math.sin(turn)];
+  return [c * x + s * z, y, -s * x + c * z];
+}
+
 // The environment on the GPU: a picture whose smaller copies are blurred as rougher surfaces see it, and the light for matte ones.
 export class EnvironmentMap {
   private readonly gl: WebGL2RenderingContext;
@@ -45,6 +60,7 @@ export class EnvironmentMap {
   private levels = 0;
   private light: Float32Array = new Float32Array(27);
   private picker: LightPicker | null = null;
+  private dominant: DominantLight | null = null;
 
   constructor(gl: WebGL2RenderingContext, quad: WebGLVertexArrayObject) {
     this.gl = gl;
@@ -94,6 +110,7 @@ export class EnvironmentMap {
     this.levels = chain.length;
     this.light = irradiance(image);
     this.picker = lightPicker(image);
+    this.dominant = dominantLight(image);
   }
 
   // A direction toward the light of the environment in the world, picked by how bright it is, for three numbers from 0 to 1.
@@ -101,11 +118,15 @@ export class EnvironmentMap {
     if (!this.picker || !this.texture) {
       return null;
     }
-    const [x, y, z] = this.picker(row, column, within);
-    // The shaders turn a direction of the world into the picture; this turns it back.
-    const turn = (turnDegrees * Math.PI) / 180;
-    const [c, s] = [Math.cos(turn), Math.sin(turn)];
-    return [c * x + s * z, y, -s * x + c * z];
+    return toWorld(this.picker(row, column, within), turnDegrees);
+  }
+
+  // The one large light that stands for the whole environment while the picture moves, and its size in degrees.
+  mainLight(turnDegrees: number): { direction: Vec3; size: number } | null {
+    if (!this.dominant || !this.texture) {
+      return null;
+    }
+    return { direction: toWorld(this.dominant.direction, turnDegrees), size: this.dominant.size };
   }
 
   // For the program of the meshes, with how far the environment is turned and how strong it is.

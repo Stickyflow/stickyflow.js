@@ -539,7 +539,10 @@ export class MeshRenderer {
     gl.disable(gl.BLEND);
     const casters = this.casters(instances, planes);
     const lightMatrix = options.shadows ? this.shadows.update(casters, box, lighting.direction) : identity();
-    const environmentLight = still?.light ?? null;
+    // While the picture moves, one large light stands for the environment, so its shadow already lies where the still picture puts it.
+    const main = still ? null : this.environment.mainLight(options.environmentTurn ?? 0);
+    const environmentLight = still ? still.light : (main?.direction ?? null);
+    const environmentSoftness = main?.size ?? 0;
     const environmentMatrix = environmentLight
       ? this.environmentShadows.update(casters, box, environmentLight)
       : identity();
@@ -565,7 +568,7 @@ export class MeshRenderer {
       gl.uniform1i(uniforms[sampler], unit);
     }
     this.shadows.bind(uniforms, softness);
-    this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix);
+    this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix, environmentSoftness);
     gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
     gl.uniform3fv(uniforms.uKey, lighting.direction);
     gl.uniform3fv(uniforms.uSun, lighting.sun);
@@ -588,7 +591,7 @@ export class MeshRenderer {
         softness,
       };
       this.drawGround(camera, lightMatrix, box, shadow, options.grid ?? false, occlusion);
-      this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix);
+      this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, environmentSoftness);
       this.drawGroundQuad();
     }
     this.drawPlanes(camera, planes);
@@ -694,9 +697,14 @@ export class MeshRenderer {
 
   // The map of the light of the environment that a frame shows. Its samplers are always set, as two of another type may not share a
   // unit, even when nothing is read.
-  private bindEnvironmentShadow(uniforms: Program['uniforms'], light: Vec3 | null, matrix: Mat4): void {
+  private bindEnvironmentShadow(
+    uniforms: Program['uniforms'],
+    light: Vec3 | null,
+    matrix: Mat4,
+    softness: number,
+  ): void {
     const { gl } = this;
-    this.environmentShadows.bind(uniforms);
+    this.environmentShadows.bind(uniforms, softness);
     gl.uniform1i(uniforms.uHasEnvShadow, light ? 1 : 0);
     gl.uniform3fv(uniforms.uEnvDirection, light ?? [0, 1, 0]);
     gl.uniformMatrix4fv(uniforms.uEnvLight, false, matrix);

@@ -184,6 +184,7 @@ export class MeshStage {
       this.host.addEventListener('mousedown', keepTextUnselected);
       this.host.addEventListener('pointermove', this.onPointerMove as EventListener);
       this.host.addEventListener('pointerup', this.onPointerUp as EventListener);
+      this.host.addEventListener('pointercancel', this.onPointerCancel);
       this.host.addEventListener('wheel', this.onWheel as EventListener, { passive: false });
     }
   }
@@ -193,6 +194,7 @@ export class MeshStage {
     this.host.removeEventListener('mousedown', keepTextUnselected);
     this.host.removeEventListener('pointermove', this.onPointerMove as EventListener);
     this.host.removeEventListener('pointerup', this.onPointerUp as EventListener);
+    this.host.removeEventListener('pointercancel', this.onPointerCancel);
     this.host.removeEventListener('wheel', this.onWheel as EventListener);
   }
 
@@ -753,6 +755,14 @@ export class MeshStage {
     if (gesture && !gesture.moved && !gesture.pan) {
       this.clickAt(event.clientX, event.clientY);
     }
+    // The last frame of a drag was a moving one, so one more is asked for, which starts the still picture.
+    this.schedule();
+  };
+
+  // A pointer that is taken away ends its gesture as a release does, without a click.
+  private readonly onPointerCancel = (): void => {
+    this.gesture = null;
+    this.schedule();
   };
 
   private clickAt(clientX: number, clientY: number): void {
