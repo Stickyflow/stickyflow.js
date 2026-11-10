@@ -6,12 +6,19 @@ export { isDimensionObject } from './artifacts/dimension/object';
 export type { SflIsometricObject } from './artifacts/isometric/object';
 export { isIsometricObject } from './artifacts/isometric/object';
 export type {
+  SflMeshGroundObject,
   SflMeshLightObject,
   SflMeshObject,
   SflMeshSceneObject,
   SflMeshSurfaceObject,
 } from './artifacts/mesh/object';
-export { isMeshLightObject, isMeshObject, isMeshSceneObject, isMeshSurfaceObject } from './artifacts/mesh/object';
+export {
+  isMeshGroundObject,
+  isMeshLightObject,
+  isMeshObject,
+  isMeshSceneObject,
+  isMeshSurfaceObject,
+} from './artifacts/mesh/object';
 export type { SflPathObject } from './artifacts/path/object';
 export { isPathObject } from './artifacts/path/object';
 export type { SflSwimlaneObject } from './artifacts/swimlane/object';

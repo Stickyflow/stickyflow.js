@@ -31,7 +31,17 @@ export interface MeshScene {
   environmentTurn?: number;
   // Brighter or darker than usual, in stops: 1 is twice as bright.
   exposure?: number;
+  ground?: MeshGround;
   order?: number;
+}
+
+// The ground of a Scene. Without a height it lies under the meshes as they stand; without a color it is not seen itself, only
+// the shadows on it and what it reflects, from 0 for nothing to 1 for a mirror.
+export interface MeshGround {
+  id: string;
+  height?: number;
+  color?: string;
+  reflection: number;
 }
 
 // A 2D object that follows a point of a mesh. Its own position is then its distance from that point.

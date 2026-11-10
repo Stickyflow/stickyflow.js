@@ -1,4 +1,4 @@
-import { DEFAULT_LIGHT, type Mesh, type Vec3 } from '../../../model/mesh';
+import { DEFAULT_LIGHT, type Mesh, type MeshGround, type Vec3 } from '../../../model/mesh';
 import { Accumulation, halton } from './accumulation';
 import {
   type Box,
@@ -103,6 +103,7 @@ export interface DrawOptions {
   environmentTurn?: number;
   // Brighter or darker than usual, in stops.
   exposure?: number;
+  ground?: MeshGround;
   // The picture may be refined over several frames, as nothing in it moves.
   still?: boolean;
 }
@@ -179,6 +180,8 @@ export class MeshRenderer {
       'uCell',
       'uReach',
       'uStage',
+      'uBasePass',
+      'uGroundColor',
       ...SCREEN_OCCLUSION_UNIFORMS,
     ]);
 
@@ -509,8 +512,8 @@ export class MeshRenderer {
         options.environmentTurn ?? 0,
       ),
     };
-    this.drawFrame(meshes, camera, options, target, frame);
-    this.accumulation.add(index >= STILL_SHOWN_FROM);
+    const under = this.drawFrame(meshes, camera, options, target, frame);
+    this.accumulation.add(index >= STILL_SHOWN_FROM, under);
     return this.accumulation.count < STILL_FRAMES;
   }
 
@@ -528,19 +531,21 @@ export class MeshRenderer {
       options.grid,
       options.environmentTurn,
       options.exposure,
+      JSON.stringify(options.ground ?? null),
       this.generation,
     ].join('|');
   }
 
   // One frame: on the canvas, or into a target of a still picture with the camera shifted within a pixel and one light of the
-  // environment.
+  // environment. A ground with a color is not part of such a frame, as shadows darken it the way they darken the page, not the
+  // way they take light away: what comes back draws it, for under the frames once they are added up.
   private drawFrame(
     meshes: readonly Mesh[],
     camera: Camera | undefined,
     options: DrawOptions,
     target: WebGLFramebuffer | null,
     still: StillFrame | null,
-  ): void {
+  ): (() => void) | null {
     const planes = options.planes ?? [];
     const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
     const { gl } = this;
@@ -554,11 +559,14 @@ export class MeshRenderer {
     const instances = this.instances(meshes);
     const measured = this.boxOf(instances, planes);
     if (!camera || !measured) {
-      return;
+      return null;
     }
+    const plain = camera;
     // The ground stays where the meshes stand when nothing has lifted them, and the box reaches down to it, so the shadows of
     // what is lifted still fall on it.
-    const floor = this.floorOf(instances) ?? measured.min[1];
+    const floor = options.ground?.height ?? this.floorOf(instances) ?? measured.min[1];
+    // A grid and a ground with a color reach further than the shadows do.
+    const wide = (options.grid ?? false) || Boolean(options.ground?.color);
     const box: Box = {
       min: [measured.min[0], Math.min(measured.min[1], floor), measured.min[2]],
       max: measured.max,
@@ -593,7 +601,7 @@ export class MeshRenderer {
         camera,
         solids,
         boxDiagonal(box) * 0.08,
-        this.groundOf(box, floor, options.grid ?? false).matrix,
+        this.groundOf(box, floor, wide).matrix,
         still?.index ?? 0,
       );
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
@@ -624,18 +632,42 @@ export class MeshRenderer {
     this.environment.bind(uniforms, options.environmentTurn ?? 0, lighting.ambient);
     this.occlusion.bind(uniforms, occlusion);
 
-    this.drawInstances(instances.filter(instance => !seeThrough(instance)));
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    if (options.shadows || options.grid || occlusion || environmentLight.mode !== 0) {
+    const opaque = instances.filter(instance => !seeThrough(instance));
+    const groundColor = colorOf(options.ground?.color)?.map(value => value ** (1 / 2.2));
+    const reflection = options.ground?.reflection ?? 0;
+    // Sets the program of the ground up for one of its two passes: the ground itself, or the shadows and the grid on it.
+    const prepareGround = (base: boolean, seen: Camera = camera) => {
       const shadow = {
         strength: options.shadows ? lighting.groundShadow : 0,
         darkness: this.groundDarkness(lighting),
         softness,
       };
-      this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, occlusion);
+      this.drawGround(seen, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
       this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
+      gl.uniform1i(this.ground.uniforms.uBasePass, base ? 1 : 0);
+      gl.uniform3fv(this.ground.uniforms.uGroundColor, groundColor ?? [0, 0, 0]);
+    };
+    const drawBase = (seen: Camera) => {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      prepareGround(true, seen);
+      this.drawGroundQuad();
+      gl.disable(gl.BLEND);
+    };
+    if (groundColor && !still) {
+      drawBase(camera);
+      gl.useProgram(program);
+    }
+    if (reflection > 0) {
+      this.drawReflection(opaque, floor, reflection, lightMatrix, environmentMatrix);
+      this.occlusion.bind(uniforms, occlusion);
+    }
+    this.drawInstances(opaque);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    if (options.shadows || options.grid || occlusion || environmentLight.mode !== 0) {
+      prepareGround(false);
       this.drawGroundQuad();
     }
     this.drawPlanes(camera, planes, still !== null);
@@ -646,6 +678,7 @@ export class MeshRenderer {
     this.drawInstances(instances.filter(seeThrough));
     gl.depthMask(true);
     gl.bindVertexArray(null);
+    return groundColor && still ? () => drawBase(plain) : null;
   }
 
   // The layers of a surface lie in one plane, so each is pulled a little toward the camera over the one before.
@@ -697,14 +730,14 @@ export class MeshRenderer {
   private groundOf(
     box: Box,
     floor: number,
-    grid: boolean,
+    wide: boolean,
   ): { center: Vec3; fade: number; reach: number; matrix: Mat4 } {
     const middle = boxCenter(box);
     const center: Vec3 = [middle[0], floor, middle[2]];
     const diagonal = Math.max(boxDiagonal(box), 1e-3);
     const fade = diagonal * 1.4;
     // The grid reaches further than the shadow and fades out, so it seems to go on.
-    const reach = grid ? diagonal * 3 : fade;
+    const reach = wide ? diagonal * 3 : fade;
     return { center, fade, reach, matrix: modelMatrix(center, [0, 0, 0], [reach, 1, reach]) };
   }
 
@@ -715,12 +748,13 @@ export class MeshRenderer {
     floor: number,
     shadow: { strength: number; darkness: number; softness: number },
     grid: boolean,
+    wide: boolean,
     occlusion: boolean,
   ): void {
     const { gl } = this;
     const { program, uniforms } = this.ground;
     const diagonal = Math.max(boxDiagonal(box), 1e-3);
-    const { center, fade, reach, matrix } = this.groundOf(box, floor, grid);
+    const { center, fade, reach, matrix } = this.groundOf(box, floor, wide);
     gl.useProgram(program);
     this.occlusion.bind(uniforms, occlusion);
     this.shadows.bind(uniforms, shadow.softness);
@@ -767,10 +801,44 @@ export class MeshRenderer {
     }
   }
 
-  private drawInstances(instances: readonly Instance[]): void {
+  // What the ground reflects: the solid meshes again, turned over at the ground, as strong as the ground reflects. Each pixel
+  // takes the nearest of them once, so they are drawn for their depth first and for their color after.
+  private drawReflection(
+    instances: readonly Instance[],
+    floor: number,
+    strength: number,
+    lightMatrix: Mat4,
+    environmentMatrix: Mat4,
+  ): void {
     const { gl } = this;
     const { uniforms } = this.main;
-    for (const { mesh, primitive, world } of instances) {
+    const mirror = modelMatrix([0, 2 * floor, 0], [0, 0, 0], [1, -1, 1]);
+    // What is turned over lies where the maps of the lights have nothing, so they are asked for where it came from.
+    gl.uniformMatrix4fv(uniforms.uLight, false, multiply(lightMatrix, mirror));
+    gl.uniformMatrix4fv(uniforms.uEnvLight, false, multiply(environmentMatrix, mirror));
+    this.occlusion.bind(uniforms, false);
+    gl.colorMask(false, false, false, false);
+    this.drawInstances(instances, mirror);
+    gl.colorMask(true, true, true, true);
+    gl.depthFunc(gl.LEQUAL);
+    gl.depthMask(false);
+    gl.enable(gl.BLEND);
+    gl.blendColor(0, 0, 0, strength);
+    gl.blendFunc(gl.CONSTANT_ALPHA, gl.ONE_MINUS_CONSTANT_ALPHA);
+    this.drawInstances(instances, mirror);
+    gl.disable(gl.BLEND);
+    gl.depthMask(true);
+    gl.depthFunc(gl.LESS);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.uniformMatrix4fv(uniforms.uLight, false, lightMatrix);
+    gl.uniformMatrix4fv(uniforms.uEnvLight, false, environmentMatrix);
+  }
+
+  private drawInstances(instances: readonly Instance[], mirror?: Mat4): void {
+    const { gl } = this;
+    const { uniforms } = this.main;
+    for (const { mesh, primitive, world: placed } of instances) {
+      const world = mirror ? multiply(mirror, placed) : placed;
       const { material } = primitive.source;
       gl.uniformMatrix4fv(uniforms.uModel, false, world);
       gl.uniformMatrix3fv(uniforms.uNormal, false, normalMatrix(world));

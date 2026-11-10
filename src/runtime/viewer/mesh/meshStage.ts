@@ -217,6 +217,7 @@ export class MeshStage {
       grid: this.grid && !wholeStage,
       environmentTurn: data.environmentTurn,
       exposure: data.exposure,
+      ground: data.ground,
       still: !wholeStage && !this.gestures.active && !moving,
     });
     this.placeAnchors();

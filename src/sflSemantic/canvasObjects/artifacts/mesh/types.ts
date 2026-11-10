@@ -35,6 +35,12 @@ export interface SflMeshLightData {
   softness?: number;
 }
 
+export interface SflMeshGroundData {
+  height?: number;
+  color?: string;
+  reflection: number;
+}
+
 export interface SflAnchorData {
   mesh: string;
   point: Vec3;

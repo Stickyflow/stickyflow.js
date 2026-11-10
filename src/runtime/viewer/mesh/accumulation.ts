@@ -71,8 +71,8 @@ export class Accumulation {
     return targets.frameBuffer;
   }
 
-  // Adds the frame that was drawn to the sum, and shows the mean on the canvas when asked to.
-  add(show: boolean): void {
+  // Adds the frame that was drawn to the sum, and shows the mean on the canvas when asked to, over what `under` draws there.
+  add(show: boolean, under?: (() => void) | null): void {
     const { gl, targets, programs } = this;
     if (!targets || !programs) {
       return;
@@ -106,11 +106,20 @@ export class Accumulation {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    if (under) {
+      under();
+      gl.disable(gl.DEPTH_TEST);
+      gl.bindVertexArray(this.quad);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    }
     gl.useProgram(programs.show.program);
     gl.bindTexture(gl.TEXTURE_2D, targets.sum);
     gl.uniform1i(programs.show.uniforms.uSum, 0);
     gl.uniform1f(programs.show.uniforms.uCount, this.frames);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.disable(gl.BLEND);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindVertexArray(null);
     gl.enable(gl.DEPTH_TEST);

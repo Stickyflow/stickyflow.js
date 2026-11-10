@@ -1,4 +1,4 @@
-import type { Mesh, MeshAnchor, MeshLight, Vec3 } from '../../../model/mesh';
+import type { Mesh, MeshAnchor, MeshGround, MeshLight, Vec3 } from '../../../model/mesh';
 import type { MeshObjectBox } from './handles';
 import type { StageSurface } from './surfaceTextures';
 
@@ -67,6 +67,7 @@ export interface StageData {
   environment?: string;
   environmentTurn?: number;
   exposure?: number;
+  ground?: MeshGround;
   meshes: Mesh[];
   surfaces?: StageSurface[];
   light?: MeshLight;

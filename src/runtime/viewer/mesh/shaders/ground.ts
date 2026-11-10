@@ -19,6 +19,9 @@ ${SHADOW_LOOKUP}
 ${ENVIRONMENT_SHADOW_LOOKUP}
 ${TONE_CURVE}
 uniform bool uStill;
+// The ground itself, when it has a color: drawn first, under what it reflects and the shadows on it.
+uniform bool uBasePass;
+uniform vec3 uGroundColor;
 // Lines one pixel wide at every cell, whatever the distance.
 float lines(vec2 at, float cell) {
   vec2 cells = at / cell;
@@ -28,6 +31,16 @@ float lines(vec2 at, float cell) {
 }
 void main() {
   float distance = length(vWorld.xz - uCenter.xz);
+  // What runs out before the edges of the Scene never ends in a hard line there.
+  vec4 seen = uStage * vec4(vWorld, 1.0);
+  vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
+  float inside = (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
+  if (uBasePass) {
+    // A ground with a color fills the Scene to its edges, and runs out far away.
+    float cover = 1.0 - smoothstep(uReach * 0.45, uReach * 0.95, distance);
+    fragment = vec4(uGroundColor * cover, cover);
+    return;
+  }
   float fade = 1.0 - smoothstep(uFade * 0.6, uFade, distance);
   float shadow = uStrength > 0.0 ? (1.0 - lit()) * uDarkness * fade * uStrength : 0.0;
   // Where something stands on the ground, the ground gets darker toward it.
@@ -35,10 +48,6 @@ void main() {
   // And where it does not see the light of the environment, it is in the shadow of that.
   // It fades out sooner than the shadow of the sun, as lights from many sides would carry it to the edges of the Scene.
   float near = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
-  // What runs out before the edges of the Scene never ends in a hard line there.
-  vec4 seen = uStage * vec4(vWorld, 1.0);
-  vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
-  float inside = (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
   // While the picture moves, the one large light takes a part of the light away. In a still picture each light counts for its
   // share of the light from above, so the frames add up to the share of the light a point lacks.
   float weight = uEnvMode == 2 ? uEnvGround * 0.92 : 0.6;
