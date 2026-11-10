@@ -59,6 +59,7 @@ export class EnvironmentMap {
   private readonly quad: WebGLVertexArrayObject;
   private texture: WebGLTexture | null = null;
   private levels = 0;
+  private width = 0;
   private light: Float32Array = new Float32Array(27);
   private picker: LightPicker | null = null;
   private dominant: DominantLight | null = null;
@@ -70,6 +71,11 @@ export class EnvironmentMap {
 
   get present(): boolean {
     return this.texture !== null;
+  }
+
+  // The picture itself, for a tracer: its texture, and the level of it that is as coarse as what the lights are picked from.
+  get picture(): { texture: WebGLTexture; skyLevel: number } | null {
+    return this.texture && { texture: this.texture, skyLevel: Math.max(0, Math.log2(this.width / 128)) };
   }
 
   // How bright the light is that a surface facing up gets from the whole environment, before its strength.
@@ -109,6 +115,7 @@ export class EnvironmentMap {
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.texture = blurred ?? source;
     this.levels = chain.length;
+    this.width = chain[0].width;
     this.light = irradiance(image);
     this.picker = lightPicker(image);
     this.dominant = dominantLight(image);

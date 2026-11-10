@@ -23,6 +23,8 @@ import { GROUND_FRAGMENT } from './shaders/ground';
 import { FRAGMENT } from './shaders/mesh';
 import { PLANE_FRAGMENT, PLANE_VERTEX } from './shaders/plane';
 import { type Caster, ENVIRONMENT_SHADOW, ShadowMap, SUN_SHADOW, shadowUniforms } from './shadowMap';
+import { PathTracer } from './trace/pathTracer';
+import type { TraceMapName, TracePart } from './trace/sceneData';
 
 // One layer of a flat surface: a picture, or a shader with the part of the surface it covers, as left, top, width and height from 0 to 1.
 export type PlaneLayer =
@@ -68,6 +70,8 @@ const COLOR_MAPS: ReadonlySet<MaterialMapName> = new Set(['base', 'emissive']);
 // How large the sun looks, in degrees, in a Scene with an environment.
 const DEFAULT_SOFTNESS = 1.5;
 const PLAIN_GROUND_SHADOW = 0.32;
+// What a ground without a color throws light back with: about as much as a page does.
+const PAGE_COLOR: Vec3 = [0.8, 0.8, 0.8];
 // How much the light is scaled before the filmic curve. An environment is lit evenly, so it can be brighter.
 const PLAIN_EXPOSURE = 0.45;
 const ENVIRONMENT_EXPOSURE = 0.7;
@@ -135,6 +139,8 @@ export class MeshRenderer {
   private readonly occlusion: ScreenOcclusion;
   private readonly environmentShadows: ShadowMap;
   private readonly accumulation: Accumulation;
+  private readonly tracer: PathTracer;
+  private readonly textureSizes = new Map<WebGLTexture, [number, number]>();
   // Counts what changes the look of the meshes besides the document: pictures that arrive and environments.
   private generation = 0;
   private stillKey = '';
@@ -212,6 +218,7 @@ export class MeshRenderer {
     this.occlusion = new ScreenOcclusion(gl, this.planeQuad, this.groundQuad);
     this.environmentShadows = new ShadowMap(gl, ENVIRONMENT_SHADOW);
     this.accumulation = new Accumulation(gl, this.planeQuad);
+    this.tracer = new PathTracer(gl, this.planeQuad);
   }
 
   // The shaders of the 2D drawing are written for this type of context, and they run in a newer one as they are.
@@ -309,6 +316,7 @@ export class MeshRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, sampler?.wrapS ?? gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, sampler?.wrapT ?? gl.REPEAT);
     primitive.textures[name] = texture;
+    this.textureSizes.set(texture, [image.width, image.height]);
   }
 
   private upload(source: MeshPrimitive): GpuPrimitive {
@@ -387,6 +395,21 @@ export class MeshRenderer {
       }
     }
     return Number.isFinite(box.min[0]) ? box : undefined;
+  }
+
+  // Where a scene stands. The ground stays where the meshes stand when nothing has lifted them, and the box reaches down to it,
+  // so the shadows of what is lifted still fall on it. A grid and a ground with a color reach further than the shadows do.
+  private standing(
+    instances: readonly Instance[],
+    measured: Box,
+    options: DrawOptions,
+  ): { floor: number; wide: boolean; box: Box } {
+    const floor = options.ground?.height ?? this.floorOf(instances) ?? measured.min[1];
+    return {
+      floor,
+      wide: (options.grid ?? false) || Boolean(options.ground?.color),
+      box: { min: [measured.min[0], Math.min(measured.min[1], floor), measured.min[2]], max: measured.max },
+    };
   }
 
   // The height of the ground: the lowest point of the meshes as they stand at the height the files give them, before the document
@@ -512,7 +535,9 @@ export class MeshRenderer {
         options.environmentTurn ?? 0,
       ),
     };
-    const under = this.drawFrame(meshes, camera, options, target, frame);
+    // A scene of solid meshes is traced, path by path. Anything else is drawn as while it moves, light by light.
+    const traced = this.traceFrame(meshes, camera, options, target, frame);
+    const under = traced ? traced.under : this.drawFrame(meshes, camera, options, target, frame);
     this.accumulation.add(index >= STILL_SHOWN_FROM, under);
     return this.accumulation.count < STILL_FRAMES;
   }
@@ -562,15 +587,7 @@ export class MeshRenderer {
       return null;
     }
     const plain = camera;
-    // The ground stays where the meshes stand when nothing has lifted them, and the box reaches down to it, so the shadows of
-    // what is lifted still fall on it.
-    const floor = options.ground?.height ?? this.floorOf(instances) ?? measured.min[1];
-    // A grid and a ground with a color reach further than the shadows do.
-    const wide = (options.grid ?? false) || Boolean(options.ground?.color);
-    const box: Box = {
-      min: [measured.min[0], Math.min(measured.min[1], floor), measured.min[2]],
-      max: measured.max,
-    };
+    const { floor, wide, box } = this.standing(instances, measured, options);
     if (still) {
       const shift = windowMatrix(1, 1, still.shift[0], still.shift[1]);
       camera = { ...camera, viewProjection: multiply(shift, camera.viewProjection) };
@@ -636,27 +653,19 @@ export class MeshRenderer {
     const groundColor = colorOf(options.ground?.color)?.map(value => value ** (1 / 2.2));
     const reflection = options.ground?.reflection ?? 0;
     // Sets the program of the ground up for one of its two passes: the ground itself, or the shadows and the grid on it.
-    const prepareGround = (base: boolean, seen: Camera = camera) => {
+    const prepareGround = () => {
       const shadow = {
         strength: options.shadows ? lighting.groundShadow : 0,
         darkness: this.groundDarkness(lighting),
         softness,
       };
-      this.drawGround(seen, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
+      this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
       this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
-      gl.uniform1i(this.ground.uniforms.uBasePass, base ? 1 : 0);
-      gl.uniform3fv(this.ground.uniforms.uGroundColor, groundColor ?? [0, 0, 0]);
-    };
-    const drawBase = (seen: Camera) => {
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      prepareGround(true, seen);
-      this.drawGroundQuad();
-      gl.disable(gl.BLEND);
+      gl.uniform1i(this.ground.uniforms.uBasePass, 0);
     };
     if (groundColor && !still) {
-      drawBase(camera);
+      this.drawGroundBase(camera, box, floor, wide, groundColor);
       gl.useProgram(program);
     }
     if (reflection > 0) {
@@ -667,7 +676,7 @@ export class MeshRenderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     if (options.shadows || options.grid || occlusion || environmentLight.mode !== 0) {
-      prepareGround(false);
+      prepareGround();
       this.drawGroundQuad();
     }
     this.drawPlanes(camera, planes, still !== null);
@@ -678,7 +687,117 @@ export class MeshRenderer {
     this.drawInstances(instances.filter(seeThrough));
     gl.depthMask(true);
     gl.bindVertexArray(null);
-    return groundColor && still ? () => drawBase(plain) : null;
+    return groundColor && still ? () => this.drawGroundBase(plain, box, floor, wide, groundColor) : null;
+  }
+
+  // A frame of a still picture by following paths of light: for a scene of solid meshes in an environment, which is all the
+  // tracer knows. Null when the scene has more, and it is drawn the other way.
+  private traceFrame(
+    meshes: readonly Mesh[],
+    camera: Camera,
+    options: DrawOptions,
+    target: WebGLFramebuffer,
+    still: StillFrame,
+  ): { under: (() => void) | null } | null {
+    const picture = this.environment.picture;
+    const light = still.light;
+    const instances = this.instances(meshes);
+    const solid = instances.every(({ mesh, primitive }) => mesh.opacity >= 1 && !primitive.source.material.blend);
+    const measured = this.boxOf(instances, []);
+    if (!picture || !light || !solid || !measured || (options.planes ?? []).length > 0 || !this.tracer.possible) {
+      return null;
+    }
+    const { gl } = this;
+    const { floor, wide, box } = this.standing(instances, measured, options);
+    const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
+    const key = `${this.generation}|${instances
+      .map(({ mesh, primitive, world }) =>
+        [primitive.count, world.join(), mesh.color, mesh.metallic, mesh.roughness].join(':'),
+      )
+      .join('|')}`;
+    this.tracer.load(key, () => instances.map(instance => this.tracePart(instance)));
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    const shift = windowMatrix(1, 1, still.shift[0], still.shift[1]);
+    const ground = this.groundOf(box, floor, wide);
+    const groundColor = colorOf(options.ground?.color);
+    const softness = lighting.softness ?? DEFAULT_SOFTNESS;
+    this.tracer.draw({
+      camera: { ...camera, viewProjection: multiply(shift, camera.viewProjection) },
+      seed: still.index,
+      exposure: ENVIRONMENT_EXPOSURE * 2 ** (options.exposure ?? 0),
+      lift: boxDiagonal(box) * 1e-4,
+      environment: {
+        ...picture,
+        turn: options.environmentTurn ?? 0,
+        strength: lighting.ambient,
+        // A light is picked as often as it is bright, so its color holds all the light of the sky, over pi.
+        total: (0.2126 * light.color[0] + 0.7152 * light.color[1] + 0.0722 * light.color[2]) * Math.PI,
+        direction: light.direction,
+        light: light.color.map(value => value * Math.PI * lighting.ambient) as Vec3,
+      },
+      sun: {
+        direction: lighting.direction,
+        light: lighting.sun,
+        size: Math.tan((Math.max(0, softness) * Math.PI) / 360),
+        shadows: options.shadows ?? false,
+      },
+      ground: {
+        floor,
+        reflection: options.ground?.reflection ?? 0,
+        color: groundColor ?? PAGE_COLOR,
+        environmentShadow: light.ground,
+        sunShadow: options.shadows ? lighting.groundShadow * this.groundDarkness(lighting) : 0,
+        center: ground.center,
+        fade: ground.fade,
+      },
+    });
+    const shown = groundColor?.map(value => value ** (1 / 2.2));
+    return { under: shown ? () => this.drawGroundBase(camera, box, floor, wide, shown) : null };
+  }
+
+  private tracePart({ mesh, primitive, world }: Instance): TracePart {
+    const { source, textures } = primitive;
+    const { material } = source;
+    const [r, g, b] = colorOf(mesh.color) ?? material.baseColor;
+    // What the document says about a surface counts over the picture of the file.
+    const overruled = mesh.metallic !== undefined || mesh.roughness !== undefined;
+    const maps: TracePart['maps'] = {};
+    for (const name of ['base', 'emissive', 'surface', 'normal'] as TraceMapName[]) {
+      const texture = name === 'surface' && overruled ? undefined : textures[name];
+      const size = texture && this.textureSizes.get(texture);
+      if (texture && size) {
+        maps[name] = { texture, width: size[0], height: size[1] };
+      }
+    }
+    return {
+      world,
+      positions: source.positions,
+      normals: source.normals,
+      uvs: source.uvs,
+      indices: source.indices,
+      base: [r, g, b, 1],
+      metallic: mesh.metallic ?? material.metallic,
+      roughness: mesh.roughness ?? material.roughness,
+      emissive: material.emissive,
+      normalScale: material.normalScale,
+      maps,
+    };
+  }
+
+  // The ground itself, when it has a color: in the colors of the screen, under what it reflects and the shadows on it.
+  private drawGroundBase(camera: Camera, box: Box, floor: number, wide: boolean, color: readonly number[]): void {
+    const { gl } = this;
+    const { uniforms } = this.ground;
+    this.drawGround(camera, identity(), box, floor, { strength: 0, darkness: 0, softness: 0 }, false, wide, false);
+    this.bindEnvironmentShadow(uniforms, { mode: 0 }, identity(), 0);
+    gl.uniform1i(uniforms.uStill, 0);
+    gl.uniform1i(uniforms.uBasePass, 1);
+    gl.uniform3fv(uniforms.uGroundColor, color);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    this.drawGroundQuad();
+    gl.disable(gl.BLEND);
   }
 
   // The layers of a surface lie in one plane, so each is pulled a little toward the camera over the one before.
@@ -889,6 +1008,7 @@ export class MeshRenderer {
     this.shadows.destroy();
     this.environmentShadows.destroy();
     this.accumulation.destroy();
+    this.tracer.destroy();
     this.environment.destroy();
     this.occlusion.destroy();
     gl.deleteVertexArray(this.groundQuad);
