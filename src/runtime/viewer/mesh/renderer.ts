@@ -386,6 +386,18 @@ export class MeshRenderer {
     return Number.isFinite(box.min[0]) ? box : undefined;
   }
 
+  // The height of the ground: the lowest point of the meshes as they stand at the height the files give them, before the document
+  // or a drag lifts or lowers them. So a mesh that is lifted leaves the ground, and the ground does not follow it.
+  private floorOf(instances: readonly Instance[]): number | undefined {
+    let floor = Infinity;
+    for (const { mesh, primitive, world } of instances) {
+      for (let index = 0; index < 8; index++) {
+        floor = Math.min(floor, transformPoint(world, boxCorner(primitive.bounds, index))[1] - mesh.position[1]);
+      }
+    }
+    return Number.isFinite(floor) ? floor : undefined;
+  }
+
   // The box around what stands on the stage, from the corners of the box of each part, so it costs the same for a million triangles.
   box(meshes: readonly Mesh[], planes: readonly Plane[] = []): Box | undefined {
     return this.boxOf(this.instances(meshes), planes);
@@ -540,10 +552,17 @@ export class MeshRenderer {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
     const instances = this.instances(meshes);
-    const box = this.boxOf(instances, planes);
-    if (!camera || !box) {
+    const measured = this.boxOf(instances, planes);
+    if (!camera || !measured) {
       return;
     }
+    // The ground stays where the meshes stand when nothing has lifted them, and the box reaches down to it, so the shadows of
+    // what is lifted still fall on it.
+    const floor = this.floorOf(instances) ?? measured.min[1];
+    const box: Box = {
+      min: [measured.min[0], Math.min(measured.min[1], floor), measured.min[2]],
+      max: measured.max,
+    };
     if (still) {
       const shift = windowMatrix(1, 1, still.shift[0], still.shift[1]);
       camera = { ...camera, viewProjection: multiply(shift, camera.viewProjection) };
@@ -574,7 +593,7 @@ export class MeshRenderer {
         camera,
         solids,
         boxDiagonal(box) * 0.08,
-        this.groundOf(box, options.grid ?? false).matrix,
+        this.groundOf(box, floor, options.grid ?? false).matrix,
         still?.index ?? 0,
       );
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
@@ -614,7 +633,7 @@ export class MeshRenderer {
         darkness: this.groundDarkness(lighting),
         softness,
       };
-      this.drawGround(camera, lightMatrix, box, shadow, options.grid ?? false, occlusion);
+      this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, occlusion);
       this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
       this.drawGroundQuad();
@@ -675,9 +694,13 @@ export class MeshRenderer {
   }
 
   // The ground under the meshes, as far as its shadow or its grid reach.
-  private groundOf(box: Box, grid: boolean): { center: Vec3; fade: number; reach: number; matrix: Mat4 } {
+  private groundOf(
+    box: Box,
+    floor: number,
+    grid: boolean,
+  ): { center: Vec3; fade: number; reach: number; matrix: Mat4 } {
     const middle = boxCenter(box);
-    const center: Vec3 = [middle[0], box.min[1], middle[2]];
+    const center: Vec3 = [middle[0], floor, middle[2]];
     const diagonal = Math.max(boxDiagonal(box), 1e-3);
     const fade = diagonal * 1.4;
     // The grid reaches further than the shadow and fades out, so it seems to go on.
@@ -689,6 +712,7 @@ export class MeshRenderer {
     camera: Camera,
     lightMatrix: Mat4,
     box: Box,
+    floor: number,
     shadow: { strength: number; darkness: number; softness: number },
     grid: boolean,
     occlusion: boolean,
@@ -696,7 +720,7 @@ export class MeshRenderer {
     const { gl } = this;
     const { program, uniforms } = this.ground;
     const diagonal = Math.max(boxDiagonal(box), 1e-3);
-    const { center, fade, reach, matrix } = this.groundOf(box, grid);
+    const { center, fade, reach, matrix } = this.groundOf(box, floor, grid);
     gl.useProgram(program);
     this.occlusion.bind(uniforms, occlusion);
     this.shadows.bind(uniforms, shadow.softness);
