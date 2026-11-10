@@ -53,6 +53,22 @@ export class EnvironmentMap {
     return this.texture !== null;
   }
 
+  // How bright the light is that a surface facing up gets from the whole environment, before its strength.
+  get fromAbove(): number {
+    const { light } = this;
+    // The terms of the sum in the shader for a normal straight up: the others are zero there.
+    const weights = [
+      [0, 0.282095],
+      [1, 0.488603],
+      [6, -0.315392],
+      [8, -0.546274],
+    ];
+    const rgb = [0, 1, 2].map(channel =>
+      weights.reduce((sum, [index, weight]) => sum + light[index * 3 + channel] * weight, 0),
+    );
+    return Math.max(0, 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]);
+  }
+
   set(image: EnvironmentImage | null): void {
     const gl = this.gl;
     gl.deleteTexture(this.texture);

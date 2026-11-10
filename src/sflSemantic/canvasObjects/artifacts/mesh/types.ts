@@ -31,6 +31,7 @@ export interface SflMeshLightData {
   color?: string;
   intensity: number;
   ambient: number;
+  softness?: number;
 }
 
 export interface SflAnchorData {

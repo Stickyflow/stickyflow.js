@@ -19,6 +19,8 @@ export interface Lighting {
   fill: number;
   // How strong an environment picture lights the world.
   ambient: number;
+  // How large the sun looks, in degrees, when the document says so.
+  softness?: number;
   // How much of a shadow can be seen: none when the sun is down.
   shadow: number;
   // On the page around the world, where a long shadow of a low sun would only be a wedge across the drawing.
@@ -47,7 +49,7 @@ function smoothstep(from: number, to: number, value: number): number {
 const mix = (a: Vec3, b: Vec3, t: number): Vec3 => a.map((value, axis) => value + (b[axis] - value) * t) as Vec3;
 const times = (a: Vec3, factor: number): Vec3 => a.map(value => value * factor) as Vec3;
 
-export function lightingOf({ turn, height, color, intensity, ambient }: MeshLight): Lighting {
+export function lightingOf({ turn, height, color, intensity, ambient, softness }: MeshLight): Lighting {
   const yaw = (turn * Math.PI) / 180;
   const pitch = (Math.min(HIGHEST, height) * Math.PI) / 180;
   const direction = normalize([Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)]);
@@ -65,6 +67,7 @@ export function lightingOf({ turn, height, color, intensity, ambient }: MeshLigh
     floor: times(FLOOR, (0.4 + 0.6 * up) * ambient),
     fill: 0.5 * ambient * (0.25 + 0.75 * up),
     ambient,
+    softness,
     shadow: above,
     groundShadow: above * smoothstep(0.05, 0.35, rise),
   };

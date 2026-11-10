@@ -7,6 +7,8 @@ in vec3 vWorld;
 uniform vec3 uCenter;
 uniform float uFade;
 uniform float uStrength;
+// How dark a shadow on the page is where the sun is gone entirely.
+uniform float uDarkness;
 uniform float uGrid;
 uniform float uCell;
 uniform float uReach;
@@ -24,7 +26,7 @@ float lines(vec2 at, float cell) {
 void main() {
   float distance = length(vWorld.xz - uCenter.xz);
   float fade = 1.0 - smoothstep(uFade * 0.6, uFade, distance);
-  float shadow = uStrength > 0.0 ? (1.0 - lit()) * 0.32 * fade * uStrength : 0.0;
+  float shadow = uStrength > 0.0 ? (1.0 - lit()) * uDarkness * fade * uStrength : 0.0;
   // Where something stands on the ground, the ground gets darker toward it.
   shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * 0.75 * fade);
   float grid = 0.0;

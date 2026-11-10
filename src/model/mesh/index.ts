@@ -42,10 +42,10 @@ export interface MeshAnchor {
 // What a binding can reach on a Mesh, a Canvas in a Scene or a Light.
 type MeshValues = Partial<
   Pick<Mesh, 'position' | 'rotation' | 'scale' | 'color' | 'opacity' | 'roughness' | 'metallic'> &
-    Pick<MeshLight, 'turn' | 'height' | 'intensity' | 'ambient'>
+    Pick<MeshLight, 'turn' | 'height' | 'intensity' | 'ambient' | 'softness'>
 >;
 
-const NUMBERS = ['opacity', 'roughness', 'metallic', 'turn', 'height', 'intensity', 'ambient'] as const;
+const NUMBERS = ['opacity', 'roughness', 'metallic', 'turn', 'height', 'intensity', 'ambient', 'softness'] as const;
 
 const AXES: Record<string, ['position' | 'rotation' | 'scale', number]> = {
   positionX: ['position', 0],
@@ -105,6 +105,8 @@ export interface MeshLight {
   color?: string;
   intensity: number;
   ambient: number;
+  // How large the sun looks, in degrees: the shadows get softer the further they fall. Without it they are as sharp as the map allows.
+  softness?: number;
 }
 
 export const DEFAULT_LIGHT: MeshLight = { id: 'light-default', turn: 57.5, height: 49, intensity: 1, ambient: 1 };

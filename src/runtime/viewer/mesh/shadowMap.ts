@@ -6,7 +6,11 @@ import { DEPTH_FRAGMENT } from './shaders/mesh';
 
 const SIZE = 2048;
 const UNIT = 1;
+// The same map again, read as plain distances, to find what casts a shadow.
+const DEPTH_UNIT = 8;
 const WORLD_UP: Vec3 = [0, 1, 0];
+
+export const SHADOW_UNIFORMS = ['uShadow', 'uShadowDepth', 'uShadowSoftness'];
 
 // Something that casts a shadow, with what tells whether it has changed since the map was drawn.
 export interface Caster extends Drawable {
@@ -20,8 +24,12 @@ export class ShadowMap {
   private readonly depth: Program;
   private readonly texture: WebGLTexture | null;
   private readonly buffer: WebGLFramebuffer | null;
+  private readonly plain: WebGLSampler | null;
   private key = '';
   private matrix: Mat4 | null = null;
+  // Half the width of the map in the world, and how deep it reaches.
+  private radius = 1;
+  private reach = 4;
 
   constructor(gl: WebGL2RenderingContext) {
     this.gl = gl;
@@ -39,6 +47,12 @@ export class ShadowMap {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.texture, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.plain = gl.createSampler();
+    gl.samplerParameteri(this.plain, gl.TEXTURE_COMPARE_MODE, gl.NONE);
+    gl.samplerParameteri(this.plain, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.samplerParameteri(this.plain, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.samplerParameteri(this.plain, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.samplerParameteri(this.plain, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   }
 
   // The matrix from the world to the map, after drawing the map if anything has changed.
@@ -50,9 +64,10 @@ export class ShadowMap {
     this.key = key;
     const gl = this.gl;
     const center = boxCenter(box);
-    const radius = Math.max(boxDiagonal(box) / 2, 1e-3) * 1.6;
-    const eye = center.map((value, axis) => value + direction[axis] * radius * 2) as Vec3;
-    const matrix = multiply(orthographic(radius, 0.01, radius * 4), lookAt(eye, center, WORLD_UP));
+    this.radius = Math.max(boxDiagonal(box) / 2, 1e-3) * 1.6;
+    this.reach = this.radius * 4 - 0.01;
+    const eye = center.map((value, axis) => value + direction[axis] * this.radius * 2) as Vec3;
+    const matrix = multiply(orthographic(this.radius, 0.01, this.radius * 4), lookAt(eye, center, WORLD_UP));
     const { program, uniforms } = this.depth;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffer);
     gl.viewport(0, 0, SIZE, SIZE);
@@ -71,12 +86,20 @@ export class ShadowMap {
     return matrix;
   }
 
-  // For a program that reads the map in its shadow lookup.
-  bind(uniforms: Program['uniforms']): void {
+  // For a program that reads the map in its shadow lookup, with the size of the sun in degrees.
+  bind(uniforms: Program['uniforms'], softness = 0): void {
     const gl = this.gl;
     gl.uniform1i(uniforms.uShadow, UNIT);
+    gl.uniform1i(uniforms.uShadowDepth, DEPTH_UNIT);
+    // The edge of a shadow widens by the tangent of half the sun for each unit of distance. A depth of the map is a share of its
+    // reach, and its width is twice the radius.
+    const spread = Math.tan((Math.max(0, softness) * Math.PI) / 360);
+    gl.uniform1f(uniforms.uShadowSoftness, (spread * this.reach) / (2 * this.radius));
     gl.activeTexture(gl.TEXTURE0 + UNIT);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.activeTexture(gl.TEXTURE0 + DEPTH_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.bindSampler(DEPTH_UNIT, this.plain);
     gl.activeTexture(gl.TEXTURE0);
   }
 
@@ -84,6 +107,7 @@ export class ShadowMap {
     const gl = this.gl;
     gl.deleteTexture(this.texture);
     gl.deleteFramebuffer(this.buffer);
+    gl.deleteSampler(this.plain);
     gl.deleteProgram(this.depth.program);
   }
 }

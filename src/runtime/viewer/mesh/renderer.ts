@@ -21,7 +21,7 @@ import { SCREEN_OCCLUSION_UNIFORMS, ScreenOcclusion } from './screenOcclusion';
 import { GROUND_FRAGMENT } from './shaders/ground';
 import { FRAGMENT } from './shaders/mesh';
 import { PLANE_FRAGMENT, PLANE_VERTEX } from './shaders/plane';
-import { type Caster, ShadowMap } from './shadowMap';
+import { type Caster, SHADOW_UNIFORMS, ShadowMap } from './shadowMap';
 
 // One layer of a flat surface: a picture, or a shader with the part of the surface it covers, as left, top, width and height from 0 to 1.
 export type PlaneLayer =
@@ -64,6 +64,9 @@ const MAP_SLOTS: ReadonlyArray<{ name: MaterialMapName; unit: number; has: strin
 ];
 const MAP_UNIFORMS = MAP_SLOTS.filter(slot => slot.name !== 'base').flatMap(slot => [slot.has, slot.sampler]);
 const COLOR_MAPS: ReadonlySet<MaterialMapName> = new Set(['base', 'emissive']);
+// How large the sun looks, in degrees, in a Scene with an environment.
+const DEFAULT_SOFTNESS = 1.5;
+const PLAIN_GROUND_SHADOW = 0.32;
 
 // Draws meshes with WebGL2. It knows nothing of SFL or SVG: it gets assets, and what the document says about each mesh.
 export class MeshRenderer {
@@ -90,7 +93,7 @@ export class MeshRenderer {
     const common = ['uModel', 'uViewProjection', 'uNormal', 'uLight'];
     this.main = link(gl, FRAGMENT, [
       ...common,
-      'uShadow',
+      ...SHADOW_UNIFORMS,
       'uShadows',
       'uKey',
       'uSun',
@@ -113,7 +116,8 @@ export class MeshRenderer {
     ]);
     this.ground = link(gl, GROUND_FRAGMENT, [
       ...common,
-      'uShadow',
+      ...SHADOW_UNIFORMS,
+      'uDarkness',
       'uCenter',
       'uFade',
       'uStrength',
@@ -429,6 +433,8 @@ export class MeshRenderer {
       this.environment.present &&
       this.occlusion.draw(camera, solids, boxDiagonal(box) * 0.08, this.groundOf(box, options.grid ?? false).matrix);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    // With an environment the sun is a disc, not a point, unless the document says how large it is.
+    const softness = lighting.softness ?? (this.environment.present ? DEFAULT_SOFTNESS : 0);
 
     const { program, uniforms } = this.main;
     gl.useProgram(program);
@@ -438,7 +444,7 @@ export class MeshRenderer {
     for (const { unit, sampler } of MAP_SLOTS) {
       gl.uniform1i(uniforms[sampler], unit);
     }
-    this.shadows.bind(uniforms);
+    this.shadows.bind(uniforms, softness);
     gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
     gl.uniform3fv(uniforms.uKey, lighting.direction);
     gl.uniform3fv(uniforms.uSun, lighting.sun);
@@ -453,8 +459,12 @@ export class MeshRenderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     if (options.shadows || options.grid || occlusion) {
-      const strength = options.shadows ? lighting.groundShadow : 0;
-      this.drawGround(camera, lightMatrix, box, strength, options.grid ?? false, occlusion);
+      const shadow = {
+        strength: options.shadows ? lighting.groundShadow : 0,
+        darkness: this.groundDarkness(lighting),
+        softness,
+      };
+      this.drawGround(camera, lightMatrix, box, shadow, options.grid ?? false, occlusion);
     }
     this.drawPlanes(camera, planes);
     gl.useProgram(program);
@@ -498,6 +508,18 @@ export class MeshRenderer {
     gl.bindVertexArray(null);
   }
 
+  // How dark a shadow on the page is. With an environment it is the share of the sun in the light a surface facing up gets, so it
+  // matches the shadows on the meshes; without one it is a light grey.
+  private groundDarkness(lighting: Lighting): number {
+    if (!this.environment.present) {
+      return PLAIN_GROUND_SHADOW;
+    }
+    const [r, g, b] = lighting.sun;
+    const sun = ((0.2126 * r + 0.7152 * g + 0.0722 * b) * Math.max(0, lighting.direction[1])) / Math.PI;
+    const around = this.environment.fromAbove * lighting.ambient;
+    return Math.min(0.85, sun / Math.max(sun + around, 1e-4));
+  }
+
   // The ground under the meshes, as far as its shadow or its grid reach.
   private groundOf(box: Box, grid: boolean): { center: Vec3; fade: number; reach: number; matrix: Mat4 } {
     const middle = boxCenter(box);
@@ -513,7 +535,7 @@ export class MeshRenderer {
     camera: Camera,
     lightMatrix: Mat4,
     box: Box,
-    strength: number,
+    shadow: { strength: number; darkness: number; softness: number },
     grid: boolean,
     occlusion: boolean,
   ): void {
@@ -523,13 +545,14 @@ export class MeshRenderer {
     const { center, fade, reach, matrix } = this.groundOf(box, grid);
     gl.useProgram(program);
     this.occlusion.bind(uniforms, occlusion);
-    this.shadows.bind(uniforms);
+    this.shadows.bind(uniforms, shadow.softness);
     gl.uniformMatrix4fv(uniforms.uViewProjection, false, camera.viewProjection);
     gl.uniformMatrix4fv(uniforms.uLight, false, lightMatrix);
     gl.uniformMatrix4fv(uniforms.uModel, false, matrix);
     gl.uniform3fv(uniforms.uCenter, center);
     gl.uniform1f(uniforms.uFade, fade);
-    gl.uniform1f(uniforms.uStrength, strength);
+    gl.uniform1f(uniforms.uStrength, shadow.strength);
+    gl.uniform1f(uniforms.uDarkness, shadow.darkness);
     gl.uniform1f(uniforms.uGrid, grid ? 1 : 0);
     gl.uniform1f(uniforms.uCell, 10 ** Math.floor(Math.log10(diagonal / 4)));
     gl.uniform1f(uniforms.uReach, reach);
