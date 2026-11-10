@@ -3,14 +3,15 @@ import { isCameraGesture } from '../../dom';
 import {
   type Box,
   type Camera,
+  FOV,
   frameBox,
   type MeshFrame,
-  FOV,
   makeCamera,
   planeHit,
   project,
   type StageWindow,
 } from './camera';
+import { type EnvironmentImage, fromPixels, parseHdr, STUDIO, studioEnvironment } from './environment';
 import { draggedBox, handleDrag, type MeshObjectBox, meshHandlesMarkup, objectOutlineMarkup } from './handles';
 import { lightingOf } from './lighting';
 import { loadAssetInto } from './loadAsset';
@@ -48,6 +49,40 @@ const topmostAt = (surface: StageSurface, x: number, y: number) =>
     .filter(item => x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + item.height)
     .pop();
 
+// Pictures of the world are kept for the page, as several stages often share one and making one takes a moment.
+const environments = new Map<string, Promise<EnvironmentImage>>();
+
+async function fetchEnvironment(address: string): Promise<EnvironmentImage> {
+  const response = await fetch(address);
+  if (!response.ok) {
+    throw new Error(`${address}: ${response.status}`);
+  }
+  const bytes = await response.arrayBuffer();
+  if (new Uint8Array(bytes, 0, 2).every((value, index) => value === '#?'.charCodeAt(index))) {
+    return parseHdr(bytes);
+  }
+  const bitmap = await createImageBitmap(new Blob([bytes]), { colorSpaceConversion: 'none' });
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('the picture could not be read');
+  }
+  context.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return fromPixels(canvas.width, canvas.height, context.getImageData(0, 0, canvas.width, canvas.height).data);
+}
+
+function environmentFor(name: string, address: string): Promise<EnvironmentImage> {
+  const key = name === STUDIO ? STUDIO : address;
+  let known = environments.get(key);
+  if (!known) {
+    known = name === STUDIO ? Promise.resolve(studioEnvironment()) : fetchEnvironment(address);
+    environments.set(key, known);
+    known.catch(() => environments.delete(key));
+  }
+  return known;
+}
+
 // A drag on the stage would otherwise mark the texts it passes over.
 const keepTextUnselected = (event: Event): void => event.preventDefault();
 
@@ -84,6 +119,8 @@ export class MeshStage {
   private readonly hiddenAnchors = new Map<string, boolean>();
   private anchorView = '';
   private readonly loading = new Set<string>();
+  // The environment the renderer has, or is getting.
+  private environment = '';
   private request: number | undefined;
   private observer: ResizeObserver | undefined;
   private zoomObserver: MutationObserver | undefined;
@@ -127,6 +164,7 @@ export class MeshStage {
     for (const asset of new Set(this.data.meshes.map(mesh => mesh.asset))) {
       this.load(asset);
     }
+    this.loadEnvironment();
     // The update of the drawing has just put the objects back, so they are moved again before anything is painted.
     this.placeAnchors();
     this.schedule();
@@ -223,6 +261,36 @@ export class MeshStage {
         this.report(`${asset}: ${failure instanceof Error ? failure.message : String(failure)}`);
       })
       .finally(() => this.loading.delete(asset));
+  }
+
+  private loadEnvironment(): void {
+    const renderer = this.renderer;
+    const name = this.data.environment ?? '';
+    if (!renderer || name === this.environment) {
+      return;
+    }
+    this.environment = name;
+    if (!name) {
+      renderer.setEnvironment(null);
+      this.schedule();
+      return;
+    }
+    const address =
+      name === STUDIO ? STUDIO : this.options.resolveAsset ? this.options.resolveAsset(name) : defaultAsset(name);
+    if (address === null) {
+      this.report(`${name}: this address is not allowed`);
+      return;
+    }
+    environmentFor(name, address)
+      .then(image => {
+        if (!this.destroyed && this.renderer === renderer && this.environment === name) {
+          renderer.setEnvironment(image);
+          this.schedule();
+        }
+      })
+      .catch((failure: unknown) => {
+        this.report(`${name}: ${failure instanceof Error ? failure.message : String(failure)}`);
+      });
   }
 
   private report(message: string): void {
@@ -351,7 +419,11 @@ export class MeshStage {
     }
     this.camera = this.frame
       ? makeCamera(
-          { ...this.frame, center: this.frame.center.map((value, axis) => value + this.pan[axis]) as typeof this.frame.center, distance: this.frame.distance * this.zoom },
+          {
+            ...this.frame,
+            center: this.frame.center.map((value, axis) => value + this.pan[axis]) as typeof this.frame.center,
+            distance: this.frame.distance * this.zoom,
+          },
           this.yaw,
           this.pitch,
           aspect,
@@ -359,7 +431,13 @@ export class MeshStage {
         )
       : undefined;
     this.keepSurfacesSharp(planes);
-    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes, lighting, grid: this.grid && !wholeStage });
+    renderer.draw(meshes, this.camera, {
+      shadows: this.data.shadow,
+      planes,
+      lighting,
+      grid: this.grid && !wholeStage,
+      environmentTurn: this.data.environmentTurn,
+    });
     this.placeAnchors();
     this.drawHandles();
     if (planes.some(plane => plane.layers.some(layer => 'rect' in layer))) {
@@ -685,7 +763,9 @@ export class MeshStage {
       // What a pixel spans at the distance of what the camera looks at.
       const height = this.host.getBoundingClientRect().height || 1;
       const perPixel = (2 * frame.distance * this.zoom * Math.tan(FOV / 2)) / height;
-      this.pan = this.pan.map((value, axis) => value - camera.right[axis] * dx * perPixel + camera.up[axis] * dy * perPixel) as [number, number, number];
+      this.pan = this.pan.map(
+        (value, axis) => value - camera.right[axis] * dx * perPixel + camera.up[axis] * dy * perPixel,
+      ) as [number, number, number];
       this.schedule();
       return;
     }
@@ -831,6 +911,7 @@ export class MeshStage {
     this.zoomObserver = undefined;
     this.renderer?.destroy();
     this.renderer = null;
+    this.environment = '';
     this.textures = null;
     this.frame = undefined;
     this.camera = undefined;

@@ -46,7 +46,12 @@ export function resolveMeshSceneObject(
   return {
     ...base,
     objectType: 'meshScene',
-    meshScene: { orbit: [yaw, pitch], shadow: asString(properties.get('shadow')) === 'true' },
+    meshScene: {
+      orbit: [yaw, pitch],
+      shadow: asString(properties.get('shadow')) === 'true',
+      environment: asString(properties.get('environment')),
+      environmentTurn: asNumber(properties.get('environmentTurn')),
+    },
   };
 }
 

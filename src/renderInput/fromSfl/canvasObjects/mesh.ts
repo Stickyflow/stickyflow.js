@@ -57,5 +57,6 @@ export function meshSurfaces(canvasObjects: SflCanvasObject[], scenes: ReadonlyS
 
 export function meshSceneObject(canvasObject: SflMeshSceneObject): MeshScene {
   const { id, x, y, width, height, order, meshScene } = canvasObject;
-  return { id, x, y, width, height, order, orbit: meshScene.orbit, shadow: meshScene.shadow };
+  const { orbit, shadow, environment, environmentTurn } = meshScene;
+  return { id, x, y, width, height, order, orbit, shadow, environment, environmentTurn };
 }

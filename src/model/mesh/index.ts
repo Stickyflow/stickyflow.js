@@ -25,6 +25,10 @@ export interface MeshScene {
   height: number;
   orbit: [number, number];
   shadow: boolean;
+  // What lights the world and is seen in its reflections: "studio", or the address of an .hdr or an equirectangular picture.
+  environment?: string;
+  // How far the environment is turned about the vertical, in degrees.
+  environmentTurn?: number;
   order?: number;
 }
 

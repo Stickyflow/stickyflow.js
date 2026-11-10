@@ -10,10 +10,12 @@ import {
   project,
   toWindow,
 } from './camera';
+import { type EnvironmentImage, irradiance, mipChain } from './environment';
 import type { MaterialMapName, MeshAsset, MeshPrimitive } from './glb';
 import { colorOf, type Lighting, lightingOf } from './lighting';
 import {
   identity,
+  invert,
   lookAt,
   type Mat4,
   modelMatrix,
@@ -26,10 +28,15 @@ import {
 import {
   DEPTH_FRAGMENT,
   FRAGMENT,
+  GEOMETRY_FRAGMENT,
   GROUND_FRAGMENT,
+  OCCLUSION_BLUR_FRAGMENT,
+  OCCLUSION_FRAGMENT,
   PLANE_FRAGMENT,
   PLANE_VERTEX,
+  PREFILTER_FRAGMENT,
   PROBE_FRAGMENT,
+  SCREEN_VERTEX,
   VERTEX,
 } from './shaderSources';
 
@@ -82,6 +89,50 @@ const MAP_SLOTS: ReadonlyArray<{ name: MaterialMapName; unit: number; has: strin
 const MAP_UNIFORMS = MAP_SLOTS.filter(slot => slot.name !== 'base').flatMap(slot => [slot.has, slot.sampler]);
 const COLOR_MAPS: ReadonlySet<MaterialMapName> = new Set(['base', 'emissive']);
 const QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
+const ENVIRONMENT_UNIT = 6;
+const SCREEN_OCCLUSION_UNIT = 7;
+const SCREEN_OCCLUSION_UNIFORMS = ['uHasScreenOcclusion', 'uScreenOcclusion', 'uScreen'];
+
+// Directions in the half sphere over a surface, more of them close to it, the same every time.
+const KERNEL = new Float32Array(
+  Array.from({ length: 16 }, (_, i) => {
+    const u = ((i * 0.618034) % 1) * 2 * Math.PI;
+    const v = ((i + 0.5) / 16) ** 0.8;
+    const length = 0.12 + 0.88 * ((i + 1) / 16) ** 2;
+    const lift = Math.sqrt(1 - v * v);
+    return [Math.cos(u) * v * length, Math.sin(u) * v * length, Math.max(0.15, lift) * length];
+  }).flat(),
+);
+
+// Pictures the size of half the canvas: the faces and distances of what is seen, and how much of the sky each pixel gets.
+interface OcclusionTargets {
+  width: number;
+  height: number;
+  geometry: WebGLTexture;
+  depth: WebGLRenderbuffer;
+  raw: WebGLTexture;
+  blurred: WebGLTexture;
+  buffers: WebGLFramebuffer[];
+}
+
+// The environment on the GPU: a picture whose smaller copies are blurred as rougher surfaces see it, and the light for matte ones.
+interface GpuEnvironment {
+  texture: WebGLTexture;
+  levels: number;
+  irradiance: Float32Array;
+}
+
+// Four values per pixel, as a float texture wants them.
+function rgba(image: EnvironmentImage): Float32Array {
+  const out = new Float32Array(image.width * image.height * 4);
+  for (let i = 0; i < image.width * image.height; i++) {
+    out[i * 4] = image.data[i * 3];
+    out[i * 4 + 1] = image.data[i * 3 + 1];
+    out[i * 4 + 2] = image.data[i * 3 + 2];
+    out[i * 4 + 3] = 1;
+  }
+  return out;
+}
 
 function compile(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
   const shader = gl.createShader(type);
@@ -120,8 +171,13 @@ function linkProgram(
   return program;
 }
 
-function link(gl: WebGL2RenderingContext, fragmentSource: string, names: readonly string[]): Program {
-  const program = linkProgram(gl, VERTEX, fragmentSource);
+function link(
+  gl: WebGL2RenderingContext,
+  fragmentSource: string,
+  names: readonly string[],
+  vertexSource = VERTEX,
+): Program {
+  const program = linkProgram(gl, vertexSource, fragmentSource);
   return { program, uniforms: Object.fromEntries(names.map(name => [name, gl.getUniformLocation(program, name)])) };
 }
 
@@ -158,6 +214,10 @@ export class MeshRenderer {
   // What the shadow map shows now, so that it is drawn again only when something that casts a shadow has moved.
   private shadowKey = '';
   private lightMatrix: Mat4 | null = null;
+  private environment: GpuEnvironment | null = null;
+  private occlusion: OcclusionTargets | null = null;
+  // Programs for the occlusion, made the first time they are needed. False when this GPU cannot draw into float pictures.
+  private occlusionPrograms: { geometry: Program; occlusion: Program; blur: Program } | false | null = null;
 
   constructor(gl: WebGL2RenderingContext) {
     this.gl = gl;
@@ -182,10 +242,28 @@ export class MeshRenderer {
       'uNormalScale',
       'uOcclusionStrength',
       'uEmissive',
+      'uHasEnvironment',
+      'uEnvironment',
+      'uEnvironmentLevels',
+      'uEnvironmentStrength',
+      'uEnvironmentTurn',
+      'uIrradiance',
+      ...SCREEN_OCCLUSION_UNIFORMS,
     ]);
     this.depth = link(gl, DEPTH_FRAGMENT, common);
     this.probing = link(gl, PROBE_FRAGMENT, [...common, 'uEye', 'uRange', 'uId']);
-    this.ground = link(gl, GROUND_FRAGMENT, [...common, 'uShadow', 'uCenter', 'uFade', 'uStrength', 'uGrid', 'uCell', 'uReach', 'uStage']);
+    this.ground = link(gl, GROUND_FRAGMENT, [
+      ...common,
+      'uShadow',
+      'uCenter',
+      'uFade',
+      'uStrength',
+      'uGrid',
+      'uCell',
+      'uReach',
+      'uStage',
+      ...SCREEN_OCCLUSION_UNIFORMS,
+    ]);
 
     this.picture = this.linkPlane(PLANE_FRAGMENT);
     this.pictureSampler = gl.getUniformLocation(this.picture, 'uPicture');
@@ -271,6 +349,82 @@ export class MeshRenderer {
   deleteTexture(texture: WebGLTexture): void {
     this.planeTextures.delete(texture);
     this.gl.deleteTexture(texture);
+  }
+
+  // Lights the meshes with a picture of the world around them, or with the sun and sky alone when there is none.
+  setEnvironment(image: EnvironmentImage | null): void {
+    const { gl } = this;
+    if (this.environment) {
+      gl.deleteTexture(this.environment.texture);
+      this.environment = null;
+    }
+    if (!image) {
+      return;
+    }
+    const chain = mipChain(image);
+    const source = requireObject(gl.createTexture(), 'texture');
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, source);
+    chain.forEach((level, index) => {
+      gl.texImage2D(gl.TEXTURE_2D, index, gl.RGBA16F, level.width, level.height, 0, gl.RGBA, gl.FLOAT, rgba(level));
+    });
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, chain.length - 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // Without float targets the plain smaller copies stand in for the blurred ones.
+    const blurred = this.prefilter(source, chain);
+    if (blurred) {
+      gl.deleteTexture(source);
+    }
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this.environment = { texture: blurred ?? source, levels: chain.length, irradiance: irradiance(image) };
+  }
+
+  private prefilter(source: WebGLTexture, chain: readonly EnvironmentImage[]): WebGLTexture | null {
+    const { gl } = this;
+    if (!gl.getExtension('EXT_color_buffer_float') && !gl.getExtension('EXT_color_buffer_half_float')) {
+      return null;
+    }
+    const target = requireObject(gl.createTexture(), 'texture');
+    gl.bindTexture(gl.TEXTURE_2D, target);
+    gl.texStorage2D(gl.TEXTURE_2D, chain.length, gl.RGBA16F, chain[0].width, chain[0].height);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const { program, uniforms } = link(gl, PREFILTER_FRAGMENT, ['uSource', 'uRoughness', 'uTexel'], SCREEN_VERTEX);
+    const buffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, buffer);
+    gl.useProgram(program);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, source);
+    gl.uniform1i(uniforms.uSource, 0);
+    gl.uniform1f(uniforms.uTexel, (4 * Math.PI) / (chain[0].width * chain[0].height));
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(this.planeQuad);
+    let complete = true;
+    chain.forEach((level, index) => {
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, index);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+        complete = false;
+        return;
+      }
+      gl.viewport(0, 0, level.width, level.height);
+      gl.uniform1f(uniforms.uRoughness, index / (chain.length - 1));
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    });
+    gl.bindVertexArray(null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(buffer);
+    gl.deleteProgram(program);
+    if (!complete) {
+      gl.deleteTexture(target);
+      return null;
+    }
+    return target;
   }
 
   hasAsset(asset: string): boolean {
@@ -564,7 +718,13 @@ export class MeshRenderer {
   draw(
     meshes: readonly Mesh[],
     camera: Camera | undefined,
-    options: { shadows?: boolean; planes?: readonly Plane[]; lighting?: Lighting; grid?: boolean } = {},
+    options: {
+      shadows?: boolean;
+      planes?: readonly Plane[];
+      lighting?: Lighting;
+      grid?: boolean;
+      environmentTurn?: number;
+    } = {},
   ): void {
     const planes = options.planes ?? [];
     const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
@@ -582,6 +742,16 @@ export class MeshRenderer {
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
     const lightMatrix = options.shadows ? this.shadowMatrix(instances, planes, box, lighting.direction) : identity();
+    const seeThrough = ({ mesh, primitive }: Instance) => mesh.opacity < 1 || primitive.source.material.blend;
+    // The occlusion comes with an environment, as without one the light of the sky is too plain to need it.
+    const occlusion = this.environment
+      ? this.drawOcclusion(
+          camera,
+          instances.filter(instance => !seeThrough(instance)),
+          box,
+          this.groundOf(box, options.grid ?? false).matrix,
+        )
+      : null;
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.shadowMap);
@@ -601,18 +771,33 @@ export class MeshRenderer {
     gl.uniform3fv(uniforms.uGlare, lighting.glare);
     gl.uniform3fv(uniforms.uSky, lighting.sky);
     gl.uniform3fv(uniforms.uFloor, lighting.floor);
-    gl.uniform1f(uniforms.uFill, lighting.fill);
+    const { environment } = this;
+    gl.uniform1f(uniforms.uFill, environment ? 0 : lighting.fill);
+    gl.uniform1i(uniforms.uHasEnvironment, environment ? 1 : 0);
+    gl.uniform1i(uniforms.uEnvironment, ENVIRONMENT_UNIT);
+    gl.activeTexture(gl.TEXTURE0 + ENVIRONMENT_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, environment?.texture ?? null);
+    if (environment) {
+      const turn = ((options.environmentTurn ?? 0) * Math.PI) / 180;
+      gl.uniform1f(uniforms.uEnvironmentLevels, environment.levels - 1);
+      gl.uniform1f(uniforms.uEnvironmentStrength, lighting.ambient);
+      gl.uniform2f(uniforms.uEnvironmentTurn, Math.cos(turn), Math.sin(turn));
+      gl.uniform3fv(uniforms.uIrradiance, environment.irradiance);
+    }
     gl.activeTexture(gl.TEXTURE0);
+    this.bindScreenOcclusion(uniforms, occlusion);
 
-    const seeThrough = ({ mesh, primitive }: Instance) => mesh.opacity < 1 || primitive.source.material.blend;
     this.drawInstances(instances.filter(instance => !seeThrough(instance)));
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    if (options.shadows || options.grid) {
-      this.drawGround(camera, lightMatrix, box, options.shadows ? lighting.groundShadow : 0, options.grid ?? false);
+    if (options.shadows || options.grid || occlusion) {
+      const strength = options.shadows ? lighting.groundShadow : 0;
+      this.drawGround(camera, lightMatrix, box, strength, options.grid ?? false, occlusion);
     }
     this.drawPlanes(camera, planes);
     gl.useProgram(program);
+    // What is seen through lies over what the occlusion was worked out for, so it takes none.
+    this.bindScreenOcclusion(uniforms, null);
     gl.depthMask(false);
     this.drawInstances(instances.filter(seeThrough));
     gl.depthMask(true);
@@ -651,25 +836,208 @@ export class MeshRenderer {
     gl.bindVertexArray(null);
   }
 
-  private drawGround(camera: Camera, lightMatrix: Mat4, box: Box, strength: number, grid: boolean): void {
-    const { gl } = this;
-    const { program, uniforms } = this.ground;
+  // The ground under the meshes, as far as its shadow or its grid reach.
+  private groundOf(box: Box, grid: boolean): { center: Vec3; fade: number; reach: number; matrix: Mat4 } {
     const middle = boxCenter(box);
     const center: Vec3 = [middle[0], box.min[1], middle[2]];
     const diagonal = Math.max(boxDiagonal(box), 1e-3);
     const fade = diagonal * 1.4;
-    // The grid reaches further than the shadow and fades out, so it seems to go on. A cell is a power of ten that suits the size of the scene.
+    // The grid reaches further than the shadow and fades out, so it seems to go on.
     const reach = grid ? diagonal * 3 : fade;
+    return { center, fade, reach, matrix: modelMatrix(center, [0, 0, 0], [reach, 1, reach]) };
+  }
+
+  private occlusionTargets(width: number, height: number): OcclusionTargets | null {
+    const { gl } = this;
+    if (this.occlusion && this.occlusion.width === width && this.occlusion.height === height) {
+      return this.occlusion;
+    }
+    this.releaseOcclusion();
+    const picture = (format: number, filter: number) => {
+      const texture = requireObject(gl.createTexture(), 'texture');
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texStorage2D(gl.TEXTURE_2D, 1, format, width, height);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return texture;
+    };
+    const geometry = picture(gl.RGBA16F, gl.NEAREST);
+    const raw = picture(gl.R8, gl.LINEAR);
+    const blurred = picture(gl.R8, gl.LINEAR);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    const depth = requireObject(gl.createRenderbuffer(), 'renderbuffer');
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    const buffers = [geometry, raw, blurred].map((texture, index) => {
+      const buffer = requireObject(gl.createFramebuffer(), 'framebuffer');
+      gl.bindFramebuffer(gl.FRAMEBUFFER, buffer);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+      if (index === 0) {
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+      }
+      return buffer;
+    });
+    const complete = buffers.every(buffer => {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, buffer);
+      return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.occlusion = { width, height, geometry, depth, raw, blurred, buffers };
+    if (!complete) {
+      this.releaseOcclusion();
+      this.occlusionPrograms = false;
+    }
+    return this.occlusion;
+  }
+
+  private releaseOcclusion(): void {
+    const { gl } = this;
+    const targets = this.occlusion;
+    if (!targets) {
+      return;
+    }
+    for (const texture of [targets.geometry, targets.raw, targets.blurred]) {
+      gl.deleteTexture(texture);
+    }
+    gl.deleteRenderbuffer(targets.depth);
+    for (const buffer of targets.buffers) {
+      gl.deleteFramebuffer(buffer);
+    }
+    this.occlusion = null;
+  }
+
+  // How much of the sky each pixel sees, for the light of the environment. Only what is solid takes part, and the ground.
+  private drawOcclusion(
+    camera: Camera,
+    instances: readonly Instance[],
+    box: Box,
+    ground: Mat4 | null,
+  ): OcclusionTargets | null {
+    const { gl } = this;
+    if (this.occlusionPrograms === null) {
+      const float = gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float');
+      this.occlusionPrograms = float
+        ? {
+            geometry: link(gl, GEOMETRY_FRAGMENT, ['uModel', 'uViewProjection', 'uNormal', 'uLight', 'uEye', 'uFlat']),
+            occlusion: link(
+              gl,
+              OCCLUSION_FRAGMENT,
+              ['uGeometry', 'uInverse', 'uViewProjection', 'uEye', 'uRadius', 'uKernel'],
+              SCREEN_VERTEX,
+            ),
+            blur: link(gl, OCCLUSION_BLUR_FRAGMENT, ['uRaw', 'uGeometry', 'uTexel'], SCREEN_VERTEX),
+          }
+        : false;
+    }
+    const programs = this.occlusionPrograms;
+    if (!programs) {
+      return null;
+    }
+    const width = Math.max(1, gl.drawingBufferWidth >> 1);
+    const height = Math.max(1, gl.drawingBufferHeight >> 1);
+    const targets = this.occlusionTargets(width, height);
+    if (!targets || !this.occlusionPrograms) {
+      return null;
+    }
+    const [geometryBuffer, rawBuffer, blurredBuffer] = targets.buffers;
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, geometryBuffer);
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    const { geometry } = programs;
+    gl.useProgram(geometry.program);
+    gl.uniformMatrix4fv(geometry.uniforms.uViewProjection, false, camera.viewProjection);
+    gl.uniformMatrix4fv(geometry.uniforms.uLight, false, identity());
+    gl.uniform3fv(geometry.uniforms.uEye, camera.eye);
+    gl.uniform4f(geometry.uniforms.uFlat, 0, 0, 0, 0);
+    for (const { primitive, world } of instances) {
+      gl.uniformMatrix4fv(geometry.uniforms.uModel, false, world);
+      gl.uniformMatrix3fv(geometry.uniforms.uNormal, false, normalMatrix(world));
+      this.drawPrimitive(primitive);
+    }
+    if (ground) {
+      gl.uniformMatrix4fv(geometry.uniforms.uModel, false, ground);
+      gl.uniformMatrix3fv(geometry.uniforms.uNormal, false, normalMatrix(identity()));
+      gl.uniform4f(geometry.uniforms.uFlat, 0, 1, 0, 1);
+      gl.bindVertexArray(this.groundQuad);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    gl.disable(gl.DEPTH_TEST);
+    gl.bindVertexArray(this.planeQuad);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, targets.geometry);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, rawBuffer);
+    const { occlusion } = programs;
+    gl.useProgram(occlusion.program);
+    gl.uniform1i(occlusion.uniforms.uGeometry, 0);
+    gl.uniformMatrix4fv(occlusion.uniforms.uInverse, false, invert(camera.viewProjection));
+    gl.uniformMatrix4fv(occlusion.uniforms.uViewProjection, false, camera.viewProjection);
+    gl.uniform3fv(occlusion.uniforms.uEye, camera.eye);
+    gl.uniform1f(occlusion.uniforms.uRadius, boxDiagonal(box) * 0.08);
+    gl.uniform3fv(occlusion.uniforms.uKernel, KERNEL);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, blurredBuffer);
+    const { blur } = programs;
+    gl.useProgram(blur.program);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, targets.geometry);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, targets.raw);
+    gl.uniform1i(blur.uniforms.uRaw, 0);
+    gl.uniform1i(blur.uniforms.uGeometry, 1);
+    gl.uniform2f(blur.uniforms.uTexel, 1 / width, 1 / height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    gl.bindVertexArray(null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.enable(gl.DEPTH_TEST);
+    return targets;
+  }
+
+  // Tells a program whether there is a picture of the occlusion, and where it is.
+  private bindScreenOcclusion(uniforms: Program['uniforms'], targets: OcclusionTargets | null): void {
+    const { gl } = this;
+    gl.uniform1i(uniforms.uHasScreenOcclusion, targets ? 1 : 0);
+    gl.uniform1i(uniforms.uScreenOcclusion, SCREEN_OCCLUSION_UNIT);
+    gl.uniform2f(uniforms.uScreen, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.activeTexture(gl.TEXTURE0 + SCREEN_OCCLUSION_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, targets?.blurred ?? null);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
+  private drawGround(
+    camera: Camera,
+    lightMatrix: Mat4,
+    box: Box,
+    strength: number,
+    grid: boolean,
+    occlusion: OcclusionTargets | null,
+  ): void {
+    const { gl } = this;
+    const { program, uniforms } = this.ground;
+    const diagonal = Math.max(boxDiagonal(box), 1e-3);
+    const { center, fade, reach, matrix } = this.groundOf(box, grid);
     gl.useProgram(program);
+    this.bindScreenOcclusion(uniforms, occlusion);
     gl.uniformMatrix4fv(uniforms.uViewProjection, false, camera.viewProjection);
     gl.uniformMatrix4fv(uniforms.uLight, false, lightMatrix);
-    gl.uniformMatrix4fv(uniforms.uModel, false, modelMatrix(center, [0, 0, 0], [reach, 1, reach]));
+    gl.uniformMatrix4fv(uniforms.uModel, false, matrix);
     gl.uniform1i(uniforms.uShadow, 1);
     gl.uniform3fv(uniforms.uCenter, center);
     gl.uniform1f(uniforms.uFade, fade);
     gl.uniform1f(uniforms.uStrength, strength);
     gl.uniform1f(uniforms.uGrid, grid ? 1 : 0);
-    gl.uniform1f(uniforms.uCell, Math.pow(10, Math.floor(Math.log10(diagonal / 4))));
+    gl.uniform1f(uniforms.uCell, 10 ** Math.floor(Math.log10(diagonal / 4)));
     gl.uniform1f(uniforms.uReach, reach);
     gl.uniformMatrix4fv(uniforms.uStage, false, camera.stage);
     gl.depthMask(false);
@@ -731,6 +1099,13 @@ export class MeshRenderer {
     gl.deleteBuffer(this.planeBuffer);
     gl.deleteTexture(this.shadowMap);
     gl.deleteFramebuffer(this.shadowBuffer);
+    this.setEnvironment(null);
+    this.releaseOcclusion();
+    if (this.occlusionPrograms) {
+      for (const { program } of Object.values(this.occlusionPrograms)) {
+        gl.deleteProgram(program);
+      }
+    }
     gl.deleteVertexArray(this.groundQuad);
     gl.deleteBuffer(this.groundBuffer);
     for (const { program } of [this.main, this.depth, this.probing, this.ground]) {

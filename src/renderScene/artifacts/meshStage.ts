@@ -13,7 +13,7 @@ export function buildMeshStages(
   const loose = meshes.some(mesh => !mesh.sceneId) || surfaces.some(surface => !surface.sceneId);
   return [...canvases, ...(loose ? [DEFAULT_MESH_SCENE] : [])].map((canvas, index) => {
     const own = meshes.filter(mesh => (mesh.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id);
-    const { id, x, y, width, height, orbit, shadow } = canvas;
+    const { id, x, y, width, height, orbit, shadow, environment, environmentTurn } = canvas;
     return {
       type: 'mesh-stage',
       id: `mesh-stage-${id}`,
@@ -26,6 +26,8 @@ export function buildMeshStages(
       stageId: id,
       orbit,
       shadow,
+      environment,
+      environmentTurn,
       meshes: own,
       light: lights.find(light => (light.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id),
       surfaces: surfaces.filter(surface => (surface.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id),

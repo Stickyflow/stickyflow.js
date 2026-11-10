@@ -15,6 +15,8 @@ export interface SflMeshData {
 export interface SflMeshSceneData {
   orbit: [number, number];
   shadow: boolean;
+  environment?: string;
+  environmentTurn?: number;
 }
 
 export interface SflMeshSurfaceData {

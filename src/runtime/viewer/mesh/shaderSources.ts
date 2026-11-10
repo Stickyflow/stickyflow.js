@@ -37,6 +37,29 @@ float lit() {
   return sum / 25.0;
 }`;
 
+// How much of the sky a pixel sees, worked out for the whole picture before the meshes are drawn. 1 where nothing is near.
+const SCREEN_OCCLUSION = `
+uniform bool uHasScreenOcclusion;
+uniform sampler2D uScreenOcclusion;
+uniform vec2 uScreen;
+float screenOcclusion() {
+  return uHasScreenOcclusion ? texture(uScreenOcclusion, gl_FragCoord.xy / uScreen).r : 1.0;
+}`;
+
+// The environment is an equirectangular picture: v runs from straight up to straight down, u once around, from behind.
+const ENVIRONMENT_LOOKUP = `
+vec3 turned(vec3 d, vec2 turn) {
+  return vec3(turn.x * d.x - turn.y * d.z, d.y, turn.y * d.x + turn.x * d.z);
+}
+vec2 equirect(vec3 d) {
+  return vec2(atan(d.x, -d.z) / (2.0 * PI) + 0.5, acos(clamp(d.y, -1.0, 1.0)) / PI);
+}
+vec3 fromEquirect(vec2 uv) {
+  float theta = uv.y * PI;
+  float phi = (uv.x - 0.5) * 2.0 * PI;
+  return vec3(sin(theta) * sin(phi), cos(theta), -sin(theta) * cos(phi));
+}`;
+
 export const FRAGMENT = `#version 300 es
 precision highp float;
 in vec3 vWorld;
@@ -66,10 +89,37 @@ uniform float uOcclusionStrength;
 uniform bool uHasEmissive;
 uniform sampler2D uEmissiveMap;
 uniform vec3 uEmissive;
+uniform bool uHasEnvironment;
+uniform sampler2D uEnvironment;
+uniform float uEnvironmentLevels;
+uniform float uEnvironmentStrength;
+uniform vec2 uEnvironmentTurn;
+uniform vec3 uIrradiance[9];
+${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
 const float PI = 3.14159265;
 const vec3 FILL = vec3(-0.6, 0.3, 0.7);
+${ENVIRONMENT_LOOKUP}
+
+vec3 environment(vec3 d, float roughness) {
+  return textureLod(uEnvironment, equirect(turned(d, uEnvironmentTurn)), roughness * uEnvironmentLevels).rgb * uEnvironmentStrength;
+}
+
+// The light a matte surface gets from the whole environment, already divided by pi.
+vec3 irradiance(vec3 n) {
+  n = turned(n, uEnvironmentTurn);
+  vec3 e = uIrradiance[0] * 0.282095
+    + uIrradiance[1] * 0.488603 * n.y
+    + uIrradiance[2] * 0.488603 * n.z
+    + uIrradiance[3] * 0.488603 * n.x
+    + uIrradiance[4] * 1.092548 * n.x * n.y
+    + uIrradiance[5] * 1.092548 * n.y * n.z
+    + uIrradiance[6] * 0.315392 * (3.0 * n.z * n.z - 1.0)
+    + uIrradiance[7] * 1.092548 * n.x * n.z
+    + uIrradiance[8] * 0.546274 * (n.x * n.x - n.y * n.y);
+  return max(e, vec3(0.0)) * uEnvironmentStrength;
+}
 
 // A filmic curve, which keeps colors in what is bright where a simple one turns them pale.
 vec3 filmic(vec3 x) {
@@ -137,6 +187,7 @@ void main() {
   float roughness = clamp(uRoughness * surface.x, 0.04, 1.0);
   float metallic = clamp(uMetallic * surface.y, 0.0, 1.0);
   float occlusion = uHasOcclusion ? mix(1.0, texture(uOcclusionMap, vUv).r, uOcclusionStrength) : 1.0;
+  occlusion *= screenOcclusion();
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
   vec3 color = light(n, v, uKey, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
@@ -146,8 +197,10 @@ void main() {
   float a004 = min(r.x * r.x, pow(2.0, -9.28 * nv)) * r.x + r.y;
   vec2 ab = vec2(-1.04, 1.04) * a004 + r.zw;
   vec3 fresnel = f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - nv, 5.0);
-  color += room(reflect(-v, n), roughness) * (fresnel * ab.x + ab.y) * occlusion;
-  color += room(n, 1.0) * base.rgb * (1.0 - metallic) * 0.55 * occlusion;
+  vec3 mirrored = uHasEnvironment ? environment(reflect(-v, n), roughness) : room(reflect(-v, n), roughness);
+  vec3 around = uHasEnvironment ? irradiance(n) : room(n, 1.0) * 0.55;
+  color += mirrored * (fresnel * ab.x + ab.y) * occlusion;
+  color += around * base.rgb * (1.0 - metallic) * occlusion;
   color += uEmissive * (uHasEmissive ? texture(uEmissiveMap, vUv).rgb : vec3(1.0));
   color = filmic(color);
   color = pow(color, vec3(1.0 / 2.2));
@@ -182,6 +235,7 @@ uniform float uGrid;
 uniform float uCell;
 uniform float uReach;
 uniform mat4 uStage;
+${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
 // Lines one pixel wide at every cell, whatever the distance.
@@ -195,6 +249,8 @@ void main() {
   float distance = length(vWorld.xz - uCenter.xz);
   float fade = 1.0 - smoothstep(uFade * 0.6, uFade, distance);
   float shadow = uStrength > 0.0 ? (1.0 - lit()) * 0.32 * fade * uStrength : 0.0;
+  // Where something stands on the ground, the ground gets darker toward it.
+  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * 0.75 * fade);
   float grid = 0.0;
   if (uGrid > 0.5) {
     vec2 at = vWorld.xz;
@@ -227,4 +283,170 @@ void main() {
     discard;
   }
   gl_FragColor = color;
+}`;
+
+export const SCREEN_VERTEX = `#version 300 es
+layout(location = 0) in vec2 aPosition;
+out vec2 vUv;
+void main() {
+  vUv = aPosition * 0.5 + 0.5;
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}`;
+
+// One level of the environment as a rough surface sees it: many directions around the mirror one, weighted as such a surface
+// reflects. Each is read from a smaller copy of the picture the less often it is chosen, so few of them still give a smooth result.
+export const PREFILTER_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uSource;
+uniform float uRoughness;
+uniform float uTexel;
+out vec4 fragment;
+const float PI = 3.14159265;
+const int SAMPLES = 256;
+${ENVIRONMENT_LOOKUP}
+
+vec2 hammersley(int i) {
+  uint bits = uint(i);
+  bits = (bits << 16u) | (bits >> 16u);
+  bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+  bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+  bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+  bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+  return vec2(float(i) / float(SAMPLES), float(bits) * 2.3283064365386963e-10);
+}
+
+void main() {
+  vec3 n = fromEquirect(vUv);
+  if (uRoughness <= 0.0) {
+    fragment = vec4(textureLod(uSource, vUv, 0.0).rgb, 1.0);
+    return;
+  }
+  vec3 helper = abs(n.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+  vec3 tangent = normalize(cross(helper, n));
+  vec3 bitangent = cross(n, tangent);
+  float a = uRoughness * uRoughness;
+  float a2 = a * a;
+  vec3 sum = vec3(0.0);
+  float weight = 0.0;
+  for (int i = 0; i < SAMPLES; i++) {
+    vec2 xi = hammersley(i);
+    float phi = 2.0 * PI * xi.x;
+    float cosTheta = sqrt((1.0 - xi.y) / (1.0 + (a2 - 1.0) * xi.y));
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+    vec3 h = normalize(tangent * cos(phi) * sinTheta + bitangent * sin(phi) * sinTheta + n * cosTheta);
+    vec3 l = 2.0 * dot(n, h) * h - n;
+    float nl = dot(n, l);
+    if (nl <= 0.0) {
+      continue;
+    }
+    float nh = max(dot(n, h), 0.0);
+    float d = a2 / (PI * pow(nh * nh * (a2 - 1.0) + 1.0, 2.0));
+    float pdf = d / 4.0 + 0.0001;
+    float solid = 1.0 / (float(SAMPLES) * pdf);
+    float lod = max(0.5 * log2(solid / uTexel) + 1.0, 0.0);
+    sum += textureLod(uSource, equirect(l), lod).rgb * nl;
+    weight += nl;
+  }
+  fragment = vec4(sum / max(weight, 0.0001), 1.0);
+}`;
+
+// For each pixel: which way its surface faces, and how far it is from the eye.
+export const GEOMETRY_FRAGMENT = `#version 300 es
+precision highp float;
+in vec3 vWorld;
+in vec3 vNormal;
+uniform vec3 uEye;
+uniform vec4 uFlat;
+out vec4 fragment;
+void main() {
+  vec3 n = uFlat.w > 0.5 ? uFlat.xyz : normalize(vNormal);
+  vec3 toEye = uEye - vWorld;
+  if (dot(n, toEye) < 0.0) {
+    n = -n;
+  }
+  fragment = vec4(n, length(toEye));
+}`;
+
+// Points in the half sphere over a surface: the more of them lie behind what the eye sees there, the less light reaches it.
+export const OCCLUSION_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uGeometry;
+uniform mat4 uInverse;
+uniform mat4 uViewProjection;
+uniform vec3 uEye;
+uniform float uRadius;
+uniform vec3 uKernel[16];
+out vec4 fragment;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void main() {
+  vec4 here = texture(uGeometry, vUv);
+  if (here.a <= 0.0) {
+    fragment = vec4(1.0);
+    return;
+  }
+  vec4 far = uInverse * vec4(vUv * 2.0 - 1.0, 1.0, 1.0);
+  vec3 ray = normalize(far.xyz / far.w - uEye);
+  vec3 p = uEye + ray * here.a;
+  vec3 n = here.xyz;
+  float angle = hash(gl_FragCoord.xy) * 6.2831853;
+  vec3 turn = vec3(cos(angle), sin(angle), cos(angle * 1.7));
+  vec3 t = turn - n * dot(turn, n);
+  t = dot(t, t) < 1e-4 ? normalize(cross(n, vec3(0.0, 0.0, 1.0))) : normalize(t);
+  vec3 b = cross(n, t);
+  float hidden = 0.0;
+  for (int i = 0; i < 16; i++) {
+    vec3 k = uKernel[i];
+    vec3 s = p + (t * k.x + b * k.y + n * k.z) * uRadius;
+    vec4 clip = uViewProjection * vec4(s, 1.0);
+    if (clip.w <= 0.0) {
+      continue;
+    }
+    vec2 uv = clip.xy / clip.w * 0.5 + 0.5;
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+      continue;
+    }
+    float seen = texture(uGeometry, uv).a;
+    if (seen <= 0.0) {
+      continue;
+    }
+    float own = length(s - uEye);
+    // What is far in front only counts a little, so an edge does not throw a dark halo on what lies behind it.
+    float near = smoothstep(0.0, 1.0, uRadius / max(abs(here.a - seen), 1e-5));
+    hidden += (seen < own - uRadius * 0.04 ? 1.0 : 0.0) * near;
+  }
+  fragment = vec4(vec3(pow(1.0 - hidden / 16.0, 2.6)), 1.0);
+}`;
+
+// A blur that stays on its own surface: neighbours at another distance from the eye count for little.
+export const OCCLUSION_BLUR_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uRaw;
+uniform sampler2D uGeometry;
+uniform vec2 uTexel;
+out vec4 fragment;
+void main() {
+  float depth = texture(uGeometry, vUv).a;
+  if (depth <= 0.0) {
+    fragment = vec4(1.0);
+    return;
+  }
+  float sum = 0.0;
+  float weight = 0.0;
+  for (int x = -2; x <= 2; x++) {
+    for (int y = -2; y <= 2; y++) {
+      vec2 at = vUv + vec2(x, y) * uTexel;
+      float other = texture(uGeometry, at).a;
+      float w = other > 0.0 ? exp(-abs(other - depth) / (depth * 0.01)) : 0.0;
+      sum += texture(uRaw, at).r * w;
+      weight += w;
+    }
+  }
+  fragment = vec4(vec3(weight > 0.0 ? sum / weight : 1.0), 1.0);
 }`;

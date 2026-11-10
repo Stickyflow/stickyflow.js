@@ -17,6 +17,8 @@ export interface Lighting {
   sky: Vec3;
   floor: Vec3;
   fill: number;
+  // How strong an environment picture lights the world.
+  ambient: number;
   // How much of a shadow can be seen: none when the sun is down.
   shadow: number;
   // On the page around the world, where a long shadow of a low sun would only be a wedge across the drawing.
@@ -62,6 +64,7 @@ export function lightingOf({ turn, height, color, intensity, ambient }: MeshLigh
     sky: times(mix(DUSK, NOON, smoothstep(0, 0.6, rise)), (0.25 + 0.75 * up) * ambient),
     floor: times(FLOOR, (0.4 + 0.6 * up) * ambient),
     fill: 0.5 * ambient * (0.25 + 0.75 * up),
+    ambient,
     shadow: above,
     groundShadow: above * smoothstep(0.05, 0.35, rise),
   };
