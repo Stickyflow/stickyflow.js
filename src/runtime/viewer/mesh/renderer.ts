@@ -119,6 +119,21 @@ interface StillFrame {
   light: SkyLight | null;
 }
 
+// How much of the light goes through a part as through glass: what the document says, or else the file.
+const transmissionOf = ({ mesh, primitive }: Instance): number =>
+  Math.min(1, Math.max(0, mesh.transmission ?? primitive.source.material.transmission));
+
+const isSeeThrough = (instance: Instance): boolean =>
+  instance.mesh.opacity < 1 || instance.primitive.source.material.blend || transmissionOf(instance) > 0;
+
+// The corners of a flat surface, for a tracer: a square from -1 to 1, with its picture from corner to corner.
+const SQUARE = {
+  positions: new Float32Array([-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0]),
+  normals: new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]),
+  uvs: new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
+  indices: [0, 1, 2, 2, 1, 3],
+};
+
 // Draws meshes with WebGL2. It knows nothing of SFL or SVG: it gets assets, and what the document says about each mesh.
 export class MeshRenderer {
   private readonly gl: WebGL2RenderingContext;
@@ -536,7 +551,7 @@ export class MeshRenderer {
         options.environmentTurn ?? 0,
       ),
     };
-    // A scene of meshes is traced, path by path. One with a Canvas is drawn as while it moves, light by light.
+    // The scene is traced, path by path. Where that cannot be had, it is drawn as while it moves, light by light.
     const traced = this.traceFrame(meshes, camera, options, target, frame);
     const under = traced ? traced.under : this.drawFrame(meshes, camera, options, target, frame);
     this.accumulation.add(index >= STILL_SHOWN_FROM, under);
@@ -608,7 +623,7 @@ export class MeshRenderer {
       environmentLight.mode === 0
         ? identity()
         : this.environmentShadows.update(casters, box, environmentLight.direction);
-    const seeThrough = ({ mesh, primitive }: Instance) => mesh.opacity < 1 || primitive.source.material.blend;
+    const seeThrough = (instance: Instance) => isSeeThrough(instance);
     const solids = instances
       .filter(instance => !seeThrough(instance))
       .map(({ world, primitive }) => ({ world, draw: () => this.drawPrimitive(primitive) }));
@@ -694,8 +709,8 @@ export class MeshRenderer {
     return groundColor && still ? () => this.drawGroundBase(plain, box, floor, wide, groundColor) : null;
   }
 
-  // A frame of a still picture by following paths of light: for a scene of meshes in an environment, which is all the tracer
-  // knows. Null when the scene has a Canvas too, and it is drawn the other way.
+  // A frame of a still picture by following paths of light, for a scene in an environment. Null when it cannot be had, and the
+  // frame is drawn the other way.
   private traceFrame(
     meshes: readonly Mesh[],
     camera: Camera,
@@ -706,9 +721,10 @@ export class MeshRenderer {
     const picture = this.environment.picture;
     const light = still.light;
     const instances = this.instances(meshes);
-    const seeThrough = instances.some(({ mesh, primitive }) => mesh.opacity < 1 || primitive.source.material.blend);
-    const measured = this.boxOf(instances, []);
-    if (!picture || !light || !measured || (options.planes ?? []).length > 0 || !this.tracer.possible) {
+    const seeThrough = instances.some(isSeeThrough);
+    const planes = options.planes ?? [];
+    const measured = this.boxOf(instances, planes);
+    if (!picture || !light || !measured || !this.tracer.possible) {
       return null;
     }
     const { gl } = this;
@@ -716,10 +732,22 @@ export class MeshRenderer {
     const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
     const key = `${this.generation}|${instances
       .map(({ mesh, primitive, world }) =>
-        [primitive.count, world.join(), mesh.color, mesh.metallic, mesh.roughness, mesh.opacity].join(':'),
+        [
+          primitive.count,
+          world.join(),
+          mesh.color,
+          mesh.metallic,
+          mesh.roughness,
+          mesh.opacity,
+          mesh.transmission,
+          mesh.ior,
+        ].join(':'),
       )
-      .join('|')}`;
-    this.tracer.load(key, () => instances.map(instance => this.tracePart(instance)));
+      .join('|')}|${planes.map(plane => plane.matrix.join()).join('|')}`;
+    this.tracer.load(key, () => [
+      ...instances.map(instance => this.tracePart(instance)),
+      ...planes.map(plane => this.tracePlane(plane)),
+    ]);
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     this.accumulation.takeGuides();
@@ -789,7 +817,45 @@ export class MeshRenderer {
       roughness: mesh.roughness ?? material.roughness,
       emissive: material.emissive,
       normalScale: material.normalScale,
+      transmission: transmissionOf({ mesh, primitive, world }),
+      ior: mesh.ior ?? material.ior,
       maps,
+    };
+  }
+
+  // A flat surface for the tracer: a square with the drawing of its layers, one over the other.
+  private tracePlane(plane: Plane): TracePart {
+    const { gl } = this;
+    return {
+      ...SQUARE,
+      world: plane.matrix,
+      base: [1, 1, 1, 1],
+      metallic: 0,
+      roughness: 1,
+      emissive: [0, 0, 0],
+      normalScale: 1,
+      transmission: 0,
+      ior: 1.5,
+      maps: {},
+      paint: () => {
+        gl.useProgram(this.picture);
+        gl.uniformMatrix4fv(this.mvpLocations.get(this.picture) ?? null, false, identity());
+        gl.uniform1i(this.pictureSampler, 0);
+        gl.uniform1i(this.pictureStill, 0);
+        gl.disable(gl.DEPTH_TEST);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.bindVertexArray(this.planeQuad);
+        gl.activeTexture(gl.TEXTURE0);
+        for (const layer of plane.layers) {
+          if ('texture' in layer) {
+            gl.bindTexture(gl.TEXTURE_2D, layer.texture);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+          }
+        }
+        gl.disable(gl.BLEND);
+        gl.bindVertexArray(null);
+      },
     };
   }
 
@@ -965,13 +1031,15 @@ export class MeshRenderer {
   private drawInstances(instances: readonly Instance[], mirror?: Mat4): void {
     const { gl } = this;
     const { uniforms } = this.main;
-    for (const { mesh, primitive, world: placed } of instances) {
+    for (const instance of instances) {
+      const { mesh, primitive, world: placed } = instance;
       const world = mirror ? multiply(mirror, placed) : placed;
       const { material } = primitive.source;
+      const clear = 1 - 0.75 * transmissionOf(instance);
       gl.uniformMatrix4fv(uniforms.uModel, false, world);
       gl.uniformMatrix3fv(uniforms.uNormal, false, normalMatrix(world));
       const [r, g, b] = colorOf(mesh.color) ?? material.baseColor;
-      gl.uniform4f(uniforms.uBase, r, g, b, material.baseColor[3] * mesh.opacity);
+      gl.uniform4f(uniforms.uBase, r, g, b, material.baseColor[3] * mesh.opacity * clear);
       gl.uniform1f(uniforms.uMetallic, mesh.metallic ?? material.metallic);
       gl.uniform1f(uniforms.uRoughness, mesh.roughness ?? material.roughness);
       gl.uniform1f(uniforms.uNormalScale, material.normalScale);

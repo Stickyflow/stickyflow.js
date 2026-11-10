@@ -9,6 +9,9 @@ export interface Mesh {
   opacity: number;
   roughness?: number;
   metallic?: number;
+  // How much of the light goes into the material and through it, as in glass, from 0 to 1, and how strongly it bends there.
+  transmission?: number;
+  ior?: number;
   position: Vec3;
   rotation: Vec3;
   scale: Vec3;
@@ -55,11 +58,25 @@ export interface MeshAnchor {
 
 // What a binding can reach on a Mesh, a Canvas in a Scene or a Light.
 type MeshValues = Partial<
-  Pick<Mesh, 'position' | 'rotation' | 'scale' | 'color' | 'opacity' | 'roughness' | 'metallic'> &
+  Pick<
+    Mesh,
+    'position' | 'rotation' | 'scale' | 'color' | 'opacity' | 'roughness' | 'metallic' | 'transmission' | 'ior'
+  > &
     Pick<MeshLight, 'turn' | 'height' | 'intensity' | 'ambient' | 'softness'>
 >;
 
-const NUMBERS = ['opacity', 'roughness', 'metallic', 'turn', 'height', 'intensity', 'ambient', 'softness'] as const;
+const NUMBERS = [
+  'opacity',
+  'roughness',
+  'metallic',
+  'transmission',
+  'ior',
+  'turn',
+  'height',
+  'intensity',
+  'ambient',
+  'softness',
+] as const;
 
 const AXES: Record<string, ['position' | 'rotation' | 'scale', number]> = {
   positionX: ['position', 0],

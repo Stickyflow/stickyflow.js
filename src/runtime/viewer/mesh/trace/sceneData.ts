@@ -22,7 +22,13 @@ export interface TracePart {
   roughness: number;
   emissive: readonly [number, number, number];
   normalScale: number;
+  // How much of the light goes through the material, as in glass, and how strongly it bends there.
+  transmission: number;
+  ior: number;
   maps: Partial<Record<TraceMapName, TraceMap>>;
+  // For a flat surface with a drawing on it: draws that drawing into the target that is bound. Such a part is not lit: it
+  // shows its drawing as it is.
+  paint?: () => void;
 }
 
 // What the tracer needs of a scene, as rows of numbers for textures.
@@ -32,14 +38,16 @@ export interface SceneData {
   // 28 numbers per triangle, in the order of the leaves: three corners, each followed by the material, the first u and the first
   // v; three normals, each followed by one more of the uvs; then the last v.
   triangles: Float32Array;
-  // 12 numbers per part: the color, then metallic, roughness, the layer of its pictures and the scale of its normal map, then
-  // what it emits and which pictures it has, as a sum of 1 for the color, 2 for the surface, 4 for the normals and 8 for the glow.
+  // 16 numbers per part: the color, then metallic, roughness, the layer of its pictures and the scale of its normal map, then
+  // what it emits and which pictures it has, as a sum of 1 for the color, 2 for the surface, 4 for the normals, 8 for the glow
+  // and 16 for a drawing that is shown as it is, then how much light it lets through and how strongly it bends it.
   materials: Float32Array;
   // The parts that have pictures, in the order of their layers.
   textured: TracePart[];
 }
 
 export const TRIANGLE_SIZE = 28;
+const MATERIAL_SIZE = 16;
 
 export function buildSceneData(parts: readonly TracePart[]): SceneData {
   const count = parts.reduce(
@@ -48,16 +56,17 @@ export function buildSceneData(parts: readonly TracePart[]): SceneData {
   );
   const corners = new Float32Array(count * 9);
   const rest = new Float32Array(count * 16);
-  const materials = new Float32Array(parts.length * 12);
+  const materials = new Float32Array(parts.length * MATERIAL_SIZE);
   const textured: TracePart[] = [];
   let triangle = 0;
   parts.forEach((part, material) => {
-    const hasMaps = Object.keys(part.maps).length > 0;
+    const hasMaps = Object.keys(part.maps).length > 0 || part.paint !== undefined;
     const flags =
       (part.maps.base ? 1 : 0) +
       (part.maps.surface ? 2 : 0) +
       (part.maps.normal ? 4 : 0) +
-      (part.maps.emissive ? 8 : 0);
+      (part.maps.emissive ? 8 : 0) +
+      (part.paint ? 16 : 0);
     materials.set(
       [
         ...part.base,
@@ -67,8 +76,12 @@ export function buildSceneData(parts: readonly TracePart[]): SceneData {
         part.normalScale,
         ...part.emissive,
         flags,
+        part.transmission,
+        part.ior,
+        0,
+        0,
       ],
-      material * 12,
+      material * MATERIAL_SIZE,
     );
     if (hasMaps) {
       textured.push(part);

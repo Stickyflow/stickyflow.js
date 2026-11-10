@@ -37,6 +37,8 @@ export function resolveMeshObject(
       opacity: asNumber(properties.get('opacity')),
       roughness: asNumber(properties.get('roughness')),
       metallic: asNumber(properties.get('metallic')),
+      transmission: asNumber(properties.get('transmission')),
+      ior: asNumber(properties.get('ior')),
       position: vector(block, layoutProp, 'position', 0),
       rotation: vector(block, layoutProp, 'rotation', 0),
       scale: vector(block, layoutProp, 'scale', 1),

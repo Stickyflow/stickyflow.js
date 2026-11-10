@@ -1,3 +1,5 @@
+import { TONE_CURVE } from '../shaders/chunks';
+
 // One frame of a path traced picture: for each pixel one path of light, followed backwards from the eye through the scene. Many
 // frames added up give the picture. The scene comes as textures of numbers: a tree of boxes, the triangles and the materials.
 
@@ -119,7 +121,9 @@ bool blocked(vec3 origin, vec3 direction) {
     if (!trace(origin, direction, 1e30, false, hit)) {
       return false;
     }
-    float opacity = fetch(uMaterials, int(fetch(uTriangles, hit.triangle * 7).w) * 3).a;
+    int material = int(fetch(uTriangles, hit.triangle * 7).w) * 4;
+    // Glass lets most of the light through. It does not bend it here, so its shadow is only lighter, without bright spots.
+    float opacity = fetch(uMaterials, material).a * (1.0 - 0.9 * fetch(uMaterials, material + 3).x);
     if (random() < opacity) {
       return true;
     }
@@ -140,6 +144,12 @@ struct Surface {
   float metallic;
   float roughness;
   vec3 emissive;
+  // How much of the light goes into the material, as in glass, how strongly it bends there, and whether the ray comes from outside.
+  float transmission;
+  float ior;
+  bool entering;
+  // A drawing that is shown as it is: it takes no light and throws none back.
+  bool unlit;
 };
 
 Surface surfaceOf(Hit hit, vec3 origin, vec3 direction) {
@@ -155,10 +165,11 @@ Surface surfaceOf(Hit hit, vec3 origin, vec3 direction) {
   vec2 uvC = vec2(nc.w, fetch(uTriangles, t + 6).x);
   float w = 1.0 - hit.at.x - hit.at.y;
   vec2 uv = uvA * w + uvB * hit.at.x + uvC * hit.at.y;
-  int m = int(a.w) * 3;
+  int m = int(a.w) * 4;
   vec4 base = fetch(uMaterials, m);
   vec4 look = fetch(uMaterials, m + 1);
   vec4 glow = fetch(uMaterials, m + 2);
+  vec4 glass = fetch(uMaterials, m + 3);
   int maps = int(glow.w);
   float layer = look.z * 2.0;
 
@@ -168,6 +179,8 @@ Surface surfaceOf(Hit hit, vec3 origin, vec3 direction) {
   vec3 ac = c.xyz - a.xyz;
   s.face = normalize(cross(ab, ac));
   s.normal = normalize(na.xyz * w + nb.xyz * hit.at.x + nc.xyz * hit.at.y);
+  // The normals of a mesh point out of it, so a ray against them comes from outside.
+  s.entering = dot(s.normal, direction) < 0.0;
   if (dot(s.face, direction) > 0.0) {
     s.face = -s.face;
   }
@@ -197,11 +210,34 @@ Surface surfaceOf(Hit hit, vec3 origin, vec3 direction) {
   s.roughness = clamp(look.y * surface.x, 0.04, 1.0);
   s.metallic = clamp(look.x * surface.y, 0.0, 1.0);
   s.emissive = glow.rgb * ((maps & 8) != 0 ? textureLod(uColorMaps, vec3(uv, layer + 1.0), 0.0).rgb : vec3(1.0));
+  s.transmission = glass.x * (1.0 - s.metallic);
+  s.ior = max(glass.y, 1.0);
+  s.unlit = (maps & 16) != 0;
+  if (s.unlit) {
+    // The drawing holds the colors of the screen. They are put among light so that they come out as they went in.
+    vec4 drawing = textureLod(uDataMaps, vec3(uv, layer), 0.0);
+    s.opacity = drawing.a;
+    s.color = vec3(0.0);
+    s.emissive = drawing.a > 0.0 ? fromScreen(drawing.rgb / drawing.a) / uExposure : vec3(0.0);
+  }
   return s;
 }`;
 
 const MATERIAL = `
 const float PI = 3.14159265;
+
+// A rough surface is many small mirrors that lean a little, each its own way: this is the way one of them faces.
+vec3 leaning(vec3 n, float roughness) {
+  vec3 helper = abs(n.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+  vec3 t = normalize(cross(helper, n));
+  vec3 b = cross(n, t);
+  float a = roughness * roughness;
+  float phi = 2.0 * PI * random();
+  float pick = random();
+  float cosTheta = sqrt((1.0 - pick) / (1.0 + (a * a - 1.0) * pick));
+  float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
+  return t * cos(phi) * sinTheta + b * sin(phi) * sinTheta + n * cosTheta;
+}
 
 // How much of the light from 'l' a surface sends toward 'v', and how likely the tracer is to pick 'l' when it follows the surface.
 vec3 reflectance(Surface s, vec3 v, vec3 l, out float chance) {
@@ -353,6 +389,7 @@ layout(location = 0) out vec4 fragment;
 // its distance, and its color with how rough it is. Nothing where it sees no surface, or one in the ground.
 layout(location = 1) out vec4 guide;
 layout(location = 2) out vec4 look;
+${TONE_CURVE}
 ${DATA}
 ${RANDOM}
 ${RAYS}
@@ -378,10 +415,10 @@ void main() {
   float chance = 0.0;
   guide = vec4(0.0);
   look = vec4(0.0);
-  // A path turns at most five times. Passing through what is see-through is no turn, but it ends somewhere too.
+  // A path turns at most eight times, which glass needs: in, out, and what it mirrors inside. Passing through what is see-through is no turn, but it ends somewhere too.
   int bounce = 0;
   bool mirrored = false;
-  for (int visit = 0; visit < 16 && bounce < 5; visit++) {
+  for (int visit = 0; visit < 24 && bounce < 8; visit++) {
     Hit hit;
     bool found = trace(origin, direction, 1e30, false, hit);
     float toGround = direction.y < 0.0 && origin.y > uFloor ? (uFloor - origin.y) / direction.y : -1.0;
@@ -399,13 +436,7 @@ void main() {
         mirrored = true;
         reflected = uReflection;
         origin = at + vec3(0.0, uLift, 0.0);
-        // A rough ground is many small mirrors that lean a little, each its own way.
-        float lean = uGroundRoughness * uGroundRoughness;
-        float turn = 2.0 * PI * random();
-        float pick = random();
-        float cosTheta = sqrt((1.0 - pick) / (1.0 + (lean * lean - 1.0) * pick));
-        float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
-        direction = reflect(direction, vec3(cos(turn) * sinTheta, cosTheta, sin(turn) * sinTheta));
+        direction = reflect(direction, leaning(vec3(0.0, 1.0, 0.0), uGroundRoughness));
         if (direction.y <= 0.0) {
           break;
         }
@@ -420,10 +451,14 @@ void main() {
       s.metallic = 0.0;
       s.roughness = 1.0;
       s.emissive = vec3(0.0);
+      s.transmission = 0.0;
+      s.unlit = false;
     } else if (!found) {
       if (!seeing) {
+        // After a turn in glass there was no other way to find this light, so it counts in full.
         float sky = skyChance(direction);
-        light += through * environment(direction) * (chance * chance / (chance * chance + sky * sky));
+        float weight = chance < 0.0 ? 1.0 : chance * chance / (chance * chance + sky * sky);
+        light += through * environment(direction) * weight;
       }
       break;
     } else {
@@ -440,11 +475,34 @@ void main() {
         // What glows keeps its own pattern, so it counts as glossy and is not smoothed.
         bool glows = s.emissive.r + s.emissive.g + s.emissive.b > 0.05;
         guide = vec4(s.normal, distance(s.position, uEye));
-        look = vec4(s.color, glows ? 0.0 : s.roughness);
+        look = vec4(s.color, glows || s.unlit || s.transmission > 0.0 ? 0.0 : s.roughness);
       }
     }
+    light += through * s.emissive;
+    if (s.unlit) {
+      break;
+    }
+    if (random() < s.transmission) {
+      // Glass: a part of the light is mirrored, more the flatter it comes, and the rest goes through and bends.
+      vec3 facet = leaning(s.normal, s.roughness);
+      float cosine = min(dot(-direction, facet), 1.0);
+      float plain = pow((s.ior - 1.0) / (s.ior + 1.0), 2.0);
+      float share = plain + (1.0 - plain) * pow(1.0 - max(cosine, 0.0), 5.0);
+      vec3 bent = refract(direction, facet, s.entering ? 1.0 / s.ior : s.ior);
+      if (dot(bent, bent) == 0.0 || random() < share) {
+        direction = reflect(direction, facet);
+        origin = s.position + s.face * uLift;
+      } else {
+        direction = bent;
+        origin = s.position - s.face * uLift;
+        through *= s.color;
+      }
+      chance = -1.0;
+      bounce++;
+      continue;
+    }
     vec3 v = -direction;
-    light += through * (s.emissive + direct(s, v, uLift));
+    light += through * direct(s, v, uLift);
     vec3 next = follow(s, v);
     vec3 back = reflectance(s, v, next, chance);
     if (chance <= 0.0 || dot(next, s.face) <= 0.0) {

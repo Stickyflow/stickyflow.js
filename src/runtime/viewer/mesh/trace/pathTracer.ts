@@ -145,6 +145,15 @@ export class PathTracer {
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, to);
       data.textured.forEach((part, index) => {
         names.forEach((name, layer) => {
+          // A drawing takes the place of the surface picture, among the plain numbers, so its colors stay as they are.
+          if (part.paint && name === 'surface') {
+            gl.framebufferTextureLayer(gl.DRAW_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, texture, 0, index * 2 + layer);
+            gl.viewport(0, 0, MAP_SIZE, MAP_SIZE);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            part.paint();
+            return;
+          }
           const map = part.maps[name];
           if (!map) {
             return;

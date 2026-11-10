@@ -7,6 +7,8 @@ export interface SflMeshData {
   opacity?: number;
   roughness?: number;
   metallic?: number;
+  transmission?: number;
+  ior?: number;
   position: Vec3;
   rotation: Vec3;
   scale: Vec3;
