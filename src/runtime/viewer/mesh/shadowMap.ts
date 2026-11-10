@@ -16,7 +16,7 @@ export interface ShadowSlot {
 }
 
 export const SUN_SHADOW: ShadowSlot = { name: 'uShadow', unit: 1, depthUnit: 8, size: 2048 };
-export const ENVIRONMENT_SHADOW: ShadowSlot = { name: 'uEnvShadow', unit: 9, depthUnit: 10, size: 1024 };
+export const ENVIRONMENT_SHADOW: ShadowSlot = { name: 'uEnvShadow', unit: 9, depthUnit: 10, size: 2048 };
 
 export const shadowUniforms = ({ name }: ShadowSlot): string[] => [name, `${name}Depth`, `${name}Softness`];
 

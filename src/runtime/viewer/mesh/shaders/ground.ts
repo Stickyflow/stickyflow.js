@@ -33,15 +33,17 @@ void main() {
   // And where it does not see the light of the environment, it is in the shadow of that.
   // It fades out sooner than the shadow of the sun, as lights from many sides would carry it to the edges of the Scene.
   float near = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
-  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - envVisible(vec3(0.0, 1.0, 0.0))) * 0.7 * near);
+  // What runs out before the edges of the Scene never ends in a hard line there.
+  vec4 seen = uStage * vec4(vWorld, 1.0);
+  vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
+  float inside = (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
+  // The share of the lights that a point does not see is the share of their light it lacks, so the shadow is nearly as dark.
+  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - envVisible(vec3(0.0, 1.0, 0.0))) * 0.92 * near * inside);
   float grid = 0.0;
   if (uGrid > 0.5) {
     vec2 at = vWorld.xz;
     grid = max(lines(at, uCell) * 0.16, lines(at, uCell * 10.0) * 0.32) * (1.0 - smoothstep(uReach * 0.3, uReach, distance));
-    // It runs out before the edges of the Scene, so it never ends in a hard line.
-    vec4 seen = uStage * vec4(vWorld, 1.0);
-    vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
-    grid *= (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
+    grid *= inside;
   }
   // Grey lines under the shadow, with the alpha premultiplied as the page expects.
   float alpha = shadow + grid * (1.0 - shadow);

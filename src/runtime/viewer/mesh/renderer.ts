@@ -73,7 +73,7 @@ const PLAIN_EXPOSURE = 0.45;
 const ENVIRONMENT_EXPOSURE = 0.7;
 // A still picture waits this long after the last change, then adds up this many frames.
 const SETTLE_MS = 150;
-const STILL_FRAMES = 96;
+const STILL_FRAMES = 192;
 // Before this many frames the sum is not shown yet, as single frames have hard edges and one light each.
 const STILL_SHOWN_FROM = 8;
 const SHADOW_NAMES = [
