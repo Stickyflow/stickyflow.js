@@ -51,6 +51,7 @@ export function resolveMeshSceneObject(
       shadow: asString(properties.get('shadow')) === 'true',
       environment: asString(properties.get('environment')),
       environmentTurn: asNumber(properties.get('environmentTurn')),
+      exposure: asNumber(properties.get('exposure')),
     },
   };
 }

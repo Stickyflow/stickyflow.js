@@ -249,3 +249,45 @@ export function irradiance(image: EnvironmentImage): Float32Array {
   }
   return result;
 }
+
+// Picks directions of light from the sky half of the environment, as often as each throws light on a surface facing up. Three
+// numbers from 0 to 1 give one direction, in the frame of the picture.
+export type LightPicker = (row: number, column: number, within: number) => [number, number, number];
+
+export function lightPicker(image: EnvironmentImage): LightPicker {
+  let source = image;
+  while (source.width > 64) {
+    source = half(source);
+  }
+  const { width, data } = source;
+  // Rows down to some 35 degrees above the horizon: lower lights throw long streaks across the page.
+  const rows = Math.max(1, Math.floor(source.height * 0.3));
+  const weights = new Float64Array(width * rows);
+  for (let y = 0; y < rows; y++) {
+    const theta = ((y + 0.5) / source.height) * Math.PI;
+    const share = Math.sin(theta) * Math.cos(theta);
+    for (let x = 0; x < width; x++) {
+      const at = (y * width + x) * 3;
+      weights[y * width + x] = (0.2126 * data[at] + 0.7152 * data[at + 1] + 0.0722 * data[at + 2]) * share;
+    }
+  }
+  const rowTotals = Array.from({ length: rows }, (_, y) =>
+    weights.subarray(y * width, (y + 1) * width).reduce((a, b) => a + b, 0),
+  );
+  const total = rowTotals.reduce((a, b) => a + b, 0) || 1;
+  const pick = (values: ArrayLike<number>, sum: number, at: number) => {
+    let left = at * sum;
+    for (let i = 0; i < values.length; i++) {
+      left -= values[i];
+      if (left <= 0) {
+        return i;
+      }
+    }
+    return values.length - 1;
+  };
+  return (row, column, within) => {
+    const y = pick(rowTotals, total, row);
+    const x = pick(weights.subarray(y * width, (y + 1) * width), rowTotals[y] || 1, column);
+    return direction((x + within) / width, (y + ((within * 7.31) % 1)) / source.height);
+  };
+}

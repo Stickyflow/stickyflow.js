@@ -1,4 +1,4 @@
-import { ENVIRONMENT_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP } from './chunks';
+import { ENVIRONMENT_LOOKUP, ENVIRONMENT_SHADOW_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP } from './chunks';
 
 export const VERTEX = `#version 300 es
 layout(location = 0) in vec3 aPosition;
@@ -8,16 +8,19 @@ uniform mat4 uModel;
 uniform mat4 uViewProjection;
 uniform mat3 uNormal;
 uniform mat4 uLight;
+uniform mat4 uEnvLight;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vShadow;
+out vec4 vEnvShadow;
 void main() {
   vec4 world = uModel * vec4(aPosition, 1.0);
   vWorld = world.xyz;
   vNormal = uNormal * aNormal;
   vUv = aUv;
   vShadow = uLight * world;
+  vEnvShadow = uEnvLight * world;
   gl_Position = uViewProjection * world;
 }`;
 
@@ -56,9 +59,12 @@ uniform float uEnvironmentLevels;
 uniform float uEnvironmentStrength;
 uniform vec2 uEnvironmentTurn;
 uniform vec3 uIrradiance[9];
+// How much the light is scaled before the filmic curve.
+uniform float uExposure;
 ${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
+${ENVIRONMENT_SHADOW_LOOKUP}
 const float PI = 3.14159265;
 const vec3 FILL = vec3(-0.6, 0.3, 0.7);
 ${ENVIRONMENT_LOOKUP}
@@ -84,7 +90,7 @@ vec3 irradiance(vec3 n) {
 
 // A filmic curve, which keeps colors in what is bright where a simple one turns them pale.
 vec3 filmic(vec3 x) {
-  x *= 0.45;
+  x *= uExposure;
   return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
 }
 
@@ -149,6 +155,7 @@ void main() {
   float metallic = clamp(uMetallic * surface.y, 0.0, 1.0);
   float occlusion = uHasOcclusion ? mix(1.0, texture(uOcclusionMap, vUv).r, uOcclusionStrength) : 1.0;
   occlusion *= screenOcclusion();
+  float sky = envVisible(n);
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
   vec3 color = light(n, v, uKey, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
@@ -160,8 +167,9 @@ void main() {
   vec3 fresnel = f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - nv, 5.0);
   vec3 mirrored = uHasEnvironment ? environment(reflect(-v, n), roughness) : room(reflect(-v, n), roughness);
   vec3 around = uHasEnvironment ? irradiance(n) : room(n, 1.0) * 0.55;
-  color += mirrored * (fresnel * ab.x + ab.y) * occlusion;
-  color += around * base.rgb * (1.0 - metallic) * occlusion;
+  // A rough reflection gathers light from as many sides as a matte surface does, so it is shadowed alike.
+  color += mirrored * (fresnel * ab.x + ab.y) * occlusion * mix(1.0, sky, roughness);
+  color += around * base.rgb * (1.0 - metallic) * occlusion * sky;
   color += uEmissive * (uHasEmissive ? texture(uEmissiveMap, vUv).rgb : vec3(1.0));
   color = filmic(color);
   color = pow(color, vec3(1.0 / 2.2));

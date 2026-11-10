@@ -297,7 +297,9 @@ export class MeshStage {
   }
 
   private placedLight(): MeshLight {
-    const light = { ...(this.data.light ?? DEFAULT_LIGHT) };
+    // An environment lights the world on its own, as in a photo studio. A sun comes only when the document asks for one.
+    const fallback = this.data.environment ? { ...DEFAULT_LIGHT, intensity: 0 } : DEFAULT_LIGHT;
+    const light = { ...(this.data.light ?? fallback) };
     for (const [property, value] of this.live.get(light.id) ?? []) {
       setMeshValue(light, property, value);
     }
@@ -398,16 +400,20 @@ export class MeshStage {
         )
       : undefined;
     this.keepSurfacesSharp(planes);
-    renderer.draw(meshes, this.camera, {
+    // A surface with a shader changes every frame, so its picture cannot be refined over several.
+    const moving = planes.some(plane => plane.layers.some(layer => 'rect' in layer));
+    const more = renderer.draw(meshes, this.camera, {
       shadows: this.data.shadow,
       planes,
       lighting,
       grid: this.grid && !wholeStage,
       environmentTurn: this.data.environmentTurn,
+      exposure: this.data.exposure,
+      still: !wholeStage && !this.gesture && !moving,
     });
     this.placeAnchors();
     this.drawHandles();
-    if (planes.some(plane => plane.layers.some(layer => 'rect' in layer))) {
+    if (moving || more) {
       this.schedule();
     }
   }

@@ -1,4 +1,5 @@
-import { type EnvironmentImage, irradiance, mipChain } from './environment';
+import type { Vec3 } from '../../../model/mesh';
+import { type EnvironmentImage, irradiance, type LightPicker, lightPicker, mipChain } from './environment';
 import { canDrawFloats, link, type Program, requireObject } from './gl';
 import { PREFILTER_FRAGMENT } from './shaders/prefilter';
 import { SCREEN_VERTEX } from './shaders/screen';
@@ -43,6 +44,7 @@ export class EnvironmentMap {
   private texture: WebGLTexture | null = null;
   private levels = 0;
   private light: Float32Array = new Float32Array(27);
+  private picker: LightPicker | null = null;
 
   constructor(gl: WebGL2RenderingContext, quad: WebGLVertexArrayObject) {
     this.gl = gl;
@@ -91,6 +93,19 @@ export class EnvironmentMap {
     this.texture = blurred ?? source;
     this.levels = chain.length;
     this.light = irradiance(image);
+    this.picker = lightPicker(image);
+  }
+
+  // A direction toward the light of the environment in the world, picked by how bright it is, for three numbers from 0 to 1.
+  lightDirection(row: number, column: number, within: number, turnDegrees: number): Vec3 | null {
+    if (!this.picker || !this.texture) {
+      return null;
+    }
+    const [x, y, z] = this.picker(row, column, within);
+    // The shaders turn a direction of the world into the picture; this turns it back.
+    const turn = (turnDegrees * Math.PI) / 180;
+    const [c, s] = [Math.cos(turn), Math.sin(turn)];
+    return [c * x + s * z, y, -s * x + c * z];
   }
 
   // For the program of the meshes, with how far the environment is turned and how strong it is.

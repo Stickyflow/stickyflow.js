@@ -1,4 +1,4 @@
-import { SCREEN_OCCLUSION, SHADOW_LOOKUP } from './chunks';
+import { ENVIRONMENT_SHADOW_LOOKUP, SCREEN_OCCLUSION, SHADOW_LOOKUP } from './chunks';
 
 // Only the shadow is drawn, so the page stays visible where there is none.
 export const GROUND_FRAGMENT = `#version 300 es
@@ -16,6 +16,7 @@ uniform mat4 uStage;
 ${SCREEN_OCCLUSION}
 out vec4 fragment;
 ${SHADOW_LOOKUP}
+${ENVIRONMENT_SHADOW_LOOKUP}
 // Lines one pixel wide at every cell, whatever the distance.
 float lines(vec2 at, float cell) {
   vec2 cells = at / cell;
@@ -29,6 +30,10 @@ void main() {
   float shadow = uStrength > 0.0 ? (1.0 - lit()) * uDarkness * fade * uStrength : 0.0;
   // Where something stands on the ground, the ground gets darker toward it.
   shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * 0.75 * fade);
+  // And where it does not see the light of the environment, it is in the shadow of that.
+  // It fades out sooner than the shadow of the sun, as lights from many sides would carry it to the edges of the Scene.
+  float near = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
+  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - envVisible(vec3(0.0, 1.0, 0.0))) * 0.7 * near);
   float grid = 0.0;
   if (uGrid > 0.5) {
     vec2 at = vWorld.xz;

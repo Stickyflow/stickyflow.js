@@ -17,6 +17,7 @@ export interface SflMeshSceneData {
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
+  exposure?: number;
 }
 
 export interface SflMeshSurfaceData {

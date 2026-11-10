@@ -66,6 +66,7 @@ export interface StageData {
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
+  exposure?: number;
   meshes: Mesh[];
   surfaces?: StageSurface[];
   light?: MeshLight;

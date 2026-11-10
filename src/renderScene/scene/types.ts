@@ -224,6 +224,7 @@ export interface SceneMeshStage extends SceneBase {
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
+  exposure?: number;
   meshes: Mesh[];
   surfaces: SceneMeshSurface[];
   light?: MeshLight;

@@ -62,6 +62,33 @@ float lit() {
   return uShadowSoftness > 0.0 ? softLit(p) : sharpLit(p);
 }`;
 
+// In a still picture each frame stands for one direction of the light of the environment, picked by how bright it is. Whether that
+// light reaches a point is read from a map of its own; frames added up give the soft shadow of the whole environment. A surface
+// that faces away from the direction learns nothing from it.
+export const ENVIRONMENT_SHADOW_LOOKUP = `
+uniform bool uHasEnvShadow;
+uniform highp sampler2DShadow uEnvShadow;
+uniform vec3 uEnvDirection;
+in vec4 vEnvShadow;
+float envVisible(vec3 n) {
+  float facing = smoothstep(0.0, 0.2, dot(n, uEnvDirection));
+  if (!uHasEnvShadow || facing <= 0.0) {
+    return 1.0;
+  }
+  vec3 p = vEnvShadow.xyz / vEnvShadow.w * 0.5 + 0.5;
+  if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) {
+    return 1.0;
+  }
+  vec2 step = 1.0 / vec2(textureSize(uEnvShadow, 0));
+  float sum = 0.0;
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      sum += texture(uEnvShadow, vec3(p.xy + vec2(x, y) * step, p.z - 0.002));
+    }
+  }
+  return mix(1.0, sum / 9.0, facing);
+}`;
+
 // How much of the sky a pixel sees, worked out for the whole picture before the meshes are drawn. 1 where nothing is near.
 export const SCREEN_OCCLUSION = `
 uniform bool uHasScreenOcclusion;

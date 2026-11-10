@@ -29,6 +29,8 @@ export interface MeshScene {
   environment?: string;
   // How far the environment is turned about the vertical, in degrees.
   environmentTurn?: number;
+  // Brighter or darker than usual, in stops: 1 is twice as bright.
+  exposure?: number;
   order?: number;
 }
 

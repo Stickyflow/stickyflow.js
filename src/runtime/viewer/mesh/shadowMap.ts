@@ -4,13 +4,21 @@ import { type Drawable, link, type Program } from './gl';
 import { lookAt, type Mat4, multiply, orthographic } from './matrix';
 import { DEPTH_FRAGMENT } from './shaders/mesh';
 
-const SIZE = 2048;
-const UNIT = 1;
-// The same map again, read as plain distances, to find what casts a shadow.
-const DEPTH_UNIT = 8;
 const WORLD_UP: Vec3 = [0, 1, 0];
 
-export const SHADOW_UNIFORMS = ['uShadow', 'uShadowDepth', 'uShadowSoftness'];
+// Where a map is read: the name of its sampler, which the names of the rest start with, its texture units and its size. The second
+// unit holds the same map again, read as plain distances, to find what casts a shadow.
+export interface ShadowSlot {
+  name: string;
+  unit: number;
+  depthUnit: number;
+  size: number;
+}
+
+export const SUN_SHADOW: ShadowSlot = { name: 'uShadow', unit: 1, depthUnit: 8, size: 2048 };
+export const ENVIRONMENT_SHADOW: ShadowSlot = { name: 'uEnvShadow', unit: 9, depthUnit: 10, size: 1024 };
+
+export const shadowUniforms = ({ name }: ShadowSlot): string[] => [name, `${name}Depth`, `${name}Softness`];
 
 // Something that casts a shadow, with what tells whether it has changed since the map was drawn.
 export interface Caster extends Drawable {
@@ -21,6 +29,7 @@ export interface Caster extends Drawable {
 // shadow has moved, or the sun has.
 export class ShadowMap {
   private readonly gl: WebGL2RenderingContext;
+  private readonly slot: ShadowSlot;
   private readonly depth: Program;
   private readonly texture: WebGLTexture | null;
   private readonly buffer: WebGLFramebuffer | null;
@@ -31,12 +40,13 @@ export class ShadowMap {
   private radius = 1;
   private reach = 4;
 
-  constructor(gl: WebGL2RenderingContext) {
+  constructor(gl: WebGL2RenderingContext, slot: ShadowSlot = SUN_SHADOW) {
     this.gl = gl;
+    this.slot = slot;
     this.depth = link(gl, DEPTH_FRAGMENT, ['uModel', 'uViewProjection', 'uNormal', 'uLight']);
     this.texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, SIZE, SIZE);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, slot.size, slot.size);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -70,7 +80,7 @@ export class ShadowMap {
     const matrix = multiply(orthographic(this.radius, 0.01, this.radius * 4), lookAt(eye, center, WORLD_UP));
     const { program, uniforms } = this.depth;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffer);
-    gl.viewport(0, 0, SIZE, SIZE);
+    gl.viewport(0, 0, this.slot.size, this.slot.size);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
     gl.uniformMatrix4fv(uniforms.uViewProjection, false, matrix);
@@ -89,17 +99,18 @@ export class ShadowMap {
   // For a program that reads the map in its shadow lookup, with the size of the sun in degrees.
   bind(uniforms: Program['uniforms'], softness = 0): void {
     const gl = this.gl;
-    gl.uniform1i(uniforms.uShadow, UNIT);
-    gl.uniform1i(uniforms.uShadowDepth, DEPTH_UNIT);
+    const { name, unit, depthUnit } = this.slot;
+    gl.uniform1i(uniforms[name], unit);
+    gl.uniform1i(uniforms[`${name}Depth`], depthUnit);
     // The edge of a shadow widens by the tangent of half the sun for each unit of distance. A depth of the map is a share of its
     // reach, and its width is twice the radius.
     const spread = Math.tan((Math.max(0, softness) * Math.PI) / 360);
-    gl.uniform1f(uniforms.uShadowSoftness, (spread * this.reach) / (2 * this.radius));
-    gl.activeTexture(gl.TEXTURE0 + UNIT);
+    gl.uniform1f(uniforms[`${name}Softness`], (spread * this.reach) / (2 * this.radius));
+    gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.activeTexture(gl.TEXTURE0 + DEPTH_UNIT);
+    gl.activeTexture(gl.TEXTURE0 + depthUnit);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.bindSampler(DEPTH_UNIT, this.plain);
+    gl.bindSampler(depthUnit, this.plain);
     gl.activeTexture(gl.TEXTURE0);
   }
 
