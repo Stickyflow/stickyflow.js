@@ -29,6 +29,9 @@ export class StageView {
     this.svg = svg;
   }
 
+  // Steady, the camera keeps the frame it has when what stands on the stage changes, as in a tool where parts come and go.
+  steady = false;
+
   get hasFrame(): boolean {
     return this.frame !== undefined;
   }
@@ -90,7 +93,7 @@ export class StageView {
   // Makes the camera for a picture. It is framed again only when `key` changes: when what stands on the stage changes, not when a
   // mesh moves, so a mesh that moves is seen moving.
   aim(key: string, aspect: number, window: StageWindow, box: () => Box | undefined, shadowFrom?: Vec3): void {
-    if (key !== this.framed) {
+    if (key !== this.framed && !(this.steady && this.frame)) {
       const bounds = box();
       this.frame = bounds && frameBox(bounds, this.yaw, this.pitch, aspect, shadowFrom);
       this.framed = key;

@@ -43,6 +43,11 @@ export interface Viewer {
   setMeshGrid(grid: boolean): void;
   // For a Scene that fills its page: the wheel moves the camera nearer or farther without a key, and the right button moves it sideways.
   setMeshDirectCamera(direct: boolean): void;
+  // Steady, the camera of a Scene keeps the frame it has when meshes come and go, as in a tool that builds a model step by step.
+  // Turning it off frames the Scene again.
+  setMeshSteadyCamera(steady: boolean): void;
+  // Off, the still picture of a Scene with an environment is not traced, so a change shows at once. On again, it is traced.
+  setMeshTracing(tracing: boolean): void;
   // What layers have hidden or locked in a Scene, by name. Meshes and what lies on a Canvas are not in the drawing, so CSS does not reach them.
   setMeshFlags(flags: MeshStageFlags): void;
   // Selects a mesh, a Canvas or what lies on one. False when no Scene has that name.

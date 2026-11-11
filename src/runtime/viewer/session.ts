@@ -109,6 +109,14 @@ export class ViewerSession implements Viewer {
     this.meshStages.setEditing(editing);
   }
 
+  setMeshSteadyCamera(steady: boolean): void {
+    this.meshStages.setSteadyCamera(steady);
+  }
+
+  setMeshTracing(tracing: boolean): void {
+    this.meshStages.setTracing(tracing);
+  }
+
   setMeshDirectCamera(direct: boolean): void {
     this.meshStages.setDirectCamera(direct);
   }

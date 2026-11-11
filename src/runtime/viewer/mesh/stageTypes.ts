@@ -40,6 +40,8 @@ export interface MeshStagesHandle {
   setEditing(editing: boolean): void;
   setGrid(grid: boolean): void;
   setDirectCamera(direct: boolean): void;
+  setSteadyCamera(steady: boolean): void;
+  setTracing(tracing: boolean): void;
   // What the layers of a host have hidden or locked, by name.
   setFlags(flags: MeshStageFlags): void;
   // Selects a mesh, a Canvas or what lies on one, from outside the stage. False when no stage knows the name.

@@ -32,6 +32,8 @@ class MeshStages implements MeshStagesHandle {
   private editing = true;
   private grid = false;
   private directCamera = false;
+  private steadyCamera = false;
+  private tracing = true;
   private flags: MeshStageFlags = { hidden: [], locked: [] };
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
@@ -65,6 +67,8 @@ class MeshStages implements MeshStagesHandle {
         created.setEditing(this.editing);
         created.setGrid(this.grid);
         created.setDirectCamera(this.directCamera);
+        created.setSteadyCamera(this.steadyCamera);
+        created.setTracing(this.tracing);
         created.setFlags(this.flags);
         this.stages.set(id, created);
       }
@@ -143,6 +147,20 @@ class MeshStages implements MeshStagesHandle {
     this.editing = editing;
     for (const stage of this.stages.values()) {
       stage.setEditing(editing);
+    }
+  }
+
+  setSteadyCamera(steady: boolean): void {
+    this.steadyCamera = steady;
+    for (const stage of this.stages.values()) {
+      stage.setSteadyCamera(steady);
+    }
+  }
+
+  setTracing(tracing: boolean): void {
+    this.tracing = tracing;
+    for (const stage of this.stages.values()) {
+      stage.setTracing(tracing);
     }
   }
 

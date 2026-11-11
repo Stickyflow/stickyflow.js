@@ -299,6 +299,30 @@ export class MeshRenderer {
     return this.assets.has(asset);
   }
 
+  // Releases every model but these. A document that changes its models would otherwise keep all it ever had.
+  keepAssets(used: ReadonlySet<string>): void {
+    const { gl } = this;
+    for (const [asset, primitives] of this.assets) {
+      if (used.has(asset)) {
+        continue;
+      }
+      for (const primitive of primitives) {
+        gl.deleteVertexArray(primitive.vao);
+        for (const buffer of primitive.buffers) {
+          gl.deleteBuffer(buffer);
+        }
+        for (const texture of Object.values(primitive.textures)) {
+          gl.deleteTexture(texture);
+        }
+      }
+      this.assets.delete(asset);
+      this.generation++;
+    }
+  }
+
+  // Off, the still picture is not traced: the stage shows the quick picture only.
+  tracing = true;
+
   addAsset(asset: string, mesh: MeshAsset): void {
     this.generation++;
     this.assets.set(
@@ -724,7 +748,7 @@ export class MeshRenderer {
     const seeThrough = instances.some(isSeeThrough);
     const planes = options.planes ?? [];
     const measured = this.boxOf(instances, planes);
-    if (!picture || !light || !measured || !this.tracer.possible) {
+    if (!this.tracing || !picture || !light || !measured || !this.tracer.possible) {
       return null;
     }
     const { gl } = this;

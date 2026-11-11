@@ -33,6 +33,7 @@ export class MeshStage {
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
   private editing = true;
   private grid = false;
+  private tracing = true;
   private readonly errors = new Set<string>();
   private request: number | undefined;
   private observer: ResizeObserver | undefined;
@@ -61,6 +62,7 @@ export class MeshStage {
       arrived: reframe => {
         if (reframe) {
           this.view.reframe();
+          this.releaseUnused();
         }
         this.schedule();
       },
@@ -112,6 +114,7 @@ export class MeshStage {
       this.loader.asset(renderer, asset);
     }
     this.loader.environmentOf(renderer, this.placement.data.environment ?? '');
+    this.releaseUnused();
     // The update of the drawing has just put the objects back, so they are moved again before anything is painted.
     this.placeAnchors();
     this.schedule();
@@ -141,6 +144,7 @@ export class MeshStage {
       return;
     }
     this.renderer = new MeshRenderer(gl);
+    this.renderer.tracing = this.tracing;
     this.textures = new SurfaceTextures(
       this.renderer,
       canvas,
@@ -391,6 +395,34 @@ export class MeshStage {
 
   setDirectCamera(direct: boolean): void {
     this.gestures.direct = direct;
+  }
+
+  setSteadyCamera(steady: boolean): void {
+    this.view.steady = steady;
+    if (!steady) {
+      this.view.reframe();
+    }
+    this.schedule();
+  }
+
+  setTracing(tracing: boolean): void {
+    this.tracing = tracing;
+    if (this.renderer) {
+      this.renderer.tracing = tracing;
+    }
+    this.schedule();
+  }
+
+  // Once every model of the document is there, the ones it no longer names are released.
+  private releaseUnused(): void {
+    const { renderer } = this;
+    if (!renderer) {
+      return;
+    }
+    const used = new Set(this.placement.data.meshes.map(mesh => mesh.asset));
+    if ([...used].every(asset => renderer.hasAsset(asset))) {
+      renderer.keepAssets(used);
+    }
   }
 
   selectObject(id: string | null): void {
