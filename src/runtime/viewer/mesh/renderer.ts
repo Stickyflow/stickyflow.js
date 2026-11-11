@@ -755,8 +755,9 @@ export class MeshRenderer {
     const ground = this.groundOf(box, floor, wide);
     const groundColor = colorOf(options.ground?.color);
     const softness = lighting.softness ?? DEFAULT_SOFTNESS;
+    const shifted = { ...camera, viewProjection: multiply(shift, camera.viewProjection) };
     this.tracer.draw({
-      camera: { ...camera, viewProjection: multiply(shift, camera.viewProjection) },
+      camera: shifted,
       seed: still.index,
       exposure: ENVIRONMENT_EXPOSURE * 2 ** (options.exposure ?? 0),
       lift: boxDiagonal(box) * 1e-4,
@@ -787,6 +788,14 @@ export class MeshRenderer {
         fade: ground.fade,
       },
     });
+    if (planes.length > 0) {
+      // The drawings of the surfaces go over the frame as while the picture moves, so they are as sharp as the screen.
+      gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      this.drawPlanes(shifted, planes, true);
+      gl.disable(gl.BLEND);
+    }
     const shown = groundColor?.map(value => value ** (1 / 2.2));
     return { under: shown ? () => this.drawGroundBase(camera, box, floor, wide, shown) : null };
   }

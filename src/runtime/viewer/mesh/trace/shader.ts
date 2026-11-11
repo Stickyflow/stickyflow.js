@@ -379,6 +379,9 @@ precision highp int;
 precision highp sampler2DArray;
 in vec2 vUv;
 uniform mat4 uInverse;
+// From the world to the picture, for the depth of what the eye sees first: what is drawn over the frame afterwards, as the
+// drawing of a Canvas is, lies behind or in front of it by that.
+uniform mat4 uViewProjection;
 uniform vec3 uEye;
 uniform float uSeed;
 uniform float uExposure;
@@ -415,6 +418,9 @@ void main() {
   float chance = 0.0;
   guide = vec4(0.0);
   look = vec4(0.0);
+  gl_FragDepth = 1.0;
+  // A Canvas that the eye sees directly is left out here and drawn over the frame, as sharp as the screen. This is where it was.
+  vec4 canvas = vec4(0.0);
   // A path turns at most eight times, which glass needs: in, out, and what it mirrors inside. Passing through what is see-through is no turn, but it ends somewhere too.
   int bounce = 0;
   bool mirrored = false;
@@ -463,6 +469,13 @@ void main() {
       break;
     } else {
       s = surfaceOf(hit, origin, direction);
+      if (s.unlit && seeing && !mirrored) {
+        if (canvas.a == 0.0) {
+          canvas = vec4(s.face, distance(s.position, uEye));
+        }
+        origin = s.position + direction * uLift;
+        continue;
+      }
       if (s.opacity < 1.0 && random() > s.opacity) {
         origin = s.position + direction * uLift;
         continue;
@@ -476,6 +489,8 @@ void main() {
         bool glows = s.emissive.r + s.emissive.g + s.emissive.b > 0.05;
         guide = vec4(s.normal, distance(s.position, uEye));
         look = vec4(s.color, glows || s.unlit || s.transmission > 0.0 ? 0.0 : s.roughness);
+        vec4 placed = uViewProjection * vec4(s.position, 1.0);
+        gl_FragDepth = clamp(placed.z / placed.w * 0.5 + 0.5, 0.0, 1.0);
       }
     }
     light += through * s.emissive;
@@ -523,5 +538,10 @@ void main() {
   }
   // One bright path would stay as a speck for a long time, so no path counts for more than this.
   light = min(light, vec3(24.0)) * uExposure;
+  if (canvas.a > 0.0) {
+    // Where a Canvas will be drawn, nothing is smoothed, so its drawing stays as it is.
+    guide = canvas;
+    look = vec4(1.0, 1.0, 1.0, 0.0);
+  }
   fragment = vec4(light * cover * (1.0 - shadow), shadow + cover * (1.0 - shadow));
 }`;

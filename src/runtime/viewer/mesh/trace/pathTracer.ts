@@ -39,6 +39,7 @@ const UNIFORMS = [
   'uFade',
   'uStage',
   'uInverse',
+  'uViewProjection',
   'uEye',
   'uSeed',
   'uExposure',
@@ -192,7 +193,10 @@ export class PathTracer {
     const { uniforms } = program;
     const { camera, environment, sun, ground } = frame;
     gl.useProgram(program.program);
-    gl.disable(gl.DEPTH_TEST);
+    // The frame also writes how far away what it shows is, for what is drawn over it afterwards.
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.ALWAYS);
+    gl.depthMask(true);
     gl.disable(gl.BLEND);
     scene.textures.forEach((texture, unit) => {
       gl.activeTexture(gl.TEXTURE0 + unit);
@@ -224,6 +228,7 @@ export class PathTracer {
     gl.uniform1f(uniforms.uFade, ground.fade);
     gl.uniformMatrix4fv(uniforms.uStage, false, camera.stage);
     gl.uniformMatrix4fv(uniforms.uInverse, false, invert(camera.viewProjection));
+    gl.uniformMatrix4fv(uniforms.uViewProjection, false, camera.viewProjection);
     gl.uniform3fv(uniforms.uEye, camera.eye);
     gl.uniform1f(uniforms.uSeed, frame.seed);
     gl.uniform1f(uniforms.uExposure, frame.exposure);
@@ -237,7 +242,7 @@ export class PathTracer {
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     }
     gl.activeTexture(gl.TEXTURE0);
-    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
   }
 
   private release(): void {
