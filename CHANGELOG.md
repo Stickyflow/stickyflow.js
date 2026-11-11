@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- `viewer.meshPointAt(clientX, clientY, query?)` gives the point of the 3D world under a point of the screen, for drawing into a Scene. Without a query it is the point on the mesh there, with the name of that mesh. With `{ height }` it is the point on the level plane at that height, wherever the meshes are. The types are `MeshPoint` and `MeshPointQuery`.
+
 ## [0.19.0] - 2026-11-11
 
 ### Added

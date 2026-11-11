@@ -3,7 +3,7 @@ import type { RenderOptions } from '../../render';
 import type { ViewBox } from './display';
 import type { OwnerRef, Unsubscribe, ViewerEventHandler, ViewerEventName } from './events';
 import type { ViewerImageExportOptions } from './export';
-import type { MeshObjectPoint, MeshObjectQuery, MeshStageFlags } from './mesh/stage';
+import type { MeshObjectPoint, MeshObjectQuery, MeshPoint, MeshPointQuery, MeshStageFlags } from './mesh/stage';
 
 export interface ViewerOptions {
   container: HTMLElement;
@@ -46,6 +46,8 @@ export interface Viewer {
   // Selects a mesh, a Canvas or what lies on one. False when no Scene has that name.
   selectMeshItem(id: string | null): boolean;
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
+  // A point of the 3D world under a point of the screen, for drawing into a Scene: on the mesh there, or on a level plane.
+  meshPointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
   setWidgetValue(componentId: string, value: string | number): boolean;
   setPaused(paused: boolean): void;
   clearOverrides(): void;

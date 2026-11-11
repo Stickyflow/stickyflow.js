@@ -44,6 +44,7 @@ export interface MeshStagesHandle {
   // Selects a mesh, a Canvas or what lies on one, from outside the stage. False when no stage knows the name.
   selectItem(id: string | null): boolean;
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
+  pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
   destroy(): void;
 }
 
@@ -51,6 +52,20 @@ export interface MeshStagesHandle {
 export interface MeshObjectQuery {
   among?: ReadonlySet<string>;
   holding?: string;
+}
+
+// Asks for a point of the world under the pointer. Without `height` it lies on the mesh there; with it, on the level
+// plane at that height, wherever the meshes are.
+export interface MeshPointQuery {
+  height?: number;
+}
+
+// A point of the world, in the units of the meshes, and the mesh it lies on, if it lies on one.
+export interface MeshPoint {
+  x: number;
+  y: number;
+  z: number;
+  mesh?: string;
 }
 
 // An object on a Canvas, and where on it the pointer is, as fractions of its width and height.

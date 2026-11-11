@@ -5,6 +5,8 @@ import {
   MESH_STAGE_ATTR,
   type MeshObjectPoint,
   type MeshObjectQuery,
+  type MeshPoint,
+  type MeshPointQuery,
   type MeshStageFlags,
   type MeshStageOptions,
   type MeshStagesHandle,
@@ -15,6 +17,8 @@ export type {
   MeshHandleChange,
   MeshObjectPoint,
   MeshObjectQuery,
+  MeshPoint,
+  MeshPointQuery,
   MeshStageEvents,
   MeshStageFlags,
   MeshStageOptions,
@@ -150,6 +154,16 @@ class MeshStages implements MeshStagesHandle {
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {
     for (const stage of this.stages.values()) {
       const found = stage.objectAt(clientX, clientY, options);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.pointAt(clientX, clientY, query);
       if (found) {
         return found;
       }

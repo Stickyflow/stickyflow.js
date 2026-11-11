@@ -6,7 +6,7 @@ import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
 import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
-import type { MeshObjectPoint, MeshObjectQuery, MeshStageFlags } from './mesh/stage';
+import type { MeshObjectPoint, MeshObjectQuery, MeshPoint, MeshPointQuery, MeshStageFlags } from './mesh/stage';
 import { type MeshStagesHandle, mountMeshStages } from './mesh/stage';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
@@ -115,6 +115,10 @@ export class ViewerSession implements Viewer {
 
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {
     return this.meshStages.objectAt(clientX, clientY, options);
+  }
+
+  meshPointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null {
+    return this.meshStages.pointAt(clientX, clientY, query);
   }
 
   setMeshValue(meshId: string, property: string, value: number | string): boolean {

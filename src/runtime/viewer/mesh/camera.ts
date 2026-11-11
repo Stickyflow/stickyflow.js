@@ -162,6 +162,17 @@ export function toWindow(camera: Camera, x: number, y: number): [number, number]
   return [((x - left) / (right - left)) * 2 - 1, ((y - bottom) / (top - bottom)) * 2 - 1];
 }
 
+// The ray through a point of the stage, from -1 to 1: where it starts and which way it goes, with a length of one.
+export function rayAt(camera: Camera, x: number, y: number): { origin: Vec3; direction: Vec3 } {
+  const tan = Math.tan(FOV / 2);
+  const direction = normalize(
+    [0, 1, 2].map(
+      axis => -camera.back[axis] + camera.right[axis] * x * tan * camera.aspect + camera.up[axis] * y * tan,
+    ),
+  );
+  return { origin: [camera.eye[0], camera.eye[1], camera.eye[2]], direction };
+}
+
 // Where a ray through a point of the stage, from -1 to 1, meets a surface given as the matrix of its square from -1 to 1.
 export function planeHit(camera: Camera, matrix: Mat4, x: number, y: number): PlaneHit | undefined {
   const across: Vec3 = [matrix[0], matrix[1], matrix[2]];

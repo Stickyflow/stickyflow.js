@@ -1,3 +1,4 @@
+import { rayAt } from './camera';
 import { lightingOf } from './lighting';
 import { transformPoint } from './matrix';
 import { MeshRenderer, type Plane } from './renderer';
@@ -12,6 +13,8 @@ import {
   MESH_STAGE_ATTR,
   type MeshObjectPoint,
   type MeshObjectQuery,
+  type MeshPoint,
+  type MeshPointQuery,
   type MeshStageFlags,
   type MeshStageOptions,
 } from './stageTypes';
@@ -270,6 +273,32 @@ export class MeshStage {
     return objectUnder(this.view.camera, this.placement.get().surfaces, point, options, () =>
       this.surfaceAt(clientX, clientY),
     );
+  }
+
+  pointAt(clientX: number, clientY: number, query: MeshPointQuery = {}): MeshPoint | null {
+    const { renderer, canvas } = this;
+    const { camera } = this.view;
+    const [x, y] = this.view.stagePoint(clientX, clientY);
+    if (!camera || Math.abs(x) > 1 || Math.abs(y) > 1) {
+      return null;
+    }
+    const { origin, direction } = rayAt(camera, x, y);
+    const along = (t: number) => ({
+      x: origin[0] + direction[0] * t,
+      y: origin[1] + direction[1] * t,
+      z: origin[2] + direction[2] * t,
+    });
+    if (query.height !== undefined) {
+      const t = Math.abs(direction[1]) < 1e-9 ? -1 : (query.height - origin[1]) / direction[1];
+      return t > 0 ? along(t) : null;
+    }
+    if (!renderer || !canvas) {
+      return null;
+    }
+    const { meshes } = this.placement.get();
+    const distance = renderer.meshDistance(meshes, camera, ...this.canvasPoint(clientX, clientY));
+    const mesh = renderer.pick(meshes, camera, ...this.canvasPoint(clientX, clientY));
+    return distance === undefined ? null : { ...along(distance), ...(mesh ? { mesh } : {}) };
   }
 
   private clickAt(clientX: number, clientY: number): void {

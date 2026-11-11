@@ -26,6 +26,6 @@ export type {
   ViewerEventName,
 } from './events';
 export type { ViewerImageExportOptions, ViewerImageFormat } from './export';
-export type { MeshObjectPoint, MeshObjectQuery, MeshStageFlags } from './mesh/stage';
+export type { MeshObjectPoint, MeshObjectQuery, MeshPoint, MeshPointQuery, MeshStageFlags } from './mesh/stage';
 export { registerShaderProgram, SHADER_DEFAULTS, type ShaderProgram, shaderProgram } from './shaders';
 export type { Viewer, ViewerOptions, ViewerSource } from './types';
