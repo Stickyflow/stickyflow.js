@@ -389,6 +389,10 @@ export class MeshStage {
     this.schedule();
   }
 
+  setDirectCamera(direct: boolean): void {
+    this.gestures.direct = direct;
+  }
+
   selectObject(id: string | null): void {
     if (id === this.selectedObject) {
       return;

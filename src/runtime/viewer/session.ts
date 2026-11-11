@@ -109,6 +109,10 @@ export class ViewerSession implements Viewer {
     this.meshStages.setEditing(editing);
   }
 
+  setMeshDirectCamera(direct: boolean): void {
+    this.meshStages.setDirectCamera(direct);
+  }
+
   setMeshGrid(grid: boolean): void {
     this.meshStages.setGrid(grid);
   }

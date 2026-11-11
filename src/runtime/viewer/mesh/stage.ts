@@ -31,6 +31,7 @@ class MeshStages implements MeshStagesHandle {
   private readonly pending = new Map<string, number | string>();
   private editing = true;
   private grid = false;
+  private directCamera = false;
   private flags: MeshStageFlags = { hidden: [], locked: [] };
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
@@ -63,6 +64,7 @@ class MeshStages implements MeshStagesHandle {
         const created = new MeshStage(host, this.svg, this.options);
         created.setEditing(this.editing);
         created.setGrid(this.grid);
+        created.setDirectCamera(this.directCamera);
         created.setFlags(this.flags);
         this.stages.set(id, created);
       }
@@ -141,6 +143,13 @@ class MeshStages implements MeshStagesHandle {
     this.editing = editing;
     for (const stage of this.stages.values()) {
       stage.setEditing(editing);
+    }
+  }
+
+  setDirectCamera(direct: boolean): void {
+    this.directCamera = direct;
+    for (const stage of this.stages.values()) {
+      stage.setDirectCamera(direct);
     }
   }
 

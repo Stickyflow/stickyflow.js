@@ -41,6 +41,8 @@ export interface Viewer {
   setMeshEditing(editing: boolean): void;
   // A grid on the floor of a Scene while it is edited, as in a modeling program. It is never in an exported picture.
   setMeshGrid(grid: boolean): void;
+  // For a Scene that fills its page: the wheel moves the camera nearer or farther without a key, and the right button moves it sideways.
+  setMeshDirectCamera(direct: boolean): void;
   // What layers have hidden or locked in a Scene, by name. Meshes and what lies on a Canvas are not in the drawing, so CSS does not reach them.
   setMeshFlags(flags: MeshStageFlags): void;
   // Selects a mesh, a Canvas or what lies on one. False when no Scene has that name.
