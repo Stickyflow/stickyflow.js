@@ -96,7 +96,50 @@ function resolveWithParameters(blocks: SflBlock[], params: ReadonlyMap<string, S
 
 // A document in which every Repeat and every Use is replaced by the blocks it makes, and the Templates and Parameters are taken out. A
 // document without any of them is returned as it is.
+// A Solid with `mirror` is written a second time, with `flip` for the side it is turned to.
+function withMirrors(blocks: SflBlock[]): SflBlock[] {
+  return blocks.flatMap(block => {
+    const inner: SflBlock = {
+      ...block,
+      entries: block.entries.flatMap((entry): SflEntry[] =>
+        entry.type === 'block'
+          ? withMirrors([entry.block]).map(child => ({ type: 'block' as const, block: child }))
+          : [entry],
+      ),
+    };
+    const mirror =
+      block.kind === 'Solid' &&
+      block.entries.find(entry => entry.type === 'property' && entry.property.key === 'mirror');
+    if (!mirror || mirror.type !== 'property') {
+      return [inner];
+    }
+    const twin: SflBlock = {
+      ...inner,
+      name: `${block.name}_mirror`,
+      entries: inner.entries.map(entry =>
+        entry === mirror
+          ? { type: 'property' as const, property: { key: 'flip', value: mirror.property.value } }
+          : entry,
+      ),
+    };
+    return [inner, twin];
+  });
+}
+
+const hasMirrors = (blocks: SflBlock[]): boolean =>
+  blocks.some(
+    block =>
+      (block.kind === 'Solid' &&
+        block.entries.some(entry => entry.type === 'property' && entry.property.key === 'mirror')) ||
+      hasMirrors(block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []))),
+  );
+
 export function expandDocument(doc: SflDocument): SflDocument {
+  const expanded = expandCopies(doc);
+  return hasMirrors(expanded.blocks) ? { ...expanded, blocks: withMirrors(expanded.blocks) } : expanded;
+}
+
+function expandCopies(doc: SflDocument): SflDocument {
   const params = readParameters(doc.blocks);
   const repeats = hasRepeats(doc.blocks);
   if (!repeats && !hasTemplates(doc.blocks) && params.size === 0 && parameterBlocks(doc.blocks).length === 0) {

@@ -137,12 +137,60 @@ function inset(ring: Ring, distance: number): Ring {
   });
 }
 
+// Whether rings drawn in by a distance are still an outline: no edge has turned round, and no two edges cross.
+function holds(rings: Outline, distance: number): boolean {
+  const drawn = rings.map(ring => inset(ring, distance));
+  const edges: Array<[P, P]> = [];
+  for (let r = 0; r < rings.length; r += 1) {
+    const [before, after] = [rings[r], drawn[r]];
+    for (let i = 0; i < before.length; i += 1) {
+      const j = (i + 1) % before.length;
+      const kept =
+        (before[j][0] - before[i][0]) * (after[j][0] - after[i][0]) +
+        (before[j][1] - before[i][1]) * (after[j][1] - after[i][1]);
+      if (kept <= 0) {
+        return false;
+      }
+      edges.push([after[i], after[j]]);
+    }
+  }
+  for (let a = 0; a < edges.length; a += 1) {
+    for (let b = a + 1; b < edges.length; b += 1) {
+      if (segmentsCross(edges[a][0], edges[a][1], edges[b][0], edges[b][1])) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// The widest chamfer an outline takes, up to the one asked for. A narrow web or a small hole takes less than a wide
+// face, and gets less, so the rim never folds over itself.
+function safeChamfer(rings: Outline, wanted: number): number {
+  if (wanted <= 0 || holds(rings, wanted)) {
+    return Math.max(0, wanted);
+  }
+  let [low, high] = [0, wanted];
+  for (let step = 0; step < 7; step += 1) {
+    const middle = (low + high) / 2;
+    if (holds(rings, middle)) {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+  return low * 0.9;
+}
+
 const SMOOTH = Math.cos((32 * Math.PI) / 180);
 
 export function buildSolid(shape: SolidShape): SolidGeometry {
   const [width, height, depth] = shape.size;
   const rings = shape.rings.map(ring => ring.map(([x, y]) => [(x - 0.5) * width, (y - 0.5) * depth] as P));
-  const chamfer = Math.max(0, Math.min(shape.chamfer, height / 2 - 1e-6, Math.min(width, depth) / 4));
+  const chamfer = safeChamfer(
+    rings,
+    Math.max(0, Math.min(shape.chamfer, height / 2 - 1e-6, Math.min(width, depth) / 4)),
+  );
   const positions: number[] = [];
   const normals: number[] = [];
   const corner = (p: P, y: number, n: [number, number, number]) => {

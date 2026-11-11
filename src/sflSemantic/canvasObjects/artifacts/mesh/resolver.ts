@@ -54,8 +54,14 @@ function solidAsset(
     : [SQUARE];
   // A ring written by hand may run either way. The rings of a symbol with Cut or Add run the right way already.
   const rings = symbol?.rings ?? flat.map(ring => (ringArea(ring) > 0 ? ring : [...ring].reverse()));
+  // Turned to the other side, the outline is turned over, and runs the other way round again.
+  const flip = asString(properties.get('flip'));
+  const turned =
+    flip === 'x' || flip === 'z'
+      ? rings.map(ring => ring.map(([x, y]) => (flip === 'x' ? [1 - x, y] : [x, 1 - y]) as [number, number]).reverse())
+      : rings;
   return solidAssetName({
-    rings,
+    rings: turned,
     size: vector(block, layoutProp, 'size', 1),
     chamfer: asNumber(properties.get('chamfer')) ?? 0,
   });
@@ -68,6 +74,7 @@ export function resolveMeshObject(
   layoutProp: LayoutProp,
   symbolDefs: Map<string, SflSymbolDefinition> = new Map(),
 ): SflMeshObject {
+  const flip = block.kind === 'Solid' ? asString(properties.get('flip')) : undefined;
   return {
     ...base,
     objectType: 'mesh',
@@ -83,11 +90,17 @@ export function resolveMeshObject(
       metallic: asNumber(properties.get('metallic')),
       transmission: asNumber(properties.get('transmission')),
       ior: asNumber(properties.get('ior')),
-      position: vector(block, layoutProp, 'position', 0),
-      rotation: vector(block, layoutProp, 'rotation', 0),
+      position: mirrored(vector(block, layoutProp, 'position', 0), flip, [-1, 1, 1], [1, 1, -1]),
+      rotation: mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
       scale: vector(block, layoutProp, 'scale', 1),
     },
   };
+}
+
+// A place or a turn on the other side of the plane a Solid is mirrored in.
+function mirrored(value: Vec3, flip: string | undefined, acrossX: Vec3, acrossZ: Vec3): Vec3 {
+  const signs = flip === 'x' ? acrossX : flip === 'z' ? acrossZ : undefined;
+  return signs ? [value[0] * signs[0], value[1] * signs[1], value[2] * signs[2]] : value;
 }
 
 export function resolveMeshSceneObject(
