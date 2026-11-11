@@ -1,4 +1,4 @@
-import type { Mesh, MeshAnchor, MeshLight, Vec3 } from '../../../model/mesh';
+import type { Mesh, MeshAnchor, MeshGround, MeshLight, Vec3 } from '../../../model/mesh';
 import type { MeshObjectBox } from './handles';
 import type { StageSurface } from './surfaceTextures';
 
@@ -38,6 +38,7 @@ export interface MeshStagesHandle {
   setValue(meshId: string, property: string, value: number | string): boolean;
   clearValues(): void;
   setEditing(editing: boolean): void;
+  setGrid(grid: boolean): void;
   // What the layers of a host have hidden or locked, by name.
   setFlags(flags: MeshStageFlags): void;
   // Selects a mesh, a Canvas or what lies on one, from outside the stage. False when no stage knows the name.
@@ -63,6 +64,10 @@ export interface StageData {
   id: string;
   orbit: [number, number];
   shadow: boolean;
+  environment?: string;
+  environmentTurn?: number;
+  exposure?: number;
+  ground?: MeshGround;
   meshes: Mesh[];
   surfaces?: StageSurface[];
   light?: MeshLight;

@@ -3,7 +3,7 @@ import type { Diagnostic } from '../../model/diagnostic';
 import type { Bounds, Point, Side } from '../../model/geometry/types';
 import type { IsometricFace } from '../../model/isometricObject';
 import type { MarkerType, PathType } from '../../model/link';
-import type { Mesh, MeshAnchor, MeshLight, MeshSurface } from '../../model/mesh';
+import type { Mesh, MeshAnchor, MeshGround, MeshLight, MeshSurface } from '../../model/mesh';
 import type { Shader } from '../../model/shader';
 
 export type RenderDiagnostic = Diagnostic;
@@ -222,6 +222,10 @@ export interface SceneMeshStage extends SceneBase {
   stageId: string;
   orbit: [number, number];
   shadow: boolean;
+  environment?: string;
+  environmentTurn?: number;
+  exposure?: number;
+  ground?: MeshGround;
   meshes: Mesh[];
   surfaces: SceneMeshSurface[];
   light?: MeshLight;

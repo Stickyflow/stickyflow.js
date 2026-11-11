@@ -12,6 +12,7 @@ import type { Swimlane } from '../../../model/swimlane';
 import {
   isDimensionObject,
   isIsometricObject,
+  isMeshGroundObject,
   isMeshLightObject,
   isMeshObject,
   isMeshSceneObject,
@@ -65,7 +66,11 @@ export function collectCanvasObjects(state: SflCanvasState): CollectedCanvasObje
     paths: canvasObjects.filter(canvasObject => canvasObject.objectType === 'path').map(pathObject),
     dimensions: canvasObjects.filter(isDimensionObject).map(dimensionObject),
     meshes: canvasObjects.filter(isMeshObject).map(object => meshObject(object, sceneIds)),
-    meshScenes: canvasObjects.filter(isMeshSceneObject).map(meshSceneObject),
+    meshScenes: canvasObjects.filter(isMeshSceneObject).map(scene => {
+      // A Scene has one ground, and the first counts.
+      const ground = canvasObjects.filter(isMeshGroundObject).find(object => object.parentFrameId === scene.id);
+      return { ...meshSceneObject(scene), ground: ground && { id: ground.id, ...ground.meshGround } };
+    }),
     meshSurfaces: meshSurfaces(canvasObjects, sceneIds),
     meshLights: canvasObjects.filter(isMeshLightObject).map(object => meshLightObject(object, sceneIds)),
     meshAnchors: canvasObjects.flatMap(object => (object.anchor ? [{ objectId: object.id, ...object.anchor }] : [])),

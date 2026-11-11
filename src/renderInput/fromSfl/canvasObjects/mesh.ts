@@ -8,7 +8,8 @@ import {
 } from '../../../sflSemantic/sflToCanvasState';
 
 export function meshObject(canvasObject: SflMeshObject, scenes: ReadonlySet<string>): Mesh {
-  const { asset, role, color, opacity, roughness, metallic, position, rotation, scale } = canvasObject.mesh;
+  const { asset, role, color, opacity, roughness, metallic, transmission, ior, position, rotation, scale } =
+    canvasObject.mesh;
   const parent = canvasObject.parentFrameId;
   return {
     id: canvasObject.id,
@@ -18,6 +19,8 @@ export function meshObject(canvasObject: SflMeshObject, scenes: ReadonlySet<stri
     opacity: opacity ?? 1,
     roughness,
     metallic,
+    transmission,
+    ior,
     position,
     rotation,
     scale,
@@ -57,5 +60,6 @@ export function meshSurfaces(canvasObjects: SflCanvasObject[], scenes: ReadonlyS
 
 export function meshSceneObject(canvasObject: SflMeshSceneObject): MeshScene {
   const { id, x, y, width, height, order, meshScene } = canvasObject;
-  return { id, x, y, width, height, order, orbit: meshScene.orbit, shadow: meshScene.shadow };
+  const { orbit, shadow, environment, environmentTurn, exposure } = meshScene;
+  return { id, x, y, width, height, order, orbit, shadow, environment, environmentTurn, exposure };
 }

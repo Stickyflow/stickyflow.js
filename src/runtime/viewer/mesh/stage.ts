@@ -26,6 +26,7 @@ class MeshStages implements MeshStagesHandle {
   private readonly stages = new Map<string, MeshStage>();
   private readonly pending = new Map<string, number | string>();
   private editing = true;
+  private grid = false;
   private flags: MeshStageFlags = { hidden: [], locked: [] };
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
@@ -57,6 +58,7 @@ class MeshStages implements MeshStagesHandle {
       } else {
         const created = new MeshStage(host, this.svg, this.options);
         created.setEditing(this.editing);
+        created.setGrid(this.grid);
         created.setFlags(this.flags);
         this.stages.set(id, created);
       }
@@ -135,6 +137,13 @@ class MeshStages implements MeshStagesHandle {
     this.editing = editing;
     for (const stage of this.stages.values()) {
       stage.setEditing(editing);
+    }
+  }
+
+  setGrid(grid: boolean): void {
+    this.grid = grid;
+    for (const stage of this.stages.values()) {
+      stage.setGrid(grid);
     }
   }
 

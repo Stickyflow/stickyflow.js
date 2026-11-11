@@ -2,7 +2,13 @@ import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh'
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase } from '../../types';
-import type { SflMeshLightObject, SflMeshObject, SflMeshSceneObject, SflMeshSurfaceObject } from './object';
+import type {
+  SflMeshGroundObject,
+  SflMeshLightObject,
+  SflMeshObject,
+  SflMeshSceneObject,
+  SflMeshSurfaceObject,
+} from './object';
 import type { SflAnchorData } from './types';
 
 type LayoutProp = (block: SflBlock, key: string) => SflValue | undefined;
@@ -31,6 +37,8 @@ export function resolveMeshObject(
       opacity: asNumber(properties.get('opacity')),
       roughness: asNumber(properties.get('roughness')),
       metallic: asNumber(properties.get('metallic')),
+      transmission: asNumber(properties.get('transmission')),
+      ior: asNumber(properties.get('ior')),
       position: vector(block, layoutProp, 'position', 0),
       rotation: vector(block, layoutProp, 'rotation', 0),
       scale: vector(block, layoutProp, 'scale', 1),
@@ -46,7 +54,13 @@ export function resolveMeshSceneObject(
   return {
     ...base,
     objectType: 'meshScene',
-    meshScene: { orbit: [yaw, pitch], shadow: asString(properties.get('shadow')) === 'true' },
+    meshScene: {
+      orbit: [yaw, pitch],
+      shadow: asString(properties.get('shadow')) === 'true',
+      environment: asString(properties.get('environment')),
+      environmentTurn: asNumber(properties.get('environmentTurn')),
+      exposure: asNumber(properties.get('exposure')),
+    },
   };
 }
 
@@ -82,6 +96,25 @@ export function resolveMeshLightObject(
       color: asString(properties.get('color')),
       intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
+      softness: asNumber(properties.get('softness')),
+    },
+  };
+}
+
+// The ground of a Scene. Without a height it lies under the meshes, and without a color only its shadows and reflections show.
+export function resolveMeshGroundObject(
+  base: SflCanvasObjectBase,
+  properties: Map<string, SflValue>,
+): SflMeshGroundObject {
+  const color = asString(properties.get('color'));
+  return {
+    ...base,
+    objectType: 'meshGround',
+    meshGround: {
+      height: asNumber(properties.get('height')),
+      color: color === 'none' ? undefined : color,
+      reflection: Math.min(1, Math.max(0, asNumber(properties.get('reflection')) ?? 0)),
+      roughness: Math.min(1, Math.max(0, asNumber(properties.get('roughness')) ?? 0)),
     },
   };
 }

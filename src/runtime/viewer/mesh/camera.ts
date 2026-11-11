@@ -1,7 +1,7 @@
 import type { Vec3 } from '../../../model/mesh';
 import { cross, dot, lookAt, type Mat4, multiply, normalize, perspective, windowMatrix } from './matrix';
 
-const FOV = (32 * Math.PI) / 180;
+export const FOV = (32 * Math.PI) / 180;
 const WORLD_UP: Vec3 = [0, 1, 0];
 const FRAME_MARGIN = 1.04;
 const LOWEST_FOLLOWED = 0.5;

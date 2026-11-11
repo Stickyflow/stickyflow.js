@@ -1,97 +1,81 @@
-import { DEFAULT_LIGHT, type Mesh, type MeshLight, setMeshValue, type Vec3 } from '../../../model/mesh';
-import { isCameraGesture } from '../../dom';
-import {
-  type Box,
-  type Camera,
-  frameBox,
-  type MeshFrame,
-  makeCamera,
-  planeHit,
-  project,
-  type StageWindow,
-} from './camera';
-import { draggedBox, handleDrag, type MeshObjectBox, meshHandlesMarkup, objectOutlineMarkup } from './handles';
 import { lightingOf } from './lighting';
-import { loadAssetInto } from './loadAsset';
-import { modelMatrix, transformPoint } from './matrix';
+import { transformPoint } from './matrix';
 import { MeshRenderer, type Plane } from './renderer';
+import { StageAnchors } from './stageAnchors';
+import { StageGestures } from './stageGestures';
+import { StageHandles } from './stageHandles';
+import { StageLoader } from './stageLoader';
+import { objectUnder, type SurfaceHit, surfaceUnder, topmostAt } from './stagePicking';
+import { StagePlacement } from './stagePlacement';
 import {
   dataOf,
-  MESH_HANDLES_ATTR,
   MESH_STAGE_ATTR,
-  type MeshHandleChange,
   type MeshObjectPoint,
   type MeshObjectQuery,
   type MeshStageFlags,
   type MeshStageOptions,
-  type Placement,
-  type StageData,
 } from './stageTypes';
-import { type StageSurface, SurfaceTextures, surfaceMatrix } from './surfaceTextures';
+import { pointIn, StageView } from './stageView';
+import { SurfaceTextures, surfaceMatrix } from './surfaceTextures';
 
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const MAX_PIXELS = 4096;
-const DRAG_THRESHOLD = 4;
-const ORBIT_PER_PIXEL = 0.5;
-const OCCLUDED_OPACITY = '0.18';
-const MAX_PITCH = 85;
-
-// A document names what it loads, so it stays on the ways a page normally loads a picture.
-function defaultAsset(asset: string): string | null {
-  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(asset)?.[1].toLowerCase();
-  return !scheme || ['http', 'https', 'blob', 'data'].includes(scheme) ? asset : null;
-}
-
-const topmostAt = (surface: StageSurface, x: number, y: number) =>
-  surface.members
-    .filter(item => x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + item.height)
-    .pop();
-
-// A drag on the stage would otherwise mark the texts it passes over.
-const keepTextUnselected = (event: Event): void => event.preventDefault();
-
+// One Scene of a drawing: it owns the canvas and the renderer, and puts together what the parts work out. What stands on it is
+// kept by the placement, the camera by the view, and loading, the pointer, the handles and the anchors each by a part of their own.
 export class MeshStage {
   private canvas: HTMLCanvasElement | null = null;
   private renderer: MeshRenderer | null = null;
   private textures: SurfaceTextures | null = null;
-  private data: StageData = { id: '', orbit: [45, 27], shadow: false, meshes: [], anchors: [] };
   private written = '';
-  private placement: Placement | null = null;
-  private framedAssets = '';
-  private frame: MeshFrame | undefined;
-  private camera: Camera | undefined;
-  private yaw = 45;
-  private pitch = 27;
   private selected: string | null = null;
+  private selectedObject: string | null = null;
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
   private editing = true;
-  private selectedObject: string | null = null;
-  private objectDraft: MeshObjectBox | null = null;
-  private handles: SVGGElement | null = null;
-  private readonly overrides = new Map<string, MeshHandleChange>();
-  // Values that came from data while the drawing stayed as it was. They last until the data says otherwise.
-  private readonly live = new Map<string, Map<string, number | string>>();
+  private grid = false;
   private readonly errors = new Set<string>();
-  private hidden: ReadonlySet<string> = new Set();
-  private locked: ReadonlySet<string> = new Set();
-  private readonly originals = new WeakMap<Element, { written: string; original: string | null }>();
-  // Whether each anchored object is behind a mesh, for the view it was last worked out in.
-  private readonly hiddenAnchors = new Map<string, boolean>();
-  private anchorView = '';
-  private readonly loading = new Set<string>();
   private request: number | undefined;
   private observer: ResizeObserver | undefined;
   private zoomObserver: MutationObserver | undefined;
   private destroyed = false;
-  private gesture: { x: number; y: number; moved: boolean } | null = null;
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
   private host: Element;
+  private readonly placement = new StagePlacement();
+  private readonly view: StageView;
+  private readonly anchors: StageAnchors;
+  private readonly loader: StageLoader;
+  private readonly gestures: StageGestures;
+  private readonly handles: StageHandles;
 
   constructor(host: Element, svg: SVGSVGElement, options: MeshStageOptions) {
     this.host = host;
     this.svg = svg;
     this.options = options;
+    this.view = new StageView(host, svg);
+    this.anchors = new StageAnchors(svg);
+    this.loader = new StageLoader({
+      resolveAsset: options.resolveAsset,
+      alive: renderer => !this.destroyed && this.renderer === renderer,
+      report: message => this.report(message),
+      arrived: reframe => {
+        if (reframe) {
+          this.view.reframe();
+        }
+        this.schedule();
+      },
+    });
+    const changed = () => this.schedule();
+    const click = (clientX: number, clientY: number) => this.clickAt(clientX, clientY);
+    this.gestures = new StageGestures({ view: this.view, changed, click });
+    this.handles = new StageHandles({
+      svg,
+      view: this.view,
+      placement: this.placement,
+      events: options.events,
+      renderer: () => this.renderer,
+      selected: () => this.selected,
+      selectedObject: () => this.selectedObject,
+      changed,
+      click,
+    });
     this.update(host);
   }
 
@@ -101,8 +85,9 @@ export class MeshStage {
 
   update(host: Element): void {
     if (host !== this.host) {
-      this.unbind();
+      this.gestures.unbind(this.host);
       this.host = host;
+      this.view.host = host;
     }
     const canvas = host.querySelector('canvas');
     if (canvas !== this.canvas) {
@@ -116,27 +101,28 @@ export class MeshStage {
     if (attribute !== this.written) {
       this.takeData(host, attribute);
     }
-    if (!this.renderer) {
+    const { renderer } = this;
+    if (!renderer) {
       return;
     }
-    for (const asset of new Set(this.data.meshes.map(mesh => mesh.asset))) {
-      this.load(asset);
+    for (const asset of new Set(this.placement.data.meshes.map(mesh => mesh.asset))) {
+      this.loader.asset(renderer, asset);
     }
+    this.loader.environmentOf(renderer, this.placement.data.environment ?? '');
     // The update of the drawing has just put the objects back, so they are moved again before anything is painted.
     this.placeAnchors();
     this.schedule();
   }
 
   private takeData(host: Element, attribute: string): void {
-    const previous = this.data.orbit;
-    this.data = dataOf(host) ?? this.data;
+    const previous = this.placement.data.orbit;
+    const data = dataOf(host) ?? this.placement.data;
+    this.placement.take(data);
     this.written = attribute;
-    this.objectDraft = null;
-    this.overrides.clear();
-    this.placement = null;
-    this.textures?.keepOnly(new Set((this.data.surfaces ?? []).map(surface => surface.id)));
-    if (previous[0] !== this.data.orbit[0] || previous[1] !== this.data.orbit[1] || !this.framedAssets) {
-      [this.yaw, this.pitch] = this.data.orbit;
+    this.handles.dropDraft();
+    this.textures?.keepOnly(new Set((data.surfaces ?? []).map(surface => surface.id)));
+    if (previous[0] !== data.orbit[0] || previous[1] !== data.orbit[1] || !this.view.hasFramed) {
+      this.view.lookFrom(data.orbit);
     }
   }
 
@@ -158,7 +144,7 @@ export class MeshStage {
       () => this.schedule(),
       message => this.report(message),
     );
-    this.framedAssets = '';
+    this.view.reframe();
     if (typeof ResizeObserver === 'function') {
       this.observer = new ResizeObserver(() => this.schedule());
       this.observer.observe(canvas);
@@ -170,40 +156,8 @@ export class MeshStage {
       this.zoomObserver.observe(this.svg, { attributes: true, attributeFilter: ['viewBox'] });
     }
     if (this.options.interactive) {
-      this.host.addEventListener('pointerdown', this.onPointerDown as EventListener);
-      this.host.addEventListener('mousedown', keepTextUnselected);
-      this.host.addEventListener('pointermove', this.onPointerMove as EventListener);
-      this.host.addEventListener('pointerup', this.onPointerUp as EventListener);
+      this.gestures.bind(this.host);
     }
-  }
-
-  private unbind(): void {
-    this.host.removeEventListener('pointerdown', this.onPointerDown as EventListener);
-    this.host.removeEventListener('mousedown', keepTextUnselected);
-    this.host.removeEventListener('pointermove', this.onPointerMove as EventListener);
-    this.host.removeEventListener('pointerup', this.onPointerUp as EventListener);
-  }
-
-  private load(asset: string): void {
-    const renderer = this.renderer;
-    if (!renderer || renderer.hasAsset(asset) || this.loading.has(asset)) {
-      return;
-    }
-    const address = this.options.resolveAsset ? this.options.resolveAsset(asset) : defaultAsset(asset);
-    this.loading.add(asset);
-    if (address === null) {
-      this.report(`${asset}: this address is not allowed`);
-      return;
-    }
-    const alive = () => !this.destroyed && this.renderer === renderer;
-    void loadAssetInto(renderer, asset, address, alive, () => {
-      this.framedAssets = '';
-      this.schedule();
-    })
-      .catch((failure: unknown) => {
-        this.report(`${asset}: ${failure instanceof Error ? failure.message : String(failure)}`);
-      })
-      .finally(() => this.loading.delete(asset));
   }
 
   private report(message: string): void {
@@ -214,7 +168,7 @@ export class MeshStage {
 
   // Everything that changes what stands on the stage comes through here.
   private schedule(): void {
-    this.placement = null;
+    this.placement.invalidate();
     if (this.request !== undefined || this.destroyed) {
       return;
     }
@@ -228,114 +182,47 @@ export class MeshStage {
     });
   }
 
-  private placedValues<T extends Mesh | StageSurface>(item: T): T {
-    const placed: T = {
-      ...item,
-      position: [...item.position],
-      rotation: [...item.rotation],
-      scale: [...item.scale],
-      ...this.overrides.get(item.id),
-    };
-    for (const [property, value] of this.live.get(item.id) ?? []) {
-      setMeshValue(placed, property, value);
-    }
-    return placed;
-  }
-
-  private placedLight(): MeshLight {
-    const light = { ...(this.data.light ?? DEFAULT_LIGHT) };
-    for (const [property, value] of this.live.get(light.id) ?? []) {
-      setMeshValue(light, property, value);
-    }
-    return this.hidden.has(light.id) ? { ...light, intensity: 0 } : light;
-  }
-
-  // A hidden Scene hides all that stands in it.
-  private visible<T extends { id: string }>(items: readonly T[]): T[] {
-    return this.hidden.has(this.data.id) ? [] : items.filter(item => !this.hidden.has(item.id));
-  }
-
-  private placed(): Placement {
-    this.placement ??= {
-      meshes: this.visible(this.data.meshes).map(mesh => this.placedValues(mesh)),
-      surfaces: this.visible(this.data.surfaces ?? []).map(surface => ({
-        ...this.placedValues(surface),
-        members: surface.members.filter(member => !this.hidden.has(member.id)),
-      })),
-      light: this.placedLight(),
-    };
-    return this.placement;
-  }
-
   private planes(): Plane[] {
-    return this.placed().surfaces.map(surface => ({
+    return this.placement.get().surfaces.map(surface => ({
       id: surface.id,
       matrix: surfaceMatrix(surface),
-      layers: this.textures?.layers(surface, this.hidden) ?? [],
+      layers: this.textures?.layers(surface, this.placement.hiddenIds) ?? [],
     }));
   }
 
-  // Sets the canvas to the part of the stage on the screen, so it stays as sharp as the screen at any zoom.
-  private fitCanvas(canvas: HTMLCanvasElement, wholeStage: boolean): { aspect: number; window: StageWindow } {
-    const full = this.host.getBoundingClientRect();
-    const page = this.svg.getBoundingClientRect();
-    const fullWidth = Math.max(full.width, 1);
-    const fullHeight = Math.max(full.height, 1);
-    const left = wholeStage ? full.left : Math.max(full.left, page.left);
-    const top = wholeStage ? full.top : Math.max(full.top, page.top);
-    const right = Math.max(left + 1, wholeStage ? full.right : Math.min(full.right, page.right));
-    const bottom = Math.max(top + 1, wholeStage ? full.bottom : Math.min(full.bottom, page.bottom));
-    const ratio = canvas.ownerDocument.defaultView?.devicePixelRatio ?? 1;
-    const scale = Math.min(ratio, MAX_PIXELS / Math.max(right - left, bottom - top));
-    const width = Math.max(1, Math.round((right - left) * scale));
-    const height = Math.max(1, Math.round((bottom - top) * scale));
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-    canvas.style.width = `${((right - left) / fullWidth) * 100}%`;
-    canvas.style.height = `${((bottom - top) / fullHeight) * 100}%`;
-    // A margin in percent counts from the width, also at the top.
-    canvas.style.marginLeft = `${((left - full.left) / fullWidth) * 100}%`;
-    canvas.style.marginTop = `${((top - full.top) / fullWidth) * 100}%`;
-    return {
-      aspect: fullWidth / fullHeight,
-      window: [
-        ((left - full.left) / fullWidth) * 2 - 1,
-        1 - ((bottom - full.top) / fullHeight) * 2,
-        ((right - full.left) / fullWidth) * 2 - 1,
-        1 - ((top - full.top) / fullHeight) * 2,
-      ],
-    };
-  }
-
   private draw(wholeStage = false): void {
-    const { canvas, renderer } = this;
+    const { canvas, renderer, view } = this;
     if (!canvas || !renderer) {
       return;
     }
-    const { aspect, window } = this.fitCanvas(canvas, wholeStage);
-    const { meshes, light } = this.placed();
+    const { data } = this.placement;
+    const { aspect, window } = view.fit(canvas, wholeStage);
+    const { meshes, light } = this.placement.get();
     const lighting = lightingOf(light);
     const planes = this.planes();
-    // The camera is framed when what stands on the stage changes, not when a mesh moves, so a mesh that moves is seen moving.
-    // Hiding something is no reason to move the camera, so this counts all that the document has.
-    const framing = `${aspect.toFixed(2)}|${this.data.meshes
+    // Hiding something is no reason to move the camera, so the framing counts all that the document has.
+    const framing = `${aspect.toFixed(2)}|${data.meshes
       .filter(mesh => renderer.hasAsset(mesh.asset))
       .map(mesh => mesh.id)
-      .join('|')}|${(this.data.surfaces ?? []).map(surface => surface.id).join('|')}`;
-    if (framing !== this.framedAssets) {
-      const box = renderer.box(meshes, planes);
-      this.frame =
-        box && frameBox(box, this.yaw, this.pitch, aspect, this.data.shadow ? lighting.direction : undefined);
-      this.framedAssets = framing;
-    }
-    this.camera = this.frame ? makeCamera(this.frame, this.yaw, this.pitch, aspect, window) : undefined;
+      .join('|')}|${(data.surfaces ?? []).map(surface => surface.id).join('|')}`;
+    const shadowFrom = data.shadow ? lighting.direction : undefined;
+    view.aim(framing, aspect, window, () => renderer.box(meshes, planes), shadowFrom);
     this.keepSurfacesSharp(planes);
-    renderer.draw(meshes, this.camera, { shadows: this.data.shadow, planes, lighting });
+    // A surface with a shader changes every frame, so its picture cannot be refined over several.
+    const moving = planes.some(plane => plane.layers.some(layer => 'rect' in layer));
+    const more = renderer.draw(meshes, view.camera, {
+      shadows: data.shadow,
+      planes,
+      lighting,
+      grid: this.grid && !wholeStage,
+      environmentTurn: data.environmentTurn,
+      exposure: data.exposure,
+      ground: data.ground,
+      still: !wholeStage && !this.gestures.active && !moving,
+    });
     this.placeAnchors();
-    this.drawHandles();
-    if (planes.some(plane => plane.layers.some(layer => 'rect' in layer))) {
+    this.handles.draw(this.editing);
+    if (moving || more) {
       this.schedule();
     }
   }
@@ -343,335 +230,69 @@ export class MeshStage {
   private keepSurfacesSharp(planes: readonly Plane[]): void {
     const ratio = this.svg.ownerDocument.defaultView?.devicePixelRatio ?? 1;
     const unit = (this.svg.getScreenCTM()?.a || 1) * ratio;
-    for (const surface of this.placed().surfaces) {
+    for (const surface of this.placement.get().surfaces) {
       const plane = planes.find(item => item.id === surface.id);
-      const a = plane && this.toStage(transformPoint(plane.matrix, [-1, 0, 0]));
-      const b = plane && this.toStage(transformPoint(plane.matrix, [1, 0, 0]));
+      const a = plane && this.view.toStage(transformPoint(plane.matrix, [-1, 0, 0]));
+      const b = plane && this.view.toStage(transformPoint(plane.matrix, [1, 0, 0]));
       if (a && b) {
         this.textures?.sharpen(surface, Math.hypot(b.x - a.x, b.y - a.y) * unit);
       }
     }
   }
 
-  private stagePoint(clientX: number, clientY: number): [number, number] {
-    const box = this.host.getBoundingClientRect();
-    return [((clientX - box.left) / box.width) * 2 - 1, 1 - ((clientY - box.top) / box.height) * 2];
+  private placeAnchors(): void {
+    const { camera } = this.view;
+    const { meshes } = this.placement.get();
+    this.anchors.place(this.placement.data.anchors, meshes, camera, this.view.toStage.bind(this.view), world =>
+      Boolean(camera && this.renderer?.occluded(meshes, camera, world)),
+    );
   }
 
   private canvasPoint(clientX: number, clientY: number): [number, number] {
-    const box = (this.canvas as HTMLCanvasElement).getBoundingClientRect();
-    return [((clientX - box.left) / box.width) * 2 - 1, 1 - ((clientY - box.top) / box.height) * 2];
+    return pointIn((this.canvas as HTMLCanvasElement).getBoundingClientRect(), clientX, clientY);
   }
 
   // The nearest surface under a point of the screen, unless a mesh stands in front of it.
-  private surfaceAt(clientX: number, clientY: number) {
-    const { camera, renderer, canvas } = this;
+  private surfaceAt(clientX: number, clientY: number): SurfaceHit | undefined {
+    const { renderer, canvas } = this;
+    const { camera } = this.view;
     if (!camera || !renderer || !canvas) {
       return undefined;
     }
-    const [x, y] = this.stagePoint(clientX, clientY);
-    let nearest: { surface: StageSurface; distance: number; x: number; y: number } | undefined;
-    for (const surface of this.placed().surfaces) {
-      const hit = planeHit(camera, surfaceMatrix(surface), x, y);
-      if (
-        hit &&
-        hit.x >= 0 &&
-        hit.x <= 1 &&
-        hit.y >= 0 &&
-        hit.y <= 1 &&
-        (!nearest || hit.distance < nearest.distance)
-      ) {
-        nearest = { surface, distance: hit.distance, x: hit.x, y: hit.y };
-      }
-    }
-    if (!nearest) {
-      return undefined;
-    }
-    const mesh = renderer.meshDistance(this.placed().meshes, camera, ...this.canvasPoint(clientX, clientY));
-    return mesh !== undefined && mesh < nearest.distance ? undefined : nearest;
-  }
-
-  // A point of the screen on the plane of a surface, in its units, also beyond its edges.
-  private surfacePoint(surface: StageSurface, clientX: number, clientY: number): { x: number; y: number } | undefined {
-    if (!this.camera) {
-      return undefined;
-    }
-    const hit = planeHit(this.camera, surfaceMatrix(surface), ...this.stagePoint(clientX, clientY));
-    return hit && { x: hit.x * surface.width, y: hit.y * surface.height };
+    const { meshes, surfaces } = this.placement.get();
+    return surfaceUnder(camera, surfaces, this.view.stagePoint(clientX, clientY), () =>
+      renderer.meshDistance(meshes, camera, ...this.canvasPoint(clientX, clientY)),
+    );
   }
 
   objectAt(clientX: number, clientY: number, options: MeshObjectQuery = {}): MeshObjectPoint | null {
-    if (options.holding) {
-      const { holding } = options;
-      const surface = this.placed().surfaces.find(item => item.members.some(member => member.id === holding));
-      const member = surface?.members.find(item => item.id === holding);
-      const at = surface && this.surfacePoint(surface, clientX, clientY);
-      if (!member || !at) {
-        return null;
-      }
-      const within = (value: number) => Math.min(1, Math.max(0, value));
-      return {
-        id: member.id,
-        x: within((at.x - member.x) / member.width),
-        y: within((at.y - member.y) / member.height),
-      };
-    }
-    const found = this.surfaceAt(clientX, clientY);
-    if (!found) {
-      return null;
-    }
-    const px = found.x * found.surface.width;
-    const py = found.y * found.surface.height;
-    const members = options.among
-      ? { ...found.surface, members: found.surface.members.filter(item => options.among?.has(item.id)) }
-      : found.surface;
-    const member = topmostAt(members, px, py);
-    return member ? { id: member.id, x: (px - member.x) / member.width, y: (py - member.y) / member.height } : null;
-  }
-
-  // A point of the 3D world in the units of the 2D drawing, from the corner of the stage.
-  private toStage(point: readonly number[]): { x: number; y: number } | undefined {
-    const projected = this.camera && project(this.camera, point);
-    if (!projected) {
-      return undefined;
-    }
-    const width = Number(this.host.getAttribute('width'));
-    const height = Number(this.host.getAttribute('height'));
-    return { x: ((projected[0] + 1) / 2) * width, y: ((1 - projected[1]) / 2) * height };
-  }
-
-  private readonly toDrawing = (point: readonly number[]): { x: number; y: number } | undefined => {
-    const inStage = this.toStage(point);
-    return (
-      inStage && {
-        x: inStage.x + Number(this.host.getAttribute('x')),
-        y: inStage.y + Number(this.host.getAttribute('y')),
-      }
+    const point = this.view.stagePoint(clientX, clientY);
+    return objectUnder(this.view.camera, this.placement.get().surfaces, point, options, () =>
+      this.surfaceAt(clientX, clientY),
     );
-  };
-
-  // Whether an anchor is behind a mesh only changes when the camera or a mesh moves, and asking costs a read from the GPU.
-  private anchorHidden(id: string, meshes: readonly Mesh[], world: readonly number[]): boolean {
-    const known = this.hiddenAnchors.get(id);
-    if (known !== undefined) {
-      return known;
-    }
-    const hidden = Boolean(this.camera && this.renderer?.occluded(meshes, this.camera, world));
-    this.hiddenAnchors.set(id, hidden);
-    return hidden;
   }
-
-  private placeAnchors(): void {
-    const { camera } = this;
-    if (!camera || this.data.anchors.length === 0) {
-      return;
-    }
-    const { meshes } = this.placed();
-    const view = `${camera.eye.join()}|${camera.window.join()}|${meshes
-      .map(mesh => `${mesh.position.join()}/${mesh.rotation.join()}/${mesh.scale.join()}/${mesh.asset}`)
-      .join('|')}`;
-    if (view !== this.anchorView) {
-      this.anchorView = view;
-      this.hiddenAnchors.clear();
-    }
-    for (const anchor of this.data.anchors) {
-      const mesh = meshes.find(candidate => candidate.id === anchor.mesh);
-      const world = mesh && transformPoint(modelMatrix(mesh.position, mesh.rotation, mesh.scale), anchor.point);
-      const at = world && this.toStage(world);
-      if (!world || !at) {
-        continue;
-      }
-      const hidden = this.anchorHidden(anchor.objectId, meshes, world);
-      for (const node of this.svg.querySelectorAll(`[data-sf-id="${CSS.escape(anchor.objectId)}"]`)) {
-        const current = node.getAttribute('transform');
-        const known = this.originals.get(node);
-        const original = known && known.written === current ? known.original : current;
-        const written = `translate(${at.x} ${at.y})${original ? ` ${original}` : ''}`;
-        node.setAttribute('transform', written);
-        this.originals.set(node, { written, original });
-        (node as SVGElement).style.opacity = hidden ? OCCLUDED_OPACITY : '';
-      }
-    }
-  }
-
-  // The mesh or the Canvas with handles, as both move in the same way.
-  private selectedItem(): { id: string; position: Vec3; rotation: Vec3; scale: Vec3; box: Box } | undefined {
-    const { renderer, selected } = this;
-    const { meshes, surfaces } = this.placed();
-    const surface = surfaces.find(item => item.id === selected);
-    const mesh = meshes.find(item => item.id === selected);
-    const box = surface
-      ? renderer?.box([], [{ id: surface.id, matrix: surfaceMatrix(surface), layers: [] }])
-      : mesh && renderer?.box([mesh]);
-    const item = surface ?? mesh;
-    return item && box && { id: item.id, position: item.position, rotation: item.rotation, scale: item.scale, box };
-  }
-
-  private objectOnSurface(): { surface: StageSurface; box: MeshObjectBox } | undefined {
-    const surface = this.placed().surfaces.find(item => item.members.some(member => member.id === this.selectedObject));
-    const member = surface?.members.find(item => item.id === this.selectedObject);
-    return surface && member ? { surface, box: this.objectDraft ?? member } : undefined;
-  }
-
-  private showHandles(id: string, markup: string): void {
-    if (!this.handles) {
-      this.handles = this.svg.ownerDocument.createElementNS(SVG_NAMESPACE, 'g') as SVGGElement;
-      this.handles.addEventListener('pointerdown', this.onHandleDown as EventListener);
-      this.handles.addEventListener('mousedown', keepTextUnselected);
-    }
-    this.handles.setAttribute(MESH_HANDLES_ATTR, id);
-    if (!this.handles.isConnected) {
-      this.svg.appendChild(this.handles);
-    }
-    this.handles.innerHTML = markup;
-  }
-
-  private drawHandles(): void {
-    const unit = 1 / (this.svg.getScreenCTM()?.a || 1);
-    const onSurface = this.editing ? this.objectOnSurface() : undefined;
-    if (onSurface) {
-      const { surface, box } = onSurface;
-      const matrix = surfaceMatrix(surface);
-      const point = (x: number, y: number) =>
-        this.toDrawing(transformPoint(matrix, [(x / surface.width) * 2 - 1, 1 - (y / surface.height) * 2, 0]));
-      const markup = objectOutlineMarkup(box, point, unit);
-      if (markup) {
-        this.showHandles(surface.id, markup);
-        return;
-      }
-    }
-    const item = this.editing ? this.selectedItem() : undefined;
-    const markup = item && meshHandlesMarkup(item.position, item.box, this.toDrawing, unit);
-    if (item && markup) {
-      this.showHandles(item.id, markup);
-    } else {
-      this.handles?.remove();
-      this.handles = null;
-    }
-  }
-
-  private dragObject(event: PointerEvent, part: string): void {
-    const found = this.objectOnSurface();
-    const id = this.selectedObject;
-    const start = found && this.surfacePoint(found.surface, event.clientX, event.clientY);
-    if (!found || !id || !start) {
-      return;
-    }
-    event.stopPropagation();
-    const view = this.svg.ownerDocument.defaultView;
-    let moved = false;
-    const move = (next: PointerEvent) => {
-      const at = this.surfacePoint(found.surface, next.clientX, next.clientY);
-      if (at) {
-        const dx = Math.round(at.x - start.x);
-        const dy = Math.round(at.y - start.y);
-        moved = moved || dx !== 0 || dy !== 0;
-        this.objectDraft = draggedBox(found.box, part, dx, dy);
-        this.schedule();
-      }
-    };
-    const up = () => {
-      view?.removeEventListener('pointermove', move);
-      view?.removeEventListener('pointerup', up);
-      if (moved && this.objectDraft) {
-        this.options.events.objectChange(id, this.objectDraft);
-      }
-    };
-    view?.addEventListener('pointermove', move);
-    view?.addEventListener('pointerup', up);
-  }
-
-  private readonly onHandleDown = (event: PointerEvent): void => {
-    const target = event.target as Element;
-    if (event.button !== 0) {
-      return;
-    }
-    const objectPart = target.getAttribute('data-mesh-object');
-    if (objectPart) {
-      this.dragObject(event, objectPart);
-      return;
-    }
-    const item = this.selectedItem();
-    const changeFor = item && handleDrag(target, item, this.toDrawing, this.svg.getScreenCTM()?.a || 1);
-    if (!item || !changeFor) {
-      return;
-    }
-    event.stopPropagation();
-    const view = this.svg.ownerDocument.defaultView;
-    const { clientX: startX, clientY: startY } = event;
-    let change: MeshHandleChange | undefined;
-    const move = (next: PointerEvent) => {
-      change = changeFor(next.clientX - startX, next.clientY - startY);
-      this.overrides.set(item.id, { ...this.overrides.get(item.id), ...change });
-      this.schedule();
-    };
-    const up = (last: PointerEvent) => {
-      view?.removeEventListener('pointermove', move);
-      view?.removeEventListener('pointerup', up);
-      if (change) {
-        this.options.events.change(item.id, change);
-      } else {
-        // A handle that was only clicked lets the click through to what lies under it.
-        this.clickAt(last.clientX, last.clientY);
-      }
-    };
-    view?.addEventListener('pointermove', move);
-    view?.addEventListener('pointerup', up);
-  };
-
-  private readonly onPointerDown = (event: PointerEvent): void => {
-    if (event.button !== 0 || isCameraGesture(event)) {
-      return;
-    }
-    this.gesture = { x: event.clientX, y: event.clientY, moved: false };
-    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
-  };
-
-  private readonly onPointerMove = (event: PointerEvent): void => {
-    const gesture = this.gesture;
-    if (!gesture) {
-      return;
-    }
-    if (!gesture.moved && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) <= DRAG_THRESHOLD) {
-      return;
-    }
-    const [dx, dy] = gesture.moved ? [event.clientX - gesture.x, event.clientY - gesture.y] : [0, 0];
-    gesture.moved = true;
-    gesture.x = event.clientX;
-    gesture.y = event.clientY;
-    this.yaw -= dx * ORBIT_PER_PIXEL;
-    this.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.pitch + dy * ORBIT_PER_PIXEL));
-    this.schedule();
-  };
-
-  private readonly onPointerUp = (event: PointerEvent): void => {
-    const gesture = this.gesture;
-    this.gesture = null;
-    if (gesture && !gesture.moved) {
-      this.clickAt(event.clientX, event.clientY);
-    }
-  };
 
   private clickAt(clientX: number, clientY: number): void {
-    const { camera, renderer, canvas } = this;
+    const { renderer, canvas } = this;
+    const { camera } = this.view;
     if (!camera || !renderer || !canvas || !this.editing) {
       return;
     }
     const found = this.surfaceAt(clientX, clientY);
     if (!found) {
-      const hit = renderer.pick(this.placed().meshes, camera, ...this.canvasPoint(clientX, clientY));
-      this.select(hit && !this.locked.has(hit) ? hit : null);
+      const hit = renderer.pick(this.placement.get().meshes, camera, ...this.canvasPoint(clientX, clientY));
+      this.select(hit && !this.placement.isLocked(hit) ? hit : null);
       return;
     }
     const { surface } = found;
-    if (this.locked.has(surface.id)) {
+    if (this.placement.isLocked(surface.id)) {
       this.select(null);
       return;
     }
     // The first click takes the Canvas, the next what lies on it.
     const open = this.selected === surface.id || surface.members.some(member => member.id === this.selectedObject);
     if (open) {
-      const free = { ...surface, members: surface.members.filter(member => !this.locked.has(member.id)) };
+      const free = { ...surface, members: surface.members.filter(member => !this.placement.isLocked(member.id)) };
       this.selectObject(topmostAt(free, found.x * surface.width, found.y * surface.height)?.id ?? null);
     } else {
       this.select(surface.id);
@@ -679,33 +300,23 @@ export class MeshStage {
   }
 
   hasMesh(id: string): boolean {
-    return (
-      this.data.meshes.some(mesh => mesh.id === id) ||
-      this.data.light?.id === id ||
-      Boolean(this.data.surfaces?.some(item => item.id === id))
-    );
+    return this.placement.has(id);
   }
 
   setValue(id: string, property: string, value: number | string): void {
-    let values = this.live.get(id);
-    if (!values) {
-      values = new Map();
-      this.live.set(id, values);
-    }
-    values.set(property, value);
+    this.placement.setValue(id, property, value);
     this.schedule();
   }
 
   clearValues(): void {
-    this.live.clear();
+    this.placement.clearValues();
     this.schedule();
   }
 
-  setFlags({ hidden, locked }: MeshStageFlags): void {
-    this.hidden = new Set(hidden);
-    this.locked = new Set(locked);
+  setFlags(flags: MeshStageFlags): void {
+    this.placement.setFlags(flags);
     for (const id of [this.selected, this.selectedObject]) {
-      if (id && (this.hidden.has(id) || this.locked.has(id))) {
+      if (id && this.placement.isOutOfReach(id)) {
         this.select(null);
       }
     }
@@ -714,15 +325,16 @@ export class MeshStage {
 
   // Whether this stage has the name, as a mesh, a Canvas, what lies on one, or itself.
   selectItem(id: string): boolean {
-    if (id === this.data.id || id === this.data.light?.id) {
+    const { data } = this.placement;
+    if (id === data.id || id === data.light?.id) {
       this.select(null);
       return true;
     }
-    if (this.hasMesh(id)) {
+    if (this.placement.has(id)) {
       this.select(id);
       return true;
     }
-    const surface = this.data.surfaces?.find(item => item.members.some(member => member.id === id));
+    const surface = this.placement.surfaceWith(id);
     if (!surface) {
       return false;
     }
@@ -739,12 +351,17 @@ export class MeshStage {
     this.schedule();
   }
 
+  setGrid(grid: boolean): void {
+    this.grid = grid;
+    this.schedule();
+  }
+
   selectObject(id: string | null): void {
     if (id === this.selectedObject) {
       return;
     }
     this.selectedObject = id;
-    this.objectDraft = null;
+    this.handles.dropDraft();
     this.options.events.objectSelect(id);
     this.schedule();
   }
@@ -776,9 +393,9 @@ export class MeshStage {
     this.zoomObserver = undefined;
     this.renderer?.destroy();
     this.renderer = null;
+    this.loader.reset();
     this.textures = null;
-    this.frame = undefined;
-    this.camera = undefined;
+    this.view.clear();
   }
 
   destroy(): void {
@@ -786,8 +403,8 @@ export class MeshStage {
     if (this.request !== undefined) {
       this.svg.ownerDocument.defaultView?.cancelAnimationFrame(this.request);
     }
-    this.unbind();
-    this.handles?.remove();
+    this.gestures.unbind(this.host);
+    this.handles.remove();
     this.release();
     this.canvas = null;
   }

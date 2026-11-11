@@ -7,6 +7,8 @@ export interface SflMeshData {
   opacity?: number;
   roughness?: number;
   metallic?: number;
+  transmission?: number;
+  ior?: number;
   position: Vec3;
   rotation: Vec3;
   scale: Vec3;
@@ -15,6 +17,9 @@ export interface SflMeshData {
 export interface SflMeshSceneData {
   orbit: [number, number];
   shadow: boolean;
+  environment?: string;
+  environmentTurn?: number;
+  exposure?: number;
 }
 
 export interface SflMeshSurfaceData {
@@ -29,6 +34,14 @@ export interface SflMeshLightData {
   color?: string;
   intensity: number;
   ambient: number;
+  softness?: number;
+}
+
+export interface SflMeshGroundData {
+  height?: number;
+  color?: string;
+  reflection: number;
+  roughness: number;
 }
 
 export interface SflAnchorData {

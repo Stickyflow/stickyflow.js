@@ -4,6 +4,7 @@ import type { SflIsometricData } from './artifacts/isometric/types';
 import type {
   SflAnchorData,
   SflMeshData,
+  SflMeshGroundData,
   SflMeshLightData,
   SflMeshSceneData,
   SflMeshSurfaceData,
@@ -23,7 +24,8 @@ export type SflCanvasObjectType =
   | 'mesh'
   | 'meshScene'
   | 'meshSurface'
-  | 'meshLight';
+  | 'meshLight'
+  | 'meshGround';
 
 export interface SflSymbolDefinition {
   name: string;
@@ -63,6 +65,7 @@ export interface SflCanvasObject extends SflCanvasObjectBase {
   meshScene?: SflMeshSceneData;
   meshSurface?: SflMeshSurfaceData;
   meshLight?: SflMeshLightData;
+  meshGround?: SflMeshGroundData;
 }
 
 export interface SflComponentData {

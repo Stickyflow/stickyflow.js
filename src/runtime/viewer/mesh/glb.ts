@@ -50,6 +50,10 @@ interface GltfMaterial {
   occlusionTexture?: { index: number; strength?: number };
   emissiveTexture?: { index: number };
   emissiveFactor?: number[];
+  extensions?: {
+    KHR_materials_transmission?: { transmissionFactor?: number };
+    KHR_materials_ior?: { ior?: number };
+  };
 }
 
 interface Gltf {
@@ -94,6 +98,9 @@ export interface MeshMaterial {
   maps: Partial<Record<MaterialMapName, MaterialMap>>;
   blend: boolean;
   doubleSided: boolean;
+  // How much of the light goes through the material, as in glass, and how strongly it bends there.
+  transmission: number;
+  ior: number;
 }
 
 export interface MeshPrimitive {
@@ -130,6 +137,8 @@ const DEFAULT_MATERIAL: MeshMaterial = {
   maps: {},
   blend: false,
   doubleSided: false,
+  transmission: 0,
+  ior: 1.5,
 };
 
 function readGlb(data: ArrayBuffer): { json: Gltf; bin?: ArrayBuffer } {
@@ -284,6 +293,8 @@ function materialOf(gltf: Gltf, buffers: ArrayBuffer[], index: number | undefine
     ),
     blend: material.alphaMode === 'BLEND',
     doubleSided: material.doubleSided === true,
+    transmission: material.extensions?.KHR_materials_transmission?.transmissionFactor ?? 0,
+    ior: material.extensions?.KHR_materials_ior?.ior ?? 1.5,
   };
 }
 

@@ -109,6 +109,10 @@ export class ViewerSession implements Viewer {
     this.meshStages.setEditing(editing);
   }
 
+  setMeshGrid(grid: boolean): void {
+    this.meshStages.setGrid(grid);
+  }
+
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {
     return this.meshStages.objectAt(clientX, clientY, options);
   }

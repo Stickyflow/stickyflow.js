@@ -9,6 +9,9 @@ export interface Mesh {
   opacity: number;
   roughness?: number;
   metallic?: number;
+  // How much of the light goes into the material and through it, as in glass, from 0 to 1, and how strongly it bends there.
+  transmission?: number;
+  ior?: number;
   position: Vec3;
   rotation: Vec3;
   scale: Vec3;
@@ -25,7 +28,25 @@ export interface MeshScene {
   height: number;
   orbit: [number, number];
   shadow: boolean;
+  // What lights the world and is seen in its reflections: "studio", or the address of an .hdr or an equirectangular picture.
+  environment?: string;
+  // How far the environment is turned about the vertical, in degrees.
+  environmentTurn?: number;
+  // Brighter or darker than usual, in stops: 1 is twice as bright.
+  exposure?: number;
+  ground?: MeshGround;
   order?: number;
+}
+
+// The ground of a Scene. Without a height it lies under the meshes as they stand; without a color it is not seen itself, only
+// the shadows on it and what it reflects, from 0 for nothing to 1 for a mirror. A rough ground reflects blurred, and less of
+// what is far from it.
+export interface MeshGround {
+  id: string;
+  height?: number;
+  color?: string;
+  reflection: number;
+  roughness: number;
 }
 
 // A 2D object that follows a point of a mesh. Its own position is then its distance from that point.
@@ -37,11 +58,25 @@ export interface MeshAnchor {
 
 // What a binding can reach on a Mesh, a Canvas in a Scene or a Light.
 type MeshValues = Partial<
-  Pick<Mesh, 'position' | 'rotation' | 'scale' | 'color' | 'opacity' | 'roughness' | 'metallic'> &
-    Pick<MeshLight, 'turn' | 'height' | 'intensity' | 'ambient'>
+  Pick<
+    Mesh,
+    'position' | 'rotation' | 'scale' | 'color' | 'opacity' | 'roughness' | 'metallic' | 'transmission' | 'ior'
+  > &
+    Pick<MeshLight, 'turn' | 'height' | 'intensity' | 'ambient' | 'softness'>
 >;
 
-const NUMBERS = ['opacity', 'roughness', 'metallic', 'turn', 'height', 'intensity', 'ambient'] as const;
+const NUMBERS = [
+  'opacity',
+  'roughness',
+  'metallic',
+  'transmission',
+  'ior',
+  'turn',
+  'height',
+  'intensity',
+  'ambient',
+  'softness',
+] as const;
 
 const AXES: Record<string, ['position' | 'rotation' | 'scale', number]> = {
   positionX: ['position', 0],
@@ -101,6 +136,8 @@ export interface MeshLight {
   color?: string;
   intensity: number;
   ambient: number;
+  // How large the sun looks, in degrees: the shadows get softer the further they fall. Without it they are as sharp as the map allows.
+  softness?: number;
 }
 
 export const DEFAULT_LIGHT: MeshLight = { id: 'light-default', turn: 57.5, height: 49, intensity: 1, ambient: 1 };
