@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-11
+
 ### Added
 
 - A Scene can be lit by the world around it: `environment: "studio"` for a room that comes with the viewer, or the address of a picture of the surroundings, as an `.hdr` file or an ordinary picture. `environmentTurn` turns it, and it adds ambient occlusion.
