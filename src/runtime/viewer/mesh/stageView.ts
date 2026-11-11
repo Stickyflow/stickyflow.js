@@ -93,7 +93,11 @@ export class StageView {
   // Makes the camera for a picture. It is framed again only when `key` changes: when what stands on the stage changes, not when a
   // mesh moves, so a mesh that moves is seen moving.
   aim(key: string, aspect: number, window: StageWindow, box: () => Box | undefined, shadowFrom?: Vec3): void {
-    if (key !== this.framed && !(this.steady && this.frame)) {
+    if (this.steady && this.frame) {
+      // The frame is kept, and counts as the frame of what stands there now, so nothing asks for the first view again.
+      this.framed = key;
+    }
+    if (key !== this.framed) {
       const bounds = box();
       this.frame = bounds && frameBox(bounds, this.yaw, this.pitch, aspect, shadowFrom);
       this.framed = key;
