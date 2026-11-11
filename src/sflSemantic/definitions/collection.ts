@@ -65,14 +65,25 @@ function collectLayoutDefinitions(sflDocument: SflDocument): BlockDefinitions {
 
 function collectSymbolDefinitions(sflDocument: SflDocument): CanvasObjectResolutionContext['symbolDefs'] {
   const symbols: CanvasObjectResolutionContext['symbolDefs'] = new Map();
-  for (const block of sflDocument.blocks) {
-    if (block.kind !== 'Symbol') {
-      continue;
+  const blocks = new Map(sflDocument.blocks.filter(block => block.kind === 'Symbol').map(block => [block.name, block]));
+  const reading = new Set<string>();
+  // A symbol that takes another one into it reads that one first. One that leads back to itself is read without it.
+  const read = (name: string): ReturnType<typeof readSymbolDefinition> => {
+    const known = symbols.get(name);
+    const block = blocks.get(name);
+    if (known || !block || reading.has(name)) {
+      return known;
     }
-    const symbol = readSymbolDefinition(block);
+    reading.add(name);
+    const symbol = readSymbolDefinition(block, read);
+    reading.delete(name);
     if (symbol) {
-      symbols.set(block.name, symbol);
+      symbols.set(name, symbol);
     }
+    return symbol;
+  };
+  for (const name of blocks.keys()) {
+    read(name);
   }
   return symbols;
 }

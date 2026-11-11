@@ -91,4 +91,5 @@ export interface SymbolDef {
   points: Array<[number, number]>;
   tension?: number;
   ports?: Array<{ name: string; at: [number, number] }>;
+  rings?: Array<Array<[number, number]>>;
 }
