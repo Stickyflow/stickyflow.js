@@ -17,6 +17,21 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- A Scene can be lit by the world around it: `environment: "studio"` for a room that comes with the viewer, or the address of a picture of the surroundings, as an `.hdr` file or an ordinary picture. `environmentTurn` turns it, and it adds ambient occlusion.
+- `exposure` on a Scene makes the picture brighter or darker in stops.
+- `softness` on a Light sets how wide the edges of its shadows are. Shadows widen with the distance to what casts them.
+- A `Ground` block in a Scene is its floor, with `height`, `color`, `reflection` and `roughness`. Without a color only its shadows and reflections show.
+- `transmission` and `ior` in the style of a Mesh make glass and other clear materials.
+- When the camera of a Scene rests, the viewer refines the picture: with an environment it works out the light from all around, and a Scene of solid meshes is path traced, with soft shadows, rough reflections, glass that bends light, and Canvas surfaces as sharp as while the picture moves. The grain is smoothed away after a few frames.
+- While a Scene is edited, its floor shows a grid. Ctrl with the wheel zooms the camera, and Ctrl or the middle button with a drag moves it.
+
+### Fixed
+
+- The ground of a Scene stays where it is when a mesh is lifted.
+- A Scene has one shadow of its environment, the same while it moves and when it is still, and the still picture starts again after every drag.
+
 ## [0.18.1] - 2026-11-08
 
 ### Changed
