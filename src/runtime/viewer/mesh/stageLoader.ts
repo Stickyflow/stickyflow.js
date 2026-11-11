@@ -1,4 +1,6 @@
+import { buildSolid, solidOfAsset } from '../../../model/solid';
 import { STUDIO } from './environment';
+import { plainAsset } from './glb';
 import { loadAssetInto } from './loadAsset';
 import { environmentFor } from './loadEnvironment';
 import type { MeshRenderer } from './renderer';
@@ -37,6 +39,12 @@ export class StageLoader {
 
   asset(renderer: MeshRenderer, asset: string): void {
     if (renderer.hasAsset(asset) || this.loading.has(asset)) {
+      return;
+    }
+    const solid = solidOfAsset(asset);
+    if (solid) {
+      renderer.addAsset(asset, plainAsset({ ...buildSolid(solid) }, []));
+      this.target.arrived(true);
       return;
     }
     const address = this.address(asset);

@@ -1,7 +1,10 @@
 import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
+import { ringArea } from '../../../../model/outline';
+import { flattenPath } from '../../../../model/path';
+import { solidAssetName } from '../../../../model/solid';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
-import type { SflCanvasObjectBase } from '../../types';
+import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
 import type {
   SflMeshGroundObject,
   SflMeshLightObject,
@@ -21,17 +24,58 @@ function vector(block: SflBlock, layoutProp: LayoutProp, key: string, fallback: 
   return [axis('X', x), axis('Y', y), axis('Z', z)];
 }
 
+const SQUARE: Array<[number, number]> = [
+  [0, 0],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+];
+
+// A Solid is a mesh whose model is built from its outline. The name of that model says all it is built from, so two
+// Solids of one shape share one model.
+function solidAsset(
+  block: SflBlock,
+  properties: Map<string, SflValue>,
+  layoutProp: LayoutProp,
+  symbolDefs: Map<string, SflSymbolDefinition>,
+): string {
+  const symbol = symbolDefs.get(asString(properties.get('symbol')) ?? '');
+  const flat = symbol
+    ? (symbol.rings ?? [
+        flattenPath({
+          points: symbol.points.map(([x, y], index) => {
+            const tension = symbol.pointTensions?.[index];
+            return tension === undefined ? { x, y } : { x, y, tension };
+          }),
+          tension: symbol.tension ?? 0,
+          closed: true,
+        }).map(point => [point.x, point.y] as [number, number]),
+      ])
+    : [SQUARE];
+  // A ring written by hand may run either way. The rings of a symbol with Cut or Add run the right way already.
+  const rings = symbol?.rings ?? flat.map(ring => (ringArea(ring) > 0 ? ring : [...ring].reverse()));
+  return solidAssetName({
+    rings,
+    size: vector(block, layoutProp, 'size', 1),
+    chamfer: asNumber(properties.get('chamfer')) ?? 0,
+  });
+}
+
 export function resolveMeshObject(
   base: SflCanvasObjectBase,
   block: SflBlock,
   properties: Map<string, SflValue>,
   layoutProp: LayoutProp,
+  symbolDefs: Map<string, SflSymbolDefinition> = new Map(),
 ): SflMeshObject {
   return {
     ...base,
     objectType: 'mesh',
     mesh: {
-      asset: asString(properties.get('asset')) ?? '',
+      asset:
+        block.kind === 'Solid'
+          ? solidAsset(block, properties, layoutProp, symbolDefs)
+          : (asString(properties.get('asset')) ?? ''),
       role: asString(properties.get('role')),
       color: asString(properties.get('color')),
       opacity: asNumber(properties.get('opacity')),

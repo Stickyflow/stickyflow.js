@@ -14,6 +14,7 @@ export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Isometric',
   'Dimension',
   'Mesh',
+  'Solid',
   'Canvas',
   'Scene',
   'Light',

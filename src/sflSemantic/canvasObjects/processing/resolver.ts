@@ -64,7 +64,7 @@ export function resolveCanvasObject(
     case 'dimension':
       return resolveDimensionObject(base, properties, origin);
     case 'mesh':
-      return resolveMeshObject(base, block, properties, layoutProp);
+      return resolveMeshObject(base, block, properties, layoutProp, symbolDefs);
     case 'meshScene':
       return resolveMeshSceneObject(base, properties);
     case 'meshLight':

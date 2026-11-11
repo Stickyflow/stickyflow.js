@@ -19,6 +19,8 @@ Two things count as breaking here that are easy to overlook:
 
 ### Added
 
+- A `Symbol` takes `Cut` and `Add`. Each has points of its own, or lays another symbol into a place with `symbol`, `at` and `size`. The result is an outline with holes, notches and parts added, for every place a symbol is used.
+- `Solid` stands in a Scene, next to Mesh. It pulls a `Symbol` up into a body with exact edges: `size` is its width, height and depth, `chamfer` cuts the rim round its top and its bottom, and it is placed and painted like a Mesh. Without a symbol it is a block.
 - `viewer.meshPointAt(clientX, clientY, query?)` gives the point of the 3D world under a point of the screen, for drawing into a Scene. Without a query it is the point on the mesh there, with the name of that mesh. With `{ height }` it is the point on the level plane at that height, wherever the meshes are. The types are `MeshPoint` and `MeshPointQuery`.
 - `viewer.setMeshDirectCamera(true)` is for a Scene that fills its page: the wheel moves the camera nearer or farther without Ctrl, and the right button moves it sideways.
 - `viewer.setMeshSteadyCamera(true)` keeps the camera of a Scene where it is when meshes come and go. Turning it off frames the Scene again.

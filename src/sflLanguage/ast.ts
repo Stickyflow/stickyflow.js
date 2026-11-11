@@ -14,6 +14,7 @@ export const NAMED_BLOCK_KINDS = [
   'Image',
   'Isometric',
   'Mesh',
+  'Solid',
   'Canvas',
   'Scene',
   'Light',
