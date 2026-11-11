@@ -301,6 +301,10 @@ export class MeshStage {
     return distance === undefined ? null : { ...along(distance), ...(mesh ? { mesh } : {}) };
   }
 
+  screenOf(point: readonly number[]): { x: number; y: number } | null {
+    return this.view.toClient(point) ?? null;
+  }
+
   private clickAt(clientX: number, clientY: number): void {
     const { renderer, canvas } = this;
     const { camera } = this.view;

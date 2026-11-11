@@ -121,6 +121,11 @@ export class ViewerSession implements Viewer {
     return this.meshStages.pointAt(clientX, clientY, query);
   }
 
+  meshPointOnScreen(point: { x: number; y: number; z: number }): { clientX: number; clientY: number } | null {
+    const found = this.meshStages.screenOf([point.x, point.y, point.z]);
+    return found && { clientX: found.x, clientY: found.y };
+  }
+
   setMeshValue(meshId: string, property: string, value: number | string): boolean {
     return this.meshStages.setValue(meshId, property, value);
   }

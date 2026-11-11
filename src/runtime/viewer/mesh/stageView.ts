@@ -140,6 +140,16 @@ export class StageView {
     return pointIn(this.host.getBoundingClientRect(), clientX, clientY);
   }
 
+  // A point of the 3D world on the screen, or undefined behind the camera.
+  toClient(point: readonly number[]): { x: number; y: number } | undefined {
+    const projected = this.camera && project(this.camera, point);
+    if (!projected) {
+      return undefined;
+    }
+    const box = this.host.getBoundingClientRect();
+    return { x: box.left + ((projected[0] + 1) / 2) * box.width, y: box.top + ((1 - projected[1]) / 2) * box.height };
+  }
+
   // A point of the 3D world in the units of the 2D drawing, from the corner of the stage.
   toStage(point: readonly number[]): DrawingPoint | undefined {
     const projected = this.camera && project(this.camera, point);

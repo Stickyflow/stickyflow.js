@@ -48,6 +48,8 @@ export interface Viewer {
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
   // A point of the 3D world under a point of the screen, for drawing into a Scene: on the mesh there, or on a level plane.
   meshPointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
+  // Where a point of the 3D world is on the screen: the other way round. Null behind the camera.
+  meshPointOnScreen(point: { x: number; y: number; z: number }): { clientX: number; clientY: number } | null;
   setWidgetValue(componentId: string, value: string | number): boolean;
   setPaused(paused: boolean): void;
   clearOverrides(): void;

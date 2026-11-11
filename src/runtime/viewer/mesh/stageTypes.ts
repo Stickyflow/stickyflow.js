@@ -45,6 +45,7 @@ export interface MeshStagesHandle {
   selectItem(id: string | null): boolean;
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
   pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
+  screenOf(point: readonly number[]): { x: number; y: number } | null;
   destroy(): void;
 }
 
