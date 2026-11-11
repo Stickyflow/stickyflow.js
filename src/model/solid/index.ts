@@ -130,7 +130,9 @@ function inset(ring: Ring, distance: number): Ring {
       return [-(to[1] - from[1]) / length, (to[0] - from[0]) / length];
     };
     const [n1, n2] = [inward(before, point), inward(point, after)];
-    const reach = Math.min(3, 1 / Math.max(0.2, 1 + n1[0] * n2[0] + n1[1] * n2[1]));
+    // At a sharp corner the point would run far out, as a spike. It goes no farther than a little past the distance.
+    const sum = Math.hypot(n1[0] + n2[0], n1[1] + n2[1]) || 1;
+    const reach = Math.min(1.5 / sum, 1 / Math.max(0.05, 1 + n1[0] * n2[0] + n1[1] * n2[1]));
     return [point[0] + (n1[0] + n2[0]) * reach * distance, point[1] + (n1[1] + n2[1]) * reach * distance];
   });
 }
