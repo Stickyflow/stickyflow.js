@@ -70,6 +70,8 @@ const COLOR_MAPS: ReadonlySet<MaterialMapName> = new Set(['base', 'emissive']);
 // How large the sun looks, in degrees, in a Scene with an environment.
 const DEFAULT_SOFTNESS = 1.5;
 const PLAIN_GROUND_SHADOW = 0.32;
+// How much light the ground loses under what stands on it, when only the ground has a shadow.
+const PLAIN_GROUND_SHADE = 0.5;
 // What a ground without a color throws light back with: about as much as a page does.
 const PAGE_COLOR: Vec3 = [0.8, 0.8, 0.8];
 // How much the light is scaled before the filmic curve. An environment is lit evenly, so it can be brighter.
@@ -632,7 +634,7 @@ export class MeshRenderer {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
     this.shadows.grain = still !== null;
-    this.environmentShadows.grain = still !== null;
+    this.environmentShadows.grain = still !== null && this.plainShadows;
     const instances = this.instances(meshes);
     const measured = this.boxOf(instances, planes) ?? options.space;
     if (!camera || !measured) {
@@ -656,10 +658,19 @@ export class MeshRenderer {
         : main
           ? { mode: 1, direction: main.direction, softness: main.size, strength: main.strength }
           : { mode: 0 };
+    // Without the shadows of the environment the ground still has one: of the one large light, soft, pale and the same while the
+    // picture moves and at rest, as it is read from a map and not from the picture.
+    const plainLight = this.plainShadows ? null : this.environment.mainLight(options.environmentTurn ?? 0);
+    const groundLight: EnvironmentLight = plainLight
+      ? {
+          mode: 1,
+          direction: plainLight.direction,
+          softness: Math.max(plainLight.size, 40),
+          strength: PLAIN_GROUND_SHADE,
+        }
+      : environmentLight;
     const environmentMatrix =
-      environmentLight.mode === 0
-        ? identity()
-        : this.environmentShadows.update(casters, box, environmentLight.direction);
+      groundLight.mode === 0 ? identity() : this.environmentShadows.update(casters, box, groundLight.direction);
     const seeThrough = (instance: Instance) => isSeeThrough(instance);
     const solids = instances
       .filter(instance => !seeThrough(instance))
@@ -713,7 +724,7 @@ export class MeshRenderer {
         softness,
       };
       this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
-      this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
+      this.bindEnvironmentShadow(this.ground.uniforms, groundLight, environmentMatrix, lighting.ambient);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
       gl.uniform1i(this.ground.uniforms.uBasePass, 0);
       // How dark the ground gets toward what stands on it. Without the shadows of the environment this is the one shadow there
@@ -734,7 +745,7 @@ export class MeshRenderer {
     this.drawInstances(opaque);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    if (options.shadows || options.grid || occlusion || environmentLight.mode !== 0) {
+    if (options.shadows || options.grid || occlusion || groundLight.mode !== 0) {
       prepareGround();
       this.drawGroundQuad();
     }
