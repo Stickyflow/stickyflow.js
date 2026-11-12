@@ -1,3 +1,4 @@
+import { type FacetsShape, facetsAssetName } from '../../../../model/facets';
 import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
 import { type Outline, ringArea } from '../../../../model/outline';
 import { flattenPath } from '../../../../model/path';
@@ -276,6 +277,27 @@ function solidAsset(
   });
 }
 
+// Facets are a mesh whose model is built from the points and the faces written in the block.
+function facetsAsset(properties: Map<string, SflValue>): string {
+  const rows = (key: string): number[][] => {
+    const list = properties.get(key);
+    return list?.type === 'list' ? list.values.map(item => listNumbers(item) ?? []) : [];
+  };
+  const symmetry = asString(properties.get('symmetry'));
+  const thickness = asNumber(properties.get('thickness'));
+  const bevel = asNumber(properties.get('bevel'));
+  const shape: FacetsShape = {
+    points: rows('points')
+      .filter(row => row.length >= 3)
+      .map(row => [row[0], row[1], row[2]] as [number, number, number]),
+    faces: rows('faces').filter(row => row.length >= 3),
+    ...(symmetry === 'x' || symmetry === 'y' || symmetry === 'z' ? { symmetry } : {}),
+    ...(thickness ? { thickness } : {}),
+    ...(bevel ? { bevel } : {}),
+  };
+  return facetsAssetName(shape);
+}
+
 export function resolveMeshObject(
   base: SflCanvasObjectBase,
   block: SflBlock,
@@ -305,7 +327,9 @@ export function resolveMeshObject(
       asset:
         block.kind === 'Solid'
           ? solidAsset(block, properties, layoutProp, symbolDefs, sketched)
-          : (asString(properties.get('asset')) ?? ''),
+          : block.kind === 'Facets'
+            ? facetsAsset(properties)
+            : (asString(properties.get('asset')) ?? ''),
       role: asString(properties.get('role')),
       color: asString(properties.get('color')),
       opacity: asNumber(properties.get('opacity')),

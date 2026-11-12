@@ -1,3 +1,4 @@
+import { buildFacets, facetsOfAsset } from '../../../model/facets';
 import { buildSolid, solidOfAsset } from '../../../model/solid';
 import { STUDIO } from './environment';
 import { plainAsset } from './glb';
@@ -44,6 +45,12 @@ export class StageLoader {
     const solid = solidOfAsset(asset);
     if (solid) {
       renderer.addAsset(asset, plainAsset({ ...buildSolid(solid) }, []));
+      this.target.arrived(true);
+      return;
+    }
+    const facets = facetsOfAsset(asset);
+    if (facets) {
+      renderer.addAsset(asset, plainAsset({ ...buildFacets(facets) }, []));
       this.target.arrived(true);
       return;
     }
