@@ -319,6 +319,12 @@ export class MeshStage {
     return this.view.toClient(point) ?? null;
   }
 
+  // Where a mesh stands right now, also while it is dragged and before the document says so.
+  placeOf(id: string): [number, number, number] | null {
+    const mesh = this.placement.get().meshes.find(item => item.id === id);
+    return mesh ? [mesh.position[0], mesh.position[1], mesh.position[2]] : null;
+  }
+
   private clickAt(clientX: number, clientY: number): void {
     const { renderer, canvas } = this;
     const { camera } = this.view;

@@ -59,6 +59,7 @@ export interface MeshStagesHandle {
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
   pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
   screenOf(point: readonly number[]): { x: number; y: number } | null;
+  placeOf(id: string): [number, number, number] | null;
   camera(): MeshCamera | null;
   setCamera(camera: Partial<MeshCamera>, animate: boolean): void;
   destroy(): void;

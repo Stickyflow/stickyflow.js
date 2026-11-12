@@ -246,6 +246,16 @@ class MeshStages implements MeshStagesHandle {
     return null;
   }
 
+  placeOf(id: string): [number, number, number] | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.placeOf(id);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
   capture(): Array<string | undefined> {
     return this.hosts().map(host => this.stages.get(dataOf(host)?.id ?? '')?.capture());
   }

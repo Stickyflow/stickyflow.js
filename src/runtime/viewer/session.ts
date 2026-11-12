@@ -161,6 +161,11 @@ export class ViewerSession implements Viewer {
     return found && { clientX: found.x, clientY: found.y };
   }
 
+  meshPlace(id: string): { x: number; y: number; z: number } | null {
+    const found = this.meshStages.placeOf(id);
+    return found && { x: found[0], y: found[1], z: found[2] };
+  }
+
   setMeshValue(meshId: string, property: string, value: number | string): boolean {
     return this.meshStages.setValue(meshId, property, value);
   }
