@@ -7,6 +7,9 @@ export interface EnvironmentImage {
 }
 
 export const STUDIO = 'studio';
+export const STUDIO_DARK = 'studio-dark';
+// The worlds that are made here and not loaded from an address.
+export const MADE_ENVIRONMENTS = [STUDIO, STUDIO_DARK];
 const MAX_WIDTH = 1024;
 const SMALLEST_HEIGHT = 4;
 
@@ -196,6 +199,33 @@ export function studioEnvironment(width = 512, height = 256): EnvironmentImage {
       const wall = 0.16 + 0.22 * up;
       const color = [wall * 1.02, wall, wall * 0.97];
       for (const box of SOFTBOXES) {
+        const light = softbox(d, box);
+        color[0] += light[0];
+        color[1] += light[1];
+        color[2] += light[2];
+      }
+      data.set(color, (y * width + x) * 3);
+    }
+  }
+  return { width, height, data };
+}
+
+const DARK_SOFTBOXES: Softbox[] = [
+  { toward: [0.25, 1, 0.3], width: 24, height: 14, light: [9, 8.9, 8.7] },
+  { toward: [-0.35, 0.35, -1], width: 30, height: 3, light: [6, 6.1, 6.4] },
+  { toward: [1, 0.2, 0.4], width: 6, height: 18, light: [1.4, 1.4, 1.45] },
+];
+
+// A dark studio: a room near black, lit by one large box from above, a thin strip behind that draws the edges, and a faint
+// box at the side.
+export function darkStudioEnvironment(width = 512, height = 256): EnvironmentImage {
+  const data = new Float32Array(width * height * 3);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const d = direction((x + 0.5) / width, (y + 0.5) / height);
+      const wall = 0.012 + 0.03 * smooth(-0.2, 0.8, d[1]);
+      const color = [wall, wall, wall * 1.04];
+      for (const box of DARK_SOFTBOXES) {
         const light = softbox(d, box);
         color[0] += light[0];
         color[1] += light[1];

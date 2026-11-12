@@ -1,6 +1,6 @@
 import { buildFacets, facetsOfAsset } from '../../../model/facets';
 import { buildSolid, solidOfAsset } from '../../../model/solid';
-import { STUDIO } from './environment';
+import { MADE_ENVIRONMENTS } from './environment';
 import { plainAsset } from './glb';
 import { loadAssetInto } from './loadAsset';
 import { environmentFor } from './loadEnvironment';
@@ -76,7 +76,7 @@ export class StageLoader {
       this.target.arrived(false);
       return;
     }
-    const address = name === STUDIO ? STUDIO : this.address(name);
+    const address = MADE_ENVIRONMENTS.includes(name) ? name : this.address(name);
     if (address === null) {
       this.target.report(`${name}: this address is not allowed`);
       return;

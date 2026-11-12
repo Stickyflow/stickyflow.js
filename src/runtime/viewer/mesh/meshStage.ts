@@ -1,4 +1,5 @@
 import { type Box, rayAt } from './camera';
+import { STUDIO_DARK } from './environment';
 import { lightingOf } from './lighting';
 import { transformPoint } from './matrix';
 import { MeshRenderer, type Plane } from './renderer';
@@ -26,6 +27,8 @@ const EMPTY_SCENE: Box = { min: [-2, 0, -2], max: [2, 2, 2] };
 
 // One Scene of a drawing: it owns the canvas and the renderer, and puts together what the parts work out. What stands on it is
 // kept by the placement, the camera by the view, and loading, the pointer, the handles and the anchors each by a part of their own.
+
+const DARK_GROUND = '#141518';
 
 export class MeshStage {
   private canvas: HTMLCanvasElement | null = null;
@@ -233,7 +236,11 @@ export class MeshStage {
       grid: this.grid && !wholeStage,
       environmentTurn: data.environmentTurn,
       exposure: data.exposure,
-      ground: data.ground,
+      // In the dark studio a ground without a color of its own is as dark as the room.
+      ground:
+        data.environment === STUDIO_DARK && !data.ground?.color
+          ? { id: '', reflection: 0, roughness: 0, ...data.ground, color: DARK_GROUND }
+          : data.ground,
       still: !wholeStage && !this.gestures.active && !moving,
       space: empty,
     });

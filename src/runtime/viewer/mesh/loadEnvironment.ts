@@ -1,4 +1,12 @@
-import { type EnvironmentImage, fromPixels, parseHdr, STUDIO, studioEnvironment } from './environment';
+import {
+  darkStudioEnvironment,
+  type EnvironmentImage,
+  fromPixels,
+  MADE_ENVIRONMENTS,
+  parseHdr,
+  STUDIO,
+  studioEnvironment,
+} from './environment';
 
 // Pictures of the world are kept for the page, as several stages often share one and making one takes a moment.
 const environments = new Map<string, Promise<EnvironmentImage>>();
@@ -24,10 +32,13 @@ async function fetchEnvironment(address: string): Promise<EnvironmentImage> {
 }
 
 export function environmentFor(name: string, address: string): Promise<EnvironmentImage> {
-  const key = name === STUDIO ? STUDIO : address;
+  const made = MADE_ENVIRONMENTS.includes(name);
+  const key = made ? name : address;
   let known = environments.get(key);
   if (!known) {
-    known = name === STUDIO ? Promise.resolve(studioEnvironment()) : fetchEnvironment(address);
+    known = made
+      ? Promise.resolve(name === STUDIO ? studioEnvironment() : darkStudioEnvironment())
+      : fetchEnvironment(address);
     environments.set(key, known);
     known.catch(() => environments.delete(key));
   }
