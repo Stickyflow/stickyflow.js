@@ -51,6 +51,8 @@ export interface MeshStagesHandle {
   setTracing(tracing: boolean): void;
   // What the layers of a host have hidden or locked, by name.
   setFlags(flags: MeshStageFlags): void;
+  // The meshes that move together: dragging one of them takes the others along, by the same step.
+  setFollowers(ids: readonly string[]): void;
   // Selects a mesh, a Canvas or what lies on one, from outside the stage. False when no stage knows the name.
   selectItem(id: string | null): boolean;
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;

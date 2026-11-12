@@ -358,6 +358,10 @@ export class MeshStage {
     this.schedule();
   }
 
+  setFollowers(ids: readonly string[]): void {
+    this.placement.followers = ids;
+  }
+
   setFlags(flags: MeshStageFlags): void {
     this.placement.setFlags(flags);
     for (const id of [this.selected, this.selectedObject]) {

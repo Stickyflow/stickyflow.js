@@ -57,6 +57,9 @@ export interface Viewer {
   setMeshTracing(tracing: boolean): void;
   // What layers have hidden or locked in a Scene, by name. Meshes and what lies on a Canvas are not in the drawing, so CSS does not reach them.
   setMeshFlags(flags: MeshStageFlags): void;
+  // The meshes of a Scene that move together: dragging one of them takes the others along by the same step, while it is
+  // dragged. The host is told of the one that was dragged. An empty list ends it.
+  setMeshGroup(ids: readonly string[]): void;
   // Selects a mesh, a Canvas or what lies on one. False when no Scene has that name.
   selectMeshItem(id: string | null): boolean;
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;

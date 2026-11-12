@@ -104,6 +104,10 @@ export class ViewerSession implements Viewer {
     return this.setComponentValue(componentId, value);
   }
 
+  setMeshGroup(ids: readonly string[]): void {
+    this.meshStages.setFollowers(ids);
+  }
+
   setMeshFlags(flags: MeshStageFlags): void {
     this.meshStages.setFlags(flags);
   }

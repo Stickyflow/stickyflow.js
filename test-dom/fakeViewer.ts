@@ -54,6 +54,7 @@ export function createFakeViewer(): FakeViewer {
     setMeshEditing: () => undefined,
     setMeshGrid: () => undefined,
     setMeshFlags: () => undefined,
+    setMeshGroup: () => undefined,
     selectMeshItem: () => false,
     setWidgetValue: () => false,
     setPaused: () => undefined,

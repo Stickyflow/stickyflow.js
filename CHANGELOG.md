@@ -29,6 +29,7 @@ Two things count as breaking here that are easy to overlook:
 - `viewer.setMeshSteadyCamera(true)` keeps the camera of a Scene where it is when meshes come and go. Turning it off frames the Scene again.
 - `Sketch` stands in a Scene. It is a plane, placed and turned by its `layout`, with the shapes drawn on it: `Rect` with `at`, `size` and a `radius` for its corners, `Circle` with `at` and `radius`, and `Outline` with `points`, each of which may carry the radius its corner is rounded with as a third number. `on` names the Solid it lies on. A Sketch is not drawn. It is what bodies are made from.
 - A `Solid` is made from a Sketch with `sketch`, the name of the Sketch, and `pick`, a list of points on its plane, each in a piece of it. The pieces are taken together as the outline, `height` says how far it is pulled up, and the Solid stands on the plane of the Sketch, turned with it. Its own `position` moves it from there. Without `pick` it is all the shapes together. So a body follows its Sketch when that is changed.
+- `viewer.setMeshGroup(ids)` names meshes of a Scene that move together. Dragging one of them takes the others along by the same step while it is dragged.
 - `viewer.meshCamera()` tells where the camera of a Scene looks from and at, and `viewer.setMeshCamera({ orbit, target }, { animate })` turns it there: to look straight at a face, or to put a view back. The type is `MeshCamera`.
 - A Scene with no mesh in it has a camera all the same, looking at a space four units wide, so its ground is drawn and `meshPointAt` answers on it.
 - `viewer.setMeshTracing(false)` shows only the quick picture of a Scene, without tracing the still one.
@@ -41,6 +42,7 @@ Two things count as breaking here that are easy to overlook:
 - While a Scene is turned or moved, the soft edges of its shadows and the shade in its corners no longer show as grain.
 - The still picture of a Scene is shown once it is smooth. It showed after a few frames, as grain that then cleared.
 - A traced picture of a Scene shows the grid as the plain one does.
+- The shadows of the light of the environment in a traced picture are smooth. They showed in bands, one for each light the frames took.
 - A Scene that is turned or moved looks nearer to how it looks at rest: the shadow that stands for the light of the environment is as strong as that light is one-sided, and the shade on the ground round what stands there counts for less.
 
 ## [0.19.0] - 2026-11-11
