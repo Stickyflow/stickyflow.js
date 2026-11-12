@@ -161,6 +161,10 @@ export class ViewerSession implements Viewer {
     return found && { clientX: found.x, clientY: found.y };
   }
 
+  meshEdges(id: string): Float32Array | null {
+    return this.meshStages.edgesOf(id);
+  }
+
   meshPlace(id: string): { x: number; y: number; z: number } | null {
     const found = this.meshStages.placeOf(id);
     return found && { x: found[0], y: found[1], z: found[2] };

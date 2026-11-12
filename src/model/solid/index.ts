@@ -2,6 +2,7 @@
 // z, with its middle at the origin, and the body rises from 0 to its height along y. A chamfer cuts the rim round its
 // top and round its bottom.
 import { type Outline, type Ring, ringArea } from '../outline';
+import { roundedRing } from '../sketch';
 import { type Corner, type Face, faceOf, type Joining, joinBodies, type V3 } from './combine';
 
 export interface SolidShape {
@@ -10,6 +11,13 @@ export interface SolidShape {
   // Width along x, height along y, depth along z.
   size: [number, number, number];
   chamfer: number;
+  // The rim of the bottom, when it is not as wide as the one of the top, which `chamfer` is then.
+  chamferBottom?: number;
+  // Rounded instead of cut straight.
+  round?: boolean;
+  // Upright edges, each a corner of a ring of the outline: the ring, the corner, how far it is cut, and 1 to round it, 0 to
+  // cut it straight.
+  corners?: Array<[number, number, number, number]>;
   // Bodies that are added to it, cut out of it, or kept with it, in the order they are written.
   joins?: SolidJoin[];
 }
@@ -171,7 +179,11 @@ function holds(rings: Outline, distance: number): boolean {
       }
     }
   }
-  return true;
+  // A hole that has grown past the body round it is gone from the outline, so the rim may not reach that far.
+  const bodies = drawn.filter((_, r) => ringArea(rings[r]) > 0);
+  return drawn.every(
+    (ring, r) => ringArea(rings[r]) >= 0 || ring.every(point => bodies.some(body => inRing(body, point))),
+  );
 }
 
 // The widest chamfer an outline takes, up to the one asked for. A narrow web or a small hole takes less than a wide
@@ -193,14 +205,42 @@ function safeChamfer(rings: Outline, wanted: number): number {
 }
 
 const SMOOTH = Math.cos((32 * Math.PI) / 180);
+const ROUND_STEPS = 6;
 
 function plainSolid(shape: SolidShape): SolidGeometry {
   const [width, height, depth] = shape.size;
-  const rings = shape.rings.map(ring => ring.map(([x, y]) => [(x - 0.5) * width, (y - 0.5) * depth] as P));
-  const chamfer = safeChamfer(
-    rings,
-    Math.max(0, Math.min(shape.chamfer, height / 2 - 1e-6, Math.min(width, depth) / 4)),
-  );
+  const rings = shape.rings.map((ring, r) => {
+    const placed = ring.map(([x, y]) => [(x - 0.5) * width, (y - 0.5) * depth] as P);
+    const own = (shape.corners ?? []).filter(([at]) => at === r);
+    if (own.length === 0) {
+      return placed;
+    }
+    const sizes = placed.map((_, i) => own.find(([, at]) => at === i)?.[2] ?? 0);
+    const straight = placed.map((_, i) => own.find(([, at]) => at === i)?.[3] === 0);
+    return roundedRing(placed, sizes, straight) as P[];
+  });
+  const most = (wanted: number) => Math.max(0, Math.min(wanted, height / 2 - 1e-6, Math.min(width, depth) / 4));
+  const top = safeChamfer(rings, most(shape.chamfer));
+  const bottom = safeChamfer(rings, most(shape.chamferBottom ?? shape.chamfer));
+  // The profile of a rim, from the wall to the cap: how far each step lies in from the outline, how far it lies on from where
+  // the wall ends, and the way it faces, out and up. A chamfer is one step, a rounding a quarter of a circle.
+  const steps = shape.round ? ROUND_STEPS : 1;
+  const profile = (size: number) =>
+    Array.from({ length: steps + 1 }, (_, k) => {
+      const angle = (k / steps) * (Math.PI / 2);
+      return shape.round
+        ? {
+            inward: size * (1 - Math.cos(angle)),
+            along: size * Math.sin(angle),
+            out: Math.cos(angle),
+            up: Math.sin(angle),
+          }
+        : { inward: size * (k / steps), along: size * (k / steps), out: Math.SQRT1_2, up: Math.SQRT1_2 };
+    });
+  const rims = [
+    { size: top, profile: profile(top), from: height - top, way: 1 },
+    { size: bottom, profile: profile(bottom), from: bottom, way: -1 },
+  ];
   const positions: number[] = [];
   const normals: number[] = [];
   const corner = (p: P, y: number, n: [number, number, number]) => {
@@ -228,32 +268,27 @@ function plainSolid(shape: SolidShape): SolidGeometry {
     triangle(a, c, d, [n[0], n[2], n[3]]);
   };
 
-  const caps = rings.map(ring => inset(ring, chamfer));
-  for (const [a, b, c] of triangulate(caps)) {
-    triangle(
-      [a, height],
-      [b, height],
-      [c, height],
-      [
-        [0, 1, 0],
-        [0, 1, 0],
-        [0, 1, 0],
-      ],
-    );
-    triangle(
-      [a, 0],
-      [b, 0],
-      [c, 0],
-      [
-        [0, -1, 0],
-        [0, -1, 0],
-        [0, -1, 0],
-      ],
-    );
+  // The caps, each as far in as its rim reaches.
+  for (const [rim, y, up] of [
+    [rims[0], height, 1],
+    [rims[1], 0, -1],
+  ] as const) {
+    const caps = rings.map(ring => inset(ring, rim.size));
+    for (const [a, b, c] of triangulate(caps)) {
+      triangle(
+        [a, y],
+        [b, y],
+        [c, y],
+        [
+          [0, up, 0],
+          [0, up, 0],
+          [0, up, 0],
+        ],
+      );
+    }
   }
 
-  rings.forEach((ring, r) => {
-    const cap = caps[r];
+  rings.forEach(ring => {
     const count = ring.length;
     // The way each wall faces, and for each point the way the wall faces there: across a gentle bend it is shared.
     const out = ring.map((point, i): P => {
@@ -270,38 +305,42 @@ function plainSolid(shape: SolidShape): SolidGeometry {
       const length = Math.hypot(own[0] + other[0], own[1] + other[1]) || 1;
       return [(own[0] + other[0]) / length, (own[1] + other[1]) / length];
     };
+    // The outline drawn in by each step of each rim.
+    const drawn = rims.map(rim => rim.profile.map(step => (step.inward > 0 ? inset(ring, step.inward) : ring)));
     for (let i = 0; i < count; i += 1) {
       const j = (i + 1) % count;
       const [ni, nj] = [at(i, i), at(j, i)];
       const side = (n: P): [number, number, number] => [n[0], 0, n[1]];
-      const slope = (n: P, up: number): [number, number, number] => [
-        n[0] * Math.SQRT1_2,
-        up * Math.SQRT1_2,
-        n[1] * Math.SQRT1_2,
-      ];
       quad(
-        [ring[i], chamfer],
-        [ring[j], chamfer],
-        [ring[j], height - chamfer],
-        [ring[i], height - chamfer],
+        [ring[i], bottom],
+        [ring[j], bottom],
+        [ring[j], height - top],
+        [ring[i], height - top],
         [side(ni), side(nj), side(nj), side(ni)],
       );
-      if (chamfer > 0) {
-        quad(
-          [ring[i], height - chamfer],
-          [ring[j], height - chamfer],
-          [cap[j], height],
-          [cap[i], height],
-          [slope(ni, 1), slope(nj, 1), slope(nj, 1), slope(ni, 1)],
-        );
-        quad(
-          [ring[i], chamfer],
-          [ring[j], chamfer],
-          [cap[j], 0],
-          [cap[i], 0],
-          [slope(ni, -1), slope(nj, -1), slope(nj, -1), slope(ni, -1)],
-        );
-      }
+      rims.forEach((rim, r) => {
+        if (rim.size <= 0) {
+          return;
+        }
+        const facing = (n: P, k: number): [number, number, number] => {
+          const step = rim.profile[k];
+          const length = Math.hypot(step.out, step.up) || 1;
+          return [(n[0] * step.out) / length, (rim.way * step.up) / length, (n[1] * step.out) / length];
+        };
+        for (let k = 0; k < steps; k += 1) {
+          const [a, b] = [rim.profile[k], rim.profile[k + 1]];
+          const [ya, yb] = [rim.from + rim.way * a.along, rim.from + rim.way * b.along];
+          // A chamfer faces one way along its whole width. A rounding turns from step to step.
+          const [ka, kb] = shape.round ? [k, k + 1] : [0, 0];
+          quad(
+            [drawn[r][k][i], ya],
+            [drawn[r][k][j], ya],
+            [drawn[r][k + 1][j], yb],
+            [drawn[r][k + 1][i], yb],
+            [facing(ni, ka), facing(nj, ka), facing(nj, kb), facing(ni, kb)],
+          );
+        }
+      });
     }
   });
   return { positions: new Float32Array(positions), normals: new Float32Array(normals) };

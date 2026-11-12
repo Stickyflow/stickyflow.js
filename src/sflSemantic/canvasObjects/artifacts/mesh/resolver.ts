@@ -158,6 +158,29 @@ function fromSketch(
   };
 }
 
+// The rims of a Solid: `chamfer` is the one of the top and the bottom, or `chamfer: top, bottom`, and `edge: round`
+// rounds them instead of cutting them straight.
+function rimOf(properties: Map<string, SflValue>): Pick<SolidJoin, 'chamfer' | 'chamferBottom' | 'round' | 'corners'> {
+  const value = properties.get('chamfer');
+  const [top = asNumber(value) ?? 0, bottom = top] = tupleValues(value) ?? [];
+  // `round` and `cut` name upright edges: each as the ring of the outline, its corner and how far, as [ring, corner, size].
+  const corners = (['cut', 'round'] as const).flatMap((name, kind) => {
+    const list = properties.get(name);
+    return list?.type === 'list'
+      ? list.values.flatMap(item => {
+          const [ring, at, size] = listNumbers(item) ?? [];
+          return size !== undefined && size > 0 ? [[ring, at, size, kind] as [number, number, number, number]] : [];
+        })
+      : [];
+  });
+  return {
+    ...(corners.length > 0 ? { corners } : {}),
+    chamfer: top,
+    ...(bottom !== top ? { chamferBottom: bottom } : {}),
+    ...(asString(properties.get('edge')) === 'round' ? { round: true } : {}),
+  };
+}
+
 const JOININGS: Record<string, SolidJoin['joining']> = { Cut: 'cut', Add: 'add', Keep: 'keep' };
 
 // A Solid is a mesh whose model is built from its outline and from the bodies joined to it. The name of that model
@@ -178,7 +201,7 @@ function solidAsset(
         joining: JOININGS[child.kind],
         rings: outlineOf(own, symbolDefs, flip),
         size: vector(child, layoutProp, 'size', 1),
-        chamfer: asNumber(own.get('chamfer')) ?? 0,
+        ...rimOf(own),
         position: mirrored(vector(child, layoutProp, 'position', 0), flip, [-1, 1, 1], [1, 1, -1]),
         rotation: mirrored(vector(child, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
       };
@@ -188,7 +211,7 @@ function solidAsset(
     size: sketched
       ? [sketched.width, asNumber(properties.get('height')) ?? vector(block, layoutProp, 'size', 1)[1], sketched.depth]
       : vector(block, layoutProp, 'size', 1),
-    chamfer: asNumber(properties.get('chamfer')) ?? 0,
+    ...rimOf(properties),
     ...(joins.length > 0 ? { joins } : {}),
   });
 }

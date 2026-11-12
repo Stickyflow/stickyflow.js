@@ -246,6 +246,16 @@ class MeshStages implements MeshStagesHandle {
     return null;
   }
 
+  edgesOf(id: string): Float32Array | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.edgesOf(id);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
   placeOf(id: string): [number, number, number] | null {
     for (const stage of this.stages.values()) {
       const found = stage.placeOf(id);

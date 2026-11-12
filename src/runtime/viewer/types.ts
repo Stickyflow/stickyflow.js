@@ -59,6 +59,9 @@ export interface Viewer {
   setMeshPlainShadows(on: boolean): void;
   // Where a mesh stands right now, also while it is dragged and before the document says so. Null when no Scene has it.
   meshPlace(id: string): { x: number; y: number; z: number } | null;
+  // The edges of a mesh as it stands, in the world: where two of its faces meet at an angle, and where a face ends. Six numbers
+  // for each, its two points. A rounding shows only where it starts and ends. Null while its model is not there.
+  meshEdges(id: string): Float32Array | null;
   // What layers have hidden or locked in a Scene, by name. Meshes and what lies on a Canvas are not in the drawing, so CSS does not reach them.
   setMeshFlags(flags: MeshStageFlags): void;
   // The meshes of a Scene that move together: dragging one of them takes the others along by the same step, while it is

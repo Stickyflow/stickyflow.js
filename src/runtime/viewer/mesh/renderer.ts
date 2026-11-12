@@ -13,6 +13,7 @@ import {
 } from './camera';
 import type { EnvironmentImage, SkyLight } from './environment';
 import { ENVIRONMENT_UNIFORMS, EnvironmentMap } from './environmentMap';
+import { featureEdges } from './featureEdges';
 import { link, linkProgram, type Program, QUAD, requireObject } from './gl';
 import type { MaterialMapName, MeshAsset, MeshPrimitive } from './glb';
 import { colorOf, type Lighting, lightingOf } from './lighting';
@@ -474,6 +475,29 @@ export class MeshRenderer {
   }
 
   // The box around what stands on the stage, from the corners of the box of each part, so it costs the same for a million triangles.
+  // The edges of a mesh as they stand, in the world: two points each. Null while its model is not there.
+  edges(mesh: Mesh): Float32Array | null {
+    const parts = this.instances([mesh]);
+    if (parts.length === 0) {
+      return null;
+    }
+    const lists = parts.map(({ primitive, world }) => {
+      const own = featureEdges(primitive.source);
+      const placed = new Float32Array(own.length);
+      for (let i = 0; i < own.length; i += 3) {
+        placed.set(transformPoint(world, own, i), i);
+      }
+      return placed;
+    });
+    const all = new Float32Array(lists.reduce((sum, list) => sum + list.length, 0));
+    let at = 0;
+    for (const list of lists) {
+      all.set(list, at);
+      at += list.length;
+    }
+    return all;
+  }
+
   box(meshes: readonly Mesh[], planes: readonly Plane[] = []): Box | undefined {
     return this.boxOf(this.instances(meshes), planes);
   }

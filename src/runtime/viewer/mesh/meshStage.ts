@@ -319,6 +319,11 @@ export class MeshStage {
     return this.view.toClient(point) ?? null;
   }
 
+  edgesOf(id: string): Float32Array | null {
+    const mesh = this.placement.get().meshes.find(item => item.id === id);
+    return mesh && this.renderer ? this.renderer.edges(mesh) : null;
+  }
+
   // Where a mesh stands right now, also while it is dragged and before the document says so.
   placeOf(id: string): [number, number, number] | null {
     const mesh = this.placement.get().meshes.find(item => item.id === id);

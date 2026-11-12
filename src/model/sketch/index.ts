@@ -18,7 +18,7 @@ export function circleRing(at: Point, radius: number): Ring {
 }
 
 // A ring with its corners rounded. A radius is no larger than the two edges at its corner allow.
-export function roundedRing(points: Ring, radii: readonly number[]): Ring {
+export function roundedRing(points: Ring, radii: readonly number[], straight?: readonly boolean[]): Ring {
   const out: Ring = [];
   points.forEach((corner, i) => {
     const radius = radii[i] ?? 0;
@@ -44,6 +44,11 @@ export function roundedRing(points: Ring, radii: readonly number[]): Ring {
     }
     if (sweep < -Math.PI) {
       sweep += Math.PI * 2;
+    }
+    // Cut straight, the corner is only its two ends.
+    if (straight?.[i]) {
+      out.push(from, to);
+      return;
     }
     for (let step = 0; step <= ROUND_STEPS; step++) {
       const angle = start + (sweep * step) / ROUND_STEPS;
