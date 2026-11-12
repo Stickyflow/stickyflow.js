@@ -203,6 +203,7 @@ export class MeshRenderer {
       'uStrength',
       'uGrid',
       'uCell',
+      'uContact',
       'uReach',
       'uStage',
       'uBasePass',
@@ -711,19 +712,13 @@ export class MeshRenderer {
         darkness: this.groundDarkness(lighting),
         softness,
       };
-      this.drawGround(
-        camera,
-        lightMatrix,
-        box,
-        floor,
-        shadow,
-        options.grid ?? false,
-        wide,
-        occlusion && this.plainShadows,
-      );
+      this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
       this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
       gl.uniform1i(this.ground.uniforms.uBasePass, 0);
+      // How dark the ground gets toward what stands on it. Without the shadows of the environment this is the one shadow there
+      // is, light, and the same while the picture moves and at rest.
+      gl.uniform1f(this.ground.uniforms.uContact, this.plainShadows ? (still ? 0.75 : 0.25) : 0.45);
     };
     if (groundColor && !still) {
       this.drawGroundBase(camera, box, floor, wide, groundColor);

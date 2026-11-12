@@ -32,7 +32,7 @@ Two things count as breaking here that are easy to overlook:
 - `viewer.setMeshGroup(ids)` names meshes of a Scene that move together. Dragging one of them takes the others along by the same step while it is dragged.
 - `viewer.meshCamera()` tells where the camera of a Scene looks from and at, and `viewer.setMeshCamera({ orbit, target }, { animate })` turns it there: to look straight at a face, or to put a view back. The type is `MeshCamera`.
 - A Scene with no mesh in it has a camera all the same, looking at a space four units wide, so its ground is drawn and `meshPointAt` answers on it.
-- `viewer.setMeshPlainShadows(false)` leaves the shadows of the environment out of the picture of a Scene that is not traced, as while it moves. Only the traced picture has them.
+- `viewer.setMeshPlainShadows(false)` leaves the shadows of the environment out of the picture of a Scene that is not traced, as while it moves. Only the traced picture has them. The ground keeps a light shade toward what stands on it, the same while the picture moves and at rest.
 - `viewer.setMeshTracing(false)` shows only the quick picture of a Scene, without tracing the still one.
 - `viewer.meshPointOnScreen(point)` is the other way round: where a point of the 3D world is on the screen.
 

@@ -19,6 +19,7 @@ ${SHADOW_LOOKUP}
 ${ENVIRONMENT_SHADOW_LOOKUP}
 ${TONE_CURVE}
 uniform bool uStill;
+uniform float uContact;
 // The ground itself, when it has a color: drawn first, under what it reflects and the shadows on it.
 uniform bool uBasePass;
 uniform vec3 uGroundColor;
@@ -45,7 +46,7 @@ void main() {
   float shadow = uStrength > 0.0 ? (1.0 - lit()) * uDarkness * fade * uStrength : 0.0;
   // Where something stands on the ground, the ground gets darker toward it. While the picture moves this counts for less: there
   // it is worked out anew with every frame and reaches far, and would lie round everything as a dark rim.
-  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * (uStill ? 0.75 : 0.25) * fade);
+  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * uContact * fade);
   // And where it does not see the light of the environment, it is in the shadow of that.
   // It fades out sooner than the shadow of the sun, as lights from many sides would carry it to the edges of the Scene.
   float near = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
