@@ -160,7 +160,9 @@ function fromSketch(
 
 // The rims of a Solid: `chamfer` is the one of the top and the bottom, or `chamfer: top, bottom`, and `edge: round`
 // rounds them instead of cutting them straight.
-function rimOf(properties: Map<string, SflValue>): Pick<SolidJoin, 'chamfer' | 'chamferBottom' | 'round' | 'corners'> {
+function rimOf(
+  properties: Map<string, SflValue>,
+): Pick<SolidJoin, 'chamfer' | 'chamferBottom' | 'round' | 'corners' | 'edges'> {
   const value = properties.get('chamfer');
   const [top = asNumber(value) ?? 0, bottom = top] = tupleValues(value) ?? [];
   // `round` and `cut` name upright edges: each as the ring of the outline, its corner and how far, as [ring, corner, size].
@@ -173,8 +175,29 @@ function rimOf(properties: Map<string, SflValue>): Pick<SolidJoin, 'chamfer' | '
         })
       : [];
   });
+  // `roundTop`, `roundBottom`, `cutTop` and `cutBottom` name single edges of the top or the bottom: each as the ring of the
+  // outline, the corner it starts at and how far, as [ring, corner, size].
+  const edges = (
+    [
+      ['cutBottom', 0, 0],
+      ['cutTop', 1, 0],
+      ['roundBottom', 0, 1],
+      ['roundTop', 1, 1],
+    ] as const
+  ).flatMap(([name, top, round]) => {
+    const list = properties.get(name);
+    return list?.type === 'list'
+      ? list.values.flatMap(item => {
+          const [ring, at, size] = listNumbers(item) ?? [];
+          return size !== undefined && size > 0
+            ? [[ring, at, size, top, round] as [number, number, number, number, number]]
+            : [];
+        })
+      : [];
+  });
   return {
     ...(corners.length > 0 ? { corners } : {}),
+    ...(edges.length > 0 ? { edges } : {}),
     chamfer: top,
     ...(bottom !== top ? { chamferBottom: bottom } : {}),
     ...(asString(properties.get('edge')) === 'round' ? { round: true } : {}),

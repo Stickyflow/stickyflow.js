@@ -18,6 +18,9 @@ export interface SolidShape {
   // Upright edges, each a corner of a ring of the outline: the ring, the corner, how far it is cut, and 1 to round it, 0 to
   // cut it straight.
   corners?: Array<[number, number, number, number]>;
+  // Single edges of the top or the bottom, each the edge of the outline from one of its corners to the next: the ring,
+  // that corner, how far it is cut, 1 for the top and 0 for the bottom, and 1 to round it, 0 to cut it straight.
+  edges?: Array<[number, number, number, number, number]>;
   // Bodies that are added to it, cut out of it, or kept with it, in the order they are written.
   joins?: SolidJoin[];
 }
@@ -392,12 +395,18 @@ function facesOf(geometry: SolidGeometry, position: V3 = [0, 0, 0], rotation: V3
 // triangles from its first corner, which works as every such face bulges nowhere inwards.
 export function buildSolid(shape: SolidShape): SolidGeometry {
   const plain = plainSolid(shape);
-  if (!shape.joins?.length) {
+  if (!shape.joins?.length && !shape.edges?.length) {
     return plain;
   }
   let faces = facesOf(plain);
-  for (const join of shape.joins) {
+  for (const join of shape.joins ?? []) {
     faces = joinBodies(faces, facesOf(plainSolid(join), join.position, join.rotation), join.joining);
+  }
+  for (const edge of shape.edges ?? []) {
+    const cutter = edgeCutter(shape, edge);
+    if (cutter) {
+      faces = joinBodies(faces, facesOf(cutter), 'cut');
+    }
   }
   const positions: number[] = [];
   const normals: number[] = [];
@@ -408,6 +417,109 @@ export function buildSolid(shape: SolidShape): SolidGeometry {
         const length = Math.hypot(...corner.normal) || 1;
         normals.push(corner.normal[0] / length, corner.normal[1] / length, corner.normal[2] / length);
       }
+    }
+  }
+  return { positions: new Float32Array(positions), normals: new Float32Array(normals) };
+}
+
+// What is taken away from a body to round or cut a single edge of its top or its bottom: a bar along that edge, whose
+// cross-section is the corner between the two faces less what is left of it.
+function edgeCutter(
+  shape: SolidShape,
+  [r, i, size, top, round]: [number, number, number, number, number],
+): SolidGeometry | null {
+  const [width, height, depth] = shape.size;
+  const ring = shape.rings[r];
+  if (!ring || size <= 0 || !ring[i]) {
+    return null;
+  }
+  const place = ([x, y]: [number, number]): P => [(x - 0.5) * width, (y - 0.5) * depth];
+  const [a, b] = [place(ring[i]), place(ring[(i + 1) % ring.length])];
+  const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (length < 1e-9) {
+    return null;
+  }
+  const along: V3 = [(b[0] - a[0]) / length, 0, (b[1] - a[1]) / length];
+  const out: V3 = [along[2], 0, -along[0]];
+  const away: V3 = [0, top ? 1 : -1, 0];
+  const y = top ? height : 0;
+  const s = Math.min(size, height / 2, length / 2);
+  // The cross-section, in steps out of the face and away from the cap, from the edge. It reaches a little past both faces so
+  // the cut is clean.
+  const e = s * 0.05 + 1e-4;
+  const section: Array<[number, number]> = [
+    [e, e],
+    [e, -s],
+  ];
+  if (round) {
+    for (let k = 0; k <= ROUND_STEPS * 2; k += 1) {
+      const angle = (k / (ROUND_STEPS * 2)) * (Math.PI / 2);
+      section.push([-s + s * Math.cos(angle), -s + s * Math.sin(angle)]);
+    }
+  } else {
+    section.push([0, -s], [-s, 0]);
+  }
+  section.push([-s, e]);
+  const ends = [-e, length + e];
+  const point = (o: number, w: number, t: number): V3 => [
+    a[0] + along[0] * t + out[0] * o,
+    y + away[1] * w,
+    a[1] + along[2] * t + out[2] * o,
+  ];
+  const positions: number[] = [];
+  const normals: number[] = [];
+  // Each triangle faces the way it is told: out of the bar.
+  const triangle = (p: V3, q: V3, t: V3, facing: V3) => {
+    const u: V3 = [q[0] - p[0], q[1] - p[1], q[2] - p[2]];
+    const v: V3 = [t[0] - p[0], t[1] - p[1], t[2] - p[2]];
+    let n: V3 = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const length = Math.hypot(n[0], n[1], n[2]);
+    if (length < 1e-14) {
+      return;
+    }
+    const flip = n[0] * facing[0] + n[1] * facing[1] + n[2] * facing[2] < 0;
+    n = [n[0] / length, n[1] / length, n[2] / length];
+    const corners = flip ? [p, t, q] : [p, q, t];
+    for (const c of corners) {
+      positions.push(...c);
+      normals.push(...(flip ? [-n[0], -n[1], -n[2]] : n));
+    }
+  };
+  const count = section.length;
+  // The way round the section runs, so each side knows which way is out.
+  const turning =
+    Math.sign(
+      section.reduce(
+        (sum, [o1, w1], k) => sum + o1 * section[(k + 1) % count][1] - section[(k + 1) % count][0] * w1,
+        0,
+      ),
+    ) || 1;
+  for (let k = 0; k < count; k += 1) {
+    const [o1, w1] = section[k];
+    const [o2, w2] = section[(k + 1) % count];
+    const [no, nw] = [(w2 - w1) * turning, -(o2 - o1) * turning];
+    const facing: V3 = [out[0] * no, away[1] * nw, out[2] * no];
+    const [p, q, t, u] = [
+      point(o1, w1, ends[0]),
+      point(o2, w2, ends[0]),
+      point(o2, w2, ends[1]),
+      point(o1, w1, ends[1]),
+    ];
+    triangle(p, q, t, facing);
+    triangle(p, t, u, facing);
+  }
+  // The two ends, as fans from the corner of the section that lies outside the body.
+  for (const [t, way] of [
+    [ends[0], -1],
+    [ends[1], 1],
+  ]) {
+    for (let k = 1; k + 1 < count; k += 1) {
+      triangle(
+        point(section[0][0], section[0][1], t),
+        point(section[k][0], section[k][1], t),
+        point(section[k + 1][0], section[k + 1][1], t),
+        [along[0] * way, 0, along[2] * way],
+      );
     }
   }
   return { positions: new Float32Array(positions), normals: new Float32Array(normals) };
