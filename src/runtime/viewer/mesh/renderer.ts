@@ -600,6 +600,8 @@ export class MeshRenderer {
       options.exposure,
       JSON.stringify(options.ground ?? null),
       this.generation,
+      // Traced or not is another picture, so turning it on or off starts the still picture over.
+      this.tracing,
     ].join('|');
   }
 
@@ -623,6 +625,8 @@ export class MeshRenderer {
       gl.depthMask(true);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
+    this.shadows.grain = still !== null;
+    this.environmentShadows.grain = still !== null;
     const instances = this.instances(meshes);
     const measured = this.boxOf(instances, planes) ?? options.space;
     if (!camera || !measured) {

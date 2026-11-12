@@ -7,6 +7,7 @@ uniform highp sampler2DShadow uShadow;
 uniform highp sampler2D uShadowDepth;
 // How wide the edge gets, in parts of the map, for each part of its depth between the point and what casts the shadow.
 uniform float uShadowSoftness;
+uniform float uShadowGrain;
 in vec4 vShadow;
 const float SHADOW_BIAS = 0.0015;
 
@@ -29,10 +30,10 @@ float sharpLit(vec3 p) {
 }
 
 // A shadow whose edge widens with the distance to what casts it, read from a map and the same map as plain distances.
-float softVisible(highp sampler2DShadow map, highp sampler2D depths, vec3 p, float softness) {
+float softVisible(highp sampler2DShadow map, highp sampler2D depths, vec3 p, float softness, float grain) {
   float texel = 1.0 / float(textureSize(map, 0).x);
   // A noise that changes in a fine, even pattern from pixel to pixel, so the turned discs blur into a smooth edge.
-  float angle = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2831853;
+  float angle = grain * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2831853;
   float search = clamp(softness * p.z, texel * 2.0, 0.08);
   float blockers = 0.0;
   float found = 0.0;
@@ -60,7 +61,7 @@ float lit() {
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) {
     return 1.0;
   }
-  return uShadowSoftness > 0.0 ? softVisible(uShadow, uShadowDepth, p, uShadowSoftness) : sharpLit(p);
+  return uShadowSoftness > 0.0 ? softVisible(uShadow, uShadowDepth, p, uShadowSoftness, uShadowGrain) : sharpLit(p);
 }`;
 
 // The shadow of the light of the environment, from a map of its own. While the picture moves (mode 1), one large light stands for
@@ -72,6 +73,7 @@ uniform int uEnvMode;
 uniform highp sampler2DShadow uEnvShadow;
 uniform highp sampler2D uEnvShadowDepth;
 uniform float uEnvShadowSoftness;
+uniform float uEnvShadowGrain;
 uniform vec3 uEnvDirection;
 // In a still picture: what the light of this frame gives a matte surface that faces it.
 uniform vec3 uEnvLightColor;
@@ -85,7 +87,7 @@ float envShadow() {
     return 1.0;
   }
   if (uEnvShadowSoftness > 0.0) {
-    return softVisible(uEnvShadow, uEnvShadowDepth, p, uEnvShadowSoftness);
+    return softVisible(uEnvShadow, uEnvShadowDepth, p, uEnvShadowSoftness, uEnvShadowGrain);
   }
   vec2 step = 1.0 / vec2(textureSize(uEnvShadow, 0));
   float sum = 0.0;

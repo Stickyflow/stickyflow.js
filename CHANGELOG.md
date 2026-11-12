@@ -38,6 +38,11 @@ Two things count as breaking here that are easy to overlook:
 
 - A Scene releases the models its document no longer names. It kept every model it had ever loaded.
 
+### Fixed
+
+- Turning the tracing of a Scene on or off starts its still picture over, so the change shows at once and not only after the view has moved.
+- While a Scene is turned or moved, the soft edges of its shadows and the shade in its corners no longer show as grain.
+
 ## [0.19.0] - 2026-11-11
 
 ### Added

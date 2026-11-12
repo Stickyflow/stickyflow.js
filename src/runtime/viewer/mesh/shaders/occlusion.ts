@@ -29,10 +29,6 @@ uniform vec3 uKernel[16];
 uniform float uSeed;
 out vec4 fragment;
 
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 void main() {
   vec4 here = texture(uGeometry, vUv);
   if (here.a <= 0.0) {
@@ -43,7 +39,8 @@ void main() {
   vec3 ray = normalize(far.xyz / far.w - uEye);
   vec3 p = uEye + ray * here.a;
   vec3 n = here.xyz;
-  float angle = hash(gl_FragCoord.xy + uSeed * 17.31) * 6.2831853;
+  // A noise in a fine, even pattern, which the blur afterwards takes out. A plain random one stays as grain.
+  float angle = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uSeed * 17.31, vec2(0.06711056, 0.00583715)))) * 6.2831853;
   vec3 turn = vec3(cos(angle), sin(angle), cos(angle * 1.7));
   vec3 t = turn - n * dot(turn, n);
   t = dot(t, t) < 1e-4 ? normalize(cross(n, vec3(0.0, 0.0, 1.0))) : normalize(t);

@@ -18,7 +18,12 @@ export interface ShadowSlot {
 export const SUN_SHADOW: ShadowSlot = { name: 'uShadow', unit: 1, depthUnit: 8, size: 2048 };
 export const ENVIRONMENT_SHADOW: ShadowSlot = { name: 'uEnvShadow', unit: 9, depthUnit: 10, size: 2048 };
 
-export const shadowUniforms = ({ name }: ShadowSlot): string[] => [name, `${name}Depth`, `${name}Softness`];
+export const shadowUniforms = ({ name }: ShadowSlot): string[] => [
+  name,
+  `${name}Depth`,
+  `${name}Softness`,
+  `${name}Grain`,
+];
 
 // Something that casts a shadow, with what tells whether it has changed since the map was drawn.
 export interface Caster extends Drawable {
@@ -35,6 +40,9 @@ export class ShadowMap {
   private readonly buffer: WebGLFramebuffer | null;
   private readonly plain: WebGLSampler | null;
   private key = '';
+  // Whether the soft edge of a shadow is turned from pixel to pixel. That hides its steps in a still picture, where the frames add
+  // up, and shows as grain in one that moves, so there it is left out.
+  grain = true;
   private matrix: Mat4 | null = null;
   // Half the width of the map in the world, and how deep it reaches.
   private radius = 1;
@@ -106,6 +114,7 @@ export class ShadowMap {
     // reach, and its width is twice the radius.
     const spread = Math.tan((Math.max(0, softness) * Math.PI) / 360);
     gl.uniform1f(uniforms[`${name}Softness`], (spread * this.reach) / (2 * this.radius));
+    gl.uniform1f(uniforms[`${name}Grain`], this.grain ? 1 : 0);
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.activeTexture(gl.TEXTURE0 + depthUnit);
