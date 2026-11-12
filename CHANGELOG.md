@@ -39,6 +39,8 @@ Two things count as breaking here that are easy to overlook:
 - A Scene releases the models its document no longer names. It kept every model it had ever loaded.
 - Turning the tracing of a Scene on or off starts its still picture over, so the change shows at once and not only after the view has moved.
 - While a Scene is turned or moved, the soft edges of its shadows and the shade in its corners no longer show as grain.
+- The still picture of a Scene is shown once it is smooth. It showed after a few frames, as grain that then cleared.
+- A traced picture of a Scene shows the grid as the plain one does.
 
 ## [0.19.0] - 2026-11-11
 

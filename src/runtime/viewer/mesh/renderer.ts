@@ -78,8 +78,9 @@ const ENVIRONMENT_EXPOSURE = 0.7;
 // A still picture waits this long after the last change, then adds up this many frames.
 const SETTLE_MS = 150;
 const STILL_FRAMES = 192;
-// Before this many frames the sum is not shown yet, as single frames have hard edges and one light each.
-const STILL_SHOWN_FROM = 8;
+// Before this many frames the sum is not shown yet, as single frames have hard edges and one light each, and a sum of few is
+// grainy. Until then the picture stays as it was while it moved.
+const STILL_SHOWN_FROM = 64;
 const SHADOW_NAMES = [
   ...shadowUniforms(SUN_SHADOW),
   ...shadowUniforms(ENVIRONMENT_SHADOW),
@@ -818,6 +819,19 @@ export class MeshRenderer {
         fade: ground.fade,
       },
     });
+    if (options.grid) {
+      // The grid goes over the frame as while the picture moves, behind what the frame says is nearer.
+      gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthFunc(gl.LEQUAL);
+      this.drawGround(shifted, identity(), box, floor, { strength: 0, darkness: 0, softness: 0 }, true, wide, false);
+      this.bindEnvironmentShadow(this.ground.uniforms, { mode: 0 }, identity(), 0);
+      gl.uniform1i(this.ground.uniforms.uStill, 1);
+      gl.uniform1i(this.ground.uniforms.uBasePass, 0);
+      this.drawGroundQuad();
+      gl.disable(gl.BLEND);
+    }
     if (planes.length > 0) {
       // The drawings of the surfaces go over the frame as while the picture moves, so they are as sharp as the screen.
       gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
