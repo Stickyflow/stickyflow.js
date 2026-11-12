@@ -204,6 +204,28 @@ function rimOf(
   };
 }
 
+// The top of a Solid when it is not the outline pulled straight up: `taper` draws it in, `shift: x, z` moves it, and
+// `loft` names a Symbol whose outline it is, in the same box as the bottom.
+function topOf(
+  properties: Map<string, SflValue>,
+  symbolDefs: Map<string, SflSymbolDefinition>,
+  flip?: string,
+): Pick<SolidJoin, 'taper' | 'shift' | 'top'> {
+  const taper = asNumber(properties.get('taper'));
+  const [x = asNumber(properties.get('shift')) ?? 0, z = 0] = tupleValues(properties.get('shift')) ?? [];
+  const named = asString(properties.get('loft'));
+  const top =
+    named && symbolDefs.has(named)
+      ? outlineOf(new Map([['symbol', properties.get('loft') as SflValue]]), symbolDefs, flip)
+      : undefined;
+  const shift: [number, number] = [flip === 'x' ? -x : x, flip === 'z' ? -z : z];
+  return {
+    ...(taper ? { taper } : {}),
+    ...(shift[0] || shift[1] ? { shift } : {}),
+    ...(top ? { top } : {}),
+  };
+}
+
 const JOININGS: Record<string, SolidJoin['joining']> = { Cut: 'cut', Add: 'add', Keep: 'keep' };
 
 // A Solid is a mesh whose model is built from its outline and from the bodies joined to it. The name of that model
@@ -225,6 +247,7 @@ function solidAsset(
         rings: outlineOf(own, symbolDefs, flip),
         size: vector(child, layoutProp, 'size', 1),
         ...rimOf(own),
+        ...topOf(own, symbolDefs, flip),
         position: mirrored(vector(child, layoutProp, 'position', 0), flip, [-1, 1, 1], [1, 1, -1]),
         rotation: mirrored(vector(child, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
       };
@@ -235,6 +258,7 @@ function solidAsset(
       ? [sketched.width, asNumber(properties.get('height')) ?? vector(block, layoutProp, 'size', 1)[1], sketched.depth]
       : vector(block, layoutProp, 'size', 1),
     ...rimOf(properties),
+    ...topOf(properties, symbolDefs, flip),
     ...(joins.length > 0 ? { joins } : {}),
   });
 }

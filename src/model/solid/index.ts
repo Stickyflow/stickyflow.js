@@ -21,6 +21,11 @@ export interface SolidShape {
   // Single edges of the top or the bottom, each the edge of the outline from one of its corners to the next: the ring,
   // that corner, how far it is cut, 1 for the top and 0 for the bottom, and 1 to round it, 0 to cut it straight.
   edges?: Array<[number, number, number, number, number]>;
+  // The top as another outline than the bottom: drawn in by `taper` (out, when it is less than 0), moved by `shift` across x
+  // and z, or an outline of its own in the same unit square, which the walls run to from the bottom.
+  taper?: number;
+  shift?: [number, number];
+  top?: Outline;
   // Bodies that are added to it, cut out of it, or kept with it, in the order they are written.
   joins?: SolidJoin[];
 }
@@ -125,10 +130,10 @@ function ears(line: Ring): Array<[P, P, P]> {
   return triangles;
 }
 
-function triangulate(rings: Outline): Array<[P, P, P]> {
+function triangulate(rings: Outline, keepStraight = false): Array<[P, P, P]> {
   const bodies = rings.filter(ring => ringArea(ring) > 0);
   const holes = rings.filter(ring => ringArea(ring) < 0);
-  return bodies.flatMap(body =>
+  const triangles = bodies.flatMap(body =>
     ears(
       withBridges(
         body,
@@ -136,6 +141,34 @@ function triangulate(rings: Outline): Array<[P, P, P]> {
       ),
     ),
   );
+  return keepStraight ? withStraightPoints(triangles, rings) : triangles;
+}
+
+// The points that lie on a straight edge, which no ear takes, are put back into the triangle whose edge they lie on, so
+// the cap meets the walls point for point.
+function withStraightPoints(triangles: Array<[P, P, P]>, rings: Outline): Array<[P, P, P]> {
+  const list = [...triangles];
+  for (const ring of rings) {
+    ring.forEach(point => {
+      for (let t = 0; t < list.length; t += 1) {
+        const tri = list[t];
+        for (let e = 0; e < 3; e += 1) {
+          const [u, v, w] = [tri[e], tri[(e + 1) % 3], tri[(e + 2) % 3]];
+          const length = Math.hypot(v[0] - u[0], v[1] - u[1]);
+          if (point === u || point === v || length < 1e-12) {
+            continue;
+          }
+          const along = ((point[0] - u[0]) * (v[0] - u[0]) + (point[1] - u[1]) * (v[1] - u[1])) / (length * length);
+          if (along <= 1e-9 || along >= 1 - 1e-9 || Math.abs(cross(u, v, point)) / length > 1e-9) {
+            continue;
+          }
+          list.splice(t, 1, [u, point as P, w], [point as P, v, w]);
+          return;
+        }
+      }
+    });
+  }
+  return list;
 }
 
 // A ring drawn in by a distance, point for point, so each point keeps its partner.
@@ -210,10 +243,69 @@ function safeChamfer(rings: Outline, wanted: number): number {
 const SMOOTH = Math.cos((32 * Math.PI) / 180);
 const ROUND_STEPS = 6;
 
-function plainSolid(shape: SolidShape): SolidGeometry {
-  const [width, height, depth] = shape.size;
-  const rings = shape.rings.map((ring, r) => {
-    const placed = ring.map(([x, y]) => [(x - 0.5) * width, (y - 0.5) * depth] as P);
+// Where along a ring each of its points lies, from 0 at the first to 1 all the way round.
+function fractions(ring: P[]): number[] {
+  const lengths = ring.map((p, i) => {
+    const q = ring[(i + 1) % ring.length];
+    return Math.hypot(q[0] - p[0], q[1] - p[1]);
+  });
+  const total = lengths.reduce((sum, length) => sum + length, 0) || 1;
+  let run = 0;
+  return lengths.map(length => {
+    const at = run / total;
+    run += length;
+    return at;
+  });
+}
+
+function sampleRing(ring: P[], at: number[], where: number[]): P[] {
+  return where.map(t => {
+    let i = at.length - 1;
+    while (i > 0 && at[i] > t) {
+      i -= 1;
+    }
+    const next = i + 1 < at.length ? at[i + 1] : 1;
+    const k = next - at[i] > 1e-12 ? (t - at[i]) / (next - at[i]) : 0;
+    const [p, q] = [ring[i], ring[(i + 1) % ring.length]];
+    return [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
+  });
+}
+
+// A bottom ring and a top ring with as many points each, point for point partners: the top is started where its point
+// lies most nearly the way the first point of the bottom lies, and both are cut at all the places either has a corner.
+function partners(bottom: P[], top: P[]): [P[], P[]] {
+  const middle = (ring: P[]): P => [
+    ring.reduce((sum, p) => sum + p[0], 0) / ring.length,
+    ring.reduce((sum, p) => sum + p[1], 0) / ring.length,
+  ];
+  let upper = ringArea(top) * ringArea(bottom) < 0 ? [...top].reverse() : top;
+  const [mb, mt] = [middle(bottom), middle(upper)];
+  const way = Math.atan2(bottom[0][1] - mb[1], bottom[0][0] - mb[0]);
+  let start = 0;
+  let nearest = Number.POSITIVE_INFINITY;
+  upper.forEach((p, i) => {
+    const off = Math.abs(
+      Math.atan2(
+        Math.sin(Math.atan2(p[1] - mt[1], p[0] - mt[0]) - way),
+        Math.cos(Math.atan2(p[1] - mt[1], p[0] - mt[0]) - way),
+      ),
+    );
+    if (off < nearest) {
+      nearest = off;
+      start = i;
+    }
+  });
+  upper = [...upper.slice(start), ...upper.slice(0, start)];
+  const [fb, ft] = [fractions(bottom), fractions(upper)];
+  const all = [...fb, ...ft].sort((a, b) => a - b).filter((t, i, list) => i === 0 || t - list[i - 1] > 1e-4);
+  return [sampleRing(bottom, fb, all), sampleRing(upper, ft, all)];
+}
+
+// The bottom and the top of a Solid as placed rings, point for point partners.
+function outlines(shape: SolidShape): { bottom: P[][]; top: P[][] } {
+  const [width, , depth] = shape.size;
+  const place = (ring: Ring): P[] => ring.map(([x, y]) => [(x - 0.5) * width, (y - 0.5) * depth] as P);
+  const rounded = (placed: P[], r: number): P[] => {
     const own = (shape.corners ?? []).filter(([at]) => at === r);
     if (own.length === 0) {
       return placed;
@@ -221,9 +313,33 @@ function plainSolid(shape: SolidShape): SolidGeometry {
     const sizes = placed.map((_, i) => own.find(([, at]) => at === i)?.[2] ?? 0);
     const straight = placed.map((_, i) => own.find(([, at]) => at === i)?.[3] === 0);
     return roundedRing(placed, sizes, straight) as P[];
-  });
+  };
+  const bottom = shape.rings.map((ring, r) => rounded(place(ring), r));
+  const [dx, dz] = shape.shift ?? [0, 0];
+  const moved = (ring: P[]): P[] => inset(ring, shape.taper ?? 0).map(([x, z]) => [x + dx, z + dz] as P);
+  // An outline of its own on top: each of its rings is the partner of the bottom ring it is nearest to, in the order written.
+  const own = shape.top?.map(place);
+  if (!own || own.length !== bottom.length) {
+    return { bottom, top: bottom.map(moved) };
+  }
+  const pairs = bottom.map((ring, r) => partners(ring, own[r]));
+  return { bottom: pairs.map(([b]) => b), top: pairs.map(([, t]) => moved(t)) };
+}
+
+function plainSolid(shape: SolidShape): SolidGeometry {
+  const [width, height, depth] = shape.size;
+  const { bottom: rings, top: tops } = outlines(shape);
+  // The outline at a height: the bottom on the ground, the top on top, and in between as far between as it lies.
+  const lofted = shape.top !== undefined || Boolean(shape.taper) || Boolean(shape.shift?.[0] || shape.shift?.[1]);
+  const ringAt = (r: number, y: number): P[] => {
+    if (!lofted) {
+      return rings[r];
+    }
+    const t = height > 0 ? y / height : 0;
+    return rings[r].map((p, i) => [p[0] + (tops[r][i][0] - p[0]) * t, p[1] + (tops[r][i][1] - p[1]) * t] as P);
+  };
   const most = (wanted: number) => Math.max(0, Math.min(wanted, height / 2 - 1e-6, Math.min(width, depth) / 4));
-  const top = safeChamfer(rings, most(shape.chamfer));
+  const top = safeChamfer(tops, most(shape.chamfer));
   const bottom = safeChamfer(rings, most(shape.chamferBottom ?? shape.chamfer));
   // The profile of a rim, from the wall to the cap: how far each step lies in from the outline, how far it lies on from where
   // the wall ends, and the way it faces, out and up. A chamfer is one step, a rounding a quarter of a circle.
@@ -276,8 +392,8 @@ function plainSolid(shape: SolidShape): SolidGeometry {
     [rims[0], height, 1],
     [rims[1], 0, -1],
   ] as const) {
-    const caps = rings.map(ring => inset(ring, rim.size));
-    for (const [a, b, c] of triangulate(caps)) {
+    const caps = (y > 0 ? tops : rings).map(ring => inset(ring, rim.size));
+    for (const [a, b, c] of triangulate(caps, shape.top !== undefined)) {
       triangle(
         [a, y],
         [b, y],
@@ -291,8 +407,10 @@ function plainSolid(shape: SolidShape): SolidGeometry {
     }
   }
 
-  rings.forEach(ring => {
-    const count = ring.length;
+  rings.forEach((ground, r) => {
+    const count = ground.length;
+    // The walls are judged half way up, where a top of its own has turned them half way.
+    const ring = ringAt(r, height / 2);
     // The way each wall faces, and for each point the way the wall faces there: across a gentle bend it is shared.
     const out = ring.map((point, i): P => {
       const next = ring[(i + 1) % count];
@@ -309,17 +427,30 @@ function plainSolid(shape: SolidShape): SolidGeometry {
       return [(own[0] + other[0]) / length, (own[1] + other[1]) / length];
     };
     // The outline drawn in by each step of each rim.
-    const drawn = rims.map(rim => rim.profile.map(step => (step.inward > 0 ? inset(ring, step.inward) : ring)));
+    const drawn = rims.map(rim =>
+      rim.profile.map(step => {
+        const level = ringAt(r, rim.from + rim.way * step.along);
+        return step.inward > 0 ? inset(level, step.inward) : level;
+      }),
+    );
+    const [low, high] = [ringAt(r, bottom), ringAt(r, height - top)];
+    // A wall that leans out or in faces down or up as much: how far its point moves out for each step up.
+    const lean = (n: P, i: number) =>
+      height > 0 ? ((tops[r][i][0] - ground[i][0]) * n[0] + (tops[r][i][1] - ground[i][1]) * n[1]) / height : 0;
     for (let i = 0; i < count; i += 1) {
       const j = (i + 1) % count;
       const [ni, nj] = [at(i, i), at(j, i)];
-      const side = (n: P): [number, number, number] => [n[0], 0, n[1]];
+      const side = (n: P, k: number): [number, number, number] => {
+        const up = lofted ? -lean(n, k) : 0;
+        const length = Math.hypot(n[0], up, n[1]) || 1;
+        return [n[0] / length, up / length, n[1] / length];
+      };
       quad(
-        [ring[i], bottom],
-        [ring[j], bottom],
-        [ring[j], height - top],
-        [ring[i], height - top],
-        [side(ni), side(nj), side(nj), side(ni)],
+        [low[i], bottom],
+        [low[j], bottom],
+        [high[j], height - top],
+        [high[i], height - top],
+        [side(ni, i), side(nj, j), side(nj, j), side(ni, i)],
       );
       rims.forEach((rim, r) => {
         if (rim.size <= 0) {
@@ -434,7 +565,12 @@ function edgeCutter(
     return null;
   }
   const place = ([x, y]: [number, number]): P => [(x - 0.5) * width, (y - 0.5) * depth];
-  const [a, b] = [place(ring[i]), place(ring[(i + 1) % ring.length])];
+  // An edge of a top that is drawn in or moved lies where the top is. With an outline of its own on top, or corners of its
+  // own, the points of the top are not the ones of the outline, and the edge stays where the outline has it.
+  const moved = top && !shape.top && !shape.corners?.some(([at]) => at === r) ? outlines(shape).top[r] : undefined;
+  const [a, b] = moved
+    ? [moved[i], moved[(i + 1) % moved.length]]
+    : [place(ring[i]), place(ring[(i + 1) % ring.length])];
   const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
   if (length < 1e-9) {
     return null;
