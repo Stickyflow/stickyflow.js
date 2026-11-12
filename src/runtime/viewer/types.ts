@@ -55,6 +55,8 @@ export interface Viewer {
   setMeshSteadyCamera(steady: boolean): void;
   // Off, the still picture of a Scene with an environment is not traced, so a change shows at once. On again, it is traced.
   setMeshTracing(tracing: boolean): void;
+  // Off, the picture of a Scene that is not traced, as while it moves, has no shadows of the environment. The traced one has.
+  setMeshPlainShadows(on: boolean): void;
   // What layers have hidden or locked in a Scene, by name. Meshes and what lies on a Canvas are not in the drawing, so CSS does not reach them.
   setMeshFlags(flags: MeshStageFlags): void;
   // The meshes of a Scene that move together: dragging one of them takes the others along by the same step, while it is

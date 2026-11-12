@@ -38,6 +38,7 @@ export class MeshStage {
   private editing = true;
   private grid = false;
   private tracing = true;
+  private plainShadows = true;
   private readonly errors = new Set<string>();
   private turning: number | undefined;
   private request: number | undefined;
@@ -150,6 +151,7 @@ export class MeshStage {
     }
     this.renderer = new MeshRenderer(gl);
     this.renderer.tracing = this.tracing;
+    this.renderer.plainShadows = this.plainShadows;
     this.textures = new SurfaceTextures(
       this.renderer,
       canvas,
@@ -450,6 +452,14 @@ export class MeshStage {
     this.view.steady = steady;
     if (!steady) {
       this.view.reframe();
+    }
+    this.schedule();
+  }
+
+  setPlainShadows(on: boolean): void {
+    this.plainShadows = on;
+    if (this.renderer) {
+      this.renderer.plainShadows = on;
     }
     this.schedule();
   }

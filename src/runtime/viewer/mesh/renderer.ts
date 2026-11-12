@@ -325,6 +325,9 @@ export class MeshRenderer {
 
   // Off, the still picture is not traced: the stage shows the quick picture only.
   tracing = true;
+  // Off, a picture that is not traced has no shadows of the environment, neither on the meshes nor on the ground. Only the
+  // traced one has them.
+  plainShadows = true;
 
   addAsset(asset: string, mesh: MeshAsset): void {
     this.generation++;
@@ -645,12 +648,13 @@ export class MeshRenderer {
     const casters = this.casters(instances, planes);
     const lightMatrix = options.shadows ? this.shadows.update(casters, box, lighting.direction) : identity();
     // While the picture moves, one large light stands for the environment, so its shadow already lies where the still picture puts it.
-    const main = still ? null : this.environment.mainLight(options.environmentTurn ?? 0);
-    const environmentLight: EnvironmentLight = still?.light
-      ? { mode: 2, direction: still.light.direction, color: still.light.color, ground: still.light.ground }
-      : main
-        ? { mode: 1, direction: main.direction, softness: main.size, strength: main.strength }
-        : { mode: 0 };
+    const main = still || !this.plainShadows ? null : this.environment.mainLight(options.environmentTurn ?? 0);
+    const environmentLight: EnvironmentLight =
+      this.plainShadows && still?.light
+        ? { mode: 2, direction: still.light.direction, color: still.light.color, ground: still.light.ground }
+        : main
+          ? { mode: 1, direction: main.direction, softness: main.size, strength: main.strength }
+          : { mode: 0 };
     const environmentMatrix =
       environmentLight.mode === 0
         ? identity()
@@ -707,7 +711,16 @@ export class MeshRenderer {
         darkness: this.groundDarkness(lighting),
         softness,
       };
-      this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
+      this.drawGround(
+        camera,
+        lightMatrix,
+        box,
+        floor,
+        shadow,
+        options.grid ?? false,
+        wide,
+        occlusion && this.plainShadows,
+      );
       this.bindEnvironmentShadow(this.ground.uniforms, environmentLight, environmentMatrix, lighting.ambient);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
       gl.uniform1i(this.ground.uniforms.uBasePass, 0);

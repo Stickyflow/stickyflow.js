@@ -35,6 +35,7 @@ class MeshStages implements MeshStagesHandle {
   private grid = false;
   private directCamera = false;
   private followers: readonly string[] = [];
+  private plainShadows = true;
   private steadyCamera = false;
   private tracing = true;
   private flags: MeshStageFlags = { hidden: [], locked: [] };
@@ -71,6 +72,7 @@ class MeshStages implements MeshStagesHandle {
         created.setGrid(this.grid);
         created.setDirectCamera(this.directCamera);
         created.setFollowers(this.followers);
+        created.setPlainShadows(this.plainShadows);
         created.setSteadyCamera(this.steadyCamera);
         created.setTracing(this.tracing);
         created.setFlags(this.flags);
@@ -165,6 +167,13 @@ class MeshStages implements MeshStagesHandle {
     this.tracing = tracing;
     for (const stage of this.stages.values()) {
       stage.setTracing(tracing);
+    }
+  }
+
+  setPlainShadows(on: boolean): void {
+    this.plainShadows = on;
+    for (const stage of this.stages.values()) {
+      stage.setPlainShadows(on);
     }
   }
 

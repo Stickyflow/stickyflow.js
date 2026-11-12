@@ -49,6 +49,7 @@ export interface MeshStagesHandle {
   setDirectCamera(direct: boolean): void;
   setSteadyCamera(steady: boolean): void;
   setTracing(tracing: boolean): void;
+  setPlainShadows(on: boolean): void;
   // What the layers of a host have hidden or locked, by name.
   setFlags(flags: MeshStageFlags): void;
   // The meshes that move together: dragging one of them takes the others along, by the same step.
