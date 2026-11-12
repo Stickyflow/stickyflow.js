@@ -21,6 +21,7 @@ Two things count as breaking here that are easy to overlook:
 
 - A `Symbol` takes `Cut` and `Add`. Each has points of its own, or lays another symbol into a place with `symbol`, `at` and `size`. The result is an outline with holes, notches and parts added, for every place a symbol is used.
 - `Solid` stands in a Scene, next to Mesh. It pulls a `Symbol` up into a body with exact edges: `size` is its width, height and depth, `chamfer` cuts the rim round its top and its bottom, and it is placed and painted like a Mesh. Without a symbol it is a block.
+- A `Solid` takes `Cut`, `Add` and `Keep`. Each is a body of its own, pulled up from a `symbol` or a block, with a `layout` measured from the middle of the ground of the Solid. It is cut out, added, or what is kept is where both are. This is for cuts that do not run along the height: a bore from the side, a slanted top.
 - `mirror: x` or `mirror: z` on a Solid makes it a second time on the other side of that plane of the Scene, turned over. The second one is named after the first, with `_mirror`.
 - A Solid takes no wider chamfer than its outline can hold: a narrow web or a small hole gets less, so the rim never folds over itself.
 - `viewer.meshPointAt(clientX, clientY, query?)` gives the point of the 3D world under a point of the screen, for drawing into a Scene. Without a query it is the point on the mesh there, with the name of that mesh. With `{ height }` it is the point on the level plane at that height, wherever the meshes are. The types are `MeshPoint` and `MeshPointQuery`.

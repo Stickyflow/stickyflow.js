@@ -1,8 +1,9 @@
 import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
-import { ringArea } from '../../../../model/outline';
+import { type Outline, ringArea } from '../../../../model/outline';
 import { flattenPath } from '../../../../model/path';
-import { solidAssetName } from '../../../../model/solid';
+import { type SolidJoin, solidAssetName } from '../../../../model/solid';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
+import { childBlocks, directProperties } from '../../../ast/blockEntries';
 import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
 import type {
@@ -31,14 +32,12 @@ const SQUARE: Array<[number, number]> = [
   [0, 1],
 ];
 
-// A Solid is a mesh whose model is built from its outline. The name of that model says all it is built from, so two
-// Solids of one shape share one model.
-function solidAsset(
-  block: SflBlock,
+// The outline a Solid or a body joined to it is pulled up from, turned over when the Solid is mirrored.
+function outlineOf(
   properties: Map<string, SflValue>,
-  layoutProp: LayoutProp,
   symbolDefs: Map<string, SflSymbolDefinition>,
-): string {
+  flip?: string,
+): Outline {
   const symbol = symbolDefs.get(asString(properties.get('symbol')) ?? '');
   const flat = symbol
     ? (symbol.rings ?? [
@@ -54,16 +53,40 @@ function solidAsset(
     : [SQUARE];
   // A ring written by hand may run either way. The rings of a symbol with Cut or Add run the right way already.
   const rings = symbol?.rings ?? flat.map(ring => (ringArea(ring) > 0 ? ring : [...ring].reverse()));
-  // Turned to the other side, the outline is turned over, and runs the other way round again.
+  return flip === 'x' || flip === 'z'
+    ? rings.map(ring => ring.map(([x, y]) => (flip === 'x' ? [1 - x, y] : [x, 1 - y]) as [number, number]).reverse())
+    : rings;
+}
+
+const JOININGS: Record<string, SolidJoin['joining']> = { Cut: 'cut', Add: 'add', Keep: 'keep' };
+
+// A Solid is a mesh whose model is built from its outline and from the bodies joined to it. The name of that model
+// says all it is built from, so two Solids of one shape share one model.
+function solidAsset(
+  block: SflBlock,
+  properties: Map<string, SflValue>,
+  layoutProp: LayoutProp,
+  symbolDefs: Map<string, SflSymbolDefinition>,
+): string {
   const flip = asString(properties.get('flip'));
-  const turned =
-    flip === 'x' || flip === 'z'
-      ? rings.map(ring => ring.map(([x, y]) => (flip === 'x' ? [1 - x, y] : [x, 1 - y]) as [number, number]).reverse())
-      : rings;
+  const joins = childBlocks(block)
+    .filter(child => child.kind in JOININGS)
+    .map((child): SolidJoin => {
+      const own = directProperties(child);
+      return {
+        joining: JOININGS[child.kind],
+        rings: outlineOf(own, symbolDefs, flip),
+        size: vector(child, layoutProp, 'size', 1),
+        chamfer: asNumber(own.get('chamfer')) ?? 0,
+        position: mirrored(vector(child, layoutProp, 'position', 0), flip, [-1, 1, 1], [1, 1, -1]),
+        rotation: mirrored(vector(child, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
+      };
+    });
   return solidAssetName({
-    rings: turned,
+    rings: outlineOf(properties, symbolDefs, flip),
     size: vector(block, layoutProp, 'size', 1),
     chamfer: asNumber(properties.get('chamfer')) ?? 0,
+    ...(joins.length > 0 ? { joins } : {}),
   });
 }
 

@@ -33,6 +33,7 @@ export const NAMED_BLOCK_KINDS = [
   'Port',
   'Cut',
   'Add',
+  'Keep',
   'DataSource',
   'Repeat',
   'Template',

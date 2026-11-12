@@ -2,6 +2,7 @@
 // z, with its middle at the origin, and the body rises from 0 to its height along y. A chamfer cuts the rim round its
 // top and round its bottom.
 import { type Outline, type Ring, ringArea } from '../outline';
+import { type Corner, type Face, faceOf, type Joining, joinBodies, type V3 } from './combine';
 
 export interface SolidShape {
   // The outline in the unit square: bodies with the inside on their left, holes running the other way.
@@ -9,6 +10,15 @@ export interface SolidShape {
   // Width along x, height along y, depth along z.
   size: [number, number, number];
   chamfer: number;
+  // Bodies that are added to it, cut out of it, or kept with it, in the order they are written.
+  joins?: SolidJoin[];
+}
+
+export interface SolidJoin extends SolidShape {
+  joining: Joining;
+  // Where it stands and how it is turned, measured from the middle of the ground of the Solid it joins.
+  position: [number, number, number];
+  rotation: [number, number, number];
 }
 
 export interface SolidGeometry {
@@ -184,7 +194,7 @@ function safeChamfer(rings: Outline, wanted: number): number {
 
 const SMOOTH = Math.cos((32 * Math.PI) / 180);
 
-export function buildSolid(shape: SolidShape): SolidGeometry {
+function plainSolid(shape: SolidShape): SolidGeometry {
   const [width, height, depth] = shape.size;
   const rings = shape.rings.map(ring => ring.map(([x, y]) => [(x - 0.5) * width, (y - 0.5) * depth] as P));
   const chamfer = safeChamfer(
@@ -294,6 +304,73 @@ export function buildSolid(shape: SolidShape): SolidGeometry {
       }
     }
   });
+  return { positions: new Float32Array(positions), normals: new Float32Array(normals) };
+}
+
+// Rotation about x, then y, then z, in degrees, as rows.
+function turn([x, y, z]: V3): number[] {
+  const [a, b, c] = [x, y, z].map(angle => (angle * Math.PI) / 180);
+  const [sa, ca, sb, cb, sc, cc] = [Math.sin(a), Math.cos(a), Math.sin(b), Math.cos(b), Math.sin(c), Math.cos(c)];
+  return [
+    cc * cb,
+    cc * sb * sa - sc * ca,
+    cc * sb * ca + sc * sa,
+    sc * cb,
+    sc * sb * sa + cc * ca,
+    sc * sb * ca - cc * sa,
+    -sb,
+    cb * sa,
+    cb * ca,
+  ];
+}
+
+function facesOf(geometry: SolidGeometry, position: V3 = [0, 0, 0], rotation: V3 = [0, 0, 0]): Face[] {
+  const m = turn(rotation);
+  const turned = (x: number, y: number, z: number): V3 => [
+    m[0] * x + m[1] * y + m[2] * z,
+    m[3] * x + m[4] * y + m[5] * z,
+    m[6] * x + m[7] * y + m[8] * z,
+  ];
+  const faces: Face[] = [];
+  const { positions, normals } = geometry;
+  for (let i = 0; i < positions.length; i += 9) {
+    const corners: Corner[] = [0, 3, 6].map(k => {
+      const at = turned(positions[i + k], positions[i + k + 1], positions[i + k + 2]);
+      return {
+        at: [at[0] + position[0], at[1] + position[1], at[2] + position[2]],
+        normal: turned(normals[i + k], normals[i + k + 1], normals[i + k + 2]),
+      };
+    });
+    const face = faceOf(corners);
+    if (face) {
+      faces.push(face);
+    }
+  }
+  return faces;
+}
+
+// The body of a Solid, with what is joined to it. A face that a join left with more than three corners is cut into
+// triangles from its first corner, which works as every such face bulges nowhere inwards.
+export function buildSolid(shape: SolidShape): SolidGeometry {
+  const plain = plainSolid(shape);
+  if (!shape.joins?.length) {
+    return plain;
+  }
+  let faces = facesOf(plain);
+  for (const join of shape.joins) {
+    faces = joinBodies(faces, facesOf(plainSolid(join), join.position, join.rotation), join.joining);
+  }
+  const positions: number[] = [];
+  const normals: number[] = [];
+  for (const face of faces) {
+    for (let i = 1; i + 1 < face.corners.length; i += 1) {
+      for (const corner of [face.corners[0], face.corners[i], face.corners[i + 1]]) {
+        positions.push(...corner.at);
+        const length = Math.hypot(...corner.normal) || 1;
+        normals.push(corner.normal[0] / length, corner.normal[1] / length, corner.normal[2] / length);
+      }
+    }
+  }
   return { positions: new Float32Array(positions), normals: new Float32Array(normals) };
 }
 
