@@ -340,6 +340,9 @@ export function lightPicker(image: EnvironmentImage): LightPicker {
 export interface DominantLight {
   direction: [number, number, number];
   size: number;
+  // How much of the light its shadow takes away: much where the lights of the sky lie together, little where they lie all
+  // round, as there no one shadow stands for them.
+  strength: number;
 }
 
 export function dominantLight(image: EnvironmentImage): DominantLight {
@@ -358,12 +361,15 @@ export function dominantLight(image: EnvironmentImage): DominantLight {
   }
   const length = Math.hypot(sum[0], sum[1], sum[2]);
   if (!total || !length) {
-    return { direction: [0, 1, 0], size: 40 };
+    return { direction: [0, 1, 0], size: 40, strength: 0.3 };
   }
   // The more the lights spread, the shorter their mean: its length gives how far they lie from it, on average.
   const spread = (Math.acos(Math.min(1, length / total)) * 180) / Math.PI;
+  const size = Math.min(60, Math.max(6, spread * 2));
   return {
     direction: [sum[0] / length, sum[1] / length, sum[2] / length],
-    size: Math.min(60, Math.max(6, spread * 2)),
+    size,
+    // A narrow light throws the one shadow there is. The wider the lights lie, the less one shadow says about them.
+    strength: Math.max(0.06, 0.6 * (1 - (size - 6) / 54) ** 1.5),
   };
 }

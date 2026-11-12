@@ -88,7 +88,8 @@ uniform float uEnvShadowGrain;
 uniform vec3 uEnvDirection;
 // In a still picture: what the light of this frame gives a matte surface that faces it.
 uniform vec3 uEnvLightColor;
-// How much the shadow of this light counts on the ground.
+// How much the shadow of this light counts on the ground. While the picture moves: how much of the light the one large light
+// takes away where it is hidden.
 uniform float uEnvGround;
 in vec4 vEnvShadow;
 // How much of the light of this frame reaches the point: 1 where nothing is in the way, or where the map does not reach.

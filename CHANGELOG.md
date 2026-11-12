@@ -41,6 +41,7 @@ Two things count as breaking here that are easy to overlook:
 - While a Scene is turned or moved, the soft edges of its shadows and the shade in its corners no longer show as grain.
 - The still picture of a Scene is shown once it is smooth. It showed after a few frames, as grain that then cleared.
 - A traced picture of a Scene shows the grid as the plain one does.
+- A Scene that is turned or moved looks nearer to how it looks at rest: the shadow that stands for the light of the environment is as strong as that light is one-sided, and the shade on the ground round what stands there counts for less.
 
 ## [0.19.0] - 2026-11-11
 

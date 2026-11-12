@@ -43,14 +43,15 @@ void main() {
   }
   float fade = 1.0 - smoothstep(uFade * 0.6, uFade, distance);
   float shadow = uStrength > 0.0 ? (1.0 - lit()) * uDarkness * fade * uStrength : 0.0;
-  // Where something stands on the ground, the ground gets darker toward it.
-  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * 0.75 * fade);
+  // Where something stands on the ground, the ground gets darker toward it. While the picture moves this counts for less: there
+  // it is worked out anew with every frame and reaches far, and would lie round everything as a dark rim.
+  shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - screenOcclusion()) * (uStill ? 0.75 : 0.25) * fade);
   // And where it does not see the light of the environment, it is in the shadow of that.
   // It fades out sooner than the shadow of the sun, as lights from many sides would carry it to the edges of the Scene.
   float near = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
   // While the picture moves, the one large light takes a part of the light away. In a still picture each light counts for its
   // share of the light from above, so the frames add up to the share of the light a point lacks.
-  float weight = uEnvMode == 2 ? uEnvGround * 0.92 : 0.6;
+  float weight = uEnvMode == 2 ? uEnvGround * 0.92 : uEnvGround;
   if (uEnvMode != 0) {
     shadow = 1.0 - (1.0 - shadow) * (1.0 - (1.0 - envShadow()) * weight * near * inside);
   }

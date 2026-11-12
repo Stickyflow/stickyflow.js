@@ -97,7 +97,7 @@ const R2 = [0.7548776662466927, 0.5698402909980532];
 // The light of the environment that a frame shows: none, the one large light of a moving picture, or one light of a still one.
 type EnvironmentLight =
   | { mode: 0 }
-  | { mode: 1; direction: Vec3; softness: number }
+  | { mode: 1; direction: Vec3; softness: number; strength: number }
   | { mode: 2; direction: Vec3; color: Vec3; ground: number };
 
 export interface DrawOptions {
@@ -581,7 +581,8 @@ export class MeshRenderer {
     // The scene is traced, path by path. Where that cannot be had, it is drawn as while it moves, light by light.
     const traced = this.traceFrame(meshes, camera, options, target, frame);
     const under = traced ? traced.under : this.drawFrame(meshes, camera, options, target, frame);
-    this.accumulation.add(index >= STILL_SHOWN_FROM, under);
+    // A traced sum is grainy for longer than one of plain frames.
+    this.accumulation.add(index >= (traced ? STILL_SHOWN_FROM : STILL_SHOWN_FROM / 2), under);
     return this.accumulation.count < STILL_FRAMES;
   }
 
@@ -648,7 +649,7 @@ export class MeshRenderer {
     const environmentLight: EnvironmentLight = still?.light
       ? { mode: 2, direction: still.light.direction, color: still.light.color, ground: still.light.ground }
       : main
-        ? { mode: 1, direction: main.direction, softness: main.size }
+        ? { mode: 1, direction: main.direction, softness: main.size, strength: main.strength }
         : { mode: 0 };
     const environmentMatrix =
       environmentLight.mode === 0
@@ -1044,6 +1045,8 @@ export class MeshRenderer {
         light.color.map(value => value * strength),
       );
       gl.uniform1f(uniforms.uEnvGround, light.ground);
+    } else if (light.mode === 1) {
+      gl.uniform1f(uniforms.uEnvGround, light.strength);
     }
   }
 
