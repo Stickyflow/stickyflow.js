@@ -233,6 +233,7 @@ export class MeshStage {
       exposure: data.exposure,
       ground: data.ground,
       still: !wholeStage && !this.gestures.active && !moving,
+      space: empty,
     });
     this.placeAnchors();
     this.handles.draw(this.editing);

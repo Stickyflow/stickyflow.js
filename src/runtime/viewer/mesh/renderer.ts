@@ -110,6 +110,8 @@ export interface DrawOptions {
   ground?: MeshGround;
   // The picture may be refined over several frames, as nothing in it moves.
   still?: boolean;
+  // The space a Scene with nothing in it takes, so its ground and its grid are drawn.
+  space?: Box;
 }
 
 // What a frame of a still picture changes: where the camera stands within a pixel, and which light of the environment it shows.
@@ -622,7 +624,7 @@ export class MeshRenderer {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
     const instances = this.instances(meshes);
-    const measured = this.boxOf(instances, planes);
+    const measured = this.boxOf(instances, planes) ?? options.space;
     if (!camera || !measured) {
       return null;
     }
