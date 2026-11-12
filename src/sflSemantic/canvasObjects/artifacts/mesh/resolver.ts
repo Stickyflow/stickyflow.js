@@ -210,7 +210,19 @@ function topOf(
   properties: Map<string, SflValue>,
   symbolDefs: Map<string, SflSymbolDefinition>,
   flip?: string,
-): Pick<SolidJoin, 'taper' | 'shift' | 'top'> {
+): Pick<SolidJoin, 'taper' | 'shift' | 'top' | 'walls'> {
+  // `walls` moves single walls as planes: each as the ring of the outline, the corner it starts at, how far it is pushed
+  // out and how many degrees it leans in, as [ring, corner, push, lean].
+  const list = properties.get('walls');
+  const walls =
+    list?.type === 'list'
+      ? list.values.flatMap(item => {
+          const [ring, at, push = 0, lean = 0] = listNumbers(item) ?? [];
+          return ring !== undefined && at !== undefined && (push || lean)
+            ? [[ring, at, push, lean] as [number, number, number, number]]
+            : [];
+        })
+      : [];
   const taper = asNumber(properties.get('taper'));
   const [x = asNumber(properties.get('shift')) ?? 0, z = 0] = tupleValues(properties.get('shift')) ?? [];
   const named = asString(properties.get('loft'));
@@ -223,6 +235,7 @@ function topOf(
     ...(taper ? { taper } : {}),
     ...(shift[0] || shift[1] ? { shift } : {}),
     ...(top ? { top } : {}),
+    ...(walls.length > 0 ? { walls } : {}),
   };
 }
 

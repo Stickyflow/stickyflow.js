@@ -7,6 +7,8 @@ export type { Dimension } from './model/dimension';
 export type { Mesh, MeshAnchor, MeshScene, Vec3 } from './model/mesh';
 export type { FreeformPath, PathFrame, PathPoint, PathSymbol } from './model/path';
 export { flattenPath, pathBounds, pathToSymbol, symbolToPath } from './model/path';
+export type { SolidShape } from './model/solid';
+export { solidOfAsset, solidOutlines } from './model/solid';
 export type { ShapeType } from './model/shape';
 export { SHAPE_TYPES } from './model/shape';
 export type { Shader, ShaderParameter } from './model/shader';
