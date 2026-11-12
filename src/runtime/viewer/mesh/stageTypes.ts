@@ -31,6 +31,13 @@ export interface MeshStageFlags {
   locked: readonly string[];
 }
 
+// Where the camera of a Scene looks from and at. `orbit` is the side it looks from, as `orbit` on a Scene: the turn round the
+// Scene and the height above it, in degrees. `target` is the point of the world in the middle of the picture.
+export interface MeshCamera {
+  orbit: [number, number];
+  target: { x: number; y: number; z: number };
+}
+
 export interface MeshStagesHandle {
   // The pictures of the stages in the order of the document, for exports.
   capture(): Array<string | undefined>;
@@ -49,6 +56,8 @@ export interface MeshStagesHandle {
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null;
   pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
   screenOf(point: readonly number[]): { x: number; y: number } | null;
+  camera(): MeshCamera | null;
+  setCamera(camera: Partial<MeshCamera>, animate: boolean): void;
   destroy(): void;
 }
 

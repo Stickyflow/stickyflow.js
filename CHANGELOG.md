@@ -27,6 +27,8 @@ Two things count as breaking here that are easy to overlook:
 - `viewer.meshPointAt(clientX, clientY, query?)` gives the point of the 3D world under a point of the screen, for drawing into a Scene. Without a query it is the point on the mesh there, with the name of that mesh. With `{ height }` it is the point on the level plane at that height, wherever the meshes are. The types are `MeshPoint` and `MeshPointQuery`.
 - `viewer.setMeshDirectCamera(true)` is for a Scene that fills its page: the wheel moves the camera nearer or farther without Ctrl, and the right button moves it sideways.
 - `viewer.setMeshSteadyCamera(true)` keeps the camera of a Scene where it is when meshes come and go. Turning it off frames the Scene again.
+- `viewer.meshCamera()` tells where the camera of a Scene looks from and at, and `viewer.setMeshCamera({ orbit, target }, { animate })` turns it there: to look straight at a face, or to put a view back. The type is `MeshCamera`.
+- A Scene with no mesh in it has a camera all the same, looking at a space four units wide, so its ground is drawn and `meshPointAt` answers on it.
 - `viewer.setMeshTracing(false)` shows only the quick picture of a Scene, without tracing the still one.
 - `viewer.meshPointOnScreen(point)` is the other way round: where a point of the 3D world is on the screen.
 

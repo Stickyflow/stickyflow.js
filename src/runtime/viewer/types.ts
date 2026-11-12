@@ -3,7 +3,14 @@ import type { RenderOptions } from '../../render';
 import type { ViewBox } from './display';
 import type { OwnerRef, Unsubscribe, ViewerEventHandler, ViewerEventName } from './events';
 import type { ViewerImageExportOptions } from './export';
-import type { MeshObjectPoint, MeshObjectQuery, MeshPoint, MeshPointQuery, MeshStageFlags } from './mesh/stage';
+import type {
+  MeshCamera,
+  MeshObjectPoint,
+  MeshObjectQuery,
+  MeshPoint,
+  MeshPointQuery,
+  MeshStageFlags,
+} from './mesh/stage';
 
 export interface ViewerOptions {
   container: HTMLElement;
@@ -57,6 +64,10 @@ export interface Viewer {
   meshPointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null;
   // Where a point of the 3D world is on the screen: the other way round. Null behind the camera.
   meshPointOnScreen(point: { x: number; y: number; z: number }): { clientX: number; clientY: number } | null;
+  // Where the camera of the Scene looks from and at. Null before a Scene is drawn.
+  meshCamera(): MeshCamera | null;
+  // Turns the camera of a Scene to another side, to another point, or both. With `animate` it goes there in a short while.
+  setMeshCamera(camera: Partial<MeshCamera>, options?: { animate?: boolean }): void;
   setWidgetValue(componentId: string, value: string | number): boolean;
   setPaused(paused: boolean): void;
   clearOverrides(): void;

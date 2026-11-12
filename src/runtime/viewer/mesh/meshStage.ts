@@ -1,4 +1,4 @@
-import { rayAt } from './camera';
+import { type Box, rayAt } from './camera';
 import { lightingOf } from './lighting';
 import { transformPoint } from './matrix';
 import { MeshRenderer, type Plane } from './renderer';
@@ -21,8 +21,12 @@ import {
 import { pointIn, StageView } from './stageView';
 import { SurfaceTextures, surfaceMatrix } from './surfaceTextures';
 
+const CAMERA_TURN_MS = 380;
+const EMPTY_SCENE: Box = { min: [-2, 0, -2], max: [2, 2, 2] };
+
 // One Scene of a drawing: it owns the canvas and the renderer, and puts together what the parts work out. What stands on it is
 // kept by the placement, the camera by the view, and loading, the pointer, the handles and the anchors each by a part of their own.
+
 export class MeshStage {
   private canvas: HTMLCanvasElement | null = null;
   private renderer: MeshRenderer | null = null;
@@ -35,6 +39,7 @@ export class MeshStage {
   private grid = false;
   private tracing = true;
   private readonly errors = new Set<string>();
+  private turning: number | undefined;
   private request: number | undefined;
   private observer: ResizeObserver | undefined;
   private zoomObserver: MutationObserver | undefined;
@@ -213,7 +218,9 @@ export class MeshStage {
       .map(mesh => mesh.id)
       .join('|')}|${(data.surfaces ?? []).map(surface => surface.id).join('|')}`;
     const shadowFrom = data.shadow ? lighting.direction : undefined;
-    view.aim(framing, aspect, window, () => renderer.box(meshes, planes), shadowFrom);
+    // A Scene with nothing in it still has a camera, so its ground shows and a point of it can be asked for.
+    const empty = data.meshes.length === 0 ? EMPTY_SCENE : undefined;
+    view.aim(framing, aspect, window, () => renderer.box(meshes, planes) ?? empty, shadowFrom);
     this.keepSurfacesSharp(planes);
     // A surface with a shader changes every frame, so its picture cannot be refined over several.
     const moving = planes.some(plane => plane.layers.some(layer => 'rect' in layer));
@@ -397,6 +404,43 @@ export class MeshStage {
     this.gestures.direct = direct;
   }
 
+  camera(): { orbit: [number, number]; target: [number, number, number] } | undefined {
+    return this.view.pose;
+  }
+
+  // Turns the camera to another side or another point. Animated, it goes there in a short while, the shorter way round.
+  setCamera(to: { orbit?: readonly [number, number]; target?: readonly number[] }, animate: boolean): void {
+    const from = this.view.pose;
+    const window = this.svg.ownerDocument.defaultView;
+    if (!from || !window) {
+      return;
+    }
+    if (this.turning !== undefined) {
+      window.cancelAnimationFrame(this.turning);
+      this.turning = undefined;
+    }
+    const orbit = to.orbit ?? from.orbit;
+    const target = to.target ?? from.target;
+    if (!animate) {
+      this.view.place(orbit, target);
+      this.schedule();
+      return;
+    }
+    const turn = ((((orbit[0] - from.orbit[0]) % 360) + 540) % 360) - 180;
+    const start = window.performance.now();
+    const step = (): void => {
+      const passed = Math.min(1, (window.performance.now() - start) / CAMERA_TURN_MS);
+      const eased = 1 - (1 - passed) ** 3;
+      this.view.place(
+        [from.orbit[0] + turn * eased, from.orbit[1] + (orbit[1] - from.orbit[1]) * eased],
+        from.target.map((value, axis) => value + (target[axis] - value) * eased),
+      );
+      this.schedule();
+      this.turning = passed < 1 && !this.destroyed ? window.requestAnimationFrame(step) : undefined;
+    };
+    step();
+  }
+
   setSteadyCamera(steady: boolean): void {
     this.view.steady = steady;
     if (!steady) {
@@ -469,6 +513,9 @@ export class MeshStage {
 
   destroy(): void {
     this.destroyed = true;
+    if (this.turning !== undefined) {
+      this.svg.ownerDocument.defaultView?.cancelAnimationFrame(this.turning);
+    }
     if (this.request !== undefined) {
       this.svg.ownerDocument.defaultView?.cancelAnimationFrame(this.request);
     }

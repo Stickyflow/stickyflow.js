@@ -4,6 +4,8 @@ import { type Box, type Camera, FOV, frameBox, type MeshFrame, makeCamera, proje
 const MAX_PIXELS = 4096;
 const ORBIT_PER_PIXEL = 0.5;
 const MAX_PITCH = 85;
+// A camera that is set looks nearly straight down, which a hand that turns it does not reach.
+const MAX_SET_PITCH = 89.5;
 
 export interface DrawingPoint {
   x: number;
@@ -44,6 +46,26 @@ export class StageView {
   lookFrom([yaw, pitch]: readonly [number, number]): void {
     this.yaw = yaw;
     this.pitch = pitch;
+  }
+
+  // Where the camera looks from and what it looks at, once it has framed something.
+  get pose(): { orbit: [number, number]; target: Vec3 } | undefined {
+    const { frame } = this;
+    return (
+      frame && {
+        orbit: [this.yaw, this.pitch],
+        target: frame.center.map((value, axis) => value + this.pan[axis]) as Vec3,
+      }
+    );
+  }
+
+  place(orbit: readonly [number, number], target: readonly number[]): void {
+    this.yaw = orbit[0];
+    this.pitch = Math.max(-MAX_SET_PITCH, Math.min(MAX_SET_PITCH, orbit[1]));
+    const { frame } = this;
+    if (frame) {
+      this.pan = frame.center.map((value, axis) => target[axis] - value) as Vec3;
+    }
   }
 
   // The next picture frames what stands on the stage again.

@@ -6,7 +6,14 @@ import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
 import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
-import type { MeshObjectPoint, MeshObjectQuery, MeshPoint, MeshPointQuery, MeshStageFlags } from './mesh/stage';
+import type {
+  MeshCamera,
+  MeshObjectPoint,
+  MeshObjectQuery,
+  MeshPoint,
+  MeshPointQuery,
+  MeshStageFlags,
+} from './mesh/stage';
 import { type MeshStagesHandle, mountMeshStages } from './mesh/stage';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
@@ -131,6 +138,14 @@ export class ViewerSession implements Viewer {
 
   meshPointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null {
     return this.meshStages.pointAt(clientX, clientY, query);
+  }
+
+  meshCamera(): MeshCamera | null {
+    return this.meshStages.camera();
+  }
+
+  setMeshCamera(camera: Partial<MeshCamera>, options?: { animate?: boolean }): void {
+    this.meshStages.setCamera(camera, options?.animate ?? false);
   }
 
   meshPointOnScreen(point: { x: number; y: number; z: number }): { clientX: number; clientY: number } | null {

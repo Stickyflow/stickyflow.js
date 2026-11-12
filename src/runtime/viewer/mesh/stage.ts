@@ -3,6 +3,7 @@ import {
   dataOf,
   MESH_HANDLES_ATTR,
   MESH_STAGE_ATTR,
+  type MeshCamera,
   type MeshObjectPoint,
   type MeshObjectQuery,
   type MeshPoint,
@@ -14,6 +15,7 @@ import {
 
 export type { MeshObjectBox } from './handles';
 export type {
+  MeshCamera,
   MeshHandleChange,
   MeshObjectPoint,
   MeshObjectQuery,
@@ -186,6 +188,24 @@ class MeshStages implements MeshStagesHandle {
       }
     }
     return null;
+  }
+
+  camera(): MeshCamera | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.camera();
+      if (found) {
+        const [x, y, z] = found.target;
+        return { orbit: found.orbit, target: { x, y, z } };
+      }
+    }
+    return null;
+  }
+
+  setCamera(camera: Partial<MeshCamera>, animate: boolean): void {
+    const { target } = camera;
+    for (const stage of this.stages.values()) {
+      stage.setCamera({ orbit: camera.orbit, target: target && [target.x, target.y, target.z] }, animate);
+    }
   }
 
   pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null {
