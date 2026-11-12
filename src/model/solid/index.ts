@@ -308,7 +308,7 @@ function plainSolid(shape: SolidShape): SolidGeometry {
 }
 
 // Rotation about x, then y, then z, in degrees, as rows.
-function turn([x, y, z]: V3): number[] {
+export function turn([x, y, z]: V3): number[] {
   const [a, b, c] = [x, y, z].map(angle => (angle * Math.PI) / 180);
   const [sa, ca, sb, cb, sc, cc] = [Math.sin(a), Math.cos(a), Math.sin(b), Math.cos(b), Math.sin(c), Math.cos(c)];
   return [

@@ -1,10 +1,11 @@
 import { DEFAULT_LIGHT, DEFAULT_ORBIT, type Vec3 } from '../../../../model/mesh';
 import { type Outline, ringArea } from '../../../../model/outline';
 import { flattenPath } from '../../../../model/path';
-import { type SolidJoin, solidAssetName } from '../../../../model/solid';
+import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch';
+import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { childBlocks, directProperties } from '../../../ast/blockEntries';
-import { asNumber, asString, tupleValues } from '../../../ast/valueAccess';
+import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
 import type {
   SflMeshGroundObject,
@@ -58,6 +59,105 @@ function outlineOf(
     : rings;
 }
 
+// What a Solid takes from a Sketch: the outline of the pieces it picks, within the box round them, and where that box lies.
+interface FromSketch {
+  rings: Outline;
+  width: number;
+  depth: number;
+  position: Vec3;
+  rotation: Vec3;
+}
+
+const pair = (value: SflValue | undefined): [number, number] => {
+  const [x = 0, y = 0] = tupleValues(value) ?? [];
+  return [x, y];
+};
+
+// The shapes of a Sketch as rings on its plane.
+function sketchShapes(sketch: SflBlock): Outline {
+  return childBlocks(sketch).flatMap((shape): Outline => {
+    const own = directProperties(shape);
+    if (shape.kind === 'Circle') {
+      const radius = asNumber(own.get('radius')) ?? 0;
+      return radius > 0 ? [circleRing(pair(own.get('at')), radius)] : [];
+    }
+    if (shape.kind === 'Rect') {
+      const [x, y] = pair(own.get('at'));
+      const [width, height] = pair(own.get('size'));
+      const one = asNumber(own.get('radius'));
+      const radii = tupleValues(own.get('radius')) ?? [one ?? 0, one ?? 0, one ?? 0, one ?? 0];
+      return width > 0 && height > 0
+        ? [
+            roundedRing(
+              [
+                [x, y],
+                [x + width, y],
+                [x + width, y + height],
+                [x, y + height],
+              ],
+              radii,
+            ),
+          ]
+        : [];
+    }
+    const points = own.get('points');
+    if (shape.kind !== 'Outline' || points?.type !== 'list') {
+      return [];
+    }
+    const rows = points.values.map(item => listNumbers(item) ?? []).filter(row => row.length >= 2);
+    return rows.length >= 3
+      ? [
+          roundedRing(
+            rows.map(row => [row[0], row[1]] as [number, number]),
+            rows.map(row => row[2] ?? 0),
+          ),
+        ]
+      : [];
+  });
+}
+
+function fromSketch(
+  properties: Map<string, SflValue>,
+  layoutProp: LayoutProp,
+  sketchDefs: Map<string, SflBlock> | undefined,
+): FromSketch | undefined {
+  const sketch = sketchDefs?.get(asString(properties.get('sketch')) ?? '');
+  if (!sketch) {
+    return undefined;
+  }
+  const pick = properties.get('pick');
+  const picks =
+    pick?.type === 'list'
+      ? pick.values.flatMap(item => {
+          const at = listNumbers(item);
+          return at && at.length >= 2 ? [[at[0], at[1]] as [number, number]] : [];
+        })
+      : [];
+  const outline = pickedOutline(sketchShapes(sketch), picks);
+  const points = outline.filter(ring => ringArea(ring) > 0).flat();
+  if (points.length === 0) {
+    return undefined;
+  }
+  const xs = points.map(point => point[0]);
+  const ys = points.map(point => point[1]);
+  const [left, top] = [Math.min(...xs), Math.min(...ys)];
+  const [width, depth] = [Math.max(...xs) - left, Math.max(...ys) - top];
+  if (width < 1e-9 || depth < 1e-9) {
+    return undefined;
+  }
+  const rotation = vector(sketch, layoutProp, 'rotation', 0);
+  const origin = vector(sketch, layoutProp, 'position', 0);
+  const m = turn(rotation);
+  const [u, v] = [left + width / 2, top + depth / 2];
+  return {
+    rings: outline.map(ring => ring.map(([x, y]) => [(x - left) / width, (y - top) / depth] as [number, number])),
+    width,
+    depth,
+    position: [origin[0] + m[0] * u + m[2] * v, origin[1] + m[3] * u + m[5] * v, origin[2] + m[6] * u + m[8] * v],
+    rotation,
+  };
+}
+
 const JOININGS: Record<string, SolidJoin['joining']> = { Cut: 'cut', Add: 'add', Keep: 'keep' };
 
 // A Solid is a mesh whose model is built from its outline and from the bodies joined to it. The name of that model
@@ -67,6 +167,7 @@ function solidAsset(
   properties: Map<string, SflValue>,
   layoutProp: LayoutProp,
   symbolDefs: Map<string, SflSymbolDefinition>,
+  sketched?: FromSketch,
 ): string {
   const flip = asString(properties.get('flip'));
   const joins = childBlocks(block)
@@ -83,8 +184,10 @@ function solidAsset(
       };
     });
   return solidAssetName({
-    rings: outlineOf(properties, symbolDefs, flip),
-    size: vector(block, layoutProp, 'size', 1),
+    rings: sketched?.rings ?? outlineOf(properties, symbolDefs, flip),
+    size: sketched
+      ? [sketched.width, asNumber(properties.get('height')) ?? vector(block, layoutProp, 'size', 1)[1], sketched.depth]
+      : vector(block, layoutProp, 'size', 1),
     chamfer: asNumber(properties.get('chamfer')) ?? 0,
     ...(joins.length > 0 ? { joins } : {}),
   });
@@ -96,15 +199,29 @@ export function resolveMeshObject(
   properties: Map<string, SflValue>,
   layoutProp: LayoutProp,
   symbolDefs: Map<string, SflSymbolDefinition> = new Map(),
+  sketchDefs?: Map<string, SflBlock>,
 ): SflMeshObject {
   const flip = block.kind === 'Solid' ? asString(properties.get('flip')) : undefined;
+  // A Solid made from a Sketch stands on the plane of that Sketch and is turned with it. Its own position moves it from there,
+  // along the plane and away from it.
+  const sketched = block.kind === 'Solid' ? fromSketch(properties, layoutProp, sketchDefs) : undefined;
+  const own = vector(block, layoutProp, 'position', 0);
+  const turned = sketched && turn(sketched.rotation);
+  const placed: Vec3 | undefined =
+    sketched && turned
+      ? [
+          sketched.position[0] + turned[0] * own[0] + turned[1] * own[1] + turned[2] * own[2],
+          sketched.position[1] + turned[3] * own[0] + turned[4] * own[1] + turned[5] * own[2],
+          sketched.position[2] + turned[6] * own[0] + turned[7] * own[1] + turned[8] * own[2],
+        ]
+      : undefined;
   return {
     ...base,
     objectType: 'mesh',
     mesh: {
       asset:
         block.kind === 'Solid'
-          ? solidAsset(block, properties, layoutProp, symbolDefs)
+          ? solidAsset(block, properties, layoutProp, symbolDefs, sketched)
           : (asString(properties.get('asset')) ?? ''),
       role: asString(properties.get('role')),
       color: asString(properties.get('color')),
@@ -113,8 +230,9 @@ export function resolveMeshObject(
       metallic: asNumber(properties.get('metallic')),
       transmission: asNumber(properties.get('transmission')),
       ior: asNumber(properties.get('ior')),
-      position: mirrored(vector(block, layoutProp, 'position', 0), flip, [-1, 1, 1], [1, 1, -1]),
-      rotation: mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
+      position: placed ?? mirrored(own, flip, [-1, 1, 1], [1, 1, -1]),
+      rotation:
+        sketched?.rotation ?? mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
       scale: vector(block, layoutProp, 'scale', 1),
     },
   };

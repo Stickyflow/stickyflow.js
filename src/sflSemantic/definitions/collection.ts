@@ -11,6 +11,8 @@ export interface CanvasDefinitions {
   styles: BlockDefinitions;
   layouts: BlockDefinitions;
   symbols: CanvasObjectResolutionContext['symbolDefs'];
+  // The Sketches of the document by name, wherever they stand.
+  sketches: BlockDefinitions;
   shaders: Map<string, Shader>;
   model?: SflBlock;
 }
@@ -24,9 +26,21 @@ export function collectCanvasDefinitions(sflDocument: SflDocument): CanvasDefini
     styles: collectStyleDefinitions(sflDocument),
     layouts: collectLayoutDefinitions(sflDocument),
     symbols: collectSymbolDefinitions(sflDocument),
+    sketches: collectSketches(sflDocument.blocks),
     shaders: collectShaderDefinitions(sflDocument),
     model: findCanvasModel(sflDocument),
   };
+}
+
+function collectSketches(blocks: readonly SflBlock[], found: BlockDefinitions = new Map()): BlockDefinitions {
+  for (const block of blocks) {
+    if (block.kind === 'Sketch') {
+      found.set(block.name, block);
+    } else {
+      collectSketches(childBlocks(block), found);
+    }
+  }
+  return found;
 }
 
 function collectShaderDefinitions(sflDocument: SflDocument): Map<string, Shader> {

@@ -30,6 +30,7 @@ export interface CanvasObjectResolutionContext {
   mergedProps: (block: SflBlock) => Map<string, SflValue>;
   layoutProp: (block: SflBlock, key: string) => SflValue | undefined;
   symbolDefs: Map<string, SflSymbolDefinition>;
+  sketchDefs?: Map<string, SflBlock>;
   shaderDefs: Map<string, Shader>;
 }
 
@@ -64,7 +65,7 @@ export function resolveCanvasObject(
     case 'dimension':
       return resolveDimensionObject(base, properties, origin);
     case 'mesh':
-      return resolveMeshObject(base, block, properties, layoutProp, symbolDefs);
+      return resolveMeshObject(base, block, properties, layoutProp, symbolDefs, context.sketchDefs);
     case 'meshScene':
       return resolveMeshSceneObject(base, properties);
     case 'meshLight':
