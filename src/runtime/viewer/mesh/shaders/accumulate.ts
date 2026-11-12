@@ -45,9 +45,13 @@ void main() {
     vec4 sum = vec4(0.0);
     float weights = 0.0;
     ivec2 size = textureSize(uSum, 0);
+    // A sum of few frames is grainy, so it is smoothed over a wider reach and with less regard for steps in its light, which are
+    // mostly grain then. As frames are added this narrows to the fine smoothing of the finished picture.
+    float early = 1.0 - smoothstep(64.0, 192.0, uCount);
+    int stride = early > 0.35 ? 2 : 1;
     for (int x = -REACH; x <= REACH; x++) {
       for (int y = -REACH; y <= REACH; y++) {
-        ivec2 at = clamp(here + ivec2(x, y), ivec2(0), size - 1);
+        ivec2 at = clamp(here + ivec2(x, y) * stride, ivec2(0), size - 1);
         vec4 otherGuide = texelFetch(uGuide, at, 0);
         if ((otherGuide.a > 0.0) != surface) {
           continue;
@@ -60,7 +64,7 @@ void main() {
           weight *= exp(-abs(guide.a - otherGuide.a) / (guide.a * 0.02));
         }
         // An edge in the light itself, as of a shadow, is kept.
-        weight *= exp(-abs(brightness(other.rgb) - ownLight) / (ownLight * 0.3 + 0.02));
+        weight *= exp(-abs(brightness(other.rgb) - ownLight) / ((ownLight * 0.3 + 0.02) * (1.0 + early * 5.0)));
         sum += other * weight;
         weights += weight;
       }
