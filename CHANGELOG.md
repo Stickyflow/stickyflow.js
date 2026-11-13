@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.2] - 2026-11-13
+
+### Changed
+
+- An `Isometric` with no width, no height and no depth draws nothing. It drew a hull and faces of no size, which were not seen but made a large drawing heavy: a Repeat can now leave out a part of what it repeats by giving it no size.
+
 ## [0.20.1] - 2026-11-13
 
 ### Fixed
