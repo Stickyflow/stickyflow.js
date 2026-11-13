@@ -23,8 +23,11 @@ interface Targets {
   look: WebGLTexture;
   depth: WebGLRenderbuffer;
   sum: WebGLTexture;
+  // What goes over the shown picture as a screen shows it, as sharp as the screen, behind what the frame says is nearer.
+  over: WebGLTexture;
   frameBuffer: WebGLFramebuffer;
   sumBuffer: WebGLFramebuffer;
+  overBuffer: WebGLFramebuffer;
 }
 
 // A still picture made of many frames: each is drawn into a picture of its own, added to a sum, and the mean of the sum is shown.
@@ -35,6 +38,7 @@ export class Accumulation {
   private targets: Targets | null = null;
   private frames = 0;
   private guided = false;
+  private overDrawn = false;
 
   constructor(gl: WebGL2RenderingContext, quad: WebGLVertexArrayObject) {
     this.gl = gl;
@@ -51,7 +55,12 @@ export class Accumulation {
       const gl = this.gl;
       this.programs = canDrawFloats(gl) && {
         add: link(gl, ADD_FRAGMENT, ['uFrame'], SCREEN_VERTEX),
-        show: link(gl, SHOW_FRAGMENT, ['uSum', 'uCount', 'uGuide', 'uLook', 'uGuided'], SCREEN_VERTEX),
+        show: link(
+          gl,
+          SHOW_FRAGMENT,
+          ['uSum', 'uCount', 'uGuide', 'uLook', 'uGuided', 'uOver', 'uHasOver'],
+          SCREEN_VERTEX,
+        ),
       };
     }
     return this.programs !== false;
@@ -71,6 +80,7 @@ export class Accumulation {
     if (this.frames === 0) {
       this.guided = false;
     }
+    this.overDrawn = false;
     gl.bindFramebuffer(gl.FRAMEBUFFER, targets.frameBuffer);
     gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
     gl.viewport(0, 0, targets.width, targets.height);
@@ -90,6 +100,21 @@ export class Accumulation {
     gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+
+  // Draws what goes over the shown picture, after the frame, with the depth the frame left. Its colors are as a screen shows them.
+  drawOver(draw: () => void): void {
+    const { gl, targets } = this;
+    if (!targets) {
+      return;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, targets.overBuffer);
+    gl.viewport(0, 0, targets.width, targets.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    draw();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, targets.frameBuffer);
+    this.overDrawn = true;
   }
 
   // Adds the frame that was drawn to the sum, and shows the mean on the canvas when asked to, over what `under` draws there.
@@ -136,7 +161,7 @@ export class Accumulation {
     }
     const { uniforms } = programs.show;
     gl.useProgram(programs.show.program);
-    [targets.sum, targets.guide, targets.look].forEach((texture, unit) => {
+    [targets.sum, targets.guide, targets.look, targets.over].forEach((texture, unit) => {
       gl.activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, texture);
     });
@@ -144,10 +169,12 @@ export class Accumulation {
     gl.uniform1i(uniforms.uGuide, 1);
     gl.uniform1i(uniforms.uLook, 2);
     gl.uniform1i(uniforms.uGuided, this.guided ? 1 : 0);
+    gl.uniform1i(uniforms.uOver, 3);
+    gl.uniform1i(uniforms.uHasOver, this.overDrawn ? 1 : 0);
     gl.uniform1f(uniforms.uCount, this.frames);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     gl.disable(gl.BLEND);
-    for (const unit of [2, 1, 0]) {
+    for (const unit of [3, 2, 1, 0]) {
       gl.activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, null);
     }
@@ -176,6 +203,7 @@ export class Accumulation {
     const guide = picture(gl.RGBA16F);
     const look = picture(gl.RGBA8);
     const sum = picture(gl.RGBA16F);
+    const over = picture(gl.RGBA8);
     gl.bindTexture(gl.TEXTURE_2D, null);
     const depth = requireObject(gl.createRenderbuffer(), 'renderbuffer');
     gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
@@ -192,8 +220,12 @@ export class Accumulation {
     gl.bindFramebuffer(gl.FRAMEBUFFER, sumBuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, sum, 0);
     const sumComplete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    const overBuffer = requireObject(gl.createFramebuffer(), 'framebuffer');
+    gl.bindFramebuffer(gl.FRAMEBUFFER, overBuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, over, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    this.targets = { width, height, frame, guide, look, depth, sum, frameBuffer, sumBuffer };
+    this.targets = { width, height, frame, guide, look, depth, sum, over, frameBuffer, sumBuffer, overBuffer };
     this.frames = 0;
     if (!frameComplete || !sumComplete) {
       this.release();
@@ -207,12 +239,13 @@ export class Accumulation {
     if (!targets) {
       return;
     }
-    for (const texture of [targets.frame, targets.guide, targets.look, targets.sum]) {
+    for (const texture of [targets.frame, targets.guide, targets.look, targets.sum, targets.over]) {
       gl.deleteTexture(texture);
     }
     gl.deleteRenderbuffer(targets.depth);
     gl.deleteFramebuffer(targets.frameBuffer);
     gl.deleteFramebuffer(targets.sumBuffer);
+    gl.deleteFramebuffer(targets.overBuffer);
     this.targets = null;
   }
 

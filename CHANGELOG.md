@@ -58,6 +58,8 @@ Two things count as breaking here that are easy to overlook:
 - A traced picture of a Scene shows the grid as the plain one does.
 - The shadows of the light of the environment in a traced picture are smooth. They showed in bands, one for each light the frames took.
 - A Scene that is turned or moved looks nearer to how it looks at rest: the shadow that stands for the light of the environment is as strong as that light is one-sided, and the shade on the ground round what stands there counts for less.
+- The arrows and the rings that move and turn what is selected in a Scene keep one size on the screen. They were sized from the box round it, so they grew while it was turned.
+- A Canvas in a traced picture looks as it does while the Scene moves: sharp, in its own colors, its text as thin as it is. It was mixed among the light and turned into screen colors a second time, so its text came out bold and soft and a shader on it pale.
 
 ## [0.19.0] - 2026-11-11
 

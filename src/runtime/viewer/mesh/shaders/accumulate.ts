@@ -22,6 +22,8 @@ uniform sampler2D uGuide;
 uniform sampler2D uLook;
 uniform bool uGuided;
 uniform float uCount;
+uniform sampler2D uOver;
+uniform bool uHasOver;
 out vec4 fragment;
 ${TONE_CURVE}
 
@@ -74,10 +76,10 @@ void main() {
     float matte = surface ? smoothstep(0.2, 0.55, look.a) : 1.0;
     mean = vec4(mix(own.rgb, smoothed.rgb, matte) * tint, surface ? mean.a : mix(own.a, smoothed.a, matte));
   }
-  if (mean.a <= 0.0) {
-    fragment = vec4(0.0);
-    return;
-  }
   float alpha = min(mean.a, 1.0);
-  fragment = vec4(toScreen(mean.rgb / mean.a) * alpha, alpha);
+  fragment = mean.a <= 0.0 ? vec4(0.0) : vec4(toScreen(mean.rgb / mean.a) * alpha, alpha);
+  if (uHasOver) {
+    vec4 over = texelFetch(uOver, here, 0);
+    fragment = over + fragment * (1.0 - over.a);
+  }
 }`;

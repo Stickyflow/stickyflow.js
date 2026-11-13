@@ -888,12 +888,14 @@ export class MeshRenderer {
       gl.disable(gl.BLEND);
     }
     if (planes.length > 0) {
-      // The drawings of the surfaces go over the frame as while the picture moves, so they are as sharp as the screen.
-      gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      this.drawPlanes(shifted, planes, true, this.stillTime);
-      gl.disable(gl.BLEND);
+      // The drawings of the surfaces go over the shown picture as while it moves: not shaken, not among the light, as sharp
+      // and with the colors they have on the screen.
+      this.accumulation.drawOver(() => {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        this.drawPlanes(camera, planes, false, this.stillTime);
+        gl.disable(gl.BLEND);
+      });
     }
     const shown = groundColor?.map(value => value ** (1 / 2.2));
     return { under: shown ? () => this.drawGroundBase(camera, box, floor, wide, shown) : null };
