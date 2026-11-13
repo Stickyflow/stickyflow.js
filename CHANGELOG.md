@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-11-13
+
+### Fixed
+
+- A Scene with a ground of a color of its own, as in the dark studio, no longer goes black while it is turned or moved. The meshes lost the shade in their corners to the ground drawn before them, unless the ground also reflected.
+
 ## [0.20.0] - 2026-11-13
 
 ### Added
