@@ -60,15 +60,16 @@ export function renderSymbol(context: ShapeRenderContext): RenderNode[] {
     return renderRectangle(context);
   }
   const tension = finite(context.shape.symbol.tension, 0);
-  const points = context.shape.symbol.points.map(([x, y]) => ({
-    x: context.x + x * context.width,
-    y: context.y + y * context.height,
-  }));
+  const place = ([x, y]: [number, number]) => ({ x: context.x + x * context.width, y: context.y + y * context.height });
+  const points = context.shape.symbol.points.map(place);
+  const rings = context.shape.symbol.rings;
   return [
     {
       ...shapeNodeBase(context),
       type: 'path',
-      d: freeformPathData({ points, tension, closed: true }),
+      d: rings
+        ? rings.map(ring => freeformPathData({ points: ring.map(place), tension: 0, closed: true })).join(' ')
+        : freeformPathData({ points, tension, closed: true }),
       rotationCenter: context.rotationCenter,
       detail: {
         of: 'symbolGeometry',

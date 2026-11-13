@@ -6,7 +6,14 @@ import { mountDisplay } from './display';
 import { Emitter, type OwnerRef, type Unsubscribe, type ViewerEventHandler, type ViewerEventName } from './events';
 import { rasterizeSvgSnapshot, serializeSvgSnapshot, type ViewerImageExportOptions } from './export';
 import { bindInteraction, type InteractionHandle } from './interaction';
-import type { MeshObjectPoint, MeshObjectQuery, MeshStageFlags } from './mesh/stage';
+import type {
+  MeshCamera,
+  MeshObjectPoint,
+  MeshObjectQuery,
+  MeshPoint,
+  MeshPointQuery,
+  MeshStageFlags,
+} from './mesh/stage';
 import { type MeshStagesHandle, mountMeshStages } from './mesh/stage';
 import { mountShaderSurfaces, type ShaderSurfaceHandle } from './shaders';
 import { assertViewerUpdateContract, renderViewerSource } from './source';
@@ -97,6 +104,10 @@ export class ViewerSession implements Viewer {
     return this.setComponentValue(componentId, value);
   }
 
+  setMeshGroup(ids: readonly string[]): void {
+    this.meshStages.setFollowers(ids);
+  }
+
   setMeshFlags(flags: MeshStageFlags): void {
     this.meshStages.setFlags(flags);
   }
@@ -109,12 +120,54 @@ export class ViewerSession implements Viewer {
     this.meshStages.setEditing(editing);
   }
 
+  setMeshSteadyCamera(steady: boolean): void {
+    this.meshStages.setSteadyCamera(steady);
+  }
+
+  setMeshPlainShadows(on: boolean): void {
+    this.meshStages.setPlainShadows(on);
+  }
+
+  setMeshTracing(tracing: boolean): void {
+    this.meshStages.setTracing(tracing);
+  }
+
+  setMeshDirectCamera(direct: boolean): void {
+    this.meshStages.setDirectCamera(direct);
+  }
+
   setMeshGrid(grid: boolean): void {
     this.meshStages.setGrid(grid);
   }
 
   meshObjectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {
     return this.meshStages.objectAt(clientX, clientY, options);
+  }
+
+  meshPointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null {
+    return this.meshStages.pointAt(clientX, clientY, query);
+  }
+
+  meshCamera(): MeshCamera | null {
+    return this.meshStages.camera();
+  }
+
+  setMeshCamera(camera: Partial<MeshCamera>, options?: { animate?: boolean }): void {
+    this.meshStages.setCamera(camera, options?.animate ?? false);
+  }
+
+  meshPointOnScreen(point: { x: number; y: number; z: number }): { clientX: number; clientY: number } | null {
+    const found = this.meshStages.screenOf([point.x, point.y, point.z]);
+    return found && { clientX: found.x, clientY: found.y };
+  }
+
+  meshEdges(id: string): Float32Array | null {
+    return this.meshStages.edgesOf(id);
+  }
+
+  meshPlace(id: string): { x: number; y: number; z: number } | null {
+    const found = this.meshStages.placeOf(id);
+    return found && { x: found[0], y: found[1], z: found[2] };
   }
 
   setMeshValue(meshId: string, property: string, value: number | string): boolean {

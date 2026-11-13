@@ -3,8 +3,11 @@ import {
   dataOf,
   MESH_HANDLES_ATTR,
   MESH_STAGE_ATTR,
+  type MeshCamera,
   type MeshObjectPoint,
   type MeshObjectQuery,
+  type MeshPoint,
+  type MeshPointQuery,
   type MeshStageFlags,
   type MeshStageOptions,
   type MeshStagesHandle,
@@ -12,9 +15,12 @@ import {
 
 export type { MeshObjectBox } from './handles';
 export type {
+  MeshCamera,
   MeshHandleChange,
   MeshObjectPoint,
   MeshObjectQuery,
+  MeshPoint,
+  MeshPointQuery,
   MeshStageEvents,
   MeshStageFlags,
   MeshStageOptions,
@@ -27,6 +33,11 @@ class MeshStages implements MeshStagesHandle {
   private readonly pending = new Map<string, number | string>();
   private editing = true;
   private grid = false;
+  private directCamera = false;
+  private followers: readonly string[] = [];
+  private plainShadows = true;
+  private steadyCamera = false;
+  private tracing = true;
   private flags: MeshStageFlags = { hidden: [], locked: [] };
   private readonly svg: SVGSVGElement;
   private readonly options: MeshStageOptions;
@@ -59,6 +70,11 @@ class MeshStages implements MeshStagesHandle {
         const created = new MeshStage(host, this.svg, this.options);
         created.setEditing(this.editing);
         created.setGrid(this.grid);
+        created.setDirectCamera(this.directCamera);
+        created.setFollowers(this.followers);
+        created.setPlainShadows(this.plainShadows);
+        created.setSteadyCamera(this.steadyCamera);
+        created.setTracing(this.tracing);
         created.setFlags(this.flags);
         this.stages.set(id, created);
       }
@@ -140,6 +156,41 @@ class MeshStages implements MeshStagesHandle {
     }
   }
 
+  setSteadyCamera(steady: boolean): void {
+    this.steadyCamera = steady;
+    for (const stage of this.stages.values()) {
+      stage.setSteadyCamera(steady);
+    }
+  }
+
+  setTracing(tracing: boolean): void {
+    this.tracing = tracing;
+    for (const stage of this.stages.values()) {
+      stage.setTracing(tracing);
+    }
+  }
+
+  setPlainShadows(on: boolean): void {
+    this.plainShadows = on;
+    for (const stage of this.stages.values()) {
+      stage.setPlainShadows(on);
+    }
+  }
+
+  setFollowers(ids: readonly string[]): void {
+    this.followers = ids;
+    for (const stage of this.stages.values()) {
+      stage.setFollowers(ids);
+    }
+  }
+
+  setDirectCamera(direct: boolean): void {
+    this.directCamera = direct;
+    for (const stage of this.stages.values()) {
+      stage.setDirectCamera(direct);
+    }
+  }
+
   setGrid(grid: boolean): void {
     this.grid = grid;
     for (const stage of this.stages.values()) {
@@ -150,6 +201,64 @@ class MeshStages implements MeshStagesHandle {
   objectAt(clientX: number, clientY: number, options?: MeshObjectQuery): MeshObjectPoint | null {
     for (const stage of this.stages.values()) {
       const found = stage.objectAt(clientX, clientY, options);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  camera(): MeshCamera | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.camera();
+      if (found) {
+        const [x, y, z] = found.target;
+        return { orbit: found.orbit, target: { x, y, z } };
+      }
+    }
+    return null;
+  }
+
+  setCamera(camera: Partial<MeshCamera>, animate: boolean): void {
+    const { target } = camera;
+    for (const stage of this.stages.values()) {
+      stage.setCamera({ orbit: camera.orbit, target: target && [target.x, target.y, target.z] }, animate);
+    }
+  }
+
+  pointAt(clientX: number, clientY: number, query?: MeshPointQuery): MeshPoint | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.pointAt(clientX, clientY, query);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  screenOf(point: readonly number[]): { x: number; y: number } | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.screenOf(point);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  edgesOf(id: string): Float32Array | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.edgesOf(id);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  placeOf(id: string): [number, number, number] | null {
+    for (const stage of this.stages.values()) {
+      const found = stage.placeOf(id);
       if (found) {
         return found;
       }

@@ -33,6 +33,8 @@ export interface SflSymbolDefinition {
   pointTensions?: Array<number | undefined>;
   tension?: number;
   ports?: Array<{ name: string; at: [number, number] }>;
+  // With Cut or Add in it, all its rings: the bodies and, running the other way, the holes. `points` is the largest body.
+  rings?: Array<Array<[number, number]>>;
 }
 
 export interface SflCanvasObjectBase {

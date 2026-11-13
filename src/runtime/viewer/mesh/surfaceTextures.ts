@@ -166,7 +166,8 @@ export class SurfaceTextures {
         width / surface.width,
         height / surface.height,
       ],
-      upload: () => uploadSurface(shader, width * level, height * level, level, performance.now() / 1000),
+      upload: (time?: number) =>
+        uploadSurface(shader, width * level, height * level, level, time ?? performance.now() / 1000),
     };
   }
 }

@@ -4,6 +4,8 @@ import { type Box, type Camera, FOV, frameBox, type MeshFrame, makeCamera, proje
 const MAX_PIXELS = 4096;
 const ORBIT_PER_PIXEL = 0.5;
 const MAX_PITCH = 85;
+// A camera that is set looks nearly straight down, which a hand that turns it does not reach.
+const MAX_SET_PITCH = 89.5;
 
 export interface DrawingPoint {
   x: number;
@@ -29,6 +31,9 @@ export class StageView {
     this.svg = svg;
   }
 
+  // Steady, the camera keeps the frame it has when what stands on the stage changes, as in a tool where parts come and go.
+  steady = false;
+
   get hasFrame(): boolean {
     return this.frame !== undefined;
   }
@@ -41,6 +46,26 @@ export class StageView {
   lookFrom([yaw, pitch]: readonly [number, number]): void {
     this.yaw = yaw;
     this.pitch = pitch;
+  }
+
+  // Where the camera looks from and what it looks at, once it has framed something.
+  get pose(): { orbit: [number, number]; target: Vec3 } | undefined {
+    const { frame } = this;
+    return (
+      frame && {
+        orbit: [this.yaw, this.pitch],
+        target: frame.center.map((value, axis) => value + this.pan[axis]) as Vec3,
+      }
+    );
+  }
+
+  place(orbit: readonly [number, number], target: readonly number[]): void {
+    this.yaw = orbit[0];
+    this.pitch = Math.max(-MAX_SET_PITCH, Math.min(MAX_SET_PITCH, orbit[1]));
+    const { frame } = this;
+    if (frame) {
+      this.pan = frame.center.map((value, axis) => target[axis] - value) as Vec3;
+    }
   }
 
   // The next picture frames what stands on the stage again.
@@ -90,6 +115,10 @@ export class StageView {
   // Makes the camera for a picture. It is framed again only when `key` changes: when what stands on the stage changes, not when a
   // mesh moves, so a mesh that moves is seen moving.
   aim(key: string, aspect: number, window: StageWindow, box: () => Box | undefined, shadowFrom?: Vec3): void {
+    if (this.steady && this.frame) {
+      // The frame is kept, and counts as the frame of what stands there now, so nothing asks for the first view again.
+      this.framed = key;
+    }
     if (key !== this.framed) {
       const bounds = box();
       this.frame = bounds && frameBox(bounds, this.yaw, this.pitch, aspect, shadowFrom);
@@ -138,6 +167,16 @@ export class StageView {
   // A point of the screen on the whole stage, from -1 to 1.
   stagePoint(clientX: number, clientY: number): [number, number] {
     return pointIn(this.host.getBoundingClientRect(), clientX, clientY);
+  }
+
+  // A point of the 3D world on the screen, or undefined behind the camera.
+  toClient(point: readonly number[]): { x: number; y: number } | undefined {
+    const projected = this.camera && project(this.camera, point);
+    if (!projected) {
+      return undefined;
+    }
+    const box = this.host.getBoundingClientRect();
+    return { x: box.left + ((projected[0] + 1) / 2) * box.width, y: box.top + ((1 - projected[1]) / 2) * box.height };
   }
 
   // A point of the 3D world in the units of the 2D drawing, from the corner of the stage.

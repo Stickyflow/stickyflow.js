@@ -12,6 +12,8 @@ export class StagePlacement {
   private hidden: ReadonlySet<string> = new Set();
   private locked: ReadonlySet<string> = new Set();
   private placed: Placement | null = null;
+  // The meshes that go along when one of them is dragged, as a group does.
+  followers: readonly string[] = [];
 
   take(data: StageData): void {
     this.data = data;

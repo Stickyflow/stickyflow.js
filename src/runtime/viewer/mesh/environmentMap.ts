@@ -131,11 +131,15 @@ export class EnvironmentMap {
   }
 
   // The one large light that stands for the whole environment while the picture moves, and its size in degrees.
-  mainLight(turnDegrees: number): { direction: Vec3; size: number } | null {
+  mainLight(turnDegrees: number): { direction: Vec3; size: number; strength: number } | null {
     if (!this.dominant || !this.texture) {
       return null;
     }
-    return { direction: toWorld(this.dominant.direction, turnDegrees), size: this.dominant.size };
+    return {
+      direction: toWorld(this.dominant.direction, turnDegrees),
+      size: this.dominant.size,
+      strength: this.dominant.strength,
+    };
   }
 
   // For the program of the meshes, with how far the environment is turned and how strong it is.

@@ -152,7 +152,10 @@ export class StageHandles {
       return;
     }
     const item = this.selectedItem();
-    const changeFor = item && handleDrag(pressed, item, view.toDrawing, svg.getScreenCTM()?.a || 1);
+    const screen = svg.getScreenCTM();
+    const start = screen ? new DOMPoint(event.clientX, event.clientY).matrixTransform(screen.inverse()) : undefined;
+    const changeFor =
+      item && handleDrag(pressed, item, view.toDrawing, screen?.a || 1, start && { x: start.x, y: start.y });
     if (!item || !changeFor) {
       return;
     }
@@ -160,9 +163,28 @@ export class StageHandles {
     const window = svg.ownerDocument.defaultView;
     const { clientX: startX, clientY: startY } = event;
     let change: MeshHandleChange | undefined;
+    // What goes along with the mesh that is dragged, and where each stood when the drag began.
+    const along = placement.followers.includes(item.id)
+      ? placement
+          .get()
+          .meshes.filter(mesh => mesh.id !== item.id && placement.followers.includes(mesh.id))
+          .map(mesh => ({ id: mesh.id, position: mesh.position }))
+      : [];
     const move = (next: PointerEvent) => {
       change = changeFor(next.clientX - startX, next.clientY - startY);
       placement.move(item.id, change);
+      const to = change.position;
+      if (to) {
+        for (const other of along) {
+          placement.move(other.id, {
+            position: [
+              other.position[0] + to[0] - item.position[0],
+              other.position[1] + to[1] - item.position[1],
+              other.position[2] + to[2] - item.position[2],
+            ],
+          });
+        }
+      }
       this.target.changed();
     };
     const up = (last: PointerEvent) => {

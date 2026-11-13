@@ -170,7 +170,7 @@ void main() {
   float toLight = dot(n, uEnvDirection);
   if (uEnvMode == 1) {
     // One large light stands for the environment, so its shadow takes only a part of the light away.
-    around *= 1.0 - 0.6 * (1.0 - envShadow()) * smoothstep(0.0, 0.2, toLight);
+    around *= 1.0 - uEnvGround * (1.0 - envShadow()) * smoothstep(0.0, 0.2, toLight);
   } else if (uEnvMode == 2) {
     // The light of this frame, where it reaches the surface, and what the ground throws back onto what faces down.
     around = uEnvLightColor * (toLight > 0.0 ? toLight * envShadow() : 0.0) * baked;

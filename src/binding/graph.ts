@@ -76,7 +76,8 @@ function fieldType(contract: DataSourceContract, field: string): BindingType | u
   return contract.mode === 'table' ? { list: type } : type;
 }
 
-const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component'];
+// A body in a Scene is pressed and tapped as a Shape is, so a part of a model can be a button.
+const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component', 'Mesh', 'Solid', 'Facets'];
 const blockKind = (block: SflBlock): BlockKind => (block.kind === 'Widget' ? 'Component' : block.kind);
 
 function collectElements(sflDocument: SflDocument): Map<string, ElementInfo> {
@@ -188,7 +189,7 @@ function eventIsKnown(site: HandlerSite, componentType: string | undefined, repo
     'unknown-event',
     allowed.length
       ? `${kind} '${name}' has no event '${handler.event}' (events: ${allowed.join(', ')}).`
-      : `${kind} '${name}' has no events; handlers belong on a Shape, Text, Component or DataSource.`,
+      : `${kind} '${name}' has no events; handlers belong on a Shape, Text, Component, a body in a Scene or DataSource.`,
   );
   return false;
 }

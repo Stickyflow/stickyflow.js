@@ -20,7 +20,7 @@ function blocksIn(block: SflBlock): SflBlock[] {
 // A Mesh draws only inside a Model, and a Model is never a mesh itself.
 export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
   const outside = sflDocument.blocks.flatMap(block => {
-    if (['Mesh', 'Scene', 'Canvas', 'Light', 'Ground'].includes(block.kind)) {
+    if (['Mesh', 'Solid', 'Facets', 'Sketch', 'Scene', 'Canvas', 'Light', 'Ground'].includes(block.kind)) {
       return [
         warning(
           'mesh-outside-model',

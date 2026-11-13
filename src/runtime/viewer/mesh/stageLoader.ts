@@ -1,4 +1,7 @@
-import { STUDIO } from './environment';
+import { buildFacets, facetsOfAsset } from '../../../model/facets';
+import { buildSolid, solidOfAsset } from '../../../model/solid';
+import { MADE_ENVIRONMENTS } from './environment';
+import { plainAsset } from './glb';
 import { loadAssetInto } from './loadAsset';
 import { environmentFor } from './loadEnvironment';
 import type { MeshRenderer } from './renderer';
@@ -39,6 +42,18 @@ export class StageLoader {
     if (renderer.hasAsset(asset) || this.loading.has(asset)) {
       return;
     }
+    const solid = solidOfAsset(asset);
+    if (solid) {
+      renderer.addAsset(asset, plainAsset({ ...buildSolid(solid) }, []));
+      this.target.arrived(true);
+      return;
+    }
+    const facets = facetsOfAsset(asset);
+    if (facets) {
+      renderer.addAsset(asset, plainAsset({ ...buildFacets(facets) }, []));
+      this.target.arrived(true);
+      return;
+    }
     const address = this.address(asset);
     this.loading.add(asset);
     if (address === null) {
@@ -61,7 +76,7 @@ export class StageLoader {
       this.target.arrived(false);
       return;
     }
-    const address = name === STUDIO ? STUDIO : this.address(name);
+    const address = MADE_ENVIRONMENTS.includes(name) ? name : this.address(name);
     if (address === null) {
       this.target.report(`${name}: this address is not allowed`);
       return;

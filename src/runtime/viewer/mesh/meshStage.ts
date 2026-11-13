@@ -1,3 +1,5 @@
+import { type Box, rayAt } from './camera';
+import { STUDIO_DARK } from './environment';
 import { lightingOf } from './lighting';
 import { transformPoint } from './matrix';
 import { MeshRenderer, type Plane } from './renderer';
@@ -12,14 +14,22 @@ import {
   MESH_STAGE_ATTR,
   type MeshObjectPoint,
   type MeshObjectQuery,
+  type MeshPoint,
+  type MeshPointQuery,
   type MeshStageFlags,
   type MeshStageOptions,
 } from './stageTypes';
 import { pointIn, StageView } from './stageView';
 import { SurfaceTextures, surfaceMatrix } from './surfaceTextures';
 
+const CAMERA_TURN_MS = 380;
+const EMPTY_SCENE: Box = { min: [-2, 0, -2], max: [2, 2, 2] };
+
 // One Scene of a drawing: it owns the canvas and the renderer, and puts together what the parts work out. What stands on it is
 // kept by the placement, the camera by the view, and loading, the pointer, the handles and the anchors each by a part of their own.
+
+const DARK_GROUND = '#141518';
+
 export class MeshStage {
   private canvas: HTMLCanvasElement | null = null;
   private renderer: MeshRenderer | null = null;
@@ -30,7 +40,10 @@ export class MeshStage {
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
   private editing = true;
   private grid = false;
+  private tracing = true;
+  private plainShadows = true;
   private readonly errors = new Set<string>();
+  private turning: number | undefined;
   private request: number | undefined;
   private observer: ResizeObserver | undefined;
   private zoomObserver: MutationObserver | undefined;
@@ -58,6 +71,7 @@ export class MeshStage {
       arrived: reframe => {
         if (reframe) {
           this.view.reframe();
+          this.releaseUnused();
         }
         this.schedule();
       },
@@ -109,6 +123,7 @@ export class MeshStage {
       this.loader.asset(renderer, asset);
     }
     this.loader.environmentOf(renderer, this.placement.data.environment ?? '');
+    this.releaseUnused();
     // The update of the drawing has just put the objects back, so they are moved again before anything is painted.
     this.placeAnchors();
     this.schedule();
@@ -138,6 +153,8 @@ export class MeshStage {
       return;
     }
     this.renderer = new MeshRenderer(gl);
+    this.renderer.tracing = this.tracing;
+    this.renderer.plainShadows = this.plainShadows;
     this.textures = new SurfaceTextures(
       this.renderer,
       canvas,
@@ -206,9 +223,11 @@ export class MeshStage {
       .map(mesh => mesh.id)
       .join('|')}|${(data.surfaces ?? []).map(surface => surface.id).join('|')}`;
     const shadowFrom = data.shadow ? lighting.direction : undefined;
-    view.aim(framing, aspect, window, () => renderer.box(meshes, planes), shadowFrom);
+    // A Scene with nothing in it still has a camera, so its ground shows and a point of it can be asked for.
+    const empty = data.meshes.length === 0 ? EMPTY_SCENE : undefined;
+    view.aim(framing, aspect, window, () => renderer.box(meshes, planes) ?? empty, shadowFrom);
     this.keepSurfacesSharp(planes);
-    // A surface with a shader changes every frame, so its picture cannot be refined over several.
+    // A surface with a shader changes every frame: the renderer refines the picture only when it is traced, at one moment.
     const moving = planes.some(plane => plane.layers.some(layer => 'rect' in layer));
     const more = renderer.draw(meshes, view.camera, {
       shadows: data.shadow,
@@ -217,8 +236,14 @@ export class MeshStage {
       grid: this.grid && !wholeStage,
       environmentTurn: data.environmentTurn,
       exposure: data.exposure,
-      ground: data.ground,
-      still: !wholeStage && !this.gestures.active && !moving,
+      // In the dark studio a ground without a color of its own is as dark as the room.
+      ground:
+        data.environment === STUDIO_DARK && !data.ground?.color
+          ? { id: '', reflection: 0, roughness: 0, ...data.ground, color: DARK_GROUND }
+          : data.ground,
+      still: !wholeStage && !this.gestures.active,
+      moving,
+      space: empty,
     });
     this.placeAnchors();
     this.handles.draw(this.editing);
@@ -272,6 +297,47 @@ export class MeshStage {
     );
   }
 
+  pointAt(clientX: number, clientY: number, query: MeshPointQuery = {}): MeshPoint | null {
+    const { renderer, canvas } = this;
+    const { camera } = this.view;
+    const [x, y] = this.view.stagePoint(clientX, clientY);
+    if (!camera || Math.abs(x) > 1 || Math.abs(y) > 1) {
+      return null;
+    }
+    const { origin, direction } = rayAt(camera, x, y);
+    const along = (t: number) => ({
+      x: origin[0] + direction[0] * t,
+      y: origin[1] + direction[1] * t,
+      z: origin[2] + direction[2] * t,
+    });
+    if (query.height !== undefined) {
+      const t = Math.abs(direction[1]) < 1e-9 ? -1 : (query.height - origin[1]) / direction[1];
+      return t > 0 ? along(t) : null;
+    }
+    if (!renderer || !canvas) {
+      return null;
+    }
+    const { meshes } = this.placement.get();
+    const distance = renderer.meshDistance(meshes, camera, ...this.canvasPoint(clientX, clientY));
+    const mesh = renderer.pick(meshes, camera, ...this.canvasPoint(clientX, clientY));
+    return distance === undefined ? null : { ...along(distance), ...(mesh ? { mesh } : {}) };
+  }
+
+  screenOf(point: readonly number[]): { x: number; y: number } | null {
+    return this.view.toClient(point) ?? null;
+  }
+
+  edgesOf(id: string): Float32Array | null {
+    const mesh = this.placement.get().meshes.find(item => item.id === id);
+    return mesh && this.renderer ? this.renderer.edges(mesh) : null;
+  }
+
+  // Where a mesh stands right now, also while it is dragged and before the document says so.
+  placeOf(id: string): [number, number, number] | null {
+    const mesh = this.placement.get().meshes.find(item => item.id === id);
+    return mesh ? [mesh.position[0], mesh.position[1], mesh.position[2]] : null;
+  }
+
   private clickAt(clientX: number, clientY: number): void {
     const { renderer, canvas } = this;
     const { camera } = this.view;
@@ -311,6 +377,10 @@ export class MeshStage {
   clearValues(): void {
     this.placement.clearValues();
     this.schedule();
+  }
+
+  setFollowers(ids: readonly string[]): void {
+    this.placement.followers = ids;
   }
 
   setFlags(flags: MeshStageFlags): void {
@@ -354,6 +424,83 @@ export class MeshStage {
   setGrid(grid: boolean): void {
     this.grid = grid;
     this.schedule();
+  }
+
+  setDirectCamera(direct: boolean): void {
+    this.gestures.direct = direct;
+  }
+
+  camera(): { orbit: [number, number]; target: [number, number, number] } | undefined {
+    return this.view.pose;
+  }
+
+  // Turns the camera to another side or another point. Animated, it goes there in a short while, the shorter way round.
+  setCamera(to: { orbit?: readonly [number, number]; target?: readonly number[] }, animate: boolean): void {
+    const from = this.view.pose;
+    const window = this.svg.ownerDocument.defaultView;
+    if (!from || !window) {
+      return;
+    }
+    if (this.turning !== undefined) {
+      window.cancelAnimationFrame(this.turning);
+      this.turning = undefined;
+    }
+    const orbit = to.orbit ?? from.orbit;
+    const target = to.target ?? from.target;
+    if (!animate) {
+      this.view.place(orbit, target);
+      this.schedule();
+      return;
+    }
+    const turn = ((((orbit[0] - from.orbit[0]) % 360) + 540) % 360) - 180;
+    const start = window.performance.now();
+    const step = (): void => {
+      const passed = Math.min(1, (window.performance.now() - start) / CAMERA_TURN_MS);
+      const eased = 1 - (1 - passed) ** 3;
+      this.view.place(
+        [from.orbit[0] + turn * eased, from.orbit[1] + (orbit[1] - from.orbit[1]) * eased],
+        from.target.map((value, axis) => value + (target[axis] - value) * eased),
+      );
+      this.schedule();
+      this.turning = passed < 1 && !this.destroyed ? window.requestAnimationFrame(step) : undefined;
+    };
+    step();
+  }
+
+  setSteadyCamera(steady: boolean): void {
+    this.view.steady = steady;
+    if (!steady) {
+      this.view.reframe();
+    }
+    this.schedule();
+  }
+
+  setPlainShadows(on: boolean): void {
+    this.plainShadows = on;
+    if (this.renderer) {
+      this.renderer.plainShadows = on;
+    }
+    this.schedule();
+  }
+
+  setTracing(tracing: boolean): void {
+    this.tracing = tracing;
+    if (this.renderer) {
+      this.renderer.tracing = tracing;
+    }
+    this.schedule();
+  }
+
+  // Once every model of the document is there, the ones it no longer names are released.
+  private releaseUnused(): void {
+    const { renderer } = this;
+    if (!renderer) {
+      return;
+    }
+    const used = new Set(this.placement.data.meshes.map(mesh => mesh.asset));
+    if ([...used].every(asset => renderer.hasAsset(asset))) {
+      renderer.keepAssets(used);
+    }
   }
 
   selectObject(id: string | null): void {
@@ -400,6 +547,9 @@ export class MeshStage {
 
   destroy(): void {
     this.destroyed = true;
+    if (this.turning !== undefined) {
+      this.svg.ownerDocument.defaultView?.cancelAnimationFrame(this.turning);
+    }
     if (this.request !== undefined) {
       this.svg.ownerDocument.defaultView?.cancelAnimationFrame(this.request);
     }

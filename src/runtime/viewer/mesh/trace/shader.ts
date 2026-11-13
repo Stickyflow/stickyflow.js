@@ -317,13 +317,24 @@ float skyChance(vec3 direction) {
   return dot(light, vec3(0.2126, 0.7152, 0.0722)) / uSkyTotal;
 }
 
+// A direction close to another one, for each pixel its own. A frame has one light of the environment, so its shadow has
+// a hard edge, and the frames together showed the edges of all of them as bands. Spread a little, they run into each other.
+const float ENV_SPREAD = 0.14;
+vec3 spreadFrom(vec3 d) {
+  float angle = random() * 2.0 * PI;
+  float radius = sqrt(random()) * ENV_SPREAD;
+  vec3 side = normalize(cross(d, abs(d.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
+  vec3 turned = normalize(d + (side * cos(angle) + cross(d, side) * sin(angle)) * radius);
+  return turned.y > 0.02 ? turned : d;
+}
+
 // The light that reaches a surface straight from the light of this frame and from the sun.
 vec3 direct(Surface s, vec3 v, float lift) {
   vec3 from = s.position + s.face * lift;
   vec3 light = vec3(0.0);
   float chance;
   vec3 back = reflectance(s, v, uEnvDirection, chance);
-  if (chance > 0.0 && !blocked(from, uEnvDirection)) {
+  if (chance > 0.0 && !blocked(from, spreadFrom(uEnvDirection))) {
     float sky = skyChance(uEnvDirection);
     float weight = sky > 0.0 ? sky * sky / (sky * sky + chance * chance) : 1.0;
     light += back * dot(s.normal, uEnvDirection) * uEnvLight * weight;
@@ -361,14 +372,14 @@ float groundShadow(vec3 at, float lift) {
   vec4 seen = uStage * vec4(at, 1.0);
   vec2 edge = seen.w > 0.0 ? abs(seen.xy / seen.w) : vec2(1.0);
   float inside = (1.0 - smoothstep(0.7, 0.97, edge.x)) * (1.0 - smoothstep(0.7, 0.97, edge.y));
-  float near = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
+  float close = 1.0 - smoothstep(uFade * 0.25, uFade * 0.7, distance);
   vec3 from = at + vec3(0.0, lift, 0.0);
   float shadow = 0.0;
   if (uSunGround > 0.0 && blocked(from, uSunDirection)) {
     shadow = uSunGround * (1.0 - smoothstep(uFade * 0.6, uFade, distance));
   }
-  if (uEnvGround > 0.0 && near * inside > 0.0 && blocked(from, uEnvDirection)) {
-    shadow = 1.0 - (1.0 - shadow) * (1.0 - uEnvGround * 0.92 * near * inside);
+  if (uEnvGround > 0.0 && close * inside > 0.0 && blocked(from, spreadFrom(uEnvDirection))) {
+    shadow = 1.0 - (1.0 - shadow) * (1.0 - uEnvGround * 0.92 * close * inside);
   }
   return shadow;
 }`;

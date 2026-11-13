@@ -34,7 +34,100 @@ export const axisLength = ({ min, max }: Box): number =>
 const along = (position: Vec3, axis: Vec3, length: number): number[] =>
   position.map((value, index) => value + axis[index] * length);
 
-// A box around what is selected, an arrow for each axis, a ring to turn it and a square to scale it.
+const RING_STEPS = 64;
+// A ring turns in steps of this many degrees, so a body stands square again easily.
+const TURN_STEP = 5;
+
+// Two ways across the plane a ring of an axis lies in, so that the first, the second and the axis turn as x, y and z do.
+const ACROSS: Record<string, [Vec3, Vec3]> = {
+  x: [
+    [0, 1, 0],
+    [0, 0, 1],
+  ],
+  y: [
+    [0, 0, 1],
+    [1, 0, 0],
+  ],
+  z: [
+    [1, 0, 0],
+    [0, 1, 0],
+  ],
+};
+
+const ringPoint = (position: Vec3, name: string, radius: number, angle: number): number[] => {
+  const [u, v] = ACROSS[name];
+  return position.map((value, i) => value + radius * (u[i] * Math.cos(angle) + v[i] * Math.sin(angle)));
+};
+
+// The arrows and the rings are as large on the screen whatever is picked, and however it is turned: so many pixels long.
+const ARROW_PIXELS = 96;
+const RING_PIXELS = 78;
+
+// How far in the world a pixel of the screen reaches where something stands: along the axis that is seen the longest.
+function worldPerPixel(position: Vec3, toDrawing: ToDrawing, unit: number): number | null {
+  const middle = toDrawing(position);
+  if (!middle) {
+    return null;
+  }
+  let longest = 0;
+  for (const { axis } of AXES) {
+    const end = toDrawing(along(position, axis, 1));
+    if (end) {
+      longest = Math.max(longest, Math.hypot(end.x - middle.x, end.y - middle.y));
+    }
+  }
+  return longest > 1e-9 ? unit / longest : null;
+}
+
+const arrowLength = (position: Vec3, box: Box, toDrawing: ToDrawing, unit: number): number => {
+  const per = worldPerPixel(position, toDrawing, unit);
+  return per ? ARROW_PIXELS * per : axisLength(box);
+};
+
+const ringRadius = (position: Vec3, box: Box, toDrawing: ToDrawing, unit: number): number => {
+  const per = worldPerPixel(position, toDrawing, unit);
+  return per ? RING_PIXELS * per : axisLength(box) * 0.85;
+};
+
+// Rotation about x, then y, then z, in degrees, as rows; and back.
+function rows([x, y, z]: Vec3): number[] {
+  const [a, b, c] = [x, y, z].map(angle => (angle * Math.PI) / 180);
+  const [sa, ca, sb, cb, sc, cc] = [Math.sin(a), Math.cos(a), Math.sin(b), Math.cos(b), Math.sin(c), Math.cos(c)];
+  return [
+    cc * cb,
+    cc * sb * sa - sc * ca,
+    cc * sb * ca + sc * sa,
+    sc * cb,
+    sc * sb * sa + cc * ca,
+    sc * sb * ca - cc * sa,
+    -sb,
+    cb * sa,
+    cb * ca,
+  ];
+}
+
+function anglesOf(m: number[]): Vec3 {
+  const degrees = 180 / Math.PI;
+  const sb = Math.max(-1, Math.min(1, -m[6]));
+  const b = Math.asin(sb) * degrees;
+  // A quarter turn about y makes the turns about x and z one: all of it goes into the turn about x.
+  if (Math.abs(sb) > 1 - 1e-9) {
+    return [Math.atan2(m[1] * Math.sign(sb), m[4]) * degrees, b, 0];
+  }
+  return [Math.atan2(m[7], m[8]) * degrees, b, Math.atan2(m[3], m[0]) * degrees];
+}
+
+const product = (a: number[], b: number[]): number[] =>
+  [0, 1, 2].flatMap(i => [0, 1, 2].map(j => a[i * 3] * b[j] + a[i * 3 + 1] * b[3 + j] + a[i * 3 + 2] * b[6 + j]));
+
+// A turn about an axis of the world, added to the turn a body has.
+function turnedAbout(rotation: Vec3, name: string, degrees: number): Vec3 {
+  const about: Vec3 = name === 'x' ? [degrees, 0, 0] : name === 'y' ? [0, degrees, 0] : [0, 0, degrees];
+  const neat = (value: number) => Math.round(value * 100) / 100 || 0;
+  return anglesOf(product(rows(about), rows(rotation))).map(neat) as Vec3;
+}
+
+// A box around what is selected, an arrow for each axis, a ring about each axis to turn it, and a square to scale it.
 export function meshHandlesMarkup(position: Vec3, box: Box, toDrawing: ToDrawing, unit: number): string {
   const origin = toDrawing(position);
   if (!origin) {
@@ -48,8 +141,10 @@ export function meshHandlesMarkup(position: Vec3, box: Box, toDrawing: ToDrawing
       outline += `M${a.x} ${a.y}L${b.x} ${b.y}`;
     }
   }
-  const parts = [`<path d="${outline}" fill="none" stroke="${ACCENT}" stroke-width="${unit}" pointer-events="none"/>`];
-  const length = axisLength(box);
+  const parts = [
+    `<path d="${outline}" fill="none" stroke="${ACCENT}" stroke-width="${unit}" pointer-events="none" data-mesh-box="true"/>`,
+  ];
+  const length = arrowLength(position, box, toDrawing, unit);
   for (const { name, axis, color } of AXES) {
     const end = toDrawing(along(position, axis, length));
     if (end) {
@@ -60,12 +155,23 @@ export function meshHandlesMarkup(position: Vec3, box: Box, toDrawing: ToDrawing
       );
     }
   }
-  const spin = toDrawing([position[0], box.max[1], position[2]]);
-  if (spin) {
-    parts.push(
-      `<circle cx="${spin.x}" cy="${spin.y - 26 * unit}" r="${7 * unit}" fill="#ffffff" stroke="${ACCENT}" stroke-width="${2 * unit}" data-mesh-spin="true" style="cursor:ew-resize"/>`,
+  // The rings go under the arrows, so an arrow is taken where the two cross.
+  const radius = ringRadius(position, box, toDrawing, unit);
+  const rings: string[] = [];
+  for (const { name, color } of AXES) {
+    const points = Array.from({ length: RING_STEPS + 1 }, (_, k) =>
+      toDrawing(ringPoint(position, name, radius, (k / RING_STEPS) * Math.PI * 2)),
+    );
+    if (points.some(point => !point)) {
+      continue;
+    }
+    const d = (points as DrawingPoint[]).map((point, k) => `${k ? 'L' : 'M'}${point.x} ${point.y}`).join('');
+    rings.push(
+      `<path d="${d}" fill="none" stroke="transparent" stroke-width="${12 * unit}" data-mesh-turn="${name}" style="cursor:grab"/>`,
+      `<path d="${d}" fill="none" stroke="${color}" stroke-width="${2 * unit}" stroke-opacity="0.75" pointer-events="none" data-mesh-ring="${name}"/>`,
     );
   }
+  parts.splice(1, 0, ...rings);
   const size = toDrawing(box.max);
   if (size) {
     parts.push(
@@ -115,7 +221,6 @@ export function draggedBox(from: MeshObjectBox, part: string, dx: number, dy: nu
   };
 }
 
-const SPIN_PER_PIXEL = 0.6;
 const SCALE_PER_PIXEL = 0.006;
 
 interface HandleTarget {
@@ -137,21 +242,40 @@ export function handleDrag(
   { position, rotation, scale, box }: HandleTarget,
   toDrawing: ToDrawing,
   pixelsPerUnit: number,
+  // Where the drag began, in the units of the drawing: a ring follows the pointer round the middle of what it turns.
+  start?: DrawingPoint,
 ): ((dx: number, dy: number) => HandleResult) | undefined {
+  const ring = handle.getAttribute('data-mesh-turn');
+  const middle = toDrawing(position);
+  if (ring && start && middle) {
+    // The way the ring runs on the screen as it turns the right way about its axis: the angle of two points of it.
+    const radius = ringRadius(position, box, toDrawing, 1 / pixelsPerUnit);
+    const [p, q] = [toDrawing(ringPoint(position, ring, radius, 0)), toDrawing(ringPoint(position, ring, radius, 0.2))];
+    const angle = (point: DrawingPoint) => Math.atan2(point.y - middle.y, point.x - middle.x);
+    const wrap = (value: number) => Math.atan2(Math.sin(value), Math.cos(value));
+    const way = p && q ? Math.sign(wrap(angle(q) - angle(p))) || 1 : 1;
+    // Added up as the pointer goes round, so a turn may go past half a circle.
+    let last = angle(start);
+    let total = 0;
+    return (dx, dy) => {
+      const now = angle({ x: start.x + dx / pixelsPerUnit, y: start.y + dy / pixelsPerUnit });
+      total += wrap(now - last);
+      last = now;
+      const degrees = Math.round((total * way * 180) / Math.PI / TURN_STEP) * TURN_STEP;
+      return { rotation: turnedAbout(rotation, ring, degrees) };
+    };
+  }
   if (handle.hasAttribute('data-mesh-scale')) {
     return (dx, dy) => {
       const factor = Math.max(0.05, 1 + (dx - dy) * SCALE_PER_PIXEL);
       return { scale: scale.map(value => value * factor) as Vec3 };
     };
   }
-  if (handle.hasAttribute('data-mesh-spin')) {
-    return dx => ({ rotation: [rotation[0], rotation[1] + dx * SPIN_PER_PIXEL, rotation[2]] });
-  }
   const axis = AXES.find(item => item.name === handle.getAttribute('data-mesh-axis'))?.axis;
   if (!axis) {
     return undefined;
   }
-  const length = axisLength(box);
+  const length = arrowLength(position, box, toDrawing, 1 / pixelsPerUnit);
   const from = toDrawing(position);
   const to = toDrawing(along(position, axis, length));
   if (!from || !to) {

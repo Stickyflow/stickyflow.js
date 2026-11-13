@@ -14,8 +14,10 @@ interface GestureTarget {
 }
 
 // The pointer on a stage: a drag turns the camera, Ctrl or the middle button with a drag moves it sideways, Ctrl with the wheel
-// moves it nearer or farther, and a press without a drag is a click.
+// moves it nearer or farther, and a press without a drag is a click. With `direct`, for a Scene that fills its page, the
+// wheel needs no key and the right button moves sideways as well.
 export class StageGestures {
+  direct = false;
   private readonly target: GestureTarget;
   private gesture: { x: number; y: number; moved: boolean; pan?: boolean } | null = null;
 
@@ -35,6 +37,7 @@ export class StageGestures {
     host.addEventListener('pointerup', this.onPointerUp as EventListener);
     host.addEventListener('pointercancel', this.onPointerCancel);
     host.addEventListener('wheel', this.onWheel as EventListener, { passive: false });
+    host.addEventListener('contextmenu', this.onMenu);
   }
 
   unbind(host: Element): void {
@@ -44,13 +47,21 @@ export class StageGestures {
     host.removeEventListener('pointerup', this.onPointerUp as EventListener);
     host.removeEventListener('pointercancel', this.onPointerCancel);
     host.removeEventListener('wheel', this.onWheel as EventListener);
+    host.removeEventListener('contextmenu', this.onMenu);
   }
+
+  // The right button moves the camera then, so its menu stays away.
+  private readonly onMenu = (event: Event): void => {
+    if (this.direct) {
+      event.preventDefault();
+    }
+  };
 
   // The page around the Scene stays as it is. A wheel made by a program, as when a page turns the plain wheel into its own zoom,
   // is left to the page.
   private readonly onWheel = (event: WheelEvent): void => {
     const { view } = this.target;
-    if (!event.isTrusted || !isCameraGesture(event) || !view.hasFrame) {
+    if (!event.isTrusted || !(this.direct || isCameraGesture(event)) || !view.hasFrame) {
       return;
     }
     event.preventDefault();
@@ -60,7 +71,8 @@ export class StageGestures {
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {
-    const pan = event.button === 1 || (event.button === 0 && isCameraGesture(event));
+    const pan =
+      event.button === 1 || (this.direct && event.button === 2) || (event.button === 0 && isCameraGesture(event));
     if (event.button !== 0 && !pan) {
       return;
     }

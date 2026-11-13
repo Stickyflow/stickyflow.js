@@ -29,10 +29,6 @@ uniform vec3 uKernel[16];
 uniform float uSeed;
 out vec4 fragment;
 
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 void main() {
   vec4 here = texture(uGeometry, vUv);
   if (here.a <= 0.0) {
@@ -43,7 +39,10 @@ void main() {
   vec3 ray = normalize(far.xyz / far.w - uEye);
   vec3 p = uEye + ray * here.a;
   vec3 n = here.xyz;
-  float angle = hash(gl_FragCoord.xy + uSeed * 17.31) * 6.2831853;
+  // Sixteen turns in a pattern of four by four pixels. The blur afterwards takes four by four pixels together, so every turn
+  // counts once in each of them and no grain is left.
+  ivec2 cell = ivec2(gl_FragCoord.xy) & 3;
+  float angle = (float(cell.x * 4 + ((cell.y * 3 + cell.x) & 3)) + 0.5) / 16.0 * 6.2831853 + uSeed * 2.399963;
   vec3 turn = vec3(cos(angle), sin(angle), cos(angle * 1.7));
   vec3 t = turn - n * dot(turn, n);
   t = dot(t, t) < 1e-4 ? normalize(cross(n, vec3(0.0, 0.0, 1.0))) : normalize(t);
@@ -88,9 +87,9 @@ void main() {
   }
   float sum = 0.0;
   float weight = 0.0;
-  for (int x = -2; x <= 2; x++) {
-    for (int y = -2; y <= 2; y++) {
-      vec2 at = vUv + vec2(x, y) * uTexel;
+  for (int x = -2; x <= 1; x++) {
+    for (int y = -2; y <= 1; y++) {
+      vec2 at = vUv + (vec2(x, y) + 0.5) * uTexel;
       float other = texture(uGeometry, at).a;
       float w = other > 0.0 ? exp(-abs(other - depth) / (depth * 0.01)) : 0.0;
       sum += texture(uRaw, at).r * w;

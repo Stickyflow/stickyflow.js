@@ -17,6 +17,64 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.2] - 2026-11-13
+
+### Changed
+
+- An `Isometric` with no width, no height and no depth draws nothing. It drew a hull and faces of no size, which were not seen but made a large drawing heavy: a Repeat can now leave out a part of what it repeats by giving it no size.
+
+## [0.20.1] - 2026-11-13
+
+### Fixed
+
+- A Scene with a ground of a color of its own, as in the dark studio, no longer goes black while it is turned or moved. The meshes lost the shade in their corners to the ground drawn before them, unless the ground also reflected.
+
+## [0.20.0] - 2026-11-13
+
+### Added
+
+- A `Symbol` takes `Cut` and `Add`. Each has points of its own, or lays another symbol into a place with `symbol`, `at` and `size`. The result is an outline with holes, notches and parts added, for every place a symbol is used.
+- `Solid` stands in a Scene, next to Mesh. It pulls a `Symbol` up into a body with exact edges: `size` is its width, height and depth, `chamfer` cuts the rim round its top and its bottom, and it is placed and painted like a Mesh. Without a symbol it is a block.
+- A `Solid` takes `Cut`, `Add` and `Keep`. Each is a body of its own, pulled up from a `symbol` or a block, with a `layout` measured from the middle of the ground of the Solid. It is cut out, added, or what is kept is where both are. This is for cuts that do not run along the height: a bore from the side, a slanted top.
+- The top of a `Solid` need not be its outline pulled straight up. `taper` draws it in, so the walls slope, and less than 0 widens it. `shift: x, z` moves it, so the body leans. `loft` names a Symbol whose outline the top is, and the walls run from the one to the other. All three work on `Cut`, `Add` and `Keep` too, and with chamfers and rounded rims.
+- `walls` moves single walls of a `Solid` as planes, each as `[ring, corner, push, lean]`: pushed out (in, when less than 0) and leaned in by degrees (out, when less than 0). The corners follow, where the walls next to them meet, so a body gets faces at any angle. A wall that would push one next to it away goes only as far as the body holds.
+- `environment: "studio-dark"` lights a Scene as a dark studio: a room near black, one large box above, a thin strip behind that draws the edges. A ground without a color of its own is then as dark as the room.
+- The handles of a selected mesh turn it about each axis of the world with a ring of its own, red, green and blue, in steps of 5 degrees. The one point that turned it only about the upright is gone. The box round it carries `data-mesh-box`, so a host can leave it out.
+- A `Solid` and `Facets` take bindings as a Mesh does: their colour, place, turn and scale follow a DataSource with `<-`. A Mesh, a Solid and Facets also take `onTap` and the other events of the pointer, so a part of a model in a Scene can be a button that writes to a DataSource.
+- `Facets` stands in a Scene, next to Mesh and Solid. It is a body of flat faces between points in space, as a folded sheet is: `points` are the points, `faces` name the points each face runs round, with the outside on the left. `symmetry` mirrors it into its other half, `thickness` makes the sheet a shell, and `bevel` lays a narrow band along every edge that turns from one face to the next, so the edges catch the light. It is placed and painted like a Mesh.
+- `solidOutlines` gives the bottom and the top of a Solid as they are built, and `solidOfAsset` reads a Solid from the name of its model, for tools that pick faces of it.
+- `mirror: x` or `mirror: z` on a Solid makes it a second time on the other side of that plane of the Scene, turned over. The second one is named after the first, with `_mirror`.
+- `roundTop`, `roundBottom`, `cutTop` and `cutBottom` on a Solid round or cut straight single edges of its top or its bottom, each named by the ring of its outline and the corner it starts at: `roundTop: [[0, 3, 0.1]]`.
+- `round` and `cut` on a Solid round or cut straight single upright edges, each a corner of its outline: `round: [[0, 2, 0.1]]` rounds the third corner of the first ring with a radius of 0.1.
+- `edge: round` on a Solid, or on what it is joined with, rounds its rims instead of cutting them straight, and `chamfer: top, bottom` gives the rim of its top and of its bottom each a width of its own.
+- A Solid takes no wider chamfer than its outline can hold: a narrow web or a small hole gets less, so the rim never folds over itself, and none so wide that a hole in it closes.
+- `viewer.meshPointAt(clientX, clientY, query?)` gives the point of the 3D world under a point of the screen, for drawing into a Scene. Without a query it is the point on the mesh there, with the name of that mesh. With `{ height }` it is the point on the level plane at that height, wherever the meshes are. The types are `MeshPoint` and `MeshPointQuery`.
+- `viewer.setMeshDirectCamera(true)` is for a Scene that fills its page: the wheel moves the camera nearer or farther without Ctrl, and the right button moves it sideways.
+- `viewer.setMeshSteadyCamera(true)` keeps the camera of a Scene where it is when meshes come and go. Turning it off frames the Scene again.
+- `Sketch` stands in a Scene. It is a plane, placed and turned by its `layout`, with the shapes drawn on it: `Rect` with `at`, `size` and a `radius` for its corners, `Circle` with `at` and `radius`, and `Outline` with `points`, each of which may carry the radius its corner is rounded with as a third number. `on` names the Solid it lies on. A Sketch is not drawn. It is what bodies are made from.
+- A `Solid` is made from a Sketch with `sketch`, the name of the Sketch, and `pick`, a list of points on its plane, each in a piece of it. The pieces are taken together as the outline, `height` says how far it is pulled up, and the Solid stands on the plane of the Sketch, turned with it. Its own `position` moves it from there. Without `pick` it is all the shapes together. So a body follows its Sketch when that is changed.
+- `viewer.meshEdges(id)` gives the edges of a mesh as it stands in the world: where two of its faces meet at an angle, and where a face ends. A rounding shows only where it starts and ends.
+- `viewer.meshPlace(id)` tells where a mesh stands right now, also while it is dragged.
+- `viewer.setMeshGroup(ids)` names meshes of a Scene that move together. Dragging one of them takes the others along by the same step while it is dragged.
+- `viewer.meshCamera()` tells where the camera of a Scene looks from and at, and `viewer.setMeshCamera({ orbit, target }, { animate })` turns it there: to look straight at a face, or to put a view back. The type is `MeshCamera`.
+- A Scene with no mesh in it has a camera all the same, looking at a space four units wide, so its ground is drawn and `meshPointAt` answers on it.
+- `viewer.setMeshPlainShadows(false)` leaves the shadows of the environment out of the picture of a Scene that is not traced, as while it moves. Only the traced picture has them. The ground keeps one soft, pale shadow under what stands on it, the same while the picture moves and at rest.
+- `viewer.setMeshTracing(false)` shows only the quick picture of a Scene, without tracing the still one.
+- `viewer.meshPointOnScreen(point)` is the other way round: where a point of the 3D world is on the screen.
+
+### Fixed
+
+- A Scene with a Canvas that runs a shader is traced too. While its still picture is refined, the shader holds at the moment the picture began, so the picture is sharp; not traced, the shader goes on as before.
+- A Scene releases the models its document no longer names. It kept every model it had ever loaded.
+- Turning the tracing of a Scene on or off starts its still picture over, so the change shows at once and not only after the view has moved.
+- While a Scene is turned or moved, the soft edges of its shadows and the shade in its corners no longer show as grain.
+- The still picture of a Scene is shown once it is smooth. It showed after a few frames, as grain that then cleared.
+- A traced picture of a Scene shows the grid as the plain one does.
+- The shadows of the light of the environment in a traced picture are smooth. They showed in bands, one for each light the frames took.
+- A Scene that is turned or moved looks nearer to how it looks at rest: the shadow that stands for the light of the environment is as strong as that light is one-sided, and the shade on the ground round what stands there counts for less.
+- The arrows and the rings that move and turn what is selected in a Scene keep one size on the screen. They were sized from the box round it, so they grew while it was turned.
+- A Canvas in a traced picture looks as it does while the Scene moves: sharp, in its own colors, its text as thin as it is. It was mixed among the light and turned into screen colors a second time, so its text came out bold and soft and a shader on it pale.
+
 ## [0.19.0] - 2026-11-11
 
 ### Added

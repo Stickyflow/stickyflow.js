@@ -11,6 +11,8 @@ export interface CanvasDefinitions {
   styles: BlockDefinitions;
   layouts: BlockDefinitions;
   symbols: CanvasObjectResolutionContext['symbolDefs'];
+  // The Sketches of the document by name, wherever they stand.
+  sketches: BlockDefinitions;
   shaders: Map<string, Shader>;
   model?: SflBlock;
 }
@@ -24,9 +26,21 @@ export function collectCanvasDefinitions(sflDocument: SflDocument): CanvasDefini
     styles: collectStyleDefinitions(sflDocument),
     layouts: collectLayoutDefinitions(sflDocument),
     symbols: collectSymbolDefinitions(sflDocument),
+    sketches: collectSketches(sflDocument.blocks),
     shaders: collectShaderDefinitions(sflDocument),
     model: findCanvasModel(sflDocument),
   };
+}
+
+function collectSketches(blocks: readonly SflBlock[], found: BlockDefinitions = new Map()): BlockDefinitions {
+  for (const block of blocks) {
+    if (block.kind === 'Sketch') {
+      found.set(block.name, block);
+    } else {
+      collectSketches(childBlocks(block), found);
+    }
+  }
+  return found;
 }
 
 function collectShaderDefinitions(sflDocument: SflDocument): Map<string, Shader> {
@@ -65,14 +79,25 @@ function collectLayoutDefinitions(sflDocument: SflDocument): BlockDefinitions {
 
 function collectSymbolDefinitions(sflDocument: SflDocument): CanvasObjectResolutionContext['symbolDefs'] {
   const symbols: CanvasObjectResolutionContext['symbolDefs'] = new Map();
-  for (const block of sflDocument.blocks) {
-    if (block.kind !== 'Symbol') {
-      continue;
+  const blocks = new Map(sflDocument.blocks.filter(block => block.kind === 'Symbol').map(block => [block.name, block]));
+  const reading = new Set<string>();
+  // A symbol that takes another one into it reads that one first. One that leads back to itself is read without it.
+  const read = (name: string): ReturnType<typeof readSymbolDefinition> => {
+    const known = symbols.get(name);
+    const block = blocks.get(name);
+    if (known || !block || reading.has(name)) {
+      return known;
     }
-    const symbol = readSymbolDefinition(block);
+    reading.add(name);
+    const symbol = readSymbolDefinition(block, read);
+    reading.delete(name);
     if (symbol) {
-      symbols.set(block.name, symbol);
+      symbols.set(name, symbol);
     }
+    return symbol;
+  };
+  for (const name of blocks.keys()) {
+    read(name);
   }
   return symbols;
 }

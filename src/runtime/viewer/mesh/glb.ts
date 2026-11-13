@@ -358,7 +358,7 @@ function readMeshes(gltf: Gltf, buffers: ArrayBuffer[], base: string): MeshAsset
   return { primitives, skipped: [...skipped] };
 }
 
-function plainAsset(geometry: PlainGeometry, skipped: string[]): MeshAsset {
+export function plainAsset(geometry: PlainGeometry, skipped: string[]): MeshAsset {
   return {
     primitives: [
       {
