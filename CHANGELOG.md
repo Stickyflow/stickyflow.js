@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-13
+
 ### Added
 
 - A `Symbol` takes `Cut` and `Add`. Each has points of its own, or lays another symbol into a place with `symbol`, `at` and `size`. The result is an outline with holes, notches and parts added, for every place a symbol is used.
