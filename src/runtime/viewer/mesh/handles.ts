@@ -140,7 +140,7 @@ export function meshHandlesMarkup(position: Vec3, box: Box, toDrawing: ToDrawing
     const d = (points as DrawingPoint[]).map((point, k) => `${k ? 'L' : 'M'}${point.x} ${point.y}`).join('');
     rings.push(
       `<path d="${d}" fill="none" stroke="transparent" stroke-width="${12 * unit}" data-mesh-turn="${name}" style="cursor:grab"/>`,
-      `<path d="${d}" fill="none" stroke="${color}" stroke-width="${2 * unit}" stroke-opacity="0.75" pointer-events="none"/>`,
+      `<path d="${d}" fill="none" stroke="${color}" stroke-width="${2 * unit}" stroke-opacity="0.75" pointer-events="none" data-mesh-ring="${name}"/>`,
     );
   }
   parts.splice(1, 0, ...rings);
