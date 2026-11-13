@@ -59,7 +59,35 @@ const ringPoint = (position: Vec3, name: string, radius: number, angle: number):
   return position.map((value, i) => value + radius * (u[i] * Math.cos(angle) + v[i] * Math.sin(angle)));
 };
 
-const ringRadius = (box: Box): number => axisLength(box) * 0.85;
+// The arrows and the rings are as large on the screen whatever is picked, and however it is turned: so many pixels long.
+const ARROW_PIXELS = 96;
+const RING_PIXELS = 78;
+
+// How far in the world a pixel of the screen reaches where something stands: along the axis that is seen the longest.
+function worldPerPixel(position: Vec3, toDrawing: ToDrawing, unit: number): number | null {
+  const middle = toDrawing(position);
+  if (!middle) {
+    return null;
+  }
+  let longest = 0;
+  for (const { axis } of AXES) {
+    const end = toDrawing(along(position, axis, 1));
+    if (end) {
+      longest = Math.max(longest, Math.hypot(end.x - middle.x, end.y - middle.y));
+    }
+  }
+  return longest > 1e-9 ? unit / longest : null;
+}
+
+const arrowLength = (position: Vec3, box: Box, toDrawing: ToDrawing, unit: number): number => {
+  const per = worldPerPixel(position, toDrawing, unit);
+  return per ? ARROW_PIXELS * per : axisLength(box);
+};
+
+const ringRadius = (position: Vec3, box: Box, toDrawing: ToDrawing, unit: number): number => {
+  const per = worldPerPixel(position, toDrawing, unit);
+  return per ? RING_PIXELS * per : axisLength(box) * 0.85;
+};
 
 // Rotation about x, then y, then z, in degrees, as rows; and back.
 function rows([x, y, z]: Vec3): number[] {
@@ -116,7 +144,7 @@ export function meshHandlesMarkup(position: Vec3, box: Box, toDrawing: ToDrawing
   const parts = [
     `<path d="${outline}" fill="none" stroke="${ACCENT}" stroke-width="${unit}" pointer-events="none" data-mesh-box="true"/>`,
   ];
-  const length = axisLength(box);
+  const length = arrowLength(position, box, toDrawing, unit);
   for (const { name, axis, color } of AXES) {
     const end = toDrawing(along(position, axis, length));
     if (end) {
@@ -128,7 +156,7 @@ export function meshHandlesMarkup(position: Vec3, box: Box, toDrawing: ToDrawing
     }
   }
   // The rings go under the arrows, so an arrow is taken where the two cross.
-  const radius = ringRadius(box);
+  const radius = ringRadius(position, box, toDrawing, unit);
   const rings: string[] = [];
   for (const { name, color } of AXES) {
     const points = Array.from({ length: RING_STEPS + 1 }, (_, k) =>
@@ -221,7 +249,7 @@ export function handleDrag(
   const middle = toDrawing(position);
   if (ring && start && middle) {
     // The way the ring runs on the screen as it turns the right way about its axis: the angle of two points of it.
-    const radius = ringRadius(box);
+    const radius = ringRadius(position, box, toDrawing, 1 / pixelsPerUnit);
     const [p, q] = [toDrawing(ringPoint(position, ring, radius, 0)), toDrawing(ringPoint(position, ring, radius, 0.2))];
     const angle = (point: DrawingPoint) => Math.atan2(point.y - middle.y, point.x - middle.x);
     const wrap = (value: number) => Math.atan2(Math.sin(value), Math.cos(value));
@@ -247,7 +275,7 @@ export function handleDrag(
   if (!axis) {
     return undefined;
   }
-  const length = axisLength(box);
+  const length = arrowLength(position, box, toDrawing, 1 / pixelsPerUnit);
   const from = toDrawing(position);
   const to = toDrawing(along(position, axis, length));
   if (!from || !to) {
