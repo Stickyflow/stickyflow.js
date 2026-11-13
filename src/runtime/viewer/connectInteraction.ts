@@ -60,7 +60,16 @@ function hit(viewer: Viewer, ids: ReadonlySet<string>, x: number, y: number): st
       found = id;
     }
   }
-  return found ?? viewer.meshObjectAt(x, y, { among: ids })?.id ?? null;
+  if (found) {
+    return found;
+  }
+  // What lies on a Canvas in a Scene, and else the body under the pointer, when it is one that answers.
+  const onSurface = viewer.meshObjectAt(x, y, { among: ids })?.id;
+  if (onSurface) {
+    return onSurface;
+  }
+  const body = viewer.meshPointAt(x, y)?.mesh;
+  return body && ids.has(body) ? body : null;
 }
 
 interface Session {
