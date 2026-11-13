@@ -769,6 +769,8 @@ export class MeshRenderer {
     if (groundColor && !still) {
       this.drawGroundBase(camera, box, floor, wide, groundColor);
       gl.useProgram(program);
+      // The ground took the picture of the occlusion away from where the meshes read it.
+      this.occlusion.bind(uniforms, occlusion);
     }
     if (reflection > 0) {
       // The rougher the ground, the nearer to it the reflection ends.
