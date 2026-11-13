@@ -227,7 +227,7 @@ export class MeshStage {
     const empty = data.meshes.length === 0 ? EMPTY_SCENE : undefined;
     view.aim(framing, aspect, window, () => renderer.box(meshes, planes) ?? empty, shadowFrom);
     this.keepSurfacesSharp(planes);
-    // A surface with a shader changes every frame, so its picture cannot be refined over several.
+    // A surface with a shader changes every frame: the renderer refines the picture only when it is traced, at one moment.
     const moving = planes.some(plane => plane.layers.some(layer => 'rect' in layer));
     const more = renderer.draw(meshes, view.camera, {
       shadows: data.shadow,
@@ -241,7 +241,8 @@ export class MeshStage {
         data.environment === STUDIO_DARK && !data.ground?.color
           ? { id: '', reflection: 0, roughness: 0, ...data.ground, color: DARK_GROUND }
           : data.ground,
-      still: !wholeStage && !this.gestures.active && !moving,
+      still: !wholeStage && !this.gestures.active,
+      moving,
       space: empty,
     });
     this.placeAnchors();

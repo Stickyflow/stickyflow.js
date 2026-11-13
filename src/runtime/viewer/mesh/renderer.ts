@@ -30,7 +30,7 @@ import type { TraceMapName, TracePart } from './trace/sceneData';
 // One layer of a flat surface: a picture, or a shader with the part of the surface it covers, as left, top, width and height from 0 to 1.
 export type PlaneLayer =
   | { texture: WebGLTexture }
-  | { program: WebGLProgram; upload(): void; rect: readonly [number, number, number, number] };
+  | { program: WebGLProgram; upload(time?: number): void; rect: readonly [number, number, number, number] };
 
 export interface Plane {
   id: string;
@@ -114,6 +114,9 @@ export interface DrawOptions {
   ground?: MeshGround;
   // The picture may be refined over several frames, as nothing in it moves.
   still?: boolean;
+  // A surface in it runs a shader. Traced, the still picture holds that shader at the moment it began; not traced, the
+  // picture is not refined, so the shader goes on.
+  moving?: boolean;
   // The space a Scene with nothing in it takes, so its ground and its grid are drawn.
   space?: Box;
 }
@@ -165,6 +168,8 @@ export class MeshRenderer {
   // Counts what changes the look of the meshes besides the document: pictures that arrive and environments.
   private generation = 0;
   private stillKey = '';
+  // The moment a still picture began, in seconds: the time its shaders are drawn at in every frame of it.
+  private stillTime = 0;
   private settled = 0;
   private readonly groundQuad: WebGLVertexArrayObject | null;
   private readonly groundBuffer: WebGLBuffer | null;
@@ -570,7 +575,12 @@ export class MeshRenderer {
   // Draws the meshes. A still picture is refined frame by frame once nothing has changed for a moment: the result says whether
   // another frame is wanted.
   draw(meshes: readonly Mesh[], camera: Camera | undefined, options: DrawOptions = {}): boolean {
-    const still = camera && options.still && this.environment.present && this.accumulation.possible;
+    const still =
+      camera &&
+      options.still &&
+      (!options.moving || this.tracing) &&
+      this.environment.present &&
+      this.accumulation.possible;
     if (!camera || !still) {
       this.stillKey = '';
       this.drawFrame(meshes, camera, options, null, null);
@@ -580,6 +590,7 @@ export class MeshRenderer {
     const key = this.viewKey(meshes, camera, options);
     if (key !== this.stillKey) {
       this.stillKey = key;
+      this.stillTime = now / 1000;
       this.settled = now + SETTLE_MS;
       this.accumulation.reset();
       this.drawFrame(meshes, camera, options, null, null);
@@ -773,7 +784,7 @@ export class MeshRenderer {
       prepareGround();
       this.drawGroundQuad();
     }
-    this.drawPlanes(camera, planes, still !== null);
+    this.drawPlanes(camera, planes, still !== null, still ? this.stillTime : undefined);
     gl.useProgram(program);
     // What is seen through lies over what the occlusion was worked out for, so it takes none.
     this.occlusion.bind(uniforms, false);
@@ -881,7 +892,7 @@ export class MeshRenderer {
       gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      this.drawPlanes(shifted, planes, true);
+      this.drawPlanes(shifted, planes, true, this.stillTime);
       gl.disable(gl.BLEND);
     }
     const shown = groundColor?.map(value => value ** (1 / 2.2));
@@ -972,7 +983,7 @@ export class MeshRenderer {
   }
 
   // The layers of a surface lie in one plane, so each is pulled a little toward the camera over the one before.
-  private drawPlanes(camera: Camera, planes: readonly Plane[], still: boolean): void {
+  private drawPlanes(camera: Camera, planes: readonly Plane[], still: boolean, time?: number): void {
     const { gl } = this;
     gl.bindVertexArray(this.planeQuad);
     gl.enable(gl.POLYGON_OFFSET_FILL);
@@ -990,7 +1001,7 @@ export class MeshRenderer {
         gl.useProgram(program);
         gl.uniformMatrix4fv(this.mvpLocations.get(program) ?? null, false, multiply(camera.viewProjection, matrix));
         if (isShader) {
-          layer.upload();
+          layer.upload(time);
         } else {
           gl.bindTexture(gl.TEXTURE_2D, layer.texture);
           gl.uniform1i(this.pictureSampler, 0);

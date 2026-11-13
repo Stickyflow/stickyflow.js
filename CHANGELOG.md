@@ -49,6 +49,7 @@ Two things count as breaking here that are easy to overlook:
 
 ### Fixed
 
+- A Scene with a Canvas that runs a shader is traced too. While its still picture is refined, the shader holds at the moment the picture began, so the picture is sharp; not traced, the shader goes on as before.
 - A Scene releases the models its document no longer names. It kept every model it had ever loaded.
 - Turning the tracing of a Scene on or off starts its still picture over, so the change shows at once and not only after the view has moved.
 - While a Scene is turned or moved, the soft edges of its shadows and the shade in its corners no longer show as grain.
