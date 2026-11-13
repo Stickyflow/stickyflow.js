@@ -152,7 +152,10 @@ export class StageHandles {
       return;
     }
     const item = this.selectedItem();
-    const changeFor = item && handleDrag(pressed, item, view.toDrawing, svg.getScreenCTM()?.a || 1);
+    const screen = svg.getScreenCTM();
+    const start = screen ? new DOMPoint(event.clientX, event.clientY).matrixTransform(screen.inverse()) : undefined;
+    const changeFor =
+      item && handleDrag(pressed, item, view.toDrawing, screen?.a || 1, start && { x: start.x, y: start.y });
     if (!item || !changeFor) {
       return;
     }
