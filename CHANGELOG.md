@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.4] - 2026-11-14
+
 ### Changed
 
 - The grain of `grain` is uneven now, as a worn print has it. Its specks are round and of different sizes, they gather in patches (`clump`, 0 to 1, `0.7`) and a few larger ones come among them (`variety`, 0 to 1, `0.5`); `cloud` gives soft blotches, and `noise` (0 to 1, `0.5`) a random noise at every pixel under the specks. With `follow` (0 to 1, `0.6`) the specks lean light on a dark fill and dark on a light one. `amount` starts at `0.3`.
