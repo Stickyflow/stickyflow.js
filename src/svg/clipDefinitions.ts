@@ -13,7 +13,7 @@ export class SvgClipDefinitions {
     return style.clip ? this.define(style.clip) : undefined;
   }
 
-  private define(clip: SceneClip): string {
+  define(clip: SceneClip): string {
     const key = JSON.stringify(clip);
     let id = this.ids.get(key);
     if (!id) {

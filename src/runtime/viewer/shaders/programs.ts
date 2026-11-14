@@ -7,6 +7,7 @@ import { emberSlitsProgram } from './builtins/emberSlits';
 import { glassDotsProgram } from './builtins/glassDots';
 import { glassRefractionProgram } from './builtins/glassRefraction';
 import { glowCardProgram } from './builtins/glowCard';
+import { grainProgram } from './builtins/grain';
 import { halftoneHaloProgram } from './builtins/halftoneHalo';
 import { haloProgram } from './builtins/halo';
 import { horizonGlowProgram } from './builtins/horizonGlow';
@@ -67,6 +68,7 @@ const builtins = [
   horizonGlowProgram,
   lightStreaksProgram,
   pulseLineProgram,
+  grainProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 

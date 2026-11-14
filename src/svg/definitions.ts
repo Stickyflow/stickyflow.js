@@ -1,5 +1,5 @@
 import type { MarkerType } from '../model/link';
-import type { RenderNode, ScenePaint, SceneStyle } from '../renderScene/scene';
+import type { RenderNode, SceneClip, ScenePaint, SceneStyle } from '../renderScene/scene';
 import { SvgClipDefinitions } from './clipDefinitions';
 import { SvgFilterDefinitions } from './filterDefinitions';
 import { safeId } from './format';
@@ -41,5 +41,9 @@ export class SvgDefinitionRegistry {
 
   clip(style: SceneStyle): string | undefined {
     return this.clips.clip(style);
+  }
+
+  clipArea(clip: SceneClip): string {
+    return this.clips.define(clip);
   }
 }
