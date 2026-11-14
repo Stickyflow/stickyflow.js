@@ -1,5 +1,6 @@
 import type { RenderNode, SceneClip } from '../../scene';
 import { freeformPathData, rotatedBounds } from '../../scene';
+import { localShapePath } from './geometry/pathCalculation';
 import type { ShapeRenderContext } from './types';
 
 // Programs that draw their own rectangle. Every other program still needs a circle or an oval.
@@ -18,34 +19,46 @@ const RECT_PROGRAMS: ReadonlySet<string> = new Set([
 ]);
 
 // Programs that fill their whole surface, so the corners of the shape have to be cut from it.
-const FILLING_PROGRAMS: ReadonlySet<string> = new Set(['horizonGlow', 'lightStreaks']);
+const FILLING_PROGRAMS: ReadonlySet<string> = new Set(['horizonGlow', 'lightStreaks', 'grain']);
+
+const fillsRectangle = (context: ShapeRenderContext): boolean =>
+  Boolean(context.shape.shader && RECT_PROGRAMS.has(context.shape.shader.program));
 
 function shaderMask(context: ShapeRenderContext): 'ellipse' | 'rect' | undefined {
-  if (context.shape.shapeType === 'circle' || context.shape.shapeType === 'oval') {
+  const type = context.shape.shapeType;
+  if ((type === 'circle' || type === 'oval') && !fillsRectangle(context)) {
     return 'ellipse';
   }
-  const rectangular = context.shape.shapeType === 'rectangle' || context.shape.shapeType === 'rounded_rectangle';
-  if (
-    (rectangular || symbolOutline(context)) &&
-    context.shape.shader &&
-    RECT_PROGRAMS.has(context.shape.shader.program)
-  ) {
+  const rectangular = type === 'rectangle' || type === 'rounded_rectangle';
+  if ((rectangular || shapeOutline(context)) && fillsRectangle(context)) {
     return 'rect';
   }
   return undefined;
 }
 
-// The outline of a symbol shape, drawn as the shape draws it, so a program that fills a rectangle can be cut to it.
-function symbolOutline(context: ShapeRenderContext): SceneClip | undefined {
-  const symbol = context.shape.shapeType === 'symbol' ? context.shape.symbol : undefined;
-  if (!symbol || symbol.points.length < 3) {
-    return undefined;
+// The outline of a shape that is not a rectangle, drawn as the shape draws it, so a program that fills a rectangle can be cut to it.
+function shapeOutline(context: ShapeRenderContext): SceneClip | undefined {
+  const { x, y, width, height } = context;
+  const type = context.shape.shapeType;
+  if (type === 'circle' || type === 'oval') {
+    const rx = width / 2;
+    const ry = height / 2;
+    const cy = y + ry;
+    return { type: 'path', d: `M ${x} ${cy} A ${rx} ${ry} 0 1 0 ${x + width} ${cy} A ${rx} ${ry} 0 1 0 ${x} ${cy} Z` };
   }
-  const place = ([x, y]: [number, number]) => ({ x: context.x + x * context.width, y: context.y + y * context.height });
-  const d = symbol.rings
-    ? symbol.rings.map(ring => freeformPathData({ points: ring.map(place), tension: 0, closed: true })).join(' ')
-    : freeformPathData({ points: symbol.points.map(place), tension: symbol.tension ?? 0, closed: true });
-  return { type: 'path', d };
+  if (type === 'symbol') {
+    const symbol = context.shape.symbol;
+    if (!symbol || symbol.points.length < 3) {
+      return undefined;
+    }
+    const place = ([px, py]: [number, number]) => ({ x: x + px * width, y: y + py * height });
+    const d = symbol.rings
+      ? symbol.rings.map(ring => freeformPathData({ points: ring.map(place), tension: 0, closed: true })).join(' ')
+      : freeformPathData({ points: symbol.points.map(place), tension: symbol.tension ?? 0, closed: true });
+    return { type: 'path', d };
+  }
+  const d = localShapePath(type, x, y, width, height);
+  return d ? { type: 'path', d } : undefined;
 }
 
 export function renderShapeShaderSurface(context: ShapeRenderContext): RenderNode | undefined {
@@ -88,6 +101,6 @@ export function renderShapeShaderSurface(context: ShapeRenderContext): RenderNod
       context.shape.shapeType === 'rounded_rectangle' && FILLING_PROGRAMS.has(context.shape.shader.program)
         ? (context.shape.cornerRadius ?? 8)
         : undefined,
-    clip: symbolOutline(context),
+    clip: fillsRectangle(context) ? shapeOutline(context) : undefined,
   };
 }
