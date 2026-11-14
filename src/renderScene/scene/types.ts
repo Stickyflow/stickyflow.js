@@ -243,6 +243,8 @@ export interface SceneShaderSurface extends SceneBase {
   mask: 'ellipse' | 'rect';
   fillColor?: string;
   cornerRadius?: number;
+  // The outline the surface is cut to, for a shape whose form is neither a rectangle nor a round one, as a symbol.
+  clip?: SceneClip;
 }
 
 export interface SceneRollingNumber extends SceneBase {

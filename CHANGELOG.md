@@ -17,6 +17,11 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The shader program `grain` gives a drawing the texture of printed paper. It draws only light and dark specks and a soft cloud of unevenness, and is clear between them, so a `rectangle` with it laid over a drawing leaves the drawing to be seen and roughens it. `amount` is how much grain there is (0 to 1, `0.18`), `size` the size of a speck in pixels of the screen (`1.5`), `light` the share of light specks (`0.5`), `cloud` how strong the slow unevenness is (`0.35`), `seed` another pattern, and `dark` and `bright` the colors of the specks. The specks keep their size however large the drawing is shown.
+- A shape drawn from a `Symbol` takes the shader programs that fill a rectangle (as `grain`, `glassDots` or `silkFolds`), cut to its outline. A symbol made from a traced area of a picture so gets the texture of the print, and a glass or a light only within its form.
+
 ## [0.20.2] - 2026-11-13
 
 ### Changed
