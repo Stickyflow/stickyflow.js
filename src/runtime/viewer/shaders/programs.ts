@@ -32,6 +32,7 @@ import { violetGlassProgram } from './builtins/violetGlass';
 import { violetGlassLightProgram } from './builtins/violetGlassLight';
 import { vortexProgram } from './builtins/vortex';
 import { wavesProgram } from './builtins/waves';
+import { wornProgram } from './builtins/worn';
 import type { ShaderProgram } from './types';
 
 const builtins = [
@@ -69,6 +70,7 @@ const builtins = [
   lightStreaksProgram,
   pulseLineProgram,
   grainProgram,
+  wornProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 

@@ -17,6 +17,10 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The shader program `worn` gives a print the damage of old paper: ink flaked off down to the paper (`wear`), a net of coarse and fine cracks (`cracks`), up to three folds straight across (`folds`), brown stains with darker rims (`stains`), browned and frayed edges (`edge`) and thin broken scratches (`scratches`), each from 0 to 1. Its marks grow with the drawing, `scale` makes them larger or smaller, and `seed` gives another pattern. `paper`, `dark` and `stain` are its colors; on a light fill the cracks are dark, on a dark fill they show the paper. Like `grain` it takes every shape, cut to its outline.
+
 ## [0.20.4] - 2026-11-14
 
 ### Changed
