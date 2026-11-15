@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.5] - 2026-11-15
+
 ### Added
 
 - The shader program `cityMap` draws a map of a city that is made up as it is drawn, in the way of a map: thin lines on a calm ground. Every quarter has streets of its own turn and size, some winding, with a wider street every few; main roads bend along the borders of the quarters, with roundabouts where three of them meet, long highways sweep across with a soft glow and with ramps that leave and join them, a river runs across as a band with a shore, crossed by bridges with a deck and rails, and points of interest glow and breathe. Every line has one width however the map is bent, a hairline from afar that grows as the map is looked at closely. `streets`, `mains`, `roundabouts`, `highways`, `ramps`, `water` and `points` (0 to 1) say how much there is of each, and 0 leaves that kind out. `variety` (0 to 1) makes the quarters differ in size, `waterAngle` turns the river and `waterOffset` (-1 to 1) moves it across the map, `scale` sets the size of it all, `angle` turns the grids, `speed` is how fast the points breathe, and `seed` gives another city. `land`, `street`, `arterial`, `highway`, `waterColor` and `point` are its colors. It fills any shape, cut to its outline.
