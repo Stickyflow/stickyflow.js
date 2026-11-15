@@ -16,10 +16,12 @@ const RECT_PROGRAMS: ReadonlySet<string> = new Set([
   'pulseLine',
   'glassRefraction',
   'grain',
+  'worn',
+  'cityMap',
 ]);
 
 // Programs that fill their whole surface, so the corners of the shape have to be cut from it.
-const FILLING_PROGRAMS: ReadonlySet<string> = new Set(['horizonGlow', 'lightStreaks', 'grain']);
+const FILLING_PROGRAMS: ReadonlySet<string> = new Set(['horizonGlow', 'lightStreaks', 'grain', 'worn', 'cityMap']);
 
 const fillsRectangle = (context: ShapeRenderContext): boolean =>
   Boolean(context.shape.shader && RECT_PROGRAMS.has(context.shape.shader.program));

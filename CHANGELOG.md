@@ -17,6 +17,12 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- The shader program `cityMap` draws a map of a city that is made up as it is drawn, in the way of a map: thin lines on a calm ground. Every quarter has streets of its own turn and size, some winding, with a wider street every few; main roads bend along the borders of the quarters, with roundabouts where three of them meet, long highways sweep across with a soft glow and with ramps that leave and join them, a river runs across as a band with a shore, crossed by bridges with a deck and rails, and points of interest glow and breathe. Every line has one width however the map is bent, a hairline from afar that grows as the map is looked at closely. `streets`, `mains`, `roundabouts`, `highways`, `ramps`, `water` and `points` (0 to 1) say how much there is of each, and 0 leaves that kind out. `variety` (0 to 1) makes the quarters differ in size, `waterAngle` turns the river and `waterOffset` (-1 to 1) moves it across the map, `scale` sets the size of it all, `angle` turns the grids, `speed` is how fast the points breathe, and `seed` gives another city. `land`, `street`, `arterial`, `highway`, `waterColor` and `point` are its colors. It fills any shape, cut to its outline.
+
+- The shader program `worn` gives a print the damage of old paper: ink flaked off down to the paper (`wear`), a net of coarse and fine cracks (`cracks`), up to three folds straight across (`folds`), brown stains with darker rims (`stains`), browned and frayed edges (`edge`) and thin broken scratches (`scratches`), each from 0 to 1. Its marks grow with the drawing, `scale` makes them larger or smaller, and `seed` gives another pattern. `paper`, `dark` and `stain` are its colors; on a light fill the cracks are dark, on a dark fill they show the paper. Like `grain` it takes every shape, cut to its outline.
+
 ## [0.20.4] - 2026-11-14
 
 ### Changed

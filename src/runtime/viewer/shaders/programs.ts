@@ -1,6 +1,7 @@
 import { buttonProgram } from './builtins/button';
 import { chromaticGlassPlateProgram } from './builtins/chromaticGlassPlate';
 import { chromaticHaloProgram } from './builtins/chromaticHalo';
+import { cityMapProgram } from './builtins/cityMap';
 import { eclipseOrbProgram } from './builtins/eclipseOrb';
 import { emberMatrixProgram } from './builtins/emberMatrix';
 import { emberSlitsProgram } from './builtins/emberSlits';
@@ -32,6 +33,7 @@ import { violetGlassProgram } from './builtins/violetGlass';
 import { violetGlassLightProgram } from './builtins/violetGlassLight';
 import { vortexProgram } from './builtins/vortex';
 import { wavesProgram } from './builtins/waves';
+import { wornProgram } from './builtins/worn';
 import type { ShaderProgram } from './types';
 
 const builtins = [
@@ -69,6 +71,8 @@ const builtins = [
   lightStreaksProgram,
   pulseLineProgram,
   grainProgram,
+  cityMapProgram,
+  wornProgram,
 ];
 const programs = new Map<string, ShaderProgram>(builtins.map(program => [program.name, program]));
 
