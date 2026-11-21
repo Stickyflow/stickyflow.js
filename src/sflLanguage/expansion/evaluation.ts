@@ -81,6 +81,13 @@ export function resolveNumeric(scope: Scope, value: SflValue): SflValue {
 }
 
 export function resolveValue(scope: Scope, value: SflValue): SflValue {
+  // A field of the row a Repeat is at, written alone as `text: house.name`.
+  if (value.type === 'ident' && value.segments.length > 1) {
+    const field = scope.vars.get(value.segments.join('.'));
+    if (field !== undefined) {
+      return scalarValue(scope, field);
+    }
+  }
   if (scope.substitute && value.type === 'ident' && value.segments.length === 1) {
     const known = scope.vars.get(value.segments[0]);
     if (known !== undefined) {

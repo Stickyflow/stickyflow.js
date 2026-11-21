@@ -1,6 +1,6 @@
 import { getComponentDescriptor } from '../model/component';
 import type { BlockKind, SflBinding, SflBlock, SflDocument, SflExpr, SflHandler } from '../sflLanguage/ast';
-import { expandDocument } from '../sflLanguage/expansion';
+import { expandDocument, type Tables } from '../sflLanguage/expansion';
 import {
   acceptsUserChange,
   BINDABLE_COMPONENT_PROPERTIES,
@@ -390,9 +390,9 @@ function indexByField(bindings: BoundProperty[]): Map<string, BoundProperty[]> {
   return byField;
 }
 
-export function buildBindingGraph(source: SflDocument): BindingGraph {
+export function buildBindingGraph(source: SflDocument, tables?: Tables): BindingGraph {
   // Names of a Repeat or a Template, like col, are only filled in when these are made.
-  const sflDocument = expandDocument(source);
+  const sflDocument = expandDocument(source, tables);
   const { contracts, diagnostics } = collectContracts(sflDocument);
   // The Parameters are gone once the document is made, so they are read from the document as it was written.
   for (const contract of collectParameterContracts(source)) {

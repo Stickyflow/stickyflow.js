@@ -2,8 +2,8 @@ import type { SflBlock, SflDocument, SflEntry, SflValue } from '../ast';
 import { resolveNumeric } from './evaluation';
 import { instance } from './instance';
 import { Random } from './random';
-import { expandRepeatBlocks, hasRepeats } from './repeat';
-import { fail, type Scalar, type Scope } from './scope';
+import { expandRepeatBlocks, hasRepeats, type RepeatData } from './repeat';
+import { fail, type Scalar, type Scope, type Tables } from './scope';
 import { expandUses, hasTemplates } from './template';
 
 const isComputed = (value: SflValue): boolean =>
@@ -134,12 +134,36 @@ const hasMirrors = (blocks: SflBlock[]): boolean =>
       hasMirrors(block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []))),
   );
 
-export function expandDocument(doc: SflDocument): SflDocument {
-  const expanded = expandCopies(doc);
+// Every DataSource of the document, and whether it holds one record or the rows of a table.
+function dataSources(blocks: SflBlock[]): Map<string, 'record' | 'table'> {
+  const found = new Map<string, 'record' | 'table'>();
+  const visit = (block: SflBlock) => {
+    if (block.kind === 'DataSource') {
+      const mode = block.entries.find(entry => entry.type === 'property' && entry.property.key === 'mode');
+      const record =
+        mode?.type === 'property' &&
+        mode.property.value.type === 'ident' &&
+        mode.property.value.segments[0] === 'record';
+      found.set(block.name, record ? 'record' : 'table');
+    }
+    for (const entry of block.entries) {
+      if (entry.type === 'block') {
+        visit(entry.block);
+      }
+    }
+  };
+  blocks.forEach(visit);
+  return found;
+}
+
+// `tables` are the rows of the tables as the host holds them, for a Repeat that runs over one. Without them such a Repeat
+// makes nothing.
+export function expandDocument(doc: SflDocument, tables: Tables = new Map()): SflDocument {
+  const expanded = expandCopies(doc, tables);
   return hasMirrors(expanded.blocks) ? { ...expanded, blocks: withMirrors(expanded.blocks) } : expanded;
 }
 
-function expandCopies(doc: SflDocument): SflDocument {
+function expandCopies(doc: SflDocument, tables: Tables): SflDocument {
   const params = readParameters(doc.blocks);
   const repeats = hasRepeats(doc.blocks);
   if (!repeats && !hasTemplates(doc.blocks) && params.size === 0 && parameterBlocks(doc.blocks).length === 0) {
@@ -147,7 +171,8 @@ function expandCopies(doc: SflDocument): SflDocument {
     return doc;
   }
   const source = withoutParameters(doc.blocks);
-  const expanded = expandUses(repeats ? expandRepeatBlocks(source, params) : source, params);
+  const data: RepeatData = { tables, sources: dataSources(doc.blocks) };
+  const expanded = expandUses(repeats ? expandRepeatBlocks(source, params, data) : source, params);
   const blocks = params.size > 0 ? resolveWithParameters(expanded, params) : expanded;
   checkNoComputed(blocks);
   return { ...doc, blocks };

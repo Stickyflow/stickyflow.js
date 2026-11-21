@@ -21,6 +21,7 @@ Two things count as breaking here that are easy to overlook:
 
 - A `Light` in a Scene takes `position: x, y, z` and is then a light at a place, as a lamp or a star: it shines from there in every direction, the same at every distance, so what stands around it has a lit side and a dark one. It casts no shadows, and `turn` and `height` say nothing for it. A Scene with such a light is not traced when it rests; it is drawn the plain way.
 - `glow` on a `Light` with a position shows the light itself: a soft shine around its place, as wide as the number says in units of the world, in the color of the light, behind what stands before it.
+- A `Repeat` can run over the rows of a table: `each: house in city` makes one cell for every row of the DataSource `city` and calls that row `house`. In the Repeat `house.name` is the value of that field in this row, in a computed value, in a text, in `where`, and in what a handler writes, so each copy can say which row it is. `index` and `count` number the rows. `columns`, `rows` and `count` cannot stand beside `each`, the row cannot take a name that a cell, a parameter or a DataSource has, and a record has no rows to run over. A table without rows makes nothing, as when a document is drawn without its data; when the host gives the table other rows, the document is made again.
 
 ## [0.20.5] - 2026-11-15
 

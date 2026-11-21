@@ -134,7 +134,15 @@ export type SflValue =
   | SflListValue
   | SflIdentValue
   | SflEndpointValue
+  | SflEachValue
   | SflExprValue;
+
+// What a `Repeat` runs over: `each: house in city` makes one cell for every row of the table `city`, and calls that row `house`.
+export interface SflEachValue {
+  type: 'each';
+  row: string;
+  source: string;
+}
 
 // A value that is computed, like `col * 25, row * 12`. It is only valid inside a `Repeat`, which works it out for every cell.
 export interface SflExprValue {

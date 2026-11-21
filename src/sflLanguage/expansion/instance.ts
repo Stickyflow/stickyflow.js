@@ -1,4 +1,4 @@
-import type { SflBinding, SflBlock, SflEntry, SflExpr, SflProperty } from '../ast';
+import type { SflBinding, SflBlock, SflEntry, SflExpr, SflHandler, SflProperty } from '../ast';
 import { resolveValue } from './evaluation';
 import type { Scope } from './scope';
 
@@ -6,8 +6,11 @@ import type { Scope } from './scope';
 function knownNames(scope: Scope, expr: SflExpr): SflExpr {
   switch (expr.kind) {
     case 'ref': {
+      // A field of the row a Repeat is at, as house.name, is a name of the cell as well.
       const value =
-        expr.path.length === 1 ? (scope.vars.get(expr.path[0]) ?? scope.params.get(expr.path[0])) : undefined;
+        expr.path.length === 1
+          ? (scope.vars.get(expr.path[0]) ?? scope.params.get(expr.path[0]))
+          : scope.vars.get(expr.path.join('.'));
       if (typeof value === 'number') {
         return { kind: 'number', value };
       }
@@ -29,6 +32,14 @@ function knownNames(scope: Scope, expr: SflExpr): SflExpr {
 
 function bindingOf(scope: Scope, binding: SflBinding): SflBinding {
   return { ...binding, expr: knownNames(scope, binding.expr) };
+}
+
+// What a handler writes can name the cell it stands in, so each copy writes its own values.
+function handlerOf(scope: Scope, handler: SflHandler): SflHandler {
+  return {
+    ...handler,
+    assignments: handler.assignments.map(assignment => ({ ...assignment, expr: knownNames(scope, assignment.expr) })),
+  };
 }
 
 function propertiesOf(scope: Scope, properties: SflProperty[]): SflProperty[] {
@@ -63,6 +74,8 @@ function entryOf(scope: Scope, entry: SflEntry, rename: (name: string) => string
       };
     case 'binding':
       return { type: 'binding', binding: bindingOf(scope, entry.binding) };
+    case 'handler':
+      return { type: 'handler', handler: handlerOf(scope, entry.handler) };
     case 'block':
       return { type: 'block', block: instance(scope, entry.block, rename) };
     default:

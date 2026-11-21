@@ -1,5 +1,5 @@
 import { documentToRenderInput } from '../renderInput/fromSfl';
-import { withParameterValues } from '../sflLanguage/expansion';
+import { eachSources, type Tables, withParameterValues } from '../sflLanguage/expansion';
 import { flush } from './evaluation';
 import { buildBindingGraph } from './graph';
 import { addElementStates, type RuntimeState } from './runtimeState';
@@ -23,11 +23,25 @@ function parameterValues(state: RuntimeState): Map<string, number> {
   return values;
 }
 
+// The rows of the tables a Repeat runs over, as their sources hold them now.
+export function tableRows(state: RuntimeState): Tables {
+  const tables = new Map<string, Row[]>();
+  const { blocks } = state.document;
+  for (const name of eachSources(blocks)) {
+    const rows = state.sources.get(name)?.get();
+    if (Array.isArray(rows)) {
+      tables.set(name, rows as Row[]);
+    }
+  }
+  return tables;
+}
+
 // The document is made again with the new values: what its Repeats make, what its parameters compute, and every binding on it.
 export function remake(state: RuntimeState): void {
   const document = withParameterValues(state.document, parameterValues(state));
-  state.graph = buildBindingGraph(document);
-  state.input = structuredClone(documentToRenderInput(document));
+  const tables = tableRows(state);
+  state.graph = buildBindingGraph(document, tables);
+  state.input = structuredClone(documentToRenderInput(document, tables));
   addElementStates(state.graph, state.input, state.elementState);
   state.applied.clear();
   for (const binding of state.graph.bindings) {

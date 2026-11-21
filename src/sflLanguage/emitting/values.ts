@@ -14,6 +14,8 @@ export function emitValue(value: SflValue): string {
       return `[${value.values.map(emitValue).join(', ')}]`;
     case 'ident':
       return value.segments.join('.');
+    case 'each':
+      return `${value.row} in ${value.source}`;
     case 'expr':
       return value.items.map(item => emitExpression(item)).join(', ');
     case 'endpoint': {
