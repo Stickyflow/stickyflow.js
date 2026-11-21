@@ -29,6 +29,8 @@ export interface Lighting {
   groundShadow: number;
   // The place the light shines from, when it is a light at a place and not a sun far away.
   point?: Vec3;
+  // Lights from the side, each from where it shines and with its light: none, one or two.
+  sides: { direction: Vec3; light: Vec3 }[];
   // How wide the shine around that place is seen, and in what color.
   glow?: { size: number; color: Vec3 };
 }
@@ -63,8 +65,20 @@ function tintOf(hex: string | undefined): Vec3 {
   return color && brightness > 0.001 ? times(color, 1 / brightness) : [1, 1, 1];
 }
 
-export function lightingOf(light: MeshLight): Lighting {
-  return light.position ? pointLighting(light, light.position) : sunLighting(light);
+// How many lights can shine from the side beside the sun.
+export const MOST_SIDE_LIGHTS = 2;
+
+// The first light is the sun of the world. The ones after it shine from their side, as suns do, in their own color.
+export function lightingOf(light: MeshLight, sideLights: readonly MeshLight[] = []): Lighting {
+  const lighting = light.position ? pointLighting(light, light.position) : sunLighting(light);
+  const sides = sideLights
+    .filter(side => !side.position)
+    .slice(0, MOST_SIDE_LIGHTS)
+    .map(side => {
+      const { direction, sun } = sunLighting(side);
+      return { direction, light: sun };
+    });
+  return { ...lighting, sides };
 }
 
 // A light at a place: as strong as a sun at noon, with no warm tint of a low sun and no shadows, as the shadow map is made
@@ -85,6 +99,7 @@ function pointLighting({ color, intensity, ambient, ambientColor, softness, glow
     softness,
     shadow: 0,
     groundShadow: 0,
+    sides: [],
     point,
     // The shine keeps the color of the light and not its strength, or a strong light would be a white disc.
     glow: glow && glow > 0 ? { size: glow, color: own } : undefined,
@@ -114,5 +129,6 @@ function sunLighting({ turn, height, color, intensity, ambient, ambientColor, so
     softness,
     shadow: above,
     groundShadow: above * smoothstep(0.05, 0.35, rise),
+    sides: [],
   };
 }

@@ -236,8 +236,8 @@ export class MeshStage {
     }
     const { data } = this.placement;
     const { aspect, window } = view.fit(canvas, wholeStage);
-    const { meshes, light } = this.placement.get();
-    const lighting = lightingOf(light);
+    const { meshes, light, sideLights } = this.placement.get();
+    const lighting = lightingOf(light, sideLights);
     const planes = this.planes();
     this.pictures?.sync(meshes, this.placement.get().surfaces);
     // Hiding something is no reason to move the camera, so the framing counts all that the document has.

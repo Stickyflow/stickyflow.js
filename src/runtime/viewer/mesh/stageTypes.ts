@@ -107,6 +107,7 @@ export interface StageData {
   meshes: Mesh[];
   surfaces?: StageSurface[];
   light?: MeshLight;
+  sideLights?: MeshLight[];
   anchors: MeshAnchor[];
 }
 
@@ -115,6 +116,7 @@ export interface Placement {
   meshes: Mesh[];
   surfaces: StageSurface[];
   light: MeshLight;
+  sideLights: MeshLight[];
 }
 
 export function dataOf(host: Element): StageData | undefined {

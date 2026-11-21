@@ -35,6 +35,9 @@ uniform vec3 uKey;
 // A light at a place: xyz is the place, and w is 1 when the light is one.
 uniform vec4 uPoint;
 uniform vec3 uSun;
+// Lights from the side: where each shines from, and its light. One that is not there has no light.
+uniform vec3 uSideDirection[2];
+uniform vec3 uSide[2];
 uniform vec3 uGlare;
 uniform vec3 uSky;
 uniform vec3 uFloor;
@@ -170,6 +173,9 @@ void main() {
   float nv = max(dot(n, v), 0.001);
   vec3 color = light(n, v, keyAt, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
   color += light(n, v, normalize(FILL), vec3(uFill), base.rgb, f0, roughness, metallic);
+  for (int i = 0; i < 2; i++) {
+    color += light(n, v, uSideDirection[i], uSide[i], base.rgb, f0, roughness, metallic);
+  }
   // What the room gives, by a short form of the usual table of how a rough surface reflects.
   vec4 r = roughness * vec4(-1.0, -0.0275, -0.572, 0.022) + vec4(1.0, 0.0425, 1.04, -0.04);
   float a004 = min(r.x * r.x, pow(2.0, -9.28 * nv)) * r.x + r.y;

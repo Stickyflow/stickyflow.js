@@ -51,6 +51,7 @@ function meshStageSvg(node: Extract<RenderNode, { type: 'mesh-stage' }>, defs: S
       hazeColor: node.hazeColor,
       ground: node.ground,
       light: node.light,
+      sideLights: node.sideLights,
       meshes: node.meshes,
       surfaces: node.surfaces.map(({ scene: _scene, ...surface }) => surface),
       anchors: node.anchors,

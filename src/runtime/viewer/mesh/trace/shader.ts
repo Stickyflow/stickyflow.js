@@ -295,6 +295,9 @@ uniform vec3 uEnvDirection;
 uniform vec3 uEnvLight;
 uniform vec3 uSunDirection;
 uniform vec3 uSun;
+// Lights from the side: where each shines from, and its light. One that is not there has no light.
+uniform vec3 uSideDirection[2];
+uniform vec3 uSide[2];
 uniform float uSunSize;
 uniform bool uSunShadows;
 
@@ -348,6 +351,14 @@ vec3 direct(Surface s, vec3 v, float lift) {
     back = reflectance(s, v, toSun, chance);
     if (chance > 0.0 && !(uSunShadows && blocked(from, toSun))) {
       light += back * dot(s.normal, toSun) * uSun;
+    }
+  }
+  for (int i = 0; i < 2; i++) {
+    if (uSide[i].r + uSide[i].g + uSide[i].b > 0.0) {
+      back = reflectance(s, v, uSideDirection[i], chance);
+      if (chance > 0.0 && !blocked(from, uSideDirection[i])) {
+        light += back * dot(s.normal, uSideDirection[i]) * uSide[i];
+      }
     }
   }
   return light;

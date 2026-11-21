@@ -232,6 +232,7 @@ export interface SceneMeshStage extends SceneBase {
   meshes: Mesh[];
   surfaces: SceneMeshSurface[];
   light?: MeshLight;
+  sideLights?: MeshLight[];
   anchors: MeshAnchor[];
 }
 

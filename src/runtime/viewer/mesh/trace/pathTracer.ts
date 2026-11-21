@@ -27,6 +27,8 @@ const UNIFORMS = [
   'uEnvLight',
   'uSunDirection',
   'uSun',
+  'uSideDirection',
+  'uSide',
   'uSunSize',
   'uSunShadows',
   'uFloor',
@@ -71,6 +73,8 @@ export interface TraceFrame {
     light: Vec3;
   };
   sun: { direction: Vec3; light: Vec3; size: number; shadows: boolean };
+  // The lights from the side, as six numbers each: where two of them shine from, and their light.
+  sides: { directions: Float32Array; lights: Float32Array };
   ground: {
     floor: number;
     reflection: number;
@@ -220,6 +224,8 @@ export class PathTracer {
     gl.uniform3fv(uniforms.uEnvLight, environment.light);
     gl.uniform3fv(uniforms.uSunDirection, sun.direction);
     gl.uniform3fv(uniforms.uSun, sun.light);
+    gl.uniform3fv(uniforms.uSideDirection, frame.sides.directions);
+    gl.uniform3fv(uniforms.uSide, frame.sides.lights);
     gl.uniform1f(uniforms.uSunSize, sun.size);
     gl.uniform1i(uniforms.uSunShadows, sun.shadows ? 1 : 0);
     gl.uniform1f(uniforms.uFloor, ground.floor);

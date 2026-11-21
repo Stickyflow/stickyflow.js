@@ -16,7 +16,7 @@ import { ENVIRONMENT_UNIFORMS, EnvironmentMap } from './environmentMap';
 import { featureEdges } from './featureEdges';
 import { link, linkProgram, type Program, QUAD, requireObject } from './gl';
 import type { MaterialMapName, MeshAsset, MeshPrimitive } from './glb';
-import { colorOf, type Lighting, lightingOf } from './lighting';
+import { colorOf, type Lighting, lightingOf, MOST_SIDE_LIGHTS } from './lighting';
 import {
   identity,
   type Mat4,
@@ -132,6 +132,18 @@ export interface DrawOptions {
   space?: Box;
 }
 
+// The lights from the side as the shaders take them: two of them, and one that is not there is dark and shines from above.
+function sideLights(lighting: Lighting): { directions: Float32Array; lights: Float32Array } {
+  const directions = new Float32Array(MOST_SIDE_LIGHTS * 3);
+  const lights = new Float32Array(MOST_SIDE_LIGHTS * 3);
+  for (let index = 0; index < MOST_SIDE_LIGHTS; index++) {
+    const side = lighting.sides[index];
+    directions.set(side?.direction ?? [0, 1, 0], index * 3);
+    lights.set(side?.light ?? [0, 0, 0], index * 3);
+  }
+  return { directions, lights };
+}
+
 const HAZE_COLOR = '#e6ebf2';
 
 // The haze of a frame: its color as a screen shows it, how much of it there is, and from what distance to what distance from
@@ -212,6 +224,8 @@ export class MeshRenderer {
       'uKey',
       'uPoint',
       'uSun',
+      'uSideDirection',
+      'uSide',
       'uGlare',
       'uSky',
       'uFloor',
@@ -781,6 +795,9 @@ export class MeshRenderer {
     gl.uniform3fv(uniforms.uKey, lighting.direction);
     gl.uniform4f(uniforms.uPoint, ...(lighting.point ?? [0, 0, 0]), lighting.point ? 1 : 0);
     gl.uniform3fv(uniforms.uSun, lighting.sun);
+    const sides = sideLights(lighting);
+    gl.uniform3fv(uniforms.uSideDirection, sides.directions);
+    gl.uniform3fv(uniforms.uSide, sides.lights);
     gl.uniform3fv(uniforms.uGlare, lighting.glare);
     gl.uniform3fv(uniforms.uSky, lighting.sky);
     gl.uniform3fv(uniforms.uFloor, lighting.floor);
@@ -943,6 +960,7 @@ export class MeshRenderer {
         direction: light.direction,
         light: light.color.map((value, axis) => value * Math.PI * lighting.ambient * lighting.skyTint[axis]) as Vec3,
       },
+      sides: sideLights(lighting),
       sun: {
         direction: lighting.direction,
         light: lighting.sun,
