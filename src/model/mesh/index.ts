@@ -37,6 +37,9 @@ export interface MeshScene {
   environmentTurn?: number;
   // Brighter or darker than usual, in stops: 1 is twice as bright.
   exposure?: number;
+  // How much of what lies far away is lost in haze, from 0 to 1, and the color of that haze.
+  haze?: number;
+  hazeColor?: string;
   ground?: MeshGround;
   order?: number;
 }

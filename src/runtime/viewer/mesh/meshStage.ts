@@ -244,6 +244,7 @@ export class MeshStage {
       grid: this.grid && !wholeStage,
       environmentTurn: data.environmentTurn,
       exposure: data.exposure,
+      haze: data.haze ? { amount: data.haze, color: data.hazeColor } : undefined,
       // In the dark studio a ground without a color of its own is as dark as the room.
       ground:
         data.environment === STUDIO_DARK && !data.ground?.color

@@ -101,6 +101,8 @@ export interface StageData {
   environment?: string;
   environmentTurn?: number;
   exposure?: number;
+  haze?: number;
+  hazeColor?: string;
   ground?: MeshGround;
   meshes: Mesh[];
   surfaces?: StageSurface[];

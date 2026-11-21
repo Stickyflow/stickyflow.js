@@ -396,6 +396,11 @@ uniform mat4 uViewProjection;
 uniform vec3 uEye;
 uniform float uSeed;
 uniform float uExposure;
+// The haze: its color as a screen shows it and how much of it, and the distances from the eye between which it grows.
+uniform vec4 uHaze;
+uniform vec2 uHazeRange;
+// How far from the eye the first surface lies that a pixel shows, or less than nothing where it shows none.
+float reached = -1.0;
 // A small step off a surface, so a ray that starts on it does not meet it again.
 uniform float uLift;
 layout(location = 0) out vec4 fragment;
@@ -499,6 +504,7 @@ void main() {
         // What glows keeps its own pattern, so it counts as glossy and is not smoothed.
         bool glows = s.emissive.r + s.emissive.g + s.emissive.b > 0.05;
         guide = vec4(s.normal, distance(s.position, uEye));
+        reached = guide.w;
         look = vec4(s.color, glows || s.unlit || s.transmission > 0.0 ? 0.0 : s.roughness);
         vec4 placed = uViewProjection * vec4(s.position, 1.0);
         gl_FragDepth = clamp(placed.z / placed.w * 0.5 + 0.5, 0.0, 1.0);
@@ -549,6 +555,10 @@ void main() {
   }
   // One bright path would stay as a speck for a long time, so no path counts for more than this.
   light = min(light, vec3(24.0)) * uExposure;
+  if (uHaze.a > 0.0 && reached >= 0.0) {
+    float deep = clamp((reached - uHazeRange.x) / max(uHazeRange.y - uHazeRange.x, 0.0001), 0.0, 1.0);
+    light = mix(light, fromScreen(uHaze.rgb), uHaze.a * deep * deep);
+  }
   if (canvas.a > 0.0) {
     // Where a Canvas will be drawn, nothing is smoothed, so its drawing stays as it is.
     guide = canvas;

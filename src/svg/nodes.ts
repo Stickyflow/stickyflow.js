@@ -47,6 +47,8 @@ function meshStageSvg(node: Extract<RenderNode, { type: 'mesh-stage' }>, defs: S
       environment: node.environment,
       environmentTurn: node.environmentTurn,
       exposure: node.exposure,
+      haze: node.haze,
+      hazeColor: node.hazeColor,
       ground: node.ground,
       light: node.light,
       meshes: node.meshes,

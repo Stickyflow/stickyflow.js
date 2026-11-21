@@ -21,6 +21,8 @@ export interface SflMeshSceneData {
   environment?: string;
   environmentTurn?: number;
   exposure?: number;
+  haze?: number;
+  hazeColor?: string;
 }
 
 export interface SflMeshSurfaceData {

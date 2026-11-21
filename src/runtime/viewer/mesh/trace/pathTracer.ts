@@ -43,6 +43,8 @@ const UNIFORMS = [
   'uEye',
   'uSeed',
   'uExposure',
+  'uHaze',
+  'uHazeRange',
   'uLift',
   'uSeeThrough',
 ];
@@ -54,6 +56,7 @@ export interface TraceFrame {
   exposure: number;
   // A small step off a surface, for the size of the scene.
   lift: number;
+  haze: { color: Vec3; amount: number; near: number; far: number };
   // Whether anything in the scene is partly see-through.
   seeThrough: boolean;
   environment: {
@@ -232,6 +235,8 @@ export class PathTracer {
     gl.uniform3fv(uniforms.uEye, camera.eye);
     gl.uniform1f(uniforms.uSeed, frame.seed);
     gl.uniform1f(uniforms.uExposure, frame.exposure);
+    gl.uniform4f(uniforms.uHaze, ...frame.haze.color, frame.haze.amount);
+    gl.uniform2f(uniforms.uHazeRange, frame.haze.near, frame.haze.far);
     gl.uniform1f(uniforms.uLift, frame.lift);
     gl.uniform1i(uniforms.uSeeThrough, frame.seeThrough ? 1 : 0);
     gl.bindVertexArray(this.quad);

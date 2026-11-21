@@ -63,6 +63,9 @@ uniform vec2 uEnvironmentTurn;
 uniform vec3 uIrradiance[9];
 // How much the light is scaled before the filmic curve.
 uniform float uExposure;
+// The haze: its color as a screen shows it and how much of it, and the distances from the eye between which it grows.
+uniform vec4 uHaze;
+uniform vec2 uHazeRange;
 // A frame of a still picture stays light, as the frames are added up before they are shown.
 uniform bool uStill;
 // When the meshes are drawn turned over, as what the ground reflects: the height of the ground, over what height above it the
@@ -187,6 +190,10 @@ void main() {
   color += around * base.rgb * (1.0 - metallic);
   color += uEmissive * (uHasEmissive ? texture(uEmissiveMap, vUv).rgb : vec3(1.0));
   color *= uExposure;
+  if (uHaze.a > 0.0) {
+    float deep = clamp((distance(vWorld, uEye) - uHazeRange.x) / max(uHazeRange.y - uHazeRange.x, 0.0001), 0.0, 1.0);
+    color = mix(color, fromScreen(uHaze.rgb), uHaze.a * deep * deep);
+  }
   if (!uStill) {
     color = toScreen(color);
   }

@@ -120,6 +120,8 @@ export interface DrawOptions {
   environmentTurn?: number;
   // Brighter or darker than usual, in stops.
   exposure?: number;
+  // What lies far away is lost in haze of a color, by as much as this at the far side of the scene.
+  haze?: { amount: number; color?: string };
   ground?: MeshGround;
   // The picture may be refined over several frames, as nothing in it moves.
   still?: boolean;
@@ -128,6 +130,22 @@ export interface DrawOptions {
   moving?: boolean;
   // The space a Scene with nothing in it takes, so its ground and its grid are drawn.
   space?: Box;
+}
+
+const HAZE_COLOR = '#e6ebf2';
+
+// The haze of a frame: its color as a screen shows it, how much of it there is, and from what distance to what distance from
+// the eye it grows, which is from the near side of the scene to its far side.
+function hazeOf(
+  haze: DrawOptions['haze'],
+  eye: Vec3,
+  box: Box,
+): { color: Vec3; amount: number; near: number; far: number } {
+  const color = (colorOf(haze?.color) ?? colorOf(HAZE_COLOR) ?? [1, 1, 1]).map(value => value ** (1 / 2.2)) as Vec3;
+  const away = Math.hypot(...box.min.map((low, axis) => (low + box.max[axis]) / 2 - eye[axis]));
+  const radius = Math.max(boxDiagonal(box) / 2, 1e-3);
+  const amount = Math.min(Math.max(haze?.amount ?? 0, 0), 1);
+  return { color, amount, near: Math.max(away - radius, 0), far: away + radius };
 }
 
 // What a frame of a still picture changes: where the camera stands within a pixel, and which light of the environment it shows.
@@ -211,6 +229,8 @@ export class MeshRenderer {
       ...ENVIRONMENT_UNIFORMS,
       ...SCREEN_OCCLUSION_UNIFORMS,
       'uExposure',
+      'uHaze',
+      'uHazeRange',
       'uMirror',
     ]);
     this.ground = link(gl, GROUND_FRAGMENT, [
@@ -653,6 +673,7 @@ export class MeshRenderer {
       options.grid,
       options.environmentTurn,
       options.exposure,
+      JSON.stringify(options.haze ?? null),
       JSON.stringify(options.ground ?? null),
       this.generation,
       // Traced or not is another picture, so turning it on or off starts the still picture over.
@@ -759,6 +780,9 @@ export class MeshRenderer {
     gl.uniform1f(uniforms.uFill, this.environment.present ? 0 : lighting.fill);
     const exposure = this.environment.present ? ENVIRONMENT_EXPOSURE : PLAIN_EXPOSURE;
     gl.uniform1f(uniforms.uExposure, exposure * 2 ** (options.exposure ?? 0));
+    const haze = hazeOf(options.haze, camera.eye, box);
+    gl.uniform4f(uniforms.uHaze, ...haze.color, haze.amount);
+    gl.uniform2f(uniforms.uHazeRange, haze.near, haze.far);
     this.environment.bind(uniforms, options.environmentTurn ?? 0, lighting.ambient);
     this.occlusion.bind(uniforms, occlusion);
 
@@ -901,6 +925,7 @@ export class MeshRenderer {
       seed: still.index,
       exposure: ENVIRONMENT_EXPOSURE * 2 ** (options.exposure ?? 0),
       lift: boxDiagonal(box) * 1e-4,
+      haze: hazeOf(options.haze, camera.eye, box),
       seeThrough,
       environment: {
         ...picture,

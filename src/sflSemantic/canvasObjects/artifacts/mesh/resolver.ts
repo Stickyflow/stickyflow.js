@@ -366,6 +366,8 @@ export function resolveMeshSceneObject(
       environment: asString(properties.get('environment')),
       environmentTurn: asNumber(properties.get('environmentTurn')),
       exposure: asNumber(properties.get('exposure')),
+      haze: asNumber(properties.get('haze')),
+      hazeColor: asString(properties.get('hazeColor')),
     },
   };
 }
