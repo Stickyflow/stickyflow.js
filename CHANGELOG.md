@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.20.6] - 2026-11-21
+
 ### Added
 
 - A `Light` in a Scene takes `position: x, y, z` and is then a light at a place, as a lamp or a star: it shines from there in every direction, the same at every distance, so what stands around it has a lit side and a dark one. It casts no shadows, and `turn` and `height` say nothing for it. A Scene with such a light is not traced when it rests; it is drawn the plain way.
