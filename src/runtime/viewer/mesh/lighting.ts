@@ -25,6 +25,10 @@ export interface Lighting {
   shadow: number;
   // On the page around the world, where a long shadow of a low sun would only be a wedge across the drawing.
   groundShadow: number;
+  // The place the light shines from, when it is a light at a place and not a sun far away.
+  point?: Vec3;
+  // How wide the shine around that place is seen, and in what color.
+  glow?: { size: number; color: Vec3 };
 }
 
 export function colorOf(hex: string | undefined): [number, number, number] | undefined {
@@ -49,7 +53,33 @@ function smoothstep(from: number, to: number, value: number): number {
 const mix = (a: Vec3, b: Vec3, t: number): Vec3 => a.map((value, axis) => value + (b[axis] - value) * t) as Vec3;
 const times = (a: Vec3, factor: number): Vec3 => a.map(value => value * factor) as Vec3;
 
-export function lightingOf({ turn, height, color, intensity, ambient, softness }: MeshLight): Lighting {
+export function lightingOf(light: MeshLight): Lighting {
+  return light.position ? pointLighting(light, light.position) : sunLighting(light);
+}
+
+// A light at a place: as strong as a sun at noon, with no warm tint of a low sun and no shadows, as the shadow map is made
+// for light that comes from one side.
+function pointLighting({ color, intensity, ambient, softness, glow }: MeshLight, point: Vec3): Lighting {
+  const own = colorOf(color) ?? [1, 1, 1];
+  const glare = times(own, intensity);
+  return {
+    direction: [0, 1, 0],
+    sun: times(glare, SUN_STRENGTH),
+    glare,
+    sky: times(NOON, ambient),
+    floor: times(FLOOR, ambient),
+    fill: 0,
+    ambient,
+    softness,
+    shadow: 0,
+    groundShadow: 0,
+    point,
+    // The shine keeps the color of the light and not its strength, or a strong light would be a white disc.
+    glow: glow && glow > 0 ? { size: glow, color: own } : undefined,
+  };
+}
+
+function sunLighting({ turn, height, color, intensity, ambient, softness }: MeshLight): Lighting {
   const yaw = (turn * Math.PI) / 180;
   const pitch = (Math.min(HIGHEST, height) * Math.PI) / 180;
   const direction = normalize([Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)]);

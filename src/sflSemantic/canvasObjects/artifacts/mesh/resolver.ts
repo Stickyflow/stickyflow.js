@@ -402,8 +402,16 @@ export function resolveMeshLightObject(
       intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
       softness: asNumber(properties.get('softness')),
+      position: place(properties.get('position')),
+      glow: asNumber(properties.get('glow')),
     },
   };
+}
+
+// The place of a light, when three numbers say it.
+function place(value: SflValue | undefined): Vec3 | undefined {
+  const [x, y, z] = tupleValues(value) ?? [];
+  return x !== undefined && y !== undefined && z !== undefined ? [x, y, z] : undefined;
 }
 
 // The ground of a Scene. Without a height it lies under the meshes, and without a color only its shadows and reflections show.

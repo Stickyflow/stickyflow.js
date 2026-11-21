@@ -35,6 +35,8 @@ export interface SflMeshLightData {
   intensity: number;
   ambient: number;
   softness?: number;
+  position?: Vec3;
+  glow?: number;
 }
 
 export interface SflMeshGroundData {

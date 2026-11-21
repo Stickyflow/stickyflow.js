@@ -32,6 +32,8 @@ in vec2 vUv;
 uniform vec4 uBase;
 uniform float uShadows;
 uniform vec3 uKey;
+// A light at a place: xyz is the place, and w is 1 when the light is one.
+uniform vec4 uPoint;
 uniform vec3 uSun;
 uniform vec3 uGlare;
 uniform vec3 uSky;
@@ -95,11 +97,14 @@ vec3 irradiance(vec3 n) {
 
 ${TONE_CURVE}
 
+// Where the light comes from at this point: one side for a sun, the place of the light for a lamp.
+vec3 keyAt;
+
 // A room worked out from a direction: the sky, the floor and the sun, blurrier the rougher the surface is.
 vec3 room(vec3 d, float roughness) {
   float blur = 0.08 + roughness * 0.6;
   vec3 color = mix(uFloor, uSky, smoothstep(-blur, blur, d.y));
-  float window = pow(max(dot(d, uKey), 0.0), mix(160.0, 3.0, roughness));
+  float window = pow(max(dot(d, keyAt), 0.0), mix(160.0, 3.0, roughness));
   return color + uGlare * window * mix(3.0, 0.25, roughness);
 }
 
@@ -145,6 +150,8 @@ void main() {
   }
   vec3 n = normalize(vNormal);
   vec3 v = normalize(uEye - vWorld);
+  vec3 toPoint = uPoint.xyz - vWorld;
+  keyAt = uPoint.w > 0.5 && dot(toPoint, toPoint) > 0.000001 ? normalize(toPoint) : uKey;
   if (dot(n, v) < 0.0) {
     n = -n;
   }
@@ -158,7 +165,7 @@ void main() {
   float occlusion = baked * screenOcclusion();
   vec3 f0 = mix(vec3(0.04), base.rgb, metallic);
   float nv = max(dot(n, v), 0.001);
-  vec3 color = light(n, v, uKey, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
+  vec3 color = light(n, v, keyAt, uSun, base.rgb, f0, roughness, metallic) * mix(1.0, lit(), uShadows);
   color += light(n, v, normalize(FILL), vec3(uFill), base.rgb, f0, roughness, metallic);
   // What the room gives, by a short form of the usual table of how a rough surface reflects.
   vec4 r = roughness * vec4(-1.0, -0.0275, -0.572, 0.022) + vec4(1.0, 0.0425, 1.04, -0.04);
@@ -193,3 +200,29 @@ void main() {
 export const DEPTH_FRAGMENT = `#version 300 es
 precision highp float;
 void main() {}`;
+
+// The shine of a light at a place: a disc that faces the eye, bright in the middle and fading to nothing at its rim.
+export const GLOW_VERTEX = `#version 300 es
+layout(location = 0) in vec2 aPosition;
+uniform mat4 uViewProjection;
+uniform vec3 uCenter;
+uniform vec3 uRight;
+uniform vec3 uUp;
+out vec2 vCorner;
+void main() {
+  vCorner = aPosition;
+  gl_Position = uViewProjection * vec4(uCenter + uRight * aPosition.x + uUp * aPosition.y, 1.0);
+}`;
+
+export const GLOW_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 vCorner;
+uniform vec3 uColor;
+out vec4 fragment;
+void main() {
+  float r = length(vCorner);
+  float halo = pow(max(0.0, 1.0 - r), 3.0);
+  float core = exp(-r * r * 14.0);
+  vec3 color = uColor * (halo * 0.5 + core * 0.9);
+  fragment = vec4(color, max(color.r, max(color.g, color.b)));
+}`;

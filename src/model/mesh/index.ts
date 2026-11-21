@@ -139,6 +139,11 @@ export interface MeshLight {
   ambient: number;
   // How large the sun looks, in degrees: the shadows get softer the further they fall. Without it they are as sharp as the map allows.
   softness?: number;
+  // A light at a place in the world, as a lamp or a star: it shines from there in every direction, the same at every distance,
+  // and casts no shadows. Turn and height then say nothing.
+  position?: Vec3;
+  // The light itself seen as a soft shine around its place, this wide in units of the world.
+  glow?: number;
 }
 
 export const DEFAULT_LIGHT: MeshLight = { id: 'light-default', turn: 57.5, height: 49, intensity: 1, ambient: 1 };

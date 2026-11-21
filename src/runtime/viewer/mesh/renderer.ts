@@ -17,11 +17,20 @@ import { featureEdges } from './featureEdges';
 import { link, linkProgram, type Program, QUAD, requireObject } from './gl';
 import type { MaterialMapName, MeshAsset, MeshPrimitive } from './glb';
 import { colorOf, type Lighting, lightingOf } from './lighting';
-import { identity, type Mat4, modelMatrix, multiply, normalMatrix, transformPoint, windowMatrix } from './matrix';
+import {
+  identity,
+  type Mat4,
+  modelMatrix,
+  multiply,
+  normalize,
+  normalMatrix,
+  transformPoint,
+  windowMatrix,
+} from './matrix';
 import { MeshProbe } from './meshProbe';
 import { SCREEN_OCCLUSION_UNIFORMS, ScreenOcclusion } from './screenOcclusion';
 import { GROUND_FRAGMENT } from './shaders/ground';
-import { FRAGMENT } from './shaders/mesh';
+import { FRAGMENT, GLOW_FRAGMENT, GLOW_VERTEX } from './shaders/mesh';
 import { PLANE_FRAGMENT, PLANE_VERTEX } from './shaders/plane';
 import { type Caster, ENVIRONMENT_SHADOW, ShadowMap, SUN_SHADOW, shadowUniforms } from './shadowMap';
 import { PathTracer } from './trace/pathTracer';
@@ -156,6 +165,7 @@ export class MeshRenderer {
   private readonly pictureSampler: WebGLUniformLocation | null;
   private readonly pictureStill: WebGLUniformLocation | null;
   private readonly planeQuad: WebGLVertexArrayObject;
+  private readonly glow: WebGLProgram;
   readonly planeBuffer: WebGLBuffer;
   private readonly assets = new Map<string, GpuPrimitive[]>();
   private readonly shadows: ShadowMap;
@@ -182,6 +192,7 @@ export class MeshRenderer {
       ...SHADOW_NAMES,
       'uShadows',
       'uKey',
+      'uPoint',
       'uSun',
       'uGlare',
       'uSky',
@@ -242,6 +253,7 @@ export class MeshRenderer {
 
     this.probe = new MeshProbe(gl);
     this.shadows = new ShadowMap(gl);
+    this.glow = linkProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, made => gl.bindAttribLocation(made, 0, 'aPosition'));
     this.environment = new EnvironmentMap(gl, this.planeQuad);
     this.occlusion = new ScreenOcclusion(gl, this.planeQuad, this.groundQuad);
     this.environmentShadows = new ShadowMap(gl, ENVIRONMENT_SHADOW);
@@ -736,8 +748,10 @@ export class MeshRenderer {
     this.shadows.bind(uniforms, softness);
     this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix, lighting.ambient);
     gl.uniform1i(uniforms.uStill, still ? 1 : 0);
-    gl.uniform1f(uniforms.uShadows, options.shadows ? 1 : 0);
+    // A light at a place casts no shadows: the shadow map is made for light from one side.
+    gl.uniform1f(uniforms.uShadows, options.shadows && !lighting.point ? 1 : 0);
     gl.uniform3fv(uniforms.uKey, lighting.direction);
+    gl.uniform4f(uniforms.uPoint, ...(lighting.point ?? [0, 0, 0]), lighting.point ? 1 : 0);
     gl.uniform3fv(uniforms.uSun, lighting.sun);
     gl.uniform3fv(uniforms.uGlare, lighting.glare);
     gl.uniform3fv(uniforms.uSky, lighting.sky);
@@ -793,8 +807,42 @@ export class MeshRenderer {
     gl.depthMask(false);
     this.drawInstances(instances.filter(seeThrough));
     gl.depthMask(true);
+    this.drawGlow(camera, lighting);
     gl.bindVertexArray(null);
     return groundColor && still ? () => this.drawGroundBase(plain, box, floor, wide, groundColor) : null;
+  }
+
+  // The shine of a light at a place: a disc that faces the eye, added to what is drawn, behind what stands before the light.
+  private drawGlow(camera: Camera, lighting: Lighting): void {
+    const { point, glow } = lighting;
+    if (!point || !glow) {
+      return;
+    }
+    const { gl } = this;
+    const [fx, fy, fz] = normalize([point[0] - camera.eye[0], point[1] - camera.eye[1], point[2] - camera.eye[2]]);
+    // Straight from above there is no side to the eye's up, so any side does.
+    const flat = Math.hypot(fx, fz) < 0.0001;
+    const right = flat ? ([1, 0, 0] as Vec3) : normalize([-fz, 0, fx]);
+    const up: Vec3 = [right[1] * fz - right[2] * fy, right[2] * fx - right[0] * fz, right[0] * fy - right[1] * fx];
+    const at = (name: string) => gl.getUniformLocation(this.glow, name);
+    gl.useProgram(this.glow);
+    gl.uniformMatrix4fv(at('uViewProjection'), false, camera.viewProjection);
+    gl.uniform3fv(at('uCenter'), point);
+    gl.uniform3fv(
+      at('uRight'),
+      right.map(value => value * glow.size),
+    );
+    gl.uniform3fv(
+      at('uUp'),
+      up.map(value => value * glow.size),
+    );
+    gl.uniform3fv(at('uColor'), glow.color);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.depthMask(false);
+    gl.bindVertexArray(this.planeQuad);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.depthMask(true);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   }
 
   // A frame of a still picture by following paths of light, for a scene in an environment. Null when it cannot be had, and the
@@ -818,6 +866,10 @@ export class MeshRenderer {
     const { gl } = this;
     const { floor, wide, box } = this.standing(instances, measured, options);
     const lighting = options.lighting ?? lightingOf(DEFAULT_LIGHT);
+    // The tracer knows a sun far away; a light at a place is drawn the plain way.
+    if (lighting.point) {
+      return null;
+    }
     const key = `${this.generation}|${instances
       .map(({ mesh, primitive, world }) =>
         [
@@ -1195,6 +1247,7 @@ export class MeshRenderer {
       gl.deleteProgram(program);
     }
     gl.deleteVertexArray(this.planeQuad);
+    gl.deleteProgram(this.glow);
     gl.deleteBuffer(this.planeBuffer);
     this.shadows.destroy();
     this.environmentShadows.destroy();
