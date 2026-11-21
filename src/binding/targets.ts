@@ -62,5 +62,6 @@ export const BINDABLE_PROPERTIES: Partial<Record<BlockKind, Record<string, Bindi
   // A Solid and Facets are meshes whose model is built from what is written: they are coloured, placed and turned as a Mesh is.
   Solid: MESH,
   Facets: MESH,
+  Terrain: MESH,
   Text: { text: 'string', textColor: 'string', opacity: 'number', ...PLACE },
 };

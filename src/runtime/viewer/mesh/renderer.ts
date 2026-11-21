@@ -386,6 +386,12 @@ export class MeshRenderer {
     }
     const { gl } = this;
     const sampler = primitive.source.material.maps[name]?.sampler;
+    // A picture that is given again takes the place of the one before it.
+    const before = primitive.textures[name];
+    if (before) {
+      this.textureSizes.delete(before);
+      gl.deleteTexture(before);
+    }
     const texture = requireObject(gl.createTexture(), 'texture');
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);

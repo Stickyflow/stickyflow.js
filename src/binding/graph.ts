@@ -77,7 +77,7 @@ function fieldType(contract: DataSourceContract, field: string): BindingType | u
 }
 
 // A body in a Scene is pressed and tapped as a Shape is, so a part of a model can be a button.
-const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component', 'Mesh', 'Solid', 'Facets'];
+const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component', 'Mesh', 'Solid', 'Facets', 'Terrain'];
 const blockKind = (block: SflBlock): BlockKind => (block.kind === 'Widget' ? 'Component' : block.kind);
 
 function collectElements(sflDocument: SflDocument): Map<string, ElementInfo> {

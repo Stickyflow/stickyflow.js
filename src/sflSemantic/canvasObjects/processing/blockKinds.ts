@@ -16,6 +16,7 @@ export const CANVAS_OBJECT_BLOCK_KINDS = [
   'Mesh',
   'Solid',
   'Facets',
+  'Terrain',
   'Canvas',
   'Scene',
   'Light',

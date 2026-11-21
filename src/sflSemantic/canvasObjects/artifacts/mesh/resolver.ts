@@ -4,6 +4,7 @@ import { type Outline, ringArea } from '../../../../model/outline';
 import { flattenPath } from '../../../../model/path';
 import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch';
 import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
+import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { childBlocks, directProperties } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
@@ -298,6 +299,23 @@ function facetsAsset(properties: Map<string, SflValue>): string {
   return facetsAssetName(shape);
 }
 
+// A Terrain is a mesh whose model is built from a picture of heights, which is loaded where the mesh is drawn.
+function terrainAsset(block: SflBlock, properties: Map<string, SflValue>, layoutProp: LayoutProp): string {
+  // `picture` is the address of a picture, or the name of a Canvas of the Scene whose drawing lies on the land.
+  const pictured = properties.get('picture');
+  const picture = asString(pictured);
+  const surface = pictured?.type === 'ident' ? pictured.segments.join('.') : undefined;
+  const base = asNumber(properties.get('base'));
+  const detail = asNumber(properties.get('detail'));
+  return terrainAssetName({
+    heights: asString(properties.get('heights')) ?? '',
+    ...(surface ? { surface } : picture ? { picture } : {}),
+    size: vector(block, layoutProp, 'size', 1),
+    ...(base !== undefined ? { base } : {}),
+    ...(detail ? { detail } : {}),
+  });
+}
+
 export function resolveMeshObject(
   base: SflCanvasObjectBase,
   block: SflBlock,
@@ -329,7 +347,9 @@ export function resolveMeshObject(
           ? solidAsset(block, properties, layoutProp, symbolDefs, sketched)
           : block.kind === 'Facets'
             ? facetsAsset(properties)
-            : (asString(properties.get('asset')) ?? ''),
+            : block.kind === 'Terrain'
+              ? terrainAsset(block, properties, layoutProp)
+              : (asString(properties.get('asset')) ?? ''),
       role: asString(properties.get('role')),
       color: asString(properties.get('color')),
       opacity: asNumber(properties.get('opacity')),
