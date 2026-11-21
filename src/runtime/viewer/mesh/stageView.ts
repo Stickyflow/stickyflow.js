@@ -48,6 +48,11 @@ export class StageView {
     this.pitch = pitch;
   }
 
+  // Where the document puts the camera: so many times nearer than the framing does.
+  closeBy(times: number | undefined): void {
+    this.zoom = Math.min(4, Math.max(0.15, 1 / (times && times > 0 ? times : 1)));
+  }
+
   // Where the camera looks from and what it looks at, once it has framed something.
   get pose(): { orbit: [number, number]; target: Vec3 } | undefined {
     const { frame } = this;

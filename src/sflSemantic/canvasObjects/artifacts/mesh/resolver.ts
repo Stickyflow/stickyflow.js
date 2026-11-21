@@ -361,6 +361,7 @@ export function resolveMeshSceneObject(
     objectType: 'meshScene',
     meshScene: {
       orbit: [yaw, pitch],
+      zoom: asNumber(properties.get('zoom')),
       shadow: asString(properties.get('shadow')) === 'true',
       environment: asString(properties.get('environment')),
       environmentTurn: asNumber(properties.get('environmentTurn')),

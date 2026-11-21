@@ -27,6 +27,8 @@ export interface MeshScene {
   width: number;
   height: number;
   orbit: [number, number];
+  // How much nearer the camera starts than where all of the world fits the picture: 2 is twice as near.
+  zoom?: number;
   shadow: boolean;
   // What lights the world and is seen in its reflections: "studio", "studio-dark", or the address of an .hdr or an
   // equirectangular picture.

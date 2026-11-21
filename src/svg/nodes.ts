@@ -42,6 +42,7 @@ function meshStageSvg(node: Extract<RenderNode, { type: 'mesh-stage' }>, defs: S
     JSON.stringify({
       id: node.stageId,
       orbit: node.orbit,
+      zoom: node.zoom,
       shadow: node.shadow,
       environment: node.environment,
       environmentTurn: node.environmentTurn,

@@ -96,6 +96,7 @@ export interface MeshObjectPoint {
 export interface StageData {
   id: string;
   orbit: [number, number];
+  zoom?: number;
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;

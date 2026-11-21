@@ -35,6 +35,7 @@ export class MeshStage {
   private renderer: MeshRenderer | null = null;
   private textures: SurfaceTextures | null = null;
   private written = '';
+  private zoomWritten: number | undefined;
   private selected: string | null = null;
   private selectedObject: string | null = null;
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
@@ -136,8 +137,15 @@ export class MeshStage {
     this.written = attribute;
     this.handles.dropDraft();
     this.textures?.keepOnly(new Set((data.surfaces ?? []).map(surface => surface.id)));
+    const nearer = this.placement.data.zoom;
+    const wasNearer = this.zoomWritten;
+    this.zoomWritten = nearer;
     if (previous[0] !== data.orbit[0] || previous[1] !== data.orbit[1] || !this.view.hasFramed) {
       this.view.lookFrom(data.orbit);
+    }
+    // The document says how near the camera starts; after that the wheel is free to change it.
+    if (nearer !== wasNearer || !this.view.hasFramed) {
+      this.view.closeBy(nearer);
     }
   }
 

@@ -221,6 +221,7 @@ export interface SceneMeshStage extends SceneBase {
   height: number;
   stageId: string;
   orbit: [number, number];
+  zoom?: number;
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
