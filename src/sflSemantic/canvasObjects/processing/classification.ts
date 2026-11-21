@@ -35,7 +35,7 @@ function declaredCanvasObjectKind(block: SflBlock, properties: Map<string, SflVa
   if (block.kind === 'Dimension') {
     return 'dimension';
   }
-  if (block.kind === 'Mesh' || block.kind === 'Solid' || block.kind === 'Facets') {
+  if (block.kind === 'Mesh' || block.kind === 'Solid' || block.kind === 'Facets' || block.kind === 'Terrain') {
     return 'mesh';
   }
   if (block.kind === 'Scene') {

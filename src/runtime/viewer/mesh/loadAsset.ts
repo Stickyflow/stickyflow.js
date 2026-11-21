@@ -1,4 +1,4 @@
-import { loadMeshAsset, type MaterialMapName } from './glb';
+import { loadMeshAsset, type MaterialMapName, type MeshAsset } from './glb';
 import type { MeshRenderer } from './renderer';
 
 // Loads a file and gives it to a renderer: the geometry first, so it can be seen, and its pictures as they come.
@@ -15,6 +15,17 @@ export async function loadAssetInto(
   }
   renderer.addAsset(asset, mesh);
   changed();
+  await loadMapsInto(renderer, asset, mesh, alive);
+  changed();
+}
+
+// Loads the pictures of the materials of an asset and gives each to the renderer as it comes.
+export async function loadMapsInto(
+  renderer: MeshRenderer,
+  asset: string,
+  mesh: MeshAsset,
+  alive: () => boolean,
+): Promise<void> {
   await Promise.all(
     mesh.primitives.flatMap((primitive, index) =>
       (Object.keys(primitive.material.maps) as MaterialMapName[]).map(async name => {
@@ -37,5 +48,4 @@ export async function loadAssetInto(
       }),
     ),
   );
-  changed();
 }

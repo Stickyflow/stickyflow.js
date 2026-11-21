@@ -16,10 +16,13 @@ export interface SflMeshData {
 
 export interface SflMeshSceneData {
   orbit: [number, number];
+  zoom?: number;
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
   exposure?: number;
+  haze?: number;
+  hazeColor?: string;
 }
 
 export interface SflMeshSurfaceData {
@@ -35,6 +38,9 @@ export interface SflMeshLightData {
   intensity: number;
   ambient: number;
   softness?: number;
+  ambientColor?: string;
+  position?: Vec3;
+  glow?: number;
 }
 
 export interface SflMeshGroundData {

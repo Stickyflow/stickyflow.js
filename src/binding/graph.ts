@@ -1,6 +1,6 @@
 import { getComponentDescriptor } from '../model/component';
 import type { BlockKind, SflBinding, SflBlock, SflDocument, SflExpr, SflHandler } from '../sflLanguage/ast';
-import { expandDocument } from '../sflLanguage/expansion';
+import { expandDocument, type Tables } from '../sflLanguage/expansion';
 import {
   acceptsUserChange,
   BINDABLE_COMPONENT_PROPERTIES,
@@ -77,7 +77,7 @@ function fieldType(contract: DataSourceContract, field: string): BindingType | u
 }
 
 // A body in a Scene is pressed and tapped as a Shape is, so a part of a model can be a button.
-const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component', 'Mesh', 'Solid', 'Facets'];
+const INTERACTIVE_KINDS: BlockKind[] = ['Shape', 'Text', 'Component', 'Mesh', 'Solid', 'Facets', 'Terrain'];
 const blockKind = (block: SflBlock): BlockKind => (block.kind === 'Widget' ? 'Component' : block.kind);
 
 function collectElements(sflDocument: SflDocument): Map<string, ElementInfo> {
@@ -390,9 +390,9 @@ function indexByField(bindings: BoundProperty[]): Map<string, BoundProperty[]> {
   return byField;
 }
 
-export function buildBindingGraph(source: SflDocument): BindingGraph {
+export function buildBindingGraph(source: SflDocument, tables?: Tables): BindingGraph {
   // Names of a Repeat or a Template, like col, are only filled in when these are made.
-  const sflDocument = expandDocument(source);
+  const sflDocument = expandDocument(source, tables);
   const { contracts, diagnostics } = collectContracts(sflDocument);
   // The Parameters are gone once the document is made, so they are read from the document as it was written.
   for (const contract of collectParameterContracts(source)) {

@@ -27,6 +27,8 @@ export interface MeshScene {
   width: number;
   height: number;
   orbit: [number, number];
+  // How much nearer the camera starts than where all of the world fits the picture: 2 is twice as near.
+  zoom?: number;
   shadow: boolean;
   // What lights the world and is seen in its reflections: "studio", "studio-dark", or the address of an .hdr or an
   // equirectangular picture.
@@ -35,6 +37,9 @@ export interface MeshScene {
   environmentTurn?: number;
   // Brighter or darker than usual, in stops: 1 is twice as bright.
   exposure?: number;
+  // How much of what lies far away is lost in haze, from 0 to 1, and the color of that haze.
+  haze?: number;
+  hazeColor?: string;
   ground?: MeshGround;
   order?: number;
 }
@@ -137,8 +142,16 @@ export interface MeshLight {
   color?: string;
   intensity: number;
   ambient: number;
+  // The color of the light of the sky, which fills the shadows: with a warm sun and a cool sky, lit sides and shaded sides differ in
+  // color and not only in brightness. Its strength stays with `ambient`.
+  ambientColor?: string;
   // How large the sun looks, in degrees: the shadows get softer the further they fall. Without it they are as sharp as the map allows.
   softness?: number;
+  // A light at a place in the world, as a lamp or a star: it shines from there in every direction, the same at every distance,
+  // and casts no shadows. Turn and height then say nothing.
+  position?: Vec3;
+  // The light itself seen as a soft shine around its place, this wide in units of the world.
+  glow?: number;
 }
 
 export const DEFAULT_LIGHT: MeshLight = { id: 'light-default', turn: 57.5, height: 49, intensity: 1, ambient: 1 };

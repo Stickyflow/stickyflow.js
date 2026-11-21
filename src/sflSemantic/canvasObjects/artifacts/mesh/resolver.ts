@@ -4,6 +4,7 @@ import { type Outline, ringArea } from '../../../../model/outline';
 import { flattenPath } from '../../../../model/path';
 import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch';
 import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
+import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { childBlocks, directProperties } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
@@ -298,6 +299,23 @@ function facetsAsset(properties: Map<string, SflValue>): string {
   return facetsAssetName(shape);
 }
 
+// A Terrain is a mesh whose model is built from a picture of heights, which is loaded where the mesh is drawn.
+function terrainAsset(block: SflBlock, properties: Map<string, SflValue>, layoutProp: LayoutProp): string {
+  // `picture` is the address of a picture, or the name of a Canvas of the Scene whose drawing lies on the land.
+  const pictured = properties.get('picture');
+  const picture = asString(pictured);
+  const surface = pictured?.type === 'ident' ? pictured.segments.join('.') : undefined;
+  const base = asNumber(properties.get('base'));
+  const detail = asNumber(properties.get('detail'));
+  return terrainAssetName({
+    heights: asString(properties.get('heights')) ?? '',
+    ...(surface ? { surface } : picture ? { picture } : {}),
+    size: vector(block, layoutProp, 'size', 1),
+    ...(base !== undefined ? { base } : {}),
+    ...(detail ? { detail } : {}),
+  });
+}
+
 export function resolveMeshObject(
   base: SflCanvasObjectBase,
   block: SflBlock,
@@ -329,7 +347,9 @@ export function resolveMeshObject(
           ? solidAsset(block, properties, layoutProp, symbolDefs, sketched)
           : block.kind === 'Facets'
             ? facetsAsset(properties)
-            : (asString(properties.get('asset')) ?? ''),
+            : block.kind === 'Terrain'
+              ? terrainAsset(block, properties, layoutProp)
+              : (asString(properties.get('asset')) ?? ''),
       role: asString(properties.get('role')),
       color: asString(properties.get('color')),
       opacity: asNumber(properties.get('opacity')),
@@ -361,10 +381,13 @@ export function resolveMeshSceneObject(
     objectType: 'meshScene',
     meshScene: {
       orbit: [yaw, pitch],
+      zoom: asNumber(properties.get('zoom')),
       shadow: asString(properties.get('shadow')) === 'true',
       environment: asString(properties.get('environment')),
       environmentTurn: asNumber(properties.get('environmentTurn')),
       exposure: asNumber(properties.get('exposure')),
+      haze: asNumber(properties.get('haze')),
+      hazeColor: asString(properties.get('hazeColor')),
     },
   };
 }
@@ -401,9 +424,18 @@ export function resolveMeshLightObject(
       color: asString(properties.get('color')),
       intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
+      ambientColor: asString(properties.get('ambientColor')),
       softness: asNumber(properties.get('softness')),
+      position: place(properties.get('position')),
+      glow: asNumber(properties.get('glow')),
     },
   };
+}
+
+// The place of a light, when three numbers say it.
+function place(value: SflValue | undefined): Vec3 | undefined {
+  const [x, y, z] = tupleValues(value) ?? [];
+  return x !== undefined && y !== undefined && z !== undefined ? [x, y, z] : undefined;
 }
 
 // The ground of a Scene. Without a height it lies under the meshes, and without a color only its shadows and reflections show.

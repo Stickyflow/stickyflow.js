@@ -221,14 +221,18 @@ export interface SceneMeshStage extends SceneBase {
   height: number;
   stageId: string;
   orbit: [number, number];
+  zoom?: number;
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
   exposure?: number;
+  haze?: number;
+  hazeColor?: string;
   ground?: MeshGround;
   meshes: Mesh[];
   surfaces: SceneMeshSurface[];
   light?: MeshLight;
+  sideLights?: MeshLight[];
   anchors: MeshAnchor[];
 }
 

@@ -21,6 +21,7 @@ import {
 } from './stageTypes';
 import { pointIn, StageView } from './stageView';
 import { SurfaceTextures, surfaceMatrix } from './surfaceTextures';
+import { pictureSurfaces, TerrainPictures } from './terrainPictures';
 
 const CAMERA_TURN_MS = 380;
 const EMPTY_SCENE: Box = { min: [-2, 0, -2], max: [2, 2, 2] };
@@ -34,7 +35,9 @@ export class MeshStage {
   private canvas: HTMLCanvasElement | null = null;
   private renderer: MeshRenderer | null = null;
   private textures: SurfaceTextures | null = null;
+  private pictures: TerrainPictures | null = null;
   private written = '';
+  private zoomWritten: number | undefined;
   private selected: string | null = null;
   private selectedObject: string | null = null;
   // Without editing the world is only looked at and used: nothing is selected and there are no handles.
@@ -136,8 +139,15 @@ export class MeshStage {
     this.written = attribute;
     this.handles.dropDraft();
     this.textures?.keepOnly(new Set((data.surfaces ?? []).map(surface => surface.id)));
+    const nearer = this.placement.data.zoom;
+    const wasNearer = this.zoomWritten;
+    this.zoomWritten = nearer;
     if (previous[0] !== data.orbit[0] || previous[1] !== data.orbit[1] || !this.view.hasFramed) {
       this.view.lookFrom(data.orbit);
+    }
+    // The document says how near the camera starts; after that the wheel is free to change it.
+    if (nearer !== wasNearer || !this.view.hasFramed) {
+      this.view.closeBy(nearer);
     }
   }
 
@@ -158,6 +168,12 @@ export class MeshStage {
     this.textures = new SurfaceTextures(
       this.renderer,
       canvas,
+      () => this.schedule(),
+      message => this.report(message),
+    );
+    this.pictures = new TerrainPictures(
+      this.renderer,
+      canvas.ownerDocument,
       () => this.schedule(),
       message => this.report(message),
     );
@@ -199,8 +215,14 @@ export class MeshStage {
     });
   }
 
+  // The surfaces that stand in the world as themselves: not the ones that are the picture of a Terrain.
+  private flatSurfaces() {
+    const pictures = pictureSurfaces(this.placement.data.meshes);
+    return this.placement.get().surfaces.filter(surface => !pictures.has(surface.id));
+  }
+
   private planes(): Plane[] {
-    return this.placement.get().surfaces.map(surface => ({
+    return this.flatSurfaces().map(surface => ({
       id: surface.id,
       matrix: surfaceMatrix(surface),
       layers: this.textures?.layers(surface, this.placement.hiddenIds) ?? [],
@@ -214,9 +236,10 @@ export class MeshStage {
     }
     const { data } = this.placement;
     const { aspect, window } = view.fit(canvas, wholeStage);
-    const { meshes, light } = this.placement.get();
-    const lighting = lightingOf(light);
+    const { meshes, light, sideLights } = this.placement.get();
+    const lighting = lightingOf(light, sideLights);
     const planes = this.planes();
+    this.pictures?.sync(meshes, this.placement.get().surfaces);
     // Hiding something is no reason to move the camera, so the framing counts all that the document has.
     const framing = `${aspect.toFixed(2)}|${data.meshes
       .filter(mesh => renderer.hasAsset(mesh.asset))
@@ -236,6 +259,7 @@ export class MeshStage {
       grid: this.grid && !wholeStage,
       environmentTurn: data.environmentTurn,
       exposure: data.exposure,
+      haze: data.haze ? { amount: data.haze, color: data.hazeColor } : undefined,
       // In the dark studio a ground without a color of its own is as dark as the room.
       ground:
         data.environment === STUDIO_DARK && !data.ground?.color
@@ -255,7 +279,7 @@ export class MeshStage {
   private keepSurfacesSharp(planes: readonly Plane[]): void {
     const ratio = this.svg.ownerDocument.defaultView?.devicePixelRatio ?? 1;
     const unit = (this.svg.getScreenCTM()?.a || 1) * ratio;
-    for (const surface of this.placement.get().surfaces) {
+    for (const surface of this.flatSurfaces()) {
       const plane = planes.find(item => item.id === surface.id);
       const a = plane && this.view.toStage(transformPoint(plane.matrix, [-1, 0, 0]));
       const b = plane && this.view.toStage(transformPoint(plane.matrix, [1, 0, 0]));
@@ -284,17 +308,15 @@ export class MeshStage {
     if (!camera || !renderer || !canvas) {
       return undefined;
     }
-    const { meshes, surfaces } = this.placement.get();
-    return surfaceUnder(camera, surfaces, this.view.stagePoint(clientX, clientY), () =>
+    const { meshes } = this.placement.get();
+    return surfaceUnder(camera, this.flatSurfaces(), this.view.stagePoint(clientX, clientY), () =>
       renderer.meshDistance(meshes, camera, ...this.canvasPoint(clientX, clientY)),
     );
   }
 
   objectAt(clientX: number, clientY: number, options: MeshObjectQuery = {}): MeshObjectPoint | null {
     const point = this.view.stagePoint(clientX, clientY);
-    return objectUnder(this.view.camera, this.placement.get().surfaces, point, options, () =>
-      this.surfaceAt(clientX, clientY),
-    );
+    return objectUnder(this.view.camera, this.flatSurfaces(), point, options, () => this.surfaceAt(clientX, clientY));
   }
 
   pointAt(clientX: number, clientY: number, query: MeshPointQuery = {}): MeshPoint | null {
@@ -542,6 +564,7 @@ export class MeshStage {
     this.renderer = null;
     this.loader.reset();
     this.textures = null;
+    this.pictures = null;
     this.view.clear();
   }
 

@@ -376,6 +376,27 @@ export function plainAsset(geometry: PlainGeometry, skipped: string[]): MeshAsse
   };
 }
 
+// A body that is built here, from its parts: each a geometry, with a picture on it or the look of matte clay. A part that is
+// `pictured` gets its picture later, from a drawing.
+export function builtAsset(
+  parts: readonly { geometry: PlainGeometry & Pick<MeshPrimitive, 'indices'>; picture?: string; pictured?: boolean }[],
+): MeshAsset {
+  return {
+    primitives: parts.map(({ geometry, picture, pictured = Boolean(picture) }) => ({
+      ...geometry,
+      transform: identity(),
+      material: {
+        ...DEFAULT_MATERIAL,
+        baseColor: pictured ? [1, 1, 1, 1] : PLAIN_MATERIAL_COLOR,
+        metallic: 0,
+        roughness: pictured ? 0.85 : PLAIN_ROUGHNESS,
+        maps: picture ? { base: { image: picture } } : {},
+      },
+    })),
+    skipped: [],
+  };
+}
+
 // STL and OBJ are told by what is in the file, as an address need not have an ending.
 function readPlainFormat(data: ArrayBuffer): MeshAsset | undefined {
   if (isBinaryStl(data)) {

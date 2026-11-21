@@ -96,14 +96,18 @@ export interface MeshObjectPoint {
 export interface StageData {
   id: string;
   orbit: [number, number];
+  zoom?: number;
   shadow: boolean;
   environment?: string;
   environmentTurn?: number;
   exposure?: number;
+  haze?: number;
+  hazeColor?: string;
   ground?: MeshGround;
   meshes: Mesh[];
   surfaces?: StageSurface[];
   light?: MeshLight;
+  sideLights?: MeshLight[];
   anchors: MeshAnchor[];
 }
 
@@ -112,6 +116,7 @@ export interface Placement {
   meshes: Mesh[];
   surfaces: StageSurface[];
   light: MeshLight;
+  sideLights: MeshLight[];
 }
 
 export function dataOf(host: Element): StageData | undefined {

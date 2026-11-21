@@ -1,6 +1,6 @@
 import { parse } from '../../sflLanguage';
 import type { SflDocument } from '../../sflLanguage/ast';
-import { expandDocument } from '../../sflLanguage/expansion';
+import { expandDocument, type Tables } from '../../sflLanguage/expansion';
 import { resolveCanvasState } from '../../sflSemantic/canvasState/resolver';
 import type { RenderInput } from '../types';
 import { collectCanvasObjects } from './canvasObjects/collect';
@@ -10,8 +10,8 @@ export function sflToRenderInput(sfl: string): RenderInput {
   return documentToRenderInput(parse(sfl));
 }
 
-export function documentToRenderInput(doc: SflDocument): RenderInput {
-  const state = resolveCanvasState(expandDocument(doc));
+export function documentToRenderInput(doc: SflDocument, tables?: Tables): RenderInput {
+  const state = resolveCanvasState(expandDocument(doc, tables));
   const canvasObjects = collectCanvasObjects(state);
   return {
     shapes: canvasObjects.shapes,

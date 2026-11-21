@@ -1,4 +1,4 @@
-import type { SflBinding, SflLayout, SflProperty, SflStyle } from '../ast';
+import type { SflBinding, SflLayout, SflProperty, SflStyle, SflValue } from '../ast';
 import type { TokenCursor } from './cursor';
 import { SflParseError } from './error';
 import { atBinding, parseBinding } from './expressions';
@@ -49,9 +49,25 @@ export class PropertyParser {
   parseProperty(): SflProperty {
     const key = this.cursor.expect('ident', 'property key').value;
     this.cursor.expect('colon', "':'");
-    const value = key === 'from' || key === 'to' ? parseEndpoint(this.cursor) : parseValue(this.cursor);
+    const value =
+      key === 'from' || key === 'to'
+        ? parseEndpoint(this.cursor)
+        : key === 'each'
+          ? this.parseEach()
+          : parseValue(this.cursor);
     this.consumeTerminator();
     return { key, value };
+  }
+
+  // `each: house in city`: a name for one row, the word in, and the table the rows come from.
+  private parseEach(): SflValue {
+    const row = this.cursor.expect('ident', 'a name for one row').value;
+    const word = this.cursor.expect('ident', "'in'");
+    if (word.value !== 'in') {
+      throw new SflParseError("each is written as 'each: row in table'", word.line, word.col);
+    }
+    const source = this.cursor.expect('ident', 'the name of a DataSource').value;
+    return { type: 'each', row, source };
   }
 
   private parsePropertyBlock(kind: 'layout' | 'style' | 'fields'): SflProperty[] {

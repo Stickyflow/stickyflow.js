@@ -142,8 +142,8 @@ export class EnvironmentMap {
     };
   }
 
-  // For the program of the meshes, with how far the environment is turned and how strong it is.
-  bind(uniforms: Program['uniforms'], turnDegrees: number, strength: number): void {
+  // For the program of the meshes, with how far the environment is turned and how strong it is in each color.
+  bind(uniforms: Program['uniforms'], turnDegrees: number, strength: readonly number[]): void {
     const gl = this.gl;
     gl.uniform1i(uniforms.uHasEnvironment, this.texture ? 1 : 0);
     gl.uniform1i(uniforms.uEnvironment, UNIT);
@@ -155,7 +155,7 @@ export class EnvironmentMap {
     }
     const turn = (turnDegrees * Math.PI) / 180;
     gl.uniform1f(uniforms.uEnvironmentLevels, this.levels - 1);
-    gl.uniform1f(uniforms.uEnvironmentStrength, strength);
+    gl.uniform3fv(uniforms.uEnvironmentStrength, strength);
     gl.uniform2f(uniforms.uEnvironmentTurn, Math.cos(turn), Math.sin(turn));
     gl.uniform3fv(uniforms.uIrradiance, this.light);
   }

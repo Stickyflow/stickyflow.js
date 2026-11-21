@@ -1,4 +1,5 @@
 import { type RenderOptions, type RenderResult, renderCanvas } from '../render';
+import { eachSources } from '../sflLanguage/expansion';
 import { checkData } from './checkData';
 import { createDataSource, type DataSource } from './dataSource';
 import { flush, markDirty, schedule } from './evaluation';
@@ -41,13 +42,15 @@ function registerSource(state: RuntimeState, name: string, source: DataSource, o
   adopt();
   // New values of parameters change what the document makes, so it is made again; the source the runtime made itself holds the values the
   // document already has.
-  const parameters = Boolean(contract.parameters);
-  if (parameters && !own) {
+  // The same holds for a table a Repeat runs over: its rows are what that Repeat makes.
+  const { blocks } = state.document;
+  const remade = Boolean(contract.parameters) || eachSources(blocks).has(name);
+  if (remade && !own) {
     requestRemake(state);
   }
   const unsubscribe = source.subscribe(() => {
     adopt();
-    if (parameters) {
+    if (remade) {
       requestRemake(state);
     }
   });

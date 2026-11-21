@@ -13,7 +13,23 @@ export function buildMeshStages(
   const loose = meshes.some(mesh => !mesh.sceneId) || surfaces.some(surface => !surface.sceneId);
   return [...canvases, ...(loose ? [DEFAULT_MESH_SCENE] : [])].map((canvas, index) => {
     const own = meshes.filter(mesh => (mesh.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id);
-    const { id, x, y, width, height, orbit, shadow, environment, environmentTurn, exposure, ground } = canvas;
+    const inScene = lights.filter(light => (light.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id);
+    const {
+      id,
+      x,
+      y,
+      width,
+      height,
+      orbit,
+      zoom,
+      shadow,
+      environment,
+      environmentTurn,
+      exposure,
+      haze,
+      hazeColor,
+      ground,
+    } = canvas;
     return {
       type: 'mesh-stage',
       id: `mesh-stage-${id}`,
@@ -25,13 +41,18 @@ export function buildMeshStages(
       height,
       stageId: id,
       orbit,
+      zoom,
       shadow,
       environment,
       environmentTurn,
       exposure,
+      haze,
+      hazeColor,
       ground,
       meshes: own,
-      light: lights.find(light => (light.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id),
+      // The first Light of a Scene is its sun, and the ones after it shine from the side.
+      light: inScene[0],
+      sideLights: inScene.length > 1 ? inScene.slice(1) : undefined,
       surfaces: surfaces.filter(surface => (surface.sceneId ?? DEFAULT_MESH_SCENE.id) === canvas.id),
       anchors: anchors.filter(anchor => own.some(mesh => mesh.id === anchor.mesh)),
     };

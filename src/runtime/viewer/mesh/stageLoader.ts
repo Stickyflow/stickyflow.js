@@ -1,9 +1,11 @@
 import { buildFacets, facetsOfAsset } from '../../../model/facets';
 import { buildSolid, solidOfAsset } from '../../../model/solid';
+import { terrainOfAsset } from '../../../model/terrain';
 import { MADE_ENVIRONMENTS } from './environment';
 import { plainAsset } from './glb';
 import { loadAssetInto } from './loadAsset';
 import { environmentFor } from './loadEnvironment';
+import { loadTerrainInto } from './loadTerrain';
 import type { MeshRenderer } from './renderer';
 
 // A document names what it loads, so it stays on the ways a page normally loads a picture.
@@ -25,7 +27,8 @@ interface LoaderTarget {
 // Loads what a stage names into its renderer: the files of its meshes, and its environment.
 export class StageLoader {
   private readonly target: LoaderTarget;
-  private readonly loading = new Set<string>();
+  // What is on its way, for each renderer: what was asked for one that is gone is asked again for the one after it.
+  private readonly loading = new WeakMap<MeshRenderer, Set<string>>();
   // The environment the renderer has, or is getting.
   private environment = '';
 
@@ -39,7 +42,9 @@ export class StageLoader {
   }
 
   asset(renderer: MeshRenderer, asset: string): void {
-    if (renderer.hasAsset(asset) || this.loading.has(asset)) {
+    const loading = this.loading.get(renderer) ?? new Set<string>();
+    this.loading.set(renderer, loading);
+    if (renderer.hasAsset(asset) || loading.has(asset)) {
       return;
     }
     const solid = solidOfAsset(asset);
@@ -54,16 +59,30 @@ export class StageLoader {
       this.target.arrived(true);
       return;
     }
+    const alive = () => this.target.alive(renderer);
+    const terrain = terrainOfAsset(asset);
+    if (terrain) {
+      loading.add(asset);
+      const heights = this.address(terrain.heights);
+      const picture = terrain.picture ? this.address(terrain.picture) : undefined;
+      if (heights === null || picture === null) {
+        this.target.report(`${heights === null ? terrain.heights : terrain.picture}: this address is not allowed`);
+        return;
+      }
+      void loadTerrainInto(renderer, asset, terrain, { heights, picture }, alive, () => this.target.arrived(true))
+        .catch((failure: unknown) => this.fail(terrain.heights, failure))
+        .finally(() => loading.delete(asset));
+      return;
+    }
     const address = this.address(asset);
-    this.loading.add(asset);
+    loading.add(asset);
     if (address === null) {
       this.target.report(`${asset}: this address is not allowed`);
       return;
     }
-    const alive = () => this.target.alive(renderer);
     void loadAssetInto(renderer, asset, address, alive, () => this.target.arrived(true))
       .catch((failure: unknown) => this.fail(asset, failure))
-      .finally(() => this.loading.delete(asset));
+      .finally(() => loading.delete(asset));
   }
 
   environmentOf(renderer: MeshRenderer, name: string): void {

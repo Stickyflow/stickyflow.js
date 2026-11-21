@@ -2,6 +2,9 @@ import type { Random } from './random';
 
 export type Scalar = number | string | boolean;
 
+// The rows of the tables a Repeat can run over, by the name of their DataSource, as the host holds them now.
+export type Tables = ReadonlyMap<string, ReadonlyArray<Readonly<Record<string, unknown>>>>;
+
 // The names and the random numbers that the computed values of a Repeat cell or a Use are worked out with.
 export interface Scope {
   vars: Map<string, Scalar>;

@@ -286,7 +286,7 @@ vec3 follow(Surface s, vec3 v) {
 const LIGHTS = `
 uniform sampler2D uEnvironment;
 uniform vec2 uEnvironmentTurn;
-uniform float uEnvironmentStrength;
+uniform vec3 uEnvironmentStrength;
 // The smaller copy of the environment that the lights of the frames are picked from, and all its light added up.
 uniform float uSkyLevel;
 uniform float uSkyTotal;
@@ -295,6 +295,9 @@ uniform vec3 uEnvDirection;
 uniform vec3 uEnvLight;
 uniform vec3 uSunDirection;
 uniform vec3 uSun;
+// Lights from the side: where each shines from, and its light. One that is not there has no light.
+uniform vec3 uSideDirection[2];
+uniform vec3 uSide[2];
 uniform float uSunSize;
 uniform bool uSunShadows;
 
@@ -350,6 +353,14 @@ vec3 direct(Surface s, vec3 v, float lift) {
       light += back * dot(s.normal, toSun) * uSun;
     }
   }
+  for (int i = 0; i < 2; i++) {
+    if (uSide[i].r + uSide[i].g + uSide[i].b > 0.0) {
+      back = reflectance(s, v, uSideDirection[i], chance);
+      if (chance > 0.0 && !blocked(from, uSideDirection[i])) {
+        light += back * dot(s.normal, uSideDirection[i]) * uSide[i];
+      }
+    }
+  }
   return light;
 }`;
 
@@ -396,6 +407,11 @@ uniform mat4 uViewProjection;
 uniform vec3 uEye;
 uniform float uSeed;
 uniform float uExposure;
+// The haze: its color as a screen shows it and how much of it, and the distances from the eye between which it grows.
+uniform vec4 uHaze;
+uniform vec2 uHazeRange;
+// How far from the eye the first surface lies that a pixel shows, or less than nothing where it shows none.
+float reached = -1.0;
 // A small step off a surface, so a ray that starts on it does not meet it again.
 uniform float uLift;
 layout(location = 0) out vec4 fragment;
@@ -499,6 +515,7 @@ void main() {
         // What glows keeps its own pattern, so it counts as glossy and is not smoothed.
         bool glows = s.emissive.r + s.emissive.g + s.emissive.b > 0.05;
         guide = vec4(s.normal, distance(s.position, uEye));
+        reached = guide.w;
         look = vec4(s.color, glows || s.unlit || s.transmission > 0.0 ? 0.0 : s.roughness);
         vec4 placed = uViewProjection * vec4(s.position, 1.0);
         gl_FragDepth = clamp(placed.z / placed.w * 0.5 + 0.5, 0.0, 1.0);
@@ -549,6 +566,10 @@ void main() {
   }
   // One bright path would stay as a speck for a long time, so no path counts for more than this.
   light = min(light, vec3(24.0)) * uExposure;
+  if (uHaze.a > 0.0 && reached >= 0.0) {
+    float deep = clamp((reached - uHazeRange.x) / max(uHazeRange.y - uHazeRange.x, 0.0001), 0.0, 1.0);
+    light = mix(light, fromScreen(uHaze.rgb), uHaze.a * deep * deep);
+  }
   if (canvas.a > 0.0) {
     // Where a Canvas will be drawn, nothing is smoothed, so its drawing stays as it is.
     guide = canvas;

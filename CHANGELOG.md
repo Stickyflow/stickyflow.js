@@ -17,6 +17,21 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- A `Light` in a Scene takes `position: x, y, z` and is then a light at a place, as a lamp or a star: it shines from there in every direction, the same at every distance, so what stands around it has a lit side and a dark one. It casts no shadows, and `turn` and `height` say nothing for it. A Scene with such a light is not traced when it rests; it is drawn the plain way.
+- `glow` on a `Light` with a position shows the light itself: a soft shine around its place, as wide as the number says in units of the world, in the color of the light, behind what stands before it.
+- A `Scene` can hold more than one `Light`. The first is its sun. Up to two more shine from their side, each from its `turn` and `height` in its `color` and `intensity`, as a colored lamp beside the stage does. In the quick picture they cast no shadows; in the rendered still picture they do.
+- A `Light` takes `ambientColor`: the color of the light of the sky, which fills the shadows. With a warm sun and a cool sky, lit sides and shaded sides differ in color and not only in brightness. How strong that light is stays with `ambient`.
+- `Terrain` is a block of land in a `Scene`. Its top follows a picture of heights, named by `heights`: a grey picture, brighter where the land is higher, or a picture that holds metres in its channels, as open elevation data comes. `picture` is what lies on the top: the address of a picture, or the name of a `Canvas` of the Scene, whose drawing then lies on the land and not in the world as a surface of its own. `base` is how thick the block is under its lowest place, `detail` how many points its longer side has. It is placed, sized, turned and bound as a `Solid` is.
+- A `Scene` takes `haze`: how much of what lies far away is lost in haze, from 0 to 1, growing from the near side of the scene to its far side. `hazeColor` is the color of that haze. The quick picture and the rendered still picture both show it.
+- A `Scene` takes `zoom`: how many times nearer the camera starts than where all of the world fits the picture, so `zoom: 2` is twice as near. The wheel still changes it from there.
+- A `Repeat` can run over the rows of a table: `each: house in city` makes one cell for every row of the DataSource `city` and calls that row `house`. In the Repeat `house.name` is the value of that field in this row, in a computed value, in a text, in `where`, and in what a handler writes, so each copy can say which row it is. `index` and `count` number the rows. `columns`, `rows` and `count` cannot stand beside `each`, the row cannot take a name that a cell, a parameter or a DataSource has, and a record has no rows to run over. A table without rows makes nothing, as when a document is drawn without its data; when the host gives the table other rows, the document is made again.
+
+### Fixed
+
+- A model that is still loading when its Scene is drawn anew is asked for again. Before, what had loaded for the earlier drawing was dropped and never asked for a second time, so the Scene stayed empty.
+
 ## [0.20.5] - 2026-11-15
 
 ### Added

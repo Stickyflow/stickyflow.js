@@ -34,6 +34,7 @@ export class StagePlacement {
         members: surface.members.filter(member => !this.hidden.has(member.id)),
       })),
       light: this.light(),
+      sideLights: (this.data.sideLights ?? []).map(light => this.lit(light)),
     };
     return this.placed;
   }
@@ -56,6 +57,7 @@ export class StagePlacement {
     return (
       this.data.meshes.some(mesh => mesh.id === id) ||
       this.data.light?.id === id ||
+      Boolean(this.data.sideLights?.some(light => light.id === id)) ||
       Boolean(this.data.surfaces?.some(item => item.id === id))
     );
   }
@@ -108,7 +110,12 @@ export class StagePlacement {
   private light(): MeshLight {
     // An environment lights the world on its own, as in a photo studio. A sun comes only when the document asks for one.
     const fallback = this.data.environment ? { ...DEFAULT_LIGHT, intensity: 0 } : DEFAULT_LIGHT;
-    const light = { ...(this.data.light ?? fallback) };
+    return this.lit(this.data.light ?? fallback);
+  }
+
+  // A light with what data has done to it. A hidden one shines no more.
+  private lit(written: MeshLight): MeshLight {
+    const light = { ...written };
     for (const [property, value] of this.live.get(light.id) ?? []) {
       setMeshValue(light, property, value);
     }

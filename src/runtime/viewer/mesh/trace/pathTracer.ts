@@ -27,6 +27,8 @@ const UNIFORMS = [
   'uEnvLight',
   'uSunDirection',
   'uSun',
+  'uSideDirection',
+  'uSide',
   'uSunSize',
   'uSunShadows',
   'uFloor',
@@ -43,6 +45,8 @@ const UNIFORMS = [
   'uEye',
   'uSeed',
   'uExposure',
+  'uHaze',
+  'uHazeRange',
   'uLift',
   'uSeeThrough',
 ];
@@ -54,19 +58,23 @@ export interface TraceFrame {
   exposure: number;
   // A small step off a surface, for the size of the scene.
   lift: number;
+  haze: { color: Vec3; amount: number; near: number; far: number };
   // Whether anything in the scene is partly see-through.
   seeThrough: boolean;
   environment: {
     texture: WebGLTexture;
     skyLevel: number;
     turn: number;
-    strength: number;
+    // How strong the sky lights the world, in each color.
+    strength: Vec3;
     // All the light of the sky, and the light of this frame: where it is, and its light over how likely it was to be picked.
     total: number;
     direction: Vec3;
     light: Vec3;
   };
   sun: { direction: Vec3; light: Vec3; size: number; shadows: boolean };
+  // The lights from the side, as six numbers each: where two of them shine from, and their light.
+  sides: { directions: Float32Array; lights: Float32Array };
   ground: {
     floor: number;
     reflection: number;
@@ -209,13 +217,15 @@ export class PathTracer {
     });
     const turn = (environment.turn * Math.PI) / 180;
     gl.uniform2f(uniforms.uEnvironmentTurn, Math.cos(turn), Math.sin(turn));
-    gl.uniform1f(uniforms.uEnvironmentStrength, environment.strength);
+    gl.uniform3fv(uniforms.uEnvironmentStrength, environment.strength);
     gl.uniform1f(uniforms.uSkyLevel, environment.skyLevel);
     gl.uniform1f(uniforms.uSkyTotal, environment.total);
     gl.uniform3fv(uniforms.uEnvDirection, environment.direction);
     gl.uniform3fv(uniforms.uEnvLight, environment.light);
     gl.uniform3fv(uniforms.uSunDirection, sun.direction);
     gl.uniform3fv(uniforms.uSun, sun.light);
+    gl.uniform3fv(uniforms.uSideDirection, frame.sides.directions);
+    gl.uniform3fv(uniforms.uSide, frame.sides.lights);
     gl.uniform1f(uniforms.uSunSize, sun.size);
     gl.uniform1i(uniforms.uSunShadows, sun.shadows ? 1 : 0);
     gl.uniform1f(uniforms.uFloor, ground.floor);
@@ -232,6 +242,8 @@ export class PathTracer {
     gl.uniform3fv(uniforms.uEye, camera.eye);
     gl.uniform1f(uniforms.uSeed, frame.seed);
     gl.uniform1f(uniforms.uExposure, frame.exposure);
+    gl.uniform4f(uniforms.uHaze, ...frame.haze.color, frame.haze.amount);
+    gl.uniform2f(uniforms.uHazeRange, frame.haze.near, frame.haze.far);
     gl.uniform1f(uniforms.uLift, frame.lift);
     gl.uniform1i(uniforms.uSeeThrough, frame.seeThrough ? 1 : 0);
     gl.bindVertexArray(this.quad);
