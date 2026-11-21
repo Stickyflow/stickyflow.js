@@ -142,6 +142,9 @@ export interface MeshLight {
   color?: string;
   intensity: number;
   ambient: number;
+  // The color of the light of the sky, which fills the shadows: with a warm sun and a cool sky, lit sides and shaded sides differ in
+  // color and not only in brightness. Its strength stays with `ambient`.
+  ambientColor?: string;
   // How large the sun looks, in degrees: the shadows get softer the further they fall. Without it they are as sharp as the map allows.
   softness?: number;
   // A light at a place in the world, as a lamp or a star: it shines from there in every direction, the same at every distance,

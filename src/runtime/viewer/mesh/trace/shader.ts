@@ -286,7 +286,7 @@ vec3 follow(Surface s, vec3 v) {
 const LIGHTS = `
 uniform sampler2D uEnvironment;
 uniform vec2 uEnvironmentTurn;
-uniform float uEnvironmentStrength;
+uniform vec3 uEnvironmentStrength;
 // The smaller copy of the environment that the lights of the frames are picked from, and all its light added up.
 uniform float uSkyLevel;
 uniform float uSkyTotal;

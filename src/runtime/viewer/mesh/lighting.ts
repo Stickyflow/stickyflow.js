@@ -19,6 +19,8 @@ export interface Lighting {
   fill: number;
   // How strong an environment picture lights the world.
   ambient: number;
+  // The color the light of the sky is tinted with, at the brightness of white.
+  skyTint: Vec3;
   // How large the sun looks, in degrees, when the document says so.
   softness?: number;
   // How much of a shadow can be seen: none when the sun is down.
@@ -52,6 +54,14 @@ function smoothstep(from: number, to: number, value: number): number {
 
 const mix = (a: Vec3, b: Vec3, t: number): Vec3 => a.map((value, axis) => value + (b[axis] - value) * t) as Vec3;
 const times = (a: Vec3, factor: number): Vec3 => a.map(value => value * factor) as Vec3;
+const tinted = (a: Vec3, tint: Vec3): Vec3 => a.map((value, axis) => value * tint[axis]) as Vec3;
+
+// A color as a tint: as bright as white, so it changes the color of a light and not its strength.
+function tintOf(hex: string | undefined): Vec3 {
+  const color = colorOf(hex);
+  const brightness = color ? 0.2126 * color[0] + 0.7152 * color[1] + 0.0722 * color[2] : 0;
+  return color && brightness > 0.001 ? times(color, 1 / brightness) : [1, 1, 1];
+}
 
 export function lightingOf(light: MeshLight): Lighting {
   return light.position ? pointLighting(light, light.position) : sunLighting(light);
@@ -59,17 +69,19 @@ export function lightingOf(light: MeshLight): Lighting {
 
 // A light at a place: as strong as a sun at noon, with no warm tint of a low sun and no shadows, as the shadow map is made
 // for light that comes from one side.
-function pointLighting({ color, intensity, ambient, softness, glow }: MeshLight, point: Vec3): Lighting {
+function pointLighting({ color, intensity, ambient, ambientColor, softness, glow }: MeshLight, point: Vec3): Lighting {
   const own = colorOf(color) ?? [1, 1, 1];
+  const skyTint = tintOf(ambientColor);
   const glare = times(own, intensity);
   return {
     direction: [0, 1, 0],
     sun: times(glare, SUN_STRENGTH),
     glare,
-    sky: times(NOON, ambient),
-    floor: times(FLOOR, ambient),
+    sky: tinted(times(NOON, ambient), skyTint),
+    floor: tinted(times(FLOOR, ambient), skyTint),
     fill: 0,
     ambient,
+    skyTint,
     softness,
     shadow: 0,
     groundShadow: 0,
@@ -79,7 +91,8 @@ function pointLighting({ color, intensity, ambient, softness, glow }: MeshLight,
   };
 }
 
-function sunLighting({ turn, height, color, intensity, ambient, softness }: MeshLight): Lighting {
+function sunLighting({ turn, height, color, intensity, ambient, ambientColor, softness }: MeshLight): Lighting {
+  const skyTint = tintOf(ambientColor);
   const yaw = (turn * Math.PI) / 180;
   const pitch = (Math.min(HIGHEST, height) * Math.PI) / 180;
   const direction = normalize([Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)]);
@@ -93,10 +106,11 @@ function sunLighting({ turn, height, color, intensity, ambient, softness }: Mesh
     direction,
     sun: times(glare, SUN_STRENGTH),
     glare,
-    sky: times(mix(DUSK, NOON, smoothstep(0, 0.6, rise)), (0.25 + 0.75 * up) * ambient),
-    floor: times(FLOOR, (0.4 + 0.6 * up) * ambient),
+    sky: tinted(times(mix(DUSK, NOON, smoothstep(0, 0.6, rise)), (0.25 + 0.75 * up) * ambient), skyTint),
+    floor: tinted(times(FLOOR, (0.4 + 0.6 * up) * ambient), skyTint),
     fill: 0.5 * ambient * (0.25 + 0.75 * up),
     ambient,
+    skyTint,
     softness,
     shadow: above,
     groundShadow: above * smoothstep(0.05, 0.35, rise),

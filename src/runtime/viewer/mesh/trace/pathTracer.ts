@@ -63,7 +63,8 @@ export interface TraceFrame {
     texture: WebGLTexture;
     skyLevel: number;
     turn: number;
-    strength: number;
+    // How strong the sky lights the world, in each color.
+    strength: Vec3;
     // All the light of the sky, and the light of this frame: where it is, and its light over how likely it was to be picked.
     total: number;
     direction: Vec3;
@@ -212,7 +213,7 @@ export class PathTracer {
     });
     const turn = (environment.turn * Math.PI) / 180;
     gl.uniform2f(uniforms.uEnvironmentTurn, Math.cos(turn), Math.sin(turn));
-    gl.uniform1f(uniforms.uEnvironmentStrength, environment.strength);
+    gl.uniform3fv(uniforms.uEnvironmentStrength, environment.strength);
     gl.uniform1f(uniforms.uSkyLevel, environment.skyLevel);
     gl.uniform1f(uniforms.uSkyTotal, environment.total);
     gl.uniform3fv(uniforms.uEnvDirection, environment.direction);

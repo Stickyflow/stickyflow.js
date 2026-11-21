@@ -58,7 +58,7 @@ uniform vec3 uEmissive;
 uniform bool uHasEnvironment;
 uniform sampler2D uEnvironment;
 uniform float uEnvironmentLevels;
-uniform float uEnvironmentStrength;
+uniform vec3 uEnvironmentStrength;
 uniform vec2 uEnvironmentTurn;
 uniform vec3 uIrradiance[9];
 // How much the light is scaled before the filmic curve.

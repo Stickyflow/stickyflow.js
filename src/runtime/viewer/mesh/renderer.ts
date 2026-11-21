@@ -773,7 +773,8 @@ export class MeshRenderer {
       gl.uniform1i(uniforms[sampler], unit);
     }
     this.shadows.bind(uniforms, softness);
-    this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix, lighting.ambient);
+    const skyLight = lighting.skyTint.map(value => value * lighting.ambient) as Vec3;
+    this.bindEnvironmentShadow(uniforms, environmentLight, environmentMatrix, skyLight);
     gl.uniform1i(uniforms.uStill, still ? 1 : 0);
     // A light at a place casts no shadows: the shadow map is made for light from one side.
     gl.uniform1f(uniforms.uShadows, options.shadows && !lighting.point ? 1 : 0);
@@ -789,7 +790,7 @@ export class MeshRenderer {
     const haze = hazeOf(options.haze, camera.eye, box);
     gl.uniform4f(uniforms.uHaze, ...haze.color, haze.amount);
     gl.uniform2f(uniforms.uHazeRange, haze.near, haze.far);
-    this.environment.bind(uniforms, options.environmentTurn ?? 0, lighting.ambient);
+    this.environment.bind(uniforms, options.environmentTurn ?? 0, skyLight);
     this.occlusion.bind(uniforms, occlusion);
 
     const opaque = instances.filter(instance => !seeThrough(instance));
@@ -803,7 +804,7 @@ export class MeshRenderer {
         softness,
       };
       this.drawGround(camera, lightMatrix, box, floor, shadow, options.grid ?? false, wide, occlusion);
-      this.bindEnvironmentShadow(this.ground.uniforms, groundLight, environmentMatrix, lighting.ambient);
+      this.bindEnvironmentShadow(this.ground.uniforms, groundLight, environmentMatrix, skyLight);
       gl.uniform1i(this.ground.uniforms.uStill, still ? 1 : 0);
       gl.uniform1i(this.ground.uniforms.uBasePass, 0);
       // How dark the ground gets toward what stands on it. Without the shadows of the environment this is the one shadow there
@@ -936,11 +937,11 @@ export class MeshRenderer {
       environment: {
         ...picture,
         turn: options.environmentTurn ?? 0,
-        strength: lighting.ambient,
+        strength: lighting.skyTint.map(value => value * lighting.ambient) as Vec3,
         // A light is picked as often as it is bright, so its color holds all the light of the sky, over pi.
         total: (0.2126 * light.color[0] + 0.7152 * light.color[1] + 0.0722 * light.color[2]) * Math.PI,
         direction: light.direction,
-        light: light.color.map(value => value * Math.PI * lighting.ambient) as Vec3,
+        light: light.color.map((value, axis) => value * Math.PI * lighting.ambient * lighting.skyTint[axis]) as Vec3,
       },
       sun: {
         direction: lighting.direction,
@@ -966,7 +967,7 @@ export class MeshRenderer {
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.depthFunc(gl.LEQUAL);
       this.drawGround(shifted, identity(), box, floor, { strength: 0, darkness: 0, softness: 0 }, true, wide, false);
-      this.bindEnvironmentShadow(this.ground.uniforms, { mode: 0 }, identity(), 0);
+      this.bindEnvironmentShadow(this.ground.uniforms, { mode: 0 }, identity(), [0, 0, 0]);
       gl.uniform1i(this.ground.uniforms.uStill, 1);
       gl.uniform1i(this.ground.uniforms.uBasePass, 0);
       this.drawGroundQuad();
@@ -1059,7 +1060,7 @@ export class MeshRenderer {
     const { gl } = this;
     const { uniforms } = this.ground;
     this.drawGround(camera, identity(), box, floor, { strength: 0, darkness: 0, softness: 0 }, false, wide, false);
-    this.bindEnvironmentShadow(uniforms, { mode: 0 }, identity(), 0);
+    this.bindEnvironmentShadow(uniforms, { mode: 0 }, identity(), [0, 0, 0]);
     gl.uniform1i(uniforms.uStill, 0);
     gl.uniform1i(uniforms.uBasePass, 1);
     gl.uniform3fv(uniforms.uGroundColor, color);
@@ -1173,7 +1174,7 @@ export class MeshRenderer {
     uniforms: Program['uniforms'],
     light: EnvironmentLight,
     matrix: Mat4,
-    strength: number,
+    strength: Vec3,
   ): void {
     const { gl } = this;
     this.environmentShadows.bind(uniforms, light.mode === 1 ? light.softness : 0);
@@ -1183,7 +1184,7 @@ export class MeshRenderer {
     if (light.mode === 2) {
       gl.uniform3fv(
         uniforms.uEnvLightColor,
-        light.color.map(value => value * strength),
+        light.color.map((value, axis) => value * strength[axis]),
       );
       gl.uniform1f(uniforms.uEnvGround, light.ground);
     } else if (light.mode === 1) {

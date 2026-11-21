@@ -424,6 +424,7 @@ export function resolveMeshLightObject(
       color: asString(properties.get('color')),
       intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
+      ambientColor: asString(properties.get('ambientColor')),
       softness: asNumber(properties.get('softness')),
       position: place(properties.get('position')),
       glow: asNumber(properties.get('glow')),
