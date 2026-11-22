@@ -10,6 +10,7 @@ function readContract(block: SflBlock, diagnostics: BindingDiagnostic[]): DataSo
   const mode: SourceMode =
     identOf(properties.find(property => property.key === 'mode')?.value) === 'record' ? 'record' : 'table';
   const contract: DataSourceContract = { name: block.name, mode, fields: {}, declared: {} };
+  const writable = properties.find(property => property.key === 'writable')?.value;
   for (const entry of block.entries) {
     if (entry.type === 'fields') {
       for (const field of entry.fields) {
@@ -30,7 +31,31 @@ function readContract(block: SflBlock, diagnostics: BindingDiagnostic[]): DataSo
       }
     }
   }
+  if (writable) {
+    contract.writable = writableFields(contract, writable, diagnostics);
+  }
   return contract;
+}
+
+// `writable: [offset, gain]` names the fields that may be written, and `writable: []` none.
+function writableFields(contract: DataSourceContract, value: SflValue, diagnostics: BindingDiagnostic[]): string[] {
+  const report = (message: string) =>
+    diagnostics.push({ severity: 'error', code: 'writable-list', message, line: 0, col: 0 });
+  if (value.type !== 'list') {
+    report(`'writable' of DataSource '${contract.name}' is a list of its fields, as in writable: [offset, gain].`);
+    return [];
+  }
+  const names = value.values.map(identOf);
+  for (const [index, name] of names.entries()) {
+    if (name === undefined) {
+      report(
+        `'writable' of DataSource '${contract.name}' holds something that is not the name of a field, at place ${index + 1}.`,
+      );
+    } else if (!contract.fields[name]) {
+      report(`'writable' of DataSource '${contract.name}' names '${name}', which is not one of its fields.`);
+    }
+  }
+  return names.filter((name): name is string => name !== undefined);
 }
 
 export function visitBlocks(blocks: SflBlock[], visit: (block: SflBlock) => void): void {

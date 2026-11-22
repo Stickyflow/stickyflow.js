@@ -17,15 +17,34 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Incompatible
+
+- SFL 1.12 reads a handler as one change. Every right side reads the values from before the handler, and each source it writes is
+  written once, at its end, with all of its fields. So `x <- x + 1` twice adds one, and a host that passes a write on, as to a device,
+  never gets half of it. Up to 1.11 every line saw what the lines before it wrote. A handler whose line reads a field that an earlier
+  line of it writes now reads the old value: a value that follows another in the same tick lags one tick behind, and a step that
+  needs the new value, as the second half of a turn, has to work it out in its own line. Before, a host that took a value over only
+  later had the first field written back to its old value.
+
 ### Added
 
-- A property that stands on a block and in its style gives a warning. The one in the style counts, as it did before, and the warning says so.
+- A record source can say which fields the document may write: `writable: [offset, gain]`, and `writable: []` for none. A handler or
+  a control that writes any other field is an error when the document is read. Without it every field may be written, as before.
+- A host can give a source a `writable` list of its own when it registers it. A write the host does not allow is an error, found when
+  the source is registered, also when the document has no list, and the write is never made.
+- A source the host registers can take writes field by field: `write(fields)` gets the fields a handler or a control changed, all of
+  one handler in one call, and only those that changed. A source with only `set` still gets the whole record, once per handler.
+- A write to a source that is not registered, or that has neither `write` nor `set`, gives a warning once. Before, it did nothing
+  without a word.
+- A property that stands on a block and in its style gives a warning. The one in the style counts, as it did before, and the warning
+  says so.
 
 ### Fixed
 
 - A picture rendered without a viewer, with `renderBound` or after `flush()`, shows what a Repeat makes from the rows of a table and
   what the values of Parameters change. Before, the document was made again only with the next frame, which such a picture never has.
-- A second and a third `Light` in a Scene no longer give the warning that they do nothing, as they shine from the side since 0.20.6. Only a fourth one does.
+- A second and a third `Light` in a Scene no longer give the warning that they do nothing, as they shine from the side since 0.20.6.
+  Only a fourth one does.
 
 ## [0.20.6] - 2026-11-21
 

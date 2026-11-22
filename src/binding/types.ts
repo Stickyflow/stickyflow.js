@@ -30,6 +30,8 @@ export interface DataSourceContract {
   declared: Record<string, string>;
   // For the record of a Parameters block: the values its parameters have in the file.
   parameters?: Record<string, number>;
+  // The fields a handler or a control may write, from `writable: [...]`. Without it every field may be written.
+  writable?: string[];
 }
 
 export interface BindingDiagnostic {

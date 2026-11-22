@@ -1,10 +1,10 @@
-import type { MutableDataSource } from './dataSource';
 import { markDirty, schedule } from './evaluation';
 import { collectRefs, evaluate } from './expression';
 import { type RuntimeState, readValue } from './runtimeState';
 import type { ElementState } from './runtimeTypes';
 import type { BoundHandler, Row } from './types';
 import { TICK_EVENT } from './types';
+import { writeFields } from './writes';
 
 export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: number, selfId?: string): void {
   const env = {
@@ -18,8 +18,10 @@ export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: n
       return readValue(state, path);
     },
   };
+  // Every right side reads the values from before the handler, and the handler writes each source once, at its end: so a handler is
+  // one change, and the host never sees half of it. A field written twice keeps the last value.
+  const writes = new Map<string, { fields: Row; line: number; col: number }>();
   for (const assignment of handler.assignments) {
-    const target = state.sources.get(assignment.source);
     const readable = collectRefs(assignment.expr).every(
       ([name]) =>
         name === 'time' ||
@@ -27,7 +29,7 @@ export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: n
         state.sources.has(name) ||
         state.elementState.has(name),
     );
-    if (!target || !('set' in target) || !readable) {
+    if (!readable) {
       continue;
     }
     let value = evaluate(assignment.expr, env);
@@ -38,10 +40,12 @@ export function runHandler(state: RuntimeState, handler: BoundHandler, delta?: n
         continue;
       }
     }
-    const row = target.get() as Row;
-    if (row[assignment.field] !== value) {
-      (target as MutableDataSource).set({ ...row, [assignment.field]: value });
-    }
+    const write = writes.get(assignment.source) ?? { fields: {}, line: assignment.line, col: assignment.col };
+    write.fields[assignment.field] = value;
+    writes.set(assignment.source, write);
+  }
+  for (const [source, { fields, line, col }] of writes) {
+    writeFields(state, source, fields, line, col);
   }
 }
 

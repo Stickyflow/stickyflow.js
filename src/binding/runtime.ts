@@ -17,11 +17,15 @@ import {
   releaseElement,
   slideElement,
 } from './userInput';
+import { checkHostWritable } from './writes';
 
 function registerSource(state: RuntimeState, name: string, source: DataSource, own = false): () => void {
   const contract = state.graph.contracts.get(name);
   if (!contract) {
     throw new Error(`No DataSource '${name}' is declared in the SFL.`);
+  }
+  if (source.writable) {
+    checkHostWritable(state, name, source.writable);
   }
   const accept = (): boolean => {
     const problem = checkData(contract, source.get());
@@ -35,6 +39,7 @@ function registerSource(state: RuntimeState, name: string, source: DataSource, o
     if (accept()) {
       state.sources.set(name, source);
       state.warned.delete(name);
+      state.warned.delete(`write:${name}`);
       markDirty(state, name);
       schedule(state);
     }

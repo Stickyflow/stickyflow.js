@@ -1,11 +1,11 @@
 import { type ComponentValue, getComponentDescriptor, isGenericComponent } from '../model/component';
 import { sliderReach } from '../model/component/sliderReach';
 import { findComponent, isComponentDisabled, writeComponentValue, writeComponentValueEnd } from './applyValue';
-import type { MutableDataSource } from './dataSource';
 import { markDirty, schedule } from './evaluation';
 import { dispatch, setElementState } from './handlers';
 import type { RuntimeState } from './runtimeState';
-import { type BoundProperty, CHANGE_EVENT, type Row } from './types';
+import { type BoundProperty, CHANGE_EVENT } from './types';
+import { writeFields } from './writes';
 
 function descriptorOf(state: RuntimeState, id: string) {
   const info = state.graph.elements.get(id);
@@ -20,13 +20,8 @@ function valueBinding(state: RuntimeState, id: string, property = 'value'): Boun
 
 function writeBack(state: RuntimeState, binding: BoundProperty, value: ComponentValue): void {
   const target = binding.expr.kind === 'ref' ? binding.expr.path : undefined;
-  const source = target ? state.sources.get(target[0]) : undefined;
-  if (!target || !source || !('set' in source)) {
-    return;
-  }
-  const row = source.get() as Row;
-  if (row[target[1]] !== value) {
-    (source as MutableDataSource).set({ ...row, [target[1]]: value });
+  if (target) {
+    writeFields(state, target[0], { [target[1]]: value }, binding.line, binding.col);
   }
 }
 
