@@ -64,13 +64,14 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
     .flatMap(scene =>
       childBlocks(scene)
         .filter(child => child.kind === 'Light')
-        .slice(1),
+        // the sun and two lights from the side
+        .slice(3),
     )
     .map(light =>
       warning(
         'extra-light',
         light.name,
-        `Light '${light.name}' does nothing: a Scene has one sun, and the first counts.`,
+        `Light '${light.name}' does nothing: a Scene has one sun and up to two lights from the side.`,
       ),
     );
   return [...outside, ...missing, ...onSurface, ...extraLights];

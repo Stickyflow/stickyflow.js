@@ -299,9 +299,11 @@ Model m {
     expect(live).toEqual([['sun', 'height', 12]]);
   });
 
-  it('warns about a second one', () => {
-    const source = 'sfl 1.8\n\nModel m {\n  Scene s {\n    Light a {\n    }\n    Light b {\n    }\n  }\n}\n';
-    expect(render(source).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['extra-light']);
+  it('takes a sun and two lights from the side, and warns about a fourth', () => {
+    const scene = (names: string[]) =>
+      `sfl 1.8\n\nModel m {\n  Scene s {\n${names.map(name => `    Light ${name} {\n    }\n`).join('')}  }\n}\n`;
+    expect(render(scene(['a', 'b', 'c'])).diagnostics).toEqual([]);
+    expect(render(scene(['a', 'b', 'c', 'd'])).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['extra-light']);
   });
 });
 
