@@ -5,7 +5,7 @@ import { createDataSource, type DataSource } from './dataSource';
 import { flush, markDirty, schedule } from './evaluation';
 import { dispatch, runTick, setElementState } from './handlers';
 import { interactiveElements } from './interactive';
-import { requestRemake } from './remake';
+import { remakeNow, requestRemake } from './remake';
 import { createRuntimeState, type RuntimeState } from './runtimeState';
 import type { BindingRuntime, BindingRuntimeOptions, BindingTarget, LiveChange } from './runtimeTypes';
 import type { Row } from './types';
@@ -142,7 +142,10 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       dispatch(state, id, 'onDrag');
     },
     tick: seconds => runTick(state, seconds),
-    flush: () => flush(state),
+    flush: () => {
+      remakeNow(state);
+      return flush(state);
+    },
     onRender(listener) {
       state.listeners.add(listener);
       return () => state.listeners.delete(listener);

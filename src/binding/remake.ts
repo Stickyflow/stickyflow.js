@@ -52,15 +52,22 @@ export function remake(state: RuntimeState): void {
 }
 
 // A control is dragged with many small steps; the document is made again at most once a frame.
+// Makes the document again at once when that is asked for and still to come: a picture that is rendered without a viewer, as for
+// print, has no next frame to wait for.
+export function remakeNow(state: RuntimeState): void {
+  if (state.remakePending) {
+    state.remakePending = false;
+    remake(state);
+  }
+}
+
 export function requestRemake(state: RuntimeState): void {
   if (state.remakePending) {
     return;
   }
   state.remakePending = true;
-  const run = () => {
-    state.remakePending = false;
-    remake(state);
-  };
+  // Unless it was made in the meantime, by a flush that could not wait.
+  const run = () => remakeNow(state);
   const frame = (globalThis as { requestAnimationFrame?: (callback: () => void) => number }).requestAnimationFrame;
   if (frame) {
     frame(run);

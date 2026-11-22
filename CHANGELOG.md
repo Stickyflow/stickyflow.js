@@ -23,6 +23,8 @@ Two things count as breaking here that are easy to overlook:
 
 ### Fixed
 
+- A picture rendered without a viewer, with `renderBound` or after `flush()`, shows what a Repeat makes from the rows of a table and
+  what the values of Parameters change. Before, the document was made again only with the next frame, which such a picture never has.
 - A second and a third `Light` in a Scene no longer give the warning that they do nothing, as they shine from the side since 0.20.6. Only a fourth one does.
 
 ## [0.20.6] - 2026-11-21
