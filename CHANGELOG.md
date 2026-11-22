@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-22
+
 ### Incompatible
 
 - SFL 1.12 reads a handler as one change. Every right side reads the values from before the handler, and each source it writes is
