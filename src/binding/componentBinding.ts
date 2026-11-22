@@ -46,5 +46,8 @@ export function twoWayTargetProblem(
   if (!target || contract?.mode !== 'record' || !contract.fields[target[1]]) {
     return `'<->' on '${key}' has to name one field of a record DataSource, as in <DataSource>.<field>.`;
   }
+  if (contract.writable && !contract.writable.includes(target[1])) {
+    return `'<->' on '${key}' writes '${target.join('.')}', which DataSource '${target[0]}' does not list as writable.`;
+  }
   return undefined;
 }

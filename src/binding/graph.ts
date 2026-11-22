@@ -226,6 +226,13 @@ function bindAssignment(
     at('unknown-target', `DataSource '${source}' has no field '${field}'.`);
     return undefined;
   }
+  if (contract.writable && !contract.writable.includes(field)) {
+    at(
+      'field-not-writable',
+      `'${target}' cannot be written: DataSource '${source}' lists ${listed(contract.writable)} as writable.`,
+    );
+    return undefined;
+  }
   const expr = own ? qualify(assignment.expr, own) : assignment.expr;
   const actual = inferType(expr, scope, (code, message) => at(code, message));
   if (!actual) {
@@ -236,6 +243,11 @@ function bindAssignment(
     return undefined;
   }
   return { source, field, expr, type: wanted, line: assignment.line, col: assignment.col };
+}
+
+// The fields a source lets be written, as words for a message.
+export function listed(fields: readonly string[]): string {
+  return fields.length === 0 ? 'no field' : fields.map(field => `'${field}'`).join(', ');
 }
 
 function bindHandler(

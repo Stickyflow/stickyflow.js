@@ -1,5 +1,5 @@
 export { collectContracts } from './contract';
-export type { DataSource, MutableDataSource } from './dataSource';
+export type { DataSource, MutableDataSource, WritableDataSource } from './dataSource';
 export { createDataSource } from './dataSource';
 export type { BindingGraph } from './graph';
 export { buildBindingGraph } from './graph';

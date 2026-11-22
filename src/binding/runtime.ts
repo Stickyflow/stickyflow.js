@@ -5,7 +5,7 @@ import { createDataSource, type DataSource } from './dataSource';
 import { flush, markDirty, schedule } from './evaluation';
 import { dispatch, runTick, setElementState } from './handlers';
 import { interactiveElements } from './interactive';
-import { requestRemake } from './remake';
+import { remakeNow, requestRemake } from './remake';
 import { createRuntimeState, type RuntimeState } from './runtimeState';
 import type { BindingRuntime, BindingRuntimeOptions, BindingTarget, LiveChange } from './runtimeTypes';
 import type { Row } from './types';
@@ -17,11 +17,15 @@ import {
   releaseElement,
   slideElement,
 } from './userInput';
+import { checkHostWritable } from './writes';
 
 function registerSource(state: RuntimeState, name: string, source: DataSource, own = false): () => void {
   const contract = state.graph.contracts.get(name);
   if (!contract) {
     throw new Error(`No DataSource '${name}' is declared in the SFL.`);
+  }
+  if (source.writable) {
+    checkHostWritable(state, name, source.writable);
   }
   const accept = (): boolean => {
     const problem = checkData(contract, source.get());
@@ -35,6 +39,7 @@ function registerSource(state: RuntimeState, name: string, source: DataSource, o
     if (accept()) {
       state.sources.set(name, source);
       state.warned.delete(name);
+      state.warned.delete(`write:${name}`);
       markDirty(state, name);
       schedule(state);
     }
@@ -142,7 +147,10 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       dispatch(state, id, 'onDrag');
     },
     tick: seconds => runTick(state, seconds),
-    flush: () => flush(state),
+    flush: () => {
+      remakeNow(state);
+      return flush(state);
+    },
     onRender(listener) {
       state.listeners.add(listener);
       return () => state.listeners.delete(listener);
