@@ -49,6 +49,7 @@ export function createFakeViewer(): FakeViewer {
     setMeshSteadyCamera: () => undefined,
     setMeshTracing: () => undefined,
     setMeshPlainShadows: () => undefined,
+    setMeshMovingShadows: () => undefined,
     meshPlace: () => null,
     meshEdges: () => null,
     meshPointOnScreen: () => null,

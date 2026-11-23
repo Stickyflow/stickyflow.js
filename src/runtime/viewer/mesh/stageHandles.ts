@@ -173,6 +173,7 @@ export class StageHandles {
     const move = (next: PointerEvent) => {
       change = changeFor(next.clientX - startX, next.clientY - startY);
       placement.move(item.id, change);
+      events.drag?.(item.id, change);
       const to = change.position;
       if (to) {
         for (const other of along) {

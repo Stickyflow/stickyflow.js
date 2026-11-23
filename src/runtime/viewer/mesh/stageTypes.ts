@@ -14,6 +14,7 @@ export interface MeshHandleChange {
 export interface MeshStageEvents {
   select(id: string | null): void;
   change(id: string, change: MeshHandleChange): void;
+  drag?(id: string, change: MeshHandleChange): void;
   objectSelect(id: string | null): void;
   objectChange(id: string, box: MeshObjectBox): void;
   error(message: string): void;
@@ -50,6 +51,7 @@ export interface MeshStagesHandle {
   setSteadyCamera(steady: boolean): void;
   setTracing(tracing: boolean): void;
   setPlainShadows(on: boolean): void;
+  setMovingShadows(on: boolean): void;
   // What the layers of a host have hidden or locked, by name.
   setFlags(flags: MeshStageFlags): void;
   // The meshes that move together: dragging one of them takes the others along, by the same step.
