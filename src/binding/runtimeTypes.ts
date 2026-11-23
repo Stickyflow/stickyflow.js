@@ -16,6 +16,16 @@ export interface BindingTarget {
   setWidgetValue?(componentId: string, value: string | number): unknown;
   setShaderParameters?(ownerId: string, parameters: Record<string, number>): unknown;
   setMeshValue?(meshId: string, property: string, value: number | string): unknown;
+  // Forgets the values it was given, when another document takes the place of the one they were for.
+  clearOverrides?(): unknown;
+}
+
+// What reading a document against the registered sources found. `writes` names the fields of sources of the host that the document
+// writes, by source, so a host can ask before it lets a document write more than the one before.
+export interface DocumentCheck {
+  ok: boolean;
+  diagnostics: BindingDiagnostic[];
+  writes: Record<string, string[]>;
 }
 
 export type LiveChange =
@@ -37,6 +47,11 @@ export interface BindingRuntime {
   readonly interactive: InteractiveElements;
   readonly input: RenderInput;
   registerSource(name: string, source: DataSource): () => void;
+  // Reads another document and checks it against the registered sources. The document that runs is not touched.
+  check(sfl: string): DocumentCheck;
+  // Puts another document in the place of the one that runs, if it has no error. The registered sources and their listeners stay,
+  // parameters keep their values under the same name, and what is attached is drawn anew at once.
+  replace(sfl: string): DocumentCheck;
   setElementState(id: string, state: Partial<ElementState>): void;
   press(id: string): void;
   release(id: string, tapped: boolean): void;

@@ -8,6 +8,7 @@ import { findComponent } from './applyValue';
 import type { DataSource } from './dataSource';
 import { type BindingGraph, buildBindingGraph } from './graph';
 import type { BindingRuntimeOptions, ElementState, LiveChange } from './runtimeTypes';
+import type { Registration } from './sources';
 import type { BindingDiagnostic, BindingValue, BoundProperty } from './types';
 
 export interface RuntimeState {
@@ -15,13 +16,16 @@ export interface RuntimeState {
   graph: BindingGraph;
   diagnostics: BindingDiagnostic[];
   input: RenderInput;
+  // The sources the document that runs reads from; of those that were registered, the ones it declares.
   sources: Map<string, DataSource>;
+  registered: Map<string, Registration>;
   applied: Map<string, string>;
   dirty: Set<BoundProperty>;
   listeners: Set<(result: RenderResult) => void>;
   warned: Set<string>;
   liveListeners: Set<(change: LiveChange) => void>;
   liveState: Map<string, LiveChange>;
+  resetListeners: Set<() => void>;
   elementState: Map<string, ElementState>;
   scheduled: boolean;
   renderNeeded: boolean;
@@ -55,12 +59,14 @@ export function createRuntimeState(sfl: string, options: BindingRuntimeOptions):
     diagnostics: [...graph.diagnostics],
     input,
     sources: new Map(),
+    registered: new Map(),
     applied: new Map(),
     dirty: new Set(),
     listeners: new Set(),
     warned: new Set(),
     liveListeners: new Set(),
     liveState: new Map(),
+    resetListeners: new Set(),
     elementState,
     scheduled: false,
     renderNeeded: false,

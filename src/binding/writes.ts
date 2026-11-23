@@ -1,6 +1,6 @@
-import { listed } from './graph';
+import { type BindingGraph, listed } from './graph';
 import type { RuntimeState } from './runtimeState';
-import type { Row } from './types';
+import type { BindingDiagnostic, Row } from './types';
 
 function warnOnce(state: RuntimeState, name: string, code: string, message: string, line: number, col: number): void {
   const key = `write:${name}`;
@@ -11,30 +11,36 @@ function warnOnce(state: RuntimeState, name: string, code: string, message: stri
   state.diagnostics.push({ severity: 'warning', code, message, line, col });
 }
 
-// Every place where the document writes a field of a source that the host does not let it write: one error each, when the source is
-// registered. The writes themselves are left out when they come.
-export function checkHostWritable(state: RuntimeState, name: string, allowed: readonly string[]): void {
-  const report = (field: string, line: number, col: number) =>
-    state.diagnostics.push({
-      severity: 'error',
+// Every place where a document writes a field of a source: an assignment in a handler, or a control bound both ways.
+export function sourceWrites(graph: BindingGraph): Array<{ source: string; field: string; line: number; col: number }> {
+  const writes = graph.handlers.flatMap(handler =>
+    handler.assignments.map(({ source, field, line, col }) => ({ source, field, line, col })),
+  );
+  for (const binding of graph.bindings) {
+    const target = binding.operator === '<->' && binding.expr.kind === 'ref' ? binding.expr.path : undefined;
+    if (target?.[1] !== undefined) {
+      writes.push({ source: target[0], field: target[1], line: binding.line, col: binding.col });
+    }
+  }
+  return writes;
+}
+
+// Every place where the document writes a field of a source that the host does not let it write: one error each.
+export function hostWriteProblems(graph: BindingGraph, name: string, allowed: readonly string[]): BindingDiagnostic[] {
+  return sourceWrites(graph)
+    .filter(write => write.source === name && !allowed.includes(write.field))
+    .map(({ field, line, col }) => ({
+      severity: 'error' as const,
       code: 'write-not-allowed',
       message: `'${name}.${field}' is written by the document, but the host does not let it be written (it allows ${listed(allowed)}).`,
       line,
       col,
-    });
-  for (const handler of state.graph.handlers) {
-    for (const assignment of handler.assignments) {
-      if (assignment.source === name && !allowed.includes(assignment.field)) {
-        report(assignment.field, assignment.line, assignment.col);
-      }
-    }
-  }
-  for (const binding of state.graph.bindings) {
-    const target = binding.operator === '<->' && binding.expr.kind === 'ref' ? binding.expr.path : undefined;
-    if (target?.[0] === name && target[1] !== undefined && !allowed.includes(target[1])) {
-      report(target[1], binding.line, binding.col);
-    }
-  }
+    }));
+}
+
+// Found when the source is registered. The writes themselves are left out when they come.
+export function checkHostWritable(state: RuntimeState, name: string, allowed: readonly string[]): void {
+  state.diagnostics.push(...hostWriteProblems(state.graph, name, allowed));
 }
 
 // Writes fields of a record source the host registered: the fields a handler or a control changed, all of one handler in one
