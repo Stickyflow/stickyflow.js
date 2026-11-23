@@ -18,6 +18,9 @@ export interface ViewerOptions {
   svg?: string;
   interactive?: boolean;
   selectable?: boolean;
+  // True lays the canvases of shader surfaces under the drawing instead of inside it. Left out, this is done in the browsers that
+  // draw a canvas inside a drawing wrongly, as those on an iPhone.
+  shaderSurfacesOutside?: boolean;
   diagramId?: string;
   renderOptions?: RenderOptions;
   // Decides what address the asset of a Mesh is loaded from, or null to not load it.

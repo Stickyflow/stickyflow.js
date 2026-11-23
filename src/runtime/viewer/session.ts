@@ -35,7 +35,7 @@ export class ViewerSession implements Viewer {
     private readonly diagramId: string,
   ) {
     this.display = mountDisplay(options.container, initialSvg);
-    this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
+    this.shaderSurfaces = mountShaderSurfaces(this.display.svg, options.shaderSurfacesOutside);
     this.meshStages = mountMeshStages(this.display.svg, {
       interactive: Boolean(options.interactive),
       resolveAsset: options.resolveAsset,

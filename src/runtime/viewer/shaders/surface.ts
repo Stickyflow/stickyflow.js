@@ -1,6 +1,7 @@
 import type { ShaderParameter } from '../../../model/shader';
 import { captureBackdropLayers, captureShaderBackdrop } from './backdrop';
 import { createSurface, refreshSurface, releaseSurface } from './createSurface';
+import { drawsCanvasInDrawingWrongly, SurfaceLayers } from './layers';
 import { drawLiveBackdrop } from './liveBackdrop';
 import { updateReactiveLightFields } from './reactiveLightField';
 import { applyBackdrop, renderSurface } from './renderSurface';
@@ -31,9 +32,9 @@ function renderSurfaces(surfaces: Surface[], seconds: number): void {
 
 function capturePngs(svg: SVGSVGElement, surfaces: Surface[], seconds: number): Array<string | undefined> {
   renderSurfaces(surfaces, seconds);
-  const surfaceByCanvas = new Map(surfaces.map(surface => [surface.canvas, surface]));
-  return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].map(canvas => {
-    const surface = surfaceByCanvas.get(canvas);
+  const surfaceByOwner = new Map(surfaces.map(surface => [surface.owner, surface]));
+  return [...svg.querySelectorAll('foreignObject[data-sf-shader]')].map(owner => {
+    const surface = surfaceByOwner.get(owner);
     if (!surface) {
       return undefined;
     }
@@ -112,11 +113,11 @@ function rememberSurfaces(surfaces: Surface[]): Map<string, SurfaceMemory> {
 }
 
 function createSurfaces(
-  svg: SVGSVGElement,
+  canvases: HTMLCanvasElement[],
   memory: Map<string, SurfaceMemory>,
   kept: Map<HTMLCanvasElement, Surface>,
 ): Surface[] {
-  return [...svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]')].flatMap(canvas => {
+  return canvases.flatMap(canvas => {
     const keptSurface = kept.get(canvas);
     if (keptSurface) {
       return [keptSurface];
@@ -165,9 +166,14 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
   private readonly view: (Window & typeof globalThis) | null;
   private readonly clock: SurfaceClock;
   private readonly unwatch: () => void;
+  private readonly layers: SurfaceLayers | undefined;
 
-  constructor(private readonly svg: SVGSVGElement) {
+  constructor(
+    private readonly svg: SVGSVGElement,
+    outside?: boolean,
+  ) {
     this.view = svg.ownerDocument.defaultView;
+    this.layers = (outside ?? drawsCanvasInDrawingWrongly(this.view)) ? new SurfaceLayers(svg) : undefined;
     this.clock = createSurfaceClock(this.view);
     this.unwatch = watchSvgChanges(svg, this.view, this.scheduleRecapture);
     svg.addEventListener('pointermove', this.track);
@@ -202,7 +208,12 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
       }
     }
     const generation = ++this.backdropGeneration;
-    this.surfaces = createSurfaces(this.svg, memory, kept);
+    this.layers?.adopt();
+    this.layers?.place();
+    const canvases = this.layers?.canvases() ?? [
+      ...this.svg.querySelectorAll<HTMLCanvasElement>('canvas[data-sf-shader-canvas]'),
+    ];
+    this.surfaces = createSurfaces(canvases, memory, kept);
     updateReactiveLightFields(this.surfaces);
     this.captureBackdrops(generation);
     if (this.surfaces.length > 0) {
@@ -219,9 +230,11 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
       this.view?.clearTimeout(this.recapture);
     }
     this.stop();
+    this.layers?.destroy();
   }
 
   private readonly draw = (milliseconds: number): void => {
+    this.layers?.place();
     if (!this.clock.paused()) {
       updateReactiveLightFields(this.surfaces);
       renderSurfaces(this.surfaces, milliseconds / 1000 - this.clock.spent());
@@ -297,6 +310,7 @@ class ShaderSurfaces implements ShaderSurfaceHandle {
   };
 }
 
-export function mountShaderSurfaces(svg: SVGSVGElement): ShaderSurfaceHandle {
-  return new ShaderSurfaces(svg);
+// `outside` lays the canvases of the surfaces under the drawing instead of inside it. Left out, it is done where the browser needs it.
+export function mountShaderSurfaces(svg: SVGSVGElement, outside?: boolean): ShaderSurfaceHandle {
+  return new ShaderSurfaces(svg, outside);
 }

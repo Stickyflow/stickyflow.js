@@ -1,5 +1,6 @@
 import type { ShaderParameter } from '../../../model/shader';
 import { shaderProgram } from './programs';
+import { ownerOfCanvas } from './surfaceOwner';
 import type { Surface } from './surfaceTypes';
 import type { ShaderProgram } from './types';
 import { color } from './uniforms';
@@ -102,7 +103,7 @@ export function planeSurface(
 }
 
 export function createSurface(canvas: HTMLCanvasElement): Surface | undefined {
-  const owner = canvas.closest('[data-sf-shader]');
+  const owner = ownerOfCanvas(canvas);
   const name = owner?.getAttribute('data-sf-shader');
   const definition = name ? shaderProgram(name) : undefined;
   const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
@@ -142,10 +143,10 @@ export function releaseSurface(surface: Surface): void {
 // every small change, such as a slider that moves a parameter. It takes the parameters the drawing has now. A shader that replaces the fill
 // of its shape is made again, as the shape was patched.
 export function refreshSurface(surface: Surface, svg: SVGSVGElement): boolean {
-  const owner = surface.canvas.closest('[data-sf-shader]');
+  const owner = ownerOfCanvas(surface.canvas);
   const name = owner?.getAttribute('data-sf-shader');
   const definition = name ? shaderProgram(name) : undefined;
-  if (!owner || !svg.contains(surface.canvas) || !definition) {
+  if (!owner || !svg.contains(owner) || !definition) {
     return false;
   }
   if (definition.name !== surface.programName || definition.replacesBaseFill || surface.baseGeometry) {
