@@ -83,11 +83,8 @@ export function connectTextFields(
   runtime: BindingRuntime,
   options: InteractionOptions = {},
 ): () => void {
-  const ids = [...runtime.graph.elements]
-    .filter(([, info]) => getComponentDescriptor(info.componentType)?.interaction === 'type')
-    .map(([id]) => id);
   const parent = viewer.svg.parentElement;
-  if (ids.length === 0 || !parent) {
+  if (!parent) {
     return () => undefined;
   }
   const document = parent.ownerDocument;
@@ -101,9 +98,33 @@ export function connectTextFields(
   styles.textContent = AUTOFILL;
   host.append(styles);
   parent.append(host);
-  const inputs = new Map(ids.map(id => [id, fieldInput(runtime, id, host)]));
+  const inputs = new Map<string, HTMLInputElement>();
+  // The document can be made again or replaced while it runs, so the fields are those it has now.
+  let graph: BindingRuntime['graph'] | undefined;
+  const takeFields = () => {
+    graph = runtime.graph;
+    const ids = new Set(
+      [...graph.elements]
+        .filter(([, info]) => getComponentDescriptor(info.componentType)?.interaction === 'type')
+        .map(([id]) => id),
+    );
+    for (const [id, input] of inputs) {
+      if (!ids.has(id)) {
+        input.remove();
+        inputs.delete(id);
+      }
+    }
+    for (const id of ids) {
+      if (!inputs.has(id)) {
+        inputs.set(id, fieldInput(runtime, id, host));
+      }
+    }
+  };
 
   const follow = () => {
+    if (runtime.graph !== graph) {
+      takeFields();
+    }
     const area = host.getBoundingClientRect();
     const usable = options.enabled?.() !== false;
     for (const [id, input] of inputs) {
