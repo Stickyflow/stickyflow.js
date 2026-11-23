@@ -1,5 +1,22 @@
 import { TONE_CURVE } from './chunks';
 
+// A shader of the 2D drawing on a surface in a Scene, cut to the round corners of its shape, as the drawing cuts its canvas.
+// uPlaneCorner holds the radius across and down, as parts of the width and the height.
+export function cornerCut(fragmentSource: string): string {
+  return `${fragmentSource.replace(/void\s+main\s*\(\s*(void)?\s*\)/, 'void sfShaderMain()')}
+uniform vec2 uPlaneCorner;
+void main() {
+  sfShaderMain();
+  vec2 near = min(vUv, 1.0 - vUv);
+  if (near.x < uPlaneCorner.x && near.y < uPlaneCorner.y) {
+    vec2 into = (uPlaneCorner - near) / uPlaneCorner;
+    if (dot(into, into) > 1.0) {
+      discard;
+    }
+  }
+}`;
+}
+
 export const PLANE_VERTEX = `attribute vec2 aPosition;
 uniform mat4 uMvp;
 varying vec2 vUv;
