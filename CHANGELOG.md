@@ -17,6 +17,36 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-23
+
+### Added
+
+- A document can take the place of the one that runs, while it runs: `runtime.check(sfl)` says whether it could, and what it would
+  write to each source, and `runtime.replace(sfl)` does it. Registered sources and their listeners stay, as do the values of
+  Parameters that the new document has by the same name and type, and the camera of a Scene of the same name. A document that cannot
+  be read, or that writes a field the host does not allow, is not taken and the one before goes on.
+- `viewer.setMeshMovingShadows(false)` takes the shadow of the sun away while the camera of a Scene is moved, by a hand or the wheel,
+  and gives it back once the camera rests. A picture that moves stays calm so; on a large floor its shadows would shimmer.
+- The viewer tells every step of a handle drag as `meshDrag`, with the place, the turn or the scale reached so far. `meshChange`
+  still comes once, when the hand lets go.
+- `createViewer({ shaderSurfacesOutside: true })` lays the canvases of shader surfaces under the drawing in every browser, to try
+  the way the viewer takes on an iPhone.
+
+### Changed
+
+- The camera of a Scene comes much nearer than before: to a fiftieth of the distance it frames the whole stage from, where it
+  stopped at a sixth. A hand-sized part of a large scene, as a box in a hall, can be looked at closely.
+
+### Fixed
+
+- On an iPhone, and in Safari, a shader surface stood at the wrong place, in the wrong size and over everything that came after it,
+  as these browsers draw a canvas inside a drawing so. The viewer lays such canvases under the drawing there, each at its place and in
+  its order, with what lies between them in between. Other browsers draw as before.
+- A shader on a `Canvas` in a `Scene` is cut to the round corners of its shape, as it is in the drawing. Before, it filled the whole
+  rectangle, and its corners stood out over the round edge.
+- A text field that comes with a document that took the place of another can be typed in. Before, only the fields of the first
+  document had an input.
+
 ## [0.21.0] - 2026-11-22
 
 ### Incompatible
