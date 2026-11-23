@@ -1,0 +1,101 @@
+name: Release
+
+# On every push to main: if the version in package.json is not on npm yet,
+# run the full CI, publish it and create the vX.Y.Z tag and GitHub release
+# with the notes from CHANGELOG.md. Otherwise nothing happens, so merges
+# without a version bump (docs, refactors) publish nothing.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two releases at once, and never cancel one halfway through.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      publish: ${{ steps.check.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: check
+        name: Is this version on npm yet?
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version > /dev/null 2>&1; then
+            echo "$name@$version is already on npm, nothing to release."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$name@$version is not on npm yet, releasing it."
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the changelog entry
+        if: steps.check.outputs.publish == 'true'
+        run: node scripts/release-notes.mjs "${{ steps.check.outputs.version }}" > /dev/null
+
+  ci:
+    name: CI
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to npm
+    needs: [version, ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the tag and the GitHub release
+      id-token: write # npm trusted publishing (OIDC), also signs the provenance
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Trusted publishing needs npm 11.5.1 or newer, which Node 24 ships with.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # The checks already ran in the ci job, so prepublishOnly is skipped here.
+      # A prerelease like 1.0.0-beta.1 goes to the "next" tag, not "latest".
+      - name: Publish
+        run: |
+          if [[ "$VERSION" == *-* ]]; then
+            npm publish --ignore-scripts --tag next
+          else
+            npm publish --ignore-scripts
+          fi
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/release-notes.mjs "$VERSION" > release-notes.md
+          prerelease=""
+          if [[ "$VERSION" == *-* ]]; then
+            prerelease="--prerelease"
+          fi
+          gh release create "v$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file release-notes.md \
+            $prerelease
