@@ -1,10 +1,11 @@
 import type { ShaderBackdrop } from './backdrop';
 import { SHADER_DEFAULTS } from './defaults';
+import { drawingOfCanvas } from './surfaceOwner';
 import type { Surface } from './surfaceTypes';
 import { applyParameters, color, number, uniform1f, uniform2f, uniform3f, uniformName } from './uniforms';
 
 function syncBackdropBounds(surface: Surface): void {
-  const svg = surface.canvas.closest('svg');
+  const svg = drawingOfCanvas(surface.canvas);
   if (!svg) {
     return;
   }

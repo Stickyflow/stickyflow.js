@@ -151,13 +151,17 @@ export class SurfaceTextures {
     if (!definition) {
       return undefined;
     }
-    const program = this.renderer.linkPlane(definition.fragmentSource);
+    const program = this.renderer.linkPlane(definition.fragmentSource, true);
     const shader = planeSurface(owner, this.canvas, this.renderer.shaderContext, program, this.renderer.planeBuffer);
     if (!shader) {
       return undefined;
     }
     const width = Number(owner.getAttribute('width'));
     const height = Number(owner.getAttribute('height'));
+    // The drawing rounds the corners of its canvas for a shape with round corners. The same radius cuts the surface here.
+    const radius = Number.parseFloat(owner.querySelector('canvas')?.style.borderRadius ?? '') || 0;
+    const gl = this.renderer.shaderContext;
+    const corner = gl.getUniformLocation(program, 'uPlaneCorner');
     return {
       program,
       rect: [
@@ -166,8 +170,10 @@ export class SurfaceTextures {
         width / surface.width,
         height / surface.height,
       ],
-      upload: (time?: number) =>
-        uploadSurface(shader, width * level, height * level, level, time ?? performance.now() / 1000),
+      upload: (time?: number) => {
+        uploadSurface(shader, width * level, height * level, level, time ?? performance.now() / 1000);
+        gl.uniform2f(corner, width > 0 ? radius / width : 0, height > 0 ? radius / height : 0);
+      },
     };
   }
 }

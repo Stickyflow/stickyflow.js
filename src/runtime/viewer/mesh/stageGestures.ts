@@ -30,6 +30,9 @@ export class StageGestures {
     return this.gesture !== null;
   }
 
+  // When the wheel turned last, on the clock of the page.
+  wheeledAt = Number.NEGATIVE_INFINITY;
+
   bind(host: Element): void {
     host.addEventListener('pointerdown', this.onPointerDown as EventListener);
     host.addEventListener('mousedown', keepTextUnselected);
@@ -67,6 +70,7 @@ export class StageGestures {
     event.preventDefault();
     event.stopPropagation();
     view.zoomBy(event.deltaY);
+    this.wheeledAt = performance.now();
     this.target.changed();
   };
 

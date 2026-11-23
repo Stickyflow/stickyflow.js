@@ -31,7 +31,7 @@ import { MeshProbe } from './meshProbe';
 import { SCREEN_OCCLUSION_UNIFORMS, ScreenOcclusion } from './screenOcclusion';
 import { GROUND_FRAGMENT } from './shaders/ground';
 import { FRAGMENT, GLOW_FRAGMENT, GLOW_VERTEX } from './shaders/mesh';
-import { PLANE_FRAGMENT, PLANE_VERTEX } from './shaders/plane';
+import { cornerCut, PLANE_FRAGMENT, PLANE_VERTEX } from './shaders/plane';
 import { type Caster, ENVIRONMENT_SHADOW, ShadowMap, SUN_SHADOW, shadowUniforms } from './shadowMap';
 import { PathTracer } from './trace/pathTracer';
 import type { TraceMapName, TracePart } from './trace/sceneData';
@@ -301,14 +301,16 @@ export class MeshRenderer {
   }
 
   // A program for a surface, kept for all that use the same one. It is written in the older form of the language, as shaders are.
-  linkPlane(fragmentSource: string): WebGLProgram {
-    const known = this.planePrograms.get(fragmentSource);
+  // A shader of the drawing can be cut to round corners; the picture of the drawing has them already.
+  linkPlane(fragmentSource: string, corners = false): WebGLProgram {
+    const source = corners ? cornerCut(fragmentSource) : fragmentSource;
+    const known = this.planePrograms.get(source);
     if (known) {
       return known;
     }
     const { gl } = this;
-    const program = linkProgram(gl, PLANE_VERTEX, fragmentSource, made => gl.bindAttribLocation(made, 0, 'aPosition'));
-    this.planePrograms.set(fragmentSource, program);
+    const program = linkProgram(gl, PLANE_VERTEX, source, made => gl.bindAttribLocation(made, 0, 'aPosition'));
+    this.planePrograms.set(source, program);
     this.mvpLocations.set(program, gl.getUniformLocation(program, 'uMvp'));
     return program;
   }

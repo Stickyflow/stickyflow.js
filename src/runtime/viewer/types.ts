@@ -18,6 +18,9 @@ export interface ViewerOptions {
   svg?: string;
   interactive?: boolean;
   selectable?: boolean;
+  // True lays the canvases of shader surfaces under the drawing instead of inside it. Left out, this is done in the browsers that
+  // draw a canvas inside a drawing wrongly, as those on an iPhone.
+  shaderSurfacesOutside?: boolean;
   diagramId?: string;
   renderOptions?: RenderOptions;
   // Decides what address the asset of a Mesh is loaded from, or null to not load it.
@@ -57,6 +60,9 @@ export interface Viewer {
   setMeshTracing(tracing: boolean): void;
   // Off, the picture of a Scene that is not traced, as while it moves, has no shadows of the environment. The traced one has.
   setMeshPlainShadows(on: boolean): void;
+  // Off, a Scene has no shadow of its sun while the camera is moved, as by a hand or the wheel, and has it again once the camera
+  // rests. A picture that moves stays calm so; on a large floor its shadows would shimmer.
+  setMeshMovingShadows(on: boolean): void;
   // Where a mesh stands right now, also while it is dragged and before the document says so. Null when no Scene has it.
   meshPlace(id: string): { x: number; y: number; z: number } | null;
   // The edges of a mesh as it stands, in the world: where two of its faces meet at an angle, and where a face ends. Six numbers

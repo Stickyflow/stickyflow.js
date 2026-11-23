@@ -35,13 +35,14 @@ export class ViewerSession implements Viewer {
     private readonly diagramId: string,
   ) {
     this.display = mountDisplay(options.container, initialSvg);
-    this.shaderSurfaces = mountShaderSurfaces(this.display.svg);
+    this.shaderSurfaces = mountShaderSurfaces(this.display.svg, options.shaderSurfacesOutside);
     this.meshStages = mountMeshStages(this.display.svg, {
       interactive: Boolean(options.interactive),
       resolveAsset: options.resolveAsset,
       events: {
         select: id => this.emitter.emit('meshSelect', { diagramId, id }),
         change: (id, change) => this.emitter.emit('meshChange', { diagramId, id, ...change }),
+        drag: (id, change) => this.emitter.emit('meshDrag', { diagramId, id, ...change }),
         error: message => this.emitter.emit('meshError', { diagramId, message }),
         objectSelect: id => this.emitter.emit('meshObjectSelect', { diagramId, id }),
         objectChange: (id, box) => this.emitter.emit('meshObjectChange', { diagramId, id, ...box }),
@@ -126,6 +127,10 @@ export class ViewerSession implements Viewer {
 
   setMeshPlainShadows(on: boolean): void {
     this.meshStages.setPlainShadows(on);
+  }
+
+  setMeshMovingShadows(on: boolean): void {
+    this.meshStages.setMovingShadows(on);
   }
 
   setMeshTracing(tracing: boolean): void {

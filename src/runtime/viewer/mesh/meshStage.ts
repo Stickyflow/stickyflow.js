@@ -31,6 +31,9 @@ const EMPTY_SCENE: Box = { min: [-2, 0, -2], max: [2, 2, 2] };
 
 const DARK_GROUND = '#141518';
 
+// How long after the last turn of the wheel the camera counts as moving.
+const WHEEL_REST = 220;
+
 export class MeshStage {
   private canvas: HTMLCanvasElement | null = null;
   private renderer: MeshRenderer | null = null;
@@ -45,6 +48,9 @@ export class MeshStage {
   private grid = false;
   private tracing = true;
   private plainShadows = true;
+  // Off, the sun casts no shadow while the camera moves, and casts it again once the camera rests.
+  private movingShadows = true;
+  private rest: number | undefined;
   private readonly errors = new Set<string>();
   private turning: number | undefined;
   private request: number | undefined;
@@ -253,7 +259,7 @@ export class MeshStage {
     // A surface with a shader changes every frame: the renderer refines the picture only when it is traced, at one moment.
     const moving = planes.some(plane => plane.layers.some(layer => 'rect' in layer));
     const more = renderer.draw(meshes, view.camera, {
-      shadows: data.shadow,
+      shadows: data.shadow && (this.movingShadows || !this.cameraMoving()),
       planes,
       lighting,
       grid: this.grid && !wholeStage,
@@ -497,6 +503,34 @@ export class MeshStage {
     this.schedule();
   }
 
+  setMovingShadows(on: boolean): void {
+    this.movingShadows = on;
+    this.schedule();
+  }
+
+  // Whether the camera is being moved: held by a hand, or zoomed by the wheel a moment ago. A wheel gives no sign when it
+  // stops, so the stage is drawn once more when the moment is over.
+  private cameraMoving(): boolean {
+    if (this.gestures.active) {
+      return true;
+    }
+    const since = performance.now() - this.gestures.wheeledAt;
+    if (since >= WHEEL_REST) {
+      return false;
+    }
+    const window = this.svg.ownerDocument.defaultView;
+    if (window && this.rest === undefined) {
+      this.rest = window.setTimeout(
+        () => {
+          this.rest = undefined;
+          this.schedule();
+        },
+        WHEEL_REST - since + 10,
+      );
+    }
+    return true;
+  }
+
   setPlainShadows(on: boolean): void {
     this.plainShadows = on;
     if (this.renderer) {
@@ -575,6 +609,9 @@ export class MeshStage {
     }
     if (this.request !== undefined) {
       this.svg.ownerDocument.defaultView?.cancelAnimationFrame(this.request);
+    }
+    if (this.rest !== undefined) {
+      this.svg.ownerDocument.defaultView?.clearTimeout(this.rest);
     }
     this.gestures.unbind(this.host);
     this.handles.remove();

@@ -14,6 +14,9 @@ export interface DrawingPoint {
 
 // The camera of a stage: where it looks from, how it frames what stands there, and how points of the world, of the stage and of
 // the screen turn into each other.
+// How near the camera may come, as a part of the distance it frames the whole stage from.
+const NEAREST = 0.02;
+
 export class StageView {
   host: Element;
   camera: Camera | undefined;
@@ -50,7 +53,7 @@ export class StageView {
 
   // Where the document puts the camera: so many times nearer than the framing does.
   closeBy(times: number | undefined): void {
-    this.zoom = Math.min(4, Math.max(0.15, 1 / (times && times > 0 ? times : 1)));
+    this.zoom = Math.min(4, Math.max(NEAREST, 1 / (times && times > 0 ? times : 1)));
   }
 
   // Where the camera looks from and what it looks at, once it has framed something.
@@ -145,8 +148,9 @@ export class StageView {
       : undefined;
   }
 
+  // Near enough to look at a hand-sized part of a large scene, as a box in a hall.
   zoomBy(wheel: number): void {
-    this.zoom = Math.min(4, Math.max(0.15, this.zoom * Math.exp(wheel * 0.002)));
+    this.zoom = Math.min(4, Math.max(NEAREST, this.zoom * Math.exp(wheel * 0.002)));
   }
 
   orbitBy(dx: number, dy: number): void {

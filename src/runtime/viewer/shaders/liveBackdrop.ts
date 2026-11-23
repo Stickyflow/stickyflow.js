@@ -1,3 +1,4 @@
+import { drawingOfCanvas } from './surfaceOwner';
 import type { Surface } from './surfaceTypes';
 
 const MAX_PIXELS = 1600;
@@ -9,7 +10,7 @@ function overlaps(a: DOMRect, b: DOMRect): boolean {
 // A captured picture of the drawing cannot hold a shader, so a surface that reads its backdrop gets the shaders behind it here, every frame.
 // They must have been drawn in this same frame, as a canvas of WebGL keeps its pixels only until then.
 export function drawLiveBackdrop(surface: Surface, below: Surface[]): void {
-  const svg = surface.canvas.closest('svg');
+  const svg = drawingOfCanvas(surface.canvas);
   if (!svg || !surface.backdropTexture) {
     return;
   }

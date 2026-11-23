@@ -70,6 +70,8 @@ export interface ViewerEventMap {
   sceneDiff: SceneDiffEvent;
   meshSelect: MeshSelectEvent;
   meshChange: MeshChangeEvent;
+  // While a handle is dragged, every step of it. meshChange still comes once, when the hand lets go.
+  meshDrag: MeshChangeEvent;
   meshError: MeshErrorEvent;
   meshObjectSelect: MeshObjectSelectEvent;
   meshObjectChange: MeshObjectChangeEvent;

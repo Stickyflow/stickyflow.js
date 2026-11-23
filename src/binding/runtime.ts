@@ -1,13 +1,13 @@
 import { type RenderOptions, type RenderResult, renderCanvas } from '../render';
-import { eachSources } from '../sflLanguage/expansion';
-import { checkData } from './checkData';
-import { createDataSource, type DataSource } from './dataSource';
-import { flush, markDirty, schedule } from './evaluation';
+import { createDataSource } from './dataSource';
+import { flush, schedule } from './evaluation';
 import { dispatch, runTick, setElementState } from './handlers';
 import { interactiveElements } from './interactive';
-import { remakeNow, requestRemake } from './remake';
+import { remakeNow } from './remake';
+import { checkDocument, replaceDocument } from './replace';
 import { createRuntimeState, type RuntimeState } from './runtimeState';
 import type { BindingRuntime, BindingRuntimeOptions, BindingTarget, LiveChange } from './runtimeTypes';
+import { registerSource } from './sources';
 import type { Row } from './types';
 import {
   activateElement,
@@ -17,53 +17,6 @@ import {
   releaseElement,
   slideElement,
 } from './userInput';
-import { checkHostWritable } from './writes';
-
-function registerSource(state: RuntimeState, name: string, source: DataSource, own = false): () => void {
-  const contract = state.graph.contracts.get(name);
-  if (!contract) {
-    throw new Error(`No DataSource '${name}' is declared in the SFL.`);
-  }
-  if (source.writable) {
-    checkHostWritable(state, name, source.writable);
-  }
-  const accept = (): boolean => {
-    const problem = checkData(contract, source.get());
-    if (problem) {
-      state.diagnostics.push({ severity: 'error', code: 'data-type-mismatch', message: problem, line: 0, col: 0 });
-      return false;
-    }
-    return true;
-  };
-  const adopt = () => {
-    if (accept()) {
-      state.sources.set(name, source);
-      state.warned.delete(name);
-      state.warned.delete(`write:${name}`);
-      markDirty(state, name);
-      schedule(state);
-    }
-  };
-  adopt();
-  // New values of parameters change what the document makes, so it is made again; the source the runtime made itself holds the values the
-  // document already has.
-  // The same holds for a table a Repeat runs over: its rows are what that Repeat makes.
-  const { blocks } = state.document;
-  const remade = Boolean(contract.parameters) || eachSources(blocks).has(name);
-  if (remade && !own) {
-    requestRemake(state);
-  }
-  const unsubscribe = source.subscribe(() => {
-    adopt();
-    if (remade) {
-      requestRemake(state);
-    }
-  });
-  return () => {
-    unsubscribe();
-    state.sources.delete(name);
-  };
-}
 
 function pushLiveChange(target: BindingTarget, change: LiveChange): void {
   if (change.kind === 'component') {
@@ -87,6 +40,8 @@ function attach(state: RuntimeState, target: BindingTarget): () => void {
   }
   const listener = (result: RenderResult) => target.update({ svg: result.svg });
   state.listeners.add(listener);
+  const reset = () => target.clearOverrides?.();
+  state.resetListeners.add(reset);
   for (const binding of state.graph.bindings) {
     state.dirty.add(binding);
   }
@@ -94,6 +49,7 @@ function attach(state: RuntimeState, target: BindingTarget): () => void {
   return () => {
     state.listeners.delete(listener);
     state.liveListeners.delete(send);
+    state.resetListeners.delete(reset);
   };
 }
 
@@ -132,6 +88,8 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       return state.input;
     },
     registerSource: (name, source) => registerSource(state, name, source),
+    check: sfl => checkDocument(state, sfl),
+    replace: sfl => replaceDocument(state, sfl),
     setElementState: (id, patch) => setElementState(state, id, patch),
     press: id => pressElement(state, id),
     release: (id, tapped) => releaseElement(state, id, tapped),
