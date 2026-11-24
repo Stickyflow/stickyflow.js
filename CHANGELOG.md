@@ -17,6 +17,8 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-24
+
 ### Added
 
 - A `Use` in a Scene can carry a `layout` with `position`, `rotation` and one `scale`, and places what its Template makes as a
