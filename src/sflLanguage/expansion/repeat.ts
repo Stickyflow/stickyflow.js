@@ -111,14 +111,42 @@ function readGrid(block: SflBlock, scope: Scope, data: RepeatData): Grid {
     chance: numbersOf(scope, block, 'chance')?.[0] ?? 1,
     diagonal: order?.type === 'ident' && order.segments[0] === 'diagonal',
     condition: propertyOf(block, 'where'),
-    helpers: block.entries.flatMap(entry =>
-      entry.type === 'property' && entry.property.value.type === 'expr' && !RESERVED.has(entry.property.key)
-        ? [entry.property]
-        : [],
-    ),
+    helpers: helpersOf(block, scope, templates),
     templates,
     each,
   };
+}
+
+// How many letters one word must change to become the other.
+function distance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    let corner = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, corner + (a[i - 1] === b[j - 1] ? 0 : 1));
+      corner = above;
+    }
+  }
+  return row[b.length];
+}
+
+// Every other property of a Repeat is a name its cells can use, a number written out as well as one worked out. One that no cell
+// uses and that is nearly a word the Repeat reads is taken for a slip of the pen, as `colums: 5`.
+function helpersOf(block: SflBlock, scope: Scope, templates: SflBlock[]): SflProperty[] {
+  const used = JSON.stringify(templates);
+  return block.entries.flatMap(entry => {
+    if (entry.type !== 'property' || RESERVED.has(entry.property.key)) {
+      return [];
+    }
+    const { key } = entry.property;
+    const meant = [...RESERVED].find(word => distance(word, key) <= (word.length > 4 ? 2 : 1));
+    if (meant && !used.includes(`"${key}"`)) {
+      fail(scope, `${key} is not read by a Repeat, and no cell uses it: is it ${meant}?`);
+    }
+    return [entry.property];
+  });
 }
 
 // With order: diagonal the cells are made from the back to the front of an isometric scene, so what is nearer covers what is behind.
@@ -167,15 +195,34 @@ function nameHelpers(scope: Scope, helpers: SflProperty[]): void {
     if (value.type === 'number' || value.type === 'string') {
       scope.vars.set(helper.key, value.value);
     } else if (value.type === 'ident') {
-      scope.vars.set(helper.key, value.segments[0] === 'true' ? 1 : 0);
+      const [word] = value.segments;
+      scope.vars.set(helper.key, word === 'true' ? 1 : word === 'false' ? 0 : value.segments.join('.'));
     } else {
       fail(scope, `${helper.key} needs a number`);
     }
   }
 }
 
+// `where` keeps a cell when it is true: worked out for the cell, or written out, as `where: false` while a Repeat is put aside.
 function keepsCell(scope: Scope, condition: SflValue | undefined): boolean {
-  return condition?.type !== 'expr' || Boolean(condition.items.map(item => evaluate(scope, item))[0]);
+  if (condition === undefined) {
+    return true;
+  }
+  if (condition.type === 'expr') {
+    return Boolean(condition.items.map(item => evaluate(scope, item))[0]);
+  }
+  const value = resolveValue(scope, condition);
+  if (value.type === 'number') {
+    return value.value !== 0;
+  }
+  if (
+    value.type === 'ident' &&
+    value.segments.length === 1 &&
+    (value.segments[0] === 'true' || value.segments[0] === 'false')
+  ) {
+    return value.segments[0] === 'true';
+  }
+  fail(scope, 'where needs true or false');
 }
 
 function expandRepeat(

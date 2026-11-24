@@ -44,6 +44,9 @@ Two things count as breaking here that are easy to overlook:
 - A name alone as a value is the value of that name wherever it stands, by one rule for a parameter of a Template, a name of a
   Repeat or of its cell, and a Parameter: `fill: tint` takes the color a Repeat worked out, as it did in a Template. Before, a Repeat
   and a Parameter put in their value only where a number stood. A word that nothing is called stays a word, as `textAlign: left`.
+- Every property of a `Repeat` that it does not read itself is a name its cells can use, a number written out as well as one worked
+  out: `trunk: 40` is a name now, as `trunk: 20 * 2` was. `where` takes a value written out, as `where: false`. A name that no cell
+  uses and that is nearly a word the Repeat reads, as `colums`, is an error that names the word meant.
 
 ## [0.22.0] - 2026-11-23
 
