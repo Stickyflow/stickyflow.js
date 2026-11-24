@@ -114,14 +114,16 @@ function withMirrors(blocks: SflBlock[]): SflBlock[] {
     if (!mirror || mirror.type !== 'property') {
       return [inner];
     }
+    const plane = mirror.property.value;
     const twin: SflBlock = {
       ...inner,
       name: `${block.name}_mirror`,
-      entries: inner.entries.map(entry =>
-        entry === mirror
-          ? { type: 'property' as const, property: { key: 'flip', value: mirror.property.value } }
-          : entry,
-      ),
+      entries: inner.entries.filter(entry => entry !== mirror),
+      ...(plane.type === 'ident'
+        ? { mirrored: plane.segments.join('.') }
+        : plane.type === 'string'
+          ? { mirrored: plane.value }
+          : {}),
     };
     return [inner, twin];
   });

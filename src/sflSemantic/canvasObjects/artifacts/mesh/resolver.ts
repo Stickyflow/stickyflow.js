@@ -253,7 +253,7 @@ function solidAsset(
   symbolDefs: Map<string, SflSymbolDefinition>,
   sketched?: FromSketch,
 ): string {
-  const flip = asString(properties.get('flip'));
+  const flip = mirrorOf(block, properties);
   const joins = childBlocks(block)
     .filter(child => child.kind in JOININGS)
     .map((child): SolidJoin => {
@@ -325,7 +325,7 @@ export function resolveMeshObject(
   symbolDefs: Map<string, SflSymbolDefinition> = new Map(),
   sketchDefs?: Map<string, SflBlock>,
 ): SflMeshObject {
-  const flip = block.kind === 'Solid' ? asString(properties.get('flip')) : undefined;
+  const flip = block.kind === 'Solid' ? mirrorOf(block, properties) : undefined;
   // A Solid made from a Sketch stands on the plane of that Sketch and is turned with it. Its own position moves it from there,
   // along the plane and away from it.
   const sketched = block.kind === 'Solid' ? fromSketch(properties, layoutProp, sketchDefs) : undefined;
@@ -379,6 +379,11 @@ function placedByUse(
   scale: Vec3,
 ): { position: Vec3; rotation: Vec3; scale: Vec3 } {
   return block.placement ? placeIn(block.placement, position, rotation, scale) : { position, rotation, scale };
+}
+
+// The plane the twin of a Solid with `mirror` is mirrored in. `flip` written by hand did the same before and still does.
+function mirrorOf(block: SflBlock, properties: Map<string, SflValue>): string | undefined {
+  return block.mirrored ?? asString(properties.get('flip'));
 }
 
 // A place or a turn on the other side of the plane a Solid is mirrored in.

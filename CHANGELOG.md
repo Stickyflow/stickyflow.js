@@ -50,6 +50,9 @@ Two things count as breaking here that are easy to overlook:
 - A `Solid` made from a Sketch is turned by its own `rotation` on the plane of the Sketch, as its `position` moved it there already;
   before, its rotation did nothing. Its width and depth come from the Sketch and its height from `height`. A `size` in its layout
   is a warning, `sketch-solid-size`; its height is still read from there when no `height` is written.
+- `mirror` is the one word for a mirrored twin. The twin no longer carries `flip` as a property; `flip` written by hand still
+  mirrors that block alone, with a warning, `flip-written`. `mirror` on a block that is not a Solid is a warning,
+  `mirror-not-solid`, as it makes no twin there. `symmetry` of Facets stays: it is a body even in itself, not a twin.
 
 ## [0.22.0] - 2026-11-23
 

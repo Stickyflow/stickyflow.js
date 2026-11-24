@@ -70,6 +70,8 @@ export interface SflBlock {
   local?: Placement;
   // Where the block lies in the world, its own placement within those of the blocks it is in.
   placement?: Placement;
+  // Set by the expansion for the twin of a Solid with `mirror`: the plane it is mirrored in.
+  mirrored?: string;
 }
 
 // A position, a turn as a matrix by rows, and one scale, as a Use, a Group or a Repeat in a Scene places what it holds.

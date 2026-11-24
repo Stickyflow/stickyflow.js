@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sflToCanvasState } from '../src';
+import { render, sflToCanvasState } from '../src';
 
 const scene = (body: string, before = '') =>
   `sfl 1.12\n\n${before}Model M {\n  Scene world {\n    layout {\n      position: 0, 0\n      size: 400, 300\n    }\n${body}  }\n}\n`;
@@ -60,5 +60,26 @@ describe('A Repeat in a Scene', () => {
       `    Repeat row {\n      count: 2\n      step: 1\n      layout {\n        position: 0, 0, 4\n        rotation: 0, 180, 0\n      }\n      Mesh seat {\n        asset: "seat.glb"\n        layout {\n          position: x, 0, 0\n        }\n      }\n    }\n`,
     );
     expect(placeOf(source, 'seat_1').position).toEqual([-1, 0, 4]);
+  });
+});
+
+describe('A mirror', () => {
+  const twin = (solid: string, kind = 'Solid') =>
+    scene(
+      `    ${kind} wing {\n      ${kind === 'Mesh' ? 'asset: "wing.glb"\n      ' : ''}${solid}\n      layout {\n        position: 1, 0, 0\n      }\n    }\n`,
+    );
+  const codes = (source: string) => render(source).diagnostics.map(found => found.code);
+
+  it('makes the twin of a Solid on the other side, as flip written by hand did, with a word about flip', () => {
+    const mirrored = sflToCanvasState(twin('mirror: x')).canvasObjects.find(object => object.id === 'wing_mirror');
+    const flipped = sflToCanvasState(twin('flip: x')).canvasObjects.find(object => object.id === 'wing');
+    expect(mirrored?.mesh?.position).toEqual([-1, 0, 0]);
+    expect(mirrored?.mesh).toEqual(flipped?.mesh);
+    expect(codes(twin('mirror: x'))).toEqual([]);
+    expect(codes(twin('flip: x'))).toEqual(['flip-written']);
+  });
+
+  it('says that it does nothing on a block that is not a Solid', () => {
+    expect(codes(twin('mirror: x', 'Mesh'))).toEqual(['mirror-not-solid']);
   });
 });

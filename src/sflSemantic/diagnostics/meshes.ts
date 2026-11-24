@@ -89,5 +89,28 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
           : `Solid '${solid.name}' is made from a Sketch, which gives its width and depth. Its height is read from size in its layout, but is written as height: … now.`,
       ),
     );
-  return [...outside, ...missing, ...onSurface, ...extraLights, ...sketchSizes];
+  // A twin in a mirror is made of a Solid alone, and flip is the word for the twin, not one to write.
+  const mirrors = sflDocument.blocks.flatMap(blocksIn).flatMap(block => {
+    const own = directProperties(block);
+    if (own.has('mirror') && block.kind !== 'Solid') {
+      return [
+        warning(
+          'mirror-not-solid',
+          block.name,
+          `${block.kind} '${block.name}' has mirror, which makes a twin of a Solid alone: it does nothing here.`,
+        ),
+      ];
+    }
+    if (own.has('flip') && ['Solid', 'Cut', 'Add', 'Keep'].includes(block.kind)) {
+      return [
+        warning(
+          'flip-written',
+          block.name,
+          `${block.kind} '${block.name}' writes flip, which is no word of SFL. It still mirrors this block alone and may go; mirror makes a mirrored twin beside it.`,
+        ),
+      ];
+    }
+    return [];
+  });
+  return [...outside, ...missing, ...onSurface, ...extraLights, ...sketchSizes, ...mirrors];
 }
