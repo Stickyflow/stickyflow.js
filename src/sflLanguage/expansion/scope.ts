@@ -13,8 +13,6 @@ export interface Scope {
   random: Random;
   // What the messages of an error start with, as `Repeat trees` or `Use oak`.
   label: string;
-  // A bare name that is one of the variables stands for its value, as the color of a Template written as `fill: color`.
-  substitute?: boolean;
 }
 
 export function fail(scope: Scope, message: string): never {

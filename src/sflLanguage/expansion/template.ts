@@ -1,5 +1,5 @@
 import type { SflBlock, SflEntry } from '../ast';
-import { resolveNumeric } from './evaluation';
+import { resolveValue } from './evaluation';
 import { instance, namesIn } from './instance';
 import { placedWithin, placementOf, within } from './placement';
 import { numbersOf } from './properties';
@@ -61,7 +61,7 @@ function expandUse(
   budget: BlockBudget,
   params: ReadonlyMap<string, Scalar>,
 ): SflBlock[] {
-  const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Use ${use.name}`, substitute: true };
+  const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Use ${use.name}` };
   if (depth > MAX_DEPTH) {
     fail(scope, `Templates are nested more than ${MAX_DEPTH} deep, which may be a Template that uses itself`);
   }
@@ -97,7 +97,7 @@ function expandUse(
     if (PLACE.has(key) || OWN.has(key)) {
       fail(scope, `${key} is the name of something a Use sets, so it cannot be a parameter`);
     }
-    const chosen = resolveNumeric(scope, given.get(key) ?? value);
+    const chosen = resolveValue(scope, given.get(key) ?? value);
     given.delete(key);
     if (chosen.type === 'number' || chosen.type === 'string') {
       scope.vars.set(key, chosen.value);

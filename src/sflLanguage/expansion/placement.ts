@@ -1,5 +1,5 @@
 import type { Placement, SflBlock } from '../ast';
-import { resolveNumeric } from './evaluation';
+import { resolveValue } from './evaluation';
 import { Random } from './random';
 import { fail, type Scope } from './scope';
 
@@ -90,7 +90,7 @@ export function placementOf(scope: Scope, block: SflBlock): Placement | undefine
     if (!written) {
       return undefined;
     }
-    const value = resolveNumeric(scope, written);
+    const value = resolveValue(scope, written);
     if (value.type === 'number') {
       return [value.value];
     }

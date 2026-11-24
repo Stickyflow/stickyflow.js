@@ -39,6 +39,12 @@ Two things count as breaking here that are easy to overlook:
   `size` or `position`, is still read, with a warning, `placement-outside-layout`, that says how it is written now. A place written on
   any other block itself, where it never did anything, gets the same warning.
 
+### Changed
+
+- A name alone as a value is the value of that name wherever it stands, by one rule for a parameter of a Template, a name of a
+  Repeat or of its cell, and a Parameter: `fill: tint` takes the color a Repeat worked out, as it did in a Template. Before, a Repeat
+  and a Parameter put in their value only where a number stood. A word that nothing is called stays a word, as `textAlign: left`.
+
 ## [0.22.0] - 2026-11-23
 
 ### Added

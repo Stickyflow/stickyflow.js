@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument, SflEntry, SflValue } from '../ast';
-import { resolveNumeric } from './evaluation';
+import { resolveValue } from './evaluation';
 import { instance } from './instance';
 import { hasPlacements, withPlacements } from './placement';
 import { Random } from './random';
@@ -71,7 +71,7 @@ function readParameters(blocks: SflBlock[]): Map<string, Scalar> {
       if (entry.type !== 'property') {
         fail(scope, 'Parameters hold only properties');
       }
-      const value = resolveNumeric(scope, entry.property.value);
+      const value = resolveValue(scope, entry.property.value);
       if (value.type === 'number' || value.type === 'string') {
         params.set(entry.property.key, value.value);
       } else if (value.type === 'ident') {

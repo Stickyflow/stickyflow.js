@@ -73,13 +73,6 @@ function scalarValue(scope: Scope, only: Scalar): SflValue {
   return { type: 'ident', segments: [String(only)] };
 }
 
-// Where only a number can stand, a bare name is a value in scope. Elsewhere it stays a word, so a parameter called left does not change `textAlign: left`.
-export function resolveNumeric(scope: Scope, value: SflValue): SflValue {
-  const name = value.type === 'ident' && value.segments.length === 1 ? value.segments[0] : undefined;
-  const known = name === undefined ? undefined : (scope.vars.get(name) ?? scope.params.get(name));
-  return known === undefined ? resolveValue(scope, value) : scalarValue(scope, known);
-}
-
 export function resolveValue(scope: Scope, value: SflValue): SflValue {
   // A field of the row a Repeat is at, written alone as `text: house.name`.
   if (value.type === 'ident' && value.segments.length > 1) {
@@ -88,14 +81,16 @@ export function resolveValue(scope: Scope, value: SflValue): SflValue {
       return scalarValue(scope, field);
     }
   }
-  if (scope.substitute && value.type === 'ident' && value.segments.length === 1) {
-    const known = scope.vars.get(value.segments[0]);
+  // A name alone is the value of that name, wherever it stands: a parameter of a Template, a name of a Repeat or of its cell, or a
+  // Parameter. A word that nothing is called stays a word, as `textAlign: left`.
+  if (value.type === 'ident' && value.segments.length === 1) {
+    const known = scope.vars.get(value.segments[0]) ?? scope.params.get(value.segments[0]);
     if (known !== undefined) {
       return scalarValue(scope, known);
     }
   }
   if (value.type === 'list') {
-    return { type: 'list', values: value.values.map(item => resolveNumeric(scope, item)) };
+    return { type: 'list', values: value.values.map(item => resolveValue(scope, item)) };
   }
   if (value.type !== 'expr') {
     return value;
