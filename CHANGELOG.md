@@ -47,6 +47,9 @@ Two things count as breaking here that are easy to overlook:
 - Every property of a `Repeat` that it does not read itself is a name its cells can use, a number written out as well as one worked
   out: `trunk: 40` is a name now, as `trunk: 20 * 2` was. `where` takes a value written out, as `where: false`. A name that no cell
   uses and that is nearly a word the Repeat reads, as `colums`, is an error that names the word meant.
+- A `Solid` made from a Sketch is turned by its own `rotation` on the plane of the Sketch, as its `position` moved it there already;
+  before, its rotation did nothing. Its width and depth come from the Sketch and its height from `height`. A `size` in its layout
+  is a warning, `sketch-solid-size`; its height is still read from there when no `height` is written.
 
 ## [0.22.0] - 2026-11-23
 

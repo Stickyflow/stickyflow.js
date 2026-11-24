@@ -6,7 +6,7 @@ import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch
 import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
 import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
-import { placeIn } from '../../../../sflLanguage/expansion/placement';
+import { placeIn, product, turnDegrees } from '../../../../sflLanguage/expansion/placement';
 import { childBlocks, directProperties, placementValue } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
@@ -342,7 +342,9 @@ export function resolveMeshObject(
   const where = placedByUse(
     block,
     placed ?? mirrored(own, flip, [-1, 1, 1], [1, 1, -1]),
-    sketched?.rotation ?? mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
+    sketched
+      ? turnDegrees(product(turn(sketched.rotation), turn(vector(block, layoutProp, 'rotation', 0))))
+      : mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
     vector(block, layoutProp, 'scale', 1),
   );
   return {

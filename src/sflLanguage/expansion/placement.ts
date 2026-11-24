@@ -39,7 +39,8 @@ const times = (m: readonly number[], v: readonly number[]): V3 => [
   m[6] * v[0] + m[7] * v[1] + m[8] * v[2],
 ];
 
-const product = (a: readonly number[], b: readonly number[]): number[] =>
+// One turn after the other: first b, then a, as matrices by rows.
+export const product = (a: readonly number[], b: readonly number[]): number[] =>
   [0, 1, 2].flatMap(row =>
     [0, 1, 2].map(column => a[row * 3] * b[column] + a[row * 3 + 1] * b[3 + column] + a[row * 3 + 2] * b[6 + column]),
   );

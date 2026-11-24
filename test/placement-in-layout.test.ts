@@ -53,3 +53,31 @@ describe('A placement in the layout', () => {
     expect(objectOf(source, 'box')?.mesh?.position).toEqual([0, 0, 0]);
   });
 });
+
+describe('A Solid made from a Sketch', () => {
+  const made = (solid: string) =>
+    scene(
+      `    Sketch plan {\n      Rect top {\n        layout {\n          position: 0, 0\n          size: 2, 1\n        }\n      }\n    }\n    Solid board {\n      sketch: plan\n${solid}    }\n`,
+    );
+  const sizeWarnings = (source: string) =>
+    render(source)
+      .diagnostics.filter(found => found.code === 'sketch-solid-size')
+      .map(found => found.message);
+
+  it('is turned by its own rotation on the plane of the Sketch', () => {
+    const turned = made('      height: 0.1\n      layout {\n        rotation: 0, 45, 0\n      }\n');
+    const plain = made('      height: 0.1\n');
+    expect(objectOf(turned, 'board')?.mesh?.rotation[1]).toBeCloseTo(
+      (objectOf(plain, 'board')?.mesh?.rotation[1] ?? 0) + 45,
+    );
+  });
+
+  it('says that a size in its layout does nothing beside its height, and reads its height from there before', () => {
+    expect(sizeWarnings(made('      height: 0.1\n      layout {\n        size: 5, 0.2, 5\n      }\n'))[0]).toContain(
+      'does nothing',
+    );
+    const before = made('      layout {\n        size: 5, 0.2, 5\n      }\n');
+    expect(sizeWarnings(before)[0]).toContain('written as height');
+    expect(objectOf(before, 'board')?.mesh?.asset).toEqual(objectOf(made('      height: 0.2\n'), 'board')?.mesh?.asset);
+  });
+});

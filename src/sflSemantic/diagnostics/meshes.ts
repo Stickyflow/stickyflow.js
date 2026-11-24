@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
-import { childBlocks, directProperties } from '../ast/blockEntries';
+import { childBlocks, directProperties, layoutProperties } from '../ast/blockEntries';
 import type { SflDiagnostic } from '../types';
 
 const warning = (code: string, ownerId: string, message: string): SflDiagnostic => ({
@@ -74,5 +74,20 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
         `Light '${light.name}' does nothing: a Scene has one sun and up to two lights from the side.`,
       ),
     );
-  return [...outside, ...missing, ...onSurface, ...extraLights];
+  // A Solid made from a Sketch takes its width and its depth from the Sketch, and its height from height.
+  const sketchSizes = sflDocument.blocks
+    .flatMap(blocksIn)
+    .filter(
+      block => block.kind === 'Solid' && directProperties(block).has('sketch') && layoutProperties(block).has('size'),
+    )
+    .map(solid =>
+      warning(
+        'sketch-solid-size',
+        solid.name,
+        directProperties(solid).has('height')
+          ? `Solid '${solid.name}' is made from a Sketch, which gives its width and depth, and height gives its height: size in its layout does nothing.`
+          : `Solid '${solid.name}' is made from a Sketch, which gives its width and depth. Its height is read from size in its layout, but is written as height: … now.`,
+      ),
+    );
+  return [...outside, ...missing, ...onSurface, ...extraLights, ...sketchSizes];
 }
