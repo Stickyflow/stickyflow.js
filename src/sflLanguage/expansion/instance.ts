@@ -1,4 +1,4 @@
-import type { SflBinding, SflBlock, SflEntry, SflExpr, SflHandler, SflProperty } from '../ast';
+import type { SflBinding, SflBlock, SflEntry, SflExpr, SflHandler, SflProperty, SflValue } from '../ast';
 import { resolveValue } from './evaluation';
 import type { Scope } from './scope';
 
@@ -46,12 +46,41 @@ function propertiesOf(scope: Scope, properties: SflProperty[]): SflProperty[] {
   return properties.map(property => ({ key: property.key, value: resolveValue(scope, property.value) }));
 }
 
-function entryOf(scope: Scope, entry: SflEntry, rename: (name: string) => string): SflEntry {
+// The properties that name another block. A copy that holds the block named takes its new name along.
+const REFERENCES = new Set(['sketch', 'anchor', 'picture']);
+
+function referenceOf(
+  key: string,
+  value: SflValue,
+  rename: (name: string) => string,
+  local: ReadonlySet<string>,
+): SflValue {
+  const [first, ...rest] = value.type === 'ident' || value.type === 'endpoint' ? value.segments : [];
+  if (first === undefined || !local.has(first)) {
+    return value;
+  }
+  if (value.type === 'endpoint') {
+    return { ...value, segments: [rename(first), ...rest] };
+  }
+  return value.type === 'ident' && REFERENCES.has(key) && rest.length === 0
+    ? { ...value, segments: [rename(first)] }
+    : value;
+}
+
+function entryOf(
+  scope: Scope,
+  entry: SflEntry,
+  rename: (name: string) => string,
+  local: ReadonlySet<string>,
+): SflEntry {
   switch (entry.type) {
     case 'property':
       return {
         type: 'property',
-        property: { key: entry.property.key, value: resolveValue(scope, entry.property.value) },
+        property: {
+          key: entry.property.key,
+          value: referenceOf(entry.property.key, resolveValue(scope, entry.property.value), rename, local),
+        },
       };
     case 'layout':
       return {
@@ -77,17 +106,40 @@ function entryOf(scope: Scope, entry: SflEntry, rename: (name: string) => string
     case 'handler':
       return { type: 'handler', handler: handlerOf(scope, entry.handler) };
     case 'block':
-      return { type: 'block', block: instance(scope, entry.block, rename) };
+      return { type: 'block', block: instance(scope, entry.block, rename, local) };
     default:
       return entry;
   }
 }
 
-// A copy of a block with its computed values worked out and its name, and the names of the blocks in it, changed by `rename`.
-export function instance(scope: Scope, block: SflBlock, rename: (name: string) => string): SflBlock {
+// A copy of a block with its computed values worked out and its name, and the names of the blocks in it, changed by `rename`. A
+// reference to one of the `local` blocks, those the same copy makes, is renamed with it, so it points into this copy.
+export function instance(
+  scope: Scope,
+  block: SflBlock,
+  rename: (name: string) => string,
+  local: ReadonlySet<string> = new Set(),
+): SflBlock {
   return {
     ...block,
     name: rename(block.name),
-    entries: block.entries.map(entry => entryOf(scope, entry, rename)),
+    entries: block.entries.map(entry => entryOf(scope, entry, rename, local)),
   };
+}
+
+// The names of these blocks and of every block in them: what one copy of a Template or of a cell makes.
+export function namesIn(blocks: SflBlock[]): Set<string> {
+  const names = new Set<string>();
+  const visit = (block: SflBlock) => {
+    if (block.name) {
+      names.add(block.name);
+    }
+    for (const entry of block.entries) {
+      if (entry.type === 'block') {
+        visit(entry.block);
+      }
+    }
+  };
+  blocks.forEach(visit);
+  return names;
 }

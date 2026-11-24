@@ -29,6 +29,11 @@ Two things count as breaking here that are easy to overlook:
   own layout puts it, within the Group, the Repeat and the Use it is in.
 - In a Scene a `Repeat` lays its rows along z and names the place of a cell `x` and `z`, as y is up there. `y` keeps the same value,
   so a Repeat written before goes on as it was.
+- A copy of a Template or of a cell of a Repeat takes its references along: `sketch`, `anchor`, `picture` and the ends of a Link that
+  name a block of the same copy point at that copy, so a Template can hold a Sketch and the Solid made from it. A name outside the
+  copy stays as it is.
+- A `sketch`, `symbol`, `loft`, `anchor` or `picture` that names no block of that kind is a warning, `unknown-reference`, instead of a
+  cube, a square or a label in the middle without a word.
 
 ## [0.22.0] - 2026-11-23
 

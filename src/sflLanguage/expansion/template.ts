@@ -1,6 +1,6 @@
 import type { SflBlock, SflEntry } from '../ast';
 import { resolveNumeric } from './evaluation';
-import { instance } from './instance';
+import { instance, namesIn } from './instance';
 import { placedWithin, placementOf, within } from './placement';
 import { numbersOf } from './properties';
 import { Random } from './random';
@@ -115,9 +115,9 @@ function expandUse(
     fail(scope, `Template ${template.name} has no parameter ${unknown}`);
   }
 
-  const made = template.entries.flatMap(entry =>
-    entry.type === 'block' ? [instance(scope, entry.block, name => `${use.name}_${name}`)] : [],
-  );
+  const parts = template.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
+  const local = namesIn(parts);
+  const made = parts.map(part => instance(scope, part, name => `${use.name}_${name}`, local));
   budget.take(made.length, scope);
   const expanded = expandIn(made, templates, depth + 1, budget, params);
   return placedWithin(expanded, placement);

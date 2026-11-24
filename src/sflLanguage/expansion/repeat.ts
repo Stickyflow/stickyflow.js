@@ -1,6 +1,6 @@
 import type { SflBlock, SflEntry, SflProperty, SflValue } from '../ast';
 import { evaluate, resolveValue, round } from './evaluation';
-import { instance } from './instance';
+import { instance, namesIn } from './instance';
 import { placedWithin, placementOf } from './placement';
 import { numbersOf, propertyOf } from './properties';
 import { Random } from './random';
@@ -189,6 +189,7 @@ function expandRepeat(
   const placement = inScene ? placementOf(scope, block) : undefined;
   const grid = readGrid(block, scope, data);
   const made: SflBlock[] = [];
+  const local = namesIn(grid.templates);
   for (const [col, row] of cellsOf(grid)) {
     if (!enterCell(scope, grid, col, row)) {
       continue;
@@ -199,7 +200,7 @@ function expandRepeat(
     }
     const suffix = grid.rows === 1 ? `_${col}` : `_${col}_${row}`;
     for (const template of grid.templates) {
-      made.push(instance(scope, template, name => `${name}${suffix}`));
+      made.push(instance(scope, template, name => `${name}${suffix}`, local));
     }
   }
   return placedWithin(made, placement);
