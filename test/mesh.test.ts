@@ -264,7 +264,7 @@ Model m {
     }
     Light sun {
       turn: 120
-      height: <- day.sun
+      elevation: <- day.sun
       color: "#ffcc88"
       intensity: 1.5
       ambient: 0.5
@@ -296,7 +296,7 @@ Model m {
     runtime.attach({ update: () => undefined, setMeshValue: (...change: unknown[]) => live.push(change) });
     runtime.registerSource('day', createDataSource({ sun: 12 } as never));
     runtime.flush();
-    expect(live).toEqual([['sun', 'height', 12]]);
+    expect(live).toEqual([['sun', 'elevation', 12]]);
   });
 
   it('takes a sun and two lights from the side, and warns about a fourth', () => {

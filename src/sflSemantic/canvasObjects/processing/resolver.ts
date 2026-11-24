@@ -71,7 +71,7 @@ export function resolveCanvasObject(
     case 'meshLight':
       return resolveMeshLightObject(base, block, properties);
     case 'meshGround':
-      return resolveMeshGroundObject(base, properties);
+      return resolveMeshGroundObject(base, block, properties);
     case 'meshSurface':
       return resolveMeshSurfaceObject(base, block, layoutProp);
     case 'swimlane':

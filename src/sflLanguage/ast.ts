@@ -59,6 +59,14 @@ export const SIDES: readonly Side[] = ['top', 'bottom', 'left', 'right'];
 export interface SflDocument {
   version: string;
   blocks: SflBlock[];
+  // What the expansion saw in the writing aids it took out, which the diagnostics then say, as a word written as it was before.
+  notes?: SflNote[];
+}
+
+export interface SflNote {
+  code: string;
+  owner: string;
+  message: string;
 }
 
 export interface SflBlock {

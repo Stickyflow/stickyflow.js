@@ -53,6 +53,16 @@ Two things count as breaking here that are easy to overlook:
 - `mirror` is the one word for a mirrored twin. The twin no longer carries `flip` as a property; `flip` written by hand still
   mirrors that block alone, with a warning, `flip-written`. `mirror` on a block that is not a Solid is a warning,
   `mirror-not-solid`, as it makes no twin there. `symmetry` of Facets stays: it is a body even in itself, not a twin.
+- One word, one meaning. Each word written before is still read, with a warning that names the word now:
+  - The edges of a Solid are one family: `chamfer` cuts straight, `fillet` rounds; alone they take the edges all round the top and the
+    bottom, with `Edges` the upright edges named, with `Top` and `Bottom` single edges there. `edge: round`, `cut`, `round`, `cutTop`,
+    `cutBottom`, `roundTop` and `roundBottom` were their words before (`edge-word-before`), and no longer meet the block `Cut`.
+  - A `Light` stands at its `elevation`, the degrees above the horizon, bindable as `height` was (`light-height`).
+  - A `Ground` lies where its layout places it, `layout { position: 0, h, 0 }`, as `height` said before (`ground-height`).
+  - A `Shape` drawn as a Symbol names it in `symbol`, as every other block does; `shape` names a form that is built in
+    (`shape-names-symbol`).
+  - A `Repeat` makes its cells in the `sequence` it says, as `order` did before, which is the stacking of a layout
+    (`repeat-order`). In a Scene a Repeat that names its rows `y` is said, as they are `z` there (`repeat-y-in-scene`).
 
 ## [0.22.0] - 2026-11-23
 

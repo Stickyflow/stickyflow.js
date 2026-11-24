@@ -1,5 +1,6 @@
 import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
 import { childBlocks, directProperties, layoutProperties } from '../ast/blockEntries';
+import { EDGE_WORDS_BEFORE } from '../canvasObjects/artifacts/mesh/resolver';
 import type { SflDiagnostic } from '../types';
 
 const warning = (code: string, ownerId: string, message: string): SflDiagnostic => ({
@@ -112,5 +113,60 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
     }
     return [];
   });
-  return [...outside, ...missing, ...onSurface, ...extraLights, ...sketchSizes, ...mirrors];
+  // The edges of a body are written by one family of words now: chamfer and fillet.
+  const edgeWords = sflDocument.blocks
+    .flatMap(blocksIn)
+    .filter(block => ['Solid', 'Cut', 'Add', 'Keep'].includes(block.kind))
+    .flatMap(block => {
+      const own = directProperties(block);
+      const words = Object.keys(EDGE_WORDS_BEFORE)
+        .filter(word => own.get(word)?.type === 'list')
+        .map(word => `${word} is written ${EDGE_WORDS_BEFORE[word]}`);
+      const edge = own.get('edge');
+      if (edge?.type === 'ident' && edge.segments[0] === 'round') {
+        words.push('edge: round with chamfer is written fillet');
+      }
+      return words.length
+        ? [
+            warning(
+              'edge-word-before',
+              block.name,
+              `${block.kind} '${block.name}': ${words.join(', ')} now. It is still read.`,
+            ),
+          ]
+        : [];
+    });
+  // height is a length: a light says how high it stands by elevation, a Ground where it lies by its layout.
+  const wordsBefore = sflDocument.blocks.flatMap(blocksIn).flatMap(block => {
+    const own = directProperties(block);
+    if (block.kind === 'Light' && own.has('height')) {
+      return [
+        warning(
+          'light-height',
+          block.name,
+          `Light '${block.name}': height is written elevation now, the degrees above the horizon, as height is a length elsewhere. It is still read.`,
+        ),
+      ];
+    }
+    if (block.kind === 'Ground' && own.has('height')) {
+      return [
+        warning(
+          'ground-height',
+          block.name,
+          `Ground '${block.name}': height is written as its place now, layout { position: 0, height, 0 }. It is still read.`,
+        ),
+      ];
+    }
+    return [];
+  });
+  return [
+    ...outside,
+    ...missing,
+    ...onSurface,
+    ...extraLights,
+    ...sketchSizes,
+    ...mirrors,
+    ...edgeWords,
+    ...wordsBefore,
+  ];
 }

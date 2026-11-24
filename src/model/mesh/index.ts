@@ -97,7 +97,9 @@ const AXES: Record<string, ['position' | 'rotation' | 'scale', number]> = {
 };
 
 // Writes one value that a binding can reach. A renderer and a live update use the same rule.
-export function setMeshValue(mesh: MeshValues, property: string, value: unknown): void {
+export function setMeshValue(mesh: MeshValues, written: string, value: unknown): void {
+  // The elevation of a light is kept as its height, the word it was written with before.
+  const property = written === 'elevation' ? 'height' : written;
   const axis = AXES[property];
   const number = NUMBERS.find(name => name === property);
   const vector = axis && mesh[axis[0]];

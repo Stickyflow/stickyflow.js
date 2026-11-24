@@ -36,6 +36,12 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectPropertiesWrittenTwice(doc),
       ...collectUnknownReferences(doc),
       ...collectPlacementsOutsideLayout(doc),
+      ...(doc.notes ?? []).map(note => ({
+        severity: 'warning' as const,
+        code: note.code,
+        ownerId: note.owner,
+        message: note.message,
+      })),
     ],
     canvasObjectResolutionContext: createCanvasObjectPropertyReaders(definitions),
   };

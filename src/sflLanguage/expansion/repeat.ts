@@ -1,4 +1,4 @@
-import type { SflBlock, SflEntry, SflProperty, SflValue } from '../ast';
+import type { SflBlock, SflEntry, SflNote, SflProperty, SflValue } from '../ast';
 import { evaluate, resolveValue, round } from './evaluation';
 import { instance, namesIn } from './instance';
 import { placedWithin, placementOf } from './placement';
@@ -21,6 +21,7 @@ const RESERVED = new Set([
   'jitter',
   'chance',
   'order',
+  'sequence',
   'where',
 ]);
 // The names every cell has, which a row cannot be called.
@@ -93,7 +94,8 @@ function readGrid(block: SflBlock, scope: Scope, data: RepeatData): Grid {
   }
   const [stepX = 0, stepY = stepX] = numbersOf(scope, block, 'step') ?? [];
   const [originX = 0, originY = 0] = numbersOf(scope, block, 'origin') ?? [];
-  const order = propertyOf(block, 'order');
+  // `sequence: diagonal`, as `order: diagonal` was written before.
+  const order = propertyOf(block, 'sequence') ?? propertyOf(block, 'order');
   const templates = block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
   if (templates.some(template => template.kind === 'Repeat')) {
     fail(scope, 'a Repeat cannot hold another Repeat');
@@ -304,4 +306,30 @@ export function eachSources(blocks: SflBlock[]): Set<string> {
   };
   blocks.forEach(visit);
   return names;
+}
+
+// What the diagnostics say about the Repeats as they are written: a word written as it was before, and y for a row in a Scene.
+export function repeatNotes(blocks: SflBlock[], inScene = false): SflNote[] {
+  return blocks.flatMap(block => {
+    const own: SflNote[] = [];
+    if (block.kind === 'Repeat') {
+      if (propertyOf(block, 'order')) {
+        own.push({
+          code: 'repeat-order',
+          owner: block.name,
+          message: `Repeat '${block.name}': order is written sequence now, as order is the stacking of a layout. It is still read.`,
+        });
+      }
+      const cells = JSON.stringify(block.entries.filter(entry => entry.type === 'block'));
+      if (inScene && cells.includes('"path":["y"]')) {
+        own.push({
+          code: 'repeat-y-in-scene',
+          owner: block.name,
+          message: `Repeat '${block.name}' lies in a Scene, where y is up: its rows are named z there. y is still read.`,
+        });
+      }
+    }
+    const children = block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
+    return [...own, ...repeatNotes(children, inScene || block.kind === 'Scene')];
+  });
 }

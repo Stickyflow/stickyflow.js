@@ -161,49 +161,55 @@ function fromSketch(
   };
 }
 
-// The rims of a Solid: `chamfer` is the one of the top and the bottom, or `chamfer: top, bottom`, and `edge: round`
-// rounds them instead of cutting them straight.
+// The edges of a Solid, by one family of words: chamfer cuts an edge straight, fillet rounds it. Alone they take the edges all
+// round the top and the bottom; with Edges the upright edges named, and with Top or Bottom single edges there, each named as the ring
+// of the outline, its corner and how far, as [ring, corner, size]. The words written before, as edge: round, cut and roundTop, are
+// still read; they are said in the diagnostics.
+export const EDGE_WORDS_BEFORE: Readonly<Record<string, string>> = {
+  cut: 'chamferEdges',
+  round: 'filletEdges',
+  cutTop: 'chamferTop',
+  cutBottom: 'chamferBottom',
+  roundTop: 'filletTop',
+  roundBottom: 'filletBottom',
+};
+
 function rimOf(
   properties: Map<string, SflValue>,
 ): Pick<SolidJoin, 'chamfer' | 'chamferBottom' | 'round' | 'corners' | 'edges'> {
-  const value = properties.get('chamfer');
+  const fillet = properties.get('fillet');
+  const value = fillet ?? properties.get('chamfer');
   const [top = asNumber(value) ?? 0, bottom = top] = tupleValues(value) ?? [];
-  // `round` and `cut` name upright edges: each as the ring of the outline, its corner and how far, as [ring, corner, size].
-  const corners = (['cut', 'round'] as const).flatMap((name, kind) => {
-    const list = properties.get(name);
-    return list?.type === 'list'
-      ? list.values.flatMap(item => {
-          const [ring, at, size] = listNumbers(item) ?? [];
-          return size !== undefined && size > 0 ? [[ring, at, size, kind] as [number, number, number, number]] : [];
-        })
-      : [];
-  });
-  // `roundTop`, `roundBottom`, `cutTop` and `cutBottom` name single edges of the top or the bottom: each as the ring of the
-  // outline, the corner it starts at and how far, as [ring, corner, size].
+  const listOf = (now: string) => {
+    const before = Object.keys(EDGE_WORDS_BEFORE).find(word => EDGE_WORDS_BEFORE[word] === now);
+    const list = properties.get(now) ?? (before ? properties.get(before) : undefined);
+    return list?.type === 'list' ? list.values.flatMap(item => [listNumbers(item) ?? []]) : [];
+  };
+  const corners = (['chamferEdges', 'filletEdges'] as const).flatMap((name, kind) =>
+    listOf(name).flatMap(([ring, at, size]) =>
+      size !== undefined && size > 0 ? [[ring, at, size, kind] as [number, number, number, number]] : [],
+    ),
+  );
   const edges = (
     [
-      ['cutBottom', 0, 0],
-      ['cutTop', 1, 0],
-      ['roundBottom', 0, 1],
-      ['roundTop', 1, 1],
+      ['chamferBottom', 0, 0],
+      ['chamferTop', 1, 0],
+      ['filletBottom', 0, 1],
+      ['filletTop', 1, 1],
     ] as const
-  ).flatMap(([name, top, round]) => {
-    const list = properties.get(name);
-    return list?.type === 'list'
-      ? list.values.flatMap(item => {
-          const [ring, at, size] = listNumbers(item) ?? [];
-          return size !== undefined && size > 0
-            ? [[ring, at, size, top, round] as [number, number, number, number, number]]
-            : [];
-        })
-      : [];
-  });
+  ).flatMap(([name, atTop, round]) =>
+    listOf(name).flatMap(([ring, at, size]) =>
+      size !== undefined && size > 0
+        ? [[ring, at, size, atTop, round] as [number, number, number, number, number]]
+        : [],
+    ),
+  );
   return {
     ...(corners.length > 0 ? { corners } : {}),
     ...(edges.length > 0 ? { edges } : {}),
     chamfer: top,
     ...(bottom !== top ? { chamferBottom: bottom } : {}),
-    ...(asString(properties.get('edge')) === 'round' ? { round: true } : {}),
+    ...(fillet !== undefined || asString(properties.get('edge')) === 'round' ? { round: true } : {}),
   };
 }
 
@@ -443,7 +449,8 @@ export function resolveMeshLightObject(
     objectType: 'meshLight',
     meshLight: {
       turn: asNumber(properties.get('turn')) ?? DEFAULT_LIGHT.turn,
-      height: asNumber(properties.get('height')) ?? DEFAULT_LIGHT.height,
+      // How high the light stands, in degrees above the horizon. `height` said the same before, and still does.
+      height: asNumber(properties.get('elevation')) ?? asNumber(properties.get('height')) ?? DEFAULT_LIGHT.height,
       color: asString(properties.get('color')),
       intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
@@ -462,16 +469,19 @@ function place(value: SflValue | undefined): Vec3 | undefined {
 }
 
 // The ground of a Scene. Without a height it lies under the meshes, and without a color only its shadows and reflections show.
+// A Ground lies at the height its layout places it at. `height` written on it said the same before, and still does.
 export function resolveMeshGroundObject(
   base: SflCanvasObjectBase,
+  block: SflBlock,
   properties: Map<string, SflValue>,
 ): SflMeshGroundObject {
   const color = asString(properties.get('color'));
+  const placed = tupleValues(placementValue(block, 'position'));
   return {
     ...base,
     objectType: 'meshGround',
     meshGround: {
-      height: asNumber(properties.get('height')),
+      height: placed?.[1] ?? asNumber(properties.get('height')),
       color: color === 'none' ? undefined : color,
       reflection: Math.min(1, Math.max(0, asNumber(properties.get('reflection')) ?? 0)),
       roughness: Math.min(1, Math.max(0, asNumber(properties.get('roughness')) ?? 0)),

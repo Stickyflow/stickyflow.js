@@ -102,7 +102,12 @@ export function classifyCanvasObject(
 ): CanvasObjectClassification {
   const kind = declaredCanvasObjectKind(block, properties);
   const shapeReference = asString(properties.get('shape'));
-  const symbol = shapeReference ? symbolDefinitions.get(shapeReference) : undefined;
+  // A Shape names a Symbol it is drawn as by `symbol`, as every other block does; `shape` names a form that is built in. A Symbol
+  // named in `shape` is still drawn, and said in the diagnostics.
+  const named = block.kind === 'Shape' || block.kind === 'Entity' ? asString(properties.get('symbol')) : undefined;
+  const symbol =
+    (named ? symbolDefinitions.get(named) : undefined) ??
+    (shapeReference ? symbolDefinitions.get(shapeReference) : undefined);
 
   return {
     objectType: isComponentBlockKind(block.kind) ? 'component' : canvasObjectTypeForKind(kind),
