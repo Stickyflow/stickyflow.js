@@ -78,3 +78,17 @@ describe('A Repeat as written', () => {
     expect(codes(repeat('', 'x, y', false))).not.toContain('repeat-y-in-scene');
   });
 });
+
+describe('A style', () => {
+  it('says how a body looks, and a word of its form in it is said', () => {
+    const inStyle = scene(
+      '    Mesh m {\n      style {\n        asset: "m.glb"\n        color: "#ffffff"\n      }\n    }\n',
+    );
+    const onBlock = scene(
+      '    Mesh m {\n      asset: "m.glb"\n      style {\n        color: "#ffffff"\n      }\n    }\n',
+    );
+    expect(objectOf(inStyle, 'm')?.mesh?.asset).toEqual('m.glb');
+    expect(codes(inStyle)).toEqual(['form-in-style']);
+    expect(codes(onBlock)).toEqual([]);
+  });
+});

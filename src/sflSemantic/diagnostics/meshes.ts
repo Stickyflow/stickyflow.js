@@ -1,5 +1,5 @@
 import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
-import { childBlocks, directProperties, layoutProperties } from '../ast/blockEntries';
+import { childBlocks, directProperties, layoutProperties, styleProperties } from '../ast/blockEntries';
 import { EDGE_WORDS_BEFORE } from '../canvasObjects/artifacts/mesh/resolver';
 import type { SflDiagnostic } from '../types';
 
@@ -44,7 +44,8 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
   const missing = sflDocument.blocks
     .filter(block => block.kind === 'Model')
     .flatMap(meshesIn)
-    .filter(mesh => !directProperties(mesh).has('asset'))
+    // An asset written in the style is read as well; form-in-style says where it belongs.
+    .filter(mesh => !directProperties(mesh).has('asset') && !styleProperties(mesh).has('asset'))
     .map(mesh =>
       warning('mesh-without-asset', mesh.name, `Mesh '${mesh.name}' has no asset, so there is nothing to draw.`),
     );

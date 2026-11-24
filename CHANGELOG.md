@@ -63,6 +63,12 @@ Two things count as breaking here that are easy to overlook:
     (`shape-names-symbol`).
   - A `Repeat` makes its cells in the `sequence` it says, as `order` did before, which is the stacking of a layout
     (`repeat-order`). In a Scene a Repeat that names its rows `y` is said, as they are `z` there (`repeat-y-in-scene`).
+- A `style` says how a body looks. A word of its form written there, as `asset`, `symbol`, `sketch`, `chamfer` or a place, is
+  still read and is a warning, `form-in-style`, that it belongs on the block, a place in its layout.
+
+### Fixed
+
+- A Mesh with its `asset` written in its style is drawn and no longer said to have none.
 
 ## [0.22.0] - 2026-11-23
 

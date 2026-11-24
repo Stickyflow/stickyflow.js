@@ -8,7 +8,7 @@ import { collectUnsupportedComponentTypes } from '../diagnostics/components';
 import { collectMeshProblems } from '../diagnostics/meshes';
 import { collectDuplicateNames } from '../diagnostics/names';
 import { collectPlacementsOutsideLayout } from '../diagnostics/placement';
-import { collectPropertiesWrittenTwice } from '../diagnostics/properties';
+import { collectFormInStyle, collectPropertiesWrittenTwice } from '../diagnostics/properties';
 import { collectUnknownReferences } from '../diagnostics/references';
 import { collectModelScreenLines } from '../diagnostics/screens';
 import type { SflDiagnostic } from '../types';
@@ -34,6 +34,7 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectModelScreenLines(doc),
       ...collectMeshProblems(doc),
       ...collectPropertiesWrittenTwice(doc),
+      ...collectFormInStyle(doc),
       ...collectUnknownReferences(doc),
       ...collectPlacementsOutsideLayout(doc),
       ...(doc.notes ?? []).map(note => ({
