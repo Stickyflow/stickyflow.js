@@ -1,5 +1,6 @@
 import type { Placement, SflBlock } from '../ast';
 import { resolveNumeric } from './evaluation';
+import { Random } from './random';
 import { fail, type Scope } from './scope';
 
 type V3 = [number, number, number];
@@ -57,8 +58,8 @@ export function within(outer: Placement, inner: Placement): Placement {
   };
 }
 
-// Where something placed at a position, with a turn and a scale of its own, comes to lie when its Use is placed.
-export function placeInUse(
+// Where something placed at a position, with a turn and a scale of its own, comes to lie in the world.
+export function placeIn(
   placement: Placement,
   position: readonly number[],
   rotation: readonly number[],
@@ -76,12 +77,14 @@ export function placeInUse(
   };
 }
 
-// The placement a Use writes in its layout: a position, a turn in degrees, and one scale, as a body is made larger evenly.
-export function placementOf(scope: Scope, use: SflBlock): Placement | undefined {
-  const properties = use.entries.flatMap(entry => (entry.type === 'layout' ? entry.layout.properties : []));
+// The placement a Use, a Group or a Repeat in a Scene writes in its layout: a position, a turn in degrees, and one scale, as what it
+// holds is made larger evenly.
+export function placementOf(scope: Scope, block: SflBlock): Placement | undefined {
+  const properties = block.entries.flatMap(entry => (entry.type === 'layout' ? entry.layout.properties : []));
   if (properties.length === 0) {
     return undefined;
   }
+  const kind = `a ${block.kind}`;
   const numbers = (key: string): number[] | undefined => {
     const written = properties.find(property => property.key === key)?.value;
     if (!written) {
@@ -98,13 +101,13 @@ export function placementOf(scope: Scope, use: SflBlock): Placement | undefined 
   };
   for (const { key } of properties) {
     if (key !== 'position' && key !== 'rotation' && key !== 'scale') {
-      fail(scope, `the layout of a Use says its position, rotation and scale, not ${key}`);
+      fail(scope, `the layout of ${kind} in a Scene says its position, rotation and scale, not ${key}`);
     }
   }
   const three = (key: string): V3 => {
     const found = numbers(key) ?? [0, 0, 0];
     if (found.length !== 3) {
-      fail(scope, `${key} of a Use needs three numbers: x, y, z`);
+      fail(scope, `${key} of ${kind} in a Scene needs three numbers: x, y, z`);
     }
     return [found[0], found[1], found[2]];
   };
@@ -112,8 +115,62 @@ export function placementOf(scope: Scope, use: SflBlock): Placement | undefined 
   if (scale.length !== 1 || !(scale[0] > 0)) {
     fail(
       scope,
-      'scale of a Use is one number above 0, as a Use is made larger evenly; a Template can take a parameter for a length',
+      `scale of ${kind} is one number above 0, as what it holds is made larger evenly; a Template can take a parameter for a length`,
     );
   }
   return { at: three('position'), turn: turnMatrix(three('rotation')), scale: scale[0] };
+}
+
+// The blocks a Use or a Repeat made, placed within it: a block that a Use inside made keeps its own placement within this one.
+export function placedWithin(blocks: SflBlock[], placement: Placement | undefined): SflBlock[] {
+  return placement
+    ? blocks.map(block => ({ ...block, local: block.local ? within(placement, block.local) : placement }))
+    : blocks;
+}
+
+// What is placed as a whole. What lies inside one of these counts from it already, so a placement stops there.
+const WHOLE = new Set(['Solid', 'Mesh', 'Facets', 'Terrain', 'Canvas']);
+
+const hasLayout = (block: SflBlock) => block.entries.some(entry => entry.type === 'layout');
+
+// Whether a block, or one in it, is placed by its Use, its Repeat or a Group in a Scene.
+export function hasPlacements(blocks: SflBlock[], inScene = false): boolean {
+  return blocks.some(
+    block =>
+      block.local !== undefined ||
+      (inScene && block.kind === 'Group' && hasLayout(block)) ||
+      hasPlacements(
+        block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : [])),
+        inScene || block.kind === 'Scene',
+      ),
+  );
+}
+
+// Every placement worked out from the top down: a block lies where its own placement puts it, within that of the blocks it is in.
+export function withPlacements(blocks: SflBlock[], outer?: Placement, inScene = false): SflBlock[] {
+  return blocks.map(block => {
+    const scope: Scope = {
+      vars: new Map(),
+      params: new Map(),
+      random: new Random(0),
+      label: `${block.kind} ${block.name}`,
+    };
+    const own = inScene && block.kind === 'Group' ? placementOf(scope, block) : undefined;
+    const steps = [outer, block.local, own].filter((step): step is Placement => step !== undefined);
+    const placement = steps.length ? steps.reduce((sum, step) => within(sum, step)) : undefined;
+    return {
+      ...block,
+      ...(placement ? { placement } : {}),
+      entries: WHOLE.has(block.kind)
+        ? block.entries
+        : block.entries.map(entry =>
+            entry.type === 'block'
+              ? {
+                  type: 'block' as const,
+                  block: withPlacements([entry.block], placement, inScene || block.kind === 'Scene')[0],
+                }
+              : entry,
+          ),
+    };
+  });
 }

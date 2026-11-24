@@ -25,6 +25,10 @@ Two things count as breaking here that are easy to overlook:
   Template, and a Group in a Template carries the placement to what it holds. A Use without a layout stays where its Template
   puts it, so a Template that takes its place as parameters goes on as before. An uneven scale, or anything else in the layout of
   a Use, is an error: a Template takes a parameter for a length.
+- A `Group` and a `Repeat` in a Scene place what they hold by the same `layout`, as a whole. Placements nest: a body lies where its
+  own layout puts it, within the Group, the Repeat and the Use it is in.
+- In a Scene a `Repeat` lays its rows along z and names the place of a cell `x` and `z`, as y is up there. `y` keeps the same value,
+  so a Repeat written before goes on as it was.
 
 ## [0.22.0] - 2026-11-23
 

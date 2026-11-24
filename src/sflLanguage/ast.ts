@@ -66,11 +66,13 @@ export interface SflBlock {
   name: string;
   composition: string[];
   entries: SflEntry[];
-  // Set by the expansion of a Use with a layout: where the blocks its Template makes are placed, as a whole.
+  // Set by the expansion: where a Use or a Repeat in a Scene places this block within the block it is in.
+  local?: Placement;
+  // Where the block lies in the world, its own placement within those of the blocks it is in.
   placement?: Placement;
 }
 
-// A position, a turn as a matrix by rows, and one scale, as a Use places what its Template makes.
+// A position, a turn as a matrix by rows, and one scale, as a Use, a Group or a Repeat in a Scene places what it holds.
 export interface Placement {
   at: [number, number, number];
   turn: number[];

@@ -6,7 +6,7 @@ import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch
 import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
 import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
-import { placeInUse } from '../../../../sflLanguage/expansion/placement';
+import { placeIn } from '../../../../sflLanguage/expansion/placement';
 import { childBlocks, directProperties } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
@@ -376,7 +376,7 @@ function placedByUse(
   rotation: Vec3,
   scale: Vec3,
 ): { position: Vec3; rotation: Vec3; scale: Vec3 } {
-  return block.placement ? placeInUse(block.placement, position, rotation, scale) : { position, rotation, scale };
+  return block.placement ? placeIn(block.placement, position, rotation, scale) : { position, rotation, scale };
 }
 
 // A place or a turn on the other side of the plane a Solid is mirrored in.

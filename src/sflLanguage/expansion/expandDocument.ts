@@ -1,6 +1,7 @@
 import type { SflBlock, SflDocument, SflEntry, SflValue } from '../ast';
 import { resolveNumeric } from './evaluation';
 import { instance } from './instance';
+import { hasPlacements, withPlacements } from './placement';
 import { Random } from './random';
 import { expandRepeatBlocks, hasRepeats, type RepeatData } from './repeat';
 import { fail, type Scalar, type Scope, type Tables } from './scope';
@@ -160,7 +161,9 @@ function dataSources(blocks: SflBlock[]): Map<string, 'record' | 'table'> {
 // makes nothing.
 export function expandDocument(doc: SflDocument, tables: Tables = new Map()): SflDocument {
   const expanded = expandCopies(doc, tables);
-  return hasMirrors(expanded.blocks) ? { ...expanded, blocks: withMirrors(expanded.blocks) } : expanded;
+  const mirrored = hasMirrors(expanded.blocks) ? { ...expanded, blocks: withMirrors(expanded.blocks) } : expanded;
+  // Last, where each block lies in the world, from the placements of the Uses, Groups and Repeats it is in.
+  return hasPlacements(mirrored.blocks) ? { ...mirrored, blocks: withPlacements(mirrored.blocks) } : mirrored;
 }
 
 function expandCopies(doc: SflDocument, tables: Tables): SflDocument {
