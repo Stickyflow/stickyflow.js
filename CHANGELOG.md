@@ -34,6 +34,10 @@ Two things count as breaking here that are easy to overlook:
   copy stays as it is.
 - A `sketch`, `symbol`, `loft`, `anchor` or `picture` that names no block of that kind is a warning, `unknown-reference`, instead of a
   cube, a square or a label in the middle without a word.
+- A place and a size are written in the layout everywhere: a `Light` reads `layout { position }`, a `Rect` and a `Circle` of a Sketch,
+  a `Port` and a `Cut` or `Add` laid into a Symbol read `layout { position, size }`. Their place written on themselves, as `at`,
+  `size` or `position`, is still read, with a warning, `placement-outside-layout`, that says how it is written now. A place written on
+  any other block itself, where it never did anything, gets the same warning.
 
 ## [0.22.0] - 2026-11-23
 

@@ -22,6 +22,11 @@ export function styleProperties(block: SflBlock): Map<string, SflValue> {
   return properties;
 }
 
+// A placement as it is written now, in the layout, or as it was written before, on the block itself, as `at` for a position.
+export function placementValue(block: SflBlock, key: string, before: string = key): SflValue | undefined {
+  return layoutProperties(block).get(key) ?? directProperties(block).get(before);
+}
+
 export function layoutProperties(block: SflBlock): Map<string, SflValue> {
   const properties = new Map<string, SflValue>();
   for (const entry of block.entries) {

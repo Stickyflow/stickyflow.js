@@ -7,6 +7,7 @@ import { collectEmptySeries, collectUnsupportedChartTypes, collectUnsupportedGri
 import { collectUnsupportedComponentTypes } from '../diagnostics/components';
 import { collectMeshProblems } from '../diagnostics/meshes';
 import { collectDuplicateNames } from '../diagnostics/names';
+import { collectPlacementsOutsideLayout } from '../diagnostics/placement';
 import { collectPropertiesWrittenTwice } from '../diagnostics/properties';
 import { collectUnknownReferences } from '../diagnostics/references';
 import { collectModelScreenLines } from '../diagnostics/screens';
@@ -34,6 +35,7 @@ export function createCanvasResolution(doc: SflDocument): CanvasResolution {
       ...collectMeshProblems(doc),
       ...collectPropertiesWrittenTwice(doc),
       ...collectUnknownReferences(doc),
+      ...collectPlacementsOutsideLayout(doc),
     ],
     canvasObjectResolutionContext: createCanvasObjectPropertyReaders(definitions),
   };

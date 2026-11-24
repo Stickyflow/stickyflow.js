@@ -7,7 +7,7 @@ import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
 import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
 import { placeIn } from '../../../../sflLanguage/expansion/placement';
-import { childBlocks, directProperties } from '../../../ast/blockEntries';
+import { childBlocks, directProperties, placementValue } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
 import type {
@@ -82,11 +82,11 @@ function sketchShapes(sketch: SflBlock): Outline {
     const own = directProperties(shape);
     if (shape.kind === 'Circle') {
       const radius = asNumber(own.get('radius')) ?? 0;
-      return radius > 0 ? [circleRing(pair(own.get('at')), radius)] : [];
+      return radius > 0 ? [circleRing(pair(placementValue(shape, 'position', 'at')), radius)] : [];
     }
     if (shape.kind === 'Rect') {
-      const [x, y] = pair(own.get('at'));
-      const [width, height] = pair(own.get('size'));
+      const [x, y] = pair(placementValue(shape, 'position', 'at'));
+      const [width, height] = pair(placementValue(shape, 'size'));
       const one = asNumber(own.get('radius'));
       const radii = tupleValues(own.get('radius')) ?? [one ?? 0, one ?? 0, one ?? 0, one ?? 0];
       return width > 0 && height > 0
@@ -428,6 +428,7 @@ export function resolveMeshSurfaceObject(
 
 export function resolveMeshLightObject(
   base: SflCanvasObjectBase,
+  block: SflBlock,
   properties: Map<string, SflValue>,
 ): SflMeshLightObject {
   return {
@@ -441,7 +442,7 @@ export function resolveMeshLightObject(
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
       ambientColor: asString(properties.get('ambientColor')),
       softness: asNumber(properties.get('softness')),
-      position: place(properties.get('position')),
+      position: place(placementValue(block, 'position') ?? properties.get('position')),
       glow: asNumber(properties.get('glow')),
     },
   };
