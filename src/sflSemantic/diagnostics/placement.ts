@@ -1,5 +1,6 @@
 import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
 import { childBlocks, directProperties } from '../ast/blockEntries';
+import { isCanvasObjectBlockKind } from '../canvasObjects/processing/blockKinds';
 import type { SflDiagnostic } from '../types';
 
 // Blocks of a chart, where `at`, `size` and `scale` say something else than a place: the line of a rule, the size of a marker,
@@ -25,7 +26,8 @@ function readBefore(key: string, block: SflBlock, parent: SflBlock | undefined):
 
 // Whether a key on the block itself means a place, or something else a block of this kind reads by that name.
 function meansPlace(key: string, block: SflBlock, parent: SflBlock | undefined): boolean {
-  if (key === 'position' || key === 'rotation') {
+  // Only a block that is placed on a page or in a Scene has a place. A Shader turns its pattern by rotation, which is no place.
+  if ((key === 'position' || key === 'rotation') && (isCanvasObjectBlockKind(block.kind) || PLACED.has(block.kind))) {
     return true;
   }
   return readBefore(key, block, parent) || (key !== 'at' && PLACED.has(block.kind));

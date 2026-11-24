@@ -81,3 +81,10 @@ describe('A Solid made from a Sketch', () => {
     expect(objectOf(before, 'board')?.mesh?.asset).toEqual(objectOf(made('      height: 0.2\n'), 'board')?.mesh?.asset);
   });
 });
+
+describe('A rotation that is no place', () => {
+  it('is not said for a Shader, which turns its pattern by it', () => {
+    const source = `sfl 1.12\n\nShader Tide {\n  kind: stripes\n  rotation: 30\n}\n\nModel M {\n  Shape a {\n    text: ""\n    layout {\n      position: 0, 0\n      size: 10, 10\n    }\n  }\n}\n`;
+    expect(warnings(source)).toEqual([]);
+  });
+});

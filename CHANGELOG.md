@@ -17,6 +17,13 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-11-24
+
+### Fixed
+
+- `placement-outside-layout` is said only for a block that is placed on a page or in a Scene. A `Shader` turns its pattern by
+  `rotation`, which is no place, and is no longer warned about.
+
 ## [0.23.0] - 2026-11-24
 
 ### Added
