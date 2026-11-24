@@ -146,7 +146,7 @@ Symbol S {
 
 Model M {
   Shape e {
-    shape: S
+    symbol: S
     layout { position: ${box.x}, ${box.y}; size: ${box.width}, ${box.height} }
   }
 }

@@ -41,6 +41,8 @@ export const BINDABLE_PROPERTIES: Partial<Record<BlockKind, Record<string, Bindi
   Path: { stroke: 'string', opacity: 'number', visible: 'boolean' },
   Light: {
     turn: 'number',
+    elevation: 'number',
+    // How high it stands, as it was written before elevation.
     height: 'number',
     color: 'string',
     intensity: 'number',

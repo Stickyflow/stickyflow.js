@@ -1,6 +1,7 @@
-import type { SflBlock, SflEntry, SflProperty, SflValue } from '../ast';
+import type { SflBlock, SflEntry, SflNote, SflProperty, SflValue } from '../ast';
 import { evaluate, resolveValue, round } from './evaluation';
-import { instance } from './instance';
+import { instance, namesIn } from './instance';
+import { placedWithin, placementOf } from './placement';
 import { numbersOf, propertyOf } from './properties';
 import { Random } from './random';
 import { fail, type Scalar, type Scope, type Tables } from './scope';
@@ -20,10 +21,11 @@ const RESERVED = new Set([
   'jitter',
   'chance',
   'order',
+  'sequence',
   'where',
 ]);
 // The names every cell has, which a row cannot be called.
-const CELL_NAMES = new Set(['col', 'row', 'index', 'count', 'columns', 'rows', 'x', 'y']);
+const CELL_NAMES = new Set(['col', 'row', 'index', 'count', 'columns', 'rows', 'x', 'y', 'z']);
 
 // What the document says about its data, for a Repeat that runs over a table.
 export interface RepeatData {
@@ -92,7 +94,8 @@ function readGrid(block: SflBlock, scope: Scope, data: RepeatData): Grid {
   }
   const [stepX = 0, stepY = stepX] = numbersOf(scope, block, 'step') ?? [];
   const [originX = 0, originY = 0] = numbersOf(scope, block, 'origin') ?? [];
-  const order = propertyOf(block, 'order');
+  // `sequence: diagonal`, as `order: diagonal` was written before.
+  const order = propertyOf(block, 'sequence') ?? propertyOf(block, 'order');
   const templates = block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
   if (templates.some(template => template.kind === 'Repeat')) {
     fail(scope, 'a Repeat cannot hold another Repeat');
@@ -110,14 +113,42 @@ function readGrid(block: SflBlock, scope: Scope, data: RepeatData): Grid {
     chance: numbersOf(scope, block, 'chance')?.[0] ?? 1,
     diagonal: order?.type === 'ident' && order.segments[0] === 'diagonal',
     condition: propertyOf(block, 'where'),
-    helpers: block.entries.flatMap(entry =>
-      entry.type === 'property' && entry.property.value.type === 'expr' && !RESERVED.has(entry.property.key)
-        ? [entry.property]
-        : [],
-    ),
+    helpers: helpersOf(block, scope, templates),
     templates,
     each,
   };
+}
+
+// How many letters one word must change to become the other.
+function distance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    let corner = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, corner + (a[i - 1] === b[j - 1] ? 0 : 1));
+      corner = above;
+    }
+  }
+  return row[b.length];
+}
+
+// Every other property of a Repeat is a name its cells can use, a number written out as well as one worked out. One that no cell
+// uses and that is nearly a word the Repeat reads is taken for a slip of the pen, as `colums: 5`.
+function helpersOf(block: SflBlock, scope: Scope, templates: SflBlock[]): SflProperty[] {
+  const used = JSON.stringify(templates);
+  return block.entries.flatMap(entry => {
+    if (entry.type !== 'property' || RESERVED.has(entry.property.key)) {
+      return [];
+    }
+    const { key } = entry.property;
+    const meant = [...RESERVED].find(word => distance(word, key) <= (word.length > 4 ? 2 : 1));
+    if (meant && !used.includes(`"${key}"`)) {
+      fail(scope, `${key} is not read by a Repeat, and no cell uses it: is it ${meant}?`);
+    }
+    return [entry.property];
+  });
 }
 
 // With order: diagonal the cells are made from the back to the front of an isometric scene, so what is nearer covers what is behind.
@@ -149,6 +180,8 @@ function enterCell(scope: Scope, grid: Grid, col: number, row: number): boolean 
     ['x', round(grid.origin[0] + col * grid.step[0] + spread())],
     ['y', round(grid.origin[1] + row * grid.step[1] + spread())],
   ]);
+  // In a Scene the rows lie along z, as y is up there. y keeps the same value, so a Repeat written before goes on as it was.
+  scope.vars.set('z', scope.vars.get('y') as number);
   // The fields of the row this cell is made for, as house.name.
   for (const [field, value] of Object.entries(grid.each?.rows[index] ?? {})) {
     if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
@@ -164,21 +197,48 @@ function nameHelpers(scope: Scope, helpers: SflProperty[]): void {
     if (value.type === 'number' || value.type === 'string') {
       scope.vars.set(helper.key, value.value);
     } else if (value.type === 'ident') {
-      scope.vars.set(helper.key, value.segments[0] === 'true' ? 1 : 0);
+      const [word] = value.segments;
+      scope.vars.set(helper.key, word === 'true' ? 1 : word === 'false' ? 0 : value.segments.join('.'));
     } else {
       fail(scope, `${helper.key} needs a number`);
     }
   }
 }
 
+// `where` keeps a cell when it is true: worked out for the cell, or written out, as `where: false` while a Repeat is put aside.
 function keepsCell(scope: Scope, condition: SflValue | undefined): boolean {
-  return condition?.type !== 'expr' || Boolean(condition.items.map(item => evaluate(scope, item))[0]);
+  if (condition === undefined) {
+    return true;
+  }
+  if (condition.type === 'expr') {
+    return Boolean(condition.items.map(item => evaluate(scope, item))[0]);
+  }
+  const value = resolveValue(scope, condition);
+  if (value.type === 'number') {
+    return value.value !== 0;
+  }
+  if (
+    value.type === 'ident' &&
+    value.segments.length === 1 &&
+    (value.segments[0] === 'true' || value.segments[0] === 'false')
+  ) {
+    return value.segments[0] === 'true';
+  }
+  fail(scope, 'where needs true or false');
 }
 
-function expandRepeat(block: SflBlock, params: ReadonlyMap<string, Scalar>, data: RepeatData): SflBlock[] {
+function expandRepeat(
+  block: SflBlock,
+  params: ReadonlyMap<string, Scalar>,
+  data: RepeatData,
+  inScene: boolean,
+): SflBlock[] {
   const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Repeat ${block.name}` };
+  // In a Scene its layout places all its cells together; elsewhere a Repeat has no place of its own.
+  const placement = inScene ? placementOf(scope, block) : undefined;
   const grid = readGrid(block, scope, data);
   const made: SflBlock[] = [];
+  const local = namesIn(grid.templates);
   for (const [col, row] of cellsOf(grid)) {
     if (!enterCell(scope, grid, col, row)) {
       continue;
@@ -189,10 +249,10 @@ function expandRepeat(block: SflBlock, params: ReadonlyMap<string, Scalar>, data
     }
     const suffix = grid.rows === 1 ? `_${col}` : `_${col}_${row}`;
     for (const template of grid.templates) {
-      made.push(instance(scope, template, name => `${name}${suffix}`));
+      made.push(instance(scope, template, name => `${name}${suffix}`, local));
     }
   }
-  return made;
+  return placedWithin(made, placement);
 }
 
 // The blocks with every Repeat replaced by the blocks it makes. What a Template holds is worked out by its Use, with its parameters.
@@ -200,10 +260,11 @@ export function expandRepeatBlocks(
   blocks: SflBlock[],
   params: ReadonlyMap<string, Scalar> = new Map(),
   data: RepeatData = NO_DATA,
+  inScene = false,
 ): SflBlock[] {
   return blocks.flatMap(block => {
     if (block.kind === 'Repeat') {
-      return expandRepeat(block, params, data);
+      return expandRepeat(block, params, data, inScene);
     }
     if (block.kind === 'Template' || !block.entries.some(entry => entry.type === 'block')) {
       return [block];
@@ -213,7 +274,10 @@ export function expandRepeatBlocks(
         ...block,
         entries: block.entries.flatMap((entry): SflEntry[] =>
           entry.type === 'block'
-            ? expandRepeatBlocks([entry.block], params, data).map(child => ({ type: 'block' as const, block: child }))
+            ? expandRepeatBlocks([entry.block], params, data, inScene || block.kind === 'Scene').map(child => ({
+                type: 'block' as const,
+                block: child,
+              }))
             : [entry],
         ),
       },
@@ -242,4 +306,30 @@ export function eachSources(blocks: SflBlock[]): Set<string> {
   };
   blocks.forEach(visit);
   return names;
+}
+
+// What the diagnostics say about the Repeats as they are written: a word written as it was before, and y for a row in a Scene.
+export function repeatNotes(blocks: SflBlock[], inScene = false): SflNote[] {
+  return blocks.flatMap(block => {
+    const own: SflNote[] = [];
+    if (block.kind === 'Repeat') {
+      if (propertyOf(block, 'order')) {
+        own.push({
+          code: 'repeat-order',
+          owner: block.name,
+          message: `Repeat '${block.name}': order is written sequence now, as order is the stacking of a layout. It is still read.`,
+        });
+      }
+      const cells = JSON.stringify(block.entries.filter(entry => entry.type === 'block'));
+      if (inScene && cells.includes('"path":["y"]')) {
+        own.push({
+          code: 'repeat-y-in-scene',
+          owner: block.name,
+          message: `Repeat '${block.name}' lies in a Scene, where y is up: its rows are named z there. y is still read.`,
+        });
+      }
+    }
+    const children = block.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
+    return [...own, ...repeatNotes(children, inScene || block.kind === 'Scene')];
+  });
 }

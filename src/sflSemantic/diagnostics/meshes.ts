@@ -1,5 +1,6 @@
 import type { SflBlock, SflDocument } from '../../sflLanguage/ast';
-import { childBlocks, directProperties } from '../ast/blockEntries';
+import { childBlocks, directProperties, layoutProperties, styleProperties } from '../ast/blockEntries';
+import { EDGE_WORDS_BEFORE } from '../canvasObjects/artifacts/mesh/resolver';
 import type { SflDiagnostic } from '../types';
 
 const warning = (code: string, ownerId: string, message: string): SflDiagnostic => ({
@@ -43,7 +44,8 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
   const missing = sflDocument.blocks
     .filter(block => block.kind === 'Model')
     .flatMap(meshesIn)
-    .filter(mesh => !directProperties(mesh).has('asset'))
+    // An asset written in the style is read as well; form-in-style says where it belongs.
+    .filter(mesh => !directProperties(mesh).has('asset') && !styleProperties(mesh).has('asset'))
     .map(mesh =>
       warning('mesh-without-asset', mesh.name, `Mesh '${mesh.name}' has no asset, so there is nothing to draw.`),
     );
@@ -74,5 +76,98 @@ export function collectMeshProblems(sflDocument: SflDocument): SflDiagnostic[] {
         `Light '${light.name}' does nothing: a Scene has one sun and up to two lights from the side.`,
       ),
     );
-  return [...outside, ...missing, ...onSurface, ...extraLights];
+  // A Solid made from a Sketch takes its width and its depth from the Sketch, and its height from height.
+  const sketchSizes = sflDocument.blocks
+    .flatMap(blocksIn)
+    .filter(
+      block => block.kind === 'Solid' && directProperties(block).has('sketch') && layoutProperties(block).has('size'),
+    )
+    .map(solid =>
+      warning(
+        'sketch-solid-size',
+        solid.name,
+        directProperties(solid).has('height')
+          ? `Solid '${solid.name}' is made from a Sketch, which gives its width and depth, and height gives its height: size in its layout does nothing.`
+          : `Solid '${solid.name}' is made from a Sketch, which gives its width and depth. Its height is read from size in its layout, but is written as height: … now.`,
+      ),
+    );
+  // A twin in a mirror is made of a Solid alone, and flip is the word for the twin, not one to write.
+  const mirrors = sflDocument.blocks.flatMap(blocksIn).flatMap(block => {
+    const own = directProperties(block);
+    if (own.has('mirror') && block.kind !== 'Solid') {
+      return [
+        warning(
+          'mirror-not-solid',
+          block.name,
+          `${block.kind} '${block.name}' has mirror, which makes a twin of a Solid alone: it does nothing here.`,
+        ),
+      ];
+    }
+    if (own.has('flip') && ['Solid', 'Cut', 'Add', 'Keep'].includes(block.kind)) {
+      return [
+        warning(
+          'flip-written',
+          block.name,
+          `${block.kind} '${block.name}' writes flip, which is no word of SFL. It still mirrors this block alone and may go; mirror makes a mirrored twin beside it.`,
+        ),
+      ];
+    }
+    return [];
+  });
+  // The edges of a body are written by one family of words now: chamfer and fillet.
+  const edgeWords = sflDocument.blocks
+    .flatMap(blocksIn)
+    .filter(block => ['Solid', 'Cut', 'Add', 'Keep'].includes(block.kind))
+    .flatMap(block => {
+      const own = directProperties(block);
+      const words = Object.keys(EDGE_WORDS_BEFORE)
+        .filter(word => own.get(word)?.type === 'list')
+        .map(word => `${word} is written ${EDGE_WORDS_BEFORE[word]}`);
+      const edge = own.get('edge');
+      if (edge?.type === 'ident' && edge.segments[0] === 'round') {
+        words.push('edge: round with chamfer is written fillet');
+      }
+      return words.length
+        ? [
+            warning(
+              'edge-word-before',
+              block.name,
+              `${block.kind} '${block.name}': ${words.join(', ')} now. It is still read.`,
+            ),
+          ]
+        : [];
+    });
+  // height is a length: a light says how high it stands by elevation, a Ground where it lies by its layout.
+  const wordsBefore = sflDocument.blocks.flatMap(blocksIn).flatMap(block => {
+    const own = directProperties(block);
+    if (block.kind === 'Light' && own.has('height')) {
+      return [
+        warning(
+          'light-height',
+          block.name,
+          `Light '${block.name}': height is written elevation now, the degrees above the horizon, as height is a length elsewhere. It is still read.`,
+        ),
+      ];
+    }
+    if (block.kind === 'Ground' && own.has('height')) {
+      return [
+        warning(
+          'ground-height',
+          block.name,
+          `Ground '${block.name}': height is written as its place now, layout { position: 0, height, 0 }. It is still read.`,
+        ),
+      ];
+    }
+    return [];
+  });
+  return [
+    ...outside,
+    ...missing,
+    ...onSurface,
+    ...extraLights,
+    ...sketchSizes,
+    ...mirrors,
+    ...edgeWords,
+    ...wordsBefore,
+  ];
 }

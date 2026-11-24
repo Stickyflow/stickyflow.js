@@ -1,7 +1,7 @@
 import { combineOutlines, type Outline, type Ring, ringArea } from '../../model/outline';
 import { flattenPath } from '../../model/path';
 import type { SflBlock } from '../../sflLanguage/ast';
-import { childBlocks, directProperties } from '../ast/blockEntries';
+import { childBlocks, directProperties, placementValue } from '../ast/blockEntries';
 import { asNumber, asString, tupleValues } from '../ast/valueAccess';
 import type { SflSymbolDefinition } from '../canvasObjects/types';
 
@@ -33,7 +33,7 @@ function readSymbolPorts(block: SflBlock): SymbolDefinition['ports'] {
   const ports = childBlocks(block)
     .filter(child => child.kind === 'Port')
     .flatMap(port => {
-      const position = tupleValues(directProperties(port).get('at'));
+      const position = tupleValues(placementValue(port, 'position', 'at'));
       if (typeof position?.[0] !== 'number' || typeof position[1] !== 'number') {
         return [];
       }
@@ -67,8 +67,8 @@ function childOutline(child: SflBlock, lookup: Lookup): Outline {
   if (!other) {
     return [];
   }
-  const [x = 0, y = 0] = tupleValues(properties.get('at')) ?? [];
-  const [width = 1, height = 1] = tupleValues(properties.get('size')) ?? [];
+  const [x = 0, y = 0] = tupleValues(placementValue(child, 'position', 'at')) ?? [];
+  const [width = 1, height = 1] = tupleValues(placementValue(child, 'size')) ?? [];
   if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 'number' || typeof height !== 'number') {
     return [];
   }

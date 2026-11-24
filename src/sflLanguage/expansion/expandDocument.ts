@@ -1,8 +1,9 @@
 import type { SflBlock, SflDocument, SflEntry, SflValue } from '../ast';
-import { resolveNumeric } from './evaluation';
+import { resolveValue } from './evaluation';
 import { instance } from './instance';
+import { hasPlacements, withPlacements } from './placement';
 import { Random } from './random';
-import { expandRepeatBlocks, hasRepeats, type RepeatData } from './repeat';
+import { expandRepeatBlocks, hasRepeats, type RepeatData, repeatNotes } from './repeat';
 import { fail, type Scalar, type Scope, type Tables } from './scope';
 import { expandUses, hasTemplates } from './template';
 
@@ -70,7 +71,7 @@ function readParameters(blocks: SflBlock[]): Map<string, Scalar> {
       if (entry.type !== 'property') {
         fail(scope, 'Parameters hold only properties');
       }
-      const value = resolveNumeric(scope, entry.property.value);
+      const value = resolveValue(scope, entry.property.value);
       if (value.type === 'number' || value.type === 'string') {
         params.set(entry.property.key, value.value);
       } else if (value.type === 'ident') {
@@ -113,14 +114,16 @@ function withMirrors(blocks: SflBlock[]): SflBlock[] {
     if (!mirror || mirror.type !== 'property') {
       return [inner];
     }
+    const plane = mirror.property.value;
     const twin: SflBlock = {
       ...inner,
       name: `${block.name}_mirror`,
-      entries: inner.entries.map(entry =>
-        entry === mirror
-          ? { type: 'property' as const, property: { key: 'flip', value: mirror.property.value } }
-          : entry,
-      ),
+      entries: inner.entries.filter(entry => entry !== mirror),
+      ...(plane.type === 'ident'
+        ? { mirrored: plane.segments.join('.') }
+        : plane.type === 'string'
+          ? { mirrored: plane.value }
+          : {}),
     };
     return [inner, twin];
   });
@@ -159,8 +162,11 @@ function dataSources(blocks: SflBlock[]): Map<string, 'record' | 'table'> {
 // `tables` are the rows of the tables as the host holds them, for a Repeat that runs over one. Without them such a Repeat
 // makes nothing.
 export function expandDocument(doc: SflDocument, tables: Tables = new Map()): SflDocument {
-  const expanded = expandCopies(doc, tables);
-  return hasMirrors(expanded.blocks) ? { ...expanded, blocks: withMirrors(expanded.blocks) } : expanded;
+  const notes = repeatNotes(doc.blocks);
+  const expanded = { ...expandCopies(doc, tables), ...(notes.length ? { notes } : {}) };
+  const mirrored = hasMirrors(expanded.blocks) ? { ...expanded, blocks: withMirrors(expanded.blocks) } : expanded;
+  // Last, where each block lies in the world, from the placements of the Uses, Groups and Repeats it is in.
+  return hasPlacements(mirrored.blocks) ? { ...mirrored, blocks: withPlacements(mirrored.blocks) } : mirrored;
 }
 
 function expandCopies(doc: SflDocument, tables: Tables): SflDocument {

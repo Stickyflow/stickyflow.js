@@ -1,6 +1,7 @@
 import type { SflBlock, SflEntry } from '../ast';
-import { resolveNumeric } from './evaluation';
-import { instance } from './instance';
+import { resolveValue } from './evaluation';
+import { instance, namesIn } from './instance';
+import { placedWithin, placementOf, within } from './placement';
 import { numbersOf } from './properties';
 import { Random } from './random';
 import { fail, type Scalar, type Scope } from './scope';
@@ -15,7 +16,6 @@ const MAX_BLOCKS = 100_000;
 const OWN = new Set(['at', 'seed']);
 // Names a Template cannot give to a parameter, as the Use puts its place in them.
 const PLACE = new Set(['x', 'y']);
-
 function hashOf(text: string): number {
   let hash = 0x811c9dc5;
   for (let index = 0; index < text.length; index++) {
@@ -61,7 +61,7 @@ function expandUse(
   budget: BlockBudget,
   params: ReadonlyMap<string, Scalar>,
 ): SflBlock[] {
-  const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Use ${use.name}`, substitute: true };
+  const scope: Scope = { vars: new Map(), params, random: new Random(0), label: `Use ${use.name}` };
   if (depth > MAX_DEPTH) {
     fail(scope, `Templates are nested more than ${MAX_DEPTH} deep, which may be a Template that uses itself`);
   }
@@ -78,6 +78,9 @@ function expandUse(
   const [x = 0, y = 0] = numbersOf(scope, use, 'at') ?? [];
   scope.vars.set('x', x);
   scope.vars.set('y', y);
+  // Read before the parameters of the Template are known, as it is the Use that says it. A Use a Repeat made is placed within it.
+  const own = placementOf(scope, use);
+  const placement = use.local && own ? within(use.local, own) : (use.local ?? own);
 
   const given = new Map(
     use.entries.flatMap(entry =>
@@ -94,7 +97,7 @@ function expandUse(
     if (PLACE.has(key) || OWN.has(key)) {
       fail(scope, `${key} is the name of something a Use sets, so it cannot be a parameter`);
     }
-    const chosen = resolveNumeric(scope, given.get(key) ?? value);
+    const chosen = resolveValue(scope, given.get(key) ?? value);
     given.delete(key);
     if (chosen.type === 'number' || chosen.type === 'string') {
       scope.vars.set(key, chosen.value);
@@ -112,11 +115,12 @@ function expandUse(
     fail(scope, `Template ${template.name} has no parameter ${unknown}`);
   }
 
-  const made = template.entries.flatMap(entry =>
-    entry.type === 'block' ? [instance(scope, entry.block, name => `${use.name}_${name}`)] : [],
-  );
+  const parts = template.entries.flatMap(entry => (entry.type === 'block' ? [entry.block] : []));
+  const local = namesIn(parts);
+  const made = parts.map(part => instance(scope, part, name => `${use.name}_${name}`, local));
   budget.take(made.length, scope);
-  return expandIn(made, templates, depth + 1, budget, params);
+  const expanded = expandIn(made, templates, depth + 1, budget, params);
+  return placedWithin(expanded, placement);
 }
 
 function expandIn(

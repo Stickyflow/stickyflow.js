@@ -17,6 +17,61 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-24
+
+### Added
+
+- A `Use` in a Scene can carry a `layout` with `position`, `rotation` and one `scale`, and places what its Template makes as a
+  whole: moved, turned about x, then y, then z, and made larger evenly. The bodies of a Template stand about its own zero, and a
+  chamfer, a cut or a wall of them grows with the scale as it is. A Use inside a Template is placed within the Use of that
+  Template, and a Group in a Template carries the placement to what it holds. A Use without a layout stays where its Template
+  puts it, so a Template that takes its place as parameters goes on as before. An uneven scale, or anything else in the layout of
+  a Use, is an error: a Template takes a parameter for a length.
+- A `Group` and a `Repeat` in a Scene place what they hold by the same `layout`, as a whole. Placements nest: a body lies where its
+  own layout puts it, within the Group, the Repeat and the Use it is in.
+- In a Scene a `Repeat` lays its rows along z and names the place of a cell `x` and `z`, as y is up there. `y` keeps the same value,
+  so a Repeat written before goes on as it was.
+- A copy of a Template or of a cell of a Repeat takes its references along: `sketch`, `anchor`, `picture` and the ends of a Link that
+  name a block of the same copy point at that copy, so a Template can hold a Sketch and the Solid made from it. A name outside the
+  copy stays as it is.
+- A `sketch`, `symbol`, `loft`, `anchor` or `picture` that names no block of that kind is a warning, `unknown-reference`, instead of a
+  cube, a square or a label in the middle without a word.
+- A place and a size are written in the layout everywhere: a `Light` reads `layout { position }`, a `Rect` and a `Circle` of a Sketch,
+  a `Port` and a `Cut` or `Add` laid into a Symbol read `layout { position, size }`. Their place written on themselves, as `at`,
+  `size` or `position`, is still read, with a warning, `placement-outside-layout`, that says how it is written now. A place written on
+  any other block itself, where it never did anything, gets the same warning.
+
+### Changed
+
+- A name alone as a value is the value of that name wherever it stands, by one rule for a parameter of a Template, a name of a
+  Repeat or of its cell, and a Parameter: `fill: tint` takes the color a Repeat worked out, as it did in a Template. Before, a Repeat
+  and a Parameter put in their value only where a number stood. A word that nothing is called stays a word, as `textAlign: left`.
+- Every property of a `Repeat` that it does not read itself is a name its cells can use, a number written out as well as one worked
+  out: `trunk: 40` is a name now, as `trunk: 20 * 2` was. `where` takes a value written out, as `where: false`. A name that no cell
+  uses and that is nearly a word the Repeat reads, as `colums`, is an error that names the word meant.
+- A `Solid` made from a Sketch is turned by its own `rotation` on the plane of the Sketch, as its `position` moved it there already;
+  before, its rotation did nothing. Its width and depth come from the Sketch and its height from `height`. A `size` in its layout
+  is a warning, `sketch-solid-size`; its height is still read from there when no `height` is written.
+- `mirror` is the one word for a mirrored twin. The twin no longer carries `flip` as a property; `flip` written by hand still
+  mirrors that block alone, with a warning, `flip-written`. `mirror` on a block that is not a Solid is a warning,
+  `mirror-not-solid`, as it makes no twin there. `symmetry` of Facets stays: it is a body even in itself, not a twin.
+- One word, one meaning. Each word written before is still read, with a warning that names the word now:
+  - The edges of a Solid are one family: `chamfer` cuts straight, `fillet` rounds; alone they take the edges all round the top and the
+    bottom, with `Edges` the upright edges named, with `Top` and `Bottom` single edges there. `edge: round`, `cut`, `round`, `cutTop`,
+    `cutBottom`, `roundTop` and `roundBottom` were their words before (`edge-word-before`), and no longer meet the block `Cut`.
+  - A `Light` stands at its `elevation`, the degrees above the horizon, bindable as `height` was (`light-height`).
+  - A `Ground` lies where its layout places it, `layout { position: 0, h, 0 }`, as `height` said before (`ground-height`).
+  - A `Shape` drawn as a Symbol names it in `symbol`, as every other block does; `shape` names a form that is built in
+    (`shape-names-symbol`).
+  - A `Repeat` makes its cells in the `sequence` it says, as `order` did before, which is the stacking of a layout
+    (`repeat-order`). In a Scene a Repeat that names its rows `y` is said, as they are `z` there (`repeat-y-in-scene`).
+- A `style` says how a body looks. A word of its form written there, as `asset`, `symbol`, `sketch`, `chamfer` or a place, is
+  still read and is a warning, `form-in-style`, that it belongs on the block, a place in its layout.
+
+### Fixed
+
+- A Mesh with its `asset` written in its style is drawn and no longer said to have none.
+
 ## [0.22.0] - 2026-11-23
 
 ### Added

@@ -59,6 +59,14 @@ export const SIDES: readonly Side[] = ['top', 'bottom', 'left', 'right'];
 export interface SflDocument {
   version: string;
   blocks: SflBlock[];
+  // What the expansion saw in the writing aids it took out, which the diagnostics then say, as a word written as it was before.
+  notes?: SflNote[];
+}
+
+export interface SflNote {
+  code: string;
+  owner: string;
+  message: string;
 }
 
 export interface SflBlock {
@@ -66,6 +74,19 @@ export interface SflBlock {
   name: string;
   composition: string[];
   entries: SflEntry[];
+  // Set by the expansion: where a Use or a Repeat in a Scene places this block within the block it is in.
+  local?: Placement;
+  // Where the block lies in the world, its own placement within those of the blocks it is in.
+  placement?: Placement;
+  // Set by the expansion for the twin of a Solid with `mirror`: the plane it is mirrored in.
+  mirrored?: string;
+}
+
+// A position, a turn as a matrix by rows, and one scale, as a Use, a Group or a Repeat in a Scene places what it holds.
+export interface Placement {
+  at: [number, number, number];
+  turn: number[];
+  scale: number;
 }
 
 export type SflEntry =

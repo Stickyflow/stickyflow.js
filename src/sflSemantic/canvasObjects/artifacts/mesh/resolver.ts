@@ -6,7 +6,8 @@ import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch
 import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
 import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
-import { childBlocks, directProperties } from '../../../ast/blockEntries';
+import { placeIn, product, turnDegrees } from '../../../../sflLanguage/expansion/placement';
+import { childBlocks, directProperties, placementValue } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
 import type {
@@ -81,11 +82,11 @@ function sketchShapes(sketch: SflBlock): Outline {
     const own = directProperties(shape);
     if (shape.kind === 'Circle') {
       const radius = asNumber(own.get('radius')) ?? 0;
-      return radius > 0 ? [circleRing(pair(own.get('at')), radius)] : [];
+      return radius > 0 ? [circleRing(pair(placementValue(shape, 'position', 'at')), radius)] : [];
     }
     if (shape.kind === 'Rect') {
-      const [x, y] = pair(own.get('at'));
-      const [width, height] = pair(own.get('size'));
+      const [x, y] = pair(placementValue(shape, 'position', 'at'));
+      const [width, height] = pair(placementValue(shape, 'size'));
       const one = asNumber(own.get('radius'));
       const radii = tupleValues(own.get('radius')) ?? [one ?? 0, one ?? 0, one ?? 0, one ?? 0];
       return width > 0 && height > 0
@@ -160,49 +161,55 @@ function fromSketch(
   };
 }
 
-// The rims of a Solid: `chamfer` is the one of the top and the bottom, or `chamfer: top, bottom`, and `edge: round`
-// rounds them instead of cutting them straight.
+// The edges of a Solid, by one family of words: chamfer cuts an edge straight, fillet rounds it. Alone they take the edges all
+// round the top and the bottom; with Edges the upright edges named, and with Top or Bottom single edges there, each named as the ring
+// of the outline, its corner and how far, as [ring, corner, size]. The words written before, as edge: round, cut and roundTop, are
+// still read; they are said in the diagnostics.
+export const EDGE_WORDS_BEFORE: Readonly<Record<string, string>> = {
+  cut: 'chamferEdges',
+  round: 'filletEdges',
+  cutTop: 'chamferTop',
+  cutBottom: 'chamferBottom',
+  roundTop: 'filletTop',
+  roundBottom: 'filletBottom',
+};
+
 function rimOf(
   properties: Map<string, SflValue>,
 ): Pick<SolidJoin, 'chamfer' | 'chamferBottom' | 'round' | 'corners' | 'edges'> {
-  const value = properties.get('chamfer');
+  const fillet = properties.get('fillet');
+  const value = fillet ?? properties.get('chamfer');
   const [top = asNumber(value) ?? 0, bottom = top] = tupleValues(value) ?? [];
-  // `round` and `cut` name upright edges: each as the ring of the outline, its corner and how far, as [ring, corner, size].
-  const corners = (['cut', 'round'] as const).flatMap((name, kind) => {
-    const list = properties.get(name);
-    return list?.type === 'list'
-      ? list.values.flatMap(item => {
-          const [ring, at, size] = listNumbers(item) ?? [];
-          return size !== undefined && size > 0 ? [[ring, at, size, kind] as [number, number, number, number]] : [];
-        })
-      : [];
-  });
-  // `roundTop`, `roundBottom`, `cutTop` and `cutBottom` name single edges of the top or the bottom: each as the ring of the
-  // outline, the corner it starts at and how far, as [ring, corner, size].
+  const listOf = (now: string) => {
+    const before = Object.keys(EDGE_WORDS_BEFORE).find(word => EDGE_WORDS_BEFORE[word] === now);
+    const list = properties.get(now) ?? (before ? properties.get(before) : undefined);
+    return list?.type === 'list' ? list.values.flatMap(item => [listNumbers(item) ?? []]) : [];
+  };
+  const corners = (['chamferEdges', 'filletEdges'] as const).flatMap((name, kind) =>
+    listOf(name).flatMap(([ring, at, size]) =>
+      size !== undefined && size > 0 ? [[ring, at, size, kind] as [number, number, number, number]] : [],
+    ),
+  );
   const edges = (
     [
-      ['cutBottom', 0, 0],
-      ['cutTop', 1, 0],
-      ['roundBottom', 0, 1],
-      ['roundTop', 1, 1],
+      ['chamferBottom', 0, 0],
+      ['chamferTop', 1, 0],
+      ['filletBottom', 0, 1],
+      ['filletTop', 1, 1],
     ] as const
-  ).flatMap(([name, top, round]) => {
-    const list = properties.get(name);
-    return list?.type === 'list'
-      ? list.values.flatMap(item => {
-          const [ring, at, size] = listNumbers(item) ?? [];
-          return size !== undefined && size > 0
-            ? [[ring, at, size, top, round] as [number, number, number, number, number]]
-            : [];
-        })
-      : [];
-  });
+  ).flatMap(([name, atTop, round]) =>
+    listOf(name).flatMap(([ring, at, size]) =>
+      size !== undefined && size > 0
+        ? [[ring, at, size, atTop, round] as [number, number, number, number, number]]
+        : [],
+    ),
+  );
   return {
     ...(corners.length > 0 ? { corners } : {}),
     ...(edges.length > 0 ? { edges } : {}),
     chamfer: top,
     ...(bottom !== top ? { chamferBottom: bottom } : {}),
-    ...(asString(properties.get('edge')) === 'round' ? { round: true } : {}),
+    ...(fillet !== undefined || asString(properties.get('edge')) === 'round' ? { round: true } : {}),
   };
 }
 
@@ -252,7 +259,7 @@ function solidAsset(
   symbolDefs: Map<string, SflSymbolDefinition>,
   sketched?: FromSketch,
 ): string {
-  const flip = asString(properties.get('flip'));
+  const flip = mirrorOf(block, properties);
   const joins = childBlocks(block)
     .filter(child => child.kind in JOININGS)
     .map((child): SolidJoin => {
@@ -324,7 +331,7 @@ export function resolveMeshObject(
   symbolDefs: Map<string, SflSymbolDefinition> = new Map(),
   sketchDefs?: Map<string, SflBlock>,
 ): SflMeshObject {
-  const flip = block.kind === 'Solid' ? asString(properties.get('flip')) : undefined;
+  const flip = block.kind === 'Solid' ? mirrorOf(block, properties) : undefined;
   // A Solid made from a Sketch stands on the plane of that Sketch and is turned with it. Its own position moves it from there,
   // along the plane and away from it.
   const sketched = block.kind === 'Solid' ? fromSketch(properties, layoutProp, sketchDefs) : undefined;
@@ -338,6 +345,14 @@ export function resolveMeshObject(
           sketched.position[2] + turned[6] * own[0] + turned[7] * own[1] + turned[8] * own[2],
         ]
       : undefined;
+  const where = placedByUse(
+    block,
+    placed ?? mirrored(own, flip, [-1, 1, 1], [1, 1, -1]),
+    sketched
+      ? turnDegrees(product(turn(sketched.rotation), turn(vector(block, layoutProp, 'rotation', 0))))
+      : mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
+    vector(block, layoutProp, 'scale', 1),
+  );
   return {
     ...base,
     objectType: 'mesh',
@@ -357,12 +372,24 @@ export function resolveMeshObject(
       metallic: asNumber(properties.get('metallic')),
       transmission: asNumber(properties.get('transmission')),
       ior: asNumber(properties.get('ior')),
-      position: placed ?? mirrored(own, flip, [-1, 1, 1], [1, 1, -1]),
-      rotation:
-        sketched?.rotation ?? mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
-      scale: vector(block, layoutProp, 'scale', 1),
+      ...where,
     },
   };
+}
+
+// Where a body or a Canvas lies, and its Use has placed what its Template made as a whole.
+function placedByUse(
+  block: SflBlock,
+  position: Vec3,
+  rotation: Vec3,
+  scale: Vec3,
+): { position: Vec3; rotation: Vec3; scale: Vec3 } {
+  return block.placement ? placeIn(block.placement, position, rotation, scale) : { position, rotation, scale };
+}
+
+// The plane the twin of a Solid with `mirror` is mirrored in. `flip` written by hand did the same before and still does.
+function mirrorOf(block: SflBlock, properties: Map<string, SflValue>): string | undefined {
+  return block.mirrored ?? asString(properties.get('flip'));
 }
 
 // A place or a turn on the other side of the plane a Solid is mirrored in.
@@ -403,16 +430,18 @@ export function resolveMeshSurfaceObject(
     x: 0,
     y: 0,
     objectType: 'meshSurface',
-    meshSurface: {
-      position: vector(block, layoutProp, 'position', 0),
-      rotation: vector(block, layoutProp, 'rotation', 0),
-      scale: vector(block, layoutProp, 'scale', 1),
-    },
+    meshSurface: placedByUse(
+      block,
+      vector(block, layoutProp, 'position', 0),
+      vector(block, layoutProp, 'rotation', 0),
+      vector(block, layoutProp, 'scale', 1),
+    ),
   };
 }
 
 export function resolveMeshLightObject(
   base: SflCanvasObjectBase,
+  block: SflBlock,
   properties: Map<string, SflValue>,
 ): SflMeshLightObject {
   return {
@@ -420,13 +449,14 @@ export function resolveMeshLightObject(
     objectType: 'meshLight',
     meshLight: {
       turn: asNumber(properties.get('turn')) ?? DEFAULT_LIGHT.turn,
-      height: asNumber(properties.get('height')) ?? DEFAULT_LIGHT.height,
+      // How high the light stands, in degrees above the horizon. `height` said the same before, and still does.
+      height: asNumber(properties.get('elevation')) ?? asNumber(properties.get('height')) ?? DEFAULT_LIGHT.height,
       color: asString(properties.get('color')),
       intensity: asNumber(properties.get('intensity')) ?? DEFAULT_LIGHT.intensity,
       ambient: asNumber(properties.get('ambient')) ?? DEFAULT_LIGHT.ambient,
       ambientColor: asString(properties.get('ambientColor')),
       softness: asNumber(properties.get('softness')),
-      position: place(properties.get('position')),
+      position: place(placementValue(block, 'position') ?? properties.get('position')),
       glow: asNumber(properties.get('glow')),
     },
   };
@@ -439,16 +469,19 @@ function place(value: SflValue | undefined): Vec3 | undefined {
 }
 
 // The ground of a Scene. Without a height it lies under the meshes, and without a color only its shadows and reflections show.
+// A Ground lies at the height its layout places it at. `height` written on it said the same before, and still does.
 export function resolveMeshGroundObject(
   base: SflCanvasObjectBase,
+  block: SflBlock,
   properties: Map<string, SflValue>,
 ): SflMeshGroundObject {
   const color = asString(properties.get('color'));
+  const placed = tupleValues(placementValue(block, 'position'));
   return {
     ...base,
     objectType: 'meshGround',
     meshGround: {
-      height: asNumber(properties.get('height')),
+      height: placed?.[1] ?? asNumber(properties.get('height')),
       color: color === 'none' ? undefined : color,
       reflection: Math.min(1, Math.max(0, asNumber(properties.get('reflection')) ?? 0)),
       roughness: Math.min(1, Math.max(0, asNumber(properties.get('roughness')) ?? 0)),
