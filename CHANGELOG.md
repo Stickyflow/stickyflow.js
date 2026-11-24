@@ -17,6 +17,15 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+### Added
+
+- A `Use` in a Scene can carry a `layout` with `position`, `rotation` and one `scale`, and places what its Template makes as a
+  whole: moved, turned about x, then y, then z, and made larger evenly. The bodies of a Template stand about its own zero, and a
+  chamfer, a cut or a wall of them grows with the scale as it is. A Use inside a Template is placed within the Use of that
+  Template, and a Group in a Template carries the placement to what it holds. A Use without a layout stays where its Template
+  puts it, so a Template that takes its place as parameters goes on as before. An uneven scale, or anything else in the layout of
+  a Use, is an error: a Template takes a parameter for a length.
+
 ## [0.22.0] - 2026-11-23
 
 ### Added

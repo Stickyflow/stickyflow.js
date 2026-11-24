@@ -66,6 +66,15 @@ export interface SflBlock {
   name: string;
   composition: string[];
   entries: SflEntry[];
+  // Set by the expansion of a Use with a layout: where the blocks its Template makes are placed, as a whole.
+  placement?: Placement;
+}
+
+// A position, a turn as a matrix by rows, and one scale, as a Use places what its Template makes.
+export interface Placement {
+  at: [number, number, number];
+  turn: number[];
+  scale: number;
 }
 
 export type SflEntry =

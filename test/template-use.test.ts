@@ -109,3 +109,69 @@ describe('Template and Use', () => {
     expect(idsOf(plain)).toEqual(['a']);
   });
 });
+
+const SCENE = (templates: string, uses: string) =>
+  `sfl 1.12\n\n${templates}\nModel M {\n  Scene world {\n    layout {\n      position: 0, 0\n      size: 400, 300\n    }\n${uses}  }\n}\n`;
+const LAMP = `Template lamp {
+  Mesh body {
+    asset: "lamp.glb"
+    layout {
+      position: 1, 0, 0
+      scale: 1, 2, 1
+    }
+  }
+}
+`;
+const placeOf = (source: string, id: string) => {
+  const found = sflToCanvasState(source).canvasObjects.find(object => object.id === id);
+  if (!found?.mesh) {
+    throw new Error(`no mesh ${id}`);
+  }
+  return {
+    position: found.mesh.position.map(v => Math.round(v * 1e6) / 1e6),
+    rotation: found.mesh.rotation,
+    scale: found.mesh.scale,
+  };
+};
+
+describe('A Use placed by its layout', () => {
+  it('moves, turns and scales what its Template makes as a whole', () => {
+    const source = SCENE(
+      LAMP,
+      '    Use a : lamp {\n      layout {\n        position: 10, 0, 0\n        rotation: 0, 90, 0\n        scale: 2\n      }\n    }\n',
+    );
+    expect(placeOf(source, 'a_body')).toEqual({ position: [10, 0, -2], rotation: [0, 90, 0], scale: [2, 4, 2] });
+  });
+
+  it('places a Use inside a Template within the Use of that Template', () => {
+    const outer = `${LAMP}\nTemplate pair {\n  Use left : lamp {\n    layout {\n      position: -1, 0, 0\n    }\n  }\n}\n`;
+    const source = SCENE(
+      outer,
+      '    Use p : pair {\n      layout {\n        position: 0, 5, 0\n        scale: 2\n      }\n    }\n',
+    );
+    expect(placeOf(source, 'p_left_body').position).toEqual([0, 5, 0]);
+  });
+
+  it('reaches into a Group, and leaves a Use without a layout where its Template puts it', () => {
+    const grouped = `Template stand {\n  Group parts {\n    Mesh foot {\n      asset: "foot.glb"\n      layout {\n        position: 0, 1, 0\n      }\n    }\n  }\n}\n`;
+    const source = SCENE(
+      grouped,
+      '    Use s : stand {\n      layout {\n        position: 3, 0, 0\n      }\n    }\n    Use t : stand {\n    }\n',
+    );
+    expect(placeOf(source, 's_foot').position).toEqual([3, 1, 0]);
+    expect(placeOf(source, 't_foot').position).toEqual([0, 1, 0]);
+  });
+
+  it('keeps the layout of a Use when the text is written again', () => {
+    const source = SCENE(LAMP, '    Use a : lamp {\n      layout {\n        position: 10, 0, 0\n      }\n    }\n');
+    expect(canonicalize(source)).toContain('position: 10, 0, 0');
+    expect(placeOf(canonicalize(source), 'a_body')).toEqual(placeOf(source, 'a_body'));
+  });
+
+  it('is an error when a Use is scaled unevenly or its layout says anything else', () => {
+    const uneven = SCENE(LAMP, '    Use a : lamp {\n      layout {\n        scale: 1, 2, 1\n      }\n    }\n');
+    expect(() => sflToCanvasState(uneven)).toThrow('scale of a Use is one number');
+    const sized = SCENE(LAMP, '    Use a : lamp {\n      layout {\n        size: 1, 1, 1\n      }\n    }\n');
+    expect(() => sflToCanvasState(sized)).toThrow('not size');
+  });
+});

@@ -6,6 +6,7 @@ import { circleRing, pickedOutline, roundedRing } from '../../../../model/sketch
 import { type SolidJoin, solidAssetName, turn } from '../../../../model/solid';
 import { terrainAssetName } from '../../../../model/terrain';
 import type { SflBlock, SflValue } from '../../../../sflLanguage/ast';
+import { placeInUse } from '../../../../sflLanguage/expansion/placement';
 import { childBlocks, directProperties } from '../../../ast/blockEntries';
 import { asNumber, asString, listNumbers, tupleValues } from '../../../ast/valueAccess';
 import type { SflCanvasObjectBase, SflSymbolDefinition } from '../../types';
@@ -338,6 +339,12 @@ export function resolveMeshObject(
           sketched.position[2] + turned[6] * own[0] + turned[7] * own[1] + turned[8] * own[2],
         ]
       : undefined;
+  const where = placedByUse(
+    block,
+    placed ?? mirrored(own, flip, [-1, 1, 1], [1, 1, -1]),
+    sketched?.rotation ?? mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
+    vector(block, layoutProp, 'scale', 1),
+  );
   return {
     ...base,
     objectType: 'mesh',
@@ -357,12 +364,19 @@ export function resolveMeshObject(
       metallic: asNumber(properties.get('metallic')),
       transmission: asNumber(properties.get('transmission')),
       ior: asNumber(properties.get('ior')),
-      position: placed ?? mirrored(own, flip, [-1, 1, 1], [1, 1, -1]),
-      rotation:
-        sketched?.rotation ?? mirrored(vector(block, layoutProp, 'rotation', 0), flip, [1, -1, -1], [-1, -1, 1]),
-      scale: vector(block, layoutProp, 'scale', 1),
+      ...where,
     },
   };
+}
+
+// Where a body or a Canvas lies, and its Use has placed what its Template made as a whole.
+function placedByUse(
+  block: SflBlock,
+  position: Vec3,
+  rotation: Vec3,
+  scale: Vec3,
+): { position: Vec3; rotation: Vec3; scale: Vec3 } {
+  return block.placement ? placeInUse(block.placement, position, rotation, scale) : { position, rotation, scale };
 }
 
 // A place or a turn on the other side of the plane a Solid is mirrored in.
@@ -403,11 +417,12 @@ export function resolveMeshSurfaceObject(
     x: 0,
     y: 0,
     objectType: 'meshSurface',
-    meshSurface: {
-      position: vector(block, layoutProp, 'position', 0),
-      rotation: vector(block, layoutProp, 'rotation', 0),
-      scale: vector(block, layoutProp, 'scale', 1),
-    },
+    meshSurface: placedByUse(
+      block,
+      vector(block, layoutProp, 'position', 0),
+      vector(block, layoutProp, 'rotation', 0),
+      vector(block, layoutProp, 'scale', 1),
+    ),
   };
 }
 

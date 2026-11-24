@@ -1,6 +1,7 @@
-import type { SflBlock, SflEntry } from '../ast';
+import type { Placement, SflBlock, SflEntry } from '../ast';
 import { resolveNumeric } from './evaluation';
 import { instance } from './instance';
+import { placementOf, within } from './placement';
 import { numbersOf } from './properties';
 import { Random } from './random';
 import { fail, type Scalar, type Scope } from './scope';
@@ -15,6 +16,21 @@ const MAX_BLOCKS = 100_000;
 const OWN = new Set(['at', 'seed']);
 // Names a Template cannot give to a parameter, as the Use puts its place in them.
 const PLACE = new Set(['x', 'y']);
+// What is placed as a whole. What lies inside one of these counts from it already, so a placement stops there.
+const WHOLE = new Set(['Solid', 'Mesh', 'Facets', 'Terrain', 'Canvas']);
+
+// The blocks a Use made, placed where its layout says, together with any placement they had from a Use inside.
+function placed(block: SflBlock, placement: Placement): SflBlock {
+  return {
+    ...block,
+    placement: block.placement ? within(placement, block.placement) : placement,
+    entries: WHOLE.has(block.kind)
+      ? block.entries
+      : block.entries.map(entry =>
+          entry.type === 'block' ? { type: 'block' as const, block: placed(entry.block, placement) } : entry,
+        ),
+  };
+}
 
 function hashOf(text: string): number {
   let hash = 0x811c9dc5;
@@ -78,6 +94,8 @@ function expandUse(
   const [x = 0, y = 0] = numbersOf(scope, use, 'at') ?? [];
   scope.vars.set('x', x);
   scope.vars.set('y', y);
+  // Read before the parameters of the Template are known, as it is the Use that says it.
+  const placement = placementOf(scope, use);
 
   const given = new Map(
     use.entries.flatMap(entry =>
@@ -116,7 +134,8 @@ function expandUse(
     entry.type === 'block' ? [instance(scope, entry.block, name => `${use.name}_${name}`)] : [],
   );
   budget.take(made.length, scope);
-  return expandIn(made, templates, depth + 1, budget, params);
+  const expanded = expandIn(made, templates, depth + 1, budget, params);
+  return placement ? expanded.map(block => placed(block, placement)) : expanded;
 }
 
 function expandIn(
