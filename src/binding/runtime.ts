@@ -88,6 +88,7 @@ export function createBindingRuntime(sfl: string, options: BindingRuntimeOptions
       return state.input;
     },
     registerSource: (name, source) => registerSource(state, name, source),
+    sourceOf: name => state.sources.get(name),
     check: sfl => checkDocument(state, sfl),
     replace: sfl => replaceDocument(state, sfl),
     setElementState: (id, patch) => setElementState(state, id, patch),
