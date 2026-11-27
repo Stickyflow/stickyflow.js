@@ -47,6 +47,9 @@ export interface BindingRuntime {
   readonly interactive: InteractiveElements;
   readonly input: RenderInput;
   registerSource(name: string, source: DataSource): () => void;
+  // The source a name reads now: one the host registered, or the record the runtime made for a Parameters block. A host that shows
+  // the controls of a figure in a runtime of their own reads that record there and writes its values into this one.
+  sourceOf(name: string): DataSource | undefined;
   // Reads another document and checks it against the registered sources. The document that runs is not touched.
   check(sfl: string): DocumentCheck;
   // Puts another document in the place of the one that runs, if it has no error. The registered sources and their listeners stay,

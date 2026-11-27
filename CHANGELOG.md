@@ -17,6 +17,14 @@ Two things count as breaking here that are easy to overlook:
 
 ## [Unreleased]
 
+## [0.23.2] - 2026-11-27
+
+### Added
+
+- `runtime.sourceOf(name)` gives the source a name reads now: one the host registered, or the record the runtime made for a
+  Parameters block. A host that shows the controls of a figure in a runtime of their own carries the values of that record into the
+  runtime of the figure; since 0.23 a source the host registers for a Parameters block is not taken in its place.
+
 ## [0.23.1] - 2026-11-24
 
 ### Fixed
